@@ -105,7 +105,11 @@ public interface RAttributable extends RTypedValue {
     }
 
     default RAttributable setClassAttr(RStringVector classAttr, @SuppressWarnings("unused") boolean convertToInt) {
-        setAttr(RRuntime.CLASS_ATTR_KEY, classAttr);
+        if (classAttr == null && getAttributes() != null) {
+            getAttributes().remove(RRuntime.CLASS_ATTR_KEY);
+        } else {
+            setAttr(RRuntime.CLASS_ATTR_KEY, classAttr);
+        }
         return this;
     }
 

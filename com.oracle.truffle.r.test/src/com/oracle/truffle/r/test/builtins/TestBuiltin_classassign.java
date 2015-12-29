@@ -184,5 +184,7 @@ public class TestBuiltin_classassign extends TestBase {
 
         assertEval(Output.ContainsError, "{x<-c(1,2,3,4); class(x)<-\"array\"; class(x)<-\"matrix\";}");
         assertEval(Output.ContainsError, "{x<-1;attr(x,\"class\")<-c(1,2,3);}");
+
+        assertEval("{ x<-function() 42; class(x)<-\"foo\"; class(x)<-NULL; x }");
     }
 }
