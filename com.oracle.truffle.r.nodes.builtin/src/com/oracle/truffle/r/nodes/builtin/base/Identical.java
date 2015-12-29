@@ -30,6 +30,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.control.SequenceNode;
+import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -156,6 +158,20 @@ public abstract class Identical extends RBuiltinNode {
             }
             RSyntaxNode xNode = x.getRep().asRSyntaxNode();
             RSyntaxNode yNode = y.getRep().asRSyntaxNode();
+            // the following is (at least) needed by setGeneric function which expects a call node
+            // and function body node containing a single (same) call node to be identical
+            if (xNode instanceof FunctionBodyNode) {
+                xNode = ((FunctionBodyNode) xNode).getStatements();
+            }
+            if (yNode instanceof FunctionBodyNode) {
+                yNode = ((FunctionBodyNode) yNode).getStatements();
+            }
+            if (xNode instanceof SequenceNode && ((SequenceNode) xNode).getSequence().length == 1) {
+                xNode = ((SequenceNode) xNode).getSequence()[0].asRSyntaxNode();
+            }
+            if (yNode instanceof SequenceNode && ((SequenceNode) yNode).getSequence().length == 1) {
+                yNode = ((SequenceNode) yNode).getSequence()[0].asRSyntaxNode();
+            }
             return RRuntime.asLogical(xNode.getRequalsImpl(yNode));
         }
         return RRuntime.LOGICAL_FALSE;
