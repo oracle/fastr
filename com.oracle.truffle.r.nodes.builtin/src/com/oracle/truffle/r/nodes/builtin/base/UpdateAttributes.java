@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -209,8 +210,12 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
      */
     @Fallback
     @TruffleBoundary
-    public Object doOther(Object obj, Object operand) {
+    public Object doOther(Object o, Object operand) {
         controlVisibility();
+        Object obj = o;
+        if (obj instanceof RShareable) {
+            obj = ((RShareable) obj).getNonShared();
+        }
         if (obj instanceof RAttributable) {
             RAttributable attrObj = (RAttributable) obj;
             attrObj.removeAllAttributes();

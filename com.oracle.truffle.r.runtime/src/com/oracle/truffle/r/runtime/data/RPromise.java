@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * which is used for manual method dispatch.
  */
 @ValueType
-public class RPromise extends RLanguageRep implements RTypedValue {
+public class RPromise implements RTypedValue {
 
     /**
      * Different to GNU R, FastR has no additional binding information (a "origin" where the binding
@@ -79,6 +79,8 @@ public class RPromise extends RLanguageRep implements RTypedValue {
 
     public static final String CLOSURE_WRAPPER_NAME = new String("<promise>");
 
+    private RBaseNode rep;
+
     /**
      * @see PromiseType
      */
@@ -112,7 +114,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * This creates a new tuple (expr, env, closure, value=null), which may later be evaluated.
      */
     RPromise(PromiseType type, OptType optType, MaterializedFrame execFrame, Closure closure) {
-        super(closure.getExpr());
+        this.rep = closure.getExpr();
         assert type != PromiseType.ARG_DEFAULT || execFrame != null;
         this.type = type;
         this.optType = optType;
@@ -124,7 +126,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * This creates a new tuple (expr, null, null, value), which is already evaluated.
      */
     RPromise(PromiseType type, OptType optType, RBaseNode expr, Object value) {
-        super(expr);
+        this.rep = expr;
         assert value != null;
         this.type = type;
         this.optType = optType;
@@ -139,12 +141,20 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * called via {@link VarargPromise#VarargPromise(PromiseType, RPromise, Closure)} only!
      */
     private RPromise(PromiseType type, OptType optType, RBaseNode expr) {
-        super(expr);
+        this.rep = expr;
         this.type = type;
         this.optType = optType;
         // Not needed as already evaluated:
         this.execFrame = null;
         this.closure = null;
+    }
+
+    public RBaseNode getRep() {
+        return rep;
+    }
+
+    public void setRep(RBaseNode rep) {
+        this.rep = rep;
     }
 
     public RType getRType() {
@@ -190,15 +200,6 @@ public class RPromise extends RLanguageRep implements RTypedValue {
             return false;
         }
         return frame == execFrame;
-    }
-
-    /**
-     * @return The representation of expression (a RNode). May contain <code>null</code> if no expr
-     *         is provided!
-     */
-    @Override
-    public final RBaseNode getRep() {
-        return super.getRep();
     }
 
     /**
@@ -483,6 +484,11 @@ public class RPromise extends RLanguageRep implements RTypedValue {
     @Override
     public void setGPBits(int value) {
         throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public boolean isS4() {
+        return false;
     }
 
 }

@@ -82,4 +82,11 @@ public class TestS4 extends TestBase {
         // output slightly different from GNU R even though we use R's "show" method to print it
         assertEval(Ignored.OutputFormatting, "{ setClass(\"foo\", representation(j=\"numeric\")); getClass(\"foo\") }");
     }
+
+    @Test
+    public void testMethods() {
+        // output slightly different from GNU R even though we use R's "show" method to print it
+        assertEval(Ignored.OutputFormatting, "{ setGeneric(\"gen\", function(object) standardGeneric(\"gen\")); gen }");
+        assertEval(Ignored.OutputFormatting, "{ gen<-function(object) 0; setGeneric(\"gen\"); gen }");
+    }
 }

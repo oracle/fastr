@@ -41,9 +41,9 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public class PrintFunctions {
@@ -102,7 +102,7 @@ public class PrintFunctions {
             // chacking for class attribute is a bit of a hack but GNU R has a hack in place here as
             // well to avoid recursively calling show via print in showDefault (we just can't use
             // the same hack at this point - for details see definition of showDefault in show.R)
-            return o instanceof RS4Object && ((RS4Object) o).getClassAttr(attrProfiles) != null;
+            return o instanceof RAttributable && ((RAttributable) o).isS4() && ((RAttributable) o).getClassAttr(attrProfiles) != null;
         }
 
     }

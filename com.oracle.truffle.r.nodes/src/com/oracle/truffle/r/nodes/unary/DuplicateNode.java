@@ -51,18 +51,18 @@ public abstract class DuplicateNode extends RBaseNode {
     @Specialization
     protected Object duplicate(RS4Object object) {
         RS4Object newObject = RDataFactory.createS4Object();
-        RAttributes newAttributes = newObject.initAttributes();
-        for (RAttribute attr : object.getAttributes()) {
-            newAttributes.put(attr.getName(), attr.getValue());
+        if (object.getAttributes() != null) {
+            RAttributes newAttributes = newObject.initAttributes();
+            for (RAttribute attr : object.getAttributes()) {
+                newAttributes.put(attr.getName(), attr.getValue());
+            }
         }
         return newObject;
     }
 
     @Specialization
     protected Object duplicate(RFunction f) {
-        RFunction newObject = RDataFactory.createFunction(f.getName(), f.getTarget(), f.getRBuiltin(), f.getEnclosingFrame(), f.getFastPath(), f.containsDispatch());
-        newObject.initAttributes(f.getAttributes());
-        return newObject;
+        return f.copy();
     }
 
     // TODO: support more types when required

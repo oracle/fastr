@@ -1522,6 +1522,10 @@ public class RSerialize {
                         break;
                     }
 
+                    case S4SXP: {
+                        break;
+                    }
+
                     /*
                      * FastR scalar, (length 1) "vectors"
                      */
