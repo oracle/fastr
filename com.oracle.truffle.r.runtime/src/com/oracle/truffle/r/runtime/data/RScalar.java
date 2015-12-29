@@ -38,4 +38,9 @@ public abstract class RScalar implements RTypedValue {
         throw RInternalError.shouldNotReachHere();
     }
 
+    @Override
+    public boolean isS4() {
+        return false;
+    }
+
 }

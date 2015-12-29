@@ -184,4 +184,9 @@ public abstract class RToVectorClosure implements RAbstractVector {
         vector.setGPBits(value);
     }
 
+    @Override
+    public boolean isS4() {
+        return false;
+    }
+
 }

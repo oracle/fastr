@@ -485,4 +485,9 @@ public class RPromise extends RLanguageRep implements RTypedValue {
         throw RInternalError.shouldNotReachHere();
     }
 
+    @Override
+    public boolean isS4() {
+        return false;
+    }
+
 }
