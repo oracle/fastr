@@ -55,6 +55,12 @@ GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_C_FILES:.c=.o)) $(FFT_OBJECT)
 
 include ../lib.mk
 
+# Why is this necessary? Because if fft.c has been created by editing, lib.mk will
+# include it in C_OBJECTS but it's already in GNUR_C_OBJECTS (uncreated case)
+$(info C_OBJECTS=$(C_OBJECTS))
+C_OBJECTS := $(filter-out $(FFT_OBJECT), $(C_OBJECTS))
+$(info C_OBJECTS=$(C_OBJECTS))
+
 $(C_OBJECTS): | $(OBJ)
 
 $(SRC)/fft.c: $(GNUR_FFT) src/ed_fft

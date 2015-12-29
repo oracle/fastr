@@ -24,7 +24,6 @@
 .PHONY: all clean
 
 all:
-	$(MAKE) -C src/jni links
 	$(MAKE) -C src/jni all
 
 clean:

@@ -9,9 +9,9 @@
  *
  * All rights reserved.
  */
-#include "rffiutils.h"
+#include <rffiutils.h>
 
-#include "Defn.h"
+#include <Defn.h>
 #include <Print.h>
 
 Rboolean known_to_be_latin1 = FALSE;
@@ -83,46 +83,6 @@ const char *Rf_EncodeLogical(int x, int w)
 {
 	unimplemented("Rf_EncodeLogical");
 	return NULL;
-}
-
-// from printutils.c
-#ifndef min
-#define min(a, b) (((a)<(b))?(a):(b))
-#endif
-#define NB 1000
-const char *Rf_EncodeReal(double x, int w, int d, int e, char cdec)
-{
-    static char buff[NB];
-    char *p, fmt[20];
-
-    /* IEEE allows signed zeros (yuck!) */
-    if (x == 0.0) x = 0.0;
-    if (!R_FINITE(x)) {
-	if(ISNA(x)) snprintf(buff, NB, "%*s", min(w, (NB-1)), CHAR(R_print.na_string));
-	else if(ISNAN(x)) snprintf(buff, NB, "%*s", min(w, (NB-1)), "NaN");
-	else if(x > 0) snprintf(buff, NB, "%*s", min(w, (NB-1)), "Inf");
-	else snprintf(buff, NB, "%*s", min(w, (NB-1)), "-Inf");
-    }
-    else if (e) {
-	if(d) {
-	    sprintf(fmt,"%%#%d.%de", min(w, (NB-1)), d);
-	    snprintf(buff, NB, fmt, x);
-	}
-	else {
-	    sprintf(fmt,"%%%d.%de", min(w, (NB-1)), d);
-	    snprintf(buff, NB, fmt, x);
-	}
-    }
-    else { /* e = 0 */
-	sprintf(fmt,"%%%d.%df", min(w, (NB-1)), d);
-	snprintf(buff, NB, fmt, x);
-    }
-    buff[NB-1] = '\0';
-
-    if(cdec != '.')
-      for(p = buff; *p; p++) if(*p == '.') *p = cdec;
-
-    return buff;
 }
 
 

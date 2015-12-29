@@ -21,11 +21,4 @@
  * questions.
  */
 
-#include "rffiutils.h"
-#include "Defn.h"
-
-#define attribute_hidden
-#include "../../../gnur/R-3.1.3/src/main/contour-common.h"
-unsigned int max_contour_segments = 25000;
-
-#include "../../../gnur/R-3.1.3/src/main/plotmath.c"
+#include "../../../gnur/R-3.1.3/src/main/format.c"

@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include "rffiutils.h"
+#include <rffiutils.h>
 #include <Riconv.h>
 
 void * Riconv_open (const char* tocode, const char* fromcode) {

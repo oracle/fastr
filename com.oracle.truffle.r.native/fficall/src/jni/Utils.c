@@ -21,7 +21,7 @@
  * questions.
  */
 
-#include "rffiutils.h"
+#include <rffiutils.h>
 
 void R_CheckStack(void) {
     // TODO: check for stack overflow

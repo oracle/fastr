@@ -21,8 +21,4 @@
  * questions.
  */
 
-#define attribute_hidden
-
-#include "Defn.h"
-
-#include "../../../gnur/R-3.1.3/src/main/sort.c"
+#include "../../../gnur/R-3.1.3/src/main/devices.c"

@@ -33,37 +33,35 @@ endif
 
 OBJ = ../../lib
 
-COMMON = ../common
+COMMON = $(abspath ../common)
 C_COMMON_SOURCES := $(notdir $(wildcard $(COMMON)/*.c))
-#$(info C_COMMON_SOURCE=$(C_COMMON_SOURCES))
+$(info C_COMMON_SOURCE=$(C_COMMON_SOURCES))
 
-# if link was already set, C_COMMON_SOURCES will be included twice without following filter
-C_LOCAL_SOURCES := $(filter-out  $(C_COMMON_SOURCES),$(wildcard *.c))
-#$(info C_LOCAL_SOURCES=$(C_LOCAL_SOURCES))
+F_COMMON_SOURCES := $(notdir $(wildcard $(COMMON)/*.f))
+F_OBJECTS := $(patsubst %.f,$(OBJ)/%.o,$(F_COMMON_SOURCES))
+
+C_LOCAL_SOURCES := $(wildcard *.c)
+
 C_HDRS := $(wildcard *.h)
 C_LIBNAME := librfficall$(DYLIB_EXT)
 C_LIB := $(TOPDIR)/../lib/$(C_LIBNAME)
 
 C_SOURCES = $(C_LOCAL_SOURCES) $(C_COMMON_SOURCES)
-#$(info C_SOURCES=$(C_SOURCES))
-C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_SOURCES))
-#$(info C_OBJECTS=$(C_OBJECTS))
-
-F_SOURCES := $(wildcard *.f)
-F_OBJECTS := $(patsubst %.f,$(OBJ)/%.o,$(F_SOURCES))
+$(info C_SOURCES=$(C_SOURCES))
+C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_LOCAL_SOURCES)) $(patsubst %.c,$(OBJ)/%.o,$(C_COMMON_SOURCES))
+$(info C_OBJECTS=$(C_OBJECTS))
 
 JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(JDK_OS_DIR)
-FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/gnur/R-3.1.3/src/include -I$(TOPDIR)/include/R_ext
+LOCAL_INCLUDES = -I. -I$(COMMON) 
+FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
 
-# The need for thhis should be reviewed
-GNUR_INCLUDES = -I$(TOPDIR)/gnur/R-3.1.3/src/include -I$(TOPDIR)/gnur/R-3.1.3/src/nmath
+INCLUDES := $(LOCAL_INCLUDES) $(JNI_INCLUDES) $(FFI_INCLUDES)
 
-INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES) $(GNUR_INCLUDES)
+COMMON_INCLUDES := $(LOCAL_INCLUDES) $(JNI_INCLUDES) $(FFI_INCLUDES) -I$(TOPDIR)/gnur/R-3.1.3/src/nmath
 
-all: Makefile $(C_COMMON_SOURCES) $(C_LIB) 
+#CFLAGS := $(CFLAGS) -H
 
-links:
-	$(foreach file,$(C_COMMON_SOURCES),ln -sf $(COMMON)/$(file) $(file);)	
+all: Makefile $(C_LIB) 
 
 $(C_LIB): $(OBJ) $(C_OBJECTS) $(F_OBJECTS)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(C_OBJECTS) $(F_OBJECTS)
@@ -74,12 +72,15 @@ $(OBJ):
 $(OBJ)/%.o: %.c $(TOPDIR)/include/Rinternals.h $(C_HDRS)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 	
+$(OBJ)/%.o: $(COMMON)/%.c $(TOPDIR)/include/Rinternals.h $(C_HDRS)
+	$(CC) $(CFLAGS) $(COMMON_INCLUDES) -c $< -o $@
+
+$(OBJ)/%.o: $(COMMON)/%.f
+	$(F77) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
+
+# for debugging, to see what's really being compiled
 $(OBJ)/%.E: %.c $(TOPDIR)/include/Rinternals.h
 	$(CC) -E $(CFLAGS) $(INCLUDES) -c $< > $@
 
-$(OBJ)/%.o: %.f
-	$(F77) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
-
 clean:
 	rm -rf $(OBJ) $(C_LIB)
-	$(foreach file,$(C_COMMON_SOURCES),rm -f $(file);)	

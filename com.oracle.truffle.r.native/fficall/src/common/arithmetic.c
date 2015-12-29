@@ -21,7 +21,7 @@
  * questions.
  */
 
-#include "rffiutils.h"
+#include <rffiutils.h>
 #include <stdlib.h>
 
 // FastR: selected functions from arithmetic.c:

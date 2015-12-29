@@ -21,11 +21,4 @@
  * questions.
  */
 
-#include "rffiutils.h"
-#include "Defn.h"
-
-
-#define attribute_hidden
-
-#include "../../../gnur/R-3.1.3/src/main/contour-common.h"
-#include "../../../gnur/R-3.1.3/src/main/plot.c"
+#include "../../../gnur/R-3.1.3/src/main/colors.c"

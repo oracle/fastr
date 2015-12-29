@@ -21,12 +21,4 @@
  * questions.
  */
 
-#include "rffiutils.h"
-#include "Defn.h"
-
-extern SEXP    R_DevicesSymbol;  /* ".Devices" */
-extern Rboolean R_Interactive;
-#define attribute_hidden
-#define R_MaxDevices 64
-
-#include "../../../gnur/R-3.1.3/src/main/devices.c"
+#include "../../../gnur/R-3.1.3/src/main/plot3d.c"

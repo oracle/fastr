@@ -21,8 +21,4 @@
  * questions.
  */
 
-#define attribute_hidden
-
-#include "Defn.h"
-
-#include "../../../gnur/R-3.1.3/src/main/colors.c"
+#include "../../../gnur/R-3.1.3/src/main/graphics.c"

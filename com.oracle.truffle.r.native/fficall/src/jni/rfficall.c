@@ -21,7 +21,7 @@
  * questions.
  */
 
-#include "rffiutils.h"
+#include <rffiutils.h>
 #include <string.h>
 #include <setjmp.h>
 

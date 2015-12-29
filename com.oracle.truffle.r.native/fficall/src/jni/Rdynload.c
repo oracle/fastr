@@ -9,7 +9,7 @@
  *
  * All rights reserved.
  */
-#include "rffiutils.h"
+#include <rffiutils.h>
 #include <Rdynload.h>
 
 // Registering routines from loaded shared libraries
@@ -133,9 +133,11 @@ Rboolean R_forceSymbols(DllInfo *dllInfo, Rboolean value) {
 
 DL_FUNC R_GetCCallable(const char *package, const char *name) {
 	unimplemented("R_GetCCallable");
+	return NULL;
 }
 
 DL_FUNC R_FindSymbol(char const *name, char const *pkg,
 		     R_RegisteredNativeSymbol *symbol) {
     unimplemented("R_FindSymbol");
+    return NULL;
 }

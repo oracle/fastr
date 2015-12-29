@@ -21,7 +21,7 @@
  * questions.
  */
 
-#include "rffiutils.h"
+#include <rffiutils.h>
 
 #define INLINE_FUN
 

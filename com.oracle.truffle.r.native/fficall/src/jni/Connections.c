@@ -21,7 +21,7 @@
  * questions.
  */
 
-#include "rffiutils.h"
+#include <rffiutils.h>
 #include <R_ext/Connections.h>
 
 SEXP R_new_custom_connection(const char *description, const char *mode, const char *class_name, Rconnection *ptr) {

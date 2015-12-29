@@ -21,26 +21,4 @@
  * questions.
  */
 
-#define DEFN_H_
-
-#include <jni.h>
-#include <stdlib.h>
-#include <Rinternals.h>
-
-// various definitions required to compile GNU-R code:
-#define F77_SYMBOL(x)	x
-#define F77_QSYMBOL(x) #x
-
-#define Rexp10(x) pow(10.0, x)
-
-// no NLS:
-#ifndef _
-#define _(String) (String)
-#endif
-#define N_(String) String
-#define ngettext(String, StringP, N) (N > 1 ? StringP: String)
-
-void sortVector(SEXP, Rboolean);
-int Scollate(SEXP a, SEXP b);
-void Rf_checkArityCall(SEXP, SEXP, SEXP);
-
+#include "../../../gnur/R-3.1.3/src/main/rlocale.c"

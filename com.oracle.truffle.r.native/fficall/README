@@ -1,19 +1,24 @@
 fficall contains the implementation of the R FFI, as described in https://cran.r-project.org/doc/manuals/r-release/R-exts.html.
+It's actually a bit more than that as it also contains code copied from GnuR, for example that supports graphics or is sufficiently
+simple that it is neither necessary nor desirable to implement in Java.
 
  There are two sub-directories:
    common
    jni
 
- 'jni' contains the implementation that is based on Java JNI. 'common' contains code that has no JNI dependencies and has been extracted for
- reuse in other implementations. Note however, that the common files cannot all be compiled in isolation, as they may depend on the implementation
- via rffiutils.h. During the build symbolic links are made to the files in common and they are compiled with the other 'jni' files.
+'common' contains code that has no explicit JNI dependencies and has been extracted for reuse in other implementations. This code is mostly
+copied/included from GnuR. 'jni' contains the implementation that is based on and has explicit dependencies on Java JNI.
+
+ Note that the 'common' files cannot all be compiled in isolation, as they typically depend on the implementation
+ via rffiutils.h (and Rinternals.h). N.B. the GnuR code may "include" header files that are private to the GnuR implementation.
+ These must always be replaced with local versions that make sense under FastR. Examples are Defn.h and Internal.h. When code
+ is compiled the C compiler include path NEVER reaches into GnuR; all internal headers that are needed must existing in the
+ common directory. They may explicitly include the original header but doing it this way ensures that we never accidently
+ include an internal header.
 
  The R FFI is rather baroque and defined in large set of header files in the sibling 'include' directory. In GnuR, the implementation
- of the functions is spread over the GnuR C files in 'src/main'. To ease navigation of the FastR implementation, in general, the implementation
- of the functions in a header file 'Rxxx.h' is stored in the file 'Rxxx.c'.
+ of the functions is spread over the GnuR C files in 'src/main'. To ease navigation of the FastR implementation, in general,
+ the implementation of the functions in a header file 'Rxxx.h' is stored in the file 'Rxxx.c'.
 
 The points of entry from Java are defined in the file rfficall.c. Various utility functions are defined if rffiutils.{h,c}.
 
-TODO
-
-Refactor the files that are copied from GnuR and not strictly part of the FFI but support the native graphics package.

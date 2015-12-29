@@ -21,10 +21,4 @@
  * questions.
  */
 
-#include "rffiutils.h"
-#include "Defn.h"
-
-#define attribute_hidden
-extern unsigned int max_contour_segments;
-
-#include "../../../gnur/R-3.1.3/src/main/plot3d.c"
+#include "../../../gnur/R-3.1.3/src/main/plotmath.c"

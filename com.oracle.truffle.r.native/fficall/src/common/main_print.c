@@ -10,8 +10,6 @@
  * All rights reserved.
  */
 
-#include "rffiutils.h"
-
 // the following code is copied from "print.c"
 
 /*
@@ -77,10 +75,9 @@
 #include <config.h>
 #endif
 
-#include "rffiutils.h"
-#include "Defn.h"
-
-#include "Print.h"
+#include <rffiutils.h>
+#include <Defn.h>
+#include <Print.h>
 
 
 /* Global print parameter struct: */

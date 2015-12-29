@@ -21,8 +21,4 @@
  * questions.
  */
 
-#include "Defn.h"
-
-#undef _
-
 #include "../../../gnur/R-3.1.3/src/appl/pretty.c"

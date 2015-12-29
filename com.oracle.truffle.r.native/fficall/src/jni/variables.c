@@ -28,8 +28,8 @@
 #include <string.h>
 #include <jni.h>
 #include <Rinternals.h>
-#include "rffiutils.h"
-#include "../common/variable_defs.h"
+#include <rffiutils.h>
+#include <variable_defs.h>
 
 jmethodID getGlobalEnvMethodID;
 jmethodID getBaseEnvMethodID;

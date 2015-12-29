@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include "rffiutils.h"
+#include <rffiutils.h>
 #include <R_ext/Parse.h>
 
 SEXP R_ParseVector(SEXP x, int y, ParseStatus *z, SEXP w) {

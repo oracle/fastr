@@ -9,10 +9,10 @@
  *
  * All rights reserved.
  */
-#ifndef VARIABLE_DEFS_H_
-#define VARIABLE_DEFS_H_
 
-// The global variables that are assumed by the R FFI.
+// These are the definitions (i.e., not extern) that are defined as extern in RInternals.h.
+// They are in a a separate header to support a JNI and non-JNI implementation of their values.
+// Therefore this file must only be included by the implementation.
 // N.B. Some variables become functions in FastR, see RInternals.h
 
 /* Evaluation Environment */
@@ -92,5 +92,5 @@ Rboolean utf8locale = FALSE;
 Rboolean mbcslocale = FALSE;
 Rboolean latin1locale = FALSE;
 int R_dec_min_exponent = -308;
+int max_contour_segments = 25000;
 
-#endif /* VARIABLE_DEFS_H_ */
