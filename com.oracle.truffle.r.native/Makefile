@@ -34,7 +34,6 @@ export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
 all: 
 	$(MAKE) -C gnur
 	$(MAKE) -C include
-	$(MAKE) -C builtinlibs
 	$(MAKE) -C osextras
 	$(MAKE) -C fficall
 	$(MAKE) -C library
@@ -42,7 +41,6 @@ all:
 
 clean: 
 	$(MAKE) -C include clean
-	$(MAKE) -C builtinlibs clean
 	$(MAKE) -C osextras clean
 	$(MAKE) -C fficall clean
 	$(MAKE) -C library clean

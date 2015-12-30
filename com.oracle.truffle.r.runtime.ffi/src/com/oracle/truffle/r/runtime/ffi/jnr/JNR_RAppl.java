@@ -45,7 +45,7 @@ public class JNR_RAppl implements RApplRFFI {
         @TruffleBoundary
         private static Linpack createAndLoadLib() {
             // need to load blas lib as Fortran functions in appl lib need it
-            return LibraryLoader.create(Linpack.class).library("Rblas").library("appl").load();
+            return LibraryLoader.create(Linpack.class).library("Rblas").library("R").load();
         }
 
         static Linpack linpack() {

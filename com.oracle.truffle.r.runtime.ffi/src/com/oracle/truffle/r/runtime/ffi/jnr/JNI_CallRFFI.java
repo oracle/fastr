@@ -51,15 +51,15 @@ public class JNI_CallRFFI implements CallRFFI {
     private static final boolean ForceRTLDGlobal = false;
 
     /**
-     * Load the {@code librfficall} library. N.B. this library defines some non-JNI global symbols
-     * that are referenced by C code in R packages. Unfortunately, {@link System#load(String)} uses
+     * Load the {@code libR} library. N.B. this library defines some non-JNI global symbols that are
+     * referenced by C code in R packages. Unfortunately, {@link System#load(String)} uses
      * {@code RTLD_LOCAL} with {@code dlopen}, so we have to load the library manually and set
      * {@code RTLD_GLOBAL}. However, a {@code dlopen} does not hook the JNI functions into the JVM,
      * so we have to do an additional {@code System.load} to achieve that.
      */
     @TruffleBoundary
     private static void loadLibrary() {
-        String librffiPath = LibPaths.getBuiltinLibPath("rfficall");
+        String librffiPath = LibPaths.getBuiltinLibPath("R");
         try {
             DLL.load(librffiPath, ForceRTLDGlobal, false);
         } catch (DLLException ex) {

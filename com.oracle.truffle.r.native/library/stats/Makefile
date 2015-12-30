@@ -40,7 +40,7 @@ ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
 endif
 
-PKG_LIBS := $(LAPACK_LIBS) $(BLAS_LIBS) -lappl -L$(FASTR_LIB_DIR) $(FLIBS)
+PKG_LIBS := $(LAPACK_LIBS) $(BLAS_LIBS) -L$(FASTR_LIB_DIR) $(FLIBS)
 
 OBJ = lib
 
@@ -75,7 +75,6 @@ nametool:
 ifeq ($(OS_NAME),Darwin)
 	install_name_tool -change libRblas.dylib $(FASTR_R_HOME)/lib/libRblas.dylib $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
 	install_name_tool -change libRlapack.dylib $(FASTR_R_HOME)/lib/libRlapack.dylib $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
-	install_name_tool -change libappl.dylib $(FASTR_R_HOME)/lib/libappl.dylib $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
 endif
 
 cleanpkg:

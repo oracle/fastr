@@ -21,7 +21,7 @@
 # questions.
 #
 
-# Master Makefile for librffi. Includes ../common/common.mk to include common files in the build
+# Master Makefile for libR. Includes ../common/common.mk to include common files in the build
 
 ifeq ($(TOPDIR),)
     TOPDIR = $(abspath ../../..)
@@ -50,8 +50,8 @@ C_LOCAL_SOURCES := $(wildcard *.c)
 $(info C_LOCAL_SOURCES=$(C_LOCAL_SOURCES))
 
 C_HDRS := $(wildcard *.h)
-C_LIBNAME := librfficall$(DYLIB_EXT)
-C_LIB := $(TOPDIR)/../lib/$(C_LIBNAME)
+C_LIBNAME := libR$(DYLIB_EXT)
+C_LIB := $(FASTR_LIB_DIR)/$(C_LIBNAME)
 
 C_SOURCES = $(C_LOCAL_SOURCES) $(C_COMMON_SOURCES)
 C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_LOCAL_SOURCES)) $(patsubst %.c,$(OBJ)/%.o,$(C_COMMON_SOURCES))
@@ -63,13 +63,18 @@ FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
 
 INCLUDES := $(LOCAL_INCLUDES) $(JNI_INCLUDES) $(FFI_INCLUDES)
 
+ifeq ($(OS_NAME), Darwin)
+VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
+endif
+
 # uncomment to see exactly where headers are being read from
 #CFLAGS := $(CFLAGS) -H
 
 all: Makefile $(C_LIB) 
 
-$(C_LIB): $(OBJ) $(C_OBJECTS) $(F_OBJECTS) $(GNUR_C_OBJECTS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(C_OBJECTS) $(F_OBJECTS) $(GNUR_C_OBJECTS)
+$(C_LIB): $(OBJ) $(C_OBJECTS) $(F_OBJECTS) $(GNUR_F_OBJECTS) $(GNUR_C_OBJECTS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(C_OBJECTS) $(F_OBJECTS) $(GNUR_C_OBJECTS) $(GNUR_F_OBJECTS) $(VERSION_FLAGS)
+	
 
 $(OBJ):
 	mkdir -p $(OBJ)
