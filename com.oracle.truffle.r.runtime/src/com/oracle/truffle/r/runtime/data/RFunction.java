@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 
 /**
  * An instance of {@link RFunction} represents a function defined in R. The properties of a function
@@ -44,7 +45,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * {@link #enclosingFrame}.
  * </ul>
  */
-public final class RFunction extends RAttributeStorage implements RTypedValue, TruffleObject {
+public final class RFunction extends RSharingAttributeStorage implements RTypedValue, TruffleObject {
 
     public static final String NO_NAME = new String("");
 
@@ -126,4 +127,19 @@ public final class RFunction extends RAttributeStorage implements RTypedValue, T
     public void setFastPath(FastPathFactory fastPath) {
         this.fastPath = fastPath;
     }
+
+    @Override
+    public RShareable copy() {
+        RFunction newFunction = RDataFactory.createFunction(getName(), getTarget(), getRBuiltin(), getEnclosingFrame(), getFastPath(), containsDispatch());
+        if (getAttributes() != null) {
+            RAttributes newAttributes = newFunction.initAttributes();
+            for (RAttribute attr : getAttributes()) {
+                newAttributes.put(attr.getName(), attr.getValue());
+            }
+            newFunction.initAttributes(newAttributes);
+        }
+        return newFunction;
+
+    }
+
 }

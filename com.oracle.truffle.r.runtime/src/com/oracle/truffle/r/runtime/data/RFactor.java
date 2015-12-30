@@ -83,7 +83,7 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RVector makeShared() {
+    public RSharingAttributeStorage makeShared() {
         return vector.makeShared();
     }
 
@@ -105,6 +105,12 @@ public final class RFactor implements RShareable, RAbstractContainer {
     @Override
     public void makeSharedPermanent() {
         vector.makeSharedPermanent();
+    }
+
+    @Override
+    public RShareable getNonShared() {
+        RIntVector newVector = (RIntVector) vector.getNonShared();
+        return newVector == vector ? this : RDataFactory.createFactor(newVector, ordered);
     }
 
     @Override

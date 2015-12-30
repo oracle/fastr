@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -196,12 +197,16 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
      * All other, non-performance centric, {@link RAttributable} types.
      */
     @Fallback
-    protected Object updateAttr(Object object, Object name, Object value) {
+    protected Object updateAttr(Object obj, Object name, Object value) {
+        Object object = obj;
         controlVisibility();
         String sname = RRuntime.asString(name);
         if (sname == null) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.MUST_BE_NONNULL_STRING, "name");
+        }
+        if (object instanceof RShareable) {
+            object = ((RShareable) object).getNonShared();
         }
         String internedName = intern(sname);
         if (object instanceof RAttributable) {

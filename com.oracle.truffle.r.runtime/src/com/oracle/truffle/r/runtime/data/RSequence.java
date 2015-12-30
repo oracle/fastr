@@ -199,4 +199,9 @@ public abstract class RSequence implements RAbstractVector {
         throw RInternalError.shouldNotReachHere();
     }
 
+    @Override
+    public boolean isS4() {
+        return false;
+    }
+
 }

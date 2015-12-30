@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * - non-shared => shared
  * </pre>
  */
-public abstract class RVector extends RAttributeStorage implements RShareable, RAbstractVector, RFFIAccess {
+public abstract class RVector extends RSharingAttributeStorage implements RShareable, RAbstractVector, RFFIAccess {
 
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName()}, true);
     private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName()}, true);
@@ -60,19 +60,12 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     private RList dimNames;
     // cache rownames for data frames as they are accessed at every data frame access
     private Object rowNames;
-    private int refCount;
-
-    private static final int TEMPORARY = 0x1;
-    private static final int SHARED = 0x2;
 
     protected RVector(boolean complete, int length, int[] dimensions, RStringVector names) {
         this.complete = complete;
         this.dimensions = dimensions;
         this.names = names;
         this.rowNames = RNull.instance;
-        if (!FastROptions.NewStateTransition.getBooleanValue()) {
-            refCount = TEMPORARY;
-        }
         if (names != null) {
             // since this constructor is for internal use only, the assertion shouldn't fail
             assert names.getLength() == length : "size mismatch: " + names.getLength() + " vs. " + length;
@@ -421,63 +414,6 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
 
     public final boolean isComplete() {
         return complete;
-    }
-
-    @Override
-    public final void markNonTemporary() {
-        assert !FastROptions.NewStateTransition.getBooleanValue();
-        refCount &= ~TEMPORARY;
-    }
-
-    @Override
-    public final boolean isTemporary() {
-        if (FastROptions.NewStateTransition.getBooleanValue()) {
-            return refCount == 0;
-        } else {
-            return (refCount & TEMPORARY) != 0;
-        }
-    }
-
-    @Override
-    public final boolean isShared() {
-        if (FastROptions.NewStateTransition.getBooleanValue()) {
-            return refCount > 1;
-        } else {
-            return (refCount & SHARED) != 0;
-        }
-    }
-
-    @Override
-    public final RVector makeShared() {
-        assert !FastROptions.NewStateTransition.getBooleanValue();
-        refCount = SHARED;
-        return this;
-    }
-
-    @Override
-    public final void incRefCount() {
-        refCount++;
-    }
-
-    @Override
-    public final void decRefCount() {
-        assert refCount > 0;
-        refCount--;
-    }
-
-    @Override
-    public boolean isSharedPermanent() {
-        return refCount == SHARED_PERMANENT_VAL;
-    }
-
-    @Override
-    public void makeSharedPermanent() {
-        if (FastROptions.NewStateTransition.getBooleanValue()) {
-            refCount = SHARED_PERMANENT_VAL;
-        } else {
-            // old scheme never reverts states
-            makeShared();
-        }
     }
 
     public final boolean hasDimensions() {
@@ -855,28 +791,8 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     }
 
     @Override
-    public final RVector materializeNonShared() {
-        if (this.isShared()) {
-            RVector res = this.copy();
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                assert res.isTemporary();
-                res.incRefCount();
-            } else {
-                res.markNonTemporary();
-            }
-            return res;
-        }
-        if (this.isTemporary()) {
-            // this is needed for primitive values coerced to vector - they need to be marked as
-            // non-temp, otherwise the following code will not work:
-            // x<-1; attributes(x) <- list(my = 1); y<-x; attributes(y)<-list(his = 2); x
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                this.incRefCount();
-            } else {
-                this.markNonTemporary();
-            }
-        }
-        return this;
+    public RVector materializeNonShared() {
+        return (RVector) getNonShared();
     }
 
     @Override

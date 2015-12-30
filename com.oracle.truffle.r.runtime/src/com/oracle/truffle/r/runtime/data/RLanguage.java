@@ -36,11 +36,6 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * instances. R allows a language element to be treated as a list, hence the support for
  * {@link RAbstractContainer}, which is implemented via AST walk operations.
  *
- * The representation is inherited from {@link RLanguageRep}. This is a Truffle AST ({@code RNode}),
- * although that type is not statically used here due to project circularities. A related
- * consequence is the the implementation of the {@link RAbstractContainer} methods are delegated to
- * a helper class from a project that can access {@code RNode}.
- *
  * {@link RLanguage} instances are almost completely immutable, <i>except</i> for the ability for
  * {@code}names} updates which manifests itself as actually transforming the AST. S we do have to
  * implement the {@link RShareable} interface.
@@ -48,11 +43,9 @@ import com.oracle.truffle.r.runtime.nodes.*;
  *
  */
 @ValueType
-public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttributable, RShareable {
+public class RLanguage extends RSharingAttributeStorage implements RAbstractContainer, RAttributable, RShareable {
 
-    private RAttributes attributes;
-
-    private int gpbits;
+    private RBaseNode rep;
 
     /**
      * Lazily computed value.
@@ -60,31 +53,24 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     private int length = -1;
 
     RLanguage(RNode rep) {
-        super(rep);
+        this.rep = rep;
     }
 
     RLanguage(RNode rep, int length) {
-        super(rep);
+        this.rep = rep;
         this.length = length;
+    }
+
+    public RBaseNode getRep() {
+        return rep;
+    }
+
+    public void setRep(RBaseNode rep) {
+        this.rep = rep;
     }
 
     public RType getRType() {
         return RType.Language;
-    }
-
-    public RAttributes getAttributes() {
-        return attributes;
-    }
-
-    public RAttributes initAttributes() {
-        if (attributes == null) {
-            attributes = RAttributes.create();
-        }
-        return attributes;
-    }
-
-    public final void initAttributes(RAttributes newAttributes) {
-        attributes = newAttributes;
     }
 
     public boolean isComplete() {
@@ -124,15 +110,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     }
 
     public RLanguage materializeNonShared() {
-        if (this.isShared()) {
-            RLanguage res = this.copy();
-            res.markNonTemporary();
-            return res;
-        }
-        if (this.isTemporary()) {
-            this.markNonTemporary();
-        }
-        return this;
+        return (RLanguage) getNonShared();
     }
 
     public RShareable materializeToShareable() {
@@ -183,10 +161,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         setAttr(RRuntime.ROWNAMES_ATTR_KEY, rowNames);
     }
 
-    public RStringVector getClassHierarchy() {
-        return RDataFactory.createStringVector(RRuntime.CLASS_LANGUAGE);
-    }
-
+    @Override
     public RStringVector getImplicitClass() {
         return RDataFactory.createStringVector(RRuntime.CLASS_LANGUAGE);
     }
@@ -206,78 +181,9 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         return l;
     }
 
-    /*
-     * RShareable support. Code is cloned directly from RVector.
-     */
-    private boolean shared;
-    private boolean temporary = true;
-    private int refCount;
-
-    public void markNonTemporary() {
-        assert !FastROptions.NewStateTransition.getBooleanValue();
-        temporary = false;
-    }
-
-    public boolean isTemporary() {
-        if (FastROptions.NewStateTransition.getBooleanValue()) {
-            return refCount == 0;
-        } else {
-            return temporary;
-        }
-    }
-
-    public boolean isShared() {
-        if (FastROptions.NewStateTransition.getBooleanValue()) {
-            return refCount > 1;
-        } else {
-            return shared;
-        }
-    }
-
-    public RShareable makeShared() {
-        assert !FastROptions.NewStateTransition.getBooleanValue();
-        if (temporary) {
-            temporary = false;
-        }
-        shared = true;
-        return this;
-    }
-
-    public void incRefCount() {
-        refCount++;
-    }
-
-    public void decRefCount() {
-        assert refCount > 0;
-        refCount--;
-    }
-
-    @Override
-    public boolean isSharedPermanent() {
-        return refCount == SHARED_PERMANENT_VAL;
-    }
-
-    @Override
-    public void makeSharedPermanent() {
-        if (FastROptions.NewStateTransition.getBooleanValue()) {
-            refCount = SHARED_PERMANENT_VAL;
-        } else {
-            // old scheme never reverts states
-            makeShared();
-        }
-    }
-
     @Override
     public String toString() {
         return String.format("RLanguage(rep=%s)", getRep());
-    }
-
-    public int getGPBits() {
-        return gpbits;
-    }
-
-    public void setGPBits(int value) {
-        gpbits = value;
     }
 
 }

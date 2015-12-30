@@ -89,6 +89,10 @@ $(C_OBJECTS): | $(OBJ)
 
 $(F_OBJECTS): | $(OBJ)
 
+$(GNUR_C_OBJECTS): | $(OBJ)
+
+$(GNUR_F_OBJECTS): | $(OBJ)
+
 $(OBJ):
 	mkdir -p $(OBJ)
 

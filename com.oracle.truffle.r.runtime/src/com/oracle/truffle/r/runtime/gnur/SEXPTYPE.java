@@ -46,7 +46,7 @@ public enum SEXPTYPE {
     EXTPTRSXP(22, RExternalPtr.class), /* external pointer */
     WEAKREFSXP(23), /* weak reference */
     RAWSXP(24, new Class<?>[]{RRawVector.class, RRaw.class}), /* raw bytes */
-    S4SXP(25), /* S4 non-vector */
+    S4SXP(25, RS4Object.class), /* S4 non-vector */
 
     NEWSXP(30), /* fresh node created in new page */
     FREESXP(31), /* node released by GC */

@@ -52,4 +52,6 @@ public interface RShareable {
 
     void makeSharedPermanent();
 
+    RShareable getNonShared();
+
 }

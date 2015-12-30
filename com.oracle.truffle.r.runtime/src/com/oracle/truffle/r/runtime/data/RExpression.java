@@ -180,7 +180,7 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RVector makeShared() {
+    public RSharingAttributeStorage makeShared() {
         return data.makeShared();
     }
 
@@ -202,6 +202,12 @@ public class RExpression implements RShareable, RAbstractContainer {
     @Override
     public void makeSharedPermanent() {
         data.makeSharedPermanent();
+    }
+
+    @Override
+    public RShareable getNonShared() {
+        RList newData = (RList) data.getNonShared();
+        return newData == data ? this : RDataFactory.createExpression(newData);
     }
 
     @Override
