@@ -45,8 +45,8 @@ void Rf_checkArityCall(SEXP, SEXP, SEXP);
 
 extern SEXP R_DeviceSymbol;
 extern SEXP R_DevicesSymbol;
-extern SEXP R_Interactive;
-extern SEXP R_Visible;
+extern Rboolean R_Interactive;
+extern Rboolean R_Visible;
 int	R_ReadConsole(const char *, unsigned char *, int, int);
 
 //#define HAVE_MBSTATE_T 1 // actually from config.h
