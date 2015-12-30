@@ -10,4 +10,6 @@
  * All rights reserved.
  */
 
-#include "../../../gnur/R-3.1.3/src/main/engine.c"
+// This is a redirect to src/nmath/nmath.h
+
+#include GNUR_NMATH_H

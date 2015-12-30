@@ -10,7 +10,7 @@
  * All rights reserved.
  */
 
-#include "rffiutils.h"
+#include <rffiutils.h>
 
 // selected functions copied from sys-unix.c and sysutils.c:
 

@@ -11,13 +11,8 @@
  */
 #include <rffiutils.h>
 
-#include <Defn.h>
-#include <Print.h>
-
 Rboolean known_to_be_latin1 = FALSE;
 Rboolean known_to_be_utf8 = FALSE;
-
-
 
 int R_cairoCdynload(int local, int now)
 {

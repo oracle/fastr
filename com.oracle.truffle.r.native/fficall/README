@@ -12,9 +12,14 @@ copied/included from GnuR. 'jni' contains the implementation that is based on an
  Note that the 'common' files cannot all be compiled in isolation, as they typically depend on the implementation
  via rffiutils.h (and Rinternals.h). N.B. the GnuR code may "include" header files that are private to the GnuR implementation.
  These must always be replaced with local versions that make sense under FastR. Examples are Defn.h and Internal.h. When code
- is compiled the C compiler include path NEVER reaches into GnuR; all internal headers that are needed must existing in the
+ is compiled the C compiler include path NEVER reaches into GnuR; all internal headers that are needed must exist in the
  common directory. They may explicitly include the original header but doing it this way ensures that we never accidently
- include an internal header.
+ include an internal header. It is TBD to decide exactly what is needed from the GnuR internal headers. Ideally,
+ we would provide versions that are absolutely minimal. Clearly it is a bug if any code that depends on the actual
+ GnuR implementation ends up in the FastR library.
+
+ N.B. Some modified files have a "_fastr" suffix to avoid a clash with an existing file in GnuR that would match
+ the Makefile rule for compiling directly from the GnuR file.
 
  The R FFI is rather baroque and defined in large set of header files in the sibling 'include' directory. In GnuR, the implementation
  of the functions is spread over the GnuR C files in 'src/main'. To ease navigation of the FastR implementation, in general,
