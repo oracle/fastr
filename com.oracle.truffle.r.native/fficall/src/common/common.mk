@@ -31,7 +31,7 @@ GNUR_APPL_SRC = $(GNUR_HOME)/src/appl
 GNUR_APPL_F_OBJECTS := $(wildcard $(GNUR_APPL_SRC)/d*.o)
 
 
-GNUR_MAIN_C_FILES = colors.c devices.c engine.c graphics.c plot.c plot3d.c plotmath.c rlocale.c sort.c
+GNUR_MAIN_C_FILES = colors.c devices.c engine.c format.c graphics.c plot.c plot3d.c plotmath.c rlocale.c sort.c
 GNUR_MAIN_SRC = $(GNUR_HOME)/src/main
 
 GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_APPL_C_FILES:.c=.o) $(GNUR_MAIN_C_FILES:.c=.o))

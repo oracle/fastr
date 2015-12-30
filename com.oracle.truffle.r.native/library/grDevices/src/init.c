@@ -30,8 +30,7 @@
 
 #ifndef _WIN32
 /* This really belongs with the X11 module, but it is about devices */
-static SEXP cairoProps(SEXP in) { return NULL; }
-/*
+static SEXP cairoProps(SEXP in)
 {
     int which = asInteger(in);
     if(which == 1)
@@ -52,7 +51,6 @@ static SEXP cairoProps(SEXP in) { return NULL; }
 	    );
     return R_NilValue;
 }
-*/
 #endif
 
 #define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
@@ -124,7 +122,7 @@ static const R_ExternalMethodDef ExtEntries[] = {
 
 #ifdef HAVE_AQUA
 extern void setup_RdotApp(void);
-/*extern */Rboolean useaqua;
+extern Rboolean useaqua;
 #endif
 
 void R_init_grDevices(DllInfo *dll)

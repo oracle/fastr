@@ -53,7 +53,7 @@ public enum FastROptions {
     InvisibleArgs("Argument writes do not trigger state transitions", true),
     NewStateTransition("Experimental state transition implementation", true),
     RefCountIncrementOnly("Disable reference count decrements for experimental state transition implementation", false),
-    UseInternalGraphics("Whether the internal (Java) graphics subsystem should be used", true),
+    UseInternalGraphics("Whether the internal (Java) graphics subsystem should be used", false),
 
     // Promises optimizations
     EagerEval("If enabled, overrides all other EagerEval switches (see EagerEvalHelper)", false),

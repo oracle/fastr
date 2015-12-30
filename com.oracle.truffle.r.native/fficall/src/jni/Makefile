@@ -41,13 +41,13 @@ COMMON = $(abspath ../common)
 include $(COMMON)/common.mk
 
 C_COMMON_SOURCES := $(notdir $(wildcard $(COMMON)/*.c))
-$(info C_COMMON_SOURCES=$(C_COMMON_SOURCES))
+#$(info C_COMMON_SOURCES=$(C_COMMON_SOURCES))
 
 F_COMMON_SOURCES := $(notdir $(wildcard $(COMMON)/*.f))
 F_OBJECTS := $(patsubst %.f,$(OBJ)/%.o,$(F_COMMON_SOURCES))
 
 C_LOCAL_SOURCES := $(wildcard *.c)
-$(info C_LOCAL_SOURCES=$(C_LOCAL_SOURCES))
+#$(info C_LOCAL_SOURCES=$(C_LOCAL_SOURCES))
 
 C_HDRS := $(wildcard *.h)
 C_LIBNAME := libR$(DYLIB_EXT)
@@ -55,7 +55,7 @@ C_LIB := $(FASTR_LIB_DIR)/$(C_LIBNAME)
 
 C_SOURCES = $(C_LOCAL_SOURCES) $(C_COMMON_SOURCES)
 C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_LOCAL_SOURCES)) $(patsubst %.c,$(OBJ)/%.o,$(C_COMMON_SOURCES))
-$(info C_OBJECTS=$(C_OBJECTS))
+#$(info C_OBJECTS=$(C_OBJECTS))
 
 JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(JDK_OS_DIR)
 LOCAL_INCLUDES = -I. -I$(COMMON) 

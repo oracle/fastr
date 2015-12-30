@@ -23,6 +23,7 @@
 // various definitions required to compile GNU-R code:
 
 #define attribute_hidden
+#define HAVE_NEARBYINT
 
 #define F77_SYMBOL(x)	x
 #define F77_QSYMBOL(x) #x
