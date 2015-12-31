@@ -56,6 +56,7 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
+import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
@@ -85,6 +86,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -541,10 +543,15 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             if (RASTUtils.isNamedFunctionNode(this)) {
                 return RASTUtils.findFunctionName(this);
             } else {
-                if (functionNode instanceof ConstantNode && ((ConstantNode) functionNode).getValue() instanceof RSymbol) {
-                    return ((ConstantNode) functionNode).getValue();
+                RNode newFunctionNode = functionNode;
+                if (newFunctionNode instanceof NamedRNode) {
+                    newFunctionNode = ((NamedRNode) newFunctionNode).original;
+                }
+                if (newFunctionNode instanceof ConstantNode &&
+                                (((ConstantNode) newFunctionNode).getValue() instanceof RSymbol || ((ConstantNode) newFunctionNode).getValue() instanceof RAbstractVector)) {
+                    return ((ConstantNode) newFunctionNode).getValue();
                 } else {
-                    return RDataFactory.createLanguage(functionNode);
+                    return RDataFactory.createLanguage(newFunctionNode);
                 }
             }
         } else {

@@ -88,5 +88,7 @@ public class TestS4 extends TestBase {
         // output slightly different from GNU R even though we use R's "show" method to print it
         assertEval(Ignored.OutputFormatting, "{ setGeneric(\"gen\", function(object) standardGeneric(\"gen\")); gen }");
         assertEval(Ignored.OutputFormatting, "{ gen<-function(object) 0; setGeneric(\"gen\"); gen }");
+
+        assertEval("{ gen<-function(object) 0; setGeneric(\"gen\"); setClass(\"foo\", representation(d=\"numeric\")); setMethod(\"gen\", signature(object=\"foo\"), function(object) object@d); gen(new(\"foo\", d=42)) }");
     }
 }

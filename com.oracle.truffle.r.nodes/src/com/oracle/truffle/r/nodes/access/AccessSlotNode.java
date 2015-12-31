@@ -98,8 +98,9 @@ public abstract class AccessSlotNode extends RNode {
 
     @Specialization(contains = "getSlotS4Cached", guards = "object.isS4()")
     protected Object getSlotS4(RAttributable object, String name) {
-        Object value = object.getAttr(attrProfiles, name.intern());
-        return getSlotS4Internal(object, name, value);
+        String internedName = name.intern();
+        Object value = object.getAttr(attrProfiles, internedName);
+        return getSlotS4Internal(object, internedName, value);
     }
 
     protected RFunction getDataPartFunction(REnvironment methodsNamespace) {
