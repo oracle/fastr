@@ -11,7 +11,7 @@
  * All rights reserved.
  */
 
-#include <rffiutils.h>
+#include <Rinternals.h>
 #include <stdlib.h>
 
 // FastR: selected functions from arithmetic.c:

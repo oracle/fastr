@@ -21,10 +21,36 @@
 # questions.
 #
 
-.PHONY: all clean
+# Builds libR
 
-all:
+ifneq (,$(wildcard $(TOPDIR)/platform.mk))
+include $(TOPDIR)/platform.mk
+else
+ifneq ($(MAKECMDGOALS),clean)
+$(error no platform.mk available)
+endif
+endif
+
+.PHONY: all clean objs
+
+C_LIBNAME := libR$(DYLIB_EXT)
+C_LIB := $(FASTR_LIB_DIR)/$(C_LIBNAME)
+
+ifeq ($(OS_NAME), Darwin)
+VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
+endif
+
+all: $(C_LIB)
+
+$(C_LIB): objs 
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(wildcard lib/*.o) $(VERSION_FLAGS)
+
+objs:
+	$(MAKE) -C src/common all
 	$(MAKE) -C src/jni all
 
 clean:
+	$(MAKE) -C src/common clean
 	$(MAKE) -C src/jni clean
+	rm -rf $(C_LIB)
+	

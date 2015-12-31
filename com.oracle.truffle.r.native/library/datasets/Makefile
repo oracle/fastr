@@ -21,4 +21,6 @@
 # questions.
 #
 
+NO_LIBRARY := 1
+
 include ../lib.mk

@@ -10,7 +10,7 @@
  * All rights reserved.
  */
 
-#include "rffiutils.h"
+#include <Rinternals.h>
 #include <stdlib.h>
 #include <R_ext/RS.h>
 

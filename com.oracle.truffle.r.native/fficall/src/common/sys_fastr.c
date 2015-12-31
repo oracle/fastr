@@ -10,10 +10,11 @@
  * All rights reserved.
  */
 
-#include <rffiutils.h>
+#include <Rinternals.h>
 
 // selected functions copied from sys-unix.c and sysutils.c:
 
+#include <stdlib.h>
 #include <sys/stat.h>
 
 static char newFileName[PATH_MAX];

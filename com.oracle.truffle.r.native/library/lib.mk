@@ -73,10 +73,12 @@ INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
 
 PKGDIR := $(FASTR_LIBRARY_DIR)/$(PKG)
 
-ifneq ($(C_SOURCES),)
-all: $(LIB_PKG_PRE) libcommon $(LIB_PKG) $(LIB_PKG_POST)
+SUPPRESS_WARNINGS := -Wno-int-conversion -Wno-implicit-function-declaration
+
+ifeq ($(NO_LIBRARY),)
+all: $(LIB_PKG_PRE) libcommon $(LIB_PKG) $(LIB_PKG_POST) 
 else
-all: $(LIB_PKG_PRE) libcommon $(LIB_PKG_POST) 
+all: $(LIB_PKG_PRE) libcommon $(LIB_PKG_POST)
 endif
 
 libcommon: $(PKGDIR)

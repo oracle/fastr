@@ -21,4 +21,24 @@
 # questions.
 #
 
+OBJ = lib
+
+GNUR_INCLUDES := -I$(TOPDIR)/fficall/src/include
+GRAPHICS_INCLUDES := -I$(GNUR_HOME)/src/library/graphics
+
+GNUR_C_SOURCES := base.c graphics.c init.c par.c plot.c plot3d.c stem.c
+                
+GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_C_SOURCES:.c=.o))
+
 include ../lib.mk
+
+include $(TOPDIR)/fficall/src/include/gnurheaders.mk
+
+#CFLAGS := $(CFLAGS) -H
+
+# plot.c needs to include the GNUR internal Print.h
+$(OBJ)/plot.o: $(GNUR_SRC)/plot.c
+	$(CC) $(CFLAGS) $(GNUR_INCLUDES) $(INCLUDES) $(GNUR_HEADER_DEFS) $(GRAPHICS_INCLUDES) $(SUPPRESS_WARNINGS) -c $< -o $@
+
+$(OBJ)/%.o: $(GNUR_SRC)/%.c
+	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_INCLUDES) $(GNUR_HEADER_DEFS) $(GRAPHICS_INCLUDES) $(SUPPRESS_WARNINGS) -c $< -o $@

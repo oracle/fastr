@@ -16,7 +16,8 @@
 #ifndef DEFN_H_
 #define DEFN_H_
 
-#include <jni.h>
+#define HAVE_ERRNO_H 1
+
 #include <stdlib.h>
 #include <Rinternals.h>
 
@@ -49,12 +50,19 @@ extern SEXP R_DevicesSymbol;
 extern Rboolean R_Interactive;
 extern Rboolean R_Visible;
 int	R_ReadConsole(const char *, unsigned char *, int, int);
+extern const char *R_Home;
+extern const char *R_TempDir;
 
 //#define HAVE_MBSTATE_T 1 // actually from config.h
 
 extern Rboolean utf8locale;
 extern Rboolean mbcslocale;
 extern Rboolean latin1locale;
+
+#define INI_as(v)
+extern char OutDec	INI_as('.');
+extern Rboolean known_to_be_latin1 INI_as(FALSE);
+extern Rboolean known_to_be_utf8 INI_as(FALSE);
 
 extern int R_dec_min_exponent;
 extern unsigned int max_contour_segments;
@@ -63,5 +71,21 @@ typedef SEXP (*CCODE)(SEXP, SEXP, SEXP, SEXP);
 
 CCODE (PRIMFUN)(SEXP x);
 
+#define Unix
+#ifdef Unix
+# define OSTYPE      "unix"
+# define FILESEP     "/"
+#endif /* Unix */
+
+#ifdef Win32
+# define OSTYPE      "windows"
+# define FILESEP     "/"
+#endif /* Win32 */
+
+#include <wchar.h>
+
+typedef unsigned short ucs2_t;
+
+#define streql(s, t)	(!strcmp((s), (t)))
 
 #endif /* DEFN_H_ */

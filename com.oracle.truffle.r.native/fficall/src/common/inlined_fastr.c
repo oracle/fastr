@@ -11,7 +11,7 @@
  * All rights reserved.
  */
 
-#include <rffiutils.h>
+#include <Rinternals.h>
 
 #define INLINE_FUN
 

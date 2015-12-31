@@ -76,7 +76,6 @@
 #include <config.h>
 #endif
 
-#include <rffiutils.h>
 #include <Defn.h>
 #include <Print.h>
 #include <R_ext/RS.h>

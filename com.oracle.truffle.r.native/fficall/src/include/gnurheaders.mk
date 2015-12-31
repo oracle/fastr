@@ -21,25 +21,12 @@
 # questions.
 #
 
-# This defines the GNUR files that are compiled directly, local overrides, plus -D defines that allow the
-# header files that redirect to GnuR versions to be location/version independent. It is included
-# by the actual implementation Makefile, e.g.in ../jni
-
-GNUR_APPL_C_FILES = pretty.c interv.c
-GNUR_APPL_SRC = $(GNUR_HOME)/src/appl
-# the Fortran sources are not recompiled
-GNUR_APPL_F_OBJECTS := $(wildcard $(GNUR_APPL_SRC)/d*.o)
-
-
-GNUR_MAIN_C_FILES = colors.c devices.c engine.c format.c graphics.c plot.c plot3d.c plotmath.c rlocale.c sort.c
-GNUR_MAIN_SRC = $(GNUR_HOME)/src/main
-
-GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_APPL_C_FILES:.c=.o) $(GNUR_MAIN_C_FILES:.c=.o))
-GNUR_F_OBJECTS := $(GNUR_APPL_F_OBJECTS)
-
 # headers that we refer to indirectly (allows version/location independence in source)
+GNUR_CONFIG_H := $(GNUR_HOME)/src/include/config.h
+GNUR_CONTOUR_COMMON_H := $(GNUR_HOME)/src/main/contour-common.h
 GNUR_GRAPHICS_H := $(GNUR_HOME)/src/include/Graphics.h
 GNUR_GRAPHICSBASE_H := $(GNUR_HOME)/src/include/GraphicsBase.h
+GNUR_FILEIO_H := $(GNUR_HOME)/src/include/Fileio.h
 GNUR_RGRAPHICS_H := $(GNUR_HOME)/src/include/Rgraphics.h
 GNUR_INTERNAL_H := $(GNUR_HOME)/src/include/Internal.h
 GNUR_NMATH_H := $(GNUR_HOME)/src/nmath/nmath.h
@@ -48,12 +35,6 @@ GNUR_RLOCALE_H := $(GNUR_HOME)/src/include/rlocale.h
 
 GNUR_HEADER_DEFS := -DGNUR_GRAPHICS_H=\"$(GNUR_GRAPHICS_H)\" -DGNUR_GRAPHICSBASE_H=\"$(GNUR_GRAPHICSBASE_H)\" \
     -DGNUR_RGRAPHICS_H=\"$(GNUR_RGRAPHICS_H)\" -DGNUR_INTERNAL_H=\"$(GNUR_INTERNAL_H)\" \
-	-DGNUR_NMATH_H=\"$(GNUR_NMATH_H)\" -DGNUR_PRINT_H=\"$(GNUR_PRINT_H)\" -DGNUR_RLOCALE_H=\"$(GNUR_RLOCALE_H)\"
-
-SUPPRESS_WARNINGS := -Wno-int-conversion -Wno-implicit-function-declaration
-
-$(OBJ)/%.o: $(GNUR_APPL_SRC)/%.c
-	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
-
-$(OBJ)/%.o: $(GNUR_MAIN_SRC)/%.c
-	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
+	-DGNUR_NMATH_H=\"$(GNUR_NMATH_H)\" -DGNUR_PRINT_H=\"$(GNUR_PRINT_H)\" -DGNUR_RLOCALE_H=\"$(GNUR_RLOCALE_H)\" \
+	-DGNUR_FILEIO_H=\"$(GNUR_FILEIO_H)\" -DGNUR_CONFIG_H=\"$(GNUR_CONFIG_H)\" \
+	-DGNUR_CONTOUR_COMMON_H=\"$(GNUR_CONTOUR_COMMON_H)\"
