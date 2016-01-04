@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -493,7 +493,7 @@ expr_subset [ASTNode i] returns [ASTNode v]
     | (t=AT n_ name=id                        { $v = FieldAccess.create(sourceSection("expr_subset/AT", $t, name), FieldOperator.AT, i, name.getText()); })
     | (t=LBRAKET subset=args y=RBRAKET        { $v = Call.create(sourceSection("expr_subset/LBRAKET", $t, $y), CallOperator.SUBSET, i, subset); })
     | (t=LBB subscript=args RBRAKET y=RBRAKET { $v = Call.create(sourceSection("expr_subset/LBB", $t, $y), CallOperator.SUBSCRIPT, i, subscript); })
-    // Must use RBRAKET twice instead of RBB beacause this is possible: a[b[1]]
+    // Must use RBRAKET twice instead of RBB because this is possible: a[b[1]]
     | (t=LPAR a=args y=RPAR                   { $v = Call.create(sourceSection("expr_subset/LPAR", $t, $y), i, a); })
     //| { $v = i; }
     ;

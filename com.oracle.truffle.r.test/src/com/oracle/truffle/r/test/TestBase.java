@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -56,6 +56,7 @@ public class TestBase {
         ParserErrorFormatting("tests that fail because of the formatting of parser error messages"),
         WrongCaller("tests that fail because the caller source is wrong in an error or warning"),
         ParserError("tests that fail because of bugs in the parser"),
+        ImplementationError("tests that fail because of bugs in other parts of the runtime"),
         SideEffects("tests that are ignored because they would interfere with other tests"),
         MissingWarning("tests that fail because of missing warnings"),
         MissingBuiltin("tests that fail because of missing builtins"),
