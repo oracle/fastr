@@ -162,13 +162,13 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     @Override
     public void deparseImpl(RDeparse.State state) {
         state.startNodeDeparse(this);
-        state.append(RDeparse.quotify(identifier.toString(), state));
+        state.append(RDeparse.quotify(identifierAsString, state));
         state.endNodeDeparse(this);
     }
 
     @Override
     public void serializeImpl(RSerialize.State state) {
-        state.setCarAsSymbol(identifier.toString());
+        state.setCarAsSymbol(identifierAsString);
     }
 
     public int getRlengthImpl() {
@@ -177,14 +177,13 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     @Override
     public Object getRelementImpl(int index) {
-        String id = identifier.toString();
-        return RDataFactory.createSymbol(id);
+        return RDataFactory.createSymbol(identifierAsString);
     }
 
     @Override
     public boolean getRequalsImpl(RSyntaxNode other) {
         if (other instanceof ReadVariableNode) {
-            return identifier.toString().equals(((ReadVariableNode) other).identifier);
+            return identifierAsString.equals(((ReadVariableNode) other).identifier);
         } else {
             return false;
         }
@@ -197,7 +196,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        RSyntaxNode result = RASTUtils.substituteName(identifier.toString(), env);
+        RSyntaxNode result = RASTUtils.substituteName(identifierAsString, env);
         if (result == null) {
             result = NodeUtil.cloneNode(this);
         }

@@ -513,8 +513,8 @@ simple_expr returns [ASTNode v]
     | cstr=conststring                          { $v = cstr; }
     | pkg=id nsg=(NS_GET|NS_GET_INT) n_ comp=id {
         List<ArgNode> args = new ArrayList<>();
-        ASTNode pkgNode = Constant.createStringConstant(sourceSection("simple_expr/NSG/pkg", pkg), pkg.getText());
-        ASTNode compNode = Constant.createStringConstant(sourceSection("simple_expr/NSG/comp", comp), comp.getText());
+        ASTNode pkgNode = AccessVariable.create(sourceSection("simple_expr/NSG/pkg", pkg), pkg.getText());
+        ASTNode compNode = AccessVariable.create(sourceSection("simple_expr/NSG/comp", comp), comp.getText());
         args.add(ArgNode.create(pkgNode.getSource(), "pkg", pkgNode));
         args.add(ArgNode.create(compNode.getSource(), "name", compNode));
         $v = Call.create(sourceSection("simple_expr/NSG", pkg, comp), nsg.getText(), args);
