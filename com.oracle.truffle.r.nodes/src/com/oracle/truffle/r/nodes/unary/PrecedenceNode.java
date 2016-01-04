@@ -156,6 +156,11 @@ public abstract class PrecedenceNode extends RBaseNode {
         return LIST_PRECEDENCE;
     }
 
+    @Specialization(guards = "recursive != LOGICAL_TRUE")
+    protected int doPairList(RPairList val, byte recursive) {
+        return LIST_PRECEDENCE;
+    }
+
     @Specialization
     protected int doDataFrame(RDataFrame val, byte recursive) {
         return LIST_PRECEDENCE;
