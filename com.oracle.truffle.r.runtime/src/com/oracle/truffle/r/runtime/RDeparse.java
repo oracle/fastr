@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -787,7 +787,15 @@ public class RDeparse {
                                 break;
 
                             case SUBSET: {
-                                deparse2buff(state, pl.car());
+                                Object left = pl.car();
+                                boolean parens = needsParens(fop, left, true);
+                                if (parens) {
+                                    state.append('(');
+                                }
+                                deparse2buff(state, left);
+                                if (parens) {
+                                    state.append(')');
+                                }
                                 state.append(op);
                                 args2buff(state, pl.cdr(), false, false);
                                 if (op.equals("[")) {
