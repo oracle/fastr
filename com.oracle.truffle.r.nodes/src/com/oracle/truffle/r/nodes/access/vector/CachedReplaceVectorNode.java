@@ -555,19 +555,21 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             }
 
             int resultIndex = 0;
-            for (int i = 0; i < vectorLength; i++) {
-                Object element = vector.getDataAtAsObject(i);
-                if (element != DELETE_MARKER) {
-                    data[resultIndex] = element;
-                    if (hasNames) {
-                        newNames[resultIndex] = names.getDataAt(i);
-                    }
-                    resultIndex++;
-                    if (isPreviousResultSpecialized() && resultIndex > resultLength) {
-                        // got too many elements
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        previousResultLength = PREVIOUS_RESULT_GENERIC;
-                        return deleteElements(vector, vectorLength);
+            if (resultLength > 0) {
+                for (int i = 0; i < vectorLength; i++) {
+                    Object element = vector.getDataAtAsObject(i);
+                    if (element != DELETE_MARKER) {
+                        data[resultIndex] = element;
+                        if (hasNames) {
+                            newNames[resultIndex] = names.getDataAt(i);
+                        }
+                        resultIndex++;
+                        if (isPreviousResultSpecialized() && resultIndex > resultLength) {
+                            // got too many elements
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            previousResultLength = PREVIOUS_RESULT_GENERIC;
+                            return deleteElements(vector, vectorLength);
+                        }
                     }
                 }
             }
