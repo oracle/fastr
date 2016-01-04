@@ -289,7 +289,7 @@ final class REngine implements Engine, Engine.Timings {
         } catch (RecognitionException e) {
             String line = e.line <= source.getLineCount() ? source.getCode(e.line) : "";
             String substring = line.substring(0, Math.min(line.length(), e.charPositionInLine + 1));
-            String token = e.token == null ? substring.substring(substring.length() - 1) : e.token.getText();
+            String token = e.token == null ? (substring.length() == 0 ? "" : substring.substring(substring.length() - 1)) : e.token.getText();
             if (e.token != null && e.token.getType() == Token.EOF && (e instanceof NoViableAltException || e instanceof MismatchedTokenException)) {
                 // the parser got stuck at the eof, request another line
                 throw new IncompleteSourceException(e, source, token, substring, e.line);
