@@ -64,7 +64,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
      * Profile if any metadata was applied at any point in time. This is useful extract primitive
      * values from the result in case no metadata was ever applied.
      */
-    private final BranchProfile metadataApplied = BranchProfile.create();
+    private final AlwaysOnBranchProfile metadataApplied = AlwaysOnBranchProfile.create();
 
     public CachedExtractVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, RTypedValue exact, RTypedValue dropDimensions, boolean recursive) {
         super(mode, vector, positions, recursive);

@@ -32,8 +32,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.nodes.profile.IntValueProfile;
-import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
+import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -209,7 +208,7 @@ abstract class WriteIndexedVectorNode extends Node {
     protected int doLogicalPosition(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension, //
                     Object[] positions, RAbstractLogicalVector position, int positionOffset, int positionLength, //
                     RTypedValue right, Object rightStore, int rightBase, int rightLength, boolean parentNA, //
-                    @Cached("create()") BranchProfile wasTrue, @Cached("create()") BranchProfile outOfBounds, //
+                    @Cached("create()") BranchProfile wasTrue, @Cached("create()") AlwaysOnBranchProfile outOfBounds, //
                     @Cached("createCountingProfile()") LoopConditionProfile profile) {
         positionNACheck.enable(!skipNA && !position.isComplete());
 
