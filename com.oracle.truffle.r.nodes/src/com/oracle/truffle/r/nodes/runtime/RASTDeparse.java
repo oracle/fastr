@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -15,6 +15,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.binary.ColonNode;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
@@ -72,6 +73,8 @@ public class RASTDeparse {
         if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
             Object fname = RASTUtils.findFunctionName(node);
             return isInfixOperator(fname);
+        } else if (node instanceof ColonNode) {
+            return RDeparse.getFunc(":");
         } else {
             return null;
         }
@@ -91,7 +94,7 @@ public class RASTDeparse {
                 break;
 
             case BINARY:
-            case BINARY2:
+            case BINARY2: {
                 // TODO lbreak
                 boolean parens = needsParens(func.info, argValues[0], true);
                 if (parens) {
@@ -117,9 +120,16 @@ public class RASTDeparse {
                     state.append(')');
                 }
                 break;
-
-            case SUBSET:
+            }
+            case SUBSET: {
+                boolean parens = needsParens(func.info, argValues[0], true);
+                if (parens) {
+                    state.append('(');
+                }
                 argValues[0].deparseImpl(state);
+                if (parens) {
+                    state.append(')');
+                }
                 state.append(func.op == SQUARE ? "[" : "[[");
                 ArgumentsSignature signature = args.getSignature();
                 // similar to ArgumentsNode.deparse()
@@ -139,8 +149,8 @@ public class RASTDeparse {
                     }
                 }
                 state.append(func.op == SQUARE ? "]" : "]]");
-
                 break;
+            }
             case DOLLAR:
                 /*
                  * Experimentally one cannot assume that the call is well formed, i.e arguments may

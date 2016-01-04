@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -112,7 +112,7 @@ public class PrintFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RFunction printFunction(VirtualFrame frame, RFunction x, byte useSource, RArgsValuesAndNames extra) {
-            String s = (String) prettyPrinter.executeString(frame, x, null, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE);
+            String s = prettyPrinter.prettyPrintFunction(x, null, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useSource == RRuntime.LOGICAL_TRUE);
             if (s != null && !s.isEmpty()) {
                 printHelper(s);
             }
