@@ -93,7 +93,7 @@ public class TestRPackages extends TestBase {
                 }
             }
 
-            rpackagesLibs.toFile().mkdir();
+            rpackagesLibs.toFile().mkdirs();
             rpackagesDists = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native", "packages");
         }
 
