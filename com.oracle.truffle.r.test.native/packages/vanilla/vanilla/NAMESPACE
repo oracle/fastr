@@ -1,1 +1,2 @@
 export(vanilla)
+export(functionTest)

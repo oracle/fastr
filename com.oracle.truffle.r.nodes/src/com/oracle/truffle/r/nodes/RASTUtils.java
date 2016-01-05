@@ -30,6 +30,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.r.nodes.binary.ColonNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
@@ -225,6 +226,8 @@ public class RASTUtils {
             return ((RCallNode) node).getArguments();
         } else if (node instanceof GroupDispatchNode) {
             return ((GroupDispatchNode) node).getArguments();
+        } else if (node instanceof ColonNode) {
+            return ((ColonNode) node).getArguments();
         }
         throw RInternalError.shouldNotReachHere();
     }

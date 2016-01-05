@@ -92,9 +92,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         state.append(" in ");
         getRange().deparse(state);
         state.append(") ");
-        state.writeOpenCurlyNLIncIndent();
         getBody().deparse(state);
-        state.decIndentWriteCloseCurly();
         state.endNodeDeparse(this);
     }
 

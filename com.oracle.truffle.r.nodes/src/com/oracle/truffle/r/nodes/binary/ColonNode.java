@@ -27,6 +27,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.binary.ColonNodeGen.ColonCastNodeGen;
+import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
@@ -40,12 +41,16 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
 
     private final BranchProfile naCheckErrorProfile = BranchProfile.create();
 
-    public abstract RNode getLeft();
+    public abstract ColonCastNode getLeft();
 
-    public abstract RNode getRight();
+    public abstract ColonCastNode getRight();
+
+    public Arguments<RSyntaxNode> getArguments() {
+        return new Arguments<>(new RSyntaxNode[]{getLeft().getOperand().asRSyntaxNode(), getRight().getOperand().asRSyntaxNode()}, ArgumentsSignature.empty(2));
+    }
 
     @CreateCast({"left", "right"})
-    protected RNode createCast(RNode child) {
+    protected ColonCastNode createCast(RNode child) {
         ColonCastNode ccn = ColonCastNodeGen.create(child);
         ccn.assignSourceSection(child.asRSyntaxNode().getSourceSection());
         return ccn;
@@ -122,11 +127,7 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
 
     @Override
     public void deparseImpl(RDeparse.State state) {
-        state.startNodeDeparse(this);
-        getLeft().deparse(state);
-        state.append(':');
-        getRight().deparse(state);
-        state.endNodeDeparse(this);
+        RASTDeparse.deparseInfixOperator(state, this, RDeparse.getFunc(":"));
     }
 
     @Override
@@ -259,9 +260,7 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
 
         @Override
         public void deparseImpl(State state) {
-            state.startNodeDeparse(this);
-            getOperand().deparse(state);
-            state.endNodeDeparse(this);
+            throw RInternalError.shouldNotReachHere();
         }
 
         @Override

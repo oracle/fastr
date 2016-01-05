@@ -56,6 +56,8 @@ public class TestBase {
         ParserErrorFormatting("tests that fail because of the formatting of parser error messages"),
         WrongCaller("tests that fail because the caller source is wrong in an error or warning"),
         ParserError("tests that fail because of bugs in the parser"),
+        ImplementationError("tests that fail because of bugs in other parts of the runtime"),
+        ReferenceError("tests that fail because of faulty behavior in the reference implementation that we don't want to emulate"),
         SideEffects("tests that are ignored because they would interfere with other tests"),
         MissingWarning("tests that fail because of missing warnings"),
         MissingBuiltin("tests that fail because of missing builtins"),

@@ -221,6 +221,10 @@ public abstract class PrettyPrinterNode extends RNode {
     @TruffleBoundary
     @Specialization
     protected String prettyPrint(RFunction operand, Object listElementName, byte quote, byte right) {
+        return prettyPrintFunction(operand, listElementName, quote, right, true);
+    }
+
+    public String prettyPrintFunction(RFunction operand, Object listElementName, byte quote, byte right, boolean useSource) {
         String string;
         if (operand.isBuiltin()) {
             RBuiltinDescriptor rBuiltin = operand.getRBuiltin();
@@ -249,7 +253,7 @@ public abstract class PrettyPrinterNode extends RNode {
             string = sb.toString();
         } else {
             String source = ((RRootNode) operand.getTarget().getRootNode()).getSourceCode();
-            if (source == null) {
+            if (source == null || !useSource) {
                 source = RDeparse.deparseForPrint(operand);
             }
             REnvironment env = RArguments.getEnvironment(operand.getEnclosingFrame());

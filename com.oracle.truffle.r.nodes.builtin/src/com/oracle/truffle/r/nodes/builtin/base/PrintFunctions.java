@@ -112,7 +112,7 @@ public class PrintFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RFunction printFunction(VirtualFrame frame, RFunction x, byte useSource, RArgsValuesAndNames extra) {
-            String s = (String) prettyPrinter.executeString(frame, x, null, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE);
+            String s = prettyPrinter.prettyPrintFunction(x, null, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useSource == RRuntime.LOGICAL_TRUE);
             if (s != null && !s.isEmpty()) {
                 printHelper(s);
             }

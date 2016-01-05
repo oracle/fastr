@@ -104,14 +104,20 @@ public final class IfNode extends RNode implements RSyntaxNode, VisibilityContro
         state.append("if (");
         condition.deparse(state);
         state.append(") ");
-        state.writeOpenCurlyNLIncIndent();
-        thenPart.deparse(state);
-        state.decIndentWriteCloseCurly();
+        if (RASTUtils.unwrap(thenPart) instanceof BlockNode && ((BlockNode) RASTUtils.unwrap(thenPart)).getSequence().length > 1) {
+            thenPart.deparse(state);
+            if (elsePart != null) {
+                state.writeline();
+            }
+        } else {
+            state.writeline();
+            state.incIndent();
+            thenPart.deparse(state);
+            state.decIndent();
+        }
         if (elsePart != null) {
-            state.append(" else ");
-            state.writeOpenCurlyNLIncIndent();
+            state.append("else ");
             elsePart.deparse(state);
-            state.decIndentWriteCloseCurly();
         }
         state.endNodeDeparse(this);
     }

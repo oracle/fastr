@@ -787,7 +787,15 @@ public class RDeparse {
                                 break;
 
                             case SUBSET: {
-                                deparse2buff(state, pl.car());
+                                Object left = pl.car();
+                                boolean parens = needsParens(fop, left, true);
+                                if (parens) {
+                                    state.append('(');
+                                }
+                                deparse2buff(state, left);
+                                if (parens) {
+                                    state.append(')');
+                                }
                                 state.append(op);
                                 args2buff(state, pl.cdr(), false, false);
                                 if (op.equals("[")) {
