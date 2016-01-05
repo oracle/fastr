@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,27 +58,6 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
     public void setDataAt(Object store, int index, Object valueArg) {
         Object value = valueArg;
         assert store == data;
-        if (value instanceof RArgsValuesAndNames) {
-            /*
-             * This is the current mechanism used to indicate that the list name must be set when
-             * called from vector access code, which creates an intermediate list for RLanguage
-             * objects. This can happen multiple times on the same list.
-             */
-            String name = ((RArgsValuesAndNames) value).getSignature().getName(0);
-            assert name != null;
-            value = ((RArgsValuesAndNames) value).getArgument(0);
-            RStringVector namesVec = getInternalNames();
-            if (namesVec == null) {
-                String[] newNames = new String[getLength()];
-                Arrays.fill(newNames, "");
-                newNames[index] = name;
-                namesVec = RDataFactory.createStringVector(newNames, RDataFactory.COMPLETE_VECTOR);
-                setNames(namesVec);
-            } else {
-                String[] oldNames = namesVec.getDataWithoutCopying();
-                oldNames[index] = name;
-            }
-        }
         ((Object[]) store)[index] = value;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,9 +52,21 @@ abstract class PositionCheckNode extends Node {
         this.containerType = containerType;
         this.castNode = PositionCastNode.create(mode, replace);
         if (positionValue instanceof String || positionValue instanceof RAbstractStringVector) {
-            boolean useNAForNotFound = !replace && containerType == RType.List && mode.isSubscript();
+            boolean useNAForNotFound = !replace && isListLike(containerType) && mode.isSubscript();
             characterLookup = new PositionCharacterLookupNode(mode, numDimensions, dimensionIndex, useNAForNotFound, exact);
         }
+    }
+
+    protected static boolean isListLike(RType type) {
+        switch (type) {
+            case Language:
+            case DataFrame:
+            case Expression:
+            case PairList:
+            case List:
+                return true;
+        }
+        return false;
     }
 
     public boolean isIgnoreDimension() {
