@@ -37,10 +37,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -478,13 +475,14 @@ abstract class WriteIndexedVectorNode extends Node {
             Object rightValue;
             if (setListElementAsObject) {
                 rightValue = rightAccess;
-                if (rightValue instanceof RAbstractVector) {
-                    // TODO we should unbox instead of materialize here
-                    rightValue = ((RAbstractVector) rightValue).materialize();
+                // unbox scalar vectors
+                if (rightValue instanceof RScalarVector) {
+                    rightValue = ((RScalarVector) rightValue).getDataAtAsObject(rightStore, 0);
                 }
             } else {
                 rightValue = ((RAbstractContainer) rightAccess).getDataAtAsObject(rightStore, rightIndex);
             }
+
             leftAccess.setDataAt(leftStore, leftIndex, rightValue);
             valueNACheck.checkListElement(rightValue);
         }

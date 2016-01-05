@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 final class CachedReplaceVectorNode extends CachedVectorNode {
@@ -204,8 +205,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
 
         if (isList()) {
-            if (mode.isSubscript() && value instanceof RAbstractContainer) {
-                value = copyValueOnAssignment((RAbstractContainer) value);
+            if (mode.isSubscript()) {
+                value = copyValueOnAssignment(value);
             }
         } else if (value instanceof RAbstractVector) {
             value = ((RAbstractVector) value).castSafe(castType);
@@ -423,12 +424,22 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
 
         String positionString = tryCastSingleString(positionsCheckNode, positions);
-        if (positionString != null) {
-            env.setAttr(positionString.intern(), originalValues);
-            return originalValues;
+        if (positionString == null) {
+            errorBranch.enter();
+            throw RError.error(this, RError.Message.WRONG_ARGS_SUBSET_ENV);
         }
-        errorBranch.enter();
-        throw RError.error(this, RError.Message.WRONG_ARGS_SUBSET_ENV);
+
+        try {
+            Object value = originalValues;
+            if (value instanceof RScalarVector) {
+                value = ((RScalarVector) value).getDataAtAsObject(0);
+            }
+            env.put(positionString, value);
+        } catch (PutException ex) {
+            throw RError.error(this, ex);
+        }
+        return env;
+
     }
 
     private final ConditionProfile sharedConditionProfile = ConditionProfile.createBinaryProfile();
@@ -463,27 +474,30 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         return returnVector;
     }
 
-    private RAbstractContainer copyValueOnAssignment(RAbstractContainer value) {
-        RShareable val = value.materializeToShareable();
-        if (FastROptions.NewStateTransition.getBooleanValue()) {
-            if (rightIsShared.profile(val.isShared())) {
-                val = val.copy();
+    private RTypedValue copyValueOnAssignment(RTypedValue value) {
+        if (value instanceof RShareable && value instanceof RAbstractVector) {
+            RShareable val = (RShareable) value;
+            if (FastROptions.NewStateTransition.getBooleanValue()) {
+                if (rightIsShared.profile(val.isShared())) {
+                    val = val.copy();
+                } else {
+                    val.incRefCount();
+                }
             } else {
-                val.incRefCount();
+                if (rightIsShared.profile(val.isShared())) {
+                    val = val.copy();
+                } else if (!val.isTemporary()) {
+                    rightIsNonTemp.enter();
+                    val.makeShared();
+                } else {
+                    assert val.isTemporary();
+                    rightIsTemp.enter();
+                    val.markNonTemporary();
+                }
             }
-        } else {
-            if (rightIsShared.profile(val.isShared())) {
-                val = val.copy();
-            } else if (!val.isTemporary()) {
-                rightIsNonTemp.enter();
-                val.makeShared();
-            } else {
-                assert val.isTemporary();
-                rightIsTemp.enter();
-                val.markNonTemporary();
-            }
+            return (RTypedValue) val;
         }
-        return (RAbstractContainer) val;
+        return value;
     }
 
     // TODO (chumer) this is way to compilicated at the moment
