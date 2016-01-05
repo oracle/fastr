@@ -24,23 +24,22 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "shortRowNames", kind = INTERNAL, parameterNames = {"x", "type"})
 public abstract class ShortRowNames extends RBuiltinNode {
-    private final ConditionProfile nameConditionProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile typeConditionProfile = ConditionProfile.createBinaryProfile();
+
     private final BranchProfile naValueMet = BranchProfile.create();
-    private final BranchProfile intVectorMet = BranchProfile.create();
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    private final BranchProfile errorProfile = BranchProfile.create();
+    private final ValueProfile operandTypeProfile = ValueProfile.createClassProfile();
 
     public abstract Object executeObject(VirtualFrame frame, Object operand, Object type);
 
@@ -49,63 +48,66 @@ public abstract class ShortRowNames extends RBuiltinNode {
         casts.toInteger(1);
     }
 
-    @SuppressWarnings("unused")
+    private final IntValueProfile typeProfile = IntValueProfile.createIdentityProfile();
+
     @Specialization
-    protected RNull getNames(RNull operand, RAbstractIntVector type) {
+    protected Object getNames(Object originalOperand, RAbstractIntVector originalType) {
         controlVisibility();
-        return RNull.instance;
-    }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "invalidType(type)")
-    protected RNull getNamesInvalidType(RAbstractContainer operand, RAbstractIntVector type) {
-        controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "type");
-    }
+        if (originalType.getLength() == 0) {
+            errorProfile.enter();
+            throw typeError();
+        }
+        int type = typeProfile.profile(originalType.getDataAt(0));
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"!invalidType(type)", "!returnScalar(type)"})
-    protected Object getNamesNull(RAbstractContainer operand, RAbstractIntVector type) {
-        controlVisibility();
-        return operand.getRowNames(attrProfiles);
-    }
+        if (type < 0 || type > 2) {
+            errorProfile.enter();
+            throw typeError();
+        }
 
-    @Specialization(guards = {"!invalidType(type)", "returnScalar(type)"})
-    protected int getNames(RAbstractContainer operand, RAbstractIntVector type) {
-        controlVisibility();
-        int t = type.getDataAt(0);
-        Object rowNames = operand.getRowNames(attrProfiles);
-        if (nameConditionProfile.profile(rowNames == RNull.instance)) {
+        Object operand = operandTypeProfile.profile(originalOperand);
+        Object rowNames;
+        if (operand instanceof RAbstractContainer) {
+            rowNames = ((RAbstractContainer) operand).getRowNames(attrProfiles);
+        } else if (operand instanceof REnvironment) {
+            rowNames = ((REnvironment) operand).getAttr(attrProfiles, RRuntime.ROWNAMES_ATTR_KEY);
+        } else if (operand instanceof RNull) {
             return 0;
         } else {
-            int n = calculateN((RAbstractVector) rowNames);
-            if (typeConditionProfile.profile(t == 1)) {
-                return n;
-            } else {
-                return Math.abs(n);
+            errorProfile.enter();
+            throw typeError();
+        }
+
+        if (type >= 1) {
+            int n = calculateN(rowNames);
+            rowNames = type == 1 ? n : Math.abs(n);
+        }
+
+        return rowNames;
+    }
+
+    private int calculateN(Object rowNames) {
+        if (rowNames == null || rowNames instanceof RNull) {
+            return 0;
+        } else if (rowNames instanceof RAbstractIntVector) {
+            RAbstractIntVector intVector = ((RAbstractIntVector) rowNames);
+            if (intVector.getLength() == 2) {
+                if (RRuntime.isNA(intVector.getDataAt(0))) {
+                    naValueMet.enter();
+                    return intVector.getDataAt(1);
+                }
             }
+            return intVector.getLength();
+        } else if (rowNames instanceof RAbstractContainer) {
+            return ((RAbstractContainer) rowNames).getLength();
+        } else {
+            errorProfile.enter();
+            throw typeError();
         }
     }
 
-    private int calculateN(RAbstractVector rowNames) {
-        if (rowNames.getElementClass() == RInteger.class && rowNames.getLength() == 2) {
-            RAbstractIntVector rowNamesIntVector = (RAbstractIntVector) rowNames;
-            intVectorMet.enter();
-            if (RRuntime.isNA(rowNamesIntVector.getDataAt(0))) {
-                naValueMet.enter();
-                return rowNamesIntVector.getDataAt(1);
-            }
-        }
-        return rowNames.getLength();
-    }
-
-    protected boolean invalidType(RAbstractIntVector type) {
-        return type.getLength() == 0 || type.getDataAt(0) < 0 || type.getDataAt(0) > 2;
-    }
-
-    protected boolean returnScalar(RAbstractIntVector type) {
-        return type.getDataAt(0) >= 1;
+    private RError typeError() {
+        return RError.error(this, RError.Message.INVALID_ARGUMENT, "type");
     }
 
 }
