@@ -31,11 +31,12 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.vector.*;
+import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -332,24 +333,40 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", ""}, dispatch = INTERNAL_GENERIC)
     public abstract static class UpdateFieldBuiltin extends RBuiltinNode {
 
-        @Child private UpdateFieldNode updateNode;
-        private final BranchProfile errorProfile = BranchProfile.create();
+        private final BranchProfile coerceList = BranchProfile.create();
+        @Child private ReplaceVectorNode extract = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        @Child private CastListNode castList;
 
         @Specialization
-        protected Object accessField(VirtualFrame frame, Object container, Object field, Object value) {
-            if (field instanceof String) {
-                if (updateNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    updateNode = insert(UpdateFieldNodeGen.create(null, null, null));
-                }
-                return updateNode.executeUpdate(frame, container, value, (String) field);
-            } else {
-                errorProfile.enter();
-                // TODO: the error message is not quite correct for all types;
-                // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
-                throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
+        protected Object update(VirtualFrame frame, Object container, String field, Object value) {
+            Object updatedObject = container;
+            if (!(container instanceof RAbstractListVector)) {
+                coerceList.enter();
+                updatedObject = coerceList(container, updatedObject);
             }
+            return extract.apply(frame, updatedObject, new Object[]{field}, value);
         }
+
+        private Object coerceList(Object object, Object vector) {
+            Object updatedVector = vector;
+            if (object instanceof RAbstractVector) {
+                if (castList == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    castList = insert(CastListNodeGen.create(true, true, false));
+                }
+                RError.warning(this, RError.Message.COERCING_LHS_TO_LIST);
+                updatedVector = castList.executeList(vector);
+            }
+            return updatedVector;
+        }
+
+        @Fallback
+        protected Object fallbackError(@SuppressWarnings("unused") Object container, Object field, @SuppressWarnings("unused") Object value) {
+            // TODO: the error message is not quite correct for all types;
+            // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
+        }
+
     }
 
     @RBuiltin(name = ":", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"from", "to"})
