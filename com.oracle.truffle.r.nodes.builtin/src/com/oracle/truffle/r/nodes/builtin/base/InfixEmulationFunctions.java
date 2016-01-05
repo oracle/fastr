@@ -29,8 +29,8 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.profiles.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.vector.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -306,24 +306,27 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "$", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, dispatch = INTERNAL_GENERIC)
     public abstract static class AccessFieldBuiltin extends RBuiltinNode {
 
-        @Child private AccessFieldNode accessNode;
-        private final BranchProfile errorProfile = BranchProfile.create();
+        @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        private final BranchProfile invalidAtomicVector = BranchProfile.create();
+        private final BranchProfile error = BranchProfile.create();
 
         @Specialization
-        protected Object accessField(VirtualFrame frame, Object container, Object field) {
-            if (field instanceof String) {
-                if (accessNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    accessNode = insert(AccessFieldNodeGen.create(null, null));
+        protected Object access(VirtualFrame frame, Object container, String field) {
+            if (!(container instanceof RAbstractListVector)) {
+                invalidAtomicVector.enter();
+                if (container instanceof RAbstractVector) {
+                    error.enter();
+                    throw RError.error(this, RError.Message.DOLLAR_ATOMIC_VECTORS);
                 }
-                return accessNode.executeAccess(frame, container, (String) field);
-            } else {
-                errorProfile.enter();
-                // TODO: the error message is not quite correct for all types;
-                // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
-                throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
             }
+            return extract.applyAccessField(frame, container, field);
         }
+
+        @Fallback
+        protected Object fallbackError(@SuppressWarnings("unused") Object container, @SuppressWarnings("unused") Object field) {
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, RType.Language.getName());
+        }
+
     }
 
     @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", ""}, dispatch = INTERNAL_GENERIC)
