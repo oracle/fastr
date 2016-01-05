@@ -1,0 +1,3 @@
+/MAX_GRAPHICS_SYSTEMS/
+s/24/256/
+w R_ext/GraphicsEngine.h

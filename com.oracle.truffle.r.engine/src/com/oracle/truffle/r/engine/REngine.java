@@ -82,7 +82,6 @@ import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.ReturnException;
@@ -101,7 +100,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RShareable;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -109,7 +107,6 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import java.util.ArrayList;
 
 /**
  * The engine for the FastR implementation. Handles parsing and evaluation. There is one instance of
@@ -164,15 +161,7 @@ final class REngine implements Engine, Engine.Timings {
         MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame("base");
         REnvironment.baseInitialize(baseFrame, globalFrame);
         RBuiltinPackages.loadBase(baseFrame);
-        boolean isInitial = !RContext.isInitialContextInitialized();
-        // TODO support per-context graphics?
-        if (isInitial) {
-            RGraphics.initialize();
-        } else {
-            /* Have to remove grDevices/graphics from the default set.
-               The system profile
-            */
-        }
+        RGraphics.initialize();
         /*
          * eval the system/site/user profiles. Experimentally GnuR does not report warnings during
          * system profile evaluation, but does for the site/user profiles.
@@ -182,11 +171,6 @@ final class REngine implements Engine, Engine.Timings {
         } catch (ParseException e) {
             throw new RInternalError(e, "error while parsing system profile from %s", RProfile.systemProfile().getName());
         }
-
-        if (!isInitial) {
-            removeGraphicsPackages();
-        }
-
         checkAndRunStartupShutdownFunction(".OptRequireMethods");
 
         suppressWarnings = false;
@@ -213,35 +197,6 @@ final class REngine implements Engine, Engine.Timings {
         checkAndRunStartupShutdownFunction(".First");
         checkAndRunStartupShutdownFunction(".First.sys");
         RBuiltinPackages.loadDefaultPackageOverrides();
-    }
-
-    /**
-     * The system profile sets the defaultPackages option which is then
-     * used in .First.sys (invoked below) to 'require' the packages.
-     * Until we support graphics in multiple contexts, we have to
-     * remove grDevices and graphics.
-     */
-    private void removeGraphicsPackages() {
-        RStringVector dp = (RStringVector) context.stateROptions.getValue("defaultPackages");
-        ArrayList<String> newDpList = new ArrayList<>();
-        for (int i = 0; i < dp.getLength(); i++) {
-            String pkg = dp.getDataAt(i);
-            if (pkg.equals("grDevices") || pkg.equals("graphics")) {
-                continue;
-            }
-            newDpList.add(pkg);
-        }
-        if (newDpList.size() != dp.getLength()) {
-            String[] data = new String[newDpList.size()];
-            newDpList.toArray(data);
-            RStringVector newDp = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
-            try {
-                context.stateROptions.setValue("defaultPackages", newDp);
-            } catch (ROptions.OptionsException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
-        }
-
     }
 
     public void checkAndRunStartupShutdownFunction(String name, String... args) {

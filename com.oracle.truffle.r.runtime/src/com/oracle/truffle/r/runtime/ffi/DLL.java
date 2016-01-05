@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -278,7 +278,8 @@ public class DLL {
                 try {
                     RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(symbolInfo.address, symbolInfo.symbol, new Object[]{dllInfo});
                 } catch (ReturnException ex) {
-                    // An error call can, due to condition handling, throw this which we must propogate
+                    // An error call can, due to condition handling, throw this which we must
+// propogate
                     throw ex;
                 } catch (Throwable ex) {
                     if (RContext.isInitialContextInitialized()) {
