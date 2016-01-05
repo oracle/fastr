@@ -11,13 +11,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.library.grDevices.DevicesCCalls;
-import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.profiles.*;
+import com.oracle.truffle.r.library.grDevices.*;
+import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_Par;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_PlotXY;
 import com.oracle.truffle.r.library.grid.GridFunctionsFactory.InitGridNodeGen;
@@ -31,45 +31,23 @@ import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_methods
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_set_method_dispatchNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
-import com.oracle.truffle.r.library.stats.CompleteCases;
-import com.oracle.truffle.r.library.stats.Covcor;
+import com.oracle.truffle.r.library.stats.*;
 import com.oracle.truffle.r.library.stats.GammaFunctionsFactory.QgammaNodeGen;
-import com.oracle.truffle.r.library.stats.RnormNodeGen;
-import com.oracle.truffle.r.library.stats.RunifNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
-import com.oracle.truffle.r.library.tools.C_ParseRdNodeGen;
-import com.oracle.truffle.r.library.tools.DirChmodNodeGen;
-import com.oracle.truffle.r.library.tools.Rmd5NodeGen;
+import com.oracle.truffle.r.library.tools.*;
 import com.oracle.truffle.r.library.tools.ToolsTextFactory.CodeFilesAppendNodeGen;
 import com.oracle.truffle.r.library.tools.ToolsTextFactory.DoTabExpandNodeGen;
-import com.oracle.truffle.r.library.utils.CountFields;
-import com.oracle.truffle.r.library.utils.Crc64NodeGen;
-import com.oracle.truffle.r.library.utils.Download;
-import com.oracle.truffle.r.library.utils.MenuNodeGen;
-import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
-import com.oracle.truffle.r.library.utils.WriteTable;
-import com.oracle.truffle.r.nodes.access.AccessFieldNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
-import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.library.utils.*;
+import com.oracle.truffle.r.nodes.access.vector.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.objects.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExternalPtr;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * {@code .Call} {@code .Fortran}, {@code .External}, {@code .External2}, {@code External.graphics}
@@ -91,16 +69,6 @@ public class ForeignFunctions {
         }
         list = RDataFactory.createPairList(symbolName, list);
         return list;
-    }
-
-    @TruffleBoundary
-    protected static String getNameFromSymbolInfo(RList symbol) {
-        return RRuntime.asString(symbol.getDataAt(AccessFieldNode.getElementIndexByName(symbol.getNames(), "name")));
-    }
-
-    @TruffleBoundary
-    protected static long getAddressFromSymbolInfo(RList symbol) {
-        return ((RExternalPtr) symbol.getDataAt(AccessFieldNode.getElementIndexByName(symbol.getNames(), "address"))).getAddr();
     }
 
     /**
@@ -163,6 +131,26 @@ public class ForeignFunctions {
             }
             throw RError.nyi(this, getRBuiltin().name() + " specialization failure: " + (name == null ? "<unknown>" : name));
         }
+
+        @Child private ExtractVectorNode nameExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        @Child private ExtractVectorNode addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+
+        protected String getNameFromSymbolInfo(VirtualFrame frame, RList symbol) {
+            if (nameExtract == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                nameExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+            }
+            return RRuntime.asString(nameExtract.applyAccessField(frame, symbol, "name"));
+        }
+
+        protected long getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
+            if (addressExtract == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+            }
+            return ((RExternalPtr) addressExtract.applyAccessField(frame, symbol, "address")).getAddr();
+        }
+
     }
 
     /**
@@ -199,9 +187,9 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "lookupBuiltin(symbol) == null")
-        protected RList c(RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") RMissing rPackage, @SuppressWarnings("unused") RMissing encoding) {
+        protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") RMissing rPackage, @SuppressWarnings("unused") RMissing encoding) {
             controlVisibility();
-            return DotC.dispatch(this, getAddressFromSymbolInfo(symbol), getNameFromSymbolInfo(symbol), naok, dup, args.getArguments());
+            return DotC.dispatch(this, getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), naok, dup, args.getArguments());
         }
 
         @Specialization
@@ -441,9 +429,9 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             controlVisibility();
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(symbol), getNameFromSymbolInfo(symbol), args.getArguments());
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), args.getArguments());
         }
 
         @Specialization
@@ -529,10 +517,10 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            String name = getNameFromSymbolInfo(symbol);
+        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+            String name = getNameFromSymbolInfo(frame, symbol);
             Object list = encodeArgumentPairList(args, name);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(symbol), name, new Object[]{list});
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), name, new Object[]{list});
         }
 
         @Specialization
@@ -598,11 +586,11 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            String name = getNameFromSymbolInfo(symbol);
+        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+            String name = getNameFromSymbolInfo(frame, symbol);
             Object list = encodeArgumentPairList(args, name);
             // TODO: provide proper values for the CALL, OP and RHO parameters
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(symbol), name, new Object[]{CALL, OP, list, RHO});
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), name, new Object[]{CALL, OP, list, RHO});
         }
 
         @Specialization
@@ -657,10 +645,10 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            String name = getNameFromSymbolInfo(symbol);
+        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+            String name = getNameFromSymbolInfo(frame, symbol);
             Object list = encodeArgumentPairList(args, name);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(symbol), name, new Object[]{list});
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), name, new Object[]{list});
         }
 
         @Specialization
@@ -714,8 +702,8 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(symbol), getNameFromSymbolInfo(symbol), args.getArguments());
+        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), args.getArguments());
         }
 
         @Specialization

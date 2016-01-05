@@ -73,11 +73,6 @@ public interface RRuntimeASTAccess {
     void setNames(RLanguage rl, RStringVector names);
 
     /**
-     * Field update for a language (call) object.
-     */
-    RLanguage updateField(RLanguage rl, String field, Object value);
-
-    /**
      * Deparse {@code rl}.
      */
     void deparse(RDeparse.State state, RLanguage rl);

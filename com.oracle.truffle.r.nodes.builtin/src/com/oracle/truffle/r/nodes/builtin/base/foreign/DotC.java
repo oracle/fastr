@@ -11,19 +11,20 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
-import java.util.Arrays;
+import java.util.*;
 
-import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.access.AccessFieldNode;
+import com.oracle.truffle.r.nodes.access.vector.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
-import com.oracle.truffle.r.runtime.ffi.DLL.*;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 
 /**
  * {@code .C} functions.
@@ -45,6 +46,9 @@ public abstract class DotC extends RBuiltinNode {
     private static final int VECTOR_LOGICAL = 12;
     @SuppressWarnings("unused") private static final int VECTOR_STRING = 12;
 
+    @Child private ExtractVectorNode nameExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+    @Child private ExtractVectorNode addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, RMissing.instance, RMissing.instance};
@@ -52,10 +56,10 @@ public abstract class DotC extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RList c(RList symbol, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+    protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
         controlVisibility();
-        long address = ((RExternalPtr) symbol.getDataAt(AccessFieldNode.getElementIndexByName(symbol.getNames(), "address"))).getAddr();
-        String name = RRuntime.asString(symbol.getDataAt(AccessFieldNode.getElementIndexByName(symbol.getNames(), "name")));
+        long address = getAddressFromSymbolInfo(frame, symbol);
+        String name = getNameFromSymbolInfo(frame, symbol);
         return dispatch(this, address, name, naok, dup, args.getArguments());
     }
 
@@ -70,6 +74,22 @@ public abstract class DotC extends RBuiltinNode {
             throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
         }
         return dispatch(this, symbolInfo.address, symbolInfo.symbol, naok, dup, args.getArguments());
+    }
+
+    protected String getNameFromSymbolInfo(VirtualFrame frame, RList symbol) {
+        if (nameExtract == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            nameExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        }
+        return RRuntime.asString(nameExtract.applyAccessField(frame, symbol, "name"));
+    }
+
+    protected long getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
+        if (addressExtract == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        }
+        return ((RExternalPtr) addressExtract.applyAccessField(frame, symbol, "address")).getAddr();
     }
 
     private static int[] checkNAs(RBuiltinNode node, int argIndex, int[] data) {

@@ -208,35 +208,6 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         }
     }
 
-    @TruffleBoundary
-    public RLanguage updateField(RLanguage rl, String field, Object value) {
-        /* We keep this here owing to code similarity with getNames */
-        RNode node = (RNode) rl.getRep();
-        if (node instanceof RCallNode) {
-            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
-            ArgumentsSignature sig = args.getSignature();
-            RSyntaxNode[] argNodes = args.getArguments();
-            boolean match = false;
-            for (int i = 0; i < sig.getLength(); i++) {
-                String name = sig.getName(i);
-                if (field.equals(name)) {
-                    RNode valueNode = RASTUtils.createNodeForValue(value);
-                    argNodes[i] = valueNode.asRSyntaxNode();
-                    match = true;
-                    break;
-                }
-            }
-            if (!match) {
-                throw RError.nyi(null, "assignment to non-existent field");
-            }
-            return RDataFactory.createLanguage(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), args.getSignature(), args.getArguments()));
-        } else if (node instanceof GroupDispatchNode) {
-            throw RError.nyi(null, "group dispatch field update");
-        } else {
-            throw RInternalError.shouldNotReachHere();
-        }
-    }
-
     @Override
     public void deparse(State state, RLanguage rl) {
         RASTDeparse.deparse(state, rl);
