@@ -52,9 +52,21 @@ abstract class PositionCheckNode extends Node {
         this.containerType = containerType;
         this.castNode = PositionCastNode.create(mode, replace);
         if (positionValue instanceof String || positionValue instanceof RAbstractStringVector) {
-            boolean useNAForNotFound = !replace && containerType == RType.List && mode.isSubscript();
+            boolean useNAForNotFound = !replace && isListLike(containerType) && mode.isSubscript();
             characterLookup = new PositionCharacterLookupNode(mode, numDimensions, dimensionIndex, useNAForNotFound, exact);
         }
+    }
+
+    protected static boolean isListLike(RType type) {
+        switch (type) {
+            case Language:
+            case DataFrame:
+            case Expression:
+            case PairList:
+            case List:
+                return true;
+        }
+        return false;
     }
 
     public boolean isIgnoreDimension() {

@@ -170,10 +170,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
             }
             throw RError.error(this, message);
         } else {
-            if (containerType == RType.List && numDimensions == 1) {
-                if (recursive) {
-                    throwBoundsError();
-                }
+            if (numDimensions == 1 && isListLike(containerType) && !recursive) {
                 // lists pass on the NA value
             } else {
                 error.enter();
