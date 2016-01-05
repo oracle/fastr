@@ -131,12 +131,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary
- * 
+ *
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
- * 
+ *
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -149,11 +149,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * non varargs, max depth:
  * |
  * D-D-D-U
- * 
+ *
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- * 
+ *
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -161,7 +161,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- * 
+ *
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -173,7 +173,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    DGV
- * 
+ *
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -556,16 +556,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             }
         } else {
             Arguments<RSyntaxNode> args = getArguments();
-            RSyntaxNode argNode = args.getArguments()[index - 1];
-            /*
-             * If this argument is of form x=y, must pass both back. We use an RArgsValuesAndNames
-             * for convenience, which is interpreted by our caller.
-             */
-            if (argNode instanceof ReadVariableNode && signature.getName(index - 1) != null) {
-                return new RArgsValuesAndNames(new Object[]{RASTUtils.createRSymbol(argNode.asRNode())}, ArgumentsSignature.get(signature.getName(index - 1)));
-            } else {
-                return RASTUtils.createLanguageElement(args, index - 1);
-            }
+            return RASTUtils.createLanguageElement(args, index - 1);
         }
     }
 

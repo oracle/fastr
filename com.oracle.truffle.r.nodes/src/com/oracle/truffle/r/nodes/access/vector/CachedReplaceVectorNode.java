@@ -265,6 +265,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 vector.setComplete(false);
             }
         }
+
         RNode.reportWork(this, replacementLength);
 
         if (isDeleteElements()) {
@@ -275,7 +276,13 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             // depth must be == 0 to avoid recursive position name updates
             updateVectorWithPositionNames(vector, positions);
         }
-        return vector;
+
+        switch (vectorType) {
+            case Language:
+                return RContext.getRRuntimeASTAccess().fromList((RList) vector);
+            default:
+                return vector;
+        }
     }
 
     private RType verifyCastType(RType compatibleType) {

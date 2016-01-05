@@ -61,6 +61,10 @@ public abstract class ExtractVectorNode extends Node {
         return mode;
     }
 
+    public final Object applyAccessField(VirtualFrame frame, Object vector, String singlePosition) {
+        return apply(frame, vector, new Object[]{singlePosition}, RLogical.valueOf(false), RMissing.instance);
+    }
+
     public final Object apply(VirtualFrame frame, Object vector, Object[] positions, Object exact, Object dropDimensions) {
         return execute(frame, boxVector.execute(vector), positions, boxExact.execute(exact), boxDropdimensions.execute(dropDimensions));
     }
