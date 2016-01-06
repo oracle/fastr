@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,6 +48,7 @@ public class TestS4 extends TestBase {
         assertEval("{ x<-function() 42; attr(x, \"foo\")<-7; y<-asS4(x); y@foo }");
         assertEval(Output.ContainsError, "{ x<-NULL; `@`(x, foo) }");
         assertEval(Output.ContainsError, "{ x<-NULL; x@foo }");
+        assertEval("{ x<-paste0(\".\", \"Data\"); y<-42; slot(y, x) }");
     }
 
     @Test
