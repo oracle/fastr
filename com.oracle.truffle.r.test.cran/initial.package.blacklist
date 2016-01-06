@@ -497,7 +497,7 @@ Package: R.methodsS3
 Reason: replacement
 
 Package: Rglpk
-Reason: Native
+Reason: native
 
 Package: overlap
 Reason: native
@@ -545,7 +545,8 @@ Package: rgl
 Reason: graphics
 
 Package: actuar
-Reason: serialize
+Reason: native
+Analysis: libRlapack and libRblas not absolute in .so (otool -L) so loading fails
 
 Package: spam
 Reason: serialize
