@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -120,6 +120,11 @@ public abstract class CastListNode extends CastBaseNode {
     @Specialization
     protected RList doEnvironment(REnvironment env) {
         return RDataFactory.createList(new Object[]{env});
+    }
+
+    @Specialization
+    protected RList doS4Object(RS4Object o) {
+        return RDataFactory.createList(new Object[]{o});
     }
 
     public static CastListNode create() {
