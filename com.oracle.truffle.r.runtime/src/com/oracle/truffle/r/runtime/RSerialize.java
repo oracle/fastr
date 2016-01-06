@@ -172,7 +172,6 @@ public class RSerialize {
 
     private abstract static class Common {
 
-        private static final Object ENV_PLACEHOLDER = new Object();
         protected Object[] refTable = new Object[128];
         protected int refTableIndex;
         protected final CallHook hook;
@@ -194,20 +193,6 @@ public class RSerialize {
             }
             refTable[refTableIndex++] = item;
             return item;
-        }
-
-        /**
-         * Create a slot for an ENVSXP value and return the index for filling in later.
-         */
-        protected int addEnvReadRef() {
-            int currentRefTableIndex = refTableIndex;
-            addReadRef(ENV_PLACEHOLDER);
-            return currentRefTableIndex;
-        }
-
-        protected void updateEnvReadRef(int index, Object item) {
-            assert refTable[index] == ENV_PLACEHOLDER;
-            refTable[index] = item;
         }
 
         protected Object getReadRef(int index) {
@@ -403,24 +388,14 @@ public class RSerialize {
                 }
 
                 case ENVSXP: {
-                    /*
-                     * Behavior varies depending on whether hashtab is present, since this is
-                     * optional in GnuR. Unfortunately, we MUST do an addReadRef before we know what
-                     * kind of environment to create, otherwise the ref indexes can get out of sync.
-                     */
                     int locked = stream.readInt();
                     /* MUST register before filling in (see serialize.c) */
-                    int envRefTableIndex = addEnvReadRef();
+                    final REnvironment.NewEnv env = RDataFactory.createNewEnv(null);
+                    addReadRef(env);
 
                     Object enclos = readItem();
                     REnvironment enclosing = enclos == RNull.instance ? REnvironment.baseEnv() : (REnvironment) enclos;
-                    final REnvironment.NewEnv env = RDataFactory.createNewEnv(null);
                     RArguments.initializeEnclosingFrame(env.getFrame(), enclosing.getFrame());
-                    /*
-                     * We update the env reference as soon as possible, in case the contents of an
-                     * environment contain a reference to the env itself.
-                     */
-                    updateEnvReadRef(envRefTableIndex, env);
                     Object frame = readItem();
                     boolean hashed = frame == RNull.instance;
                     Object hashtab = readItem();
