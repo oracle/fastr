@@ -44,24 +44,17 @@ public abstract class DuplicateNode extends RBaseNode {
 
     // TODO: should we distinguish scalars to avoid conversion and copy?
     @Specialization
-    protected Object duplicate(RAbstractVector vector) {
+    protected RAbstractVector duplicate(RAbstractVector vector) {
         return deep ? vector.deepCopy() : vector.copy();
     }
 
     @Specialization
-    protected Object duplicate(RS4Object object) {
-        RS4Object newObject = RDataFactory.createS4Object();
-        if (object.getAttributes() != null) {
-            RAttributes newAttributes = newObject.initAttributes();
-            for (RAttribute attr : object.getAttributes()) {
-                newAttributes.put(attr.getName(), attr.getValue());
-            }
-        }
-        return newObject;
+    protected RS4Object duplicate(RS4Object object) {
+        return object.copy();
     }
 
     @Specialization
-    protected Object duplicate(RFunction f) {
+    protected RFunction duplicate(RFunction f) {
         return f.copy();
     }
 

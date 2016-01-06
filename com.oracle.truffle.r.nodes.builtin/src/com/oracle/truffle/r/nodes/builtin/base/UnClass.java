@@ -108,15 +108,17 @@ public abstract class UnClass extends RBuiltinNode {
         controlVisibility();
         if (arg.getClassAttr(attrProfiles) != null) {
             objectProfile.enter();
-            // TODO: should we make S4 objects shareable?
-            RS4Object resultS4 = RDataFactory.createS4Object();
-            if (arg.getAttributes() != null) {
-                RAttributes newAttributes = resultS4.initAttributes();
-                for (RAttribute attr : arg.getAttributes()) {
-                    newAttributes.put(attr.getName(), attr.getValue());
+            RS4Object resultS4 = arg;
+            if (!resultS4.isTemporary()) {
+                resultS4 = resultS4.copy();
+                if (FastROptions.NewStateTransition.getBooleanValue()) {
+                    resultS4.isTemporary();
+                    resultS4.incRefCount();
+                } else {
+                    resultS4.markNonTemporary();
                 }
-                newAttributes.remove(RRuntime.CLASS_ATTR_KEY);
             }
+            resultS4.removeAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
             return resultS4;
         }
         return arg;

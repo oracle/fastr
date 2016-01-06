@@ -76,6 +76,9 @@ public abstract class WrapArgumentBaseNode extends RNode {
         } else if (result instanceof RFunction) {
             everSeenLanguage.enter();
             return (RFunction) result;
+        } else if (result instanceof RS4Object) {
+            everSeenLanguage.enter();
+            return (RS4Object) result;
         } else {
             nonShareable.enter();
             return null;

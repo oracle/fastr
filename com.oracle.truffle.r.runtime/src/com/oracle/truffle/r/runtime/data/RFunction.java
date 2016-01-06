@@ -129,7 +129,7 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
     }
 
     @Override
-    public RShareable copy() {
+    public RFunction copy() {
         RFunction newFunction = RDataFactory.createFunction(getName(), getTarget(), getRBuiltin(), getEnclosingFrame(), getFastPath(), containsDispatch());
         if (getAttributes() != null) {
             RAttributes newAttributes = newFunction.initAttributes();

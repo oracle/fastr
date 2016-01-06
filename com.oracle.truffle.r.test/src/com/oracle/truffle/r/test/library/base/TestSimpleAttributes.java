@@ -46,6 +46,8 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ x<-function() 42; attr(x, \"foo\")<-\"foo\"; y<-x; attr(y, \"foo\")<-NULL; x }");
 
         assertEval("{ f<-function(y) attr(y, \"foo\")<-NULL; x<-function() 42; attr(x, \"foo\")<-\"foo\"; s<-\"bar\"; switch(s, f(x)); x }");
+
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(y)<-NULL; x }");
     }
 
     @Test

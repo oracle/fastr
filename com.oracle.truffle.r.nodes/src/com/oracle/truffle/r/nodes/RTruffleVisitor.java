@@ -56,6 +56,8 @@ import com.oracle.truffle.r.nodes.function.PostProcessArgumentsNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
+import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
+import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
 import com.oracle.truffle.r.parser.ast.ASTNode;
 import com.oracle.truffle.r.parser.ast.AccessVariable;
 import com.oracle.truffle.r.parser.ast.AccessVector;
