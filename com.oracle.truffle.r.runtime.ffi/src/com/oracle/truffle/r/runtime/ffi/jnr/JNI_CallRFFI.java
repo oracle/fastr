@@ -130,6 +130,9 @@ public class JNI_CallRFFI implements CallRFFI {
         try {
             inCritical.acquire();
             switch (args.length) {
+                case 0:
+                    callVoid0(address);
+                    break;
                 case 1:
                     callVoid1(address, args[0]);
                     break;
@@ -141,6 +144,8 @@ public class JNI_CallRFFI implements CallRFFI {
             inCritical.release();
         }
     }
+
+    private static native void callVoid0(long address);
 
     private static native void callVoid1(long address, Object arg1);
 

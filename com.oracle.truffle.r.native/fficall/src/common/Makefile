@@ -27,7 +27,7 @@ ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
 endif
 
-.PHONY: all clean copy_appl_objects
+.PHONY: all clean
 
 # location of compiled code (.o files)
 OBJ = ../../lib
@@ -61,6 +61,7 @@ all: Makefile $(C_OBJECTS) $(F_OBJECTS) $(GNUR_C_OBJECTS) $(GNUR_F_OBJECTS) copy
 
 copy_appl_objects: $(GNUR_APPL_F_OBJECTS)
 	cp $(GNUR_APPL_F_OBJECTS) $(OBJ)
+	touch copy_appl_objects
 
 $(C_OBJECTS): | $(OBJ)
 
@@ -87,5 +88,5 @@ $(OBJ)/%.o: %.f
 	$(F77) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(OBJ)
+	rm -rf $(OBJ) copy_appl_objects
 

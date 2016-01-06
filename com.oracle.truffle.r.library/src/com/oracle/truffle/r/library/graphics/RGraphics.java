@@ -14,6 +14,8 @@
  */
 package com.oracle.truffle.r.library.graphics;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.oracle.truffle.r.library.graphics.core.*;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.context.*;
@@ -24,8 +26,14 @@ import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
- * A placeholder to keep {@code REngine} limited to calling the {@link #initialize} method. It sets
- * the {@code .Device} and {@code .Devices} variables in "base" as per GnuR.
+ * A placeholder to keep {@code REngine} limited to calling the {@link #initialize} method. Two
+ * possible implementations are available:
+ * <ul>
+ * <li>Native graphics from GnuR</li>
+ * <li>Internal (Java) graphics, very incomplete implementation</li>
+ * </ul>
+ * The default is native graphics, selected by a startup option. Graphics is not virtualized, so
+ * multiple contexts all share the same underlying implementation which is initialized exactly once.
  *
  */
 public class RGraphics {
@@ -38,17 +46,20 @@ public class RGraphics {
      */
     private static final String DOT_DEVICE = ".Device";
     private static final String DOT_DEVICES = ".Devices";
+    private static final AtomicBoolean initialized = new AtomicBoolean();
 
     public static void initialize() {
-        if (FastROptions.UseInternalGraphics.getBooleanValue()) {
-            REnvironment baseEnv = REnvironment.baseEnv();
-            baseEnv.safePut(DOT_DEVICE, NULL_DEVICE);
-            RPairList devices = RDataFactory.createPairList(NULL_DEVICE);
-            baseEnv.safePut(DOT_DEVICES, devices);
-            registerBaseGraphicsSystem();
-        } else {
-            SymbolInfo symbolInfo = DLL.findSymbolInfo("InitGraphics", null);
-            RFFIFactory.getRFFI().getCRFFI().invoke(symbolInfo.address, new Object[0]);
+        if (initialized.compareAndSet(false, true)) {
+            if (FastROptions.UseInternalGraphics.getBooleanValue()) {
+                REnvironment baseEnv = REnvironment.baseEnv();
+                baseEnv.safePut(DOT_DEVICE, NULL_DEVICE);
+                RPairList devices = RDataFactory.createPairList(NULL_DEVICE);
+                baseEnv.safePut(DOT_DEVICES, devices);
+                registerBaseGraphicsSystem();
+            } else {
+                SymbolInfo symbolInfo = DLL.findSymbolInfo("InitGraphics", null);
+                RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(symbolInfo.address, "InitGraphics", new Object[0]);
+            }
         }
     }
 

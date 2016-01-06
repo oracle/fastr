@@ -228,5 +228,17 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_callVoid1(JNIEnv *env, j
 	callExit(env);
 }
 
+typedef void (*callVoid0func)();
+
+JNIEXPORT void JNICALL
+Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_callVoid0(JNIEnv *env, jclass c, jlong address) {
+	callEnter(env, &error_jmpbuf);
+	if (!setjmp(error_jmpbuf)) {
+		callVoid0func call1 = (callVoid0func) address;
+		(*call1)();
+	}
+	callExit(env);
+}
+
 
 
