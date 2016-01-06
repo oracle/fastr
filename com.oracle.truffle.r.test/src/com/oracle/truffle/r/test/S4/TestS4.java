@@ -48,6 +48,7 @@ public class TestS4 extends TestBase {
         assertEval("{ x<-function() 42; attr(x, \"foo\")<-7; y<-asS4(x); y@foo }");
         assertEval(Output.ContainsError, "{ x<-NULL; `@`(x, foo) }");
         assertEval(Output.ContainsError, "{ x<-NULL; x@foo }");
+        assertEval("{ x<-paste0(\".\", \"Data\"); y<-42; slot(y, x) }");
     }
 
     @Test

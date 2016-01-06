@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2013, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -31,9 +31,18 @@ public class Slot {
         @Child AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(null, null);
         @Child CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
-        @Specialization(guards = "nameVec.getLength() == 1")
+        protected static String getInternedName(RAbstractStringVector nameVec) {
+            return nameVec.getDataAt(0).intern();
+        }
+
+        @Specialization(guards = {"nameVec.getLength() == 1", "nameVec.getDataAt(0).equals(cachedInternedName)"})
+        protected Object getSlotCached(Object object, @SuppressWarnings("unused") RAbstractStringVector nameVec, @Cached("getInternedName(nameVec)") String cachedInternedName) {
+            return accessSlotNode.executeAccess(castAttributable.executeObject(object), cachedInternedName);
+        }
+
+        @Specialization(contains = "getSlotCached", guards = "nameVec.getLength() == 1")
         protected Object getSlot(Object object, RAbstractStringVector nameVec) {
-            return accessSlotNode.executeAccess(castAttributable.executeObject(object), nameVec.getDataAt(0));
+            return accessSlotNode.executeAccess(castAttributable.executeObject(object), nameVec.getDataAt(0).intern());
         }
 
         @SuppressWarnings("unused")
@@ -49,9 +58,18 @@ public class Slot {
         @Child UpdateSlotNode updateSlotNode = UpdateSlotNodeGen.create(null, null, null);
         @Child CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
-        @Specialization(guards = "nameVec.getLength() == 1")
+        protected static String getInternedName(RAbstractStringVector nameVec) {
+            return nameVec.getDataAt(0).intern();
+        }
+
+        @Specialization(guards = {"nameVec.getLength() == 1", "nameVec.getDataAt(0).equals(cachedInternedName)"})
+        protected Object setSlotCached(Object object, @SuppressWarnings("unused") RAbstractStringVector nameVec, Object value, @Cached("getInternedName(nameVec)") String cachedInternedName) {
+            return updateSlotNode.executeUpdate(castAttributable.executeObject(object), cachedInternedName, value);
+        }
+
+        @Specialization(contains = "setSlotCached", guards = "nameVec.getLength() == 1")
         protected Object setSlot(Object object, RAbstractStringVector nameVec, Object value) {
-            return updateSlotNode.executeUpdate(castAttributable.executeObject(object), nameVec.getDataAt(0), value);
+            return updateSlotNode.executeUpdate(castAttributable.executeObject(object), nameVec.getDataAt(0).intern(), value);
         }
 
         @SuppressWarnings("unused")
