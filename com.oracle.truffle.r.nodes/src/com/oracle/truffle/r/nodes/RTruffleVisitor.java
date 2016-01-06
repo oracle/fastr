@@ -457,6 +457,11 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             String vSymbol = callArg.getVariable();
             replacementArg = createReplacementForVariableUsing(callArg, vSymbol, replacement.isSuper());
             RCallNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, true);
+            // this is pretty gross, but at this point seems like the only way to get setClass to
+            // work properly
+            if (fAst.getLhs().toString().equals("slot<-")) {
+                replacementCall.replaceArgument(0, GetNonSharedNodeGen.create(replacementCall.getArgument(0).asRNode()));
+            }
             assignFromTemp = WriteLocalFrameVariableNode.createAnonymous(vSymbol, replacementCall, WriteVariableNode.Mode.INVISIBLE, replacement.isSuper());
         } else if (val instanceof AccessVector) {
             AccessVector callArgAst = (AccessVector) val;

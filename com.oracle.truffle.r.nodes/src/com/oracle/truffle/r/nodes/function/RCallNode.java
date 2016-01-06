@@ -282,6 +282,10 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         return arguments.v[index];
     }
 
+    public void replaceArgument(int index, RSyntaxNode value) {
+        arguments.v[index] = value;
+    }
+
     @Override
     public Object execute(VirtualFrame frame) {
         return execute(frame, executeFunctionNode(frame));
