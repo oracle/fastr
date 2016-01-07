@@ -86,6 +86,11 @@ public class EnvFunctions {
     public abstract static class AsEnvironment extends Adapter {
 
         @Specialization
+        protected REnvironment asEnvironment(@SuppressWarnings("unused") RNull rnull) {
+            throw RError.error(this, RError.Message.AS_ENV_NULL_DEFUNCT);
+        }
+
+        @Specialization
         protected REnvironment asEnvironment(REnvironment env) {
             controlVisibility();
             return env;
