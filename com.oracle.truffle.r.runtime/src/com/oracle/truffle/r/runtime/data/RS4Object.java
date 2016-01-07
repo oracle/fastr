@@ -55,6 +55,7 @@ public class RS4Object extends RSharingAttributeStorage {
                 newAttributes.put(attr.getName(), attr.getValue());
             }
         }
+        resultS4.gpbits = gpbits;
         return resultS4;
 
     }

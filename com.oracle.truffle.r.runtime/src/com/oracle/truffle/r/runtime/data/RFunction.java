@@ -138,6 +138,7 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
             }
             newFunction.initAttributes(newAttributes);
         }
+        newFunction.gpbits = gpbits;
         return newFunction;
 
     }

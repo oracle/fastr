@@ -161,5 +161,7 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ x<-matrix(1, ncol=1); y<-c(1,2,3,4); x*y }");
 
         assertEval("{ x<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(y)<-NULL; x }");
+
+        assertEval("{ gen<-function(object) 0; setGeneric(\"gen\"); x<-gen; attr(x, \"valueClass\")<-character(); isS4(x) }");
     }
 }
