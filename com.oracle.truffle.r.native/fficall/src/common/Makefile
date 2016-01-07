@@ -24,7 +24,7 @@
 # This builds the GNUR files that are compiled directly, and local overrides
 
 ifneq ($(MAKECMDGOALS),clean)
-include $(TOPDIR)/platform.mk
+include $(FASTR_NATIVE_DIR)/platform.mk
 endif
 
 .PHONY: all clean
@@ -50,7 +50,7 @@ F_SOURCES = $(wildcard *.f)
 F_OBJECTS := $(patsubst %.f,$(OBJ)/%.o,$(F_SOURCES))
 
 JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(JDK_OS_DIR)
-FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
+FFI_INCLUDES = -I$(FASTR_NATIVE_DIR)/include -I$(FASTR_NATIVE_DIR)/include/R_ext
 INCLUDES := -I $(abspath ../include) $(JNI_INCLUDES) $(FFI_INCLUDES)
 
 include ../include/gnurheaders.mk
@@ -81,7 +81,7 @@ $(OBJ)/%.o: $(GNUR_APPL_SRC)/%.c
 $(OBJ)/%.o: $(GNUR_MAIN_SRC)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
-$(OBJ)/%.o: %.c $(TOPDIR)/include/Rinternals.h
+$(OBJ)/%.o: %.c $(FASTR_NATIVE_DIR)/include/Rinternals.h
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
 $(OBJ)/%.o: %.f
