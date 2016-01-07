@@ -16,6 +16,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.profiles.*;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.library.grDevices.*;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_Par;
@@ -151,6 +152,33 @@ public class ForeignFunctions {
             return ((RExternalPtr) addressExtract.applyAccessField(frame, symbol, "address")).getAddr();
         }
 
+        @Override
+        public int getRlengthImpl() {
+            // TODO How do we get the length of the actual arguments?
+            // This suffices for accessing the "name", which is constant, e.g. .Call
+            return 1;
+        }
+
+        @Override
+        public Object getRelementImpl(int index) {
+            if (index == 0) {
+                String name = getBuiltin().getName();
+                assert name == name.intern();
+                return RDataFactory.createSymbol(name);
+            } else {
+                throw RInternalError.unimplemented();
+            }
+        }
+
+        @Override
+        public void deparseImpl(RDeparse.State state) {
+            state.startNodeDeparse(this);
+            // FIXME workaround until we can access arguments
+            SourceSection ss = getSourceSection();
+            assert ss != null;
+            state.append(ss.getCode());
+            state.endNodeDeparse(this);
+        }
     }
 
     /**
