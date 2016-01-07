@@ -27,7 +27,7 @@ suite = {
     "suites" : [
             {
                "name" : "graal",
-               "version" : "c07e0f138412a0e2d108ec9e6a879f54e68395f4",
+               "version" : "1375f94fdf3076dddc8ab9574d3ad179d49a4994",
                "urls" : [
                     {"url" : "http://lafo.ssw.uni-linz.ac.at/hg/graal-compiler", "kind" : "hg"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -54,7 +54,7 @@ suite = {
         "resource" : "true"
     },
 
-    "ANTLR" : {
+    "ANTLR-3.5" : {
       "path" : "libdownloads/antlr-runtime-3.5.jar",
       "urls" : ["http://central.maven.org/maven2/org/antlr/antlr-runtime/3.5/antlr-runtime-3.5.jar"],
       "sha1" : "0baa82bff19059401e90e1b90020beb9c96305d7",
@@ -65,7 +65,7 @@ suite = {
       "sha1" : "NOCHECK",
     },
 
-    "ANTLR-C" : {
+    "ANTLR-C-3.5" : {
       "path" : "libdownloads/antlr-complete-3.5.1.jar",
       "urls" : ["http://central.maven.org/maven2/org/antlr/antlr-complete/3.5.1/antlr-complete-3.5.1.jar"],
       "sha1" : "ebb4b995fd67a9b291ea5b19379509160f56e154",
@@ -195,8 +195,8 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "JDK_TOOLS",
-        "ANTLR",
-        "ANTLR-C",
+        "ANTLR-3.5",
+        "ANTLR-C-3.5",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -372,8 +372,8 @@ suite = {
       "dependencies" : ["com.oracle.truffle.r.parser.processor"],
       "exclude" : [
         "JDK_TOOLS",
-        "ANTLR",
-        "ANTLR-C",
+        "ANTLR-3.5",
+        "ANTLR-C-3.5",
        ],
 
     },
@@ -398,8 +398,8 @@ suite = {
         "JNR_INVOKE",
         "JNR_UDIS86",
         "truffle:JLINE",
-        "ANTLR-C",
-        "ANTLR",
+        "ANTLR-C-3.5",
+        "ANTLR-3.5",
         "GNUR",
         "GNU_ICONV",
       ],

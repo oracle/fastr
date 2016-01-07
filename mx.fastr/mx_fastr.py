@@ -86,7 +86,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True):
 
     vmArgs = ['-cp', mx.classpath(_r_command_project)]
     # jvmci specific
-    vmArgs += ['-G:InliningDepthError=500', '-G:EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
+    vmArgs += ['-Dgraal.option.InliningDepthError=500', '-Dgraal.option.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
 
     if extraVmArgs is None or not '-da' in extraVmArgs:
         # unless explicitly disabled we enable assertion checking
@@ -114,7 +114,7 @@ def _sanitize_vmArgs(jdk, vmArgs):
     i = 0
     while i < len(vmArgs):
         vmArg = vmArgs[i]
-        if vmArg.startswith('-G') or 'JVMCI' in vmArg:
+        if 'graal.option' in vmArg or 'JVMCI' in vmArg:
             if vm and vm == "original":
                 i = i + 1
                 continue
