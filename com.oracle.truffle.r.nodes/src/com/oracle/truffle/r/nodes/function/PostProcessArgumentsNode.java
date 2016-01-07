@@ -96,13 +96,23 @@ public final class PostProcessArgumentsNode extends RNode {
     public Node deepCopy() {
         CompilerAsserts.neverPartOfCompilation();
         if (createClone) {
-            PostProcessArgumentsNode copy = (PostProcessArgumentsNode) super.deepCopy();
-            nextOptPostProccessArgNode = insert(copy);
-            return copy;
+            return deepCopyUnconditional();
         } else {
             this.createClone = true;
             return this;
         }
+    }
+
+    /*
+     * Deep copies are also made from other places than the trufflerizer, in which case we need to
+     * always create the node chain.
+     */
+    public PostProcessArgumentsNode deepCopyUnconditional() {
+        CompilerAsserts.neverPartOfCompilation();
+        PostProcessArgumentsNode copy = (PostProcessArgumentsNode) super.deepCopy();
+        nextOptPostProccessArgNode = insert(copy);
+        return copy;
+
     }
 
     PostProcessArgumentsNode getActualNode() {

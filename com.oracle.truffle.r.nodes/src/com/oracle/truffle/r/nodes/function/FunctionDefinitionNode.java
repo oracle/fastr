@@ -132,7 +132,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         FrameDescriptor frameDesc = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(description != null && !description.isEmpty() ? description : "<function>", frameDesc);
         return new FunctionDefinitionNode(getSourceSection(), frameDesc, (BodyNode) body.unwrap().deepCopy(), getFormalArguments(), description, substituteFrame, argPostProcess == null ? null
-                        : (PostProcessArgumentsNode) argPostProcess.deepCopy());
+                        : argPostProcess.deepCopyUnconditional());
     }
 
     private static boolean containsAnyDispatch(BodyNode body) {
