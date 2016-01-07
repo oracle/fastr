@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -24,6 +24,7 @@ public class TestBuiltin_unique extends TestBase {
 
     @Test
     public void testunique2() {
+        // FIXME NA's are being considered duplicates
         assertEval(Ignored.Unknown, "argv <- list(c('a', 'b', 'c', 'c', 'b', 'a', 'NA', 'd', 'd', NA), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
@@ -34,8 +35,7 @@ public class TestBuiltin_unique extends TestBase {
 
     @Test
     public void testunique4() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(c(9L, 9L), c(9L, 9L), c(9L, 9L), c(9L, 9L), c(9L, 9L), c(9L, 9L)), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(list(c(9L, 9L), c(9L, 9L), c(9L, 9L), c(9L, 9L), c(9L, 9L), c(9L, 9L)), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
@@ -70,7 +70,8 @@ public class TestBuiltin_unique extends TestBase {
 
     @Test
     public void testunique11() {
-        assertEval(Ignored.Unknown,
+        // FIXME ordering wrong
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(c(20.65, NA, NA, 40.25, 61.9, 55.27, 58.13, 54.04, 21.15, 18.32, NA, 65.84, 58.77, 53.99, 63.37, 64.81, 47.11, 9.65, 67.1, 48.83, 57.92, 69.5, 73.95, 5.46, 49.92, 54.21, 61.38, 56.66, 60.14, 56.68, NA, 53.13, 39.7, 74.83, 59.73, NA, 67.06, 67.99, 60.6, 4.63, 71.09, 43.4, 21.9, 61.45, 77.98, 36.67, 69.95, 55.26, 63.24, NA), .Names = c('Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming')), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
@@ -81,12 +82,13 @@ public class TestBuiltin_unique extends TestBase {
 
     @Test
     public void testunique13() {
-        assertEval(Ignored.Unknown, "argv <- list(list(NULL, NULL, NULL, NULL, NULL), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(list(NULL, NULL, NULL, NULL, NULL), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
     public void testunique14() {
-        assertEval(Ignored.Unknown, "argv <- list(c(9.18429112061858e-05, 0.0238094009226188, 0.0498038685764186), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval(Ignored.OutputFormatting,
+                        "argv <- list(c(9.18429112061858e-05, 0.0238094009226188, 0.0498038685764186), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
@@ -106,7 +108,8 @@ public class TestBuiltin_unique extends TestBase {
 
     @Test
     public void testunique18() {
-        assertEval(Ignored.Unknown, "argv <- list(c(3, 4, 5, 11, 10, 9, 8, 8, 9, 10, 11, 12, 13), FALSE, TRUE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        // FIXME ordering wrong
+        assertEval(Ignored.ImplementationError, "argv <- list(c(3, 4, 5, 11, 10, 9, 8, 8, 9, 10, 11, 12, 13), FALSE, TRUE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
@@ -121,8 +124,7 @@ public class TestBuiltin_unique extends TestBase {
 
     @Test
     public void testunique21() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(A = c(3L, 5L), B = c(3L, 5L), C = c(3L, 5L), D = c(3L, 5L)), .Names = c('A', 'B', 'C', 'D')), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(structure(list(A = c(3L, 5L), B = c(3L, 5L), C = c(3L, 5L), D = c(3L, 5L)), .Names = c('A', 'B', 'C', 'D')), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
@@ -137,23 +139,24 @@ public class TestBuiltin_unique extends TestBase {
 
     @Test
     public void testunique24() {
-        assertEval(Ignored.Unknown, "argv <- list(list('numeric_version', 'numeric_version'), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(list('numeric_version', 'numeric_version'), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
     public void testunique25() {
-        assertEval(Ignored.Unknown,
+        // FIXME character(0) instead of factor(0)
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
     public void testunique26() {
-        assertEval(Ignored.Unknown, "argv <- list(list('Math2', 'round', 'signif'), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(list('Math2', 'round', 'signif'), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
     public void testunique27() {
-        assertEval(Ignored.Unknown, "argv <- list(list(structure('Math2', package = 'methods'), 'round', 'signif'), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(list(structure('Math2', package = 'methods'), 'round', 'signif'), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
@@ -178,7 +181,8 @@ public class TestBuiltin_unique extends TestBase {
 
     @Test
     public void testunique33() {
-        assertEval(Ignored.Unknown,
+        // FIXME Evaluation/Location labels lost
+        assertEval(Ignored.ImplementationError,
                         "argv <- structure(list(x = structure(c(15, 37, 30, 18, 8, 20,     42.7, 29.3), .Dim = c(4L, 2L), .Dimnames = structure(list(Evaluation = c('very good',     'good', 'bad', 'very bad'), Location = c('city centre', 'suburbs')),     .Names = c('Evaluation', 'Location')))), .Names = 'x');"
                                         + "do.call('unique', argv)");
     }

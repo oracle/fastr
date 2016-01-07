@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.*;
@@ -257,8 +258,44 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "lengthOne(list)")
-    protected RList doUnique(RList list, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
+    protected RList doUniqueL1(RList list, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
         return (RList) list.copyDropAttributes();
+    }
+
+    @Child private Identical identical;
+
+    private boolean identical(Object x, Object y) {
+        if (identical == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            identical = insert(IdenticalNodeGen.create(true, new RNode[7], null, null));
+        }
+        return RRuntime.fromLogical(identical.executeByte(x, y, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE));
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "!lengthOne(list)")
+    protected RList doUnique(RList list, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
+        /*
+         * Brute force, as manual says: Using this for lists is potentially slow, especially if the
+         * elements are not atomic vectors (see vector) or differ only in their attributes. In the
+         * worst case it is O(n^2).
+         */
+        ArrayList<Object> data = new ArrayList<>(list.getLength());
+        for (int i = 0; i < list.getLength(); i++) {
+            Object elem = list.getDataAt(i);
+            boolean same = false;
+            for (int j = 0; j < data.size(); j++) {
+                Object dataElem = data.get(j);
+                if (identical(elem, dataElem)) {
+                    same = true;
+                    break;
+                }
+            }
+            if (!same) {
+                data.add(elem);
+            }
+        }
+        return RDataFactory.createList(data.toArray());
     }
 
     public static boolean lengthOne(RList list) {
