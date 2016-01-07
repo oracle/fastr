@@ -29,6 +29,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
@@ -50,7 +51,7 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
         return new FunctionExpressionNode(src, callTarget, fastPath);
     }
 
-    private final RootCallTarget callTarget;
+    @CompilationFinal private RootCallTarget callTarget;
     private final PromiseDeoptimizeFrameNode deoptFrameNode;
     private final FastPathFactory fastPath;
 
@@ -77,6 +78,12 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
         }
         if (!initialized) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
+            if (!FrameSlotChangeMonitor.hasEnclosingFrameDescriptor(callTarget.getRootNode().getFrameDescriptor(), frame)) {
+                RRootNode root = (RRootNode) callTarget.getRootNode();
+                root = root.duplicateWithNewFrameDescriptor();
+                RootCallTarget newTarget = Truffle.getRuntime().createCallTarget(root);
+                callTarget = newTarget;
+            }
             FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), frame);
             initialized = true;
         }

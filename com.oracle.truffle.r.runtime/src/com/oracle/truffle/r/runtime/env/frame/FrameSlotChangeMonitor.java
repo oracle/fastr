@@ -59,7 +59,7 @@ public final class FrameSlotChangeMonitor {
      * result based on the system's knowledge about the hierarchy of environments and the stable
      * values of certain bindings. Most function lookups can be answered based only on this
      * information.
-     *
+     * 
      * These lookups are stored for caching and invalidation, i.e., to save on repeated lookups and
      * to invalidate lookups in case the environment hierarchy changes.
      */
@@ -281,11 +281,23 @@ public final class FrameSlotChangeMonitor {
         return getMetaData(handleBaseNamespaceEnv(frame));
     }
 
-    public static synchronized void initializeEnclosingFrame(FrameDescriptor descriptor, Frame newEnclosingFrame) {
-        CompilerAsserts.neverPartOfCompilation();
+    private static FrameDescriptorMetaData getDescriptorMetaData(FrameDescriptor descriptor) {
         assert descriptor != null : "initializing enclosing of null descriptor";
         FrameDescriptorMetaData target = getMetaData(descriptor);
         assert target != null : "frame descriptor wasn't registered properly";
+        return target;
+    }
+
+    public static synchronized boolean hasEnclosingFrameDescriptor(FrameDescriptor descriptor, Frame newEnclosingFrame) {
+        CompilerAsserts.neverPartOfCompilation();
+        FrameDescriptorMetaData target = getDescriptorMetaData(descriptor);
+        FrameDescriptor newEnclosingDescriptor = handleBaseNamespaceEnv(newEnclosingFrame);
+        return !(target.enclosingFrameDescriptor.getValue() != newEnclosingDescriptor && target.enclosingFrameDescriptor.getValue() == null);
+    }
+
+    public static synchronized void initializeEnclosingFrame(FrameDescriptor descriptor, Frame newEnclosingFrame) {
+        CompilerAsserts.neverPartOfCompilation();
+        FrameDescriptorMetaData target = getDescriptorMetaData(descriptor);
 
         FrameDescriptor newEnclosingDescriptor = handleBaseNamespaceEnv(newEnclosingFrame);
 
