@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,13 +21,12 @@
 # questions.
 #
 
-# If GNUR_HOME is defined we take that as a pre-built, immutable, entity
-
 .PHONY: all clean 
 
 export TOPDIR = $(CURDIR)
 export FASTR_R_HOME=$(abspath $(TOPDIR)/..)
 export FASTR_LIB_DIR=$(FASTR_R_HOME)/lib
+export FASTR_NATIVE_DIR = $(TOPDIR)
 export R_VERSION = 3.1.3
 export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
 
