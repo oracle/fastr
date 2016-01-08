@@ -84,7 +84,16 @@ public abstract class Identical extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isRNull(x) || isRNull(y)")
-    protected byte doInternalIdentical(Object x, Object y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
+    protected byte doInternalIdenticalNull(Object x, Object y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
+        if (!recursive) {
+            controlVisibility();
+        }
+        return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "isRMissing(x) || isRMissing(y)")
+    protected byte doInternalIdenticalMissing(Object x, Object y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         if (!recursive) {
             controlVisibility();
         }
@@ -312,19 +321,6 @@ public abstract class Identical extends RBuiltinNode {
         return RRuntime.asLogical(x.getAddr() == y.getAddr());
     }
 
-    @SuppressWarnings("unused")
-    @Fallback
-    protected byte doInternalIdenticalWrongTypes(Object x, Object y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
-        if (x.getClass() != y.getClass()) {
-            return RRuntime.LOGICAL_FALSE;
-        } else {
-            throw RInternalError.unimplemented();
-        }
-    }
-
     @Specialization
     protected byte doInternalIdenticalGeneric(RPairList x, RPairList y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
         if (!recursive) {
@@ -369,6 +365,19 @@ public abstract class Identical extends RBuiltinNode {
             }
         }
         return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected byte doInternalIdenticalWrongTypes(Object x, Object y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
+        if (!recursive) {
+            controlVisibility();
+        }
+        if (x.getClass() != y.getClass()) {
+            return RRuntime.LOGICAL_FALSE;
+        } else {
+            throw RInternalError.unimplemented();
+        }
     }
 
     protected boolean vectorsLists(RAbstractVector x, RAbstractVector y) {
