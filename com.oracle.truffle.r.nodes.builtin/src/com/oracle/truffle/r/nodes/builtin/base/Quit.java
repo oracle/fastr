@@ -92,6 +92,7 @@ public abstract class Quit extends RInvisibleBuiltinNode {
              * save always
              */
             RContext.getEngine().checkAndRunStartupShutdownFunction("sys.save.image", new String[]{"\".RData\""});
+            RContext.getInstance().getConsoleHandler().flushHistory();
         }
         if (runLast != 0) {
             RContext.getEngine().checkAndRunStartupShutdownFunction(".Last");

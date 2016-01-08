@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
+import java.io.File;
+
 import com.oracle.truffle.api.CompilerDirectives.*;
 
 /**
@@ -106,4 +108,13 @@ public interface ConsoleHandler {
     int getWidth();
 
     String getInputDescription();
+
+    default void setHistoryFrom(@SuppressWarnings("unused") File file) {
+        // by default, do nothing
+    }
+
+    default void flushHistory() {
+        // by default, do nothing
+    }
+
 }

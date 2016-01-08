@@ -25,6 +25,8 @@ package com.oracle.truffle.r.engine.shell;
 import java.io.*;
 
 import jline.console.*;
+import jline.console.history.FileHistory;
+import jline.console.history.History;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
@@ -102,5 +104,24 @@ public class JLineConsoleHandler implements ConsoleHandler {
 
     public String getInputDescription() {
         return "<shell_input>";
+    }
+
+    public void setHistoryFrom(File file) {
+        try {
+            console.setHistory(new FileHistory(file));
+        } catch (IOException x) {
+            // silent - there will simply be no history
+        }
+    }
+
+    public void flushHistory() {
+        History history = console.getHistory();
+        if (history instanceof FileHistory) {
+            try {
+                ((FileHistory) history).flush();
+            } catch (IOException x) {
+                // silent - no history appended
+            }
+        }
     }
 }

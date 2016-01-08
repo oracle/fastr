@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.engine;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -193,6 +194,7 @@ final class REngine implements Engine, Engine.Timings {
         if (!(context.getOptions().getBoolean(RCmdOption.NO_RESTORE) || context.getOptions().getBoolean(RCmdOption.NO_RESTORE_DATA))) {
             // call sys.load.image(".RData", RCmdOption.QUIET
             checkAndRunStartupShutdownFunction("sys.load.image", new String[]{"\".RData\"", context.getOptions().getBoolean(RCmdOption.QUIET) ? "TRUE" : "FALSE"});
+            context.getConsoleHandler().setHistoryFrom(new File("./.Rhistory"));
         }
         checkAndRunStartupShutdownFunction(".First");
         checkAndRunStartupShutdownFunction(".First.sys");
