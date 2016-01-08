@@ -347,9 +347,9 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     junitArgs += ['--runlistener', runlistener]
 
     # suppress Truffle compilation by using a high threshold
-    vmArgs += ['-G:TruffleCompilationThreshold=100000']
+    vmArgs += ['-Dgraal.option.TruffleCompilationThreshold=100000']
 
-    vmArgs += ['-G:InliningDepthError=500', '-G:EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx4G']
+    vmArgs += ['-Dgraal.option.InliningDepthError=500', '-Dgraal.option.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx4G']
 
     setREnvironment()
     jdk = get_default_jdk()
@@ -535,8 +535,8 @@ def load_optional_suite(name, rev):
         mx.build_suite(opt_suite)
     return opt_suite
 
-_r_apptests_rev = 'b9b40d4a9a3171e9641bc66bc9798250b197fc80'
-_r_benchmarks_rev = '74b7d0627b41977a617b41705ff9639db4ae7940'
+_r_apptests_rev = 'dfa1747a3b230ed6d8af55e229ec339eb58d38ed'
+_r_benchmarks_rev = '72d53a9a99cf3ade1376e5c540a07e5095eb29f6'
 
 def mx_post_parse_cmd_line(opts):
     # load optional suites, r_apptests first so r_benchmarks can find it
