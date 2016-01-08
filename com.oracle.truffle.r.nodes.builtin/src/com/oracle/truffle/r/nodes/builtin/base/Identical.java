@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,6 +56,7 @@ public abstract class Identical extends RBuiltinNode {
     protected abstract byte executeByte(Object x, Object y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment);
 
     @Child private Identical identicalRecursive;
+    @Child private Identical identicalRecursiveAttr;
     private final boolean recursive;
 
     public Identical(boolean recursive) {
@@ -71,6 +72,14 @@ public abstract class Identical extends RBuiltinNode {
             identicalRecursive = insert(IdenticalNodeGen.create(true, new RNode[7], null, null));
         }
         return identicalRecursive.executeByte(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
+    }
+
+    private byte identicalRecursiveAttr(Object x, Object y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
+        if (identicalRecursiveAttr == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            identicalRecursiveAttr = insert(IdenticalNodeGen.create(true, new RNode[7], null, null));
+        }
+        return identicalRecursiveAttr.executeByte(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
     @SuppressWarnings("unused")
@@ -110,6 +119,32 @@ public abstract class Identical extends RBuiltinNode {
         return truth ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
+    private byte identicalAttr(RAttributable x, RAttributable y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
+        RAttributes xAttributes = x.getAttributes();
+        RAttributes yAttributes = y.getAttributes();
+        if (xAttributes == null && yAttributes == null) {
+            return RRuntime.LOGICAL_TRUE;
+        } else if (xAttributes == null || yAttributes == null) {
+            return RRuntime.LOGICAL_FALSE;
+        } else if (xAttributes.size() == yAttributes.size()) {
+            Iterator<RAttribute> xIter = xAttributes.iterator();
+            Iterator<RAttribute> yIter = yAttributes.iterator();
+            while (xIter.hasNext()) {
+                RAttribute xAttr = xIter.next();
+                RAttribute yAttr = yIter.next();
+                if (!xAttr.getName().equals(yAttr.getName())) {
+                    return RRuntime.LOGICAL_FALSE;
+                }
+                byte res = identicalRecursiveAttr(xAttr.getValue(), yAttr.getValue(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
+                if (res == RRuntime.LOGICAL_FALSE) {
+                    return RRuntime.LOGICAL_FALSE;
+                }
+            }
+            return RRuntime.LOGICAL_TRUE;
+        }
+        return RRuntime.LOGICAL_FALSE;
+    }
+
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(RAbstractLogicalVector x, REnvironment y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
@@ -144,7 +179,8 @@ public abstract class Identical extends RBuiltinNode {
         if (!recursive) {
             controlVisibility();
         }
-        return x.getName().equals(y.getName()) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        assert x.getName() == x.getName().intern() && y.getName() == y.getName().intern();
+        return x.getName() == y.getName() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
@@ -172,7 +208,8 @@ public abstract class Identical extends RBuiltinNode {
             if (yNode instanceof SequenceNode && ((SequenceNode) yNode).getSequence().length == 1) {
                 yNode = ((SequenceNode) yNode).getSequence()[0].asRSyntaxNode();
             }
-            return RRuntime.asLogical(xNode.getRequalsImpl(yNode));
+            return RRuntime.asLogical(xNode.getRequalsImpl(yNode)) == RRuntime.LOGICAL_TRUE ? identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment)
+                            : RRuntime.LOGICAL_FALSE;
         }
         return RRuntime.LOGICAL_FALSE;
     }
@@ -186,7 +223,6 @@ public abstract class Identical extends RBuiltinNode {
         return RRuntime.asLogical(x == y);
     }
 
-    @SuppressWarnings("unused")
     @Specialization(guards = "!vectorsLists(x, y)")
     protected byte doInternalIdenticalGeneric(RAbstractVector x, RAbstractVector y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         if (!recursive) {
@@ -201,7 +237,7 @@ public abstract class Identical extends RBuiltinNode {
                 }
             }
         }
-        return RRuntime.LOGICAL_TRUE;
+        return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
     @Specialization
@@ -218,7 +254,7 @@ public abstract class Identical extends RBuiltinNode {
                 return RRuntime.LOGICAL_FALSE;
             }
         }
-        return RRuntime.LOGICAL_TRUE;
+        return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
     @Specialization
@@ -264,25 +300,7 @@ public abstract class Identical extends RBuiltinNode {
         if (x.isS4() != y.isS4()) {
             return RRuntime.LOGICAL_FALSE;
         }
-        RAttributes xAttributes = x.getAttributes();
-        RAttributes yAttributes = y.getAttributes();
-        if (xAttributes.size() == yAttributes.size()) {
-            Iterator<RAttribute> xIter = xAttributes.iterator();
-            Iterator<RAttribute> yIter = yAttributes.iterator();
-            while (xIter.hasNext()) {
-                RAttribute xAttr = xIter.next();
-                RAttribute yAttr = yIter.next();
-                if (!xAttr.getName().equals(yAttr.getName())) {
-                    return RRuntime.LOGICAL_FALSE;
-                }
-                byte res = identicalRecursive(xAttr.getValue(), yAttr.getValue(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
-                if (res == RRuntime.LOGICAL_FALSE) {
-                    return RRuntime.LOGICAL_FALSE;
-                }
-            }
-            return RRuntime.LOGICAL_TRUE;
-        }
-        return RRuntime.LOGICAL_FALSE;
+        return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
     @SuppressWarnings("unused")
@@ -305,6 +323,52 @@ public abstract class Identical extends RBuiltinNode {
         } else {
             throw RInternalError.unimplemented();
         }
+    }
+
+    @Specialization
+    protected byte doInternalIdenticalGeneric(RPairList x, RPairList y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
+        if (!recursive) {
+            controlVisibility();
+        }
+        if (identicalRecursive(x.car(), y.car(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment) == RRuntime.LOGICAL_FALSE) {
+            return RRuntime.LOGICAL_FALSE;
+        }
+        Object tmpXCdr = x.cdr();
+        Object tmpYCdr = y.cdr();
+        while (true) {
+            if (RPairList.isNull(tmpXCdr) && RPairList.isNull(tmpYCdr)) {
+                break;
+            } else if (RPairList.isNull(tmpXCdr) || RPairList.isNull(tmpYCdr)) {
+                return RRuntime.LOGICAL_FALSE;
+            } else {
+                RPairList xSubList = (RPairList) tmpXCdr;
+                RPairList ySubList = (RPairList) tmpYCdr;
+
+                if (RPairList.isNull(xSubList.getTag()) && RPairList.isNull(ySubList.getTag())) {
+                    break;
+                } else if (RPairList.isNull(xSubList.getTag()) || RPairList.isNull(ySubList.getTag())) {
+                    return RRuntime.LOGICAL_FALSE;
+                } else {
+                    if (xSubList.getTag() instanceof RSymbol && ySubList.getTag() instanceof RSymbol) {
+                        String xTagName = ((RSymbol) xSubList.getTag()).getName();
+                        String yTagName = ((RSymbol) ySubList.getTag()).getName();
+                        assert xTagName == xTagName.intern() && yTagName == yTagName.intern();
+                        if (xTagName != yTagName) {
+                            return RRuntime.LOGICAL_FALSE;
+                        }
+                    } else {
+                        RInternalError.unimplemented("non-RNull and non-RSymbol pairlist tags are not currently supported");
+                    }
+                }
+                if (identicalRecursive(xSubList.car(), ySubList.car(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment) == RRuntime.LOGICAL_FALSE) {
+                    return RRuntime.LOGICAL_FALSE;
+                }
+                if (xSubList.getAttributes() != null || ySubList.getAttributes() != null) {
+                    RInternalError.unimplemented("attributes of internal pairlists are not currently supported");
+                }
+            }
+        }
+        return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
     protected boolean vectorsLists(RAbstractVector x, RAbstractVector y) {
