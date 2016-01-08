@@ -227,5 +227,28 @@ public class TestBuiltin_identical extends TestBase {
         assertEval("{ x<-list(7); y<-list(42); identical(x,y) }");
         assertEval("{ x<-list(list(7)); y<-list(list(7)); identical(x,y) }");
         assertEval("{ x<-list(list(7)); y<-list(list(42)); identical(x,y) }");
+
+        assertEval("{ f1<-function(x=1) 42; f2<-function(x=2) 7; identical(formals(f1), formals(f2)) }");
+        assertEval("{ f1<-function(x=1) 42; f2<-function(x=1) 7; identical(formals(f1), formals(f2)) }");
+        assertEval("{ x<-42; attr(x, \"foo\")<-\"foo\"; y<-42; attr(y, \"foo\")<-\"foo\"; identical(x, y) }");
+        assertEval("{ x<-42; attr(x, \"foo\")<-\"foo\"; y<-42; attr(y, \"bar\")<-\"foo\"; identical(x, y) }");
+        assertEval("{ x<-42; attr(x, \"foo\")<-\"foo\"; y<-42; attr(y, \"foo\")<-\"bar\"; identical(x, y) }");
+        assertEval("{ x<-42; attr(x, \"foo\")<-\"foo\"; y<-42; attr(y, \"bar\")<-\"bar\"; identical(x, y) }");
+        assertEval("{ x<-42; attr(x, \"foo\")<-\"foo\"; y<-42; identical(x, y) }");
+        assertEval("{ x<-list(42); attr(x, \"foo\")<-\"foo\"; y<-list(42); attr(y, \"foo\")<-\"foo\"; identical(x, y) }");
+        assertEval("{ x<-list(42); attr(x, \"foo\")<-\"foo\"; y<-list(42); attr(y, \"bar\")<-\"foo\"; identical(x, y) }");
+        assertEval("{ x<-list(42); attr(x, \"foo\")<-\"foo\"; y<-list(42); attr(y, \"foo\")<-\"bar\"; identical(x, y) }");
+        assertEval("{ x<-list(42); attr(x, \"foo\")<-\"foo\"; y<-list(42); attr(y, \"bar\")<-\"bar\"; identical(x, y) }");
+        assertEval("{ x<-list(42); attr(x, \"foo\")<-\"foo\"; y<-list(42); identical(x, y) }");
+        assertEval("{ x<-quote(f()); attr(x, \"foo\")<-\"foo\"; y<-quote(f()); attr(y, \"foo\")<-\"foo\"; identical(x, y) }");
+        assertEval("{ x<-quote(f()); attr(x, \"foo\")<-\"foo\"; y<-quote(f()); attr(y, \"bar\")<-\"foo\"; identical(x, y) }");
+        assertEval("{ x<-quote(f()); attr(x, \"foo\")<-\"foo\"; y<-quote(f()); attr(y, \"foo\")<-\"bar\"; identical(x, y) }");
+        assertEval("{ x<-quote(f()); attr(x, \"foo\")<-\"foo\"; y<-quote(f()); attr(y, \"bar\")<-\"bar\"; identical(x, y) }");
+        assertEval("{ x<-quote(f()); attr(x, \"foo\")<-\"foo\"; y<-quote(f()); identical(x, y) }");
+        assertEval("{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); attr(y, \"foo\")<-\"foo\"; identical(x, y) }");
+        assertEval("{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); attr(y, \"bar\")<-\"foo\"; identical(x, y) }");
+        assertEval("{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); attr(y, \"foo\")<-\"bar\"; identical(x, y) }");
+        assertEval("{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); attr(y, \"bar\")<-\"bar\"; identical(x, y) }");
+        assertEval("{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); identical(x, y) }");
     }
 }
