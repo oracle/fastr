@@ -436,12 +436,12 @@ public class IsTypeFunctions {
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @Specialization
-        protected byte isObject(RAbstractContainer arg) {
+        protected byte isObject(RAttributable arg) {
             controlVisibility();
             return arg.isObject(attrProfiles) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRAbstractContainer(value)"})
+        @Specialization(guards = {"!isRMissing(value)", "!isRAttributable(value)"})
         protected byte isType(Object value) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;

@@ -116,4 +116,8 @@ public interface RAttributable extends RTypedValue {
     default RStringVector getClassAttr(RAttributeProfiles profiles) {
         return (RStringVector) getAttr(profiles, RRuntime.CLASS_ATTR_KEY);
     }
+
+    default boolean isObject(RAttributeProfiles profiles) {
+        return getClassAttr(profiles) != null ? true : false;
+    }
 }

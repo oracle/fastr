@@ -100,5 +100,6 @@ public class TestBuiltin_isobject extends TestBase {
         assertEval("{ is.object(c(1,2,3)) }");
         assertEval("{ is.object(NA) }");
         assertEval("{ is.object(NULL) }");
+        assertEval("{ f<-function() 42; class(f)<-\"foo\"; is.object(f) }");
     }
 }

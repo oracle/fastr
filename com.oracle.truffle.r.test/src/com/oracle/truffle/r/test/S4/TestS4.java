@@ -93,5 +93,7 @@ public class TestS4 extends TestBase {
         assertEval("{ gen<-function(object) 0; setGeneric(\"gen\"); setClass(\"foo\", representation(d=\"numeric\")); setMethod(\"gen\", signature(object=\"foo\"), function(object) object@d); gen(new(\"foo\", d=42)) }");
 
         assertEval("{ setClass(\"foo\", representation(d=\"numeric\")); setClass(\"bar\",  contains=\"foo\"); setGeneric(\"gen\", function(o) standardGeneric(\"gen\")); setMethod(\"gen\", signature(o=\"foo\"), function(o) \"FOO\"); setMethod(\"gen\", signature(o=\"bar\"), function(o) \"BAR\"); c(gen(new(\"foo\", d=7)), gen(new(\"bar\", d=42))) }");
+
+        assertEval("{ setGeneric(\"gen\", function(o) standardGeneric(\"gen\")); setGeneric(\"gen\", function(o) standardGeneric(\"gen\")) }");
     }
 }

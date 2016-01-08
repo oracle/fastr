@@ -333,4 +333,8 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
         return value == RNull.instance;
     }
 
+    protected static boolean isRAttributable(Object value) {
+        return value instanceof RAttributable;
+    }
+
 }
