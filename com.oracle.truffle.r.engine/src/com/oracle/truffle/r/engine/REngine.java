@@ -53,6 +53,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactory;
 import com.oracle.truffle.r.engine.interop.RFunctionAccessFactory;
+import com.oracle.truffle.r.engine.interop.RListAccessFactory;
 import com.oracle.truffle.r.library.graphics.RGraphics;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
@@ -96,6 +97,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -598,7 +600,9 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     public ForeignAccess getForeignAccess(RTypedValue value) {
-        if (value instanceof RAbstractVector) {
+        if (value instanceof RList) {
+            return ForeignAccess.create(RList.class, new RListAccessFactory());
+        } else if (value instanceof RAbstractVector) {
             return ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
         } else if (value instanceof RFunction) {
             return ForeignAccess.create(RFunction.class, new RFunctionAccessFactory());

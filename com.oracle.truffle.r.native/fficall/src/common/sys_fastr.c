@@ -12,6 +12,8 @@
 
 #include <Rinternals.h>
 
+#define _(Source) (Source)
+
 // selected functions copied from sys-unix.c and sysutils.c:
 
 #include <stdlib.h>

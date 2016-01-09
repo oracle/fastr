@@ -57,11 +57,11 @@ include ../include/gnurheaders.mk
 
 SUPPRESS_WARNINGS := -Wno-int-conversion -Wno-implicit-function-declaration
 
-all: Makefile $(C_OBJECTS) $(F_OBJECTS) $(GNUR_C_OBJECTS) $(GNUR_F_OBJECTS) copy_appl_objects
+all: Makefile $(C_OBJECTS) $(F_OBJECTS) $(GNUR_C_OBJECTS) $(GNUR_F_OBJECTS) $(OBJ)/copy_appl_objects
 
-copy_appl_objects: $(GNUR_APPL_F_OBJECTS)
+$(OBJ)/copy_appl_objects: $(GNUR_APPL_F_OBJECTS)
 	cp $(GNUR_APPL_F_OBJECTS) $(OBJ)
-	touch copy_appl_objects
+	touch $(OBJ)/copy_appl_objects
 
 $(C_OBJECTS): | $(OBJ)
 
@@ -88,5 +88,5 @@ $(OBJ)/%.o: %.f
 	$(F77) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(OBJ) copy_appl_objects
+	rm -rf $(OBJ)
 

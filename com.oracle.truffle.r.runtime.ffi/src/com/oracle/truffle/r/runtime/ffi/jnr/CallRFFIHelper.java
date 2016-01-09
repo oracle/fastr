@@ -81,23 +81,23 @@ public class CallRFFIHelper {
 
     // Checkstyle: stop method name check
 
-    static RIntVector Rf_ScalarInteger(int value) {
+    public static RIntVector Rf_ScalarInteger(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
     }
 
-    static RLogicalVector Rf_ScalarLogical(int value) {
+    public static RLogicalVector Rf_ScalarLogical(int value) {
         return RDataFactory.createLogicalVectorFromScalar(value != 0);
     }
 
-    static RDoubleVector Rf_ScalarDouble(double value) {
+    public static RDoubleVector Rf_ScalarDouble(double value) {
         return RDataFactory.createDoubleVectorFromScalar(value);
     }
 
-    static RStringVector Rf_ScalarString(String value) {
+    public static RStringVector Rf_ScalarString(String value) {
         return RDataFactory.createStringVectorFromScalar(value);
     }
 
-    static int Rf_asInteger(Object x) {
+    public static int Rf_asInteger(Object x) {
         if (x instanceof Integer) {
             return ((Integer) x).intValue();
         } else if (x instanceof Double) {
@@ -108,7 +108,7 @@ public class CallRFFIHelper {
         }
     }
 
-    static double Rf_asReal(Object x) {
+    public static double Rf_asReal(Object x) {
         if (x instanceof Double) {
             return ((Double) x).doubleValue();
         } else if (x instanceof Byte) {
@@ -119,7 +119,7 @@ public class CallRFFIHelper {
         }
     }
 
-    static int Rf_asLogical(Object x) {
+    public static int Rf_asLogical(Object x) {
         if (x instanceof Byte) {
             return ((Byte) x).intValue();
         } else {
@@ -128,7 +128,7 @@ public class CallRFFIHelper {
         }
     }
 
-    static String Rf_asChar(Object x) {
+    public static String Rf_asChar(Object x) {
         if (x instanceof String) {
             return (String) x;
         } else {
@@ -137,11 +137,11 @@ public class CallRFFIHelper {
         }
     }
 
-    static Object Rf_cons(Object car, Object cdr) {
+    public static Object Rf_cons(Object car, Object cdr) {
         return RDataFactory.createPairList(car, cdr);
     }
 
-    static void Rf_defineVar(Object symbolArg, Object value, Object envArg) {
+    public static void Rf_defineVar(Object symbolArg, Object value, Object envArg) {
         REnvironment env = (REnvironment) envArg;
         RSymbol name = (RSymbol) symbolArg;
         try {
@@ -151,11 +151,11 @@ public class CallRFFIHelper {
         }
     }
 
-    static Object Rf_findVar(Object symbolArg, Object envArg) {
+    public static Object Rf_findVar(Object symbolArg, Object envArg) {
         return findVarInFrameHelper(symbolArg, envArg, true);
     }
 
-    static Object Rf_findVarInFrame(Object symbolArg, Object envArg) {
+    public static Object Rf_findVarInFrame(Object symbolArg, Object envArg) {
         return findVarInFrameHelper(symbolArg, envArg, false);
     }
 
@@ -182,7 +182,7 @@ public class CallRFFIHelper {
 
     }
 
-    static Object Rf_getAttrib(Object obj, Object name) {
+    public static Object Rf_getAttrib(Object obj, Object name) {
         Object result = RNull.instance;
         if (obj instanceof RAttributable) {
             RAttributable attrObj = (RAttributable) obj;
@@ -198,7 +198,7 @@ public class CallRFFIHelper {
         return result;
     }
 
-    static void Rf_setAttrib(Object obj, Object name, Object val) {
+    public static void Rf_setAttrib(Object obj, Object name, Object val) {
         if (obj instanceof RAttributable) {
             RAttributable attrObj = (RAttributable) obj;
             RAttributes attrs = attrObj.getAttributes();
@@ -217,7 +217,7 @@ public class CallRFFIHelper {
         }
     }
 
-    private static RStringVector getClassHr(Object v) {
+    public static RStringVector getClassHr(Object v) {
         if (v instanceof RAttributable) {
             return ((RAttributable) v).getClassHierarchy();
         } else if (v instanceof Byte) {
@@ -238,7 +238,7 @@ public class CallRFFIHelper {
         }
     }
 
-    static int Rf_inherits(Object x, String clazz) {
+    public static int Rf_inherits(Object x, String clazz) {
         RStringVector hierarchy = getClassHr(x);
         for (int i = 0; i < hierarchy.getLength(); i++) {
             if (hierarchy.getDataAt(i).equals(clazz)) {
@@ -248,15 +248,15 @@ public class CallRFFIHelper {
         return 0;
     }
 
-    static int Rf_isString(Object x) {
+    public static int Rf_isString(Object x) {
         return RRuntime.asString(x) == null ? 0 : 1;
     }
 
-    static int Rf_isNull(Object x) {
+    public static int Rf_isNull(Object x) {
         return x == RNull.instance ? 1 : 0;
     }
 
-    static Object Rf_PairToVectorList(Object x) {
+    public static Object Rf_PairToVectorList(Object x) {
         if (x == RNull.instance) {
             return RDataFactory.createList();
         }
@@ -264,19 +264,19 @@ public class CallRFFIHelper {
         return pl.toRList();
     }
 
-    static void Rf_error(String msg) {
+    public static void Rf_error(String msg) {
         throw RError.error(RError.NO_NODE, RError.Message.GENERIC, msg);
     }
 
-    static void Rf_warning(String msg) {
+    public static void Rf_warning(String msg) {
         RError.warning(RError.NO_NODE, RError.Message.GENERIC, msg);
     }
 
-    static void Rf_warningcall(Object call, String msg) {
+    public static void Rf_warningcall(Object call, String msg) {
         RErrorHandling.warningcallRFFI(call, msg);
     }
 
-    static Object Rf_allocateVector(int mode, int n) {
+    public static Object Rf_allocateVector(int mode, int n) {
         SEXPTYPE type = SEXPTYPE.mapInt(mode);
         if (n < 0) {
             throw RError.error(RError.NO_NODE, RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
@@ -303,7 +303,7 @@ public class CallRFFIHelper {
 
     }
 
-    static Object Rf_allocateArray(int mode, Object dimsObj) {
+    public static Object Rf_allocateArray(int mode, Object dimsObj) {
         RIntVector dims = (RIntVector) dimsObj;
         int n = 1;
         int[] newDims = new int[dims.getLength()];
@@ -318,7 +318,7 @@ public class CallRFFIHelper {
 
     }
 
-    static Object Rf_allocateMatrix(int mode, int ncol, int nrow) {
+    public static Object Rf_allocateMatrix(int mode, int ncol, int nrow) {
         SEXPTYPE type = SEXPTYPE.mapInt(mode);
         if (nrow < 0 || ncol < 0) {
             throw RError.error(RError.NO_NODE, RError.Message.NEGATIVE_EXTENTS_TO_MATRIX);
@@ -341,7 +341,7 @@ public class CallRFFIHelper {
         }
     }
 
-    static int LENGTH(Object x) {
+    public static int LENGTH(Object x) {
         if (x instanceof RAbstractContainer) {
             return ((RAbstractContainer) x).getLength();
         } else if (x == RNull.instance) {
@@ -353,19 +353,19 @@ public class CallRFFIHelper {
         }
     }
 
-    static void SET_STRING_ELT(Object x, int i, Object v) {
+    public static void SET_STRING_ELT(Object x, int i, Object v) {
         // TODO error checks
         RStringVector xv = (RStringVector) x;
         xv.setElement(i, v);
     }
 
-    static void SET_VECTOR_ELT(Object x, int i, Object v) {
+    public static void SET_VECTOR_ELT(Object x, int i, Object v) {
         // TODO error checks
         RList list = (RList) x;
         list.setElement(i, v);
     }
 
-    static byte[] RAW(Object x) {
+    public static byte[] RAW(Object x) {
         if (x instanceof RRawVector) {
             return ((RRawVector) x).getDataWithoutCopying();
         } else if (x instanceof RRaw) {
@@ -379,7 +379,7 @@ public class CallRFFIHelper {
         return RRuntime.isNA(v) ? Integer.MIN_VALUE : v;
     }
 
-    static int[] LOGICAL(Object x) {
+    public static int[] LOGICAL(Object x) {
         if (x instanceof RLogicalVector) {
             // TODO: this should not actually copy...
             RLogicalVector vector = (RLogicalVector) x;
@@ -396,7 +396,7 @@ public class CallRFFIHelper {
 
     }
 
-    static int[] INTEGER(Object x) {
+    public static int[] INTEGER(Object x) {
         if (x instanceof RIntVector) {
             return ((RIntVector) x).getDataWithoutCopying();
         } else if (x instanceof RIntSequence) {
@@ -416,7 +416,7 @@ public class CallRFFIHelper {
         }
     }
 
-    static double[] REAL(Object x) {
+    public static double[] REAL(Object x) {
         if (x instanceof RDoubleVector) {
             return ((RDoubleVector) x).getDataWithoutCopying();
         } else if (x instanceof RDoubleSequence) {
@@ -427,7 +427,7 @@ public class CallRFFIHelper {
         }
     }
 
-    static String STRING_ELT(Object x, int i) {
+    public static String STRING_ELT(Object x, int i) {
         if (x instanceof String) {
             assert i == 0;
             return (String) x;
@@ -438,7 +438,7 @@ public class CallRFFIHelper {
         }
     }
 
-    static Object VECTOR_ELT(Object x, int i) {
+    public static Object VECTOR_ELT(Object x, int i) {
         if (x instanceof RList) {
             return ((RList) x).getDataAt(i);
         } else {
@@ -446,7 +446,7 @@ public class CallRFFIHelper {
         }
     }
 
-    static int NAMED(Object x) {
+    public static int NAMED(Object x) {
         if (x instanceof RShareable) {
             return ((RShareable) x).isShared() ? 1 : 0;
         } else {
@@ -454,57 +454,57 @@ public class CallRFFIHelper {
         }
     }
 
-    static Object Rf_duplicate(Object x) {
+    public static Object Rf_duplicate(Object x) {
         guaranteeInstanceOf(x, RAbstractVector.class);
         return ((RAbstractVector) x).copy();
     }
 
-    static Object PRINTNAME(Object x) {
+    public static Object PRINTNAME(Object x) {
         guaranteeInstanceOf(x, RSymbol.class);
         return ((RSymbol) x).getName();
     }
 
-    static Object TAG(Object e) {
+    public static Object TAG(Object e) {
         guaranteeInstanceOf(e, RPairList.class);
         return ((RPairList) e).getTag();
     }
 
-    static Object CAR(Object e) {
+    public static Object CAR(Object e) {
         guaranteeInstanceOf(e, RPairList.class);
         Object car = ((RPairList) e).car();
         return car;
     }
 
-    static Object CDR(Object e) {
+    public static Object CDR(Object e) {
         guaranteeInstanceOf(e, RPairList.class);
         Object cdr = ((RPairList) e).cdr();
         return cdr;
     }
 
-    static Object CADR(Object e) {
+    public static Object CADR(Object e) {
         guaranteeInstanceOf(e, RPairList.class);
         Object cadr = ((RPairList) e).cadr();
         return cadr;
     }
 
-    static Object SETCAR(Object x, Object y) {
+    public static Object SETCAR(Object x, Object y) {
         guaranteeInstanceOf(x, RPairList.class);
         ((RPairList) x).setCar(y);
         return x; // TODO check or y?
     }
 
-    static Object SETCDR(Object x, Object y) {
+    public static Object SETCDR(Object x, Object y) {
         guaranteeInstanceOf(x, RPairList.class);
         ((RPairList) x).setCdr(y);
         return x; // TODO check or y?
     }
 
-    static Object R_FindNamespace(Object name) {
+    public static Object R_FindNamespace(Object name) {
         Object result = RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(RRuntime.asString(name));
         return result;
     }
 
-    static Object Rf_eval(Object expr, Object env) {
+    public static Object Rf_eval(Object expr, Object env) {
         guarantee(env instanceof REnvironment);
         Object result;
         if (expr instanceof RPromise) {
@@ -520,7 +520,7 @@ public class CallRFFIHelper {
         return result;
     }
 
-    static Object Rf_findfun(Object symbolObj, Object envObj) {
+    public static Object Rf_findfun(Object symbolObj, Object envObj) {
         guarantee(envObj instanceof REnvironment);
         REnvironment env = (REnvironment) envObj;
         guarantee(symbolObj instanceof RSymbol);
@@ -535,13 +535,13 @@ public class CallRFFIHelper {
         }
     }
 
-    static Object Rf_GetOption1(Object tag) {
+    public static Object Rf_GetOption1(Object tag) {
         guarantee(tag instanceof RSymbol);
         Object result = RContext.getInstance().stateROptions.getValue(((RSymbol) tag).getName());
         return result;
     }
 
-    static void Rf_gsetVar(Object symbol, Object value, Object rho) {
+    public static void Rf_gsetVar(Object symbol, Object value, Object rho) {
         guarantee(symbol instanceof RSymbol);
         REnvironment baseEnv = RContext.getInstance().stateREnvironment.getBaseEnv();
         guarantee(rho == baseEnv);
@@ -552,7 +552,7 @@ public class CallRFFIHelper {
         }
     }
 
-    static void DUPLICATE_ATTRIB(Object to, Object from) {
+    public static void DUPLICATE_ATTRIB(Object to, Object from) {
         if (from instanceof RAttributable) {
             guaranteeInstanceOf(to, RAttributable.class);
             RAttributes attributes = ((RAttributable) from).getAttributes();
@@ -561,7 +561,7 @@ public class CallRFFIHelper {
         // TODO: copy OBJECT? and S4 attributes
     }
 
-    static REnvironment Rf_createNewEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
+    public static REnvironment Rf_createNewEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
         REnvironment env = RDataFactory.createNewEnv(name, hashed, initialSize);
         RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
         return env;
@@ -569,35 +569,35 @@ public class CallRFFIHelper {
 
     // Checkstyle: resume method name check
 
-    static Object validate(Object x) {
+    public static Object validate(Object x) {
         return x;
     }
 
-    static Object getGlobalEnv() {
+    public static Object getGlobalEnv() {
         return RContext.getInstance().stateREnvironment.getGlobalEnv();
     }
 
-    static Object getBaseEnv() {
+    public static Object getBaseEnv() {
         return RContext.getInstance().stateREnvironment.getBaseEnv();
     }
 
-    static Object getBaseNamespace() {
+    public static Object getBaseNamespace() {
         return RContext.getInstance().stateREnvironment.getBaseNamespace();
     }
 
-    static Object getNamespaceRegistry() {
+    public static Object getNamespaceRegistry() {
         return RContext.getInstance().stateREnvironment.getNamespaceRegistry();
     }
 
-    static int isInteractive() {
+    public static int isInteractive() {
         return RContext.getInstance().isInteractive() ? 1 : 0;
     }
 
-    static int isS4Object(Object x) {
+    public static int isS4Object(Object x) {
         return x instanceof RS4Object ? 1 : 0;
     }
 
-    static void printf(String message) {
+    public static void printf(String message) {
         RContext.getInstance().getConsoleHandler().print(message);
     }
 }

@@ -9,10 +9,14 @@
  *
  * All rights reserved.
  */
-#include <rffiutils.h>
+
+#include <Rinternals.h>
+#include <stdlib.h>
 
 Rboolean known_to_be_latin1 = FALSE;
 Rboolean known_to_be_utf8 = FALSE;
+
+extern void *unimplemented(char *msg);
 
 int R_cairoCdynload(int local, int now)
 {

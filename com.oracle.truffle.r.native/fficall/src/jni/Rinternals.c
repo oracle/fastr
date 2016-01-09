@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -295,6 +295,10 @@ SEXP Rf_duplicated(SEXP x, Rboolean y) {
 	return NULL;
 }
 
+SEXP Rf_applyClosure(SEXP x, SEXP y, SEXP z, SEXP a, SEXP b) {
+	return unimplemented("Rf_applyClosure");
+}
+
 void Rf_copyMostAttrib(SEXP x, SEXP y) {
 	unimplemented("Rf_copyMostAttrib");
 }
@@ -355,6 +359,11 @@ Rboolean Rf_isString(SEXP s) {
 	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_isStringMethodID, s);
 }
 
+Rboolean R_cycle_detected(SEXP s, SEXP child) {
+	unimplemented("R_cycle_detected");
+	return 0;
+}
+
 cetype_t Rf_getCharCE(SEXP x) {
     // unimplemented("Rf_getCharCE");
     // TODO: real implementation
@@ -385,6 +394,11 @@ SEXP Rf_mkCharLenCE(const char *x, int len, cetype_t enc) {
 	// TODO encoding, assume UTF for now, zero terminated
 	SEXP result = (*thisenv)->NewStringUTF(thisenv, buf);
 	return checkRef(thisenv, result);
+}
+
+const char *Rf_reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst) {
+	unimplemented("Rf_reEnc");
+	return NULL;
 }
 
 SEXP Rf_mkString(const char *s) {
@@ -456,6 +470,10 @@ void Rf_error(const char *format, ...) {
 	// just transfer back which will cleanup and exit the entire JNI call
 	longjmp(*getErrorJmpBuf(), 1);
 
+}
+
+void Rf_errorcall(SEXP x, const char *format, ...) {
+	unimplemented("Rf_errorcall");
 }
 
 void Rf_warningcall(SEXP x, const char *format, ...) {
