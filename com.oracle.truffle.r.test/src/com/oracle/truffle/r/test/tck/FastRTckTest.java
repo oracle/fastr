@@ -84,7 +84,11 @@ public class FastRTckTest extends TruffleTCK {
         "   a[i]$imaginary <- b[i]$imaginary\n" +
         " }\n" +
         "}\n" +
-        "Interop.export('complexCopy', complexCopy)\n",
+        "Interop.export('complexCopy', complexCopy)\n" +
+        "valuesObject <- function() {\n" +
+        "  list('byteValue'=0L, 'shortValue'=0L, 'intValue'=0L, 'longValue'=0L, 'floatValue'=0, 'doubleValue'=0, 'charValue'=0L, 'stringValue'='', 'booleanValue'=FALSE)\n" +
+        "}\n" +
+        "Interop.export('valuesObject', valuesObject)\n",
         "<initialization>"
     ).withMimeType(TruffleRLanguage.MIME);
     // @formatter:on
@@ -154,6 +158,11 @@ public class FastRTckTest extends TruffleTCK {
             "  re turn(42)\n" +
             "}\n";
         // @formatter:on
+    }
+
+    @Override
+    protected String valuesObject() {
+        return "valuesObject";
     }
 
     @Override

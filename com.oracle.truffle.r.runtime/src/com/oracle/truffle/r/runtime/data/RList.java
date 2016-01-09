@@ -22,11 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.TruffleObject;
+
 import java.util.*;
 
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.RContext;
 
-public final class RList extends RListBase implements RGPBits {
+public final class RList extends RListBase implements RGPBits, TruffleObject {
 
     private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getName());
 
@@ -79,6 +83,10 @@ public final class RList extends RListBase implements RGPBits {
     @Override
     public RStringVector getImplicitClass() {
         return getClassHierarchyHelper(implicitClassHeader);
+    }
+
+    public ForeignAccess getForeignAccess() {
+        return RContext.getEngine().getForeignAccess(this);
     }
 
 }
