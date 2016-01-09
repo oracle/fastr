@@ -397,8 +397,8 @@ SEXP Rf_mkCharLenCE(const char *x, int len, cetype_t enc) {
 }
 
 const char *Rf_reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst) {
-	unimplemented("Rf_reEnc");
-	return NULL;
+	// TODO proper implementation
+	return x;
 }
 
 SEXP Rf_mkString(const char *s) {
@@ -1231,11 +1231,6 @@ double R_atof(const char *str) {
 double R_strtod(const char *c, char **end) {
 	unimplemented("R_strtod");
 	return 0;
-}
-
-const char *reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst) {
-    // TODO: proper implementation of reEnc
-    return x;
 }
 
 SEXP R_PromiseExpr(SEXP x) {
