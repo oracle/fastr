@@ -46,6 +46,7 @@ com.oracle.truffle.r.native/fficall/src/common/print_fastr.c,gnu_r_gentleman_iha
 com.oracle.truffle.r.native/fficall/src/common/printutils_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/sys_fastr.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/common/util_fastr.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/src/common/unimplemented.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/include/Defn.h,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/include/Graphics.h,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/include/GraphicsBase.h,gnu_r_gentleman_ihaka.copyright
@@ -57,7 +58,6 @@ com.oracle.truffle.r.native/fficall/src/include/contour-common.h,gnu_r_gentleman
 com.oracle.truffle.r.native/fficall/src/include/nmath.h,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/include/rlocale.h,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/variable_defs/variable_defs.h,gnu_r.copyright
-com.oracle.truffle.r.native/fficall/src/jni/unimplemented.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/jni/Memory.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/jni/Rdynload_fastr.c,gnu_r.copyright
 com.oracle.truffle.r.native/include/src/libintl.h,no.copyright
