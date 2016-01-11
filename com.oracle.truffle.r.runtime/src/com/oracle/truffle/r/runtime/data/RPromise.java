@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,7 +79,7 @@ public class RPromise implements RTypedValue {
 
     public static final String CLOSURE_WRAPPER_NAME = new String("<promise>");
 
-    private RBaseNode rep;
+    private final RBaseNode rep;
 
     /**
      * @see PromiseType
@@ -151,10 +151,6 @@ public class RPromise implements RTypedValue {
 
     public RBaseNode getRep() {
         return rep;
-    }
-
-    public void setRep(RBaseNode rep) {
-        this.rep = rep;
     }
 
     public RType getRType() {
