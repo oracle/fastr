@@ -330,7 +330,7 @@ public class InfixEmulationFunctions {
 
     }
 
-    @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", ""}, dispatch = INTERNAL_GENERIC)
+    @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", "value"}, dispatch = INTERNAL_GENERIC)
     public abstract static class UpdateFieldBuiltin extends RBuiltinNode {
 
         private final BranchProfile coerceList = BranchProfile.create();
