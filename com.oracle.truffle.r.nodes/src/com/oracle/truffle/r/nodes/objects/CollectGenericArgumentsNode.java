@@ -35,7 +35,10 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -49,6 +52,7 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
     @Children private final LocalReadVariableNode[] argReads;
     @Children private final ClassHierarchyScalarNode[] classHierarchyNodes;
     @Child private ClassHierarchyScalarNode classHierarchyNodeSlowPath;
+    @Child private PromiseCheckHelperNode promiseHelper = new PromiseCheckHelperNode();
 
     private final ConditionProfile valueMissingProfile = ConditionProfile.createBinaryProfile();
 
@@ -75,13 +79,13 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
         String[] result = new String[argReads.length];
         for (int i = 0; i < argReads.length; i++) {
             Object cachedId = argReads[i].getIdentifier();
-            String id = ((RSymbol) (arguments.getDataAt(0))).getName();
+            String id = ((RSymbol) (arguments.getDataAt(i))).getName();
             assert cachedId instanceof String && cachedId == ((String) cachedId).intern() && id == id.intern();
             if (cachedId != id) {
                 throw new SlowPathException();
             }
             Object value = argReads[i].execute(frame);
-            result[i] = valueMissingProfile.profile(value == null) ? "missing" : classHierarchyNodes[i].executeString(value);
+            result[i] = valueMissingProfile.profile(value == null) ? "missing" : classHierarchyNodes[i].executeString(promiseHelper.checkEvaluate(frame, value));
         }
         return result;
     }
@@ -103,7 +107,11 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
             if (slot == null) {
                 result[i] = "missing";
             } else {
-                result[i] = classHierarchyNodeSlowPath.executeString(frame.getValue(slot));
+                Object value = frame.getValue(slot);
+                if (value instanceof RPromise) {
+                    value = PromiseHelperNode.evaluateSlowPath(null, (RPromise) value);
+                }
+                result[i] = classHierarchyNodeSlowPath.executeString(value);
             }
         }
         return result;
