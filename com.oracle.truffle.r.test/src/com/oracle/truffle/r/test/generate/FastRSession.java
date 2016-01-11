@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
+import com.oracle.truffle.r.test.TestBase;
 
 public final class FastRSession implements RSession {
 
@@ -267,6 +268,9 @@ public final class FastRSession implements RSession {
                     if (t instanceof RError) {
                         // nothing to do
                     } else {
+                        if (!TestBase.ProcessFailedTests && t instanceof RInternalError) {
+                            RInternalError.reportError(t);
+                        }
                         t.printStackTrace();
                         killedByException = t;
                     }

@@ -60,7 +60,7 @@ import com.oracle.truffle.r.test.generate.TestOutputManager;
  */
 public class TestBase {
 
-    private static final boolean ProcessFailedTests = Boolean.getBoolean("ProcessFailedTests");
+    public static final boolean ProcessFailedTests = Boolean.getBoolean("ProcessFailedTests");
 
     public enum Output implements TestTrait {
         ContainsError, // the error context is ignored (e.g., "a+b" vs. "a + b")
