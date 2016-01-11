@@ -92,6 +92,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return node.getRelement(index);
     }
 
+    @TruffleBoundary
     public Object fromList(RList list) {
         int length = list.getLength();
         if (length == 0) {
