@@ -86,7 +86,7 @@ public class FastRTckTest extends TruffleTCK {
         "}\n" +
         "Interop.export('complexCopy', complexCopy)\n" +
         "valuesObject <- function() {\n" +
-        "  list('byteValue'=0L, 'shortValue'=0L, 'intValue'=0L, 'longValue'=0L, 'floatValue'=0, 'doubleValue'=0, 'charValue'=0L, 'stringValue'='', 'booleanValue'=FALSE)\n" +
+        "  list('byteValue'=0L, 'shortValue'=0L, 'intValue'=0L, 'longValue'=0L, 'floatValue'=0, 'doubleValue'=0, 'charValue'=48L, 'stringValue'='', 'booleanValue'=FALSE)\n" +
         "}\n" +
         "Interop.export('valuesObject', valuesObject)\n",
         "<initialization>"

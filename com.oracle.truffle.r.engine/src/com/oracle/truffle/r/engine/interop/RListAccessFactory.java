@@ -79,11 +79,11 @@ public final class RListAccessFactory implements Factory10 {
     }
 
     public CallTarget accessRead() {
-        throw RInternalError.unimplemented("accessRead");
+        return Truffle.getRuntime().createCallTarget(ListReadNodeGen.create());
     }
 
     public CallTarget accessWrite() {
-        throw RInternalError.unimplemented("accessWrite");
+        return Truffle.getRuntime().createCallTarget(ListWriteNodeGen.create());
     }
 
     public CallTarget accessExecute(int argumentsLength) {
@@ -91,7 +91,7 @@ public final class RListAccessFactory implements Factory10 {
     }
 
     public CallTarget accessInvoke(int argumentsLength) {
-        throw RInternalError.unimplemented("accessInvoke");
+        return null;
     }
 
     public CallTarget accessNew(int argumentsLength) {
