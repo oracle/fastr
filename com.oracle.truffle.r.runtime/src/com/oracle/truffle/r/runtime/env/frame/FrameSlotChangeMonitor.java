@@ -478,7 +478,7 @@ public final class FrameSlotChangeMonitor {
 
     // methods for creating new frame slots
 
-    public static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind initialKind) {
+    public static synchronized FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind initialKind) {
         CompilerAsserts.neverPartOfCompilation();
         FrameSlot frameSlot = fd.findFrameSlot(identifier);
         if (frameSlot != null) {
