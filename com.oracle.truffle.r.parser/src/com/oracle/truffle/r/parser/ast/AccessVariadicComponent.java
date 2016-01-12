@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,22 +26,35 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-public class SimpleAccessTempVariable extends AccessVariable {
+public final class AccessVariadicComponent extends ASTNode {
 
-    private final String tempSymbol;
+    private final int index;
+    private final String name;
 
-    SimpleAccessTempVariable(SourceSection source, String tempSymbol) {
+    private AccessVariadicComponent(SourceSection source, String name) {
         super(source);
-        this.tempSymbol = tempSymbol;
+        index = getVariadicComponentIndex(name);
+        this.name = name;
     }
 
-    public String getSymbol() {
-        return tempSymbol;
+    private static int getVariadicComponentIndex(String symbol) {
+        if (symbol.length() > 2 && symbol.charAt(0) == '.' && symbol.charAt(1) == '.') {
+            for (int i = 2; i < symbol.length(); i++) {
+                if (symbol.charAt(i) < '\u0030' || symbol.charAt(i) > '\u0039') {
+                    return -1;
+                }
+            }
+            return Integer.parseInt(symbol.substring(2));
+        }
+        return -1;
     }
 
-    @Override
-    public int getPrecedence() {
-        return Operation.MAX_PRECEDENCE;
+    public int getIndex() {
+        return index;
+    }
+
+    public String getName() {
+        return name;
     }
 
     @Override
@@ -52,5 +65,9 @@ public class SimpleAccessTempVariable extends AccessVariable {
     @Override
     public <R> List<R> visitAll(Visitor<R> v) {
         return Collections.emptyList();
+    }
+
+    public static ASTNode create(SourceSection src, String name) {
+        return new AccessVariadicComponent(src, name);
     }
 }

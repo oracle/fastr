@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -211,7 +211,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     }
 
     @Override
-    public Void visit(SimpleAssignVariable n) {
+    public Void visit(AssignVariable n) {
         print(n.getVariable());
         print(" <- ");
         n.getExpr().accept(this);
@@ -219,15 +219,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     }
 
     @Override
-    public Void visit(UpdateVector n) {
-        print(n.getVector());
-        print(" <- ");
-        print(n.getRHS());
-        return null;
-    }
-
-    @Override
-    public Void visit(FunctionCall n) {
+    public Void visit(Call n) {
         print(n.getName() + "(");
         print(n.getArguments(), true);
         print(")");
@@ -244,24 +236,8 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     }
 
     @Override
-    public Void visit(SimpleAccessVariable n) {
+    public Void visit(AccessVariable n) {
         print(n.getVariable());
-        return null;
-    }
-
-    @Override
-    public Void visit(FieldAccess n) {
-        print(n.getLhs());
-        print("$");
-        print(n.getFieldName());
-        return null;
-    }
-
-    @Override
-    public Void visit(UpdateField n) {
-        n.getVector().accept(this);
-        print(" <- ");
-        n.getRHS().accept(this);
         return null;
     }
 

@@ -14,13 +14,42 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-public abstract class Call extends ASTNode {
+public final class Call extends ASTNode {
 
+    // LHS of a call does not need to be a symbol, it can be a lambda expression (FunctionCall)
+    private final Object lhs;
     private final List<ArgNode> arguments;
 
-    protected Call(SourceSection source, List<ArgNode> arguments) {
+    private Call(SourceSection source, Object lhs, List<ArgNode> arguments) {
         super(source);
+        this.lhs = lhs;
         this.arguments = arguments;
+    }
+
+    public Object getLhs() {
+        return lhs;
+    }
+
+    public boolean isSymbol() {
+        return lhs instanceof String;
+    }
+
+    public String getName() {
+        String result = (String) lhs;
+        return result;
+    }
+
+    public Call getFunctionCall() {
+        return (Call) lhs;
+    }
+
+    public ASTNode getLhsNode() {
+        return (ASTNode) lhs;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> v) {
+        return v.visit(this);
     }
 
     @Override
@@ -39,49 +68,71 @@ public abstract class Call extends ASTNode {
         return arguments;
     }
 
+    public static ASTNode create(SourceSection src, String fun, List<ArgNode> args) {
+        return new Call(src, fun, args);
+    }
+
     public static ASTNode create(SourceSection src, ASTNode call, List<ArgNode> arguments) {
         for (ArgNode a : arguments) {
             // otherwise "empty" indexes are not recorded at all
             if (a.getName() == null && a.getValue() == null) {
-                a.value = new Missing(a.getSource());
+                a.setValue(new Missing(a.getSource()));
             }
         }
         // Add "call"'s source to src
         SourceSection callSrc = combineSource(call.getSource(), src);
-        if (call instanceof SimpleAccessVariable) {
-            SimpleAccessVariable ccall = (SimpleAccessVariable) call;
-            return create(callSrc, ccall.getVariable(), arguments);
+        if (call instanceof AccessVariable) {
+            AccessVariable ccall = (AccessVariable) call;
+            return new Call(callSrc, ccall.getVariable(), arguments);
         } else if (call instanceof Constant) {
             Constant c = (Constant) call;
             assert c.getValue() instanceof String;
-            return create(callSrc, (String) c.getValue(), arguments);
-        } else if (call instanceof FunctionCall) {
-            return new FunctionCall(callSrc, (FunctionCall) call, arguments);
+            return new Call(callSrc, c.getValue(), arguments);
         } else {
-            return new FunctionCall(callSrc, call, arguments, false);
+            return new Call(callSrc, call, arguments);
         }
     }
 
-    public static ASTNode create(SourceSection src, String funName, List<ArgNode> args) {
-        return new FunctionCall(src, funName, args);
+    public static ASTNode create(SourceSection src, CallOperator op, ASTNode lhs, ASTNode... additionalArgs) {
+        List<ArgNode> args = new ArrayList<>();
+        args.add(ArgNode.create(lhs.getSource(), null, lhs));
+        for (ASTNode arg : additionalArgs) {
+            args.add(ArgNode.create(arg.getSource(), null, arg));
+        }
+        return new Call(src, op.getOpName(), args);
     }
 
     public static ASTNode create(SourceSection src, CallOperator op, ASTNode lhs, List<ArgNode> args) {
         for (ArgNode a : args) {
             // otherwise "empty" indexes are not recorded at all
             if (a.getName() == null && a.getValue() == null) {
-                a.value = new Missing(a.getSource());
+                a.setValue(new Missing(a.getSource()));
             }
         }
         // lhs is actually the first argument when rewritten as a call, `[`(lhs, args)
         args.add(0, ArgNode.create(lhs.getSource(), null, lhs));
         // adjust src to encompass the entire expression
         SourceSection newSrc = combineSource(lhs.getSource(), src);
-        return new AccessVector(newSrc, lhs, args, op == CallOperator.SUBSET);
+        if (args.size() == 1) {
+            args.add(ArgNode.create(null, null, new Missing(null)));
+        }
+        return new Call(newSrc, op.getOpName(), args);
     }
 
     public enum CallOperator {
-        SUBSET,
-        SUBSCRIPT
+        SUBSET("["),
+        SUBSCRIPT("[["),
+        FIELD("$"),
+        AT("@");
+
+        private final String opName;
+
+        private CallOperator(String opName) {
+            this.opName = opName;
+        }
+
+        public String getOpName() {
+            return opName;
+        }
     }
 }

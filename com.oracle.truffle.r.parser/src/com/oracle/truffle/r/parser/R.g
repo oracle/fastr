@@ -236,10 +236,10 @@ assign returns [ASTNode v]
         }
     }
     : l=tilde_expr
-      ( ARROW n_ r=expr             { rr = $r.v; $v = AssignVariable.create(null, false, $l.v, $r.v); }
-      | SUPER_ARROW n_ r=expr       { rr = $r.v; $v = AssignVariable.create(null, true, $l.v, $r.v); }
-      | RIGHT_ARROW n_ r=expr       { rr = $r.v; $v = AssignVariable.create(null, false, $r.v, $l.v); }
-      | SUPER_RIGHT_ARROW n_ r=expr { rr = $r.v; $v = AssignVariable.create(null, true, $r.v, $l.v); }
+      ( op=ARROW n_ r=expr             { rr = $r.v; $v = AssignVariable.create(false, sourceSection("assign/ARROW", op), $l.v, $r.v); }
+      | op=SUPER_ARROW n_ r=expr       { rr = $r.v; $v = AssignVariable.create(true, sourceSection("assign/SUPER_ARROW", op), $l.v, $r.v); }
+      | op=RIGHT_ARROW n_ r=expr       { rr = $r.v; $v = AssignVariable.create(false, sourceSection("assign/RIGHT_ARROW", op), $r.v, $l.v); }
+      | op=SUPER_RIGHT_ARROW n_ r=expr { rr = $r.v; $v = AssignVariable.create(true, sourceSection("assign/SUPER_RIGHT_ARROW", op), $r.v, $l.v); }
       | { $v = $l.v; }
       )
     ;
@@ -253,11 +253,11 @@ alter_assign returns [ASTNode v]
         }
     }
     : l=tilde_expr
-      ( (ARROW)=>ARROW n_ r=expr_or_assign                         { rr = $r.v; $v = AssignVariable.create(null, false, $l.v, $r.v); }
-      | (SUPER_ARROW)=>SUPER_ARROW n_ r=expr_or_assign             { rr = $r.v; $v = AssignVariable.create(null, true, $l.v, $r.v); }
-      | (RIGHT_ARROW)=>RIGHT_ARROW n_ r=expr_or_assign             { rr = $r.v; $v = AssignVariable.create(null, false, $r.v, $l.v); }
-      | (SUPER_RIGHT_ARROW)=>SUPER_RIGHT_ARROW n_ r=expr_or_assign { rr = $r.v; $v = AssignVariable.create(null, true, $r.v, $l.v); }
-      | (ASSIGN)=>ASSIGN n_ r=expr_or_assign                       { rr = $r.v; $v = AssignVariable.create(null, false, $l.v, $r.v); }
+      ( (ARROW)=>op=ARROW n_ r=expr_or_assign                         { rr = $r.v; $v = AssignVariable.create(false, sourceSection("assign/ARROW", op), $l.v, $r.v); }
+      | (SUPER_ARROW)=>op=SUPER_ARROW n_ r=expr_or_assign             { rr = $r.v; $v = AssignVariable.create(true, sourceSection("assign/SUPER_ARROW", op), $l.v, $r.v); }
+      | (RIGHT_ARROW)=>op=RIGHT_ARROW n_ r=expr_or_assign             { rr = $r.v; $v = AssignVariable.create(false, sourceSection("assign/RIGHT_ARROW", op), $r.v, $l.v); }
+      | (SUPER_RIGHT_ARROW)=>op=SUPER_RIGHT_ARROW n_ r=expr_or_assign { rr = $r.v; $v = AssignVariable.create(true, sourceSection("assign/SUPER_RIGHT_ARROW", op), $r.v, $l.v); }
+      | (ASSIGN)=>op=ASSIGN n_ r=expr_or_assign                       { rr = $r.v; $v = AssignVariable.create(false, sourceSection("assign/ASSIGN", op), $l.v, $r.v); }
       | { $v = $l.v; }
       )
     ;
@@ -488,20 +488,20 @@ basic_expr returns [ASTNode v]
     ;
 
 expr_subset [ASTNode i] returns [ASTNode v]
-    : (t=FIELD n_ name=id                     { $v = FieldAccess.create(sourceSection("expr_subset/FIELDid", $t, name), FieldOperator.FIELD, i, name.getText()); })
-    | (t=FIELD n_ sname=conststring           { $v = FieldAccess.create(sourceSection("expr_subset/FIELDst", $t, sname), FieldOperator.FIELD, i, sname); })
-    | (t=AT n_ name=id                        { $v = FieldAccess.create(sourceSection("expr_subset/AT", $t, name), FieldOperator.AT, i, name.getText()); })
+    : (t=FIELD n_ name=id                     { $v = Call.create(sourceSection("expr_subset/FIELDid", $t, $y), CallOperator.FIELD, i, Constant.createString(sourceSection("expr_subset/fieldname", name), name.getText())); })
+    | (t=FIELD n_ sname=conststring           { $v = Call.create(sourceSection("expr_subset/FIELDst", $t, $y), CallOperator.FIELD, i, sname); })
+    | (t=AT n_ name=id                        { $v = Call.create(sourceSection("expr_subset/AT", $t, $y), CallOperator.AT, i, Constant.createString(sourceSection("expr_subset/atname", name), name.getText())); })
     | (t=LBRAKET subset=args y=RBRAKET        { $v = Call.create(sourceSection("expr_subset/LBRAKET", $t, $y), CallOperator.SUBSET, i, subset); })
-    | (t=LBB subscript=args RBRAKET y=RBRAKET { $v = Call.create(sourceSection("expr_subset/LBB", $t, $y), CallOperator.SUBSCRIPT, i, subscript); })
     // Must use RBRAKET twice instead of RBB because this is possible: a[b[1]]
+    | (t=LBB subscript=args RBRAKET y=RBRAKET { $v = Call.create(sourceSection("expr_subset/LBB", $t, $y), CallOperator.SUBSCRIPT, i, subscript); })
     | (t=LPAR a=args y=RPAR                   { $v = Call.create(sourceSection("expr_subset/LPAR", $t, $y), i, a); })
     //| { $v = i; }
     ;
 
 simple_expr returns [ASTNode v]
-    : i=id                                      { $v = AccessVariable.create(sourceSection("simple_expr/id", i), i.getText(), false); }
+    : i=id                                      { $v = AccessVariable.create(sourceSection("simple_expr/id", i), i.getText()); }
     | b=bool                                    { $v = b; }
-    | d=DD                                      { $v = AccessVariable.createDotDot(sourceSection("simple_expr/DD", d), d.getText()); }
+    | d=DD                                      { $v = AccessVariadicComponent.create(sourceSection("simple_expr/DD", d), d.getText()); }
     | t=NULL                                    { $v = Constant.createNull(sourceSection("simple_expr/NULL", t)); }
     | t=INF                                     { $v = Constant.createDouble(sourceSection("simple_expr/INF", t), "Inf"); }
     | t=NAN                                     { $v = Constant.createDouble(sourceSection("simple_expr/NAN", t), "NaN"); }

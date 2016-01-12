@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,14 @@
 package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.instrument.WrapperNode;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeVisitor;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * This class should be used as the superclass for all instances of nodes in the FastR AST in
@@ -96,10 +98,6 @@ public abstract class RBaseNode extends Node {
      * found by following the parent chain, which is therefore the default implementation.
      */
     protected RSyntaxNode getRSyntaxNode() {
-        RSyntaxNode node = checkReplacementChild();
-        if (node != null) {
-            return node;
-        }
         Node current = this;
         while (current != null) {
             if (current instanceof RSyntaxNode && ((RSyntaxNode) current).isSyntax()) {
@@ -148,13 +146,6 @@ public abstract class RBaseNode extends Node {
         }
         /* Explicitly allow on a node for which isSyntax() == false */
         if (this instanceof RSyntaxNode) {
-            if (RContext.getRRuntimeASTAccess().isReplacementNode(this)) {
-                return super.getSourceSection();
-            }
-            RSyntaxNode node = checkReplacementChild();
-            if (node != null) {
-                return node.getSourceSection();
-            }
             return super.getSourceSection();
         } else {
             throw RInternalError.shouldNotReachHere("getSourceSection on non-syntax node");
@@ -198,27 +189,4 @@ public abstract class RBaseNode extends Node {
     public SourceSection getEncapsulatingSourceSection() {
         return getRSyntaxNode().getSourceSection();
     }
-
-    /**
-     * This is rather nasty, but then that applies to {@code ReplacementNode} in general. Since a
-     * auto-generated child of a {@code ReplacementNode} may have a {@link SourceSection}, we might
-     * return it using the normal logic, but that would be wrong, we really need to return the the
-     * {@link SourceSection} of the {@code ReplacementNode} itself. This is a case where we can't
-     * use {@link #getRSyntaxNode} as a workaround because the {@code ReplacementNode} child nodes
-     * are just standard {@link RSyntaxNode}s.
-     *
-     * @return {@code null} if not a child of a {@code ReplacementNode}, otherwise the
-     *         {@code ReplacementNode}.
-     */
-    private RSyntaxNode checkReplacementChild() {
-        Node node = this;
-        while (node != null) {
-            if (RContext.getRRuntimeASTAccess().isReplacementNode(node)) {
-                return (RSyntaxNode) node;
-            }
-            node = node.getParent();
-        }
-        return null;
-    }
-
 }

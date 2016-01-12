@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +22,43 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
-import com.oracle.truffle.api.source.*;
+import java.util.Arrays;
+import java.util.List;
 
-public class Replacement extends AssignVariable {
+import com.oracle.truffle.api.source.SourceSection;
 
-    private final FunctionCall replacementFunctionCall;
+public final class Replacement extends ASTNode {
 
-    Replacement(SourceSection src, boolean isSuper, FunctionCall replacementFunctionCall, ASTNode rhs) {
-        super(src, isSuper, rhs);
-        this.replacementFunctionCall = replacementFunctionCall;
+    private final boolean isSuper;
+    private final ASTNode lhs;
+    private final ASTNode rhs;
+
+    private Replacement(SourceSection source, boolean isSuper, ASTNode lhs, ASTNode rhs) {
+        super(source);
+        this.isSuper = isSuper;
+        this.lhs = lhs;
+        this.rhs = rhs;
     }
 
-    public FunctionCall getReplacementFunctionCall() {
-        return replacementFunctionCall;
+    public static Replacement create(SourceSection source, boolean isSuper, ASTNode lhs, ASTNode rhs) {
+        return new Replacement(source, isSuper, lhs, rhs);
+    }
+
+    public boolean isSuper() {
+        return isSuper;
+    }
+
+    public ASTNode getLhs() {
+        return lhs;
+    }
+
+    public ASTNode getRhs() {
+        return rhs;
+    }
+
+    @Override
+    public <R> List<R> visitAll(Visitor<R> v) {
+        return Arrays.asList(lhs.accept(v), rhs.accept(v));
     }
 
     @Override

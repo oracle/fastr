@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,8 +75,8 @@ final class Info {
 
 public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
 
-    private static final Set<String> wellKnownFunctions = new HashSet<>(Arrays.asList("any", "dim", "dimnames", "is.null", "list", "names", "return", "print", "length", "rep", "max", "matrix",
-                    "is.array", "is.element", "is.character", "exp", "all", "pmin", "pmax", "as.numeric", "as.integer", ".Call", "sum", "order", "rev", "integer", "double"));
+    private static final Set<String> wellKnownFunctions = new HashSet<>(Arrays.asList("$", "@", "[", "any", "dim", "dimnames", "is.null", "list", "names", "return", "print", "length", "rep", "max",
+                    "matrix", "is.array", "is.element", "is.character", "exp", "all", "pmin", "pmax", "as.numeric", "as.integer", ".Call", "sum", "order", "rev", "integer", "double"));
 
     private EvaluatedArgumentsVisitor() {
         // private constructor
@@ -98,17 +98,12 @@ public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
     }
 
     @Override
-    public Info visit(SimpleAccessVariadicComponent n) {
+    public Info visit(AccessVariadicComponent n) {
         return Info.EMPTY;
     }
 
     @Override
     public Info visit(Missing m) {
-        return Info.EMPTY;
-    }
-
-    @Override
-    public Info visit(SimpleAccessTempVariable n) {
         return Info.EMPTY;
     }
 
@@ -186,7 +181,7 @@ public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
     }
 
     @Override
-    public Info visit(SimpleAssignVariable n) {
+    public Info visit(AssignVariable n) {
         if (n.isSuper()) {
             return Info.ANY;
         } else {
@@ -198,27 +193,19 @@ public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
     }
 
     @Override
-    public Info visit(UpdateVector n) {
-        Info info = Info.createNew();
-        info.addBefore(n.getRHS().accept(this));
-        info.addBefore(n.getVector().accept(this));
-        return info;
-    }
-
-    @Override
     public Info visit(Replacement n) {
         if (n.isSuper()) {
             return Info.ANY;
         } else {
             Info info = Info.createNew();
-            info.addBefore(n.getReplacementFunctionCall().accept(this));
-            info.addBefore(n.getExpr().accept(this));
+            info.addBefore(n.getLhs().accept(this));
+            info.addBefore(n.getRhs().accept(this));
             return info;
         }
     }
 
     @Override
-    public Info visit(FunctionCall n) {
+    public Info visit(Call n) {
         if (n.getLhs() instanceof String && wellKnownFunctions.contains(n.getLhs())) {
             List<ArgNode> arguments = n.getArguments();
             Info info = Info.createNew();
@@ -239,22 +226,9 @@ public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
     }
 
     @Override
-    public Info visit(SimpleAccessVariable n) {
+    public Info visit(AccessVariable n) {
         Info info = Info.createNew();
         info.evaluatedNames.add(n.getVariable());
-        return info;
-    }
-
-    @Override
-    public Info visit(FieldAccess n) {
-        return n.getLhs().accept(this);
-    }
-
-    @Override
-    public Info visit(UpdateField n) {
-        Info info = Info.createNew();
-        info.addBefore(n.getRHS().accept(this));
-        info.addBefore(n.getVector().accept(this));
         return info;
     }
 

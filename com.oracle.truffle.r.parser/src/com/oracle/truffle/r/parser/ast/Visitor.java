@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -32,25 +32,17 @@ public interface Visitor<R> {
 
     R visit(Constant constant);
 
-    R visit(SimpleAccessVariable readVariable);
+    R visit(AccessVariable readVariable);
 
-    R visit(SimpleAccessTempVariable readVariable);
+    R visit(AccessVariadicComponent readVariable);
 
-    R visit(SimpleAccessVariadicComponent readVariable);
+    R visit(AssignVariable assign);
 
-    R visit(FieldAccess fieldAccess);
-
-    R visit(SimpleAssignVariable assign);
-
-    R visit(Replacement assign);
-
-    R visit(UpdateVector update);
-
-    R visit(UpdateField update);
+    R visit(Replacement replacement);
 
     R visit(Function function);
 
-    R visit(FunctionCall functionCall);
+    R visit(Call functionCall);
 
     R visit(ArgNode arg);
 

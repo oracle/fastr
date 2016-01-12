@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -73,27 +73,17 @@ public class BasicVisitor<R> implements Visitor<R> {
     }
 
     @Override
-    public R visit(SimpleAccessVariable n) {
+    public R visit(AccessVariable n) {
         return visit((ASTNode) n);
     }
 
     @Override
-    public R visit(SimpleAccessTempVariable n) {
+    public R visit(AccessVariadicComponent n) {
         return visit((ASTNode) n);
     }
 
     @Override
-    public R visit(SimpleAccessVariadicComponent n) {
-        return visit((ASTNode) n);
-    }
-
-    @Override
-    public R visit(FieldAccess n) {
-        return visit((ASTNode) n);
-    }
-
-    @Override
-    public R visit(SimpleAssignVariable n) {
+    public R visit(AssignVariable n) {
         return visit((ASTNode) n);
     }
 
@@ -102,23 +92,8 @@ public class BasicVisitor<R> implements Visitor<R> {
         return visit((ASTNode) n);
     }
 
-    @Override
-    public R visit(UpdateVector u) {
-        return visit((ASTNode) u);
-    }
-
-    @Override
-    public R visit(UpdateField u) {
-        return visit((ASTNode) u);
-    }
-
     public R visit(Call n) {
         return visit((ASTNode) n);
-    }
-
-    @Override
-    public R visit(FunctionCall n) {
-        return visit((Call) n);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,10 +52,10 @@ public class TreePrinter extends BasicVisitor<Void> {
         out.print(n.getClass().getSimpleName());
         if (n instanceof BinaryOperation) {
             out.print(" " + ((BinaryOperation) n).getOperator().getName());
-        } else if (n instanceof SimpleAccessVariable) {
-            out.print(" " + ((SimpleAccessVariable) n).getVariable());
-        } else if (n instanceof FunctionCall) {
-            FunctionCall call = (FunctionCall) n;
+        } else if (n instanceof AccessVariable) {
+            out.print(" " + ((AccessVariable) n).getVariable());
+        } else if (n instanceof Call) {
+            Call call = (Call) n;
             out.print(" " + call.getLhs());
         }
         out.println();

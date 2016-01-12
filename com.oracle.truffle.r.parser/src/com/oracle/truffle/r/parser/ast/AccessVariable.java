@@ -4,29 +4,46 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.parser.ast;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.oracle.truffle.api.source.*;
 
-public abstract class AccessVariable extends ASTNode {
+public final class AccessVariable extends ASTNode {
 
-    protected AccessVariable(SourceSection source) {
+    private final String variable;
+
+    private AccessVariable(SourceSection source, String variable) {
         super(source);
+        this.variable = variable;
     }
 
-    public static ASTNode create(SourceSection src, String name, boolean shouldCopyValue) {
-        return new SimpleAccessVariable(src, name, shouldCopyValue);
+    public String getVariable() {
+        return variable;
     }
 
-    public static ASTNode create(SourceSection src, String tempSymbol) {
-        return new SimpleAccessTempVariable(src, tempSymbol);
+    @Override
+    public int getPrecedence() {
+        return Operation.MAX_PRECEDENCE;
     }
 
-    public static ASTNode createDotDot(SourceSection src, String name) {
-        return new SimpleAccessVariadicComponent(src, name);
+    @Override
+    public <R> R accept(Visitor<R> v) {
+        return v.visit(this);
+    }
+
+    @Override
+    public <R> List<R> visitAll(Visitor<R> v) {
+        return Collections.emptyList();
+    }
+
+    public static ASTNode create(SourceSection src, String name) {
+        return new AccessVariable(src, name);
     }
 }
