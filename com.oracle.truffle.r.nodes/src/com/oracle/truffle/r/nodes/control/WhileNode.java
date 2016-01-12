@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,8 +49,10 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
         this.isRepeat = isRepeat;
     }
 
-    public static WhileNode create(RSyntaxNode condition, RSyntaxNode body, boolean isRepeat) {
-        return new WhileNode(condition, body, isRepeat);
+    public static WhileNode create(SourceSection src, RSyntaxNode condition, RSyntaxNode body, boolean isRepeat) {
+        WhileNode result = new WhileNode(condition, body, isRepeat);
+        result.assignSourceSection(src);
+        return result;
     }
 
     @Override
@@ -110,7 +112,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        return create(getCondition().substitute(env), getBody().substitute(env), isRepeat);
+        return create(null, getCondition().substitute(env), getBody().substitute(env), isRepeat);
     }
 
     public int getRlengthImpl() {

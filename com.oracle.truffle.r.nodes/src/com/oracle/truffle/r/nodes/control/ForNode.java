@@ -58,8 +58,10 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         this.loopNode = Truffle.getRuntime().createLoopNode(new ForRepeatingNode(this, cvar, body, indexName, lengthName, rangeName));
     }
 
-    public static ForNode create(WriteVariableNode cvar, RSyntaxNode range, RSyntaxNode body) {
-        return new ForNode(cvar, range.asRNode(), body.asRNode());
+    public static ForNode create(SourceSection src, WriteVariableNode cvar, RSyntaxNode range, RSyntaxNode body) {
+        ForNode result = new ForNode(cvar, range.asRNode(), body.asRNode());
+        result.assignSourceSection(src);
+        return result;
     }
 
     @Override
@@ -116,7 +118,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        return create((WriteVariableNode) getCvar().substitute(env), getRange().substitute(env), getBody().substitute(env));
+        return create(null, (WriteVariableNode) getCvar().substitute(env), getRange().substitute(env), getBody().substitute(env));
     }
 
     public int getRlengthImpl() {

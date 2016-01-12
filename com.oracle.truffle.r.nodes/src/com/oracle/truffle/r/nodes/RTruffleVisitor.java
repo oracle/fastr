@@ -531,7 +531,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     public RSyntaxNode visit(While loop) {
         RSyntaxNode condition = loop.getCondition().accept(this);
         RSyntaxNode body = BlockNode.ensureBlock(loop.getBody().getSource(), loop.getBody().accept(this));
-        return matchSources(WhileNode.create(condition, body, false), loop);
+        return WhileNode.create(loop.getSource(), condition, body, false);
     }
 
     @Override
@@ -547,12 +547,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     @Override
     public RSyntaxNode visit(Repeat loop) {
         RSyntaxNode body = BlockNode.ensureBlock(loop.getBody().getSource(), loop.getBody().accept(this));
-        return matchSources(WhileNode.create(ConstantNode.create(RRuntime.LOGICAL_TRUE), body, true), loop);
-    }
-
-    private static RSyntaxNode matchSources(RSyntaxNode truffleNode, ASTNode astNode) {
-        truffleNode.asRNode().assignSourceSection(astNode.getSource());
-        return truffleNode;
+        return WhileNode.create(loop.getSource(), ConstantNode.create(RRuntime.LOGICAL_TRUE), body, true);
     }
 
     @Override
@@ -560,7 +555,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         WriteVariableNode cvar = WriteVariableNode.create(loop.getSource(), loop.getVariable(), null, false);
         RSyntaxNode range = loop.getRange().accept(this);
         RSyntaxNode body = loop.getBody().accept(this);
-        return matchSources(ForNode.create(cvar, range, new BlockNode(loop.getBody().getSource(), body)), loop);
+        return ForNode.create(loop.getSource(), cvar, range, new BlockNode(loop.getBody().getSource(), body));
     }
 
     @Override
