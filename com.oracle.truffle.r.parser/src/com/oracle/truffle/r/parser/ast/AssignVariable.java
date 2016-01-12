@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -53,8 +53,8 @@ public abstract class AssignVariable extends ASTNode {
             return writeFunction(src, isSuper, (FunctionCall) lhs, rhs);
         } else if (lhs instanceof Constant) {
             Constant c = (Constant) lhs;
-            assert c.getType() == Constant.ConstantType.STRING;
-            String value = c.getValue();
+            assert c.getValue() instanceof String;
+            String value = (String) c.getValue();
             return writeVariable(src, isSuper, value, rhs);
         }
         throw RInternalError.unimplemented("unexpected lhs type: " + lhs.getClass());

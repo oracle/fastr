@@ -442,7 +442,7 @@ unary_expression returns [ASTNode v]
       | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/PLUS", $p, $l.stop), ArithmeticOperator.UNARY_PLUS, $l.v); }
       )
     | m=MINUS n_ { plusOrMinus = true; }
-      ( (number) => num=number { ((Constant) num).addNegativeSign(); $v = num; }
+      ( (number) => num=number { num = ((Constant) num).createNegated(); $v = num; }
       | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/MINUS", $m, $l.stop), ArithmeticOperator.UNARY_MINUS, $l.v); }
       )
     | m=NOT n_ { plusOrMinus = true; }
@@ -502,13 +502,13 @@ simple_expr returns [ASTNode v]
     : i=id                                      { $v = AccessVariable.create(sourceSection("simple_expr/id", i), i.getText(), false); }
     | b=bool                                    { $v = b; }
     | d=DD                                      { $v = AccessVariable.createDotDot(sourceSection("simple_expr/DD", d), d.getText()); }
-    | t=NULL                                    { $v = Constant.getNull(sourceSection("simple_expr/NULL", t)); }
-    | t=INF                                     { $v = Constant.createDoubleConstant(sourceSection("simple_expr/INF", t), "Inf"); }
-    | t=NAN                                     { $v = Constant.createDoubleConstant(sourceSection("simple_expr/NAN", t), "NaN"); }
-    | t=NAINT                                   { $v = Constant.createIntConstant(sourceSection("simple_expr/NAINT", t), "NA_integer_"); }
-    | t=NAREAL                                  { $v = Constant.createDoubleConstant(sourceSection("simple_expr/NAREAL", t), "NA_real_"); }
+    | t=NULL                                    { $v = Constant.createNull(sourceSection("simple_expr/NULL", t)); }
+    | t=INF                                     { $v = Constant.createDouble(sourceSection("simple_expr/INF", t), "Inf"); }
+    | t=NAN                                     { $v = Constant.createDouble(sourceSection("simple_expr/NAN", t), "NaN"); }
+    | t=NAINT                                   { $v = Constant.createInt(sourceSection("simple_expr/NAINT", t), "NA_integer_"); }
+    | t=NAREAL                                  { $v = Constant.createDouble(sourceSection("simple_expr/NAREAL", t), "NA_real_"); }
     | t=NACHAR                                  { $v = Constant.createStringNA(sourceSection("simple_expr/NACHAR", t)); }
-    | t=NACOMPL                                 { $v = Constant.createComplexConstant(sourceSection("simple_expr/NACOMPL", t), "NA_complex_"); }
+    | t=NACOMPL                                 { $v = Constant.createComplex(sourceSection("simple_expr/NACOMPL", t), "NA_complex_"); }
     | num=number                                { $v = num; }
     | cstr=conststring                          { $v = cstr; }
     | pkg=id nsg=(NS_GET|NS_GET_INT) n_ comp=id {
@@ -525,13 +525,13 @@ simple_expr returns [ASTNode v]
     ;
 
 number returns [ASTNode n]
-    : i=INTEGER { $n = Constant.createIntConstant(sourceSection("number/INTEGER", i), $i.text); }
-    | d=DOUBLE  { $n = Constant.createDoubleConstant(sourceSection("number/DOUBLE", d), $d.text); }
-    | c=COMPLEX { $n = Constant.createComplexConstant(sourceSection("number/COMPLEX", c), $c.text); }
+    : i=INTEGER { $n = Constant.createInt(sourceSection("number/INTEGER", i), $i.text); }
+    | d=DOUBLE  { $n = Constant.createDouble(sourceSection("number/DOUBLE", d), $d.text); }
+    | c=COMPLEX { $n = Constant.createComplex(sourceSection("number/COMPLEX", c), $c.text); }
     ;
 
 conststring returns [ASTNode n]
-    : s=STRING { $n = Constant.createStringConstant(sourceSection("conststring", s), $s.text); }
+    : s=STRING { $n = Constant.createString(sourceSection("conststring", s), $s.text); }
     ;
 
 id returns [Token t]
@@ -540,9 +540,9 @@ id returns [Token t]
     ;
 
 bool returns [ASTNode v]
-    : t=TRUE  { $v = Constant.createBoolConstant(sourceSection("bool/TRUE", t), RRuntime.LOGICAL_TRUE); }
-    | t=FALSE { $v = Constant.createBoolConstant(sourceSection("bool/FALSE", t), RRuntime.LOGICAL_FALSE); }
-    | t=NA    { $v = Constant.createBoolConstant(sourceSection("bool/NA", t), RRuntime.LOGICAL_NA); }
+    : t=TRUE  { $v = Constant.createBool(sourceSection("bool/TRUE", t), RRuntime.LOGICAL_TRUE); }
+    | t=FALSE { $v = Constant.createBool(sourceSection("bool/FALSE", t), RRuntime.LOGICAL_FALSE); }
+    | t=NA    { $v = Constant.createBool(sourceSection("bool/NA", t), RRuntime.LOGICAL_NA); }
     ;
 
 or_operator returns [ArithmeticOperator v]

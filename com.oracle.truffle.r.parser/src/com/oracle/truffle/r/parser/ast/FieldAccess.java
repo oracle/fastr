@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -54,8 +54,8 @@ public final class FieldAccess extends ASTNode {
 
     public static ASTNode create(SourceSection src, FieldOperator op, ASTNode value, ASTNode fieldName) {
         Constant fnc = (Constant) fieldName;
-        assert fnc.getType() == Constant.ConstantType.STRING;
-        return create(src, op, value, fnc.getValue());
+        assert fnc.getValue() instanceof String;
+        return create(src, op, value, (String) fnc.getValue());
     }
 
     public ASTNode getLhs() {

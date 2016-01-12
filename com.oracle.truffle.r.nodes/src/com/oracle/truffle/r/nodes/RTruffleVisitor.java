@@ -56,7 +56,6 @@ import com.oracle.truffle.r.nodes.function.PostProcessArgumentsNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
-import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
 import com.oracle.truffle.r.parser.ast.ASTNode;
 import com.oracle.truffle.r.parser.ast.AccessVariable;
@@ -65,7 +64,6 @@ import com.oracle.truffle.r.parser.ast.ArgNode;
 import com.oracle.truffle.r.parser.ast.BinaryOperation;
 import com.oracle.truffle.r.parser.ast.Break;
 import com.oracle.truffle.r.parser.ast.Constant;
-import com.oracle.truffle.r.parser.ast.Constant.ConstantType;
 import com.oracle.truffle.r.parser.ast.FieldAccess;
 import com.oracle.truffle.r.parser.ast.For;
 import com.oracle.truffle.r.parser.ast.Formula;
@@ -97,7 +95,6 @@ import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -117,37 +114,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
     @Override
     public RSyntaxNode visit(Constant c) {
-        SourceSection src = c.getSource();
-        if (c.getType() == ConstantType.NULL) {
-            return ConstantNode.create(src, RNull.instance);
-        }
-        switch (c.getType()) {
-            case INT:
-                return ConstantNode.create(src, RRuntime.string2int(c.getValue()));
-            case DOUBLE:
-                return ConstantNode.create(src, RRuntime.string2double(c.getValue()));
-            case BOOL:
-                switch (c.getValue()) {
-                    case "NA":
-                        return ConstantNode.create(src, RRuntime.LOGICAL_NA);
-                    case "1":
-                        return ConstantNode.create(src, RRuntime.LOGICAL_TRUE);
-                    case "0":
-                        return ConstantNode.create(src, RRuntime.LOGICAL_FALSE);
-                    default:
-                        throw new AssertionError();
-                }
-            case STRING:
-                return ConstantNode.create(src, c.getValue());
-            case COMPLEX:
-                if (c.getValue().equals("NA_complex_")) {
-                    return ConstantNode.create(src, RDataFactory.createComplex(RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART));
-                } else {
-                    return ConstantNode.create(src, RDataFactory.createComplex(0, RRuntime.string2double(c.getValue())));
-                }
-            default:
-                throw new UnsupportedOperationException();
-        }
+        return ConstantNode.create(c.getSource(), c.getValue());
     }
 
     @Override

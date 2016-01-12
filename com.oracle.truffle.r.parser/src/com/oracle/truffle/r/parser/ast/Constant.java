@@ -4,43 +4,33 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.parser.ast;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
 
 public final class Constant extends ASTNode {
 
-    public enum ConstantType {
-        DOUBLE,
-        COMPLEX,
-        INT,
-        BOOL,
-        STRING,
-        NULL
-    }
+    private final Object value;
 
-    private String value;
-    private final ConstantType type;
-
-    private Constant(String value, ConstantType type, SourceSection source) {
+    private Constant(Object value, SourceSection source) {
         super(source);
         this.value = value;
-        this.type = type;
     }
 
-    public String getValue() {
+    public Object getValue() {
         return value;
-    }
-
-    public ConstantType getType() {
-        return type;
     }
 
     @Override
@@ -49,11 +39,11 @@ public final class Constant extends ASTNode {
     }
 
     public String prettyValue() {
-        return value;
+        return String.valueOf(value);
     }
 
-    public static ASTNode getNull(SourceSection src) {
-        return new Constant(null, ConstantType.NULL, src);
+    public static ASTNode createNull(SourceSection src) {
+        return new Constant(RNull.instance, src);
     }
 
     @Override
@@ -66,39 +56,42 @@ public final class Constant extends ASTNode {
         return v.visit(this);
     }
 
-    public static Constant createDoubleConstant(SourceSection src, String value) {
-        return new Constant(value, ConstantType.DOUBLE, src);
+    public static Constant createDouble(SourceSection src, String value) {
+        return new Constant(RRuntime.string2double(value), src);
     }
 
-    public static Constant createComplexConstant(SourceSection src, String value) {
-        return new Constant(value, ConstantType.COMPLEX, src);
-    }
-
-    public static Constant createIntConstant(SourceSection src, String value) {
-        return new Constant(value, ConstantType.INT, src);
-    }
-
-    public static Constant createBoolConstant(SourceSection src, int value) {
-        String strValue;
-        if (value == RRuntime.LOGICAL_NA) {
-            strValue = "NA";
+    public static Constant createComplex(SourceSection src, String value) {
+        if (value.equals("NA_complex_")) {
+            return new Constant(RComplex.NA, src);
         } else {
-            strValue = String.valueOf(value);
+            return new Constant(RDataFactory.createComplex(0, RRuntime.string2double(value)), src);
         }
-
-        return new Constant(strValue, ConstantType.BOOL, src);
     }
 
-    public static Constant createStringConstant(SourceSection src, String value) {
-        return new Constant(value.intern(), ConstantType.STRING, src);
+    public static Constant createInt(SourceSection src, String value) {
+        return new Constant(RRuntime.string2int(value), src);
+    }
+
+    public static Constant createBool(SourceSection src, byte value) {
+        return new Constant(value, src);
+    }
+
+    public static Constant createString(SourceSection src, String value) {
+        return new Constant(value.intern(), src);
     }
 
     public static Constant createStringNA(SourceSection src) {
         // don't intern NA value, otherwise each "NA" literal becomes an NA value
-        return new Constant(RRuntime.STRING_NA, ConstantType.STRING, src);
+        return new Constant(RRuntime.STRING_NA, src);
     }
 
-    public void addNegativeSign() {
-        value = "-" + value;
+    public Constant createNegated() {
+        if (value instanceof Integer) {
+            return new Constant(-(Integer) value, getSource());
+        } else if (value instanceof Double) {
+            return new Constant(-(Double) value, getSource());
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 }
