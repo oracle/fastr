@@ -55,7 +55,11 @@ INCLUDES := -I $(abspath ../include) $(JNI_INCLUDES) $(FFI_INCLUDES)
 
 include ../include/gnurheaders.mk
 
-SUPPRESS_WARNINGS := -Wno-int-conversion -Wno-implicit-function-declaration
+ifeq ($(OS_NAME), SunOS)
+    SUPPRESS_WARNINGS :=
+else
+    SUPPRESS_WARNINGS := -Wno-int-conversion -Wno-implicit-function-declaration
+endif
 
 all: Makefile $(C_OBJECTS) $(F_OBJECTS) $(GNUR_C_OBJECTS) $(GNUR_F_OBJECTS) $(OBJ)/copy_appl_objects
 
