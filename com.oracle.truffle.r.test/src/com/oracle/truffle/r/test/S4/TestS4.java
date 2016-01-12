@@ -49,6 +49,10 @@ public class TestS4 extends TestBase {
         assertEval(Output.ContainsError, "{ x<-NULL; `@`(x, foo) }");
         assertEval(Output.ContainsError, "{ x<-NULL; x@foo }");
         assertEval("{ x<-paste0(\".\", \"Data\"); y<-42; slot(y, x) }");
+
+        // test from Hadley Wickham's book
+        assertEval("{ setClass(\"Person\", representation(name = \"character\", age = \"numeric\"), prototype(name = NA_character_, age = NA_real_)); getSlots(\"Person\") }");
+
     }
 
     @Test
@@ -76,6 +80,15 @@ public class TestS4 extends TestBase {
     public void testAllocation() {
         assertEval("{ new(\"numeric\") }");
         assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", j=42) }");
+
+        // tests from Hadley Wickham's book
+        assertEval("{ setClass(\"Person\", representation(name = \"character\", age = \"numeric\")); setClass(\"Employee\", representation(boss = \"Person\"), contains = \"Person\"); hadley <- new(\"Person\", name = \"Hadley\", age = 31); hadley }");
+        assertEval(Output.ContainsError,
+                        "{ setClass(\"Person\", representation(name = \"character\", age = \"numeric\")); setClass(\"Employee\", representation(boss = \"Person\"), contains = \"Person\"); hadley <- new(\"Person\", name = \"Hadley\", age = \"thirty\") }");
+        assertEval(Output.ContainsError,
+                        "{ setClass(\"Person\", representation(name = \"character\", age = \"numeric\")); setClass(\"Employee\", representation(boss = \"Person\"), contains = \"Person\"); hadley <- new(\"Person\", name = \"Hadley\", sex = \"male\") }");
+        assertEval("{ setClass(\"Person\", representation(name = \"character\", age = \"numeric\")); setClass(\"Employee\", representation(boss = \"Person\"), contains = \"Person\"); hadley <- new(\"Person\", name = \"Hadley\"); hadley@age }");
+        assertEval("{ setClass(\"Person\", representation(name = \"character\", age = \"numeric\"), prototype(name = NA_character_, age = NA_real_)); hadley <- new(\"Person\", name = \"Hadley\"); hadley@age }");
     }
 
     @Test
@@ -95,5 +108,9 @@ public class TestS4 extends TestBase {
         assertEval("{ setClass(\"foo\", representation(d=\"numeric\")); setClass(\"bar\",  contains=\"foo\"); setGeneric(\"gen\", function(o) standardGeneric(\"gen\")); setMethod(\"gen\", signature(o=\"foo\"), function(o) \"FOO\"); setMethod(\"gen\", signature(o=\"bar\"), function(o) \"BAR\"); c(gen(new(\"foo\", d=7)), gen(new(\"bar\", d=42))) }");
 
         assertEval("{ setGeneric(\"gen\", function(o) standardGeneric(\"gen\")); setGeneric(\"gen\", function(o) standardGeneric(\"gen\")) }");
+
+        // test from Hadley Wickham's book
+        assertEval("{ setClass(\"A\"); setClass(\"A1\", contains = \"A\"); setClass(\"A2\", contains = \"A1\"); setClass(\"A3\", contains = \"A2\"); setGeneric(\"foo\", function(a, b) standardGeneric(\"foo\")); setMethod(\"foo\", signature(\"A1\", \"A2\"), function(a, b) \"1-2\"); setMethod(\"foo\", signature(\"A2\", \"A1\"), function(a, b) \"2-1\"); foo(new(\"A2\"), new(\"A2\")) }");
+
     }
 }
