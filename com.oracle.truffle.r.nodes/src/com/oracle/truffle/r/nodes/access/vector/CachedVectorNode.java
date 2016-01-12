@@ -103,8 +103,8 @@ abstract class CachedVectorNode extends RBaseNode {
         return positions;
     }
 
-    private static boolean isRemovePosition(Object positions) {
-        return positions instanceof RMissing;
+    private static boolean isRemovePosition(Object position) {
+        return position instanceof RMissing;
     }
 
     protected static boolean logicalAsBoolean(RTypedValue cast, boolean defaultValue) {
