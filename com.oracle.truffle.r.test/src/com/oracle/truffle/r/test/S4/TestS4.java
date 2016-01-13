@@ -89,6 +89,14 @@ public class TestS4 extends TestBase {
                         "{ setClass(\"Person\", representation(name = \"character\", age = \"numeric\")); setClass(\"Employee\", representation(boss = \"Person\"), contains = \"Person\"); hadley <- new(\"Person\", name = \"Hadley\", sex = \"male\") }");
         assertEval("{ setClass(\"Person\", representation(name = \"character\", age = \"numeric\")); setClass(\"Employee\", representation(boss = \"Person\"), contains = \"Person\"); hadley <- new(\"Person\", name = \"Hadley\"); hadley@age }");
         assertEval("{ setClass(\"Person\", representation(name = \"character\", age = \"numeric\"), prototype(name = NA_character_, age = NA_real_)); hadley <- new(\"Person\", name = \"Hadley\"); hadley@age }");
+
+        // testw from Hadley Wickham's book
+        assertEval(Output.ContainsError,
+                        "{ check_person <- function(object) { errors <- character(); length_age <- length(object@age); if (length_age != 1) { msg <- paste(\"Age is length \", length_age, \".  Should be 1\", sep = \"\"); errors <- c(errors, msg) }; if (length(errors) == 0) TRUE else errors }; setClass(\"Person\", representation(name = \"character\", age = \"numeric\"), validity = check_person); new(\"Person\", name = \"Hadley\") }");
+        assertEval(Output.ContainsError,
+                        "{ check_person <- function(object) { errors <- character(); length_age <- length(object@age); if (length_age != 1) { msg <- paste(\"Age is length \", length_age, \".  Should be 1\", sep = \"\"); errors <- c(errors, msg) }; if (length(errors) == 0) TRUE else errors }; setClass(\"Person\", representation(name = \"character\", age = \"numeric\"), validity = check_person); new(\"Person\", name = \"Hadley\", age = 1:10) }");
+        assertEval(Output.ContainsError,
+                        "{ check_person <- function(object) { errors <- character(); length_age <- length(object@age); if (length_age != 1) { msg <- paste(\"Age is length \", length_age, \".  Should be 1\", sep = \"\"); errors <- c(errors, msg) }; if (length(errors) == 0) TRUE else errors }; setClass(\"Person\", representation(name = \"character\", age = \"numeric\"), validity = check_person); hadley <- new(\"Person\", name = \"Hadley\", age = 31); hadley@age <- 1:10; validObject(hadley) }");
     }
 
     @Test
