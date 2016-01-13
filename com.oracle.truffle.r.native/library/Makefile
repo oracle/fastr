@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -30,14 +30,14 @@ all: libdir make_subdirs
 
 make_subdirs:
 	for dir in $(SUBDIRS); do \
-		$(MAKE) PACKAGE=$$dir -C $$dir; \
+		$(MAKE) PACKAGE=$$dir -C $$dir || exit 1; \
 	done
 
 clean: clean_subdirs
 
 clean_subdirs:
 	for dir in $(SUBDIRS); do \
-		$(MAKE) PACKAGE=$$dir -C $$dir clean; \
+		$(MAKE) PACKAGE=$$dir -C $$dir clean || exit 1; \
 	done
 	
 libdir:
