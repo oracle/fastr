@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -60,7 +60,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse9() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(utils::str), 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(quote(utils::str), 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test

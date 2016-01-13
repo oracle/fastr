@@ -84,8 +84,7 @@ public class TestBuiltin_identical extends TestBase {
 
     @Test
     public void testidentical14() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(1, 1, 1, 1, 2, 3), .Dim = c(3L, 2L), .Dimnames = list(NULL, c('I', 'a')), foo = 'bar', class = 'matrix'), structure(c(1, 1, 1, 1, 2, 3), .Dim = c(3L, 2L), class = 'matrix', foo = 'bar', .Dimnames = list(NULL, c('I', 'a'))), TRUE, TRUE, FALSE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(structure(c(1, 1, 1, 1, 2, 3), .Dim = c(3L, 2L), .Dimnames = list(NULL, c('I', 'a')), foo = 'bar', class = 'matrix'), structure(c(1, 1, 1, 1, 2, 3), .Dim = c(3L, 2L), class = 'matrix', foo = 'bar', .Dimnames = list(NULL, c('I', 'a'))), TRUE, TRUE, FALSE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -213,8 +212,8 @@ public class TestBuiltin_identical extends TestBase {
 
         assertEval("{ identical(list(1, list(2)), list(list(1), 1)) }");
         assertEval("{ identical(list(1, list(2)), list(1, list(2))) }");
-        assertEval(Ignored.Unknown, "{ x <- 1 ; attr(x, \"my\") <- 10; identical(x, 1) }");
-        assertEval(Ignored.Unknown, "{ x <- 1 ; attr(x, \"my\") <- 10; y <- 1 ; attr(y, \"my\") <- 11 ; identical(x,y) }");
+        assertEval("{ x <- 1 ; attr(x, \"my\") <- 10; identical(x, 1) }");
+        assertEval("{ x <- 1 ; attr(x, \"my\") <- 10; y <- 1 ; attr(y, \"my\") <- 11 ; identical(x,y) }");
 
         assertEval("{ identical(quote(if(x) 42), quote(if(x) 7)) }");
         assertEval("{ identical(quote(if(x) 42), quote(if(x) 42)) }");
