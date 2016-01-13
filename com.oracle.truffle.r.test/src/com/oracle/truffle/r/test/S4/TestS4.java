@@ -119,6 +119,10 @@ public class TestS4 extends TestBase {
 
         // test from Hadley Wickham's book
         assertEval("{ setClass(\"A\"); setClass(\"A1\", contains = \"A\"); setClass(\"A2\", contains = \"A1\"); setClass(\"A3\", contains = \"A2\"); setGeneric(\"foo\", function(a, b) standardGeneric(\"foo\")); setMethod(\"foo\", signature(\"A1\", \"A2\"), function(a, b) \"1-2\"); setMethod(\"foo\", signature(\"A2\", \"A1\"), function(a, b) \"2-1\"); foo(new(\"A2\"), new(\"A2\")) }");
+        assertEval("{ setGeneric(\"sides\", function(object) standardGeneric(\"sides\")); setClass(\"Shape\"); setClass(\"Polygon\", representation(sides = \"integer\"), contains = \"Shape\"); setClass(\"Triangle\", contains = \"Polygon\"); setMethod(\"sides\", signature(\"Triangle\"), function(object) 3); showMethods(\"sides\") }");
+        assertEval("{ setGeneric(\"sides\", function(object) standardGeneric(\"sides\")); setClass(\"Shape\"); setClass(\"Polygon\", representation(sides = \"integer\"), contains = \"Shape\"); setClass(\"Triangle\", contains = \"Polygon\"); setMethod(\"sides\", signature(\"Triangle\"), function(object) 3); showMethods(class = \"Polygon\") }");
+        assertEval(Output.ContainsError,
+                        "{ setClass(\"Shape\"); setClass(\"Polygon\", representation(sides = \"integer\"), contains = \"Shape\"); setClass(\"Triangle\", contains = \"Polygon\"); setGeneric(\"sides\", valueClass = \"numeric\", function(object) standardGeneric(\"sides\")); setMethod(\"sides\", signature(\"Triangle\"), function(object) \"three\"); sides(new(\"Triangle\")) }");
 
     }
 }

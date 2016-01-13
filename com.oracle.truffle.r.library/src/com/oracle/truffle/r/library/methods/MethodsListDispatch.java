@@ -216,6 +216,9 @@ public class MethodsListDispatch {
             while (rho != null) {
                 // TODO: make it faster
                 MaterializedFrame currentFrame = rho.getFrame();
+                if (currentFrame == null) {
+                    break;
+                }
                 FrameDescriptor currentFrameDesc = currentFrame.getFrameDescriptor();
                 Object o = ExecuteMethod.slotRead(currentFrame, currentFrameDesc, name);
                 if (o != null) {
