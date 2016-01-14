@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -61,6 +62,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -82,7 +84,7 @@ public class EnvFunctions {
         protected final BranchProfile errorProfile = BranchProfile.create();
     }
 
-    @RBuiltin(name = "as.environment", kind = PRIMITIVE, parameterNames = {"fun"})
+    @RBuiltin(name = "as.environment", kind = PRIMITIVE, parameterNames = {"fun"}, dispatch = INTERNAL_GENERIC)
     public abstract static class AsEnvironment extends Adapter {
 
         @Child private List2Env list2Env;
@@ -159,6 +161,17 @@ public class EnvFunctions {
             REnvironment env = RDataFactory.createNewEnv(null);
             env.setParent(REnvironment.emptyEnv());
             return list2Env(list, env);
+        }
+
+        @Specialization
+        protected Object asEnvironment(RS4Object obj) {
+            // generic dispatch tried already
+            Object xData = obj.getAttribute(RRuntime.DOT_XDATA);
+            if (xData == null || !(xData instanceof REnvironment)) {
+                throw RError.error(this, RError.Message.S4OBJECT_NX_ENVIRONMENT);
+            } else {
+                return xData;
+            }
         }
 
         @Fallback

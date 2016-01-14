@@ -641,6 +641,7 @@ public final class RError extends RuntimeException {
         SLOT_NON_S4("trying to get slot \"%s\" from an object (class \"%s\") that is not an S4 object "),
         SLOT_CANNOT_GET("cannot get a slot (\"%s\") from an object of type \"%s\""),
         SLOT_NONE("no slot of name \"%s\" for this object of class \"%s\""),
+        S4OBJECT_NX_ENVIRONMENT("S4 object does not extend class \"environment\""),
         NOT_A_SLOT("'%s' is not a slot in class ”%s”"),
         NS_ALREADY_REG("namespace already registered"),
         NS_NOTREG("namespace not registered"),
