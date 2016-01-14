@@ -26,6 +26,8 @@ import org.junit.*;
 
 import com.oracle.truffle.r.test.*;
 
+// Checkstyle: stop LineLength
+
 /**
  * Tests for the S4 object model implementation.
  */
