@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -105,7 +105,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
          * it is represented as a LANGSXP with symbol "{" and a NULL cdr, representing the empty
          * sequence. This is an unpleasant special case in FastR that we can only detect by
          * re-examining the original source.
-         *
+         * 
          * A sequence of length 1, i.e. a single statement, is represented as itself, e.g. a SYMSXP
          * for "x" or a LANGSXP for a function call. Otherwise, the representation is a LISTSXP
          * pairlist, where the car is the statement and the cdr is either NILSXP or a LISTSXP for
@@ -133,6 +133,13 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
             sequenceSubs[i] = sequence[i].substitute(env).asRNode();
         }
         return new BlockNode(null, sequenceSubs);
+    }
+
+    @Override
+    public void allNamesImpl(RAllNames.State state) {
+        for (int i = 0; i < sequence.length; i++) {
+            sequence[i].allNames(state);
+        }
     }
 
     public int getRlengthImpl() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ public interface RSyntaxNodeSPI {
      * Support for the {@code deparse} builtin function. The source representation should be
      * appended to the {@link State}.
      */
-    void deparseImpl(State state);
+    void deparseImpl(RDeparse.State state);
 
     /**
      * Support for the {@code substitute} builtin function. Assert: {this.isSyntax() == true}. N.B.
@@ -72,5 +72,13 @@ public interface RSyntaxNodeSPI {
      * {@code identical} builtin).
      */
     boolean getRequalsImpl(RSyntaxNode other);
+
+    /**
+     * Support for the {@code all.names} builtin. Names in this node should be accumulated in the
+     * state.
+     */
+    default void allNamesImpl(@SuppressWarnings("unused") RAllNames.State state) {
+        throw RInternalError.unimplemented();
+    }
 
 }

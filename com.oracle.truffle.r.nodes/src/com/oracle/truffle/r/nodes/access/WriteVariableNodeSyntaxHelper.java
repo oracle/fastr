@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,6 +66,16 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
                 return RASTUtils.createLanguageElement(getRhs());
             default:
                 throw RInternalError.shouldNotReachHere();
+        }
+
+    }
+
+    protected void allNamesHelper(RAllNames.State state, String op) {
+        state.addName(getName().toString());
+        RNode rhs = getRhs();
+        if (rhs != null) {
+            state.addName(op);
+            getRhs().allNames(state);
         }
 
     }

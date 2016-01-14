@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,6 +92,11 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
     public void serializeImpl(RSerialize.State state) {
         // Don't serialize the argument saving nodes
         statements.serialize(state);
+    }
+
+    @Override
+    public void allNamesImpl(RAllNames.State state) {
+        statements.allNames(state);
     }
 
     public int getRlengthImpl() {

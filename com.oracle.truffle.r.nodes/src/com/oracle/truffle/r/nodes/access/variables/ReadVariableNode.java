@@ -49,6 +49,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
@@ -164,6 +165,11 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         state.startNodeDeparse(this);
         state.append(RDeparse.quotify(identifierAsString, state));
         state.endNodeDeparse(this);
+    }
+
+    @Override
+    public void allNamesImpl(RAllNames.State state) {
+        state.addName(identifierAsString);
     }
 
     @Override

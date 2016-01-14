@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
+import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
@@ -104,6 +105,11 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
         state.startNodeDeparse(this);
         ((FunctionDefinitionNode) callTarget.getRootNode()).deparseImpl(state);
         state.endNodeDeparse(this);
+    }
+
+    @Override
+    public void allNamesImpl(RAllNames.State state) {
+        ((FunctionDefinitionNode) callTarget.getRootNode()).allNamesImpl(state);
     }
 
     @Override

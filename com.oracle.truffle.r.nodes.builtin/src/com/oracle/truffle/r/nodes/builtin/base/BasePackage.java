@@ -72,6 +72,7 @@ public class BasePackage extends RBuiltinPackage {
         add(APerm.class, APermNodeGen::create);
         add(Abs.class, AbsNodeGen::create);
         add(All.class, AllNodeGen::create);
+        add(AllNames.class, AllNamesNodeGen::create);
         add(Any.class, AnyNodeGen::create);
         add(AnyNA.class, AnyNANodeGen::create);
         add(Arg.class, ArgNodeGen::create);

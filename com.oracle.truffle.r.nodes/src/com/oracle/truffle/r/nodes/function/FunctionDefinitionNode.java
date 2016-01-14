@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RAllNames.State;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.context.*;
@@ -557,6 +558,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             ix++;
         }
         return false;
+    }
+
+    public void allNamesImpl(State state) {
+        state.addName("function");
+        body.allNames(state);
     }
 
 }

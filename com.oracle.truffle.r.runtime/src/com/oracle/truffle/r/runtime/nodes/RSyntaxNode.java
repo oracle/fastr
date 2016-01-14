@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,8 +50,9 @@ import com.oracle.truffle.r.runtime.context.*;
  * information, to return {@code false}.
  *
  * Every implementor of this interface must provide an implementation of the {@link #deparseImpl},
- * {@link #serializeImpl} and {@link #substituteImpl} methods. These are invoked by the
- * corresponding methods on {@link RBaseNode} after the correct {@link RSyntaxNode} is located.
+ * {@link #serializeImpl}, {@link #allNamesImpl}, and {@link #substituteImpl} methods. These are
+ * invoked by the corresponding methods on {@link RBaseNode} after the correct {@link RSyntaxNode}
+ * is located.
  */
 public interface RSyntaxNode extends RSyntaxNodeSPI {
     /**

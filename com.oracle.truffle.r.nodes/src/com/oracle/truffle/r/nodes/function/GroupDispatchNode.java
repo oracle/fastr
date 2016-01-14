@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -27,6 +27,7 @@ import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
+import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RGroupGenerics;
@@ -114,6 +115,16 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
         String name = getGenericName();
         state.setAsBuiltin(name);
         RCallNode.serializeArguments(state, callArgsNode.getSyntaxArguments(), callArgsNode.signature);
+    }
+
+    @Override
+    public void allNamesImpl(RAllNames.State state) {
+        if (state.includeFunctions()) {
+            state.addName(getGenericName());
+        }
+        for (RSyntaxNode argNode : callArgsNode.getSyntaxArguments()) {
+            argNode.allNamesImpl(state);
+        }
     }
 
     @Override

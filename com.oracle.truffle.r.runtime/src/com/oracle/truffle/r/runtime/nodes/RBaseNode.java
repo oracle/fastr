@@ -26,6 +26,7 @@ import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -137,6 +138,11 @@ public abstract class RBaseNode extends Node {
     public boolean getRequals(RSyntaxNode other) {
         RSyntaxNode syntaxNode = getRSyntaxNode();
         return syntaxNode.getRequalsImpl(other);
+    }
+
+    public void allNames(RAllNames.State state) {
+        RSyntaxNode syntaxNode = getRSyntaxNode();
+        syntaxNode.allNamesImpl(state);
     }
 
     @Override
