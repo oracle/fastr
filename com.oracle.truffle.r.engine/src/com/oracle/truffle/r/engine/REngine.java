@@ -447,7 +447,7 @@ final class REngine implements Engine, Engine.Timings {
         FormalArguments formals = ((RRootNode) func.getRootNode()).getFormalArguments();
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(fdn.getSourceSection(), descriptor, NodeUtil.cloneNode(fdn.getBody()), formals, "GENERIC EVAL", true, true, null);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
-        MaterializedFrame vFrame = VirtualEvalFrame.create(frame, (RFunction) null, RArguments.getCall(frame), RArguments.getDepth(frame));
+        MaterializedFrame vFrame = VirtualEvalFrame.create(frame, func, RArguments.getCall(frame), RArguments.getDepth(frame));
         return runCall(callTarget, vFrame, false, false);
     }
 
