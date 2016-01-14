@@ -327,6 +327,8 @@ public final class RError extends RuntimeException {
         DOLLAR_ATOMIC_VECTORS("$ operator is invalid for atomic vectors"),
         COERCING_LHS_TO_LIST("Coercing LHS to a list"),
         ARGUMENT_NOT_LIST("argument not a list"),
+        FIRST_ARGUMENT_NOT_NAMED_LIST("first argument must be a named list"),
+        LIST_NAMES_SAME_LENGTH("names(x) must be a character vector of the same length as x"),
         DIMS_CONTAIN_NEGATIVE_VALUES("the dims contain negative values"),
         NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED("negative length vectors are not allowed"),
         FIRST_ARG_MUST_BE_ARRAY("invalid first argument, must be an array"),

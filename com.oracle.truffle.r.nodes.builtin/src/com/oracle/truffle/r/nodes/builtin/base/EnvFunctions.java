@@ -85,6 +85,8 @@ public class EnvFunctions {
     @RBuiltin(name = "as.environment", kind = PRIMITIVE, parameterNames = {"fun"})
     public abstract static class AsEnvironment extends Adapter {
 
+        @Child private List2Env list2Env;
+
         @Specialization
         protected REnvironment asEnvironment(@SuppressWarnings("unused") RNull rnull) {
             throw RError.error(this, RError.Message.AS_ENV_NULL_DEFUNCT);
@@ -142,6 +144,26 @@ public class EnvFunctions {
             }
             errorProfile.enter();
             throw RError.error(this, RError.Message.NO_ITEM_NAMED, name);
+        }
+
+        private REnvironment list2Env(RList list, REnvironment env) {
+            if (list2Env == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                list2Env = insert(List2EnvNodeGen.create(new RNode[2], null, null));
+            }
+            return list2Env.execute(list, env);
+        }
+
+        @Specialization
+        protected REnvironment asEnvironment(RList list) {
+            REnvironment env = RDataFactory.createNewEnv(null);
+            env.setParent(REnvironment.emptyEnv());
+            return list2Env(list, env);
+        }
+
+        @Fallback
+        protected REnvironment asEnvironment(@SuppressWarnings("unused") Object object) {
+            throw RError.error(this, RError.Message.INVALID_OBJECT);
         }
 
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -352,6 +352,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Length.class, LengthNodeGen::create);
         add(License.class, LicenseNodeGen::create);
         add(ListBuiltin.class, ListBuiltinNodeGen::create);
+        add(List2Env.class, List2EnvNodeGen::create);
         add(LoadSaveFunctions.Load.class, LoadSaveFunctionsFactory.LoadNodeGen::create);
         add(LoadSaveFunctions.LoadFromConn2.class, LoadSaveFunctionsFactory.LoadFromConn2NodeGen::create);
         add(LoadSaveFunctions.SaveToConn.class, LoadSaveFunctionsFactory.SaveToConnNodeGen::create);
