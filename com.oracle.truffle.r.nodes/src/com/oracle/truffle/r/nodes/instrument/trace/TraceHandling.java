@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.instrument.trace;
 
+import java.io.FileWriter;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -34,17 +35,25 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * Handles everything related to the R {@code trace} function.
+ * Handles everything related to the R {@code trace} function. Also used by
+ * {@link FastROptions#TraceCalls} option.
+ *
+ * Output normally goes to the connection associated with the standard output, which can be
+ * redirected via the {@code sink} R function. However, for use with {@link FastROptions#TraceCalls}
+ * ,it may also be explicitly directed to the file {@code fastr_tracecalls.log}.
  */
 public class TraceHandling {
 
@@ -85,6 +94,9 @@ public class TraceHandling {
         TraceFunctionEventReceiver fser = new TraceFunctionEventReceiver();
         RInstrument.getInstrumenter().attach(probe, fser, "trace");
         RContext.getInstance().stateTraceHandling.put(uid, fser);
+        if (outputHandler == null) {
+            setOutputHandler();
+        }
         return probe;
     }
 
@@ -124,9 +136,47 @@ public class TraceHandling {
 
     }
 
+    private abstract static class OutputHandler {
+        abstract void writeString(String s, boolean nl) throws IOException;
+    }
+
+    private static class StdoutOutputHandler extends OutputHandler {
+
+        @Override
+        void writeString(String s, boolean nl) throws IOException {
+            StdConnections.getStdout().writeString(s, nl);
+        }
+
+    }
+
+    private static class FileOutputHandler extends OutputHandler {
+        private FileWriter fileWriter;
+
+        FileOutputHandler() {
+            try {
+                fileWriter = new FileWriter("fastr_tracecalls.log");
+            } catch (IOException e) {
+                Utils.fatalError("failed to open 'fastr_tracecalls.log'" + e.getMessage());
+            }
+        }
+
+        @Override
+        void writeString(String s, boolean nl) throws IOException {
+            fileWriter.append(s);
+            if (nl) {
+                fileWriter.append('\n');
+            }
+            fileWriter.flush();
+        }
+    }
+
+    private static void setOutputHandler() {
+        outputHandler = FastROptions.TraceCallsToFile.getBooleanValue() ? new FileOutputHandler() : new StdoutOutputHandler();
+    }
+
+    private static OutputHandler outputHandler;
+
     private static class TraceFunctionEventReceiver extends TraceEventReceiver {
-        private static final int INDENT = 2;
-        private static int indent;
 
         TraceFunctionEventReceiver() {
         }
@@ -135,31 +185,31 @@ public class TraceHandling {
             if (!disabled()) {
                 @SuppressWarnings("unused")
                 FunctionStatementsNode fsn = (FunctionStatementsNode) node;
+                int depth = RArguments.getDepth(frame);
                 try {
-                    for (int i = 0; i < indent; i++) {
-                        StdConnections.getStdout().writeString(" ", false);
+                    for (int i = 0; i < depth; i++) {
+                        outputHandler.writeString(" ", false);
                     }
-                    String callString = RContext.getRRuntimeASTAccess().getCallerSource(RArguments.getCall(frame));
-                    StdConnections.getStdout().writeString("trace: " + callString, true);
+                    RCaller caller = RArguments.getCall(frame);
+                    String callString;
+                    if (caller != null) {
+                        callString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
+                    } else {
+                        callString = "<no source>";
+                    }
+                    outputHandler.writeString("trace: " + callString, true);
                 } catch (IOException ex) {
                     throw RError.error(RError.NO_NODE, RError.Message.GENERIC, ex.getMessage());
                 }
-                indent += INDENT;
             }
         }
 
         @Override
         public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Throwable exception) {
-            if (!disabled()) {
-                indent -= INDENT;
-            }
         }
 
         @Override
         public void onReturnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
-            if (!disabled()) {
-                indent -= INDENT;
-            }
         }
 
     }

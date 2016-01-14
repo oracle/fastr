@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,7 +82,14 @@ public class Browser {
                         int ix = RArguments.getDepth(frame);
                         Frame stackFrame = frame;
                         do {
-                            String callString = RContext.getRRuntimeASTAccess().getCallerSource(RArguments.getCall(stackFrame));
+                            RCaller caller = RArguments.getCall(stackFrame);
+                            String callString;
+                            if (caller == null) {
+                                // FIXME should not happen, seems S4-related
+                                callString = "<no source>";
+                            } else {
+                                callString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
+                            }
                             ch.println(callString);
                             ix--;
                         } while (ix > 0 && (stackFrame = Utils.getStackFrame(FrameInstance.FrameAccess.READ_ONLY, ix)) != null);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,11 +36,12 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
  */
 public enum FastROptions {
     PrintErrorStacktraces("Prints Java and R stack traces for all errors", false),
-    PrintErrorStacktracesToFile("Dumps Java and R stack traces to file for all errors", true),
+    PrintErrorStacktracesToFile("Dumps Java and R stack traces to 'fastr_errors.log' for all errors", true),
     CheckResultCompleteness("Assert completeness of results vectors after evaluating unit tests and R shell commands", true),
     Debug("Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.", null, true),
     Instrument("Enable Instrumentation", false),
     TraceCalls("Trace all R function calls (implies +Instrument)", false),
+    TraceCallsToFile("TraceCalls output is sent to 'fastr_tracecalls.log'", false),
     TraceNativeCalls("Trace all native function calls (performed via .Call, .External, etc.)", false),
     PerfStats("PerfStats=p1,p2,...; Collect performance stats identified by p1, etc.", null, true),
     PerfStatsFile("PerfStatsFile=file; Send performance stats to 'file', default stdout", null, true),

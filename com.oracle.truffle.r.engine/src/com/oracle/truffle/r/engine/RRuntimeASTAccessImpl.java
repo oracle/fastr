@@ -25,6 +25,7 @@ package com.oracle.truffle.r.engine;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
@@ -292,7 +293,12 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     public String getCallerSource(RLanguage rl) {
         RSyntaxNode sn = (RSyntaxNode) rl.getRep();
-        return sn.getSourceSection().getCode();
+        SourceSection ss = sn.getSourceSection();
+        if (ss == null) {
+            return "<no source>";
+        } else {
+            return ss.getCode();
+        }
     }
 
     private static RBuiltinNode isBuiltin(Node node) {
