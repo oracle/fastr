@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -216,6 +216,9 @@ public class MethodsListDispatch {
             while (rho != null) {
                 // TODO: make it faster
                 MaterializedFrame currentFrame = rho.getFrame();
+                if (currentFrame == null) {
+                    break;
+                }
                 FrameDescriptor currentFrameDesc = currentFrame.getFrameDescriptor();
                 Object o = ExecuteMethod.slotRead(currentFrame, currentFrameDesc, name);
                 if (o != null) {

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -73,7 +73,11 @@ INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
 
 PKGDIR := $(FASTR_LIBRARY_DIR)/$(PKG)
 
-SUPPRESS_WARNINGS := -Wno-int-conversion -Wno-implicit-function-declaration
+ifeq ($(OS_NAME), SunOS)
+    SUPPRESS_WARNINGS :=
+else
+    SUPPRESS_WARNINGS := -Wno-int-conversion -Wno-implicit-function-declaration
+endif
 
 ifeq ($(NO_LIBRARY),)
 all: $(LIB_PKG_PRE) libcommon $(LIB_PKG) $(LIB_PKG_POST) 
