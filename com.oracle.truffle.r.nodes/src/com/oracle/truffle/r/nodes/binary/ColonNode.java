@@ -142,6 +142,13 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
     }
 
     @Override
+    public void allNamesImpl(RAllNames.State state) {
+        state.addName(":");
+        getLeft().allNames(state);
+        getRight().allNames(state);
+    }
+
+    @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
         return create(null, getLeft().substitute(env).asRNode(), getRight().substitute(env).asRNode());
     }
@@ -266,6 +273,11 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
         @Override
         public void serializeImpl(RSerialize.State state) {
             getOperand().serialize(state);
+        }
+
+        @Override
+        public void allNamesImpl(RAllNames.State state) {
+            getOperand().allNames(state);
         }
 
         @Override

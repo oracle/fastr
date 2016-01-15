@@ -66,6 +66,9 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
         this.car = car;
         this.cdr = cdr;
         this.tag = tag;
+        if (tag instanceof String) {
+            throw RInternalError.shouldNotReachHere();
+        }
         this.type = type;
     }
 
@@ -109,7 +112,7 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
                 if (plt.isNullTag()) {
                     names[i] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
                 } else {
-                    names[i] = (String) plt.getTag();
+                    names[i] = ((RSymbol) plt.getTag()).getName();
                 }
             }
             if (i < len - 1) {
@@ -171,6 +174,9 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
 
     public void setTag(Object newTag) {
         assert newTag != null;
+        if (tag instanceof String) {
+            throw RInternalError.shouldNotReachHere();
+        }
         this.tag = newTag;
     }
 

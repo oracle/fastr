@@ -71,10 +71,12 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
     }
 
     protected void allNamesHelper(RAllNames.State state, String op) {
-        state.addName(getName().toString());
         RNode rhs = getRhs();
         if (rhs != null) {
             state.addName(op);
+        }
+        state.addName(getName().toString());
+        if (rhs != null) {
             getRhs().allNames(state);
         }
 

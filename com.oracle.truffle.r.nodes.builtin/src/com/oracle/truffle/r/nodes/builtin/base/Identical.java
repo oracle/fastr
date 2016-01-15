@@ -362,6 +362,8 @@ public abstract class Identical extends RBuiltinNode {
                 if (xSubList.getAttributes() != null || ySubList.getAttributes() != null) {
                     RInternalError.unimplemented("attributes of internal pairlists are not currently supported");
                 }
+                tmpXCdr = ((RPairList) tmpXCdr).cdr();
+                tmpYCdr = ((RPairList) tmpYCdr).cdr();
             }
         }
         return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);

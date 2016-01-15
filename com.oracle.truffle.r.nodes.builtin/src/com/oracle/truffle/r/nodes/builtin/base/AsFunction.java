@@ -76,8 +76,15 @@ public abstract class AsFunction extends RBuiltinNode {
                     defaultValue = null;
                 } else if (arg == RNull.instance) {
                     defaultValue = ConstantNode.create(RNull.instance);
-                } else if (arg instanceof RLanguage && ((RLanguage) arg).getRep() instanceof ConstantNode) {
-                    defaultValue = (ConstantNode) ((RLanguage) arg).getRep();
+                } else if (arg instanceof RLanguage) {
+                    defaultValue = (RNode) ((RLanguage) arg).getRep();
+                } else if (arg instanceof RSymbol) {
+                    if (arg == RSymbol.MISSING) {
+                        defaultValue = null;
+                    } else {
+                        RSymbol symbol = (RSymbol) arg;
+                        defaultValue = ConstantNode.create(symbol.getName());
+                    }
                 } else {
                     throw RInternalError.unimplemented();
                 }

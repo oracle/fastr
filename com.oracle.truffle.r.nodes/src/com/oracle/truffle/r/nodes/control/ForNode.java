@@ -121,6 +121,14 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         return create(null, (WriteVariableNode) getCvar().substitute(env), getRange().substitute(env), getBody().substitute(env));
     }
 
+    @Override
+    public void allNamesImpl(RAllNames.State state) {
+        state.addName("for");
+        getCvar().allNames(state);
+        getRange().allNames(state);
+        getBody().allNames(state);
+    }
+
     public int getRlengthImpl() {
         return 4;
     }

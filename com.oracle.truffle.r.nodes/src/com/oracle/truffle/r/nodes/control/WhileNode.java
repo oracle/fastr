@@ -88,9 +88,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
             getCondition().deparse(state);
             state.append(") ");
         }
-        state.writeOpenCurlyNLIncIndent();
         getBody().deparse(state);
-        state.decIndentWriteCloseCurly();
         state.endNodeDeparse(this);
     }
 
@@ -113,6 +111,17 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
         return create(null, getCondition().substitute(env), getBody().substitute(env), isRepeat);
+    }
+
+    @Override
+    public void allNamesImpl(RAllNames.State state) {
+        if (isRepeat) {
+            state.addName("repeat ");
+        } else {
+            state.addName("while (");
+            getCondition().allNames(state);
+        }
+        getBody().allNames(state);
     }
 
     public int getRlengthImpl() {

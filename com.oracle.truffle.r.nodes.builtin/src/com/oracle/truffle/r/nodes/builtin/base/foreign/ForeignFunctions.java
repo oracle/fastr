@@ -32,6 +32,7 @@ import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_methods
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_set_method_dispatchNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
+import com.oracle.truffle.r.library.methods.SubstituteDirectNodeGen;
 import com.oracle.truffle.r.library.stats.*;
 import com.oracle.truffle.r.library.stats.GammaFunctionsFactory.QgammaNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
@@ -294,6 +295,7 @@ public class ForeignFunctions {
                     return R_setSlotNodeGen.create();
                 case "R_standardGeneric":
                 case "do_substitute_direct":
+                    return SubstituteDirectNodeGen.create();
                 case "Rf_allocS4Object":
                 case "R_get_primname":
                     return new UnimplementedExternal(name);

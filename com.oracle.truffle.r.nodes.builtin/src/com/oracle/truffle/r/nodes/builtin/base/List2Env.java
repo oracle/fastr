@@ -24,41 +24,24 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
+import com.oracle.truffle.r.nodes.builtin.RList2EnvNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "list2env", kind = INTERNAL, parameterNames = {"x", "envir"})
 public abstract class List2Env extends RBuiltinNode {
-    protected abstract REnvironment execute(RList list, REnvironment env);
+    @Child RList2EnvNode list2EnvNode;
 
     @Specialization
     protected REnvironment doList2Env(RList list, REnvironment env) {
-        RStringVector names = list.getNames();
-        if (names == null) {
-            throw RError.error(this, RError.Message.LIST_NAMES_SAME_LENGTH);
+        if (list2EnvNode == null) {
+            list2EnvNode = insert(RList2EnvNodeGen.create());
         }
-        for (int i = list.getLength() - 1; i >= 0; i--) {
-            String name = names.getDataAt(i);
-            if (name.length() == 0) {
-                throw RError.error(this, RError.Message.ZERO_LENGTH_VARIABLE);
-            }
-            // in case of duplicates, last element in list wins
-            if (env.get(name) == null) {
-                env.safePut(name, list.getDataAt(i));
-            }
-        }
-        return env;
+        return list2EnvNode.execute(list, env);
     }
 
-    @SuppressWarnings("unused")
-    @Fallback
-    protected Object doList2Env(Object obj, REnvironment env) {
-        throw RError.error(this, RError.Message.FIRST_ARGUMENT_NOT_NAMED_LIST);
-    }
 }
