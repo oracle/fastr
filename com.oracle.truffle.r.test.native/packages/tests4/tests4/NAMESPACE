@@ -1,0 +1,9 @@
+## classes
+exportClasses(Vehicle)
+exportClasses(Truck)
+exportClasses(Car)
+exportClasses(Inspector)
+exportClasses(StateInspector)
+
+## methods
+exportMethods(inspect.vehicle)

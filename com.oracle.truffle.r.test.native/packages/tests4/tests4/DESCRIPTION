@@ -1,0 +1,10 @@
+Package: tests4
+Type: Package
+Title: Tests loading of package containing S4 code
+Version: 1.0
+Date: 2015-01-15
+Author: FastR Tester
+Maintainer: FastR Tester <fastr@yahoogroups.com>
+Description: Tests the package loading implementation
+License: GPL-2
+Depends: R (>= 3.1.3)
