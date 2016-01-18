@@ -552,6 +552,7 @@ public class BasePackage extends RBuiltinPackage {
         addFastPath(baseFrame, "integer", () -> IntegerFastPathNodeGen.create(null));
         addFastPath(baseFrame, "numeric", () -> DoubleFastPathNodeGen.create(null));
         addFastPath(baseFrame, "double", () -> DoubleFastPathNodeGen.create(null));
+        addFastPath(baseFrame, "intersect", () -> IntersectFastPathNodeGen.create(null));
         addFastPath(baseFrame, "pmax", FastPathFactory.EVALUATE_ARGS);
         addFastPath(baseFrame, "pmin", FastPathFactory.EVALUATE_ARGS);
         addFastPath(baseFrame, "cbind", FastPathFactory.FORCED_EAGER_ARGS);
