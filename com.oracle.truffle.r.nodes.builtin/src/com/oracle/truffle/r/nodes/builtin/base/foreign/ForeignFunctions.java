@@ -294,6 +294,7 @@ public class ForeignFunctions {
                 case "R_set_slot":
                     return R_setSlotNodeGen.create();
                 case "R_standardGeneric":
+                    return new UnimplementedExternal(name);
                 case "do_substitute_direct":
                     return SubstituteDirectNodeGen.create();
                 case "Rf_allocS4Object":
