@@ -27,15 +27,14 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 @RBuiltin(name = ".isMethodsDispatchOn", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
 public abstract class IsMethodsDispatchOn extends RBuiltinNode {
 
-    private static boolean on;
-
     @Specialization
     protected byte doIsMethodsDispatchOn() {
         controlVisibility();
-        return RRuntime.asLogical(on);
+        return RRuntime.asLogical(RContext.getInstance().isMethodTableDispatchOn());
     }
 }

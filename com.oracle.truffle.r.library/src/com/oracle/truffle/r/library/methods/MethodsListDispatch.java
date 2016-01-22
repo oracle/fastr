@@ -39,6 +39,7 @@ public class MethodsListDispatch {
         @Specialization
         @TruffleBoundary
         protected REnvironment initMethodDispatch(REnvironment env) {
+            RContext.getInstance().setMethodTableDispatchOn(true);
             // TBD what should we actually do here
             return env;
         }

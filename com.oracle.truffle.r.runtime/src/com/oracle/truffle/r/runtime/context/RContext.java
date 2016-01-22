@@ -282,7 +282,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     /**
      * Used by the MethodListDispatch class.
      */
-    private boolean methodTableDispatchOn = true;
+    private boolean methodTableDispatchOn = false;
     private boolean allowPrimitiveMethods = true;
     private HashMap<String, RStringVector> s4ExtendsTable = new HashMap<>();
 
@@ -424,6 +424,9 @@ public final class RContext extends ExecutionContext implements TruffleObject {
                 throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "can't have multiple active SHARED_PARENT_RW contexts");
             }
             info.getParent().sharedChild = this;
+            // this one must be shared between contexts - otherwise testing contexts do not know
+            // that methods package is loaded
+            this.methodTableDispatchOn = info.getParent().methodTableDispatchOn;
         }
         for (ContextState state : contextStates()) {
             assert state != null;
