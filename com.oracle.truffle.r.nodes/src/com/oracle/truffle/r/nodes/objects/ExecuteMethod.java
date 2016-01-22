@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -65,17 +66,17 @@ public abstract class ExecuteMethod extends RBaseNode {
                 boolean missing = RMissingHelper.isMissingArgument(frame, argName);
                 Object val = slotRead(currentFrame, currentFrameDesc, argName);
                 slotInit(newFrame, desc, argName, val);
-                if (missing && !(val instanceof RArgsValuesAndNames)) {
+                if (missing && !(val instanceof RArgsValuesAndNames || val == RMissing.instance)) {
                     throw RInternalError.unimplemented();
                 }
             }
         }
 
         slotInit(newFrame, desc, RRuntime.R_DOT_DEFINED, readDefined.execute(frame));
-        slotInit(newFrame, desc, RRuntime.RDotMethod, readDefined.execute(frame));
-        slotInit(newFrame, desc, RRuntime.R_DOT_TARGET, readDefined.execute(frame));
-        slotInit(newFrame, desc, RRuntime.RDotGeneric, readDefined.execute(frame));
-        slotInit(newFrame, desc, RRuntime.R_DOT_METHODS, readDefined.execute(frame));
+        slotInit(newFrame, desc, RRuntime.RDotMethod, readMethod.execute(frame));
+        slotInit(newFrame, desc, RRuntime.R_DOT_TARGET, readTarget.execute(frame));
+        slotInit(newFrame, desc, RRuntime.RDotGeneric, readGeneric.execute(frame));
+        slotInit(newFrame, desc, RRuntime.R_DOT_METHODS, readMethods.execute(frame));
 
         Object ret = callMethod(fdef, newFrame);
         return ret;
