@@ -68,7 +68,7 @@ public class TestS4TestPackage extends TestRPackages {
                         new String[]{packagePaths.rpackagesLibs.toString()}));
         assertEval(TestBase.template("{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Car\"), new(\"StateInspector\"))); detach(\"package:tests4\"); r }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
-        assertEval(TestBase.template("{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Truck\"), new(\"Inspector\"))); detach(\"package:tests4\"); r }",
+        assertEval(TestBase.template("{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Truck\"), new(\"StateInspector\"))); detach(\"package:tests4\"); r }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
