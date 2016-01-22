@@ -29,6 +29,7 @@ import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_getGene
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_identCNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_initMethodDispatchNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_methodsPackageMetaNameNodeGen;
+import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_nextMethodCallNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_set_method_dispatchNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
@@ -287,6 +288,7 @@ public class ForeignFunctions {
                 case "R_methods_test_NEW":
                 case "R_missingArg":
                 case "R_nextMethodCall":
+                    return R_nextMethodCallNodeGen.create();
                 case "R_quick_method_check":
                 case "R_selectMethod":
                 case "R_set_el_named":

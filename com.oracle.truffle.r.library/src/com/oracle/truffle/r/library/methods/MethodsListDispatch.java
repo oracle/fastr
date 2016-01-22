@@ -16,10 +16,14 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.GetGenericInternalNodeGen;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.objects.ExecuteMethod;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
@@ -29,6 +33,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 // Transcribed (unless otherwise noted) from src/library/methods/methods_list_dispatch.c
 
@@ -252,6 +258,45 @@ public class MethodsListDispatch {
             // being a symbol but at this point this case is not handled (even possible?) in
             // FastR
             return generic == null ? RNull.instance : generic;
+        }
+    }
+
+    public abstract static class R_nextMethodCall extends RExternalBuiltinNode.Arg2 {
+
+        @Child private LocalReadVariableNode readDotNextMethod = LocalReadVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, false);
+        @Child private LocalReadVariableNode readDots = LocalReadVariableNode.create("...", false);
+
+        @Specialization
+        protected Object nextMethodCall(RLanguage matchedCall, REnvironment ev) {
+            RFunction op = (RFunction) readDotNextMethod.execute(null, ev.getFrame());
+            if (op == null) {
+                throw RError.error(this, RError.Message.GENERIC, "internal error in 'callNextMethod': '.nextMethod' was not assigned in the frame of the method call");
+            }
+            boolean dotsDone = readDots.execute(null, ev.getFrame()) == null;
+            if (!dotsDone) {
+                // TODO: in GNUR R there is some special handling of ... which may or may not be
+                // necessary anymore (as per their own comment); let's consider this after we hit
+                // this test case
+                throw RInternalError.unimplemented();
+            }
+            boolean primCase = op.isBuiltin();
+            if (primCase) {
+                throw RInternalError.unimplemented();
+            }
+            if (!(matchedCall.getRep() instanceof RCallNode)) {
+                throw RInternalError.unimplemented();
+
+            }
+            RCallNode callNode = (RCallNode) matchedCall.getRep();
+            RNode f = ReadVariableNode.create(RRuntime.R_DOT_NEXT_METHOD);
+            ArgumentsSignature sig = callNode.getArguments().getSignature();
+            RSyntaxNode[] args = new RSyntaxNode[sig.getLength()];
+            for (int i = 0; i < args.length; i++) {
+                args[i] = ReadVariableNode.create(sig.getName(i));
+            }
+            RLanguage newCall = RDataFactory.createLanguage(new RCallNode(f, args, sig));
+            Object res = RContext.getEngine().eval(newCall, ev.getFrame());
+            return res;
         }
     }
 

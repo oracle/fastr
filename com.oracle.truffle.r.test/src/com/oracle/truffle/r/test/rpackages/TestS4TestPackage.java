@@ -61,7 +61,6 @@ public class TestS4TestPackage extends TestRPackages {
 
     // TODO: these do not work yet due to some obscure problem with package exports
     @Test
-    @Ignore
     public void testS4Execute() {
         assertEval(TestBase.template("{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Car\"), new(\"Inspector\"))); detach(\"package:tests4\"); r }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
