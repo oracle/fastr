@@ -118,6 +118,7 @@ public class JLineConsoleHandler implements ConsoleHandler {
         History history = console.getHistory();
         if (history instanceof FileHistory) {
             try {
+                history.removeLast();
                 ((FileHistory) history).flush();
             } catch (IOException x) {
                 // silent - no history appended
