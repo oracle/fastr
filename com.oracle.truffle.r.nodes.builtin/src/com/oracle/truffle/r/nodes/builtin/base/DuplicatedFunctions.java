@@ -129,6 +129,12 @@ public class DuplicatedFunctions {
             return RDataFactory.createLogicalVector(ds.dupVec, RDataFactory.COMPLETE_VECTOR);
         }
 
+        @SuppressWarnings("unused")
+        @Specialization
+        protected RLogicalVector duplicated(RNull x, Object incomparables, byte fromLast, int nmax) {
+            return RDataFactory.createEmptyLogicalVector();
+        }
+
         @Specialization(guards = {"!isIncomparable(incomparables)", "!empty(x)"})
         protected RLogicalVector duplicatedFalseIncomparables(RAbstractVector x, @SuppressWarnings("unused") byte incomparables, byte fromLast, @SuppressWarnings("unused") int nmax) {
             return analyzeAndCreateResult(x, null, fromLast);
