@@ -474,12 +474,12 @@ public class RPromise implements RTypedValue {
 
     @Override
     public int getGPBits() {
-        throw RInternalError.shouldNotReachHere();
+        return 0;
     }
 
     @Override
     public void setGPBits(int value) {
-        throw RInternalError.shouldNotReachHere();
+        // This gets called from RSerialize, just ignore (for now)
     }
 
     @Override

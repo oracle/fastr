@@ -416,7 +416,8 @@ public class RDeparse {
     }
 
     /**
-     * Version for use by {@code RSerialize} to convert a CLOSXP into a parseable string.
+     * Version for use by {@code RSerialize} to convert a CLOSXP/LANGSXP/PROMSXP into a parseable
+     * string.
      */
     @TruffleBoundary
     public static String deparse(RPairList pl) {
@@ -515,15 +516,11 @@ public class RDeparse {
                 state.append((String) obj);
                 break;
 
-            case PROMSXP:
-                RPromise promise = (RPromise) obj;
-                if (promise.isEvaluated()) {
-                    deparse2buff(state, promise.getValue());
-                } else {
-                    Object v = RContext.getEngine().evalPromise(((RPromise) obj).getClosure(), null);
-                    deparse2buff(state, v);
-                }
+            case PROMSXP: {
+                RPairList f = (RPairList) obj;
+                deparse2buff(state, f.cdr());
                 break;
+            }
 
             case CLOSXP: {
                 RPairList f = (RPairList) obj;

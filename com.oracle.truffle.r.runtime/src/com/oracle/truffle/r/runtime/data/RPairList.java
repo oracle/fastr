@@ -66,9 +66,6 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
         this.car = car;
         this.cdr = cdr;
         this.tag = tag;
-        if (tag instanceof String) {
-            throw RInternalError.shouldNotReachHere();
-        }
         this.type = type;
     }
 
@@ -174,9 +171,6 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
 
     public void setTag(Object newTag) {
         assert newTag != null;
-        if (tag instanceof String) {
-            throw RInternalError.shouldNotReachHere();
-        }
         this.tag = newTag;
     }
 

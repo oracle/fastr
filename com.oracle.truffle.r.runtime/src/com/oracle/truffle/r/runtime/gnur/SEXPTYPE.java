@@ -38,7 +38,7 @@ public enum SEXPTYPE {
     REALSXP(14, new Class<?>[]{RDoubleVector.class, RDoubleSequence.class}), /* real variables */
     CPLXSXP(15, RComplexVector.class), /* complex variables */
     STRSXP(16, new Class<?>[]{RStringVector.class, String.class}), /* string vectors */
-    DOTSXP(17, RPairList.class), /* dot-dot-dot object */
+    DOTSXP(17, RArgsValuesAndNames.class), /* dot-dot-dot object */
     ANYSXP(18), /* make "any" args work */
     VECSXP(19, RList.class), /* generic vectors */
     EXPRSXP(20, RExpression.class), /* expressions vectors */

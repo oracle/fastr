@@ -255,6 +255,29 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             state.openPairList(SEXPTYPE.LANGSXP);
             node.serializeImpl(state);
             return state.closePairList();
+        } else if (obj instanceof RPromise) {
+            RPromise promise = (RPromise) obj;
+            RSyntaxNode node = (RSyntaxNode) RASTUtils.unwrap(promise.getRep());
+            /*
+             * If the promise is evaluated, we store the value (in car) and the tag is set to RNull,
+             * else we record the environment in the tag and store RUnboundValue. In either case we
+             * record the expression.
+             */
+            Object value;
+            Object tag;
+            if (promise.isEvaluated()) {
+                value = promise.getValue();
+                tag = RNull.instance;
+            } else {
+                value = RUnboundValue.instance;
+                tag = promise.getFrame() == null ? REnvironment.globalEnv() : REnvironment.frameToEnvironment(promise.getFrame());
+            }
+            state.openPairList().setTag(tag);
+            state.setCar(value);
+            state.openPairList();
+            node.serializeImpl(state);
+            state.setCdr(state.closePairList());
+            return state.closePairList();
         } else {
             throw RInternalError.unimplemented("serialize");
         }

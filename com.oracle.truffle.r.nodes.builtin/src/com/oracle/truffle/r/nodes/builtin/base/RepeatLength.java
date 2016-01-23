@@ -146,4 +146,14 @@ public abstract class RepeatLength extends RBuiltinNode {
         }
         return RDataFactory.createComplexVector(array, value.isComplete());
     }
+
+    @Specialization
+    protected RList repLen(RList list, int length) {
+        controlVisibility();
+        Object[] data = new Object[length];
+        for (int i = 0; i < length; i++) {
+            data[i] = list.getDataAt(i % list.getLength());
+        }
+        return RDataFactory.createList(data);
+    }
 }

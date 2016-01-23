@@ -549,34 +549,16 @@ Reason: native
 Analysis: libRlapack and libRblas not absolute in .so (otool -L) so loading fails
 
 Package: spam
-Reason: serialize
-
-Package: codetools
-Reason: serialize
-
-Package: iterators
-Reason: serialize
-
-Package: apc
-Reason: serialize
-
-Package: apsrtable
-Reason: serialize
-
-Package: assertthat
-Reason: serialize
-
-Package: citbcmst
-Reason: serialize
+Reason: S4
+Analysis: fdef@package in setMethod, fdef is NULL
 
 Package: cubfits
-Reason: serialize
-
-Package: NLP
-Reason: serialize
+Reason: native
+Analysis: _coerceInteger undefined
 
 Package: proxy
-Reason: serialize
+Reason: corebug
+Analysis: stack overflow in vector extract
 
 Package: appell
 Reason: fortran
