@@ -263,11 +263,18 @@ public class MethodsListDispatch {
 
     public abstract static class R_nextMethodCall extends RExternalBuiltinNode.Arg2 {
 
-        @Child private LocalReadVariableNode readDotNextMethod = LocalReadVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, false);
-        @Child private LocalReadVariableNode readDots = LocalReadVariableNode.create("...", false);
+        @Child private LocalReadVariableNode readDotNextMethod;
+        @Child private LocalReadVariableNode readDots;
 
         @Specialization
+        @TruffleBoundary
         protected Object nextMethodCall(RLanguage matchedCall, REnvironment ev) {
+            // TODO: we can't create LocalReadVariableNode-s once and for all because ev may change
+            // leading to a problem if contains a different frame; should we finesse implementation
+            // of LocalReadVariableNode to handle this?
+            readDotNextMethod = insert(LocalReadVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, false));
+            readDots = insert(LocalReadVariableNode.create("...", false));
+
             RFunction op = (RFunction) readDotNextMethod.execute(null, ev.getFrame());
             if (op == null) {
                 throw RError.error(this, RError.Message.GENERIC, "internal error in 'callNextMethod': '.nextMethod' was not assigned in the frame of the method call");
