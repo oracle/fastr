@@ -192,6 +192,9 @@ public class RASTUtils {
     @TruffleBoundary
     public static RSyntaxNode createCall(Object fna, boolean sourceUnavailable, ArgumentsSignature signature, RSyntaxNode... arguments) {
         Object fn = fna;
+        if (fn instanceof Node) {
+            fn = unwrap(fn);
+        }
         if (fn instanceof ConstantNode) {
             fn = ((ConstantNode) fn).getValue();
         }
