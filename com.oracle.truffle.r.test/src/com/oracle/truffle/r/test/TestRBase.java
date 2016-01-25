@@ -70,7 +70,7 @@ public class TestRBase extends TestBase {
         for (int i = 0; i < files.length; i++) {
             try {
                 BufferedReader bf = new BufferedReader(new FileReader(files[i]));
-                StringBuffer sb = new StringBuffer("}");
+                StringBuffer sb = new StringBuffer("{");
                 TestTrait testTrait = null;
                 while (true) {
                     String l = bf.readLine();
