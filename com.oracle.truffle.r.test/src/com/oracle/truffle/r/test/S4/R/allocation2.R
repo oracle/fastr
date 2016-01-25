@@ -3,4 +3,4 @@
 
 setClass("Person", representation(name = "character", age = "numeric"))
 setClass("Employee", representation(boss = "Person"), contains = "Person")
-new("Person", name = "Hadley", age = "thirty")
+print(new("Person", name = "Hadley", age = "thirty"))

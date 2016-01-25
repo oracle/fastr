@@ -22,4 +22,4 @@ setMethod("inspect.vehicle",
    message("Checking seat belts")
  })
 
-inspect.vehicle(new("Car"), new("Inspector"))
+print(inspect.vehicle(new("Car"), new("Inspector")))

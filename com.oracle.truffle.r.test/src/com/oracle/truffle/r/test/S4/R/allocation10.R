@@ -17,10 +17,9 @@ check_person <- function(object) {
   
   if (length(errors) == 0) TRUE else errors
 }
-setClass("Person", representation(name = "character", age = "numeric"), 
-  validity = check_person)
+setClass("Person", representation(name = "character", age = "numeric"), validity = check_person)
 
 hadley <- new("Person", name = "Hadley", age = 31)
 hadley@age <- 1:10
-validObject(hadley)
+print(validObject(hadley))
 
