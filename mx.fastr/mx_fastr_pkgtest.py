@@ -195,6 +195,15 @@ def rpt_compare(args):
             return 1
     return 0
 
+def _failed_outputs(outputs):
+    '''
+    return True iff outputs has any .fail files
+    '''
+    for output in outputs:
+        if output.endswith(".fail"):
+            return True
+    return False
+
 def _rpt_compare_pkgs(gnur, fastr, verbose, pattern, diff=False, difftool=None):
     '''
     returns dict keyed by pkg with value 0 for pass, 1 for fail
@@ -204,15 +213,20 @@ def _rpt_compare_pkgs(gnur, fastr, verbose, pattern, diff=False, difftool=None):
     for pkg in fastr.keys():
         if re.search(pattern, pkg) is None:
             continue
+        result[pkg] = -1 # unknown
         if not gnur.has_key(pkg):
             print 'no gnur output to compare: ' + pkg
             continue
 
-        result[pkg] = 0 # optimistic
         if verbose:
             print 'comparing ' + pkg
         fastr_outputs = fastr[pkg]
         gnur_outputs = gnur[pkg]
+        if _failed_outputs(gnur_outputs):
+            print 'gnur test failed: ' + pkg
+            continue
+
+        result[pkg] = 0 # optimistic
         if len(fastr_outputs) != len(gnur_outputs):
             if verbose:
                 print 'fastr is missing some output files'
@@ -222,6 +236,11 @@ def _rpt_compare_pkgs(gnur, fastr, verbose, pattern, diff=False, difftool=None):
             continue
         for i in range(len(gnur_outputs)):
             fastr_output = fastr_outputs[i]
+            if fastr_output.endswith(".fail"):
+                if verbose:
+                    print 'failed output: ' + fastr_output
+                    result[pkg] = 1
+                    continue
             gnur_output = gnur_outputs[i]
             gnur_content = None
             with open(gnur_output) as f:
@@ -626,6 +645,7 @@ def rpt_test_status(args):
     _add_common_args(parser)
     _add_pattern_arg(parser)
     parser.add_argument('--all', action='store_true', help='shows status for all runs')
+    parser.add_argument('--regressions', action='store_true', help='show regressions (i.e. latest failed when previous ok')
     args = parser.parse_args(args)
 
     gnur = _gather_test_outputs(join(os.getcwd(), "test_gnur"))
@@ -634,15 +654,37 @@ def rpt_test_status(args):
         if not re.search(args.pattern, pkg):
             continue
         testcount = len(resultInfo_list)
-        for index in range(testcount):
-            fastr = _get_test_outputs(fastr_resultInfo_map, index, pkg)
-            rdict = _rpt_compare_pkgs(gnur, fastr, args.verbose, args.pattern)
-            if rdict.has_key(pkg):
-                # missing if test_gnur missing results for this package
-                rc = rdict[pkg]
-                print pkg + ' (' + str(fastr_resultInfo_map[pkg][index].date) + ')' + ': ' + ('OK' if rc == 0 else 'FAILED')
-            if not args.all:
-                break
+        if args.regressions:
+            if testcount > 1:
+                fastr_cur = _get_test_outputs(fastr_resultInfo_map, testcount - 1, pkg)
+                fastr_prev = _get_test_outputs(fastr_resultInfo_map, testcount - 2, pkg)
+                rdict_cur = _rpt_compare_pkgs(gnur, fastr_cur, args.verbose, args.pattern)
+                rdict_prev = _rpt_compare_pkgs(gnur, fastr_prev, args.verbose, args.pattern)
+                if rdict_cur.has_key(pkg):
+                    # missing if test_gnur missing results for this package
+                    rc_cur = rdict_cur[pkg]
+                    rc_prev = rdict_prev[pkg]
+                    if rc_prev == 0 and rc_cur != 0:
+                        print pkg + ' (' + str(fastr_resultInfo_map[pkg][testcount - 1].date) + ')' + ': REGRESSION'
+        else:
+            # newest first
+            for index in range(testcount - 1, 0, -1):
+                fastr = _get_test_outputs(fastr_resultInfo_map, index, pkg)
+                rdict = _rpt_compare_pkgs(gnur, fastr, args.verbose, args.pattern)
+                if rdict.has_key(pkg):
+                    # missing if test_gnur missing results for this package
+                    rc = rdict[pkg]
+                    print pkg + ' (' + str(fastr_resultInfo_map[pkg][index].date) + ')' + ': ' + _status_string(rc)
+                if not args.all:
+                    break
+
+def _status_string(rc):
+    if rc == 0:
+        return "OK"
+    elif rc == 1:
+        return "FAILED"
+    else:
+        return "UNKNOWN"
 
 def rpt_test_summary(args):
     parser = ArgumentParser(prog='mx rpt-test-summary')
