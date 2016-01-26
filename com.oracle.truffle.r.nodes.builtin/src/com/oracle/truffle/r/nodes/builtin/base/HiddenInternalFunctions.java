@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -240,16 +240,8 @@ public class HiddenInternalFunctions {
                         return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
                     }
                 };
-                Object result = RSerialize.unserialize(udata, callHook, packageName);
-                if (result instanceof RFunction) {
-                    RFunction function = (RFunction) result;
-                    if (function.getName() == null || function.getName().isEmpty()) {
-                        String name = ReadVariableNode.getSlowPathEvaluationName();
-                        if (name != null) {
-                            RContext.getRRuntimeASTAccess().setFunctionName(function.getRootNode(), name);
-                        }
-                    }
-                }
+                String functionName = ReadVariableNode.getSlowPathEvaluationName();
+                Object result = RSerialize.unserialize(udata, callHook, packageName, functionName);
                 return result;
             } catch (IOException ex) {
                 // unexpected
@@ -465,7 +457,7 @@ public class HiddenInternalFunctions {
 
     /*
      * Created as primitive function to avoid incrementing reference count for the argument.
-     * 
+     *
      * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
      * SHARED_PERMANENT_VAL for permanent shared
      */
