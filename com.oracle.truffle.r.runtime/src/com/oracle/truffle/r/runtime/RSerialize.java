@@ -1535,18 +1535,18 @@ public class RSerialize {
                          */
 
                         case FUNSXP:
-                            if (gnuRType == SEXPTYPE.BUILTINSXP) {
+                        case PROMSXP:
+                        case LANGSXP:
+                        case LISTSXP:
+                        case DOTSXP: {
+                            if (type == SEXPTYPE.FUNSXP && gnuRType == SEXPTYPE.BUILTINSXP) {
+                                // special case
                                 RFunction fun = (RFunction) obj;
                                 String name = fun.getRBuiltin().getName();
                                 stream.writeString(name);
                                 tailCall = false;
                                 break;
                             }
-                            // fall through
-                        case PROMSXP:
-                        case LANGSXP:
-                        case LISTSXP:
-                        case DOTSXP: {
                             tailCall = true;
                             // attributes written first to avoid recursion on cdr
                             if (attributes != null) {
