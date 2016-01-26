@@ -133,7 +133,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
     }
 
     @Fallback
-    protected Object fallback(Object x, Object y) {
+    protected Object fallback(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
         return null;
     }
 }
