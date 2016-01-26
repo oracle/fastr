@@ -1,3 +1,5 @@
+# test from Hadley Wickham's book
+
 setClass("Vehicle")
 setClass("Truck", contains = "Vehicle")
 setClass("Car", contains = "Vehicle")
@@ -12,14 +14,15 @@ setGeneric("inspect.vehicle", function(v, i) {
 setMethod("inspect.vehicle",
  signature(v = "Vehicle", i = "Inspector"),
  function(v, i) {
-   message("Looking for rust")
+   print("Looking for rust")
  })
 
 setMethod("inspect.vehicle",
  signature(v = "Car", i = "Inspector"),
  function(v, i) {
    callNextMethod() # perform vehicle inspection
-   message("Checking seat belts")
+   print("Checking seat belts")
  })
 
-print(inspect.vehicle(new("Car"), new("Inspector")))
+inspect.vehicle(new("Car"), new("Inspector"))
+removeGeneric("inspect.vehicle");

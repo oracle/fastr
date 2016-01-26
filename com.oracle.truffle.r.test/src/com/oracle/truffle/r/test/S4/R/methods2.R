@@ -18,4 +18,6 @@ setMethod("sides", signature("Triangle"), function(object) 3)
 setMethod("sides", signature("Square"),   function(object) 4)
 # setMethod("sides", signature("Circle"),   function(object) Inf)
 
-print(showMethods(class = "Polygon"))
+res<-print(showMethods(class = "Polygon"))
+removeGeneric("sides")
+print(res)

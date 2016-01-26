@@ -12,4 +12,4 @@ setClass("Square", contains = "Polygon")
 # setClass("Circle", contains = "Shape")
 
 setMethod("sides", signature("Triangle"), function(object) "three")
-print(sides(new("Triangle")))
+tryCatch({sides(new("Triangle"))}, error = function(e) { removeGeneric("sides"); stop(e) })

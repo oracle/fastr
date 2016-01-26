@@ -91,10 +91,11 @@ public class TestRBase extends TestBase {
                     }
                 }
                 bf.close();
+                String testFilePath = TestBase.relativize(testDirPath.resolve(files[i].getName())).toString();
                 if (testTrait == null) {
-                    assertEval(TestBase.template("{ source(\"%0\") }", new String[]{files[i].getAbsolutePath()}));
+                    assertEval(TestBase.template("{ source(\"%0\") }", new String[]{testFilePath}));
                 } else {
-                    assertEval(testTrait, TestBase.template("{ source(\"%0\") }", new String[]{files[i].getAbsolutePath()}));
+                    assertEval(testTrait, TestBase.template("{ source(\"%0\") }", new String[]{testFilePath}));
                 }
             } catch (IOException x) {
                 Assert.fail("error reading: " + files[i].getPath() + ": " + x);

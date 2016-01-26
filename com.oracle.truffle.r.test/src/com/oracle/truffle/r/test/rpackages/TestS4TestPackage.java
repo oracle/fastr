@@ -56,19 +56,23 @@ public class TestS4TestPackage extends TestRPackages {
 
     @Test
     public void testS4Load() {
-        assertEval(TestBase.template("{ library(\"tests4\", lib.loc = \"%0\"); detach(\"package:tests4\") }", new String[]{packagePaths.rpackagesLibs.toString()}));
+        assertEval(TestBase.template("{ library(\"tests4\", lib.loc = \"%0\"); detach(\"package:tests4\"); unloadNamespace(\"tests4\") }", new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
     // TODO: these do not work yet due to some obscure problem with package exports
     @Test
     public void testS4Execute() {
-        assertEval(TestBase.template("{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Car\"), new(\"Inspector\"))); detach(\"package:tests4\"); r }",
+        assertEval(TestBase.template(
+                        "{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Car\"), new(\"Inspector\"))); detach(\"package:tests4\"); unloadNamespace(\"tests4\"); r }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
-        assertEval(TestBase.template("{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Truck\"), new(\"Inspector\"))); detach(\"package:tests4\"); r }",
+        assertEval(TestBase.template(
+                        "{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Truck\"), new(\"Inspector\"))); detach(\"package:tests4\"); unloadNamespace(\"tests4\"); r }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
-        assertEval(TestBase.template("{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Car\"), new(\"StateInspector\"))); detach(\"package:tests4\"); r }",
+        assertEval(TestBase.template(
+                        "{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Car\"), new(\"StateInspector\"))); detach(\"package:tests4\"); unloadNamespace(\"tests4\"); r }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
-        assertEval(TestBase.template("{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Truck\"), new(\"StateInspector\"))); detach(\"package:tests4\"); r }",
+        assertEval(TestBase.template(
+                        "{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Truck\"), new(\"StateInspector\"))); detach(\"package:tests4\"); unloadNamespace(\"tests4\"); r }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
