@@ -212,6 +212,21 @@ public class FastRTckTest extends TruffleTCK {
     }
 
     @Override
+    public void testPlusWithOneNegativeShort() throws Exception {
+        // no floats in FastR
+    }
+
+    @Override
+    public void testPlusWithDoubleFloatSameAsInt() throws Exception {
+        // no floats in FastR
+    }
+
+    @Override
+    public void testPlusWithLongMaxIntMinInt() throws Exception {
+        // no longs in FastR
+    }
+
+    @Override
     public void testPlusWithLong() throws Exception {
         // no longs in FastR
     }
