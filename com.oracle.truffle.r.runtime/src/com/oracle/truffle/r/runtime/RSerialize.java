@@ -1317,8 +1317,9 @@ public class RSerialize {
 
         private void writeItem(Object objArg) throws IOException {
             Object obj = objArg;
-            boolean tailCall = false;
+            boolean tailCall;
             do {
+                tailCall = false;
                 SEXPTYPE specialType;
                 Object psn;
                 if ((psn = getPersistentName(obj)) != RNull.instance) {
@@ -1544,7 +1545,6 @@ public class RSerialize {
                                 RFunction fun = (RFunction) obj;
                                 String name = fun.getRBuiltin().getName();
                                 stream.writeString(name);
-                                tailCall = false;
                                 break;
                             }
                             tailCall = true;
@@ -1558,28 +1558,26 @@ public class RSerialize {
                                 case FUNSXP: {
                                     RFunction fun = (RFunction) obj;
                                     RPairList pl = (RPairList) RContext.getRRuntimeASTAccess().serialize(state, fun);
-                                    if (pl != null) {
-                                        state.convertUnboundValues(pl);
-                                        if (FastROptions.debugMatches("printWclosure")) {
-                                            Debug.printClosure(pl);
-                                        }
-                                        writeItem(pl.getTag());
-                                        writeItem(pl.car());
-                                        obj = pl.cdr();
+                                    assert pl != null;
+                                    state.convertUnboundValues(pl);
+                                    if (FastROptions.debugMatches("printWclosure")) {
+                                        Debug.printClosure(pl);
                                     }
+                                    writeItem(pl.getTag());
+                                    writeItem(pl.car());
+                                    obj = pl.cdr();
                                     break;
                                 }
 
                                 case PROMSXP: {
                                     RPairList pl = (RPairList) RContext.getRRuntimeASTAccess().serialize(state, obj);
-                                    if (pl != null) {
-                                        state.convertUnboundValues(pl);
-                                        if (pl.getTag() != RNull.instance) {
-                                            writeItem(pl.getTag());
-                                        }
-                                        writeItem(pl.car());
-                                        obj = pl.cdr();
+                                    assert pl != null;
+                                    state.convertUnboundValues(pl);
+                                    if (pl.getTag() != RNull.instance) {
+                                        writeItem(pl.getTag());
                                     }
+                                    writeItem(pl.car());
+                                    obj = pl.cdr();
                                     break;
                                 }
 
