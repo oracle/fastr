@@ -115,7 +115,7 @@ def _sanitize_vmArgs(jdk, vmArgs):
     i = 0
     while i < len(vmArgs):
         vmArg = vmArgs[i]
-        if 'graal.option' in vmArg or 'JVMCI' in vmArg:
+        if 'graal' in vmArg or 'JVMCI' in vmArg:
             if vm and vm == "original":
                 i = i + 1
                 continue
@@ -351,7 +351,7 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     vmArgs += ['-Dgraal.option.TruffleCompilationThreshold=100000']
 
     if _mx_jvmci:
-        vmArgs += ['-Dgraal.option.InliningDepthError=500', '-Dgraal.option.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx4G']
+        vmArgs += ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx4G']
 
     setREnvironment()
     jdk = get_default_jdk()
