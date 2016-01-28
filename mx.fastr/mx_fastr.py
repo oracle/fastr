@@ -223,6 +223,10 @@ def build(args):
 def pylint(args):
     return mx.pylint(['--primary'])
 
+def eclipseformat(args):
+    mx.log("Note: eclipseformat is currently not supported for FastR")
+    return 0
+
 def _fastr_gate_runner(args, tasks):
     # Until fixed, we call Checkstyle here and limit to primary
     with mx_gate.Task('Checkstyle check', tasks) as t:
@@ -567,6 +571,7 @@ _commands = {
     'test' : [test, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'installcran' : [installcran, '[options]'],
+    'eclipseformat' : [eclipseformat, '[options]'],
     }
 
 _commands.update(mx_fastr_pkgtest._commands)
