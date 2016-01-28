@@ -218,10 +218,10 @@ def build(args):
         os.environ['COMPILER_WARNINGS_FATAL'] = 'false'
         os.environ['USE_CLANG'] = 'true'
         os.environ['LFLAGS'] = '-Xlinker -lstdc++'
-    mx_jvm().build(args)
+    return mx_jvm().build(args)
 
 def pylint(args):
-    mx.pylint(['--primary'])
+    return mx.pylint(['--primary'])
 
 def _fastr_gate_runner(args, tasks):
     # Until fixed, we call Checkstyle here and limit to primary
