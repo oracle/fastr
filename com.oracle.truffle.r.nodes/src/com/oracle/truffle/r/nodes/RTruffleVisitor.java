@@ -346,7 +346,7 @@ public final class RTruffleVisitor implements Visitor<RSyntaxNode> {
         argNodes[argNodes.length - 1] = rhs;
         names[argNodes.length - 1] = "value";
 
-        if (fun.getName().equals("slot")) {
+        if (fun.getName().equals("slot") || fun.getName().equals("@")) {
             // this is pretty gross, but at this point seems like the only way to get setClass to
             // work properly
             argNodes[0] = GetNonSharedNodeGen.create(argNodes[0].asRNode());
