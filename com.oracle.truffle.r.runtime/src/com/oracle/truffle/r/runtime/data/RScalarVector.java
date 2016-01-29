@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -136,10 +136,6 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
 
     public RVector createEmptySameType(int newLength, boolean newIsComplete) {
         return materialize().createEmptySameType(newLength, newIsComplete);
-    }
-
-    public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        throw new UnsupportedOperationException();
     }
 
     public boolean isMatrix() {

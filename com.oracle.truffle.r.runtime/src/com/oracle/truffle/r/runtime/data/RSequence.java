@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -164,11 +164,6 @@ public abstract class RSequence implements RAbstractVector {
     @Override
     public final RShareable materializeToShareable() {
         return this.materialize();
-    }
-
-    @Override
-    public final void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        throw RInternalError.shouldNotReachHere();
     }
 
     @Override
