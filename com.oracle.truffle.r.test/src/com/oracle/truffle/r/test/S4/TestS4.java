@@ -106,10 +106,4 @@ public class TestS4 extends TestRBase {
         return "S4";
     }
 
-    @Override
-    @Test
-    public void runRSourceTests() {
-        super.runRSourceTests();
-    }
-
 }
