@@ -68,8 +68,8 @@ public class PrintFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!isS4(o)")
-        protected Object printDefault(VirtualFrame frame, Object o, Object digits, byte quote, Object naPrint, Object printGap, byte right, Object max, Object useSource, Object noOpt) {
-            String s = (String) prettyPrinter.executeString(frame, o, null, quote, right);
+        protected Object printDefault(Object o, Object digits, byte quote, Object naPrint, Object printGap, byte right, Object max, Object useSource, Object noOpt) {
+            String s = (String) prettyPrinter.executeString(o, null, quote, right);
             if (s != null && !s.isEmpty()) {
                 printHelper(s);
             }
