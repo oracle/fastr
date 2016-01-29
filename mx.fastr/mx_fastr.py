@@ -87,7 +87,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True):
     vmArgs = ['-cp', mx.classpath(_r_command_project)]
     # jvmci specific
     if _mx_jvmci:
-        vmArgs += ['-Dgraal.option.InliningDepthError=500', '-Dgraal.option.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
+        vmArgs += ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
 
     if extraVmArgs is None or not '-da' in extraVmArgs:
         # unless explicitly disabled we enable assertion checking
@@ -348,7 +348,7 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     junitArgs += ['--runlistener', runlistener]
 
     # suppress Truffle compilation by using a high threshold
-    vmArgs += ['-Dgraal.option.TruffleCompilationThreshold=100000']
+    vmArgs += ['-Dgraal.TruffleCompilationThreshold=100000']
 
     if _mx_jvmci:
         vmArgs += ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx5G']
