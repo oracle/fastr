@@ -250,8 +250,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         return vectorType == RType.List;
     }
 
-    private final NullProfile dimNamesNull = NullProfile.create();
+    private final ConditionProfile dimNamesNull = ConditionProfile.createBinaryProfile();
     private final ValueProfile foundDimNamesProfile = ValueProfile.createClassProfile();
+    private final ConditionProfile selectPositionsProfile = ConditionProfile.createBinaryProfile();
 
     @ExplodeLoop
     private void applyDimensions(RAbstractContainer originalTarget, RVector extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
@@ -259,19 +260,16 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         int dimCount = countDimensions(positionProfile);
 
         int[] newDimensions = new int[dimCount];
-        RList originalDimNames = dimNamesNull.profile(originalTarget.getDimNames(null));
-        Object[] newDimNames = null;
-        if (originalDimNames != null) {
-            newDimNames = new Object[dimCount];
-        }
+        RList originalDimNames = originalTarget.getDimNames(null);
+        Object[] newDimNames = dimNamesNull.profile(originalDimNames == null) ? null : new Object[dimCount];
 
         int dimIndex = -1;
         for (int i = 0; i < numberOfDimensions; i++) {
             int selectedPositionsCount = positionProfile[i].selectedPositionsCount;
-            if (selectedPositionsCount != 1 || !dropDimensions) {
+            if (!dropDimensions || selectPositionsProfile.profile(selectedPositionsCount != 1)) {
                 dimIndex++;
                 newDimensions[dimIndex] = selectedPositionsCount;
-                if (originalDimNames != null) {
+                if (newDimNames != null) {
                     Object dataAt = originalDimNames.getDataAt(i);
                     Object result;
                     if (dataAt == RNull.instance) {
@@ -290,7 +288,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             if (newDimNames != null) {
                 extractedTarget.setDimNames(RDataFactory.createList(newDimNames));
             }
-        } else if (originalDimNames != null && originalDimNames.getLength() > 0) {
+        } else if (newDimNames != null && originalDimNames.getLength() > 0) {
             RAbstractStringVector foundNames = translateDimNamesToNames(positionProfile, originalDimNames, extractedTargetLength, positions);
             if (foundNames != null) {
                 foundNames = foundDimNamesProfile.profile(foundNames);
