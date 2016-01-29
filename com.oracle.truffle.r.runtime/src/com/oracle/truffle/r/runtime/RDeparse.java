@@ -167,6 +167,7 @@ public class RDeparse {
         new Func("[", new PPInfo(PP.SUBSET, PREC_SUBSET, false)),
         new Func("[[", new PPInfo(PP.SUBSET, PREC_SUBSET, false)),
         new Func("$", new PPInfo(PP.DOLLAR, PREC_DOLLAR, false)),
+        new Func("@", new PPInfo(PP.DOLLAR, PREC_DOLLAR, false)),
     };
     // @formatter:on
 
