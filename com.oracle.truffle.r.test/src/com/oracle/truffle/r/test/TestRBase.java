@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.junit.Assert;
+import org.junit.Test;
 
 import com.oracle.truffle.r.runtime.REnvVars;
 
@@ -57,10 +58,8 @@ public class TestRBase extends TestBase {
         return null;
     }
 
-    /*
-     * This method needs to be called by each test suite to run the actual tests.
-     */
-    protected void runRSourceTests() {
+    @Test
+    public void runRSourceTests() {
         String testDirName = getTestDir();
         if (testDirName == null) {
             return;

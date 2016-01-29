@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ public final class VectorLengthProfile {
             return length;
         } else if (cachedLength == UNINITIALIZED_LENGTH) {
             // check the uninitialized case first - this way an uninitialized profile will deopt
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             cachedLength = length <= MAX_PROFILED_LENGTH ? length : GENERIC_LENGTH;
         } else if (cachedLength == length) {
             return cachedLength;

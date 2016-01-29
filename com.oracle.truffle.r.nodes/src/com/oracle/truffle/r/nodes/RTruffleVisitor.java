@@ -100,6 +100,9 @@ public final class RTruffleVisitor implements Visitor<RSyntaxNode> {
     }
 
     public RFunction transformFunction(String name, Function func, MaterializedFrame enclosingFrame) {
+        if (func.getDebugName() == null && name != null && !name.isEmpty()) {
+            func.setDebugName(name);
+        }
         RootCallTarget callTarget = createFunctionCallTarget(func);
         FastPathFactory fastPath = EvaluatedArgumentsVisitor.process(func);
         FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);

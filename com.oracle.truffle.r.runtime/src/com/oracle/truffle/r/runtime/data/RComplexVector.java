@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -206,11 +206,11 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        RComplexVector other = (RComplexVector) fromVector;
+        RAbstractComplexVector other = (RAbstractComplexVector) fromVector;
         int toIndex2 = toIndex << 1;
-        int fromIndex2 = fromIndex << 1;
-        data[toIndex2] = other.data[fromIndex2];
-        data[toIndex2 + 1] = other.data[fromIndex2 + 1];
+        RComplex value = other.getDataAt(fromIndex);
+        data[toIndex2] = value.getRealPart();
+        data[toIndex2 + 1] = value.getImaginaryPart();
     }
 
     @Override

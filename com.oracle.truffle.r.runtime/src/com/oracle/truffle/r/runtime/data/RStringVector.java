@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -198,8 +198,8 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        RStringVector other = (RStringVector) fromVector;
-        data[toIndex] = other.data[fromIndex];
+        RAbstractStringVector other = (RAbstractStringVector) fromVector;
+        data[toIndex] = other.getDataAt(fromIndex);
     }
 
     @Override

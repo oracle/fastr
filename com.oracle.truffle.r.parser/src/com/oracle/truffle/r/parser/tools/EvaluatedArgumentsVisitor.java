@@ -22,14 +22,36 @@
  */
 package com.oracle.truffle.r.parser.tools;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import com.oracle.truffle.r.parser.ast.*;
+import com.oracle.truffle.r.parser.ast.ASTNode;
+import com.oracle.truffle.r.parser.ast.AccessVariable;
+import com.oracle.truffle.r.parser.ast.AccessVariadicComponent;
+import com.oracle.truffle.r.parser.ast.ArgNode;
+import com.oracle.truffle.r.parser.ast.AssignVariable;
+import com.oracle.truffle.r.parser.ast.BinaryOperation;
+import com.oracle.truffle.r.parser.ast.Break;
+import com.oracle.truffle.r.parser.ast.Call;
+import com.oracle.truffle.r.parser.ast.Constant;
+import com.oracle.truffle.r.parser.ast.For;
+import com.oracle.truffle.r.parser.ast.Function;
+import com.oracle.truffle.r.parser.ast.If;
+import com.oracle.truffle.r.parser.ast.Missing;
+import com.oracle.truffle.r.parser.ast.Next;
 import com.oracle.truffle.r.parser.ast.Operation.ArithmeticOperator;
 import com.oracle.truffle.r.parser.ast.Operation.Operator;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.parser.ast.Repeat;
+import com.oracle.truffle.r.parser.ast.Replacement;
+import com.oracle.truffle.r.parser.ast.Sequence;
+import com.oracle.truffle.r.parser.ast.UnaryOperation;
+import com.oracle.truffle.r.parser.ast.While;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.data.FastPathFactory;
+import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 final class Info {
     public static final Info EMPTY = new Info(Collections.emptySet(), Collections.emptySet(), false);
@@ -75,8 +97,9 @@ final class Info {
 
 public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
 
-    private static final Set<String> wellKnownFunctions = new HashSet<>(Arrays.asList("$", "@", "[", "any", "dim", "dimnames", "is.null", "list", "names", "return", "print", "length", "rep", "max",
-                    "matrix", "is.array", "is.element", "is.character", "exp", "all", "pmin", "pmax", "as.numeric", "as.integer", ".Call", "sum", "order", "rev", "integer", "double"));
+    private static final Set<String> wellKnownFunctions = new HashSet<>(Arrays.asList("c", "$", "@", "[", "[[", "any", "dim", "dimnames", "rownames", "colnames", "is.null", "list", "names", "return",
+                    "print", "length", "rep", "min", "max", "matrix", "table", "is.array", "is.element", "is.character", "exp", "all", "pmin", "pmax", "as.numeric", "proc.time", "as.integer",
+                    "as.character", "as.matrix", ".Call", "sum", "order", "rev", "integer", "double", "as.numeric", "as.list", "as.integer", ".Call", "unname", "log", "lgamma"));
 
     private EvaluatedArgumentsVisitor() {
         // private constructor

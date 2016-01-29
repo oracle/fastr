@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ public abstract class MakeUnique extends RBuiltinNode {
 
     private final ConditionProfile namesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile duplicatesProfile = ConditionProfile.createBinaryProfile();
-    private final NACheck dummyCheck = new NACheck(); // never triggered (used for vector update)
+    private final NACheck dummyCheck = NACheck.create(); // never triggered (used for vector update)
 
     @Specialization
     protected RAbstractStringVector makeUnique(RAbstractStringVector names, String sep) {

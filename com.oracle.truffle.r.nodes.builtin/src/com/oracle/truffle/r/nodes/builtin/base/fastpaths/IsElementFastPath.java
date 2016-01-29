@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,38 +22,99 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.fastpaths;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public abstract class IsElementFastPath extends RFastPathNode {
+public abstract class IsElementFastPath extends RFastPathNode implements VisibilityController {
 
     @Specialization(guards = "el.getLength() == 1")
     protected Byte iselementOne(RAbstractStringVector el, RAbstractStringVector set, //
-                    @Cached("create()") NAProfile na, //
                     @Cached("create()") BranchProfile trueProfile, //
                     @Cached("create()") BranchProfile falseProfile) {
+        controlVisibility();
         String element = el.getDataAt(0);
-        if (!na.isNA(element)) {
-            int length = set.getLength();
-            for (int i = 0; i < length; i++) {
-                if (element.equals(set.getDataAt(i))) {
+        int length = set.getLength();
+        for (int i = 0; i < length; i++) {
+            if (element.equals(set.getDataAt(i))) {
+                trueProfile.enter();
+                return RRuntime.LOGICAL_TRUE;
+            }
+        }
+        falseProfile.enter();
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    protected Byte iselementOne(double el, double set) {
+        controlVisibility();
+        return RRuntime.asLogical(el == set);
+    }
+
+    @Specialization(guards = "el.getLength() == 1")
+    protected Byte iselementOne(RAbstractDoubleVector el, RAbstractDoubleVector set, //
+                    @Cached("create()") BranchProfile trueProfile, //
+                    @Cached("create()") BranchProfile falseProfile) {
+        controlVisibility();
+        double element = el.getDataAt(0);
+        int length = set.getLength();
+        for (int i = 0; i < length; i++) {
+            if (element == set.getDataAt(i)) {
+                trueProfile.enter();
+                return RRuntime.LOGICAL_TRUE;
+            }
+        }
+        falseProfile.enter();
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization(guards = "el.getLength() == 1")
+    protected Byte isElementOneSequence(RAbstractDoubleVector el, RIntSequence set, //
+                    @Cached("createBinaryProfile()") ConditionProfile profile) {
+        controlVisibility();
+        double element = el.getDataAt(0);
+        return RRuntime.asLogical(profile.profile(element >= set.getStart() && element <= set.getEnd()));
+    }
+
+    @Specialization(contains = "isElementOneSequence", guards = "el.getLength() == 1")
+    protected Byte iselementOne(RAbstractDoubleVector el, RAbstractIntVector set, //
+                    @Cached("create()") NACheck na, //
+                    @Cached("create()") BranchProfile trueProfile, //
+                    @Cached("create()") BranchProfile falseProfile) {
+        controlVisibility();
+        double element = el.getDataAt(0);
+        int length = set.getLength();
+        na.enable(set);
+        for (int i = 0; i < length; i++) {
+            int data = set.getDataAt(i);
+            if (na.check(data)) {
+                if (RRuntime.isNA(element)) {
                     trueProfile.enter();
                     return RRuntime.LOGICAL_TRUE;
                 }
+            } else if (element == data) {
+                trueProfile.enter();
+                return RRuntime.LOGICAL_TRUE;
             }
-            falseProfile.enter();
-            return RRuntime.LOGICAL_FALSE;
         }
-        return null;
+        falseProfile.enter();
+        return RRuntime.LOGICAL_FALSE;
     }
 
     @Fallback
     @SuppressWarnings("unused")
     protected Object fallback(Object el, Object set) {
+        System.out.println(getRootNode() + " " + el + " " + set);
         return null;
     }
 }

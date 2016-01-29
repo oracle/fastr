@@ -129,8 +129,8 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
 
     @Override
     public final void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        RListBase other = (RListBase) fromVector;
-        data[toIndex] = other.data[fromIndex];
+        RAbstractListVector other = (RAbstractListVector) fromVector;
+        data[toIndex] = other.getDataAtAsObject(fromIndex);
     }
 
     public final Class<?> getElementClass() {

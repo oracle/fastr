@@ -250,9 +250,9 @@ public class RSerialize {
      * @param packageName the name of the package that the lozyLoad is from
      */
     @TruffleBoundary
-    public static Object unserialize(byte[] data, CallHook hook, String packageName) throws IOException {
+    public static Object unserialize(byte[] data, CallHook hook, String packageName, String functionName) throws IOException {
         InputStream is = new PByteArrayInputStream(data);
-        Input instance = trace() ? new TracingInput(is, hook, packageName) : new Input(is, hook, packageName);
+        Input instance = trace() ? new TracingInput(is, hook, packageName, functionName) : new Input(is, hook, packageName, functionName);
         Object result = instance.unserialize();
         return result;
     }
@@ -268,6 +268,12 @@ public class RSerialize {
         protected final String packageName;
 
         /**
+         * Only set when called from lazyLoadDBFetch. Helps giving a proper name to deserialized
+         * functions.
+         */
+        protected String functionName;
+
+        /**
          * We need to know whether we are unserializing a {@link SEXPTYPE#CLOSXP} as we do not want
          * convert embedded instances of {@link SEXPTYPE#LANGSXP} into ASTs.
          */
@@ -279,12 +285,13 @@ public class RSerialize {
         private int langDepth;
 
         private Input(RConnection conn) throws IOException {
-            this(conn.getInputStream(), null, null);
+            this(conn.getInputStream(), null, null, null);
         }
 
-        private Input(InputStream is, CallHook hook, String packageName) throws IOException {
+        private Input(InputStream is, CallHook hook, String packageName, String functionName) throws IOException {
             super(hook);
             this.packageName = packageName;
+            this.functionName = functionName;
             this.closureDepth = 0;
             byte[] buf = new byte[2];
             is.read(buf);
@@ -347,6 +354,10 @@ public class RSerialize {
             int levs = flags >>> 12;
             Object result = null;
             SEXPTYPE type = SEXPTYPE.mapInt(Flags.ptype(flags));
+
+            String currentFunctionName = functionName;
+            functionName = null;
+
             switch (type) {
                 case NILVALUE_SXP:
                     return RNull.instance;
@@ -495,7 +506,7 @@ public class RSerialize {
                              * on return.
                              */
                             MaterializedFrame enclosingFrame = ((REnvironment) rpl.getTag()).getFrame();
-                            RFunction func = parseFunction(deparse, enclosingFrame);
+                            RFunction func = parseFunction(deparse, enclosingFrame, currentFunctionName);
 
                             copyAttributes(func, rpl.getAttributes());
                             result = func;
@@ -756,7 +767,7 @@ public class RSerialize {
             }
         }
 
-        private RFunction parseFunction(String deparseRaw, MaterializedFrame enclosingFrame) throws IOException {
+        private RFunction parseFunction(String deparseRaw, MaterializedFrame enclosingFrame, String currentFunctionName) throws IOException {
             try {
                 String sourcePath = null;
                 String deparse = deparseRaw;
@@ -774,7 +785,7 @@ public class RSerialize {
                 String name;
                 if (sourcePath == null) {
                     source = Source.fromText(deparse, UNKNOWN_PACKAGE_SOURCE_PREFIX + packageName + " deparse>");
-                    name = RFunction.NO_NAME;
+                    name = currentFunctionName;
                 } else {
                     source = Source.fromNamedText(deparse, sourcePath);
                     // Located a function source file from which we can retrieve the function name
@@ -1096,11 +1107,11 @@ public class RSerialize {
         private int nesting;
 
         private TracingInput(RConnection conn) throws IOException {
-            this(conn.getInputStream(), null, null);
+            this(conn.getInputStream(), null, null, null);
         }
 
-        private TracingInput(InputStream is, CallHook hook, String packageName) throws IOException {
-            super(is, hook, packageName);
+        private TracingInput(InputStream is, CallHook hook, String packageName, String functionName) throws IOException {
+            super(is, hook, packageName, functionName);
         }
 
         @Override

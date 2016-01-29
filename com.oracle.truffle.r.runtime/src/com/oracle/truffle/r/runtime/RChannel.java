@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -314,7 +314,7 @@ public class RChannel {
             unserializeList(elList);
             ret = elList;
         } else if (el instanceof byte[]) {
-            ret = RSerialize.unserialize((byte[]) el, null, null);
+            ret = RSerialize.unserialize((byte[]) el, null, null, null);
         } else {
             ret = el;
         }
@@ -362,7 +362,7 @@ public class RChannel {
                 }
                 return list;
             } else if (msg instanceof byte[]) {
-                return RSerialize.unserialize((byte[]) msg, null, null);
+                return RSerialize.unserialize((byte[]) msg, null, null, null);
             } else {
                 if (msg instanceof RAttributable && ((RAttributable) msg).getAttributes() != null) {
                     unserializeAttributes(((RAttributable) msg).getAttributes());

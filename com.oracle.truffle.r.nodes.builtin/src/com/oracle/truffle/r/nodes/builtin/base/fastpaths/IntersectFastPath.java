@@ -38,6 +38,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
     @Specialization(guards = {"x.getLength() > 0", "y.getLength() > 0"})
     protected RAbstractIntVector intersect(RAbstractIntVector x, RAbstractIntVector y, //
                     @Cached("createBinaryProfile()") ConditionProfile isSortedProfile) {
+        reportWork(x.getLength() + y.getLength());
         int lastValue = x.getDataAt(0);
         boolean xSorted = true;
         for (int i = 1; i < x.getLength(); i++) {
@@ -133,7 +134,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
     }
 
     @Fallback
-    protected Object fallback(Object x, Object y) {
+    protected Object fallback(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
         return null;
     }
 }
