@@ -59,7 +59,7 @@ public final class FrameSlotChangeMonitor {
      * result based on the system's knowledge about the hierarchy of environments and the stable
      * values of certain bindings. Most function lookups can be answered based only on this
      * information.
-     * 
+     *
      * These lookups are stored for caching and invalidation, i.e., to save on repeated lookups and
      * to invalidate lookups in case the environment hierarchy changes.
      */
@@ -389,6 +389,9 @@ public final class FrameSlotChangeMonitor {
 
         invalidateAllNames(newEnclosing);
         invalidateNames(position, newEnclosingFrame.getFrameDescriptor().getIdentifiers());
+
+        newEnclosing.previousLookups.clear();
+        newEnclosing.previousLookups.addAll(oldEnclosing.previousLookups);
 
         position.enclosingFrameDescriptor.getAssumption().invalidate();
         position.enclosingFrameDescriptor = new StableValue<>(newEnclosingFrame.getFrameDescriptor(), "enclosing frame");
