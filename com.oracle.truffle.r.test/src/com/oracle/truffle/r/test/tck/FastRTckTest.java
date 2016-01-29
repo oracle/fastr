@@ -166,6 +166,45 @@ public class FastRTckTest extends TruffleTCK {
     }
 
     @Override
+    public void readWriteBooleanValue() throws Exception {
+        // TODO not yet supported
+    }
+
+    @Override
+    public void readWriteDoubleValue() throws Exception {
+        // TODO not yet supported
+    }
+
+    @Override
+    public void readWriteCharValue() throws Exception {
+        // TODO not yet supported
+    }
+
+    @Override
+    public void readWriteShortValue() throws Exception {
+        // TODO not yet supported
+    }
+
+    @Override
+    public void readWriteByteValue() throws Exception {
+        // TODO not yet supported
+    }
+
+    @Override
+    public void readWriteIntValue() throws Exception {
+        // TODO not yet supported
+    }
+
+    @Override
+    public void readWriteFloatValue() throws Exception {
+        // TODO not yet supported
+    }
+
+    public void testAddComplexNumbersWithMethod() throws Exception {
+        // TODO not yet supported
+    }
+
+    @Override
     @Test
     public void testNull() {
         // disabled because we don't provide a Java "null" value in R
@@ -209,6 +248,21 @@ public class FastRTckTest extends TruffleTCK {
     @Override
     public void testPrimitiveReturnTypeFloat() throws Exception {
         // no floats in FastR
+    }
+
+    @Override
+    public void testPlusWithOneNegativeShort() throws Exception {
+        // no floats in FastR
+    }
+
+    @Override
+    public void testPlusWithDoubleFloatSameAsInt() throws Exception {
+        // no floats in FastR
+    }
+
+    @Override
+    public void testPlusWithLongMaxIntMinInt() throws Exception {
+        // no longs in FastR
     }
 
     @Override
