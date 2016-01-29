@@ -639,6 +639,10 @@ public class TestBase {
         return expectedOutputManager.generate;
     }
 
+    protected static boolean checkOnly() {
+        return expectedOutputManager.checkOnly;
+    }
+
     /**
      * Evaluate expected output from {@code input}. By default the lookup is based on {@code input}
      * but can be overridden by providing a non-null {@code testIdOrNull}.

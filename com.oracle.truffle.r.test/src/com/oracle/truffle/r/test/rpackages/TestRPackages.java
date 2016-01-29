@@ -162,4 +162,24 @@ public class TestRPackages extends TestBase {
 
     protected static final PackagePaths packagePaths = new PackagePaths();
 
+    protected static void setupInstallTestPackages(String[] testPackages) {
+        if (!checkOnly()) {
+            for (String p : testPackages) {
+                if (!packagePaths.installPackage(p)) {
+                    throw new AssertionError();
+                }
+            }
+        }
+    }
+
+    protected static void tearDownUninstallTestPackages(String[] testPackages) {
+        if (!checkOnly()) {
+            for (String p : testPackages) {
+                if (!packagePaths.uninstallPackage(p)) {
+                    throw new AssertionError();
+                }
+            }
+        }
+    }
+
 }

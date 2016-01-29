@@ -36,21 +36,13 @@ public class TestVanillaPackage extends TestRPackages {
     private static final String[] TEST_PACKAGES = new String[]{"vanilla"};
 
     @BeforeClass
-    public static void setupInstallTestPackages() {
-        for (String p : TEST_PACKAGES) {
-            if (!packagePaths.installPackage(p)) {
-                throw new AssertionError();
-            }
-        }
+    public static void setupInstallMyTestPackages() {
+        setupInstallTestPackages(TEST_PACKAGES);
     }
 
     @AfterClass
-    public static void tearDownUninstallTestPackages() {
-        for (String p : TEST_PACKAGES) {
-            if (!packagePaths.uninstallPackage(p)) {
-                throw new AssertionError();
-            }
-        }
+    public static void tearDownUninstallMyTestPackages() {
+        tearDownUninstallTestPackages(TEST_PACKAGES);
     }
 
     @Test

@@ -36,21 +36,13 @@ public class TestS4TestPackage extends TestRPackages {
     private static final String[] TEST_PACKAGES = new String[]{"tests4"};
 
     @BeforeClass
-    public static void setupInstallTestPackages() {
-        for (String p : TEST_PACKAGES) {
-            if (!packagePaths.installPackage(p)) {
-                throw new AssertionError();
-            }
-        }
+    public static void setupInstallMyTestPackages() {
+        setupInstallTestPackages(TEST_PACKAGES);
     }
 
     @AfterClass
-    public static void tearDownUninstallTestPackages() {
-        for (String p : TEST_PACKAGES) {
-            if (!packagePaths.uninstallPackage(p)) {
-                throw new AssertionError();
-            }
-        }
+    public static void tearDownUninstallMyTestPackages() {
+        tearDownUninstallTestPackages(TEST_PACKAGES);
     }
 
     @Test
@@ -58,7 +50,6 @@ public class TestS4TestPackage extends TestRPackages {
         assertEval(TestBase.template("{ library(\"tests4\", lib.loc = \"%0\"); detach(\"package:tests4\"); unloadNamespace(\"tests4\") }", new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
-    // TODO: these do not work yet due to some obscure problem with package exports
     @Test
     public void testS4Execute() {
         assertEval(TestBase.template(
