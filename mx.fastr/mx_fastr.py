@@ -351,7 +351,7 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     vmArgs += ['-Dgraal.option.TruffleCompilationThreshold=100000']
 
     if _mx_jvmci:
-        vmArgs += ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx4G']
+        vmArgs += ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx5G']
 
     setREnvironment()
     jdk = get_default_jdk()
