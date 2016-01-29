@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996, Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -37,7 +37,7 @@ public abstract class Scan extends RBuiltinNode {
     private static final int SCAN_BLOCKSIZE = 1000;
     private static final int NO_COMCHAR = 100000; /* won't occur even in Unicode */
 
-    private final NACheck naCheck = new NACheck();
+    private final NACheck naCheck = NACheck.create();
     private final BranchProfile errorProfile = BranchProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 

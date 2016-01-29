@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,9 +27,9 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 
 public abstract class BinaryMapNAFunctionNode extends BinaryMapFunctionNode {
 
-    protected final NACheck leftNACheck = new NACheck();
-    protected final NACheck rightNACheck = new NACheck();
-    protected final NACheck resultNACheck = new NACheck();
+    protected final NACheck leftNACheck = NACheck.create();
+    protected final NACheck rightNACheck = NACheck.create();
+    protected final NACheck resultNACheck = NACheck.create();
 
     /**
      * Enables all NA checks for the given input vectors.
