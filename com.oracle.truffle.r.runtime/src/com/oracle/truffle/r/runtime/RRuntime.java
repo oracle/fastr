@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,7 +29,7 @@ public class RRuntime {
     // Parts of the welcome message originate from GNU R.
     public static final String WELCOME_MESSAGE =
         "FastR version " + RVersionNumber.FULL + "\n" +
-        "Copyright (c) 2013-5, Oracle and/or its affiliates\n" +
+        "Copyright (c) 2013-6, Oracle and/or its affiliates\n" +
         "Copyright (c) 1995-2015, The R Core Team\n" +
         "Copyright (c) 2015 The R Foundation\n" +
         "Copyright (c) 2012-4 Purdue University\n" +
