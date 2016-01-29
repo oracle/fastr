@@ -235,10 +235,10 @@ public class EnvFunctions {
     public abstract static class SetParentEnv extends Adapter {
 
         @Specialization
+        @TruffleBoundary
         protected REnvironment setParentenv(REnvironment env, REnvironment parent) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
-                errorProfile.enter();
                 throw RError.error(this, RError.Message.CANNOT_SET_PARENT);
             }
             env.setParent(parent);
