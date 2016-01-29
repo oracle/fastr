@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,21 +22,55 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.*;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.COMPLEX_PRECEDENCE;
+import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.DOUBLE_PRECEDENCE;
+import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.EXPRESSION_PRECEDENCE;
+import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.INT_PRECEDENCE;
+import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.LIST_PRECEDENCE;
+import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.LOGICAL_PRECEDENCE;
+import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.NO_PRECEDENCE;
+import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.RAW_PRECEDENCE;
+import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.STRING_PRECEDENCE;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.RCastingBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.CombineNodeGen.CombineInputCastNodeGen;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.nodes.unary.CastRawNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
+import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
+import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"..."})
 public abstract class Combine extends RCastingBuiltinNode {
@@ -52,17 +86,30 @@ public abstract class Combine extends RCastingBuiltinNode {
     @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
     @Child private CombineInputCast inputCast = CombineInputCastNodeGen.create(null);
     @Child private CastToVectorNode castVector;
-
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public abstract Object executeCombine(Object value);
 
-    @Specialization(limit = "1", guards = {"args.getLength() == cachedLength", "cachedPrecedence == precedence(args, cachedLength)"})
-    protected Object combineLengthCached(RArgsValuesAndNames args, //
+    @Specialization(guards = "isSimpleArguments(args)")
+    protected Object combineSimple(RArgsValuesAndNames args) {
+        controlVisibility();
+        return args.getArgument(0);
+    }
+
+    protected boolean isSimpleArguments(RArgsValuesAndNames args) {
+        return !signatureHasNames() && args.getLength() == 1 && !(args.getArgument(0) instanceof RAbstractVector);
+    }
+
+    @Specialization(contains = "combineSimple", limit = "1", guards = {"args.getLength() == cachedLength", "cachedPrecedence == precedence(args, cachedLength)"})
+    protected Object combineCached(RArgsValuesAndNames args, //
                     @Cached("args.getLength()") int cachedLength, //
                     @Cached("precedence( args, cachedLength)") int cachedPrecedence, //
                     @Cached("createCast(cachedPrecedence)") CastNode cast, //
-                    @Cached("createFold(cachedPrecedence)") CombineBinaryNode combineBinary) {
+                    @Cached("create()") BranchProfile naBranch, //
+                    @Cached("create()") BranchProfile naNameBranch, //
+                    @Cached("create()") NACheck naCheck, //
+                    @Cached("create()") NACheck naNameCheck, //
+                    @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
         controlVisibility();
         CompilerAsserts.partialEvaluationConstant(cachedPrecedence);
 
@@ -70,32 +117,147 @@ public abstract class Combine extends RCastingBuiltinNode {
             return RNull.instance;
         }
 
-        boolean signatureHasNames = getSuppliedSignature() != null && getSuppliedSignature().getNonNullCount() > 0;
+        // perform all the casts
+        Object[] elements = new Object[cachedLength];
+        int size = prepareElements(args, cast, elements);
 
-        CompilerAsserts.partialEvaluationConstant(signatureHasNames);
+        // prepare the names (if there are any)
+        RStringVector namesVector = hasNamesProfile.profile(hasNames(elements)) ? foldNames(naNameBranch, naNameCheck, elements, size) : null;
 
-        Object[] array = args.getArguments();
+        // get the actual contents of the result
+        RVector result = foldContents(cachedPrecedence, naBranch, naCheck, elements, size, namesVector);
 
-        Object current = readAndCast(cast, array, 0, signatureHasNames);
-        for (int i = 1; i < cachedLength; i++) {
-            Object other = readAndCast(cast, array, i, signatureHasNames);
-            current = combineBinary.executeCombine(current, other);
-        }
-        RNode.reportWork(this, cachedLength);
+        RNode.reportWork(this, size);
 
         if (cachedPrecedence == EXPRESSION_PRECEDENCE) {
-            return RDataFactory.createExpression((RList) current);
+            return RDataFactory.createExpression((RList) result);
         } else {
-            return current;
+            return result;
         }
     }
 
-    @Specialization(contains = "combineLengthCached", limit = "COMBINE_CACHED_LIMIT", guards = {"cachedPrecedence == precedence(args, args.getLength())"})
-    protected Object combineCached(RArgsValuesAndNames args, //
+    @ExplodeLoop
+    private int prepareElements(RArgsValuesAndNames args, CastNode cast, Object[] elements) {
+        boolean signatureHasNames = signatureHasNames();
+        CompilerAsserts.partialEvaluationConstant(signatureHasNames);
+
+        Object[] array = args.getArguments();
+        int size = 0;
+        for (int i = 0; i < elements.length; i++) {
+            Object element = readAndCast(cast, array, i, signatureHasNames);
+            elements[i] = element;
+            size += getElementSize(element);
+        }
+        return size;
+    }
+
+    private static int getElementSize(Object element) {
+        if (element instanceof RAbstractVector) {
+            return ((RAbstractVector) element).getLength();
+        } else if (element instanceof RNull) {
+            // nothing to do - NULL elements are skipped
+            return 0;
+        } else {
+            return 1;
+        }
+    }
+
+    @ExplodeLoop
+    private boolean hasNames(Object[] elements) {
+        for (Object element : elements) {
+            if (element instanceof RAbstractVector) {
+                RAbstractVector vector = (RAbstractVector) element;
+                if (vector.getNames(attrProfiles) != null) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @ExplodeLoop
+    private RStringVector foldNames(BranchProfile naNameBranch, NACheck naNameCheck, Object[] elements, int size) {
+        RStringVector result = RDataFactory.createStringVector(new String[size], true);
+        int pos = 0;
+        for (Object element : elements) {
+            pos += processNamesElement(naNameBranch, naNameCheck, result, pos, element);
+        }
+        return result;
+    }
+
+    private int processNamesElement(BranchProfile naNameBranch, NACheck naNameCheck, RStringVector result, int pos, Object element) {
+        if (element instanceof RAbstractVector) {
+            RAbstractVector v = (RAbstractVector) element;
+            RStringVector newNames = v.getNames(attrProfiles);
+            if (newNames != null) {
+                for (int i1 = 0; i1 < newNames.getLength(); i1++) {
+                    result.transferElementSameType(pos + i1, newNames, i1);
+                }
+                if (!newNames.isComplete()) {
+                    naNameBranch.enter();
+                    result.setComplete(false);
+                }
+            } else {
+                for (int i1 = 0; i1 < v.getLength(); i1++) {
+                    result.updateDataAt(pos + i1, RRuntime.NAMES_ATTR_EMPTY_VALUE, naNameCheck);
+                }
+            }
+            return v.getLength();
+        } else if (element instanceof RNull) {
+            // nothing to do - NULL elements are skipped
+            return 0;
+        } else {
+            result.updateDataAt(pos, RRuntime.NAMES_ATTR_EMPTY_VALUE, naNameCheck);
+            return 1;
+        }
+    }
+
+    @ExplodeLoop
+    private static RVector foldContents(int cachedPrecedence, BranchProfile naBranch, NACheck naCheck, Object[] elements, int size, RStringVector namesVector) {
+        RVector result = createResultVector(cachedPrecedence, size, namesVector);
+        int pos = 0;
+        for (Object element : elements) {
+            pos += processContentElement(naBranch, naCheck, result, pos, element);
+        }
+        return result;
+    }
+
+    private static int processContentElement(BranchProfile naBranch, NACheck naCheck, RVector result, int pos, Object element) {
+        if (element instanceof RAbstractVector) {
+            RAbstractVector v = (RAbstractVector) element;
+            for (int i = 0; i < v.getLength(); i++) {
+                result.transferElementSameType(pos + i, v, i);
+            }
+            if (!v.isComplete()) {
+                naBranch.enter();
+                result.setComplete(false);
+            }
+            return v.getLength();
+        } else if (element instanceof RNull) {
+            // nothing to do - NULL elements are skipped
+            return 0;
+        } else {
+            naCheck.enable(true);
+            result.updateDataAtAsObject(pos, element, naCheck);
+            return 1;
+        }
+    }
+
+    private boolean signatureHasNames() {
+        return getSuppliedSignature() != null && getSuppliedSignature().getNonNullCount() > 0;
+    }
+
+    @TruffleBoundary
+    @Specialization(limit = "COMBINE_CACHED_LIMIT", contains = "combineCached", guards = "cachedPrecedence == precedence(args)")
+    protected Object combine(RArgsValuesAndNames args, //
                     @Cached("precedence(args, args.getLength())") int cachedPrecedence, //
                     @Cached("createCast(cachedPrecedence)") CastNode cast, //
-                    @Cached("createFold(cachedPrecedence)") CombineBinaryNode combineBinary) {
-        return combineLengthCached(args, args.getLength(), cachedPrecedence, cast, combineBinary);
+                    @Cached("create()") BranchProfile naBranch, //
+                    @Cached("create()") BranchProfile naNameBranch, //
+                    @Cached("create()") NACheck naCheck, //
+                    @Cached("create()") NACheck naNameCheck, //
+                    @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
+        return combineCached(args, args.getLength(), cachedPrecedence, cast, naBranch, naNameBranch, naCheck, naNameCheck, hasNamesProfile);
     }
 
     @Specialization(guards = "!isArguments(args)")
@@ -136,8 +298,18 @@ public abstract class Combine extends RCastingBuiltinNode {
         return resultVector;
     }
 
+    protected int precedence(RArgsValuesAndNames args) {
+        int precedence = NO_PRECEDENCE;
+        Object[] array = args.getArguments();
+        for (int i = 0; i < array.length; i++) {
+            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], RRuntime.LOGICAL_FALSE));
+        }
+        return precedence;
+    }
+
+    @ExplodeLoop
     protected int precedence(RArgsValuesAndNames args, int length) {
-        int precedence = -1;
+        int precedence = NO_PRECEDENCE;
         Object[] array = args.getArguments();
         for (int i = 0; i < length; i++) {
             precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], RRuntime.LOGICAL_FALSE));
@@ -153,23 +325,23 @@ public abstract class Combine extends RCastingBuiltinNode {
         return CombineNodeGen.create(null, null, null);
     }
 
-    protected static CombineBinaryNode createFold(int precedence) {
+    protected static RVector createResultVector(int precedence, int size, RStringVector names) {
         switch (precedence) {
             case COMPLEX_PRECEDENCE:
-                return CombineBinaryComplexNodeGen.create(null, null);
+                return RDataFactory.createComplexVector(new double[size * 2], true, names);
             case DOUBLE_PRECEDENCE:
-                return CombineBinaryDoubleNodeGen.create(null, null);
+                return RDataFactory.createDoubleVector(new double[size], true, names);
             case INT_PRECEDENCE:
-                return CombineBinaryIntegerNodeGen.create(null, null);
+                return RDataFactory.createIntVector(new int[size], true, names);
             case LOGICAL_PRECEDENCE:
-                return CombineBinaryLogicalNodeGen.create(null, null);
+                return RDataFactory.createLogicalVector(new byte[size], true, names);
             case STRING_PRECEDENCE:
-                return CombineBinaryStringNodeGen.create(null, null);
+                return RDataFactory.createStringVector(new String[size], true, names);
             case RAW_PRECEDENCE:
-                return CombineBinaryRawNodeGen.create(null, null);
+                return RDataFactory.createRawVector(new byte[size], names);
             case EXPRESSION_PRECEDENCE:
             case LIST_PRECEDENCE:
-                return CombineBinaryListNodeGen.create(null, null);
+                return RDataFactory.createList(new Object[size], names);
             case NO_PRECEDENCE:
                 return null;
             default:
@@ -202,40 +374,36 @@ public abstract class Combine extends RCastingBuiltinNode {
     }
 
     @TruffleBoundary
-    private static RAbstractVector mergeNamesSlow(RAbstractVector vector, String name, RStringVector orgNamesObject) {
+    private static RAbstractVector mergeNamesSlow(RAbstractVector vector, String name, RStringVector orgNames) {
         /*
          * TODO (chumer) we should reuse some node for this to concat a RStringVector with a String.
          */
-        if (orgNamesObject == null) {
+        RVector v = vector.materialize();
+        RStringVector newNames;
+        if (orgNames == null) {
             assert (name != null);
             assert (!name.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE));
-            RVector v = vector.materialize();
             if (v.getLength() == 1) {
                 // single value - just use the name
-                v.setNames(RDataFactory.createStringVector(new String[]{name}, true));
+                newNames = RDataFactory.createStringVector(new String[]{name}, true);
             } else {
                 // multiple values - prepend name to the index of a given value
                 String[] names = new String[v.getLength()];
                 for (int i = 0; i < names.length; i++) {
                     names[i] = name + (i + 1);
                 }
-                v.setNames(RDataFactory.createStringVector(names, true));
+                newNames = RDataFactory.createStringVector(names, true);
             }
-            return v;
         } else {
-            RStringVector orgNames = orgNamesObject;
             if (vector.getLength() == 1) {
                 // single value
-                RVector v = vector.materialize();
                 // prepend name to the original name
                 assert (!name.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE));
                 String orgName = orgNames.getDataAt(0);
-                v.setNames(RDataFactory.createStringVector(new String[]{orgName.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE) ? name : name + "." + orgName}, true));
-                return v;
+                newNames = RDataFactory.createStringVector(new String[]{orgName.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE) ? name : name + "." + orgName}, true);
             } else {
                 // multiple values - prepend name to the index of a given value or to the original
                 // name
-                RVector v = vector.materialize();
                 String[] names = new String[v.getLength()];
                 for (int i = 0; i < names.length; i++) {
                     if (name == null) {
@@ -246,10 +414,11 @@ public abstract class Combine extends RCastingBuiltinNode {
                         names[i] = orgName.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE) ? name + (i + 1) : name + "." + orgName;
                     }
                 }
-                v.setNames(RDataFactory.createStringVector(names, true));
-                return v;
+                newNames = RDataFactory.createStringVector(names, true);
             }
         }
+        v.setNames(newNames);
+        return v;
     }
 
     @NodeChild
@@ -297,7 +466,5 @@ public abstract class Combine extends RCastingBuiltinNode {
         protected boolean needsCopy(RAbstractVector vector) {
             return vector.getAttributes() != null || vector.getNames(attrProfiles) != null || vector.getDimNames(attrProfiles) != null;
         }
-
     }
-
 }
