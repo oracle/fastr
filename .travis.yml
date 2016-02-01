@@ -12,7 +12,6 @@ install:
   - wget https://lafo.ssw.uni-linz.ac.at/slavefiles/gate/eclipse-jdk8-linux-x86_64.tar.gz
   - tar -xvzf eclipse-jdk8-linux-x86_64.tar.gz
   - export ECLIPSE_EXE=eclipse/eclipse
-  - sudo apt-get install gcc
 script:
   - $TEST_COMMAND
 env:
