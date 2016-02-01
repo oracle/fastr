@@ -563,12 +563,14 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 if (newFunctionNode instanceof NamedRNode) {
                     newFunctionNode = ((NamedRNode) newFunctionNode).original;
                 }
-                if (newFunctionNode instanceof ConstantNode &&
-                                (((ConstantNode) newFunctionNode).getValue() instanceof RSymbol || ((ConstantNode) newFunctionNode).getValue() instanceof RAbstractVector)) {
-                    return ((ConstantNode) newFunctionNode).getValue();
-                } else {
-                    return RDataFactory.createLanguage(newFunctionNode);
+                if (newFunctionNode instanceof ConstantNode) {
+                    Object funcNodeValue = ((ConstantNode) newFunctionNode).getValue();
+                    if (funcNodeValue instanceof RSymbol || funcNodeValue instanceof RAbstractVector || funcNodeValue instanceof Integer || funcNodeValue instanceof Double ||
+                                    funcNodeValue instanceof Byte || funcNodeValue instanceof String) {
+                        return ((ConstantNode) newFunctionNode).getValue();
+                    }
                 }
+                return RDataFactory.createLanguage(newFunctionNode);
             }
         } else {
             Arguments<RSyntaxNode> args = getArguments();

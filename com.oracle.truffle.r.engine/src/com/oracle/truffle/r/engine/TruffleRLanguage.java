@@ -35,6 +35,8 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
@@ -112,7 +114,21 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected CallTarget parse(Source source, Node context, String... argumentNames) throws IOException {
-        return RContext.getEngine().parseToCallTarget(source);
+        try {
+            return RContext.getEngine().parseToCallTarget(source);
+        } catch (IncompleteSourceException e) {
+            throw new com.oracle.truffle.api.vm.IncompleteSourceException(e);
+        } catch (ParseException e) {
+            return new CallTarget() {
+                public Object call(Object... arguments) {
+                    try {
+                        throw e.throwAsRError();
+                    } catch (@SuppressWarnings("hiding") RError e) {
+                        return null;
+                    }
+                }
+            };
+        }
     }
 
     @Override

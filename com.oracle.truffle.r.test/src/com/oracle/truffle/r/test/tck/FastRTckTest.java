@@ -154,9 +154,7 @@ public class FastRTckTest extends TruffleTCK {
     protected String invalidCode() {
         // @formatter:off
         return
-            "main <- f unction() {\n" +
-            "  re turn(42)\n" +
-            "}\n";
+            "main <- function() {\n";
         // @formatter:on
     }
 
