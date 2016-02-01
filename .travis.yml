@@ -4,7 +4,7 @@ jdk:
 install:
   - sudo pip install astroid==1.1.0
   - sudo pip install pylint==1.1.0
-  - sudo add-apt-repository ppa:mercurial-ppa/releases
+  - sudo add-apt-repository -y ppa:mercurial-ppa/releases
   - sudo apt-get update
   - sudo apt-get install mercurial
   - pylint --version
