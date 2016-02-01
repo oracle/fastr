@@ -353,6 +353,8 @@ def _junit_r_harness(args, vmArgs, junitArgs):
 
     # suppress Truffle compilation by using a high threshold
     vmArgs += ['-Dgraal.TruffleCompilationThreshold=100000']
+    # on some systems a large Java stack seems necessary
+    vmArgs += ['-Xss12m']
 
     if _mx_jvmci:
         vmArgs += ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx5G']
