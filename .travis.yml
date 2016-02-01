@@ -1,0 +1,23 @@
+language: java
+jdk:
+  - oraclejdk8
+install:
+  - sudo pip install astroid==1.1.0
+  - sudo pip install pylint==1.1.0
+  - pylint --version
+  - hg clone https://bitbucket.org/allr/mx
+  - wget http://ftp.halifax.rwth-aachen.de/eclipse//eclipse/downloads/drops4/R-4.5.1-201509040015/ecj-4.5.1.jar
+  - mv ecj-4.5.1.jar mx/ecj.jar
+  - export JDT=mx/ecj.jar
+  - wget https://lafo.ssw.uni-linz.ac.at/slavefiles/gate/eclipse-jdk8-linux-x86_64.tar.gz
+  - tar -xvzf eclipse-jdk8-linux-x86_64.tar.gz
+  - export ECLIPSE_EXE=eclipse/eclipse
+  - sudo apt-get install gcc
+  - sudo apt-get install gfortran
+script:
+  - $TEST_COMMAND
+env:
+  - TEST_COMMAND='mx/mx --src-suitemodel nested gate'
+
+
+
