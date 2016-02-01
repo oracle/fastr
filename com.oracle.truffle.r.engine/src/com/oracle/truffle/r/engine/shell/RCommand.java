@@ -221,7 +221,7 @@ public class RCommand {
                          */
                         try {
                             vm.eval(subSource);
-                        } catch (IncompleteSourceException e) {
+                        } catch (IncompleteSourceException | com.oracle.truffle.api.vm.IncompleteSourceException e) {
                             // read another line of input
                             consoleHandler.setPrompt(doEcho ? continuePrompt : null);
                             String additionalInput = consoleHandler.readLine();
