@@ -46,11 +46,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * {@link #getEncapsulatingSourceSection()} to enforce the FastR invariant that <b>only</b>nodes
  * that implement {@link #getRSyntaxNode()} should have a {@link SourceSection} attribute.
  *
- * The {@code ReplacementNode} class is give special handling because its child nodes are
- * necessarily syntax nodes but we never want to return them as results. TODO find a low-cost,
- * minimally invasive way, of finessing this, as it also applies to any AST transformation that
- * rewrites user code.
- *
  * Is it ever acceptable to subclass {@link Node} directly? The answer is yes, with the following
  * caveats:
  * <ul>
