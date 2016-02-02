@@ -2,11 +2,13 @@ language: java
 jdk:
   - oraclejdk8
 install:
+  - sudo sh -c "echo 'deb http://archives.ubuntu.com/ubuntu $(lsb_release -cs) main' >> /etc/apt/sources.list"
   - sudo pip install astroid==1.1.0
   - sudo pip install pylint==1.1.0
   - sudo add-apt-repository -y ppa:mercurial-ppa/releases
   - sudo apt-get update
   - sudo apt-get install mercurial
+  - sudo apt-get install gfortran
   - pylint --version
   - hg --version
   - git clone https://github.com/graalvm/mx
