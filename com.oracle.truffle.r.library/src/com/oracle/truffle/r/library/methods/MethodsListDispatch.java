@@ -28,6 +28,8 @@ import com.oracle.truffle.r.nodes.objects.ExecuteMethod;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
+import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo.MethodCode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -41,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -136,28 +139,76 @@ public class MethodsListDispatch {
 
         @Specialization
         @TruffleBoundary
-        protected byte setPrimitiveMethods(Object fname, Object op, Object codeVec, @SuppressWarnings("unused") Object fundef, @SuppressWarnings("unused") Object mlist) {
-            @SuppressWarnings("unused")
+        protected Object setPrimitiveMethods(Object fname, Object op, Object codeVec, RTypedValue fundef, Object mlist) {
             String fnameString = RRuntime.asString(fname);
             String codeVecString = RRuntime.asString(codeVec);
             if (codeVecString == null) {
                 throw RError.error(this, RError.Message.GENERIC, "argument 'code' must be a character string");
             }
-            // TODO: implement proper primitive method setting
+
             if (op == RNull.instance) {
-                @SuppressWarnings("unused")
                 byte value = RRuntime.asLogical(RContext.getInstance().allowPrimitiveMethods());
                 if (codeVecString.length() > 0) {
-                    if (codeVecString.charAt(0) == 'C') {
+                    if (codeVecString.charAt(0) == 'c' || codeVecString.charAt(0) == 'C') {
                         RContext.getInstance().setAllowPrimitiveMethods(false);
-                    } else if (codeVecString.charAt(0) == 'S') {
+                    } else if (codeVecString.charAt(0) == 's' || codeVecString.charAt(0) == 'S') {
                         RContext.getInstance().setAllowPrimitiveMethods(true);
                     }
                 }
-                return RRuntime.LOGICAL_FALSE; // value;
+                return value;
             }
-            return RRuntime.LOGICAL_FALSE;
-            // throw RInternalError.unimplemented();
+
+            setPrimitiveMethodsInternal(op, codeVecString, fundef, mlist);
+            return fnameString;
+        }
+
+        private static void setPrimitiveMethodsInternal(Object op, String codeVec, RTypedValue fundef, Object mlist) {
+            MethodCode code;
+            if (codeVec.charAt(0) == 'c') {
+                code = MethodCode.NO_METHODS;
+            }
+            else if (codeVec.charAt(0) == 'r') {
+                code = MethodCode.NEEDS_RESET;
+            }
+            else if (codeVec.startsWith("se")) {
+                code = MethodCode.HAS_METHODS;
+            }
+            else if (codeVec.startsWith("su")) {
+                code = MethodCode.SUPPRESSED;
+            }
+            else {
+                throw RError.error(RError.NO_NODE, RError.Message.INVALID_PRIM_METHOD_CODE, codeVec);
+            }
+            if (!(op instanceof RFunction) || !((RFunction) op).isBuiltin()) {
+                throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "invalid object: must be a primitive function");
+            }
+            int primMethodIndex = ((RFunction) op).getRBuiltin().getPrimMethodIndex();
+            assert primMethodIndex != PrimitiveMethodsInfo.INVALID_INDEX;
+
+            PrimitiveMethodsInfo primMethodsInfo = RContext.getInstance().getPrimitiveMethodsInfo();
+            if (primMethodIndex >= primMethodsInfo.getSize()) {
+                primMethodsInfo = primMethodsInfo.resize(primMethodIndex + 1);
+            }
+            primMethodsInfo.setPrimMethodCode(primMethodIndex, code);
+            RFunction value = primMethodsInfo.getPrimGeneric(primMethodIndex);
+            if (code != MethodCode.SUPPRESSED) {
+                assert fundef != null; // explicitly checked in GNU R
+                if (code == MethodCode.NO_METHODS && value != null) {
+                    primMethodsInfo.setPrimGeneric(primMethodIndex, null);
+                    primMethodsInfo.setPrimMethodList(primMethodIndex, null);
+                } else if (fundef != RNull.instance && value == null) {
+                    if (!(fundef instanceof RFunction)) {
+                        throw RError.error(RError.NO_NODE, RError.Message.PRIM_GENERIC_NOT_FUNCTION, fundef.getRType().getName());
+                    }
+                    primMethodsInfo.setPrimGeneric(primMethodIndex, (RFunction) fundef);
+                }
+            }
+            if (code == MethodCode.HAS_METHODS) {
+                assert mlist != null; // explicitly checked in GNU R
+                if (mlist != RNull.instance) {
+                    primMethodsInfo.setPrimMethodList(primMethodIndex, (REnvironment) mlist);
+                }
+            }
         }
     }
 

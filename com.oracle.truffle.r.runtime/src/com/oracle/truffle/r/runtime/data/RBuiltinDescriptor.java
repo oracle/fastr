@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,12 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 public abstract class RBuiltinDescriptor {
+
+    private static int primitiveMethodCount;
+
     private final String name;
     private final String[] aliases;
     private final RBuiltinKind kind;
@@ -37,6 +41,7 @@ public abstract class RBuiltinDescriptor {
     private final boolean alwaysSplit;
     private final RDispatch dispatch;
     private final RGroupGenerics group;
+    private final int primitiveMethodIndex;
     @CompilationFinal private final boolean[] evaluatesArgument;
 
     public RBuiltinDescriptor(String name, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, boolean alwaysSplit, RDispatch dispatch) {
@@ -55,6 +60,16 @@ public abstract class RBuiltinDescriptor {
         for (int index : nonEvalArgs) {
             assert evaluatesArgument[index] : "duplicate nonEvalArgs entry " + index + " in " + this;
             evaluatesArgument[index] = false;
+        }
+
+        if (kind == RBuiltinKind.PRIMITIVE) {
+            // TODO: assert that static count is only incremented in the primordial context (it's
+            // currently tough to do as builtin descriptors seem to be created before the primordial
+            // context is fully initialized but code inspection shows that the assertion holds)
+            primitiveMethodIndex = primitiveMethodCount++;
+        }
+        else {
+            primitiveMethodIndex = PrimitiveMethodsInfo.INVALID_INDEX;
         }
     }
 
@@ -96,5 +111,9 @@ public abstract class RBuiltinDescriptor {
 
     public boolean evaluatesArg(int index) {
         return evaluatesArgument[index];
+    }
+
+    public int getPrimMethodIndex() {
+        return primitiveMethodIndex;
     }
 }

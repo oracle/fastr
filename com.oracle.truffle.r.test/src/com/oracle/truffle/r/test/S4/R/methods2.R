@@ -8,7 +8,7 @@ setClass("Shape")
 setClass("Polygon", representation(sides = "integer"), contains = "Shape")
 setClass("Triangle", contains = "Polygon")
 setClass("Square", contains = "Polygon")
-# setClass("Circle", contains = "Shape")
+setClass("Circle", contains = "Shape")
 
 setMethod("sides", signature(object = "Polygon"), function(object) {
   object@sides
@@ -16,7 +16,7 @@ setMethod("sides", signature(object = "Polygon"), function(object) {
 
 setMethod("sides", signature("Triangle"), function(object) 3)
 setMethod("sides", signature("Square"),   function(object) 4)
-# setMethod("sides", signature("Circle"),   function(object) Inf)
+setMethod("sides", signature("Circle"),   function(object) Inf)
 
 res<-print(showMethods(class = "Polygon"))
 removeGeneric("sides")

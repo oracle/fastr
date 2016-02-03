@@ -40,6 +40,7 @@ import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.LazyDBCache;
+import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.RCmdOptions;
@@ -290,6 +291,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     private boolean active;
 
+    private PrimitiveMethodsInfo primitiveMethodsInfo;
+
     /**
      * A (hopefully) temporary workaround to ignore the setting of {@link #resultVisible} for
      * benchmarks. Set across all contexts.
@@ -376,6 +379,20 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             this.info = ContextInfo.create(RCmdOptions.parseArguments(Client.R, new String[0]), ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env.in(), env.out()));
         } else {
             this.info = initialInfo;
+        }
+
+        // this must happen before engine activation in the code below
+        if (info.getKind() == ContextKind.SHARE_NOTHING) {
+            if (info.getParent() == null) {
+                this.primitiveMethodsInfo = new PrimitiveMethodsInfo();
+            } else {
+                // share nothing contexts need their own copy of the primitive methods meta-data as
+                // they can run (and update this meta data) concurrently with the parent;
+                // alternative would be to copy on-write but we would need some kind of locking
+                // machinery to avoid races
+                assert info.getParent().getPrimitiveMethodsInfo() != null;
+                this.primitiveMethodsInfo = info.getParent().getPrimitiveMethodsInfo().duplicate();
+            }
         }
 
         this.env = env;
@@ -549,6 +566,19 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public void putS4Extends(String key, RStringVector value) {
         s4ExtendsTable.put(key, value);
+    }
+
+    public PrimitiveMethodsInfo getPrimitiveMethodsInfo() {
+        if (primitiveMethodsInfo == null) {
+            // shared contexts do not run concurrently with their parent and re-use primitive
+            // methods information
+            assert info.getKind() != ContextKind.SHARE_NOTHING;
+            assert info.getParent() != null;
+            return info.getParent().getPrimitiveMethodsInfo();
+        }
+        else {
+            return primitiveMethodsInfo;
+        }
     }
 
     public boolean isInteractive() {
