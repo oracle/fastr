@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -109,7 +109,7 @@ public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariabl
         public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (getName().isEmpty()) {
-                throw RError.error(this, RError.Message.ZERO_LENGTH_VARIABLE);
+                throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
             }
             final WriteSuperFrameVariableNodeHelper writeNode;
             if (REnvironment.isGlobalEnvFrame(enclosingFrame)) {

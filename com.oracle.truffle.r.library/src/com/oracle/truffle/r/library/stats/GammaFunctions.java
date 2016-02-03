@@ -8,7 +8,7 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * based on AS 91 (C) 1979 Royal Statistical Society
  *  and  on AS 111 (C) 1977 Royal Statistical Society
@@ -376,7 +376,7 @@ public abstract class GammaFunctions {
         }
 
         if (x <= 0 && x == (long) x) { /* Negative integer argument */
-            RError.warning(RError.NO_NODE, RError.Message.VALUE_OUT_OF_RANGE, "lgamma");
+            RError.warning(RError.SHOW_CALLER2, RError.Message.VALUE_OUT_OF_RANGE, "lgamma");
             return Double.POSITIVE_INFINITY; /* +Inf, since lgamma(x) = log|gamma(x)| */
         }
 
@@ -393,7 +393,7 @@ public abstract class GammaFunctions {
          */
 
         if (y > gfn_sign_xmax) {
-            RError.warning(RError.NO_NODE, RError.Message.VALUE_OUT_OF_RANGE, "lgamma");
+            RError.warning(RError.SHOW_CALLER2, RError.Message.VALUE_OUT_OF_RANGE, "lgamma");
             return Double.POSITIVE_INFINITY;
         }
 
@@ -426,7 +426,7 @@ public abstract class GammaFunctions {
              * integer.
              */
 
-            RError.warning(RError.NO_NODE, RError.Message.FULL_PRECISION, "lgamma");
+            RError.warning(RError.SHOW_CALLER2, RError.Message.FULL_PRECISION, "lgamma");
         }
 
         return ans;

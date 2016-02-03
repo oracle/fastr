@@ -199,7 +199,7 @@ public class TraceHandling {
                     }
                     outputHandler.writeString("trace: " + callString, true);
                 } catch (IOException ex) {
-                    throw RError.error(RError.NO_NODE, RError.Message.GENERIC, ex.getMessage());
+                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ex.getMessage());
                 }
             }
         }

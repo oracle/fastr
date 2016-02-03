@@ -291,7 +291,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
 
     public final void setNames(RStringVector newNames) {
         // TODO pass invoking Node
-        setNames(newNames, RError.NO_NODE);
+        setNames(newNames, RError.SHOW_CALLER2);
     }
 
     @TruffleBoundary
@@ -344,7 +344,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
 
     public final void setDimNames(RList newDimNames) {
         // TODO pass invoking node
-        setDimNames(newDimNames, RError.NO_NODE);
+        setDimNames(newDimNames, RError.SHOW_CALLER2);
     }
 
     @TruffleBoundary
@@ -514,7 +514,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
                                 resVector.copyAttributesFrom(sourceVector);
                             } else {
                                 // TODO: add invoking node
-                                throw RError.error(RError.NO_NODE, RError.Message.ADDING_INVALID_CLASS, "factor");
+                                throw RError.error(RError.SHOW_CALLER2, RError.Message.ADDING_INVALID_CLASS, "factor");
                             }
                         } else {
                             resVector = (RIntVector) vector;

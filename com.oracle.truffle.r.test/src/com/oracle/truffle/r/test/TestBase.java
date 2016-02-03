@@ -503,6 +503,12 @@ public class TestBase {
         String expected = originalExpected;
         if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError)) {
             ok = true;
+            if (containsError && !ambiguousError) {
+                System.out.println("unexpected correct error message: " + getTestContext());
+            }
+            if (containsWarning) {
+                System.out.println("unexpected correct warning message: " + getTestContext());
+            }
         } else {
             if (containsWarning || (mayContainWarning && expected.contains(WARNING))) {
                 String resultWarning = getWarningMessage(result);

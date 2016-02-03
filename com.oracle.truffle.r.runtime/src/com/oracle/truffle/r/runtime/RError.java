@@ -66,10 +66,16 @@ public final class RError extends RuntimeException {
     }
 
     /**
-     * This flags a call to {@code error} or {@code warning} will no value for {@link Node}. Ideally
-     * this never happens, so we make it explicit.
+     * This flags a call to {@code error} or {@code warning} where the error message should show the
+     * caller's caller.
      */
-    public static final RBaseNode NO_NODE = new RBaseNode() {
+    public static final RBaseNode SHOW_CALLER2 = new RBaseNode() {
+    };
+    /**
+     * This flags a call to {@code error} or {@code warning} where the error message should show the
+     * caller of the current function.
+     */
+    public static final RBaseNode SHOW_CALLER = new RBaseNode() {
     };
 
     /**
@@ -144,7 +150,7 @@ public final class RError extends RuntimeException {
      * to condition handlers, the error will not actually be thrown.
      *
      *
-     * @param node {@code RNode} of the code throwing the error, or {@link #NO_NODE} if not
+     * @param node {@code RNode} of the code throwing the error, or {@link #SHOW_CALLER2} if not
      *            available. If {@code NO_NODE} an attempt will be made to identify the call context
      *            from the currently active frame.
      * @param msg a {@link Message} instance specifying the error
@@ -155,7 +161,7 @@ public final class RError extends RuntimeException {
         assert node != null;
         // thrown from a builtin specified by "node"
         RErrorHandling.signalError(node, msg, args);
-        return RErrorHandling.errorcallDflt(node, msg, args);
+        return RErrorHandling.errorcallDflt(true, node, msg, args);
     }
 
     /**
@@ -208,7 +214,7 @@ public final class RError extends RuntimeException {
     @TruffleBoundary
     public static void performanceWarning(String string) {
         if (FastROptions.PerformanceWarnings.getBooleanValue()) {
-            warning(RError.NO_NODE, Message.PERFORMANCE, string);
+            warning(RError.SHOW_CALLER2, Message.PERFORMANCE, string);
         }
     }
 

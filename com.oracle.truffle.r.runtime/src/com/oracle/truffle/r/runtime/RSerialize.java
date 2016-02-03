@@ -1355,7 +1355,7 @@ public class RSerialize {
                     addReadRef(obj);
                     String name = null;
                     if ((name = env.isPackageEnv()) != null) {
-                        RError.warning(RError.NO_NODE, RError.Message.PACKAGE_AVAILABLE, name);
+                        RError.warning(RError.SHOW_CALLER2, RError.Message.PACKAGE_AVAILABLE, name);
                         stream.writeInt(SEXPTYPE.PACKAGESXP.code);
                         stream.writeString(name);
                     } else if (env.isNamespaceEnv()) {

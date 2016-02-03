@@ -528,7 +528,7 @@ final class REngine implements Engine, Engine.Timings {
             throw ex;
         } catch (BreakException | NextException cfe) {
             if (topLevel) {
-                throw RError.error(RError.NO_NODE, RError.Message.NO_LOOP_FOR_BREAK_NEXT);
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.NO_LOOP_FOR_BREAK_NEXT);
             } else {
                 // there can be an outer loop
                 throw cfe;

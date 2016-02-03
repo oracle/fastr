@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,7 +121,7 @@ public class ConnectionSupport {
                     return setConnection(i, con);
                 }
             }
-            throw RError.error(RError.NO_NODE, RError.Message.ALL_CONNECTIONS_IN_USE);
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.ALL_CONNECTIONS_IN_USE);
         }
 
         @Override
@@ -147,7 +147,7 @@ public class ConnectionSupport {
                 }
                 BaseRConnection con = ref.get();
                 if (con instanceof TextConnections.TextRConnection) {
-                    RError.warning(RError.NO_NODE, RError.Message.UNUSED_TEXTCONN, con.descriptor, ((TextConnections.TextRConnection) con).description);
+                    RError.warning(RError.SHOW_CALLER2, RError.Message.UNUSED_TEXTCONN, con.descriptor, ((TextConnections.TextRConnection) con).description);
                 }
                 if (con != null) {
                     int index = con.descriptor;
@@ -813,7 +813,7 @@ public class ConnectionSupport {
                          * "name" for the warning.
                          */
                         lines.add(new String(buffer, 0, totalRead));
-                        RError.warning(RError.NO_NODE, RError.Message.INCOMPLETE_FINAL_LINE, "TODO: connection path");
+                        RError.warning(RError.SHOW_CALLER2, RError.Message.INCOMPLETE_FINAL_LINE, "TODO: connection path");
                     }
                     break;
                 }
@@ -969,7 +969,7 @@ public class ConnectionSupport {
 
         @Override
         public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            throw RError.error(RError.NO_NODE, RError.Message.UNSEEKABLE_CONNECTION);
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.UNSEEKABLE_CONNECTION);
         }
 
     }
