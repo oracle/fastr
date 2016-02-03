@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -115,7 +115,7 @@ public class TestBuiltin_min extends TestBase {
 
     @Test
     public void testmin20() {
-        assertEval(Output.ContainsWarning, "argv <- list(numeric(0));min(argv[[1]]);");
+        assertEval("argv <- list(numeric(0));min(argv[[1]]);");
     }
 
     @Test
@@ -127,7 +127,7 @@ public class TestBuiltin_min extends TestBase {
     public void testMinimum() {
         assertEval("{ min((-1):100) }");
         assertEval("{ min(2L, 4L) }");
-        assertEval(Output.ContainsWarning, "{ min() }");
+        assertEval("{ min() }");
         assertEval("{ min(c(1,2,0/0)) }");
         assertEval("{ max(c(1,2,0/0)) }");
         assertEval("{ min(1:10, 100:200, c(4.0, -5.0)) }");
@@ -135,11 +135,11 @@ public class TestBuiltin_min extends TestBase {
         assertEval("{ min(0/0, 1.1) }");
         assertEval("{ min(0/0, 1.1, NA) }");
         assertEval("{ min(c(as.character(NA), \"foo\")) }");
-        assertEval(Output.ContainsWarning, "{ min(character(0)) }");
-        assertEval(Output.ContainsWarning, "{ min(character()) }");
-        assertEval(Output.ContainsWarning, "{ min(double(0)) }");
-        assertEval(Output.ContainsWarning, "{ min(double()) }");
-        assertEval(Output.ContainsWarning, "{ min(NULL) }");
+        assertEval("{ min(character(0)) }");
+        assertEval("{ min(character()) }");
+        assertEval("{ min(double(0)) }");
+        assertEval("{ min(double()) }");
+        assertEval("{ min(NULL) }");
 
         assertEval("{ min(1:10, 100:200, c(4.0, 5.0), c(TRUE,FALSE,NA)) }");
         assertEval("{ min(c(\"hi\",\"abbey\",\"hello\")) }");
@@ -148,7 +148,7 @@ public class TestBuiltin_min extends TestBase {
 
         assertEval("{ is.logical(min(TRUE, FALSE)) }");
         assertEval("{ is.logical(min(TRUE)) }");
-        assertEval(Output.ContainsError, "{ min(as.raw(42), as.raw(7)) }");
+        assertEval("{ min(as.raw(42), as.raw(7)) }");
         assertEval(Output.ContainsError, "{ min(42+42i, 7+7i) }");
         assertEval("{ min(\"42\", \"7\") }");
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ public class TestConditionHandling extends TestBase {
     @Test
     public void testTryCatch() {
         assertEval("{ tryCatch(1, finally = print(\"Hello\")) }");
-        assertEval(Output.ContainsError, "{ e <- simpleError(\"test error\"); tryCatch(stop(e), finally = print(\"Hello\")) }");
+        assertEval("{ e <- simpleError(\"test error\"); tryCatch(stop(e), finally = print(\"Hello\")) }");
         assertEval(Output.ContainsError, "{ tryCatch(stop(\"fred\"), finally = print(\"Hello\")) }");
         assertEval("{ e <- simpleError(\"test error\"); tryCatch(stop(e), error = function(e) e, finally = print(\"Hello\"))}");
         assertEval(Ignored.Unknown, "{ tryCatch(stop(\"fred\"), error = function(e) e, finally = print(\"Hello\"))}");

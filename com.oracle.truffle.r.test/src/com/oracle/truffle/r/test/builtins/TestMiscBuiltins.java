@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -320,11 +320,11 @@ public class TestMiscBuiltins extends TestBase {
 
     @Test
     public void testSimpleRm() {
-        assertEval(Output.ContainsError, "{ x <- 200 ; rm(\"x\") ; x }");
+        assertEval("{ x <- 200 ; rm(\"x\") ; x }");
         assertEval(Output.ContainsWarning, "{ rm(\"ieps\") }");
         assertEval("{ x <- 200 ; rm(\"x\") }");
-        assertEval(Output.ContainsError, "{ x<-200; y<-100; rm(\"x\", \"y\"); x }");
-        assertEval(Output.ContainsError, "{ x<-200; y<-100; rm(\"x\", \"y\"); y }");
+        assertEval("{ x<-200; y<-100; rm(\"x\", \"y\"); x }");
+        assertEval("{ x<-200; y<-100; rm(\"x\", \"y\"); y }");
     }
 
     @Test

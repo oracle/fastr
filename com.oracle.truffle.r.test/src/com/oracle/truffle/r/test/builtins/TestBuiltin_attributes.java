@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -184,10 +184,10 @@ public class TestBuiltin_attributes extends TestBase {
         assertEval("{ x <- 1 ; attributes(x) <- list(hi=3, hello=2) ; x }");
         assertEval("{ x <- 1 ; attributes(x) <- list(hi=3, names=\"name\") ; x }");
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(names=NULL) ; x }");
-        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; attributes(x) <- list(hi = 1, 2) ; x }");
-        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2) ; x }");
-        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; attributes(x) <- list(ho = 1, 2, 3) ; x }");
-        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2, 3) ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi = 1, 2) ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2) ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(ho = 1, 2, 3) ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2, 3) ; x }");
         assertEval(Output.ContainsError, "{ x <- c(hello=1) ; y<-list(1,2); names(y)<-c(\"hi\", \"\"); attributes(x)<-y; x }");
         assertEval("{ x <- 1; attributes(x) <- list(my = 1) ; y <- x; attributes(y) <- list(his = 2) ; x }");
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi=1) ;  attributes(x) <- NULL ; x }");

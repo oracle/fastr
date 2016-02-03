@@ -42,9 +42,9 @@ public class TestBase {
     private static final boolean ProcessFailedTests = Boolean.getBoolean("ProcessFailedTests");
 
     public static enum Output implements TestTrait {
-        ContainsError,
-        ContainsAmbiguousError,
-        ContainsWarning,
+        ContainsError, // the error context is ignored (e.g., "a+b" vs. "a + b")
+        ContainsAmbiguousError, // the actual error message is ignored
+        ContainsWarning, // the warning context is ignored
         MayContainError,
         MayContainWarning;
     }

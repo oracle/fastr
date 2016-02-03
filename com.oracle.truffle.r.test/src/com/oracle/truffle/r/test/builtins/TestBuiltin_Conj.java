@@ -57,7 +57,7 @@ public class TestBuiltin_Conj extends TestBase {
         assertEval("{ typeof(Conj(42L)) }");
         assertEval("{ Conj(FALSE) }");
         assertEval("{ typeof(Conj(FALSE)) }");
-        assertEval(Output.ContainsError, "{ Conj(as.raw(12)) }");
+        assertEval("{ Conj(as.raw(12)) }");
         assertEval("{ x<-42+2i; attr(x, \"foo\")<-\"foo\"; Conj(x) }");
         assertEval("{ Conj(NA) }");
         assertEval("{ Conj(as.complex(NA)) }");
