@@ -259,9 +259,10 @@ def _rpt_compare_pkgs(gnur, fastr, verbose, pattern, diff=False, difftool=None):
                 break
     return result
 
-def check_install(result, text):
+def check_install(text):
     lines = text.split("\n")
     nlines = len(lines)
+    install_status = dict()
     result_data = ""
 
     def find_done(index, pkgname):
@@ -287,14 +288,16 @@ def check_install(result, text):
             line = lines[i]
             if line.startswith("* installing *source* package"):
                 pkgname = _extract_pkgname(line)
-                result_data += pkgname
-                if find_done(i, pkgname):
-                    result_data += ": OK\n"
-                else:
-                    result_data += ": FAILED\n"
-                    result = 1
+                install_status[pkgname] = find_done(i, pkgname)
 
-    return result, result_data
+        for pkgname in sorted(install_status):
+            result_data += pkgname
+            if install_status[pkgname]:
+                result_data += ": OK\n"
+            else:
+                result_data += ": FAILED\n"
+
+    return result_data
 
 def rpt_check_install_log(args):
     parser = ArgumentParser(prog='mx rpt-check-install-log')
@@ -303,7 +306,7 @@ def rpt_check_install_log(args):
 
     with open(args.log) as f:
         content = f.read()
-        _, result_data = check_install(0, content)
+        result_data = check_install(content)
 
     print result_data
 
@@ -438,7 +441,7 @@ def _get_results(logdir):
         if 'result' in localdir:
             with open(os.path.join(logdir, localdir, 'testlog')) as f:
                 rawData = f.read()
-                result_data = check_install(0, rawData)[1]
+                result_data = check_install(rawData)
                 results.append(Result(ResultInfo(localdir), result_data, rawData))
     return results
 
