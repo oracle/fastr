@@ -656,7 +656,9 @@ public final class RError extends RuntimeException {
         NON_EMPTY_STRING("'%s' must be a non-empty string; got an empty string"),
         SINGLE_STRING_WRONG_TYPE("'%s' must be a single string (got an object of class \"%s\")"),
         NO_GENERIC_FUN("no generic function definition found for '%s'"),
-        NO_GENERIC_FUN_IN_ENV("no generic function definition found for '%s' in the supplied environment");
+        NO_GENERIC_FUN_IN_ENV("no generic function definition found for '%s' in the supplied environment"),
+        INVALID_PRIM_METHOD_CODE("invalid primitive methods code (\"%s\"): should be \"clear\", \"reset\", \"set\", or \"suppress\""),
+        PRIM_GENERIC_NOT_FUNCTION("the formal definition of a primitive generic must be a function object (got type '%s')");
 
         public final String message;
         final boolean hasArgs;
