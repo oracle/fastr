@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,8 @@ fastr.dumptrees <- function(func, igvDump=FALSE, verbose=FALSE) .FastR(.NAME="du
 fastr.syntaxtree <- function(func, source=FALSE, visitAll=FALSE) invisible(.FastR(.NAME="syntaxtree", func, source, visitAll))
 
 fastr.tree <- function(func, verbose=FALSE) invisible(.FastR(.NAME="tree", func, verbose))
+
+fastr.treestats <- function(obj) .FastR(.NAME="treestats", obj, options=character())
 
 fastr.typeof <- function(x) .FastR(.NAME="typeof", x)
 
