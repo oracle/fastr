@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * A collection of methods that need access to the AST types, needed by code that resides in the
@@ -114,7 +115,7 @@ public interface RRuntimeASTAccess {
      * @param call may be {@code null} or it may be the {@link Node} that was executing when the
      *            error.warning was generated (builtin or associated node).
      */
-    Object findCaller(Node call);
+    Object findCaller(RBaseNode call);
 
     /**
      * Convenience method for {@code getCallerSource(getSyntaxCaller(caller))}.

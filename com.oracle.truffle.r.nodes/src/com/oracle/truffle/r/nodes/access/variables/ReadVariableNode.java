@@ -364,7 +364,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
             if (kind == ReadKind.Silent) {
                 return null;
             } else {
-                throw RError.error(RError.NO_NODE, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
+                throw RError.error(RError.SHOW_CALLER, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
             }
         }
 
@@ -496,7 +496,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
             if (kind == ReadKind.Silent) {
                 return null;
             } else {
-                throw RError.error(RError.NO_NODE, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
+                throw RError.error(RError.SHOW_CALLER, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
             }
         }
 
@@ -530,7 +530,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
                 value = lookup.getValue();
             }
             if (kind != ReadKind.Silent && value == null) {
-                throw RError.error(RError.NO_NODE, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
+                throw RError.error(RError.SHOW_CALLER, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
             }
             return value;
         }
@@ -538,7 +538,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     private FrameLevel initialize(VirtualFrame frame, Frame variableFrame) {
         if (identifier.toString().isEmpty()) {
-            throw RError.error(RError.NO_NODE, RError.Message.ZERO_LENGTH_VARIABLE);
+            throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
         }
 
         /*
@@ -678,7 +678,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
                 if (value != null) {
                     if (value == RMissing.instance) {
-                        throw RError.error(RError.NO_NODE, RError.Message.ARGUMENT_MISSING, identifier);
+                        throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, identifier);
                     }
                     if (value instanceof RPromise) {
                         RPromise promise = (RPromise) value;
@@ -785,7 +785,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         }
         if (obj == RMissing.instance) {
             unexpectedMissingProfile.enter();
-            throw RError.error(RError.NO_NODE, RError.Message.ARGUMENT_MISSING, getIdentifier());
+            throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, getIdentifier());
         }
         if (mode == RType.Any) {
             return true;
@@ -820,7 +820,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
             return false;
         }
         if (obj == RMissing.instance) {
-            throw RError.error(RError.NO_NODE, RError.Message.ARGUMENT_MISSING, getIdentifier());
+            throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, getIdentifier());
         }
         if (mode == RType.Any) {
             return true;

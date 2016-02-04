@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,7 @@ public abstract class Warning extends RInvisibleBuiltinNode {
         boolean call = RRuntime.fromLogical(callL);
         boolean immediate = RRuntime.fromLogical(immediateL);
         boolean noBreakWarning = RRuntime.fromLogical(noBreakWarningL);
-        RErrorHandling.warningcallInternal(call, this, message, immediate, noBreakWarning);
+        RErrorHandling.warningcallInternal(call, message, immediate, noBreakWarning);
         controlVisibility();
         return message;
     }

@@ -147,7 +147,7 @@ public class CallRFFIHelper {
         try {
             env.put(name.getName(), value);
         } catch (PutException ex) {
-            throw RError.error(RError.NO_NODE, ex);
+            throw RError.error(RError.SHOW_CALLER2, ex);
         }
     }
 
@@ -161,10 +161,10 @@ public class CallRFFIHelper {
 
     private static Object findVarInFrameHelper(Object symbolArg, Object envArg, boolean inherits) {
         if (envArg == RNull.instance) {
-            throw RError.error(RError.NO_NODE, RError.Message.USE_NULL_ENV_DEFUNCT);
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.USE_NULL_ENV_DEFUNCT);
         }
         if (!(envArg instanceof REnvironment)) {
-            throw RError.error(RError.NO_NODE, RError.Message.ARG_NOT_AN_ENVIRONMENT, inherits ? "findVar" : "findVarInFrame");
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.ARG_NOT_AN_ENVIRONMENT, inherits ? "findVar" : "findVarInFrame");
         }
         RSymbol name = (RSymbol) symbolArg;
         REnvironment env = (REnvironment) envArg;
@@ -265,11 +265,11 @@ public class CallRFFIHelper {
     }
 
     public static void Rf_error(String msg) {
-        throw RError.error(RError.NO_NODE, RError.Message.GENERIC, msg);
+        throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
     }
 
     public static void Rf_warning(String msg) {
-        RError.warning(RError.NO_NODE, RError.Message.GENERIC, msg);
+        RError.warning(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
     }
 
     public static void Rf_warningcall(Object call, String msg) {
@@ -279,7 +279,7 @@ public class CallRFFIHelper {
     public static Object Rf_allocateVector(int mode, int n) {
         SEXPTYPE type = SEXPTYPE.mapInt(mode);
         if (n < 0) {
-            throw RError.error(RError.NO_NODE, RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
             // TODO check long vector
         }
         switch (type) {
@@ -321,7 +321,7 @@ public class CallRFFIHelper {
     public static Object Rf_allocateMatrix(int mode, int ncol, int nrow) {
         SEXPTYPE type = SEXPTYPE.mapInt(mode);
         if (nrow < 0 || ncol < 0) {
-            throw RError.error(RError.NO_NODE, RError.Message.NEGATIVE_EXTENTS_TO_MATRIX);
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.NEGATIVE_EXTENTS_TO_MATRIX);
         }
         // TODO check long vector
         int[] dims = new int[]{nrow, ncol};

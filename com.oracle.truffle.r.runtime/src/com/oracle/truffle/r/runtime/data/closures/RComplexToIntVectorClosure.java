@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ public class RComplexToIntVectorClosure extends RToIntVectorClosure implements R
         if (!vector.isComplete() && RRuntime.isNA(right)) {
             return RRuntime.INT_NA;
         }
-        RError.warning(RError.NO_NODE, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        RError.warning(RError.SHOW_CALLER2, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         return RRuntime.complex2intNoCheck(right);
     }
 }

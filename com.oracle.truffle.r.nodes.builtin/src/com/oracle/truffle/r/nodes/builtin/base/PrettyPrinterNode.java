@@ -398,7 +398,7 @@ public abstract class PrettyPrinterNode extends RNode {
         } else if (o instanceof RStringVector && ((RStringVector) o).getLength() == 1) {
             return ((RStringVector) o).getDataAt(0);
         } else {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, msg);
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
         }
     }
 

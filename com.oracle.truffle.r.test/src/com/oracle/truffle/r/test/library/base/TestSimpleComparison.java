@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -66,9 +66,9 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ \"1+1.1i\" == 1+1.1i }");
         assertEval("{ \"1+1.100i\" == 1+1.100i }");
 
-        assertEval(Output.ContainsError, "{ x<-1+1i; x > FALSE }");
+        assertEval("{ x<-1+1i; x > FALSE }");
         assertEval("{ z <- TRUE; dim(z) <- c(1) ; dim(z == TRUE) }");
-        assertEval(Output.ContainsError, "{ z <- TRUE; dim(z) <- c(1) ; u <- 1:3 ; dim(u) <- 3 ; u == z }");
+        assertEval("{ z <- TRUE; dim(z) <- c(1) ; u <- 1:3 ; dim(u) <- 3 ; u == z }");
     }
 
     @Test
@@ -178,10 +178,10 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ 3 != 1:2 }");
         assertEval("{ b <- 1:3 ; z <- FALSE ; b[2==2] }");
 
-        assertEval(Output.ContainsError, "{ x<-1+1i; y<-2+2i; x > y }");
-        assertEval(Output.ContainsError, "{ x<-1+1i; y<-2+2i; x < y }");
-        assertEval(Output.ContainsError, "{ x<-1+1i; y<-2+2i; x >= y }");
-        assertEval(Output.ContainsError, "{ x<-1+1i; y<-2+2i; x <= y }");
+        assertEval("{ x<-1+1i; y<-2+2i; x > y }");
+        assertEval("{ x<-1+1i; y<-2+2i; x < y }");
+        assertEval("{ x<-1+1i; y<-2+2i; x >= y }");
+        assertEval("{ x<-1+1i; y<-2+2i; x <= y }");
 
         assertEval("{ c(1,2,NA,4) != 2 }");
         assertEval("{ c(1,2,NA,4) == 2 }");

@@ -282,7 +282,7 @@ public final class NACheck {
             return RRuntime.DOUBLE_NA;
         }
         if (warning) {
-            RError.warning(RError.NO_NODE, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(RError.SHOW_CALLER2, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return RRuntime.complex2doubleNoCheck(value);
     }
@@ -299,7 +299,7 @@ public final class NACheck {
             return RRuntime.INT_NA;
         }
         if (warning) {
-            RError.warning(RError.NO_NODE, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(RError.SHOW_CALLER2, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return RRuntime.complex2intNoCheck(right);
     }
@@ -322,7 +322,7 @@ public final class NACheck {
         int result = (int) value;
         if (result == Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
             conversionOverflowReached.enter();
-            RError.warning(RError.NO_NODE, RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION);
             check(RRuntime.INT_NA); // na encountered
             return RRuntime.INT_NA;
         }
@@ -348,7 +348,7 @@ public final class NACheck {
                 result[i] = intValue;
             }
             if (warning) {
-                RError.warning(RError.NO_NODE, RError.Message.NA_INTRODUCED_COERCION);
+                RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION);
             }
         }
         return result;

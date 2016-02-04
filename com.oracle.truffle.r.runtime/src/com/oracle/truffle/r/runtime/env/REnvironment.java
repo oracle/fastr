@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -632,7 +632,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
             try {
                 result.put(names.getDataAt(i), list.getDataAt(i));
             } catch (PutException ex) {
-                throw RError.error(RError.NO_NODE, ex);
+                throw RError.error(RError.SHOW_CALLER2, ex);
             }
         }
         return result;
@@ -941,7 +941,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * the creation of {@link Function} environments to ensure the <i>at most one>/i> invariant and
      * store the value in the frame immediately.
      */
-    private static final class Function extends REnvironment {
+    public static final class Function extends REnvironment {
 
         private Function(MaterializedFrame frame) {
             // function environments are not named

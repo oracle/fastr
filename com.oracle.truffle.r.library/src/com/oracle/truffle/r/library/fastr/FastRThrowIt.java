@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,7 +57,7 @@ public class FastRThrowIt {
                 case "BRQ":
                     throw new BrowserQuitException();
                 default:
-                    throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "unknown case: " + name);
+                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "unknown case: " + name);
             }
         }
     }

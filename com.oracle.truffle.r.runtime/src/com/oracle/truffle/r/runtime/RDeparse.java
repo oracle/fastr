@@ -1217,6 +1217,7 @@ public class RDeparse {
             // TODO seq detection and COMPAT?
             if (len > 1) {
                 state.append("c(");
+                surround = true;
             }
             RIntVector intVec = (RIntVector) vec;
             for (int i = 0; i < len; i++) {
@@ -1231,13 +1232,14 @@ public class RDeparse {
                     state.append(", ");
                 }
             }
-            if (len > 1) {
-                state.append(')');
-            }
         } else {
             // TODO NA checks
             if (len > 1) {
                 state.append("c(");
+                surround = true;
+            } else if (len == 1 && type == SEXPTYPE.CPLXSXP) {
+                state.append('(');
+                surround = true;
             }
             for (int i = 0; i < len; i++) {
                 Object element = vec.getDataAtAsObject(i);
@@ -1255,12 +1257,9 @@ public class RDeparse {
                     state.append(", ");
                 }
             }
-            if (len > 1) {
-                state.append(')');
-            }
-            if (surround) {
-                state.append(')');
-            }
+        }
+        if (surround) {
+            state.append(')');
         }
         return state;
     }

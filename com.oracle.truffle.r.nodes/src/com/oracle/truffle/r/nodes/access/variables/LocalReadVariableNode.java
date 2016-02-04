@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,7 +75,7 @@ public final class LocalReadVariableNode extends Node {
         if (frameSlot == null && notInFrame == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (identifier.toString().isEmpty()) {
-                throw RError.error(RError.NO_NODE, RError.Message.ZERO_LENGTH_VARIABLE);
+                throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
             }
             frameSlot = variableFrame.getFrameDescriptor().findFrameSlot(identifier);
             notInFrame = frameSlot == null ? variableFrame.getFrameDescriptor().getNotInFrameAssumption(identifier) : null;

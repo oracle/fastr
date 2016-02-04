@@ -173,10 +173,10 @@ public class MethodsListDispatch {
             } else if (codeVec.startsWith("su")) {
                 code = MethodCode.SUPPRESSED;
             } else {
-                throw RError.error(RError.NO_NODE, RError.Message.INVALID_PRIM_METHOD_CODE, codeVec);
+                throw RError.error(RError.SHOW_CALLER, RError.Message.INVALID_PRIM_METHOD_CODE, codeVec);
             }
             if (!(op instanceof RFunction) || !((RFunction) op).isBuiltin()) {
-                throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "invalid object: must be a primitive function");
+                throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, "invalid object: must be a primitive function");
             }
             int primMethodIndex = ((RFunction) op).getRBuiltin().getPrimMethodIndex();
             assert primMethodIndex != PrimitiveMethodsInfo.INVALID_INDEX;
@@ -194,7 +194,7 @@ public class MethodsListDispatch {
                     primMethodsInfo.setPrimMethodList(primMethodIndex, null);
                 } else if (fundef != RNull.instance && value == null) {
                     if (!(fundef instanceof RFunction)) {
-                        throw RError.error(RError.NO_NODE, RError.Message.PRIM_GENERIC_NOT_FUNCTION, fundef.getRType().getName());
+                        throw RError.error(RError.SHOW_CALLER, RError.Message.PRIM_GENERIC_NOT_FUNCTION, fundef.getRType().getName());
                     }
                     primMethodsInfo.setPrimGeneric(primMethodIndex, (RFunction) fundef);
                 }

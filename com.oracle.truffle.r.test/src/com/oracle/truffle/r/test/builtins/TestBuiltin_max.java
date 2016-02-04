@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -70,7 +70,7 @@ public class TestBuiltin_max extends TestBase {
 
     @Test
     public void testmax11() {
-        assertEval(Output.ContainsWarning, "argv <- list(numeric(0));max(argv[[1]]);");
+        assertEval("argv <- list(numeric(0));max(argv[[1]]);");
     }
 
     @Test
@@ -162,17 +162,17 @@ public class TestBuiltin_max extends TestBase {
     public void testMaximum() {
         assertEval("{ max((-1):100) }");
         assertEval("{ max(2L, 4L) }");
-        assertEval(Output.ContainsWarning, "{ max() }");
+        assertEval("{ max() }");
         assertEval("{ max(1:10, 100:200, c(4.0, 5.0)) }");
         assertEval("{ max(NA, 1.1) }");
         assertEval("{ max(0/0, 1.1) }");
         assertEval("{ max(0/0, 1.1, NA) }");
         assertEval("{ max(c(as.character(NA), \"foo\")) }");
-        assertEval(Output.ContainsWarning, "{ max(character(0)) }");
-        assertEval(Output.ContainsWarning, "{ max(character()) }");
-        assertEval(Output.ContainsWarning, "{ max(double(0)) }");
-        assertEval(Output.ContainsWarning, "{ max(double()) }");
-        assertEval(Output.ContainsWarning, "{ max(NULL) }");
+        assertEval("{ max(character(0)) }");
+        assertEval("{ max(character()) }");
+        assertEval("{ max(double(0)) }");
+        assertEval("{ max(double()) }");
+        assertEval("{ max(NULL) }");
 
         assertEval("{ max(1:10, 100:200, c(4.0, 5.0), c(TRUE,FALSE,NA)) }");
         assertEval("{ max(c(\"hi\",\"abbey\",\"hello\")) }");
@@ -180,7 +180,7 @@ public class TestBuiltin_max extends TestBase {
 
         assertEval("{ is.logical(max(TRUE, FALSE)) }");
         assertEval("{ is.logical(max(TRUE)) }");
-        assertEval(Output.ContainsError, "{ max(as.raw(42), as.raw(7)) }");
+        assertEval("{ max(as.raw(42), as.raw(7)) }");
         assertEval(Output.ContainsError, "{ max(42+42i, 7+7i) }");
         assertEval("{ max(\"42\", \"7\") }");
 
