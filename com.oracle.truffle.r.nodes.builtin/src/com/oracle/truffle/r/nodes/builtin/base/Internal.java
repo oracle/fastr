@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -94,7 +94,7 @@ public abstract class Internal extends RBuiltinNode {
 
             // .Internal function is validated
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            builtinCallNode = insert(RCallNode.createInternalCall(frame, operand.asRSyntaxNode().getSourceSection(), callNode, function, name));
+            builtinCallNode = insert(RCallNode.createInternalCall(frame, callNode, function, name));
             builtinFunction = function;
         }
         return builtinCallNode.execute(frame, builtinFunction, null);

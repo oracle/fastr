@@ -345,6 +345,9 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
      * will have been stored. Otherwise, we have to deal with the different ways in which the
      * internal implementation can generate an error/warning and locate the correct node, and try to
      * match the behavior of GnuR regarding {@code .Internal} (TODO).
+     *
+     * The result of this function should either be {@code RNull.instance} or an {@link RLanguage}
+     * object that wraps an {@link RSyntaxNode}.
      */
     public Object findCaller(Node call) {
         Frame frame = Utils.getActualCurrentFrame();
@@ -357,20 +360,20 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 // .Internal at outer level?
                 if (builtIn.getBuiltin().getKind() == RBuiltinKind.INTERNAL && getCallerFromFrame(frame) == RNull.instance) {
                     return RNull.instance;
-                }
-                /*
-                 * Currently builtins called through do.call do not have a (meaningful) source
-                 * section.
-                 */
-                if (builtIn.getSourceSection() != null) {
+                } else if (builtIn.getBuiltin().getKind() == RBuiltinKind.INTERNAL) {
                     // look for the surrounding RCallNode
                     Node node = builtIn;
-                    if (builtIn.getBuiltin().getKind() == RBuiltinKind.INTERNAL) {
-                        while (!(node instanceof RCallNode)) {
-                            node = node.getParent();
-                        }
+                    while (!(node instanceof RCallNode)) {
+                        node = node.getParent();
                     }
                     return RDataFactory.createLanguage((RNode) node);
+                } else {
+                    RSyntaxNode originalCall = builtIn.getOriginalCall();
+                    if (originalCall != null) {
+                        return RDataFactory.createLanguage(originalCall.asRNode());
+                    } else {
+                        // fall through
+                    }
                 }
                 // We see some RSyntaxNodes with null SourceSections (which should never happen)
             } else if (call instanceof RSyntaxNode && call.getSourceSection() != null) {

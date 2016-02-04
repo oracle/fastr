@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,22 +25,21 @@ package com.oracle.truffle.r.nodes.builtin;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 @NodeFields(value = {@NodeField(name = "builtin", type = RBuiltinFactory.class), @NodeField(name = "suppliedSignature", type = ArgumentsSignature.class)})
 @NodeChild(value = "arguments", type = RNode[].class)
-public abstract class RBuiltinNode extends RNode implements RSyntaxNode, VisibilityController {
+public abstract class RBuiltinNode extends RNode implements VisibilityController {
 
     public abstract Object execute(VirtualFrame frame, Object... args);
 
@@ -222,11 +221,9 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
         return Truffle.getRuntime().createCallTarget(root);
     }
 
-    public final RBuiltinNode inline(ArgumentsSignature signature, RNode[] args, SourceSection callSrc) {
+    public final RBuiltinNode inline(ArgumentsSignature signature, RNode[] args) {
         // static number of arguments
         RBuiltinNode node = createNode(getBuiltin(), args, signature);
-        // TODO src is (very) occasionally null, which should not happen
-        node.assignSourceSection(callSrc);
         return node;
     }
 
@@ -248,41 +245,20 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
         return factory.getConstructor().get(arguments, factory, signature);
     }
 
-    @Override
-    public void deparseImpl(RDeparse.State state) {
-        state.startNodeDeparse(this);
-        assert getBuiltin().getKind() == RBuiltinKind.INTERNAL;
-        state.append(".Internal(");
-        state.append(getBuiltin().getName());
-        // arguments; there is no CallArgumentsNode, so we create one to reuse the deparse code
-        RSyntaxNode[] args = Arrays.copyOf(getArguments(), getArguments().length, RSyntaxNode[].class);
-        RCallNode.deparseArguments(state, args, getSuppliedSignature());
-        state.append(')');
-        state.endNodeDeparse(this);
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        throw RInternalError.unimplemented();
-    }
-
-    public int getRlengthImpl() {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+    /**
+     * Generally, {@link RBuiltinNode} instances are created as child nodes of a private class in
+     * {@link RCallNode} that can return the original {@link RCallNode} which has all the pertinent
+     * information as initially parsed. However, currently, builtins called via
+     * {@code do.call("func", )} have a {@link RBuiltinRootNode} as a parent, which carries no
+     * context about the original call, so we return {@code null}.
+     */
+    public RSyntaxNode getOriginalCall() {
+        Node p = getParent();
+        if (p instanceof RBuiltinRootNode) {
+            return null;
+        } else {
+            return ((RBaseNode) getParent()).asRSyntaxNode();
+        }
     }
 
     @Override

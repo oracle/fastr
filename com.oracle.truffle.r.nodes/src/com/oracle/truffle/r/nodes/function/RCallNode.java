@@ -651,13 +651,12 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      * original call.
      *
      * @param frame The frame to create the inlined builtins in
-     * @param src source section to use (from original call)
      * @param internalCallArg the {@link UninitializedCallNode} corresponding to the argument to the
      *            {code .Internal}.
      * @param function the resolved {@link RFunction}.
      * @param name The name of the function
      */
-    public static LeafCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, String name) {
+    public static LeafCallNode createInternalCall(VirtualFrame frame, RCallNode internalCallArg, RFunction function, String name) {
         CompilerAsserts.neverPartOfCompilation();
         return UninitializedCallNode.createCacheNode(frame, internalCallArg.createArguments(null, false, true), internalCallArg, function);
     }
@@ -827,7 +826,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 // We inline the given arguments here, as builtins are executed inside the same
                 // frame as they are called.
                 InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, creator);
-                callNode = new BuiltinCallNode(root.inline(inlinedArgs.getSignature(), inlinedArgs.getArguments(), creator.getSourceSection()));
+                callNode = new BuiltinCallNode(root.inline(inlinedArgs.getSignature(), inlinedArgs.getArguments()), creator);
             } else {
                 // Now we need to distinguish: Do supplied arguments vary between calls?
                 if (args.containsVarArgsSymbol()) {
@@ -919,9 +918,19 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     private static final class BuiltinCallNode extends LeafCallNode {
 
         @Child private RBuiltinNode builtin;
+        /**
+         * The original {@link RSyntaxNode} this derives from.
+         */
+        private final RCallNode call;
 
-        BuiltinCallNode(RBuiltinNode builtin) {
+        BuiltinCallNode(RBuiltinNode builtin, RCallNode call) {
             this.builtin = builtin;
+            this.call = call;
+        }
+
+        @Override
+        public RSyntaxNode getRSyntaxNode() {
+            return call;
         }
 
         @Override

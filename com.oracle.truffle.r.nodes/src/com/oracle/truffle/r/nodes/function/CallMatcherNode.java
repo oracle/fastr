@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -188,7 +188,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             this.formals = ((RRootNode) cachedFunction.getRootNode()).getFormalArguments();
             if (function.isBuiltin()) {
                 RBuiltinRootNode builtinRoot = RCallNode.findBuiltinRootNode(function.getTarget());
-                this.builtin = builtinRoot.inline(formals.getSignature(), null, specializer.getRSyntaxNode().getSourceSection());
+                this.builtin = builtinRoot.inline(formals.getSignature(), null);
                 this.builtinArgumentCasts = builtin.getCasts();
             } else {
                 this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());

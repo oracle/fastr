@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Simple container class for holding arguments which are going to be inlined into FastR built-ins
- * (using {@link RBuiltinNode#inline(ArgumentsSignature, RNode[], SourceSection)}.
+ * (using {@link RBuiltinNode#inline(ArgumentsSignature, RNode[])}.
  */
 public final class InlinedArguments extends Arguments<RNode> {
 
