@@ -575,8 +575,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             assert info.getKind() != ContextKind.SHARE_NOTHING;
             assert info.getParent() != null;
             return info.getParent().getPrimitiveMethodsInfo();
-        }
-        else {
+        } else {
             return primitiveMethodsInfo;
         }
     }

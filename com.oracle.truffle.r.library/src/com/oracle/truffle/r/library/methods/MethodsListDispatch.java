@@ -166,17 +166,13 @@ public class MethodsListDispatch {
             MethodCode code;
             if (codeVec.charAt(0) == 'c') {
                 code = MethodCode.NO_METHODS;
-            }
-            else if (codeVec.charAt(0) == 'r') {
+            } else if (codeVec.charAt(0) == 'r') {
                 code = MethodCode.NEEDS_RESET;
-            }
-            else if (codeVec.startsWith("se")) {
+            } else if (codeVec.startsWith("se")) {
                 code = MethodCode.HAS_METHODS;
-            }
-            else if (codeVec.startsWith("su")) {
+            } else if (codeVec.startsWith("su")) {
                 code = MethodCode.SUPPRESSED;
-            }
-            else {
+            } else {
                 throw RError.error(RError.NO_NODE, RError.Message.INVALID_PRIM_METHOD_CODE, codeVec);
             }
             if (!(op instanceof RFunction) || !((RFunction) op).isBuiltin()) {

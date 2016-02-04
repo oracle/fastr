@@ -67,8 +67,7 @@ public abstract class RBuiltinDescriptor {
             // currently tough to do as builtin descriptors seem to be created before the primordial
             // context is fully initialized but code inspection shows that the assertion holds)
             primitiveMethodIndex = primitiveMethodCount++;
-        }
-        else {
+        } else {
             primitiveMethodIndex = PrimitiveMethodsInfo.INVALID_INDEX;
         }
     }
