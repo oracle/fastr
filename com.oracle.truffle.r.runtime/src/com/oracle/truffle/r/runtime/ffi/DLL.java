@@ -52,7 +52,7 @@ public class DLL {
      */
     private static final AtomicInteger ID = new AtomicInteger();
 
-    public static enum NativeSymbolType {
+    public enum NativeSymbolType {
         C,
         Call,
         Fortran,

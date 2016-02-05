@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -175,7 +175,7 @@ public abstract class PromiseNode extends RNode {
      */
     private static final class OptVariableSuppliedPromiseNode extends OptVariablePromiseBaseNode {
 
-        public OptVariableSuppliedPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
+        OptVariableSuppliedPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
             super(factory, rvn, wrapIndex);
         }
 
@@ -212,7 +212,7 @@ public abstract class PromiseNode extends RNode {
         private final BranchProfile isVarArgProfile = BranchProfile.create();
         private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
 
-        public InlinedSuppliedArgumentNode(RNode expression, Object defaultValue, boolean unwrap) {
+        InlinedSuppliedArgumentNode(RNode expression, Object defaultValue, boolean unwrap) {
             // TODO assert RSyntaxNode?
             this.expression = expression;
             this.defaultValue = defaultValue;

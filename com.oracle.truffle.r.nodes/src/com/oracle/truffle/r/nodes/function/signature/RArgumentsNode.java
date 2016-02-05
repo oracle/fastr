@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,7 +59,7 @@ public abstract class RArgumentsNode extends RBaseNode {
     private static final class RArgumentsCachedNode extends RArgumentsNode {
         private final RFunction cachedFunction;
 
-        public RArgumentsCachedNode(RFunction cachedFunction) {
+        RArgumentsCachedNode(RFunction cachedFunction) {
             this.cachedFunction = cachedFunction;
         }
 

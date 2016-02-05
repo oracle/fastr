@@ -41,7 +41,7 @@ public class TestBase {
 
     private static final boolean ProcessFailedTests = Boolean.getBoolean("ProcessFailedTests");
 
-    public static enum Output implements TestTrait {
+    public enum Output implements TestTrait {
         ContainsError, // the error context is ignored (e.g., "a+b" vs. "a + b")
         ContainsAmbiguousError, // the actual error message is ignored
         ContainsWarning, // the warning context is ignored
@@ -49,7 +49,7 @@ public class TestBase {
         MayContainWarning;
     }
 
-    public static enum Ignored implements TestTrait {
+    public enum Ignored implements TestTrait {
         Unknown("failing tests that have not been classified yet"),
         Unstable("tests that produce inconsistent results in GNUR"),
         OutputFormatting("tests that fail because of problems with output formatting"),
@@ -65,7 +65,7 @@ public class TestBase {
 
         private final String description;
 
-        private Ignored(String description) {
+        Ignored(String description) {
             this.description = description;
         }
 
@@ -488,7 +488,7 @@ public class TestBase {
         public final String result;
         public final String expected;
 
-        public CheckResult(boolean ok, String result, String expected) {
+        CheckResult(boolean ok, String result, String expected) {
             this.ok = ok;
             this.result = result;
             this.expected = expected;

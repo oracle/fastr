@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import java.util.*;
  * environment is handled in some other class.
  */
 public final class RCmdOptions {
-    public static enum Client {
+    public enum Client {
         R {
             @Override
             public String usage() {
@@ -58,13 +58,13 @@ public final class RCmdOptions {
         public abstract String usage();
     }
 
-    public static enum RCmdOptionType {
+    public enum RCmdOptionType {
         BOOLEAN,
         STRING,
         REPEATED_STRING
     }
 
-    public static enum RCmdOption {
+    public enum RCmdOption {
         HELP(RCmdOptionType.BOOLEAN, true, "h", "help", false, "Print short help message and exit"),
         VERSION(RCmdOptionType.BOOLEAN, true, "version", false, "Print version info and exit"),
         ENCODING(RCmdOptionType.STRING, false, "encoding=ENC", null, "Specify encoding to be used for stdin"),
@@ -111,7 +111,7 @@ public final class RCmdOptions {
         private final Object defaultValue;
         private final String help;
 
-        private RCmdOption(RCmdOptionType type, Client client, boolean implemented, String shortName, String name, Object defaultValue, String help) {
+        RCmdOption(RCmdOptionType type, Client client, boolean implemented, String shortName, String name, Object defaultValue, String help) {
             this.type = type;
             this.client = client;
             this.implemented = implemented;
@@ -136,11 +136,11 @@ public final class RCmdOptions {
             this.help = help.replace("\n", "\n                          ");
         }
 
-        private RCmdOption(RCmdOptionType type, boolean implemented, String shortName, String name, Object defaultValue, String help) {
+        RCmdOption(RCmdOptionType type, boolean implemented, String shortName, String name, Object defaultValue, String help) {
             this(type, Client.EITHER, implemented, shortName, name, defaultValue, help);
         }
 
-        private RCmdOption(RCmdOptionType type, boolean implemented, String name, Object defaultValue, String help) {
+        RCmdOption(RCmdOptionType type, boolean implemented, String name, Object defaultValue, String help) {
             this(type, Client.EITHER, implemented, null, name, defaultValue, help);
         }
 
@@ -241,7 +241,7 @@ public final class RCmdOptions {
         private final RCmdOption option;
         private final boolean matchedShort;
 
-        public MatchResult(RCmdOption option, boolean matchedShort) {
+        MatchResult(RCmdOption option, boolean matchedShort) {
             this.option = option;
             this.matchedShort = matchedShort;
         }

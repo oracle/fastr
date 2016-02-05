@@ -42,7 +42,7 @@ final class PositionsCheckNode extends Node {
     private final boolean replace;
     private final int positionsLength;
 
-    public PositionsCheckNode(ElementAccessMode mode, RType containerType, Object[] positions, boolean exact, boolean replace, boolean recursive) {
+    PositionsCheckNode(ElementAccessMode mode, RType containerType, Object[] positions, boolean exact, boolean replace, boolean recursive) {
         this.mode = mode;
         this.replace = replace;
         this.positionsCheck = new PositionCheckNode[positions.length];

@@ -133,7 +133,7 @@ public abstract class CallMatcherNode extends RBaseNode {
 
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class CallMatcherUninitializedNode extends CallMatcherNode {
-        public CallMatcherUninitializedNode(boolean forNextMethod, boolean argsAreEvaluated) {
+        CallMatcherUninitializedNode(boolean forNextMethod, boolean argsAreEvaluated) {
             super(forNextMethod, argsAreEvaluated);
         }
 
@@ -176,7 +176,7 @@ public abstract class CallMatcherNode extends RBaseNode {
         private final MatchPermutation permutation;
         private final FormalArguments formals;
 
-        public CallMatcherCachedNode(ArgumentsSignature suppliedSignature, ArgumentsSignature[] varArgSignatures, RFunction function, long[] preparePermutation, MatchPermutation permutation,
+        CallMatcherCachedNode(ArgumentsSignature suppliedSignature, ArgumentsSignature[] varArgSignatures, RFunction function, long[] preparePermutation, MatchPermutation permutation,
                         CallMatcherNode specializer, boolean forNextMethod, boolean argsAreEvaluated, CallMatcherNode next) {
             super(forNextMethod, argsAreEvaluated);
             this.cachedSuppliedSignature = suppliedSignature;
@@ -272,7 +272,7 @@ public abstract class CallMatcherNode extends RBaseNode {
 
     private static final class CallMatcherGenericNode extends CallMatcherNode {
 
-        public CallMatcherGenericNode(boolean forNextMethod, boolean argsAreEvaluated) {
+        CallMatcherGenericNode(boolean forNextMethod, boolean argsAreEvaluated) {
             super(forNextMethod, argsAreEvaluated);
         }
 

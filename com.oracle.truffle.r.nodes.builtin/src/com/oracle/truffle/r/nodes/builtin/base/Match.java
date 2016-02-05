@@ -533,7 +533,7 @@ public abstract class Match extends RBuiltinNode {
 
         private final String[] keys;
 
-        public NonRecursiveHashMapCharacter(int approxCapacity) {
+        NonRecursiveHashMapCharacter(int approxCapacity) {
             super(approxCapacity);
             keys = new String[values.length];
         }
@@ -591,7 +591,7 @@ public abstract class Match extends RBuiltinNode {
 
         private final RComplex[] keys;
 
-        public NonRecursiveHashMapComplex(int approxCapacity) {
+        NonRecursiveHashMapComplex(int approxCapacity) {
             super(approxCapacity);
             keys = new RComplex[values.length];
         }
@@ -650,7 +650,7 @@ public abstract class Match extends RBuiltinNode {
         private final double[] keys;
         private int nanValue;
 
-        public NonRecursiveHashMapDouble(int approxCapacity) {
+        NonRecursiveHashMapDouble(int approxCapacity) {
             super(approxCapacity);
             keys = new double[values.length];
             Arrays.fill(keys, RRuntime.DOUBLE_NA);
@@ -715,7 +715,7 @@ public abstract class Match extends RBuiltinNode {
 
         private final int[] keys;
 
-        public NonRecursiveHashMapInt(int approxCapacity) {
+        NonRecursiveHashMapInt(int approxCapacity) {
             super(approxCapacity);
             keys = new int[values.length];
             Arrays.fill(keys, RRuntime.INT_NA);

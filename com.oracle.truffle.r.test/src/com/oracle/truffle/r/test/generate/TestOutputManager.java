@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -152,7 +152,7 @@ public class TestOutputManager {
     private static class SaveBufferedReader extends BufferedReader {
         StringBuffer save;
 
-        public SaveBufferedReader(Reader in, StringBuffer save) {
+        SaveBufferedReader(Reader in, StringBuffer save) {
             super(in);
             this.save = save;
         }

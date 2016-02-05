@@ -59,7 +59,7 @@ public final class FrameSlotChangeMonitor {
      * result based on the system's knowledge about the hierarchy of environments and the stable
      * values of certain bindings. Most function lookups can be answered based only on this
      * information.
-     *
+     * 
      * These lookups are stored for caching and invalidation, i.e., to save on repeated lookups and
      * to invalidate lookups in case the environment hierarchy changes.
      */
@@ -428,7 +428,7 @@ public final class FrameSlotChangeMonitor {
         @CompilationFinal private StableValue<Object> stableValue;
         private int invalidationCount;
 
-        public FrameSlotInfoImpl(boolean isSingletonFrame, boolean isGlobalEnv, Object identifier) {
+        FrameSlotInfoImpl(boolean isSingletonFrame, boolean isGlobalEnv, Object identifier) {
             if (isSingletonFrame) {
                 stableValue = new StableValue<>(null, identifier.toString());
                 invalidationCount = isGlobalEnv ? MAX_GLOBAL_ENV_INVALIDATION_COUNT : MAX_INVALIDATION_COUNT;

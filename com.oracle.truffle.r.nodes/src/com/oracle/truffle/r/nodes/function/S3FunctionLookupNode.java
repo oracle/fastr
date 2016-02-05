@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -223,7 +223,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
     private static final class UseMethodFunctionLookupUninitializedNode extends S3FunctionLookupNode {
         private int depth;
 
-        public UseMethodFunctionLookupUninitializedNode(boolean throwsError, boolean nextMethod) {
+        UseMethodFunctionLookupUninitializedNode(boolean throwsError, boolean nextMethod) {
             super(throwsError, nextMethod);
         }
 
@@ -265,7 +265,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         private final String cachedGroup;
         private final RFunction builtin;
 
-        public UseMethodFunctionLookupCachedNode(boolean throwsError, boolean nextMethod, String genericName, RStringVector type, String group, RFunction builtin,
+        UseMethodFunctionLookupCachedNode(boolean throwsError, boolean nextMethod, String genericName, RStringVector type, String group, RFunction builtin,
                         List<ReadVariableNode> unsuccessfulReadsCaller, List<LocalReadVariableNode> unsuccessfulReadsTable, LocalReadVariableNode readS3MethodsTable, ReadVariableNode successfulRead,
                         LocalReadVariableNode successfulReadTable, RFunction function, Object clazz, String targetFunctionName, boolean groupMatch, S3FunctionLookupNode next) {
             super(throwsError, nextMethod);

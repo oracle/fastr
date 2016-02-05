@@ -127,7 +127,7 @@ public final class Call extends ASTNode {
 
         private final String opName;
 
-        private CallOperator(String opName) {
+        CallOperator(String opName) {
             this.opName = opName;
         }
 

@@ -177,7 +177,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         // used as RSyntaxNode
         private final ForNode forNode;
 
-        public ForRepeatingNode(ForNode forNode, WriteVariableNode cvar, RNode body, String indexName, String lengthName, String rangeName) {
+        ForRepeatingNode(ForNode forNode, WriteVariableNode cvar, RNode body, String indexName, String lengthName, String rangeName) {
             this.forNode = forNode;
             this.writeElementNode = cvar;
             this.body = body;

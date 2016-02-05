@@ -58,7 +58,7 @@ public class RDeparse {
     public static final char BACKTICK = '`';
     public static final char DQUOTE = '"';
 
-    public static enum PP {
+    public enum PP {
         FUNCALL,
         RETURN,
         BINARY,

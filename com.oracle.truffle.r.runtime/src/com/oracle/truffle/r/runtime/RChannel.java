@@ -149,7 +149,7 @@ public class RChannel {
 
         private RList list;
 
-        public SerializedList(RList list) {
+        SerializedList(RList list) {
             this.list = list;
         }
 

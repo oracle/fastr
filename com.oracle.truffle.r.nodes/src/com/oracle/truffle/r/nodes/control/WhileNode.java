@@ -163,7 +163,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
         // used as RSyntaxNode
         private final WhileNode whileNode;
 
-        public WhileRepeatingNode(WhileNode whileNode, ConvertBooleanNode condition, RNode body) {
+        WhileRepeatingNode(WhileNode whileNode, ConvertBooleanNode condition, RNode body) {
             this.whileNode = whileNode;
             this.condition = condition;
             this.body = body;

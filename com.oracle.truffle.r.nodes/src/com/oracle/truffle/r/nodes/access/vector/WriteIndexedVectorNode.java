@@ -466,7 +466,7 @@ abstract class WriteIndexedVectorNode extends Node {
 
         private final boolean setListElementAsObject;
 
-        public WriteListAction(boolean setListElementAsObject) {
+        WriteListAction(boolean setListElementAsObject) {
             this.setListElementAsObject = setListElementAsObject;
         }
 

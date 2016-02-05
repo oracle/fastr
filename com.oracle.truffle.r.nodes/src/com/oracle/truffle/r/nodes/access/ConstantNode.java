@@ -133,12 +133,12 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         return cn;
     }
 
-    public static final class ConstantDoubleScalarNode extends ConstantNode {
+    private static final class ConstantDoubleScalarNode extends ConstantNode {
 
         private final Double objectValue;
         private final double doubleValue;
 
-        public ConstantDoubleScalarNode(double value) {
+        ConstantDoubleScalarNode(double value) {
             this.objectValue = value;
             this.doubleValue = value;
         }
@@ -155,12 +155,12 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         }
     }
 
-    public static final class ConstantLogicalScalarNode extends ConstantNode {
+    private static final class ConstantLogicalScalarNode extends ConstantNode {
 
         private final byte logicalValue;
         private final Byte objectValue;
 
-        public ConstantLogicalScalarNode(byte value) {
+        ConstantLogicalScalarNode(byte value) {
             this.logicalValue = value;
             this.objectValue = value;
         }
@@ -177,12 +177,12 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         }
     }
 
-    public static final class ConstantIntegerScalarNode extends ConstantNode {
+    private static final class ConstantIntegerScalarNode extends ConstantNode {
 
         private final Integer objectValue;
         private final int intValue;
 
-        public ConstantIntegerScalarNode(int value) {
+        ConstantIntegerScalarNode(int value) {
             this.objectValue = value;
             this.intValue = value;
         }
@@ -204,7 +204,7 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
 
         private final Object value;
 
-        public ConstantObjectNode(Object value) {
+        ConstantObjectNode(Object value) {
             this.value = value;
         }
 

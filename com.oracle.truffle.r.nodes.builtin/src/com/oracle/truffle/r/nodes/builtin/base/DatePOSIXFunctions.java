@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -47,7 +47,7 @@ public class DatePOSIXFunctions {
         private boolean complete = true;
         private final String zone;
 
-        public POSIXltBuilder(int length, String zone) {
+        POSIXltBuilder(int length, String zone) {
             this.zone = zone;
             sec = new double[length];
             min = new int[length];

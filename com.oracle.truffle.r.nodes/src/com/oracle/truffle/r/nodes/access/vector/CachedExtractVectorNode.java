@@ -66,7 +66,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
      */
     private final AlwaysOnBranchProfile metadataApplied = AlwaysOnBranchProfile.create();
 
-    public CachedExtractVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, RTypedValue exact, RTypedValue dropDimensions, boolean recursive) {
+    CachedExtractVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, RTypedValue exact, RTypedValue dropDimensions, boolean recursive) {
         super(mode, vector, positions, recursive);
         this.targetClass = vector.getClass();
         this.exactClass = exact.getClass();
@@ -423,7 +423,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
         @Children private final CachedExtractVectorNode[] extractNodes;
 
-        public ExtractDimNamesNode(int dimensions) {
+        ExtractDimNamesNode(int dimensions) {
             this.extractNodes = new CachedExtractVectorNode[dimensions];
         }
 

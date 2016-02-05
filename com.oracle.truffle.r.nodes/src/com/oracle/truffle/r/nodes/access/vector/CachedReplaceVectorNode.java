@@ -74,7 +74,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     @Child private CachedReplaceVectorNode copyPositionNames;
     @Child private DeleteElementsNode deleteElementsNode;
 
-    public CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, RTypedValue value, boolean updatePositionNames, boolean recursive) {
+    CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, RTypedValue value, boolean updatePositionNames, boolean recursive) {
         super(mode, vector, positions, recursive);
 
         if (numberOfDimensions == 1 && positions[0] instanceof String || positions[0] instanceof RAbstractStringVector) {

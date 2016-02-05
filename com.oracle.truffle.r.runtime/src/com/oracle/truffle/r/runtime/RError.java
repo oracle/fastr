@@ -218,7 +218,7 @@ public final class RError extends RuntimeException {
         }
     }
 
-    public static enum Message {
+    public enum Message {
         /**
          * Eventually this will go away, used only by {@link RError#nyi}.
          */
@@ -669,7 +669,7 @@ public final class RError extends RuntimeException {
         public final String message;
         final boolean hasArgs;
 
-        private Message(String message) {
+        Message(String message) {
             this.message = message;
             hasArgs = message.indexOf('%') >= 0;
         }
