@@ -339,21 +339,25 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     public RLanguage getSyntaxCaller(RCaller rl) {
-        RSyntaxNode sn = RASTUtils.unwrap(rl.getRep()).asRSyntaxNode();
-        return RDataFactory.createLanguage(getSyntaxNode(sn).asRNode());
+        RBaseNode bn = RASTUtils.unwrap(rl.getRep());
+        return RDataFactory.createLanguage(checkBuiltin(bn).asRSyntaxNode().asRNode());
     }
 
-    private static RSyntaxNode getSyntaxNode(RSyntaxNode sn) {
-        if (sn instanceof RBuiltinNode) {
-            Node current = (RBuiltinNode) sn;
-            while (current != null) {
-                if (current instanceof GroupDispatchNode || current instanceof RCallNode) {
-                    return (RSyntaxNode) current;
-                }
-                current = current.getParent();
+    private static RBaseNode checkBuiltin(RBaseNode bn) {
+        if (bn instanceof RBuiltinNode) {
+            RSyntaxNode sn = ((RBuiltinNode) bn).getOriginalCall();
+            if (sn == null) {
+                /*
+                 * TODO Ideally this never happens but do.call creates trees that make finding the
+                 * original call impossible.
+                 */
+                return null;
+            } else {
+                return (RBaseNode) sn;
             }
+        } else {
+            return bn;
         }
-        return sn;
     }
 
     public String getCallerSource(RLanguage rl) {
@@ -401,7 +405,14 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             }
             return findCallerFromFrame(frame);
         } else {
-            return RDataFactory.createLanguage(getSyntaxNode(call.asRSyntaxNode()).asRNode());
+            RBaseNode originalCall = checkBuiltin(call);
+            if (originalCall != null && originalCall.checkasRSyntaxNode() != null) {
+                return RDataFactory.createLanguage(originalCall.asRSyntaxNode().asRNode());
+            } else {
+                // See checkBuiltin. Also some RBaseNode subclasses do not provide an RSyntaxNode.
+                Frame frame = Utils.getActualCurrentFrame();
+                return findCallerFromFrame(frame);
+            }
         }
     }
 

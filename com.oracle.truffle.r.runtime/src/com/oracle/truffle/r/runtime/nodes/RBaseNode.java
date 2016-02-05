@@ -90,10 +90,36 @@ public abstract class RBaseNode extends Node {
     }
 
     /**
+     * See comment on {@link #checkGetRSyntaxNode()}.
+     */
+    public RSyntaxNode checkasRSyntaxNode() {
+        if (isRSyntaxNode()) {
+            return (RSyntaxNode) this;
+        } else {
+            return checkGetRSyntaxNode();
+        }
+    }
+
+    /**
      * Many nodes organize themselves in such a way that the relevant {@link RSyntaxNode} can be
      * found by following the parent chain, which is therefore the default implementation.
      */
     protected RSyntaxNode getRSyntaxNode() {
+        RSyntaxNode result = checkGetRSyntaxNode();
+        if (result == null) {
+            throw RInternalError.shouldNotReachHere("getRSyntaxNode");
+        } else {
+            return result;
+        }
+    }
+
+    /**
+     * If every {@link RBaseNode} subclass either overrides {@link #getRSyntaxNode()} or works
+     * correctly with the default hierarchical implementation, this method would be redundant.
+     * However, currently that is not always the case, so this method can be used by defensive code.
+     * It returns {@code null} if the {@link RSyntaxNode} cannot be located.
+     */
+    private RSyntaxNode checkGetRSyntaxNode() {
         Node current = this;
         while (current != null) {
             if (current instanceof RSyntaxNode && ((RSyntaxNode) current).isSyntax()) {
@@ -101,7 +127,7 @@ public abstract class RBaseNode extends Node {
             }
             current = current.getParent();
         }
-        throw RInternalError.shouldNotReachHere("getRSyntaxNode");
+        return null;
     }
 
     public void deparse(State state) {

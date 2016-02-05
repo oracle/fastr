@@ -30,7 +30,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -51,7 +50,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * e.g.: {@link #matchArgumentsEvaluated(RFunction, EvaluatedArguments, RBaseNode, boolean)} for
  * 'UseMethod' and {@link #matchArgumentsInlined(RFunction, UnmatchedArguments, RBaseNode)} for
  * builtins which are implemented in Java ( @see
- * {@link RBuiltinNode#inline(ArgumentsSignature, RNode[], SourceSection)}
+ * {@link RBuiltinNode#inline(ArgumentsSignature, RNode[])}
  * </p>
  *
  * <p>
