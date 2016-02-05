@@ -52,8 +52,7 @@ public abstract class CallMatcherNode extends RBaseNode {
 
     public abstract Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, S3Args s3Args);
 
-    private static CallMatcherCachedNode specialize(ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, CallMatcherNode specializer, boolean forNextMethod,
-                    boolean argsAreEvaluated, CallMatcherNode next) {
+    protected CallMatcherCachedNode specialize(ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, CallMatcherNode next) {
 
         int argCount = suppliedArguments.length;
         int argListSize = argCount;
@@ -86,9 +85,9 @@ public abstract class CallMatcherNode extends RBaseNode {
 
         assert resultSignature != null;
         ArgumentsSignature formalSignature = ArgumentMatcher.getFunctionSignature(function);
-        MatchPermutation permutation = ArgumentMatcher.matchArguments(resultSignature, formalSignature, specializer, forNextMethod, function.getRBuiltin());
+        MatchPermutation permutation = ArgumentMatcher.matchArguments(resultSignature, formalSignature, this, forNextMethod, function.getRBuiltin());
 
-        return new CallMatcherCachedNode(suppliedSignature, varArgSignatures, function, preparePermutation, permutation, specializer, forNextMethod, argsAreEvaluated, next);
+        return new CallMatcherCachedNode(suppliedSignature, varArgSignatures, function, preparePermutation, permutation, forNextMethod, argsAreEvaluated, next);
     }
 
     protected Object[] prepareArguments(VirtualFrame frame, Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, S3Args s3Args) {
@@ -145,7 +144,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             if (++depth > MAX_CACHE_DEPTH) {
                 return replace(new CallMatcherGenericNode(forNextMethod, argsAreEvaluated)).execute(frame, suppliedSignature, suppliedArguments, function, s3Args);
             } else {
-                CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, this, forNextMethod, argsAreEvaluated, this));
+                CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, this));
                 // for splitting if necessary
                 if (cachedNode.call != null && RCallNode.needsSplitting(function)) {
                     cachedNode.call.cloneCallTarget();
@@ -177,7 +176,7 @@ public abstract class CallMatcherNode extends RBaseNode {
         private final FormalArguments formals;
 
         CallMatcherCachedNode(ArgumentsSignature suppliedSignature, ArgumentsSignature[] varArgSignatures, RFunction function, long[] preparePermutation, MatchPermutation permutation,
-                        CallMatcherNode specializer, boolean forNextMethod, boolean argsAreEvaluated, CallMatcherNode next) {
+                        boolean forNextMethod, boolean argsAreEvaluated, CallMatcherNode next) {
             super(forNextMethod, argsAreEvaluated);
             this.cachedSuppliedSignature = suppliedSignature;
             this.cachedVarArgSignatures = varArgSignatures;
