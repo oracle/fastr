@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -34,7 +34,7 @@ public class TestBuiltin_rep extends TestBase {
 
     @Test
     public void testrep4() {
-        assertEval(Ignored.Unknown, "argv <- list(list(), 0L); .Internal(rep_len(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(list(), 0L); .Internal(rep_len(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -54,7 +54,7 @@ public class TestBuiltin_rep extends TestBase {
 
     @Test
     public void testrep8() {
-        assertEval(Ignored.Unknown, "argv <- list(list(c('                  ', '                ')), 1L); .Internal(rep_len(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(list(c('                  ', '                ')), 1L); .Internal(rep_len(argv[[1]], argv[[2]]))");
     }
 
     @Test

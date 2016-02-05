@@ -264,7 +264,7 @@ public class TestEnvironments extends TestBase {
         assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
 
         // Requires generic specialization
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ as.environment(as.environment) }");
+        assertEval("{ as.environment(as.environment) }");
     }
 
     @Test

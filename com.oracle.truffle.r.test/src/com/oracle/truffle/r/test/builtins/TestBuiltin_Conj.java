@@ -19,7 +19,7 @@ public class TestBuiltin_Conj extends TestBase {
 
     @Test
     public void testConj1() {
-        assertEval(Ignored.Unknown, "argv <- list(NA_complex_);Conj(argv[[1]]);");
+        assertEval("argv <- list(NA_complex_);Conj(argv[[1]]);");
     }
 
     @Test
@@ -42,12 +42,12 @@ public class TestBuiltin_Conj extends TestBase {
 
     @Test
     public void testConj5() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));Conj(argv[[1]]);");
+        assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));Conj(argv[[1]]);");
     }
 
     @Test
     public void testConj6() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE);Conj(argv[[1]]);");
+        assertEval("argv <- list(FALSE);Conj(argv[[1]]);");
     }
 
     @Test
