@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,7 +80,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
         String[] names = new String[result.getLength()];
         Arrays.fill(names, RRuntime.STRING_NA);
         names[0] = name;
-        RStringVector namesVector = RDataFactory.createStringVector(names, names.length <= 1);
+        RStringVector namesVector = RDataFactory.createStringVector(names, names.length <= 1 && names[0] != RRuntime.STRING_NA);
         result.setNames(namesVector);
         return result;
     }

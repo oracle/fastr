@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -239,7 +239,13 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     public RVector getLevels(RAttributeProfiles attrProfiles) {
-        return (RVector) vector.getAttr(attrProfiles, RRuntime.LEVELS_ATTR_KEY);
+        Object attr = vector.getAttr(attrProfiles, RRuntime.LEVELS_ATTR_KEY);
+        if (attr instanceof RVector) {
+            return (RVector) attr;
+        } else {
+            // Scalar, must convert
+            return (RVector) RRuntime.asAbstractVector(attr);
+        }
     }
 
     public int getNLevels(RAttributeProfiles attrProfiles) {
