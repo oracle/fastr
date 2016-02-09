@@ -117,17 +117,17 @@ public class RRuntime {
 
     public static final String RS3MethodsTable = ".__S3MethodsTable__.";
 
-    public static final String RDotGeneric = ".Generic";
+    public static final String R_DOT_GENERIC = ".Generic";
 
-    public static final String RDotMethod = ".Method";
+    public static final String R_DOT_METHOD = ".Method";
 
-    public static final String RDotClass = ".Class";
+    public static final String R_DOT_CLASS = ".Class";
 
-    public static final String RDotGenericCallEnv = ".GenericCallEnv";
+    public static final String R_DOT_GENERIC_CALL_ENV = ".GenericCallEnv";
 
-    public static final String RDotGenericDefEnv = ".GenericDefEnv";
+    public static final String R_DOT_GENERIC_DEF_ENV = ".GenericDefEnv";
 
-    public static final String RDotGroup = ".Group";
+    public static final String R_DOT_GROUP = ".Group";
 
     public static final String RDOT = ".";
 

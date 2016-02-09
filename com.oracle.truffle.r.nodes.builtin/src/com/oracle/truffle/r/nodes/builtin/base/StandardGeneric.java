@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -118,7 +118,6 @@ public abstract class StandardGeneric extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             collectArgumentsNode = insert(CollectGenericArgumentsNodeGen.create(sigArgs.getDataWithoutCopying(), sigLength));
         }
-
         String[] classes = collectArgumentsNode.execute(frame, sigArgs, sigLength);
         Object ret = dispatchGeneric.executeObject(frame, methodsEnv, mtable, RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR), fdef, fname);
         return ret;
@@ -131,6 +130,10 @@ public abstract class StandardGeneric extends RBuiltinNode {
             RAttributes attributes = fn.getAttributes();
             if (attributes == null) {
                 return null;
+            }
+            if (genericAttrAccess == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                genericAttrAccess = insert(AttributeAccessNodeGen.create(RRuntime.GENERIC_ATTR_KEY));
             }
             genObj = genericAttrAccess.execute(attributes);
             if (genObj == null) {
@@ -148,16 +151,15 @@ public abstract class StandardGeneric extends RBuiltinNode {
     protected Object stdGeneric(VirtualFrame frame, RAbstractStringVector fVec, @SuppressWarnings("unused") RMissing fdef) {
         String fname = fVec.getDataAt(0);
         int n = RArguments.getDepth(frame);
-        if (genericAttrAccess == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            assert sysFunction == null;
-            genericAttrAccess = insert(AttributeAccessNodeGen.create(RRuntime.GENERIC_ATTR_KEY));
-            sysFunction = insert(FrameFunctionsFactory.SysFunctionNodeGen.create(new RNode[1], null, null));
-        }
         Object fnObj = RArguments.getFunction(frame);
         fnObj = getFunction(frame, fVec, fname, fnObj);
         if (fnObj != null) {
             return fnObj;
+        }
+        if (sysFunction == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            sysFunction = insert(FrameFunctionsFactory.SysFunctionNodeGen.create(new RNode[1], null, null));
+            RError.performanceWarning("sys.frame usage in standardGeneric");
         }
         // TODO: GNU R counts to (i < n) - does their equivalent of getDepth return a different
         // value

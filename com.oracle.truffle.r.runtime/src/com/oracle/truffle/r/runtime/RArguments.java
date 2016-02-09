@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,23 +84,45 @@ public final class RArguments {
     @CompilationFinal public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     @ValueType
-    public static final class S3Args {
-        public final String generic;
-        public final Object clazz;
+    public abstract static class DispatchArgs {
+        public final Object generic;
         public final Object method;
+
+        public DispatchArgs(Object generic, Object method) {
+            this.generic = generic;
+            this.method = method;
+        }
+    }
+
+    @ValueType
+    public static final class S3Args extends DispatchArgs {
+        public final Object clazz;
         public final MaterializedFrame callEnv;
         public final MaterializedFrame defEnv;
         public final String group;
 
         public S3Args(String generic, Object clazz, Object method, MaterializedFrame callEnv, MaterializedFrame defEnv, String group) {
+            super(generic, method);
             assert generic != null && callEnv != null : generic + " " + callEnv;
             assert generic.intern() == generic;
-            this.generic = generic;
             this.clazz = clazz;
-            this.method = method;
             this.callEnv = callEnv;
             this.defEnv = defEnv;
             this.group = group;
+        }
+    }
+
+    @ValueType
+    public static final class S4Args extends DispatchArgs {
+        public final Object defined;
+        public final Object target;
+        public final Object methods;
+
+        public S4Args(Object defined, Object method, Object target, Object generic, Object methods) {
+            super(generic, method);
+            this.defined = defined;
+            this.target = target;
+            this.methods = methods;
         }
     }
 
@@ -109,7 +131,7 @@ public final class RArguments {
     static final int INDEX_CALL = 2;
     static final int INDEX_CALLER_FRAME = 3;
     static final int INDEX_ENCLOSING_FRAME = 4;
-    static final int INDEX_S3_ARGS = 5;
+    static final int INDEX_DISPATCH_ARGS = 5;
     static final int INDEX_DEPTH = 6;
     static final int INDEX_IS_IRREGULAR = 7;
     static final int INDEX_SIGNATURE = 8;
@@ -132,13 +154,13 @@ public final class RArguments {
         return ((HasSignature) function.getRootNode()).getSignature();
     }
 
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, S3Args s3Args) {
+    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, DispatchArgs dispatchArgs) {
         CompilerAsserts.neverPartOfCompilation();
-        return create(functionObj, call, callerFrame, depth, evaluatedArgs, signature, functionObj.getEnclosingFrame(), s3Args);
+        return create(functionObj, call, callerFrame, depth, evaluatedArgs, signature, functionObj.getEnclosingFrame(), dispatchArgs);
     }
 
     public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature,
-                    MaterializedFrame enclosingFrame, S3Args s3Args) {
+                    MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
         assert evaluatedArgs != null && signature != null : evaluatedArgs + " " + signature;
         assert evaluatedArgs.length == signature.getLength() : Arrays.toString(evaluatedArgs) + " " + signature;
         assert signature == getSignature(functionObj) : signature + " vs. " + getSignature(functionObj);
@@ -151,7 +173,7 @@ public final class RArguments {
         a[INDEX_CALL] = call;
         a[INDEX_CALLER_FRAME] = callerFrame;
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
-        a[INDEX_S3_ARGS] = s3Args;
+        a[INDEX_DISPATCH_ARGS] = dispatchArgs;
         a[INDEX_DEPTH] = depth;
         a[INDEX_IS_IRREGULAR] = false;
         a[INDEX_SIGNATURE] = signature;
@@ -183,8 +205,8 @@ public final class RArguments {
         return (MaterializedFrame) args[INDEX_CALLER_FRAME];
     }
 
-    public static S3Args getS3Args(Frame frame) {
-        return (S3Args) frame.getArguments()[INDEX_S3_ARGS];
+    public static DispatchArgs getDispatchArgs(Frame frame) {
+        return (DispatchArgs) frame.getArguments()[INDEX_DISPATCH_ARGS];
     }
 
     public static REnvironment getEnvironment(Frame frame) {

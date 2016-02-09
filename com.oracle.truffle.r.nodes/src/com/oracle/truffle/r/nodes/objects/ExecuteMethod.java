@@ -13,6 +13,7 @@
 package com.oracle.truffle.r.nodes.objects;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -22,11 +23,16 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.function.CallMatcherNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RMissingHelper;
+import com.oracle.truffle.r.nodes.function.signature.CollectArgumentsNode;
+import com.oracle.truffle.r.nodes.function.signature.CollectArgumentsNodeGen;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RArguments.S4Args;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -41,45 +47,30 @@ public abstract class ExecuteMethod extends RBaseNode {
     public abstract Object executeObject(VirtualFrame frame, RFunction fdef);
 
     @Child private LocalReadVariableNode readDefined = LocalReadVariableNode.create(RRuntime.R_DOT_DEFINED, true);
-    @Child private LocalReadVariableNode readMethod = LocalReadVariableNode.create(RRuntime.RDotMethod, true);
+    @Child private LocalReadVariableNode readMethod = LocalReadVariableNode.create(RRuntime.R_DOT_METHOD, true);
     @Child private LocalReadVariableNode readTarget = LocalReadVariableNode.create(RRuntime.R_DOT_TARGET, true);
-    @Child private LocalReadVariableNode readGeneric = LocalReadVariableNode.create(RRuntime.RDotGeneric, true);
-    @Child private LocalReadVariableNode readMethods = LocalReadVariableNode.create(RRuntime.R_DOT_METHODS, true);
+    @Child private ReadVariableNode readGeneric = ReadVariableNode.create(RRuntime.R_DOT_GENERIC);
+    @Child private ReadVariableNode readMethods = ReadVariableNode.create(RRuntime.R_DOT_METHODS);
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
+
+    @Child private CollectArgumentsNode collectArgs;
+    @Child private CallMatcherNode callMatcher;
 
     @Specialization
     protected Object executeMethod(VirtualFrame frame, RFunction fdef) {
-
-        Object[] args = argsNode.execute(RArguments.getFunction(frame), RArguments.getCall(frame), null, RArguments.getDepth(frame) + 1, RArguments.getArguments(frame),
-                        RArguments.getSignature(frame), null);
-        MaterializedFrame newFrame = Truffle.getRuntime().createMaterializedFrame(args);
-        FrameDescriptor desc = newFrame.getFrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<executeMethod>", desc);
-        FrameSlotChangeMonitor.initializeEnclosingFrame(newFrame, RArguments.getFunction(frame).getEnclosingFrame());
-        FormalArguments formals = ((RRootNode) fdef.getRootNode()).getFormalArguments();
-        if (formals != null) {
-            ArgumentsSignature signature = formals.getSignature();
-            MaterializedFrame currentFrame = frame.materialize();
-            FrameDescriptor currentFrameDesc = currentFrame.getFrameDescriptor();
-            for (int i = 0; i < signature.getLength(); i++) {
-                String argName = signature.getName(i);
-                boolean missing = RMissingHelper.isMissingArgument(frame, argName);
-                Object val = slotRead(currentFrame, currentFrameDesc, argName);
-                slotInit(newFrame, desc, argName, val);
-                if (missing && !(val instanceof RArgsValuesAndNames || val == RMissing.instance)) {
-                    throw RInternalError.unimplemented();
-                }
-            }
+        if (collectArgs == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            collectArgs = insert(CollectArgumentsNodeGen.create());
+            callMatcher = insert(CallMatcherNode.create(false, false));
         }
 
-        slotInit(newFrame, desc, RRuntime.R_DOT_DEFINED, readDefined.execute(frame));
-        slotInit(newFrame, desc, RRuntime.RDotMethod, readMethod.execute(frame));
-        slotInit(newFrame, desc, RRuntime.R_DOT_TARGET, readTarget.execute(frame));
-        slotInit(newFrame, desc, RRuntime.RDotGeneric, readGeneric.execute(frame));
-        slotInit(newFrame, desc, RRuntime.R_DOT_METHODS, readMethods.execute(frame));
+        FormalArguments formals = ((RRootNode) fdef.getRootNode()).getFormalArguments();
+        ArgumentsSignature signature = formals.getSignature();
+        Object[] oldArgs = collectArgs.execute(frame, signature);
 
-        Object ret = callMethod(fdef, newFrame);
-        return ret;
+        S4Args s4Args = new S4Args(readDefined.execute(frame), readMethod.execute(frame), readTarget.execute(frame), readGeneric.execute(frame), readMethods.execute(frame));
+
+        return callMatcher.execute(frame, signature, oldArgs, fdef, s4Args);
     }
 
     @TruffleBoundary

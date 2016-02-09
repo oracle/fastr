@@ -90,7 +90,6 @@ public class TestS4 extends TestRBase {
     }
 
     @Test
-    @Ignore
     public void testMethods() {
         // output slightly different from GNU R even though we use R's "show" method to print it
         assertEval(Ignored.OutputFormatting, "{ setGeneric(\"gen\", function(object) standardGeneric(\"gen\")); res<-print(gen); removeGeneric(\"gen\"); res }");
@@ -106,7 +105,7 @@ public class TestS4 extends TestRBase {
 
     @Override
     public String getTestDir() {
-        return null;// "S4";
+        return "S4";
     }
 
 }

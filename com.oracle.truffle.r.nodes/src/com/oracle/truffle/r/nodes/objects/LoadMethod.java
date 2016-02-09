@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -26,6 +26,7 @@ import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -42,7 +43,7 @@ public abstract class LoadMethod extends RBaseNode {
     @Child private WriteLocalFrameVariableNode writeRTarget = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_TARGET, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRDefined = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_DEFINED, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRNextMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, null, WriteVariableNode.Mode.REGULAR);
-    @Child private WriteLocalFrameVariableNode writeRMethod = WriteLocalFrameVariableNode.create(RRuntime.RDotMethod, null, WriteVariableNode.Mode.REGULAR);
+    @Child private WriteLocalFrameVariableNode writeRMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_METHOD, null, WriteVariableNode.Mode.REGULAR);
     @Child private ReadVariableNode loadMethodFind;
     @Child private DirectCallNode loadMethodCall;
     @CompilationFinal private RFunction loadMethodFunction;
@@ -86,7 +87,7 @@ public abstract class LoadMethod extends RBaseNode {
                 loadMethodFind = insert(ReadVariableNode.createFunctionLookup(null, "loadMethod"));
                 loadMethodFunction = (RFunction) loadMethodFind.execute(null, methodsEnv.getFrame());
                 loadMethodCall = insert(Truffle.getRuntime().createDirectCallNode(loadMethodFunction.getTarget()));
-
+                RError.performanceWarning("loadMethod executing slow path");
             }
             RFunction currentFunction = (RFunction) loadMethodFind.execute(null, methodsEnv.getFrame());
             if (cached.profile(currentFunction == loadMethodFunction)) {
