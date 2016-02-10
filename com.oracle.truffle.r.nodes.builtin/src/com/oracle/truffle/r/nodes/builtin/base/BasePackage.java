@@ -480,8 +480,8 @@ public class BasePackage extends RBuiltinPackage {
         add(Tabulate.class, TabulateNodeGen::create);
         add(TempDir.class, TempDirNodeGen::create);
         add(TempFile.class, TempFileNodeGen::create);
-        add(ToLower.class, ToLowerNodeGen::create);
-        add(ToUpper.class, ToUpperNodeGen::create);
+        add(ToLowerOrUpper.ToLower.class, ToLowerOrUpper::createToLower);
+        add(ToLowerOrUpper.ToUpper.class, ToLowerOrUpper::createToUpper);
         add(Traceback.class, TracebackNodeGen::create);
         add(TraceFunctions.PrimTrace.class, TraceFunctionsFactory.PrimTraceNodeGen::create);
         add(TraceFunctions.PrimUnTrace.class, TraceFunctionsFactory.PrimUnTraceNodeGen::create);
