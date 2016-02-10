@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -39,7 +39,7 @@ public class TestBuiltin_tolower extends TestBase {
 
     @Test
     public void testtolower5() {
-        assertEval(Ignored.Unknown, "argv <- list(structure('base', .Names = 'Priority')); .Internal(tolower(argv[[1]]))");
+        assertEval(Ignored.Unimplemented, "argv <- list(structure('base', .Names = 'Priority')); .Internal(tolower(argv[[1]]))");
     }
 
     @Test
@@ -49,7 +49,7 @@ public class TestBuiltin_tolower extends TestBase {
 
     @Test
     public void testtolower8() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(x = c('NA', NA, 'BANANA')), .Names = 'x');do.call('tolower', argv)");
+        assertEval("argv <- structure(list(x = c('NA', NA, 'BANANA')), .Names = 'x');do.call('tolower', argv)");
     }
 
     @Test
@@ -57,8 +57,12 @@ public class TestBuiltin_tolower extends TestBase {
         assertEval("{ tolower(c(\"Hello\",\"ByE\")) }");
         assertEval("{ tolower(c()) }");
 
-        assertEval(Ignored.Unknown, "{ tolower(1E100) }");
-        assertEval(Ignored.Unknown, "{ tolower(c(a=\"HI\", \"HELlo\")) }");
-        assertEval(Ignored.Unknown, "{ tolower(NA) }");
+        assertEval(Ignored.OutputFormatting, "{ tolower(1E100) }");
+        assertEval(Ignored.Unimplemented, "{ tolower(c(a=\"HI\", \"HELlo\")) }");
+        assertEval("{ tolower(NA) }");
+
+        assertEval("tolower(c('NA', 'na'))");
+        assertEval("tolower(NA_integer_)");
+        assertEval("tolower(NA_real_)");
     }
 }
