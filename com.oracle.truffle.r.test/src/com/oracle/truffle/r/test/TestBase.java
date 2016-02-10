@@ -144,6 +144,9 @@ public class TestBase {
                         }
                     }
                 }
+                if (genExpected) {
+                    System.setProperty("GenerateExpectedOutput", "true");
+                }
                 expectedOutputManager = new ExpectedTestOutputManager(expectedOutputFile, genExpected, checkExpected, genExpectedQuiet);
                 fastROutputManager = new FastRTestOutputManager(fastROutputFile);
             } catch (Throwable ex) {
