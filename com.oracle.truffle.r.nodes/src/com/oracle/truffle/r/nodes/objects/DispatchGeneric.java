@@ -46,7 +46,7 @@ public abstract class DispatchGeneric extends RBaseNode {
     @CompilationFinal private RFunction inheritForDispatchFunction;
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
     @Child private LoadMethod loadMethod = LoadMethodNodeGen.create();
-    @Child private ExecuteMethod executeMethod = ExecuteMethodNodeGen.create();
+    @Child private ExecuteMethod executeMethod = new ExecuteMethod();
 
     @TruffleBoundary
     private static String createMultiDispatchString(RStringVector classes) {

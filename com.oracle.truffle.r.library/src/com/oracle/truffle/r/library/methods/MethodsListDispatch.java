@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.GetGenericInternalNodeGen;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
@@ -24,7 +25,6 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.objects.ExecuteMethod;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -287,7 +287,7 @@ public class MethodsListDispatch {
                     break;
                 }
                 FrameDescriptor currentFrameDesc = currentFrame.getFrameDescriptor();
-                Object o = ExecuteMethod.slotRead(currentFrame, currentFrameDesc, name);
+                Object o = slotRead(currentFrame, currentFrameDesc, name);
                 if (o != null) {
                     if (o instanceof RPromise) {
                         o = PromiseHelperNode.evaluateSlowPath(null, (RPromise) o);
@@ -318,6 +318,16 @@ public class MethodsListDispatch {
             // being a symbol but at this point this case is not handled (even possible?) in
             // FastR
             return generic == null ? RNull.instance : generic;
+        }
+
+        @TruffleBoundary
+        private static Object slotRead(MaterializedFrame currentFrame, FrameDescriptor desc, String name) {
+            FrameSlot slot = desc.findFrameSlot(name);
+            if (slot != null) {
+                return currentFrame.getValue(slot);
+            } else {
+                return null;
+            }
         }
     }
 
