@@ -52,16 +52,8 @@ public class TestVanillaPackage extends TestRPackages {
 
     @Test
     public void testSimpleFunction() {
-        /*
-         * This test fails because FastR doesn't install the package correctly. In particular, the
-         * ReplacementNode serializes "y[x] <- z" to "`[<-`(y, x, z)", where it should create
-         * "y <- `[<-`(y, x, z)" (i.e., it doesn't actually change the variable). This causes
-         * replacements that are part of lazy-loaded library functions to have no effect if the
-         * package in question was installed using FastR.
-         */
-        assertEval(Ignored.ImplementationError,
-                        TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); r <- functionTest(c(1,2,3,4,5,6),8:10); detach(\"package:vanilla\"); r }",
-                                        new String[]{packagePaths.rpackagesLibs.toString()}));
+        assertEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); r <- functionTest(c(1,2,3,4,5,6),8:10); detach(\"package:vanilla\"); r }",
+                        new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
 }
