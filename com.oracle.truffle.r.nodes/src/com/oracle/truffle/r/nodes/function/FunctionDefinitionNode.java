@@ -91,7 +91,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      * unknown.
      */
     private String description;
-    private final FunctionUID uuid;
+    private FunctionUID uuid;
     private boolean instrumented = false;
 
     @Child private FrameSlotNode onExitSlot;
@@ -163,9 +163,14 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public RRootNode duplicateWithNewFrameDescriptor() {
         FrameDescriptor frameDesc = new FrameDescriptor();
+        FunctionUID thisUuid = uuid;
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(description != null && !description.isEmpty() ? description : "<function>", frameDesc);
-        return new FunctionDefinitionNode(getSourceSection(), frameDesc, (BodyNode) body.unwrap().deepCopy(), getFormalArguments(), description, substituteFrame, argPostProcess == null ? null
-                        : argPostProcess.deepCopyUnconditional());
+        FunctionDefinitionNode result = new FunctionDefinitionNode(getSourceSection(), frameDesc, (BodyNode) body.unwrap().deepCopy(), getFormalArguments(), description, substituteFrame,
+                        argPostProcess == null ? null
+                                        : argPostProcess.deepCopyUnconditional());
+        // Instrumentation depends on this copy having same uuid
+        result.uuid = thisUuid;
+        return result;
     }
 
     private static boolean containsAnyDispatch(BodyNode body) {

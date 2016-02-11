@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -216,8 +216,10 @@ public class RInstrument {
     public static void registerFunctionDefinition(FunctionDefinitionNode fdn) {
         FunctionUID uid = fdn.getUID();
         FunctionData fd = functionMap.get(uid);
-        assert fd == null;
-        functionMap.put(uid, new FunctionData(uid, fdn));
+        // Owing to FDN duplication, fdn may be registered multiple times
+        if (fd == null) {
+            functionMap.put(uid, new FunctionData(uid, fdn));
+        }
     }
 
     public static FunctionIdentification getFunctionIdentification(FunctionUID uid) {
