@@ -18,11 +18,14 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
+import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -31,6 +34,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -41,6 +45,10 @@ public abstract class LoadMethod extends RBaseNode {
 
     public abstract RFunction executeRFunction(VirtualFrame frame, RAttributable fdef, String fname);
 
+    @Child AttributeAccess targetAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_TARGET);
+    @Child AttributeAccess definedAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_DEFINED);
+    @Child AttributeAccess nextMethodAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_NEXT_METHOD);
+    @Child AttributeAccess sourceAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_SOURCE);
     @Child private WriteLocalFrameVariableNode writeRTarget = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_TARGET, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRDefined = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_DEFINED, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRNextMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, null, WriteVariableNode.Mode.REGULAR);
@@ -52,28 +60,47 @@ public abstract class LoadMethod extends RBaseNode {
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
     private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
     private final ConditionProfile moreAttributes = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile noNextMethodAttr = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile noTargetAttr = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile noDefinedAttr = ConditionProfile.createBinaryProfile();
+    private final BranchProfile noSourceAttr = BranchProfile.create();
     private final RCaller caller = RDataFactory.createCaller(this);
 
     @Specialization
     protected RFunction loadMethod(VirtualFrame frame, RFunction fdef, String fname) {
-        assert fdef.getAttributes() != null; // should have at least class attribute
-        int found = 1;
-        for (RAttribute attr : fdef.getAttributes()) {
-            String name = attr.getName();
-            assert name == name.intern();
-            if (name == RRuntime.R_TARGET) {
-                writeRTarget.execute(frame, attr.getValue());
-                found++;
-            } else if (name == RRuntime.R_DEFINED) {
-                writeRDefined.execute(frame, attr.getValue());
-                found++;
-            } else if (name == RRuntime.R_NEXT_METHOD) {
-                writeRNextMethod.execute(frame, attr.getValue());
-                found++;
-            } else if (name == RRuntime.R_SOURCE) {
-                found++;
+        RAttributes attributes = fdef.getAttributes();
+        assert attributes != null; // should have at least class attribute
+        int found;
+        Object nextMethodAttr = nextMethodAttrAccess.execute(attributes);
+        // it's an optimization only where it's expected that either 2 or 4 attributes total will be
+        // present - anything else triggers execution of a generic S4 function
+        if (noNextMethodAttr.profile(nextMethodAttr == null)) {
+            found = 4; // class attribute plus three others are expected
+            Object targetAttr = targetAttrAccess.execute(attributes);
+            if (noTargetAttr.profile(targetAttr == null)) {
+                found--;
+            }
+            else {
+                writeRTarget.execute(frame, targetAttr);
+            }
+            Object definedAttr = definedAttrAccess.execute(attributes);
+            if (noDefinedAttr.profile(definedAttr == null)) {
+                found--;
+            }
+            else {
+                writeRDefined.execute(frame, definedAttr);
+            }
+            Object sourceAttr = sourceAttrAccess.execute(attributes);
+            if (sourceAttr == null) {
+                noSourceAttr.enter();
+                found--;
             }
         }
+        else {
+            found = 2; // next method attribute and class attribute
+            writeRNextMethod.execute(frame, nextMethodAttr);
+        }
+
         writeRMethod.execute(frame, fdef);
         if ("loadMethod" == fname) {
             // the loadMethod function contains the following call:
