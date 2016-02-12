@@ -89,8 +89,8 @@ public abstract class StandardGeneric extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             collectArgumentsNode = insert(CollectGenericArgumentsNodeGen.create(sigArgs.getDataWithoutCopying(), sigLength));
         }
-        String[] classes = collectArgumentsNode.execute(frame, sigArgs, sigLength);
-        Object ret = dispatchGeneric.executeObject(frame, mtable, RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR), fdef, fname);
+        RStringVector classes = collectArgumentsNode.execute(frame, sigArgs, sigLength);
+        Object ret = dispatchGeneric.executeObject(frame, mtable, classes, fdef, fname);
         return ret;
     }
 

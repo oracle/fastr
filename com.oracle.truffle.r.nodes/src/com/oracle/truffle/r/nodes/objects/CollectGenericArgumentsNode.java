@@ -37,8 +37,10 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -56,7 +58,7 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
 
     private final ConditionProfile valueMissingProfile = ConditionProfile.createBinaryProfile();
 
-    public abstract String[] execute(VirtualFrame frame, RList arguments, int argLength);
+    public abstract RStringVector execute(VirtualFrame frame, RList arguments, int argLength);
 
     protected CollectGenericArgumentsNode(Object[] arguments, int argLength) {
         LocalReadVariableNode[] reads = new LocalReadVariableNode[argLength];
@@ -72,7 +74,7 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
 
     @ExplodeLoop
     @Specialization(rewriteOn = SlowPathException.class)
-    protected String[] combineCached(VirtualFrame frame, RList arguments, int argLength) throws SlowPathException {
+    protected RStringVector combineCached(VirtualFrame frame, RList arguments, int argLength) throws SlowPathException {
         if (argLength != argReads.length) {
             throw new SlowPathException();
         }
@@ -87,16 +89,16 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
             Object value = argReads[i].execute(frame);
             result[i] = valueMissingProfile.profile(value == null) ? "missing" : classHierarchyNodes[i].executeString(promiseHelper.checkEvaluate(frame, value));
         }
-        return result;
+        return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization
-    protected String[] combine(VirtualFrame frame, RList arguments, int argLength) {
+    protected RStringVector combine(VirtualFrame frame, RList arguments, int argLength) {
         return readFromMaterialized(frame.materialize(), arguments, argLength);
     }
 
     @TruffleBoundary
-    private String[] readFromMaterialized(MaterializedFrame frame, RList arguments, int argLength) {
+    private RStringVector readFromMaterialized(MaterializedFrame frame, RList arguments, int argLength) {
         CompilerAsserts.neverPartOfCompilation();
         classHierarchyNodeSlowPath = insert(ClassHierarchyScalarNodeGen.create());
         String[] result = new String[argLength];
@@ -114,6 +116,6 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
                 result[i] = classHierarchyNodeSlowPath.executeString(value);
             }
         }
-        return result;
+        return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 }
