@@ -27,7 +27,7 @@ public final class ReadTableHead extends RExternalBuiltinNode {
         RConnection conn = (RConnection) argValues[0];
         int nlines = castInt(castVector(argValues[1]));
         try (RConnection openConn = conn.forceOpen("r")) {
-            return RDataFactory.createStringVector(openConn.readLines(nlines), RDataFactory.COMPLETE_VECTOR);
+            return RDataFactory.createStringVector(openConn.readLines(nlines, true, false), RDataFactory.COMPLETE_VECTOR);
         } catch (IOException ex) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, ex.getMessage());

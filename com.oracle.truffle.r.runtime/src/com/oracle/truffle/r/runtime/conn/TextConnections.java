@@ -93,7 +93,7 @@ public class TextConnections {
         }
 
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             int nleft = lines.length - index;
             int nlines = nleft;
             if (n > 0) {

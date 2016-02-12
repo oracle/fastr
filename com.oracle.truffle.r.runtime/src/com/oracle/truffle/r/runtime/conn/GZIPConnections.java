@@ -128,8 +128,8 @@ public class GZIPConnections {
         }
 
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
-            return readLinesHelper(inputStream, n);
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+            return readLinesHelper(inputStream, n, warn, skipNul);
         }
 
         @Override

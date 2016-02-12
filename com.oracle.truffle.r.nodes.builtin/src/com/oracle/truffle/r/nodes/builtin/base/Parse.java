@@ -121,7 +121,7 @@ public abstract class Parse extends RBuiltinNode {
                 throw RError.nyi(this, "parse from stdin not implemented");
             }
             try (RConnection openConn = conn.forceOpen("r")) {
-                lines = openConn.readLines(0);
+                lines = openConn.readLines(0, false, false);
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.PARSE_ERROR);
             }

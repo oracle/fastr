@@ -120,8 +120,8 @@ public class FileConnections {
 
         @TruffleBoundary
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
-            return readLinesHelper(inputStream, n);
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+            return readLinesHelper(inputStream, n, warn, skipNul);
         }
 
         @Override
@@ -223,8 +223,8 @@ public class FileConnections {
 
         @TruffleBoundary
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
-            return readLinesHelper(inputStream, n);
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+            return readLinesHelper(inputStream, n, warn, skipNul);
         }
 
         @Override
@@ -382,9 +382,9 @@ public class FileConnections {
         }
 
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             raf.seek(readOffset);
-            return readLinesHelper(inputStream, n);
+            return readLinesHelper(inputStream, n, warn, skipNul);
         }
 
         @Override

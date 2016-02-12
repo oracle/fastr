@@ -193,7 +193,7 @@ public class StdConnections {
 
         @Override
         @TruffleBoundary
-        public String[] readLinesInternal(int n) throws IOException {
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             ConsoleHandler console = RContext.getInstance().getConsoleHandler();
             ArrayList<String> lines = new ArrayList<>();
             String line;

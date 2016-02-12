@@ -52,7 +52,7 @@ public abstract class ReadDCF extends RBuiltinNode {
                     keepWhiteSet.add(keepWhite.getDataAt(i));
                 }
             }
-            dcf = DCF.read(openConn.readLines(0), keepWhiteSet);
+            dcf = DCF.read(openConn.readLines(0, true, false), keepWhiteSet);
         } catch (IOException ex) {
             throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
         }

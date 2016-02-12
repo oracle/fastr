@@ -342,12 +342,12 @@ public class ConnectionSupport {
         private static final int INVALID_DESCRIPTOR = -1;
 
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
 
         @Override
-        public String[] readLines(int n) throws IOException {
+        public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
 
@@ -633,9 +633,9 @@ public class ConnectionSupport {
         }
 
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             checkOpen();
-            return theConnection.readLinesInternal(n);
+            return theConnection.readLinesInternal(n, warn, skipNul);
         }
 
         @Override
@@ -789,8 +789,11 @@ public class ConnectionSupport {
          * {@code readLines} from an {@link InputStream}. It would be convenient to use a
          * {@link BufferedReader} but mixing binary and text operations, which is a requirement,
          * would then be difficult.
+         *
+         * @param warn TODO
+         * @param skipNul TODO
          */
-        default String[] readLinesHelper(InputStream in, int n) throws IOException {
+        default String[] readLinesHelper(InputStream in, int n, boolean warn, boolean skipNul) throws IOException {
             ArrayList<String> lines = new ArrayList<>();
             int totalRead = 0;
             byte[] buffer = new byte[64];
@@ -813,7 +816,9 @@ public class ConnectionSupport {
                          * "name" for the warning.
                          */
                         lines.add(new String(buffer, 0, totalRead));
-                        RError.warning(RError.SHOW_CALLER2, RError.Message.INCOMPLETE_FINAL_LINE, "TODO: connection path");
+                        if (warn) {
+                            RError.warning(RError.SHOW_CALLER2, RError.Message.INCOMPLETE_FINAL_LINE, "TODO: connection path");
+                        }
                     }
                     break;
                 }
@@ -1031,7 +1036,7 @@ public class ConnectionSupport {
         }
 
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
         }
 
