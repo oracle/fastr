@@ -13,22 +13,15 @@
 package com.oracle.truffle.r.nodes.objects;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -36,14 +29,9 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class DispatchGeneric extends RBaseNode {
 
-    public abstract Object executeObject(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef, String fname);
+    public abstract Object executeObject(VirtualFrame frame, REnvironment mtable, RStringVector classes, RFunction fdef, String fname);
 
     private final ConditionProfile singleStringProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
-    private final RCaller caller = RDataFactory.createCaller(this);
-    @Child private ReadVariableNode inheritForDispatchFind;
-    @Child private DirectCallNode inheritForDispatchCall;
-    @CompilationFinal private RFunction inheritForDispatchFunction;
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
     @Child private LoadMethod loadMethod = LoadMethodNodeGen.create();
     @Child private ExecuteMethod executeMethod = new ExecuteMethod();
@@ -72,45 +60,36 @@ public abstract class DispatchGeneric extends RBaseNode {
         return LocalReadVariableNode.create(dispatchString, true);
     }
 
-    private Object dispatchInternal(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef, String fname, RFunction f) {
+    private Object dispatchInternal(VirtualFrame frame, REnvironment mtable, RStringVector classes, RFunction fdef, String fname, RFunction f) {
         RFunction method = f;
         if (method == null) {
-            if (inheritForDispatchFind == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                inheritForDispatchFind = insert(ReadVariableNode.createFunctionLookup(null, ".InheritForDispatch"));
-                inheritForDispatchFunction = (RFunction) inheritForDispatchFind.execute(null, methodsEnv.getFrame());
-                inheritForDispatchCall = insert(Truffle.getRuntime().createDirectCallNode(inheritForDispatchFunction.getTarget()));
-
-            }
-            RFunction currentFunction = (RFunction) inheritForDispatchFind.execute(null, methodsEnv.getFrame());
-            if (cached.profile(currentFunction == inheritForDispatchFunction)) {
-                Object[] args = argsNode.execute(inheritForDispatchFunction, caller, null, RArguments.getDepth(frame) + 1, new Object[]{classes, fdef, mtable},
-                                ArgumentsSignature.get("classes", "fdef", "mtable"), null);
-                method = (RFunction) inheritForDispatchCall.call(frame, args);
-            } else {
-                // slow path
-                method = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), classes, fdef, mtable);
-            }
+            // if method has not been found, it will be retrieved by the following R function call
+            // and installed in the methods table so that the slow path does not have to be executed
+            // again
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
+            RFunction currentFunction = ReadVariableNode.lookupFunction(".InheritForDispatch", methodsEnv.getFrame(), true);
+            method = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), classes, fdef, mtable);
         }
-        method = loadMethod.executeRFunction(frame, methodsEnv, method, fname);
+        method = loadMethod.executeRFunction(frame, method, fname);
         Object ret = executeMethod.executeObject(frame, method);
         return ret;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "equalClasses(classes, cachedClasses)")
-    protected Object dispatchCached(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef, String fname,
+    protected Object dispatchCached(VirtualFrame frame, REnvironment mtable, RStringVector classes, RFunction fdef, String fname,
                     @Cached("classes") RStringVector cachedClasses, @Cached("createDispatchString(cachedClasses)") String dispatchString,
                     @Cached("createTableRead(dispatchString)") LocalReadVariableNode tableRead) {
         RFunction method = (RFunction) tableRead.execute(null, mtable.getFrame());
-        return dispatchInternal(frame, methodsEnv, mtable, classes, fdef, fname, method);
+        return dispatchInternal(frame, mtable, classes, fdef, fname, method);
     }
 
     @Specialization(contains = "dispatchCached")
-    protected Object dispatch(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef, String fname) {
+    protected Object dispatch(VirtualFrame frame, REnvironment mtable, RStringVector classes, RFunction fdef, String fname) {
         String dispatchString = createDispatchString(classes);
         RFunction method = (RFunction) mtable.get(dispatchString);
-        return dispatchInternal(frame, methodsEnv, mtable, classes, fdef, fname, method);
+        return dispatchInternal(frame, mtable, classes, fdef, fname, method);
     }
 
     protected boolean equalClasses(RStringVector classes, RStringVector cachedClasses) {

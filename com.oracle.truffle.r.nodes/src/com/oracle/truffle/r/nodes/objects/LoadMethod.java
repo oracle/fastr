@@ -21,6 +21,7 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -38,12 +39,13 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class LoadMethod extends RBaseNode {
 
-    public abstract RFunction executeRFunction(VirtualFrame frame, REnvironment methodsEnv, RAttributable fdef, String fname);
+    public abstract RFunction executeRFunction(VirtualFrame frame, RAttributable fdef, String fname);
 
     @Child private WriteLocalFrameVariableNode writeRTarget = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_TARGET, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRDefined = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_DEFINED, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRNextMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_METHOD, null, WriteVariableNode.Mode.REGULAR);
+    @Child private LocalReadVariableNode methodsEnvRead = LocalReadVariableNode.create("methods", true);
     @Child private ReadVariableNode loadMethodFind;
     @Child private DirectCallNode loadMethodCall;
     @CompilationFinal private RFunction loadMethodFunction;
@@ -53,7 +55,7 @@ public abstract class LoadMethod extends RBaseNode {
     private final RCaller caller = RDataFactory.createCaller(this);
 
     @Specialization
-    protected RFunction loadMethod(VirtualFrame frame, REnvironment methodsEnv, RFunction fdef, String fname) {
+    protected RFunction loadMethod(VirtualFrame frame, RFunction fdef, String fname) {
         assert fdef.getAttributes() != null; // should have at least class attribute
         int found = 1;
         for (RAttribute attr : fdef.getAttributes()) {
@@ -82,14 +84,19 @@ public abstract class LoadMethod extends RBaseNode {
         assert !fname.equals("loadMethod");
         RFunction ret;
         if (moreAttributes.profile(found < fdef.getAttributes().size())) {
+            RFunction currentFunction;
+            REnvironment methodsEnv = (REnvironment) methodsEnvRead.execute(frame, REnvironment.getNamespaceRegistry().getFrame());
             if (loadMethodFind == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 loadMethodFind = insert(ReadVariableNode.createFunctionLookup(null, "loadMethod"));
-                loadMethodFunction = (RFunction) loadMethodFind.execute(null, methodsEnv.getFrame());
+                currentFunction = (RFunction) loadMethodFind.execute(null, methodsEnv.getFrame());
+                loadMethodFunction = currentFunction;
                 loadMethodCall = insert(Truffle.getRuntime().createDirectCallNode(loadMethodFunction.getTarget()));
                 RError.performanceWarning("loadMethod executing slow path");
             }
-            RFunction currentFunction = (RFunction) loadMethodFind.execute(null, methodsEnv.getFrame());
+            else {
+                currentFunction = (RFunction) loadMethodFind.execute(frame, methodsEnv.getFrame());
+            }
             if (cached.profile(currentFunction == loadMethodFunction)) {
                 Object[] args = argsNode.execute(loadMethodFunction, caller, null, RArguments.getDepth(frame) + 1, new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())},
                                 ArgumentsSignature.get("method", "fname", "envir"), null);
