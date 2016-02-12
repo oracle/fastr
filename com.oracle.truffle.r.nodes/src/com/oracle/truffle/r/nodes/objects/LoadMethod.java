@@ -79,15 +79,13 @@ public abstract class LoadMethod extends RBaseNode {
             Object targetAttr = targetAttrAccess.execute(attributes);
             if (noTargetAttr.profile(targetAttr == null)) {
                 found--;
-            }
-            else {
+            } else {
                 writeRTarget.execute(frame, targetAttr);
             }
             Object definedAttr = definedAttrAccess.execute(attributes);
             if (noDefinedAttr.profile(definedAttr == null)) {
                 found--;
-            }
-            else {
+            } else {
                 writeRDefined.execute(frame, definedAttr);
             }
             Object sourceAttr = sourceAttrAccess.execute(attributes);
@@ -95,14 +93,13 @@ public abstract class LoadMethod extends RBaseNode {
                 noSourceAttr.enter();
                 found--;
             }
-        }
-        else {
+        } else {
             found = 2; // next method attribute and class attribute
             writeRNextMethod.execute(frame, nextMethodAttr);
         }
 
         writeRMethod.execute(frame, fdef);
-        if ("loadMethod" == fname) {
+        if (fname.equals("loadMethod")) {
             // the loadMethod function contains the following call:
             // standardGeneric("loadMethod")
             // which we are handling here, so == is fine
@@ -120,8 +117,7 @@ public abstract class LoadMethod extends RBaseNode {
                 loadMethodFunction = currentFunction;
                 loadMethodCall = insert(Truffle.getRuntime().createDirectCallNode(loadMethodFunction.getTarget()));
                 RError.performanceWarning("loadMethod executing slow path");
-            }
-            else {
+            } else {
                 currentFunction = (RFunction) loadMethodFind.execute(frame, methodsEnv.getFrame());
             }
             if (cached.profile(currentFunction == loadMethodFunction)) {

@@ -103,8 +103,7 @@ public abstract class DispatchGeneric extends RBaseNode {
                     equalsMethodRequired.enter();
                     if (cachedClasses.getDataAt(i).equals(classes.getDataAt(i))) {
                         return true;
-                    }
-                    else {
+                    } else {
                         return false;
                     }
                 }
