@@ -52,7 +52,7 @@ public abstract class ListReadNode extends RootNode {
     @Specialization
     protected Object readField(VirtualFrame frame, Object receiver, String field) {
         Object x = extract.applyAccessField(frame, receiver, field);
-        //Have to use field name to distinguish byte and boolean
+        // Have to use field name to distinguish byte and boolean
         if (x instanceof Byte && field.startsWith("boolean")) {
             x = RRuntime.fromLogical((Byte) x);
         }

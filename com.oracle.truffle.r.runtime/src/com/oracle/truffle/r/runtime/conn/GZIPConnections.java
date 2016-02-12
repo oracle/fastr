@@ -90,13 +90,13 @@ public class GZIPConnections {
             setDelegate(delegate);
         }
 
-// @Override
+        // @Override
         /**
          * GnuR behavior for lazy connections is odd, e.g. gzfile returns "text", even though the
          * default mode is "rb".
          */
-// public boolean isTextMode() {
-// }
+        // public boolean isTextMode() {
+        // }
     }
 
     private static class GZIPInputRConnection extends DelegateReadRConnection implements ReadWriteHelper {

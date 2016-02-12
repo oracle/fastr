@@ -558,10 +558,10 @@ public class RRuntime {
         if (operand > 1000000000000L) {
             return String.format((Locale) null, "%.6e", operand);
         }
-// if (true || operand < 0.0001) {
-// // not quite correct but better than nothing for now...
-// return String.format((Locale) null, "%.22e", new BigDecimal(operand));
-// }
+        // if (true || operand < 0.0001) {
+        // // not quite correct but better than nothing for now...
+        // return String.format((Locale) null, "%.22e", new BigDecimal(operand));
+        // }
         if (digitsBehindDot == -1) {
             return Double.toString(operand);
         } else {

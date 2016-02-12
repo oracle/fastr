@@ -1139,7 +1139,7 @@ public class RSerialize {
     }
 
     // Serialize support is currently very limited, essentially to saving the CRAN package format
-// info,
+    // info,
 
     private abstract static class POutputStream {
         protected OutputStream os;

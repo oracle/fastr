@@ -40,8 +40,8 @@ public class LogFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-// // base argument is at index 1, and double
-// arguments[1] = CastDoubleNodeGen.create(arguments[1], true, false, false);
+            // // base argument is at index 1, and double
+            // arguments[1] = CastDoubleNodeGen.create(arguments[1], true, false, false);
             casts.toDouble(1);
         }
 

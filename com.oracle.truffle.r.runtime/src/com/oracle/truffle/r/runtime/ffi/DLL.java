@@ -279,7 +279,7 @@ public class DLL {
                     RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(symbolInfo.address, symbolInfo.symbol, new Object[]{dllInfo});
                 } catch (ReturnException ex) {
                     // An error call can, due to condition handling, throw this which we must
-// propogate
+                    // propogate
                     throw ex;
                 } catch (Throwable ex) {
                     if (RContext.isInitialContextInitialized()) {

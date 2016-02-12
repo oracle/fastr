@@ -110,7 +110,7 @@ public abstract class Internal extends RBuiltinNode {
     }
 
     private static final String[] NOT_IMPLEMENTED = new String[]{
-        //@formatter:off
+//@formatter:off
         ".addTryHandlers", "interruptsSuspended", "restart", "backsolve", "max.col", "row", "all.names", "comment", "`comment<-`", "list2env", "tcrossprod", "setFileTime", "lbeta",
         "beta", "lchoose", "choose", "dchisq", "pchisq", "qchisq", "dexp", "pexp", "qexp", "dgeom", "pgeom", "qgeom", "dpois", "ppois", "qpois", "dt", "pt", "qt", "dsignrank",
         "psignrank", "qsignrank", "besselJ", "besselY", "psigamma", "dbeta", "pbeta", "qbeta", "dbinom", "pbinom", "qbinom", "dcauchy", "pcauchy", "qcauchy", "df", "pf", "qf", "dgamma",

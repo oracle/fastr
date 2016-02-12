@@ -62,7 +62,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
             throw new NullPointerException("Graphics system to register is null");
         }
         int index = findElementIndexInArray(null, graphicsSystems); // find null in the
-// graphicsSystems
+        // graphicsSystems
         if (NOT_FOUND == index) {
             throw handleErrorAndMakeException("too many graphics systems registered");
         }

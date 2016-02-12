@@ -184,14 +184,14 @@ public abstract class PromiseNode extends RNode {
             return new PromisedNode(factory);
         }
 
-// @TruffleBoundary
+        // @TruffleBoundary
         public void onSuccess(RPromise promise) {
-// System.err.println("Opt SUCCESS: " + promise.getOptType());
+            // System.err.println("Opt SUCCESS: " + promise.getOptType());
         }
 
-// @TruffleBoundary
+        // @TruffleBoundary
         public void onFailure(RPromise promise) {
-// System.err.println("Opt FAILURE: " + promise.getOptType());
+            // System.err.println("Opt FAILURE: " + promise.getOptType());
             rewriteToFallback();
         }
     }
