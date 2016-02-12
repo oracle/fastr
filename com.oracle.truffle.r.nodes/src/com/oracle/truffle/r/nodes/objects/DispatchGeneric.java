@@ -18,6 +18,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
@@ -32,6 +33,7 @@ public abstract class DispatchGeneric extends RBaseNode {
     public abstract Object executeObject(VirtualFrame frame, REnvironment mtable, RStringVector classes, RFunction fdef, String fname);
 
     private final ConditionProfile singleStringProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile equalsMethodRequired = BranchProfile.create();
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
     @Child private LoadMethod loadMethod = LoadMethodNodeGen.create();
     @Child private ExecuteMethod executeMethod = new ExecuteMethod();
@@ -98,7 +100,13 @@ public abstract class DispatchGeneric extends RBaseNode {
                 // TODO: makes sure equality is good enough here, but it's for optimization only
                 // anwyay
                 if (cachedClasses.getDataAt(i) != classes.getDataAt(i)) {
-                    return false;
+                    equalsMethodRequired.enter();
+                    if (cachedClasses.getDataAt(i).equals(classes.getDataAt(i))) {
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
                 }
             }
             return true;
