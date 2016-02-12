@@ -406,6 +406,7 @@ suite = {
       "distDependencies" : [
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_DEBUG",
+        "TRUFFLE_R_PARSER_PROCESSOR",
       ],
     },
 
