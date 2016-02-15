@@ -201,6 +201,7 @@ public class TestBuiltin_names extends TestBase {
     @Test
     public void testNames() {
         assertEval("{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }");
+        assertEval("{ symNames <- c(\"foobar\", \"bar\"); names(symNames) = symNames; names(names(symNames)); }");
     }
 
     @Test
