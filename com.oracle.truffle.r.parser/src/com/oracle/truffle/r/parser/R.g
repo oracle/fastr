@@ -746,6 +746,7 @@ fragment ESCAPE [StringBuilder buf]
       | '\'' { buf.append('\''); }
       | ' ' { buf.append(' '); }
       | '\\' { buf.append('\\'); }
+      | '\n' { buf.append('\n'); }
       | a = OCT_DIGIT b = OCT_DIGIT c = OCT_DIGIT { buf.append(ParseUtil.octChar($a.text, $b.text, $c.text)); }
       | a = OCT_DIGIT b = OCT_DIGIT { buf.append(ParseUtil.octChar($a.text, $b.text)); }
       | a = OCT_DIGIT { buf.append(ParseUtil.octChar($a.text)); }
