@@ -93,21 +93,15 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
     SourceSection SOURCE_UNAVAILABLE = SourceSection.createUnavailable("R", "unavailable");
 
     /*
-     * Convenience methods that also handle the fact that an {@code FunctionDefinitionNode} is not
-     * an {@code RNode}.
+     * Every implementor of this interface must either inherit or directly implement the following
+     * three methods.
      */
 
-    default SourceSection getSourceSection() {
-        return (asNode().getSourceSection());
-    }
+    SourceSection getSourceSection();
 
-    default void clearSourceSection() {
-        asNode().clearSourceSection();
-    }
+    void clearSourceSection();
 
-    default void assignSourceSection(SourceSection section) {
-        asNode().assignSourceSection(section);
-    }
+    void setSourceSection(SourceSection sourceSection);
 
     /**
      * Traverses the entire tree but only invokes the {@code visit} method for nodes that return

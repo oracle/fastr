@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
-public final class IfNode extends RNode implements RSyntaxNode, VisibilityController {
+public final class IfNode extends RSourceSectionNode implements RSyntaxNode, VisibilityController {
 
     @Child private ConvertBooleanNode condition;
     @Child private RNode thenPart;
@@ -42,16 +42,16 @@ public final class IfNode extends RNode implements RSyntaxNode, VisibilityContro
 
     private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
-    private IfNode(RSyntaxNode condition, RSyntaxNode thenPart, RSyntaxNode elsePart) {
+    private IfNode(SourceSection src, RSyntaxNode condition, RSyntaxNode thenPart, RSyntaxNode elsePart) {
+        super(src);
         this.condition = ConvertBooleanNode.create(condition);
         this.thenPart = thenPart.asRNode();
         this.elsePart = elsePart == null ? null : elsePart.asRNode();
     }
 
     public static IfNode create(SourceSection src, RSyntaxNode condition, RSyntaxNode thenPart, RSyntaxNode elsePart) {
-        IfNode i = new IfNode(condition, thenPart, elsePart == null ? null : elsePart);
-        i.assignSourceSection(src);
-        return i;
+        IfNode ifNode = new IfNode(src, condition, thenPart, elsePart == null ? null : elsePart);
+        return ifNode;
     }
 
     /**

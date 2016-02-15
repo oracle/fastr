@@ -44,9 +44,10 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
+public final class FunctionExpressionNode extends RSourceSectionNode implements RSyntaxNode {
 
     public static FunctionExpressionNode create(SourceSection src, RootCallTarget callTarget, FastPathFactory fastPath) {
         return new FunctionExpressionNode(src, callTarget, fastPath);
@@ -59,8 +60,8 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
     @CompilationFinal private boolean initialized = false;
 
     private FunctionExpressionNode(SourceSection src, RootCallTarget callTarget, FastPathFactory fastPath) {
+        super(src);
         this.fastPath = fastPath;
-        assignSourceSection(src);
         this.callTarget = callTarget;
         this.deoptFrameNode = EagerEvalHelper.optExprs() || EagerEvalHelper.optVars() || EagerEvalHelper.optDefault() ? new PromiseDeoptimizeFrameNode() : null;
     }

@@ -38,13 +38,14 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Holds the sequence of nodes created for R's replacement assignment. Allows custom deparse and
  * debug handling.
  */
-public final class ReplacementNode extends RNode implements RSyntaxNode {
+public final class ReplacementNode extends RSourceSectionNode implements RSyntaxNode {
 
     /**
      * This holds the AST for the "untransformed" AST, i.e. as it appears in the source. Currently
@@ -60,6 +61,7 @@ public final class ReplacementNode extends RNode implements RSyntaxNode {
     @Child private RemoveAndAnswerNode removeRhs;
 
     public ReplacementNode(SourceSection src, boolean isSuper, RSyntaxNode syntaxLhs, RSyntaxNode rhs, String rhsSymbol, RNode v, String tmpSymbol, List<RNode> updates) {
+        super(src);
         this.isSuper = isSuper;
         this.syntaxLhs = syntaxLhs;
         this.storeRhs = WriteVariableNode.createAnonymous(rhsSymbol, rhs.asRNode(), WriteVariableNode.Mode.INVISIBLE);
@@ -68,7 +70,6 @@ public final class ReplacementNode extends RNode implements RSyntaxNode {
         // remove var and rhs, returning rhs' value
         this.removeTemp = RemoveAndAnswerNode.create(tmpSymbol);
         this.removeRhs = RemoveAndAnswerNode.create(rhsSymbol);
-        assignSourceSection(src);
     }
 
     private String getSymbol() {

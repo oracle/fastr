@@ -37,10 +37,11 @@ import com.oracle.truffle.r.runtime.nodes.*;
  */
 public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityController {
     public static final RNode[] EMPTY_BLOCK = new RNode[0];
+    private SourceSection sourceSection;
 
     public BlockNode(SourceSection src, RNode[] sequence) {
         super(sequence);
-        assignSourceSection(src);
+        this.sourceSection = src;
     }
 
     /**
@@ -195,6 +196,20 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
             }
         }
         return true;
+    }
+
+    public void setSourceSection(SourceSection sourceSection) {
+        this.sourceSection = sourceSection;
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        return sourceSection;
+    }
+
+    @Override
+    public void clearSourceSection() {
+        sourceSection = null;
     }
 
 }

@@ -34,6 +34,7 @@ public final class WriteSuperVariableNodeWrapper extends com.oracle.truffle.r.no
     @Child private EventHandlerNode eventHandlerNode;
 
     public WriteSuperVariableNodeWrapper(com.oracle.truffle.r.nodes.access.WriteSuperVariableNode child) {
+        super(child.getSourceSection());
         assert child != null;
         assert !(child instanceof WriteSuperVariableNodeWrapper);
         this.child = child;

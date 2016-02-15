@@ -93,6 +93,7 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -204,10 +205,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * with the same arguments, and there will very rarely be the case that the same arguments get
  * passed via "..." to the same functions.
  *
- * TODO Many of the classes here do not really need to implement {@link RSyntaxNode}.
  */
 @NodeInfo(cost = NodeCost.NONE)
-public final class RCallNode extends RNode implements RSyntaxNode {
+public final class RCallNode extends RSourceSectionNode implements RSyntaxNode {
 
     private static final int FUNCTION_INLINE_CACHE_SIZE = 4;
     private static final int VARARGS_INLINE_CACHE_SIZE = 4;
@@ -265,7 +265,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     @CompilationFinal private int foreignCallArgCount;
     @Child private CallArgumentsNode foreignCallArguments;
 
-    public RCallNode(RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
+    public RCallNode(SourceSection sourceSection, RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
+        super(sourceSection);
         this.functionNode = function;
         this.arguments = new SyntaxArguments(arguments);
         this.signature = signature;
@@ -672,7 +673,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         for (int i = 0; i < args.length; i++) {
             args[i] = i < replacementArgs.length ? replacementArgs[i] : call.arguments.v[i];
         }
-        return new RCallNode(NodeUtil.cloneNode(call.functionNode), args, call.signature);
+        return new RCallNode(call.getSourceSection(), NodeUtil.cloneNode(call.functionNode), args, call.signature);
     }
 
     /**
@@ -681,11 +682,9 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      * valid {@link SourceSection}.
      */
     public static RCallNode createCall(SourceSection src, RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        RCallNode call = new RCallNode(function, arguments, signature);
+        RCallNode call = new RCallNode(src, function, arguments, signature);
         if (src == null) {
             RASTDeparse.ensureSourceSection(call);
-        } else {
-            call.assignSourceSection(src);
         }
         return call;
     }
@@ -696,7 +695,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      * {@code LApply}).
      */
     public static RCallNode createCallNotSyntax(RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        RCallNode call = new RCallNode(function, arguments, signature);
+        RCallNode call = new RCallNode(RSyntaxNode.SOURCE_UNAVAILABLE, function, arguments, signature);
         return call;
     }
 

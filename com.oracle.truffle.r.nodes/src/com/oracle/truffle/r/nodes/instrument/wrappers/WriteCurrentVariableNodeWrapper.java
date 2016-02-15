@@ -34,6 +34,7 @@ public final class WriteCurrentVariableNodeWrapper extends com.oracle.truffle.r.
     @Child private EventHandlerNode eventHandlerNode;
 
     public WriteCurrentVariableNodeWrapper(com.oracle.truffle.r.nodes.access.WriteCurrentVariableNode child) {
+        super(child.getSourceSection());
         assert child != null;
         assert !(child instanceof WriteCurrentVariableNodeWrapper);
         this.child = child;

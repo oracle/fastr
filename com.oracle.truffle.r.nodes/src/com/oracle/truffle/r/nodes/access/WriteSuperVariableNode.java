@@ -34,6 +34,10 @@ import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * The "syntax" variant corresponding to {@code x <<- y} in the source.
+ *
+ * Owing to type hierarchy restrictions (and lack of multiple (state) inheritance) this cannot
+ * extend {@link RSourceSectionNode}, so we store the field in {@link WriteVariableNodeSyntaxHelper}
+ * .
  */
 @NodeInfo(cost = NodeCost.NONE)
 @NeedsWrapper
@@ -41,9 +45,12 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
 
     @Child WriteVariableNode writeSuperFrameVariableNode;
 
+    protected WriteSuperVariableNode(SourceSection src) {
+        super(src);
+    }
+
     public static WriteSuperVariableNode create(SourceSection src, String name, RNode rhs) {
-        WriteSuperVariableNode result = new WriteSuperVariableNode();
-        result.assignSourceSection(src);
+        WriteSuperVariableNode result = new WriteSuperVariableNode(src);
         result.writeSuperFrameVariableNode = result.insert(WriteSuperFrameVariableNode.create(name, rhs, Mode.REGULAR));
         return result;
     }

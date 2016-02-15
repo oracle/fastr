@@ -38,8 +38,10 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * There must be no sharing of nodes between the {@code syntaxAST} and the child nodes of the
  * ReplacementNode as this will cause runaway recursion due to the check for a node being a child of
  * a {@link ReplacementNode} in {@link RBaseNode#getRSyntaxNode}.
+ *
+ * TODO Do we need this class any more? It's not referenced externally.
  */
-public class WriteReplacementNode extends RNode implements RSyntaxNode {
+public class WriteReplacementNode extends RSourceSectionNode implements RSyntaxNode {
 
     private final RCallNode replacementCall;
     private final RSyntaxNode rhs;
@@ -49,6 +51,7 @@ public class WriteReplacementNode extends RNode implements RSyntaxNode {
     }
 
     public WriteReplacementNode(RCallNode replacementCall, RSyntaxNode rhs) {
+        super(RSyntaxNode.SOURCE_UNAVAILABLE);
         this.replacementCall = NodeUtil.cloneNode(replacementCall);
         this.rhs = (RSyntaxNode) NodeUtil.cloneNode(rhs.asNode());
     }

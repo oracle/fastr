@@ -29,10 +29,10 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
-public final class BreakNode extends RNode implements RSyntaxNode, VisibilityController {
+public final class BreakNode extends RSourceSectionNode implements RSyntaxNode, VisibilityController {
 
     public BreakNode(SourceSection src) {
-        assignSourceSection(src);
+        super(src);
     }
 
     @Override

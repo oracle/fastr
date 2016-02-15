@@ -93,6 +93,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private String description;
     private FunctionUID uuid;
     private boolean instrumented = false;
+    private SourceSection sourceSection;
 
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode onExitExpressionCache;
@@ -149,6 +150,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                     PostProcessArgumentsNode argPostProcess) {
         super(src, formals, frameDesc);
         assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
+        this.sourceSection = src;
         this.body = body;
         this.uninitializedBody = body;
         this.description = description;
@@ -630,6 +632,20 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     public void allNamesImpl(State state) {
         state.addName("function");
         body.allNames(state);
+    }
+
+    public void setSourceSection(SourceSection sourceSection) {
+        this.sourceSection = sourceSection;
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        return sourceSection;
+    }
+
+    @Override
+    public void clearSourceSection() {
+        sourceSection = null;
     }
 
 }

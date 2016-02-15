@@ -36,6 +36,7 @@ import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -348,6 +349,20 @@ public abstract class PromiseNode extends RNode {
         @Override
         public boolean getRequalsImpl(RSyntaxNode other) {
             throw RInternalError.unimplemented();
+        }
+
+        public void setSourceSection(SourceSection sourceSection) {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public void clearSourceSection() {
+            throw RInternalError.shouldNotReachHere();
         }
     }
 

@@ -70,7 +70,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameAndSlotLookupResult;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.LookupResult;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -78,7 +78,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * a particular layout of frame descriptors and enclosing environments, and re-specializes in case
  * the layout changes.
  */
-public final class ReadVariableNode extends RNode implements RSyntaxNode, VisibilityController {
+public final class ReadVariableNode extends RSourceSectionNode implements RSyntaxNode, VisibilityController {
 
     private static final int MAX_INVALIDATION_COUNT = 2;
 
@@ -95,34 +95,30 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     }
 
     public static ReadVariableNode create(String name) {
-        return new ReadVariableNode(name, RType.Any, ReadKind.Normal);
+        return new ReadVariableNode(RSyntaxNode.SOURCE_UNAVAILABLE, name, RType.Any, ReadKind.Normal);
     }
 
     public static ReadVariableNode create(SourceSection src, String name, boolean shouldCopyValue) {
-        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
-        rvn.assignSourceSection(src);
+        ReadVariableNode rvn = new ReadVariableNode(src, name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
         return rvn;
     }
 
     public static ReadVariableNode createSilent(String name, RType mode) {
-        return new ReadVariableNode(name, mode, ReadKind.Silent);
+        return new ReadVariableNode(RSyntaxNode.SOURCE_UNAVAILABLE, name, mode, ReadKind.Silent);
     }
 
     public static ReadVariableNode createSuperLookup(SourceSection src, String name) {
-        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, ReadKind.Super);
-        rvn.assignSourceSection(src);
+        ReadVariableNode rvn = new ReadVariableNode(src, name, RType.Any, ReadKind.Super);
         return rvn;
     }
 
     public static ReadVariableNode createFunctionLookup(SourceSection src, String identifier) {
-        ReadVariableNode result = new ReadVariableNode(identifier, RType.Function, ReadKind.Normal);
-        result.assignSourceSection(src);
+        ReadVariableNode result = new ReadVariableNode(src, identifier, RType.Function, ReadKind.Normal);
         return result;
     }
 
     public static ReadVariableNode createForcedFunctionLookup(SourceSection src, String name) {
-        ReadVariableNode result = new ReadVariableNode(name, RType.Function, ReadKind.ForcedTypeCheck);
-        result.assignSourceSection(src);
+        ReadVariableNode result = new ReadVariableNode(src, name, RType.Function, ReadKind.ForcedTypeCheck);
         return result;
     }
 
@@ -143,7 +139,8 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     @CompilationFinal private final boolean[] seenValueKinds = new boolean[FrameSlotKind.values().length];
 
-    private ReadVariableNode(Object identifier, RType mode, ReadKind kind) {
+    private ReadVariableNode(SourceSection sourceSection, Object identifier, RType mode, ReadKind kind) {
+        super(sourceSection);
         this.identifier = identifier;
         this.identifierAsString = identifier.toString().intern();
         this.mode = mode;

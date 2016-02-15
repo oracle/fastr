@@ -37,7 +37,9 @@ import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 @NodeChildren({@NodeChild("left"), @NodeChild("right")})
+// TODO should inherit from RSourceSectionNode
 public abstract class ColonNode extends RNode implements RSyntaxNode, VisibilityController {
+    private SourceSection sourceSection;
 
     private final BranchProfile naCheckErrorProfile = BranchProfile.create();
 
@@ -121,7 +123,7 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
 
     public static ColonNode create(SourceSection src, RNode left, RNode right) {
         ColonNode cn = ColonNodeGen.create(left, right);
-        cn.assignSourceSection(src);
+        cn.sourceSection = src;
         return cn;
     }
 
@@ -180,8 +182,24 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
         return intValue;
     }
 
+    public void setSourceSection(SourceSection sourceSection) {
+        this.sourceSection = sourceSection;
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        return sourceSection;
+    }
+
+    @Override
+    public void clearSourceSection() {
+        sourceSection = null;
+    }
+
     @NodeChild("operand")
+    // TODO should not be an RSyntaxNode
     public abstract static class ColonCastNode extends RNode implements RSyntaxNode {
+        private SourceSection sourceSection;
 
         private final ConditionProfile lengthGreaterOne = ConditionProfile.createBinaryProfile();
 
@@ -297,6 +315,20 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
         @Override
         public boolean getRequalsImpl(RSyntaxNode other) {
             return getOperand().getRequals(other);
+        }
+
+        public void setSourceSection(SourceSection sourceSection) {
+            this.sourceSection = sourceSection;
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            return sourceSection;
+        }
+
+        @Override
+        public void clearSourceSection() {
+            sourceSection = null;
         }
     }
 }

@@ -44,14 +44,14 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
      */
     private final boolean isRepeat;
 
-    private WhileNode(RSyntaxNode condition, RSyntaxNode body, boolean isRepeat) {
+    private WhileNode(SourceSection src, RSyntaxNode condition, RSyntaxNode body, boolean isRepeat) {
+        super(src);
         this.loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(this, ConvertBooleanNode.create(condition), body.asRNode()));
         this.isRepeat = isRepeat;
     }
 
     public static WhileNode create(SourceSection src, RSyntaxNode condition, RSyntaxNode body, boolean isRepeat) {
-        WhileNode result = new WhileNode(condition, body, isRepeat);
-        result.assignSourceSection(src);
+        WhileNode result = new WhileNode(src, condition, body, isRepeat);
         return result;
     }
 

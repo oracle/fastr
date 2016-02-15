@@ -413,6 +413,20 @@ public class RASTUtils {
         public boolean getRequalsImpl(RSyntaxNode other) {
             throw RInternalError.unimplemented();
         }
+
+        public void setSourceSection(SourceSection sourceSection) {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public void clearSourceSection() {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 
     /**
