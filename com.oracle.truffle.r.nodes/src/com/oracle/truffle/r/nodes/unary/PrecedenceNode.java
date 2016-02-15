@@ -172,6 +172,11 @@ public abstract class PrecedenceNode extends RBaseNode {
     }
 
     @Specialization
+    protected int doExpression(RLanguage val, byte recursive) {
+        return EXPRESSION_PRECEDENCE;
+    }
+
+    @Specialization
     protected int doFactor(RFactor val, byte recursive) {
         return INT_PRECEDENCE;
     }

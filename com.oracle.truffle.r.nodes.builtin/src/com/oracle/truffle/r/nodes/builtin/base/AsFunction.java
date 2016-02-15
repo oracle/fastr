@@ -25,14 +25,16 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.BodyNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
@@ -40,9 +42,24 @@ import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -70,7 +87,7 @@ public abstract class AsFunction extends RBuiltinNode {
             AccessArgumentNode[] argAccessNodes = new AccessArgumentNode[x.getLength() - 1];
             RNode[] init = new RNode[x.getLength() - 1];
             for (int i = 0; i < x.getLength() - 1; i++) {
-                RNode defaultValue;
+                final RNode defaultValue;
                 Object arg = x.getDataAt(i);
                 if (arg == RMissing.instance) {
                     defaultValue = null;
@@ -83,8 +100,10 @@ public abstract class AsFunction extends RBuiltinNode {
                         defaultValue = null;
                     } else {
                         RSymbol symbol = (RSymbol) arg;
-                        defaultValue = ConstantNode.create(symbol.getName());
+                        defaultValue = ReadVariableNode.create(symbol.getName());
                     }
+                } else if (RRuntime.asAbstractVector(arg) instanceof RAbstractVector) {
+                    defaultValue = ConstantNode.create(arg);
                 } else {
                     throw RInternalError.unimplemented();
                 }
@@ -128,7 +147,12 @@ public abstract class AsFunction extends RBuiltinNode {
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         boolean containsDispatch = ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch();
         return RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, envir.getFrame(), null, containsDispatch);
+    }
 
+    @Specialization
+    @TruffleBoundary
+    protected RFunction asFunction(RExpression x, REnvironment envir) {
+        return asFunction(x.getList(), envir);
     }
 
     @SuppressWarnings("unused")

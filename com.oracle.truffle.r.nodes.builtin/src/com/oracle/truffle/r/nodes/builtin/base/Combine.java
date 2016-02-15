@@ -64,6 +64,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -119,7 +120,7 @@ public abstract class Combine extends RCastingBuiltinNode {
 
         // perform all the casts
         Object[] elements = new Object[cachedLength];
-        int size = prepareElements(args, cast, elements);
+        int size = prepareElements(args, cast, cachedPrecedence, elements);
 
         // prepare the names (if there are any)
         RStringVector namesVector = hasNamesProfile.profile(hasNames(elements)) ? foldNames(naNameBranch, naNameCheck, elements, size) : null;
@@ -137,14 +138,14 @@ public abstract class Combine extends RCastingBuiltinNode {
     }
 
     @ExplodeLoop
-    private int prepareElements(RArgsValuesAndNames args, CastNode cast, Object[] elements) {
+    private int prepareElements(RArgsValuesAndNames args, CastNode cast, int precedence, Object[] elements) {
         boolean signatureHasNames = signatureHasNames();
         CompilerAsserts.partialEvaluationConstant(signatureHasNames);
 
         Object[] array = args.getArguments();
         int size = 0;
         for (int i = 0; i < elements.length; i++) {
-            Object element = readAndCast(cast, array, i, signatureHasNames);
+            Object element = readAndCast(cast, array, i, precedence, signatureHasNames);
             elements[i] = element;
             size += getElementSize(element);
         }
@@ -265,12 +266,12 @@ public abstract class Combine extends RCastingBuiltinNode {
         return combine.executeCombine(new RArgsValuesAndNames(new Object[]{args}, EMPTY_SIGNATURE));
     }
 
-    private Object readAndCast(CastNode castNode, Object[] values, int index, boolean hasNames) {
+    private Object readAndCast(CastNode castNode, Object[] values, int index, int precedence, boolean hasNames) {
         Object value = inputCast.execute(values[index]);
         if (hasNames) {
             value = namesMerge(castVector(value), getSuppliedSignature().getName(index));
         }
-        return castNode.execute(value);
+        return (precedence == EXPRESSION_PRECEDENCE && value instanceof RLanguage) ? value : castNode.execute(value);
     }
 
     protected RAbstractVector namesMerge(RAbstractVector vector, String name) {
