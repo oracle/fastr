@@ -1383,6 +1383,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ b <- c(\"a\",\"b\") ; z <- b ; b[[3L]] <- \"xx\" ; b }");
 
         assertEval("{ x <- as.list(1:2) ; x[[\"z\"]] <- NULL ; x }");
+        assertEval("{ e < new.env(); e[[\"abc\"]] <- 3}");
+        assertEval("{ e < new.env(); e[[\"abc\"]] <- NULL}");
 
         assertEval("{ x<-5:1; x[0-2]<-1000; x }");
         assertEval("{ x<-c(); x[[TRUE]] <- 2; x }");
