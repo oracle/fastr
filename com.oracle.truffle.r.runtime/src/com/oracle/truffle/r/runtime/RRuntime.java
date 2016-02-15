@@ -156,6 +156,7 @@ public class RRuntime {
     public static final String R_SOURCE = "source";
 
     public static final String NULL = "NULL";
+    public static final RSymbol PSEUDO_NULL = new RSymbol("\u0001NULL\u0001");
     public static final String UNBOUND = "UNBOUND";
 
     @CompilationFinal private static final String[] numberStringCache = new String[4096];
