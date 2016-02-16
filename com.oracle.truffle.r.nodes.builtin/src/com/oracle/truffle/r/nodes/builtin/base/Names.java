@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "names", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Names extends RBuiltinNode {
@@ -45,6 +46,12 @@ public abstract class Names extends RBuiltinNode {
         } else {
             return RNull.instance;
         }
+    }
+
+    @Specialization
+    protected Object getNames(REnvironment env) {
+        controlVisibility();
+        return env.ls(true, null, false);
     }
 
     @Fallback
