@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,6 +76,20 @@ public class TestStats extends TestBase {
         assertEval("{ x<-c(0.5); y<-c(s1=1); z<-c(s1=7); attr(z, \"foo\")<-\"foo\"; qgamma(x, shape=y, rate=z) }");
         assertEval("{ x<-c(0.5); y<-c(s1=1, s2=2); z<-c(s1=7, s2=8); qgamma(0.5, shape=y, rate=z) }");
         assertEval("{ x<-c(a=0.5); y<-c(s1=1); attr(y, \"bar\")<-\"bar\"; z<-c(7, s3=8); attr(z, \"foo\")<-\"foo\"; qgamma(x, shape=y, rate=z) }");
+    }
+
+    @Test
+    public void testQbinom() {
+        assertEval("qbinom(1:50/100,20,0.7)");
+        assertEval("qbinom(1:100/100,20,0.1)");
+        assertEval("qbinom(1:100/100,5,0.1)");
+        assertEval("qbinom(1:100/100,0,0.1)");
+        assertEval("qbinom(1,20,0.1)");
+        assertEval("qbinom(0.66,20,0.1)");
+        assertEval("qbinom(0,20,0.1)");
+        assertEval("qbinom(0,20,c(0.1,0.9))");
+        assertEval(Output.ContainsWarning, "qbinom(0,20,c(0.1,1.9))");
+        assertEval("qbinom(0,integer(),c(0.1,0.9))");
     }
 
     @Test
