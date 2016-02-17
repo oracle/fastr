@@ -22,20 +22,36 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import java.util.*;
+import java.util.Arrays;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.CreateCast;
+import com.oracle.truffle.api.dsl.GeneratedBy;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.NodeField;
+import com.oracle.truffle.api.dsl.NodeFields;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
+import com.oracle.truffle.r.nodes.function.FormalArguments;
+import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.unary.ApplyCastNode;
+import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @NodeFields(value = {@NodeField(name = "builtin", type = RBuiltinFactory.class), @NodeField(name = "suppliedSignature", type = ArgumentsSignature.class)})
 @NodeChild(value = "arguments", type = RNode[].class)
@@ -43,101 +59,14 @@ public abstract class RBuiltinNode extends RNode implements VisibilityController
 
     public abstract Object execute(VirtualFrame frame, Object... args);
 
-    private static final CastNode[] EMPTY_CASTS_ARRAY = new CastNode[0];
-
-    public final class CastBuilder {
-
-        private CastNode[] casts = EMPTY_CASTS_ARRAY;
-
-        private CastBuilder insert(int index, CastNode cast) {
-            if (index >= casts.length) {
-                casts = Arrays.copyOf(casts, index + 1);
-            }
-            if (casts[index] == null) {
-                casts[index] = cast;
-            } else {
-                casts[index] = new ChainedCastNode(casts[index], cast);
-            }
-            return this;
-        }
-
-        public CastBuilder toAttributable(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            return insert(index, CastToAttributableNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
-        }
-
-        public CastBuilder toVector(int index) {
-            return toVector(index, false);
-        }
-
-        public CastBuilder toVector(int index, boolean nonVectorPreserved) {
-            return insert(index, CastToVectorNodeGen.create(nonVectorPreserved));
-        }
-
-        public CastBuilder toInteger(int index) {
-            return toInteger(index, false, false, false);
-        }
-
-        public CastBuilder toInteger(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            return insert(index, CastIntegerNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
-        }
-
-        public CastBuilder toDouble(int index) {
-            return toDouble(index, false, false, false);
-        }
-
-        public CastBuilder toDouble(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            return insert(index, CastDoubleNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
-        }
-
-        public CastBuilder toLogical(int index) {
-            return toLogical(index, false, false, false);
-        }
-
-        public CastBuilder toLogical(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            return insert(index, CastLogicalNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
-        }
-
-        public CastBuilder toCharacter(int index) {
-            return toCharacter(index, false, false, false, false);
-        }
-
-        public CastBuilder toCharacter(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation, boolean emptyVectorConvertedToNull) {
-            return insert(index, CastStringNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation, emptyVectorConvertedToNull));
-        }
-
-        public CastBuilder boxPrimitive(int index) {
-            return insert(index, BoxPrimitiveNodeGen.create());
-        }
-
-        public CastBuilder custom(int index, CastNode cast) {
-            return insert(index, cast);
-        }
-
-        public CastBuilder firstIntegerWithWarning(int index, int intNa, String name) {
-            insert(index, CastIntegerNodeGen.create(false, false, false));
-            return insert(index, FirstIntNode.createWithWarning(RError.Message.FIRST_ELEMENT_USED, name, intNa));
-        }
-
-        public CastBuilder convertToInteger(int index) {
-            return insert(index, ConvertIntNodeGen.create());
-        }
-
-        public CastBuilder firstIntegerWithError(int index, RError.Message error, String name) {
-            insert(index, CastIntegerNodeGen.create(false, false, false));
-            return insert(index, FirstIntNode.createWithError(error, name));
-        }
-
-        public CastBuilder firstStringWithError(int index, RError.Message error, String name) {
-            return insert(index, FirstStringNode.createWithError(error, name));
-        }
-
-        public CastBuilder firstBoolean(int index) {
-            return insert(index, FirstBooleanNodeGen.create());
-        }
-    }
-
     protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
         // nothing to do
+    }
+
+    public CastNode[] getCasts() {
+        CastBuilder builder = new CastBuilder();
+        createCasts(builder);
+        return builder.getCasts();
     }
 
     @CreateCast("arguments")
@@ -153,12 +82,6 @@ public abstract class RBuiltinNode extends RNode implements VisibilityController
             }
         }
         return castArguments;
-    }
-
-    public CastNode[] getCasts() {
-        CastBuilder builder = new CastBuilder();
-        createCasts(builder);
-        return builder.casts;
     }
 
     /**
@@ -223,8 +146,7 @@ public abstract class RBuiltinNode extends RNode implements VisibilityController
 
     public final RBuiltinNode inline(ArgumentsSignature signature, RNode[] args) {
         // static number of arguments
-        RBuiltinNode node = createNode(getBuiltin(), args, signature);
-        return node;
+        return createNode(getBuiltin(), args, signature);
     }
 
     protected final RBuiltin getRBuiltin() {
