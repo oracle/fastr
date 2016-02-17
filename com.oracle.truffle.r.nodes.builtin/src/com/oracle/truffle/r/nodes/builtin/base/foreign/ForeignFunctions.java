@@ -493,6 +493,8 @@ public class ForeignFunctions {
                     return RunifNodeGen.create();
                 case "qgamma":
                     return QgammaNodeGen.create();
+                case "qbinom":
+                    return QbinomNodeGen.create();
                 case "download":
                     return new Download();
                 case "unzip":
