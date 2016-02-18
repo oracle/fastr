@@ -94,12 +94,13 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
 
     /*
      * Every implementor of this interface must either inherit or directly implement the following
-     * three methods.
+     * three methods. N.B. removeSourceSection and setSourceSection are deliberately renamed from
+     * the previous (now deprecated) methods on the Node class.
      */
 
     SourceSection getSourceSection();
 
-    void clearSourceSection();
+    void unsetSourceSection();
 
     void setSourceSection(SourceSection sourceSection);
 
@@ -112,9 +113,9 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
      * node. We visit but do not call the {@code nodeVisitor} on {@link RSyntaxNode}s that return
      * {@code true} to {@link #isBackbone()}.
      *
-     * N.B. A {@code ReplacementNode} is a very special case. Its children are {@link RSyntaxNode}s,
-     * but we do not want to visit them at all. TODO perhaps we should visit the associated
-     * {@code syntaxAST}.
+     * N.B. A {@code ReplacementNode} is a very special case as we don't want to visit the
+     * transformation denoted by the child nodes, so we use the special lhs/rhs accessors and visit
+     * those.
      */
     static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor) {
         boolean visitChildren = true;
@@ -126,8 +127,12 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
             }
             incDepth = 1;
         }
-        if (!RContext.getRRuntimeASTAccess().isReplacementNode(node)) {
-            if (visitChildren) {
+        if (visitChildren) {
+            RSyntaxNode[] rnChildren = RContext.getRRuntimeASTAccess().isReplacementNode(node);
+            if (rnChildren != null) {
+                accept(rnChildren[0].asNode(), depth + incDepth, nodeVisitor);
+                accept(rnChildren[1].asNode(), depth + incDepth, nodeVisitor);
+            } else {
                 for (Node child : node.getChildren()) {
                     if (child != null) {
                         accept(child, depth + incDepth, nodeVisitor);

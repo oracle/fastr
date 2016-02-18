@@ -36,10 +36,12 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
-@NodeChildren({@NodeChild("left"), @NodeChild("right")})
-// TODO should inherit from RSourceSectionNode
-public abstract class ColonNode extends RNode implements RSyntaxNode, VisibilityController {
-    private SourceSection sourceSection;
+/* Ideally this node will go away when colon is treated as function.
+ * In the meantime it is a mystery why we need to redefine the source section methods, but experimentally if not,
+ * the compiler claims they are unimplemented. */
+
+@NodeChildren({@NodeChild(type = RNode.class, value = "left"), @NodeChild(type = RNode.class, value = "right")})
+public abstract class ColonNode extends RSourceSectionNode implements RSyntaxNode, VisibilityController {
 
     private final BranchProfile naCheckErrorProfile = BranchProfile.create();
 
@@ -47,14 +49,32 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
 
     public abstract ColonCastNode getRight();
 
+    protected ColonNode(SourceSection sourceSection) {
+        super(sourceSection);
+    }
+
+    @Override
+    public void setSourceSection(SourceSection sourceSection) {
+        super.setSourceSection(sourceSection);
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        return super.getSourceSection();
+    }
+
+    @Override
+    public void unsetSourceSection() {
+        super.unsetSourceSection();
+    }
+
     public Arguments<RSyntaxNode> getArguments() {
         return new Arguments<>(new RSyntaxNode[]{getLeft().getOperand().asRSyntaxNode(), getRight().getOperand().asRSyntaxNode()}, ArgumentsSignature.empty(2));
     }
 
     @CreateCast({"left", "right"})
     protected ColonCastNode createCast(RNode child) {
-        ColonCastNode ccn = ColonCastNodeGen.create(child);
-        ccn.assignSourceSection(child.asRSyntaxNode().getSourceSection());
+        ColonCastNode ccn = ColonCastNodeGen.create(child.asRSyntaxNode().getSourceSection(), child);
         return ccn;
     }
 
@@ -122,8 +142,7 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
     }
 
     public static ColonNode create(SourceSection src, RNode left, RNode right) {
-        ColonNode cn = ColonNodeGen.create(left, right);
-        cn.sourceSection = src;
+        ColonNode cn = ColonNodeGen.create(src, left, right);
         return cn;
     }
 
@@ -182,28 +201,31 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
         return intValue;
     }
 
-    public void setSourceSection(SourceSection sourceSection) {
-        this.sourceSection = sourceSection;
-    }
-
-    @Override
-    public SourceSection getSourceSection() {
-        return sourceSection;
-    }
-
-    @Override
-    public void clearSourceSection() {
-        sourceSection = null;
-    }
-
-    @NodeChild("operand")
+    @NodeChild(type = RNode.class, value = "operand")
     // TODO should not be an RSyntaxNode
-    public abstract static class ColonCastNode extends RNode implements RSyntaxNode {
-        private SourceSection sourceSection;
-
+    public abstract static class ColonCastNode extends RSourceSectionNode implements RSyntaxNode {
         private final ConditionProfile lengthGreaterOne = ConditionProfile.createBinaryProfile();
 
         public abstract RNode getOperand();
+
+        protected ColonCastNode(SourceSection sourceSection) {
+            super(sourceSection);
+        }
+
+        @Override
+        public void setSourceSection(SourceSection sourceSection) {
+            super.setSourceSection(sourceSection);
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            return super.getSourceSection();
+        }
+
+        @Override
+        public void unsetSourceSection() {
+            super.unsetSourceSection();
+        }
 
         @Specialization(guards = "isIntValue(operand)")
         protected int doDoubleToInt(double operand) {
@@ -317,18 +339,5 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
             return getOperand().getRequals(other);
         }
 
-        public void setSourceSection(SourceSection sourceSection) {
-            this.sourceSection = sourceSection;
-        }
-
-        @Override
-        public SourceSection getSourceSection() {
-            return sourceSection;
-        }
-
-        @Override
-        public void clearSourceSection() {
-            sourceSection = null;
-        }
     }
 }

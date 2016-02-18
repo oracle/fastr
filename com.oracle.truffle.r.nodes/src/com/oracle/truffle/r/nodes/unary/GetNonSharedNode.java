@@ -87,7 +87,7 @@ public abstract class GetNonSharedNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void clearSourceSection() {
+    public void unsetSourceSection() {
         throw RInternalError.shouldNotReachHere();
     }
 

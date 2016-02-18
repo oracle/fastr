@@ -231,7 +231,7 @@ public final class RTruffleVisitor implements Visitor<RSyntaxNode> {
 
         // Maintain SourceSection
         if (astBody != null && statements.getSourceSection() == null) {
-            statements.assignSourceSection(astBody.getSource());
+            statements.setSourceSection(astBody.getSource());
         }
         FormalArguments formals = FormalArguments.createForFunction(defaultValues, ArgumentsSignature.get(argumentNames));
         for (AccessArgumentNode access : argAccessNodes) {

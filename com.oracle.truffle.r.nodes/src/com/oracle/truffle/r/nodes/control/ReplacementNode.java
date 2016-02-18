@@ -44,16 +44,19 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 /**
  * Holds the sequence of nodes created for R's replacement assignment. Allows custom deparse and
  * debug handling.
+ *
  */
 public final class ReplacementNode extends RSourceSectionNode implements RSyntaxNode {
 
     /**
-     * This holds the AST for the "untransformed" AST, i.e. as it appears in the source. Currently
-     * only used in {@code deparse} and {@code serialize}.
+     * This is just the left hand side of the assignment and only used for {@link #deparseImpl} etc.
      */
     @CompilationFinal private RSyntaxNode syntaxLhs;
     private final boolean isSuper;
 
+    /**
+     * The original right hand side in the source can be found by {@code storeRhs.getRhs()}.
+     */
     @Child private WriteVariableNode storeRhs;
     @Child private WriteVariableNode storeValue;
     @Children private final RNode[] updates;
@@ -70,6 +73,20 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
         // remove var and rhs, returning rhs' value
         this.removeTemp = RemoveAndAnswerNode.create(tmpSymbol);
         this.removeRhs = RemoveAndAnswerNode.create(rhsSymbol);
+    }
+
+    /**
+     * Support for syntax tree visitor.
+     */
+    public RSyntaxNode getLhs() {
+        return syntaxLhs;
+    }
+
+    /**
+     * Support for syntax tree visitor.
+     */
+    public RSyntaxNode getRhs() {
+        return storeRhs.getRhs().asRSyntaxNode();
     }
 
     private String getSymbol() {

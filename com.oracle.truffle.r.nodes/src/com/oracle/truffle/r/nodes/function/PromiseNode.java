@@ -361,7 +361,7 @@ public abstract class PromiseNode extends RNode {
         }
 
         @Override
-        public void clearSourceSection() {
+        public void unsetSourceSection() {
             throw RInternalError.shouldNotReachHere();
         }
     }

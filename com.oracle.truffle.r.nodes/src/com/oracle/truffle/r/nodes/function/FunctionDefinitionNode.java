@@ -644,7 +644,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     @Override
-    public void clearSourceSection() {
+    public void unsetSourceSection() {
         sourceSection = null;
     }
 

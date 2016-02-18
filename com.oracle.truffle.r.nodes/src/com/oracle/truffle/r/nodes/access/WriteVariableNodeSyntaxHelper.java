@@ -98,8 +98,7 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
         return sourceSection;
     }
 
-    @Override
-    public void clearSourceSection() {
+    public void unsetSourceSection() {
         sourceSection = null;
     }
 }

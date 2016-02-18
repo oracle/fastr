@@ -410,7 +410,7 @@ public class RDeparse {
                 RSyntaxNode node = entry.getKey();
                 NodeSourceInfo nsi = entry.getValue();
                 // may have had one initially
-                node.clearSourceSection();
+                node.unsetSourceSection();
                 node.setSourceSection(source.createSection("", nsi.startCharIndex, nsi.endCharIndex - nsi.startCharIndex));
             }
         }

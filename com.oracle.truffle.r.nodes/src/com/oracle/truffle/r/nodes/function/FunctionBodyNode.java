@@ -144,7 +144,7 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
     }
 
     @Override
-    public void clearSourceSection() {
+    public void unsetSourceSection() {
         sourceSection = null;
     }
 

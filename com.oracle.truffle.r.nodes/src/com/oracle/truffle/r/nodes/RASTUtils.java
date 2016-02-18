@@ -424,7 +424,7 @@ public class RASTUtils {
         }
 
         @Override
-        public void clearSourceSection() {
+        public void unsetSourceSection() {
             throw RInternalError.shouldNotReachHere();
         }
     }

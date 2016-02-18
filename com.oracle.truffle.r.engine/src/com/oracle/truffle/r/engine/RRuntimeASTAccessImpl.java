@@ -442,8 +442,13 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return getSyntaxCaller((RCaller) caller);
     }
 
-    public boolean isReplacementNode(Node node) {
-        return node instanceof ReplacementNode;
+    public RSyntaxNode[] isReplacementNode(Node node) {
+        if (node instanceof ReplacementNode) {
+            ReplacementNode rn = (ReplacementNode) node;
+            return new RSyntaxNode[]{rn.getLhs(), rn.getRhs()};
+        } else {
+            return null;
+        }
     }
 
     public boolean isFunctionDefinitionNode(Node node) {

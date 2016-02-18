@@ -208,7 +208,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
     }
 
     @Override
-    public void clearSourceSection() {
+    public void unsetSourceSection() {
         sourceSection = null;
     }
 
