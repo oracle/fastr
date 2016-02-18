@@ -452,7 +452,7 @@ class DefaultMatchClass(MatchClass):
                     print line_file[1]
 
 
-def find_matches(results, match_string, print_matches, list_file_matches, match_klass_name):
+def _find_matches(results, match_string, print_matches, list_file_matches, match_klass_name):
     if match_klass_name:
         mod = sys.modules[__name__]
         match_klass = getattr(mod, match_klass_name)
@@ -644,16 +644,17 @@ def rpt_install_summary(args):
             failed = failed + 1
     print "package installs: " + str(len(pkgtable)) + ", ok: " + str(ok) + ", failed: " + str(failed)
 
-def rpt_findmatches(args):
-    parser = ArgumentParser(prog='mx rpt-findmatches')
+def rpt_find_matches(args):
+    parser = ArgumentParser(prog='mx rpt-find-matches')
     parser.add_argument("--print-matches", action='store_true', help='print matching lines in find-matches')
     parser.add_argument("--list-file-matches", action='store_true', help='show files in find-matches')
     parser.add_argument('--match-class', action='store', help='override default MatchClass')
+    parser.add_argument('--match-string', action='store', help='string to match', required=True)
     _add_common_args(parser)
     args = _check_verbose(parser.parse_args(args))
 
     results = _get_results(args.logdir)
-    find_matches(results, args.find_matches, args.print_matches, args.list_file_matches, args.match_class)
+    _find_matches(results, args.match_string, args.print_matches, args.list_file_matches, args.match_class)
 
 def rpt_install_status(args):
     parser = ArgumentParser(prog='mx rpt-install-status')
@@ -791,7 +792,7 @@ _commands = {
     'rpt-getnew' : [rpt_getnew, '[options]'],
     'rpt-install-summary' : [rpt_install_summary, '[options]'],
     'rpt-test-summary' : [rpt_test_summary, '[options]'],
-    'rpt-findmatches' : [rpt_findmatches, '[options]'],
+    'rpt-findmatches' : [rpt_find_matches, '[options]'],
     'rpt-install-status' : [rpt_install_status, '[options]'],
     'rpt-test-status' : [rpt_test_status, '[options]'],
     'rpt-compare': [rpt_compare, '[options]'],

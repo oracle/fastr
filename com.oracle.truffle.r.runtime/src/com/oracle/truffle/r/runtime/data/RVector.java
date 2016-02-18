@@ -64,6 +64,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     protected RVector(boolean complete, int length, int[] dimensions, RStringVector names) {
         this.complete = complete;
         this.dimensions = dimensions;
+        assert names != this;
         this.names = names;
         this.rowNames = RNull.instance;
         if (names != null) {
@@ -102,6 +103,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     }
 
     public final void setInternalNames(RStringVector newNames) {
+        assert newNames != this;
         names = newNames;
     }
 
@@ -286,6 +288,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         } else {
             putAttribute(RRuntime.NAMES_ATTR_KEY, newNames);
         }
+        assert newNames != this;
         this.names = newNames;
     }
 
@@ -314,6 +317,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
                 this.dimNames = newDimNames;
             } else {
                 putAttribute(RRuntime.NAMES_ATTR_KEY, newNames);
+                assert newNames != this;
                 this.names = newNames;
             }
         }

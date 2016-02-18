@@ -341,6 +341,9 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             case PairList:
                 vector = RType.List;
                 break;
+            case Environment:
+                vector = RType.List;
+                break;
             default:
                 vector = this.vectorType;
                 break;

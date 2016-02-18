@@ -73,6 +73,10 @@ public abstract class DoCall extends RBuiltinNode {
 
     @Specialization
     protected Object doDoCall(VirtualFrame frame, Object what, RList argsAsList, REnvironment env) {
+        /*
+         * Step 1: handle the variants of "what" (could be done in extra specializations) and assign
+         * "func".
+         */
         RFunction func;
         if (what instanceof RFunction) {
             func = (RFunction) what;
@@ -87,11 +91,14 @@ public abstract class DoCall extends RBuiltinNode {
             throw RError.error(this, RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
         }
 
+        /*
+         * Step 2: To re-create the illusion of a normal call, turn the values in argsAsList into
+         * promises.
+         */
         Object[] argValues = argsAsList.getDataCopy();
         RStringVector n = argsAsList.getNames(attrProfiles);
         String[] argNames = n == null ? new String[argValues.length] : n.getDataNonShared();
         ArgumentsSignature signature = ArgumentsSignature.get(argNames);
-        RBuiltinDescriptor builtin = func.getRBuiltin();
         MaterializedFrame callerFrame = null;
         for (int i = 0; i < argValues.length; i++) {
             Object arg = argValues[i];
@@ -111,6 +118,21 @@ public abstract class DoCall extends RBuiltinNode {
                 }
             }
         }
+
+        /* Step 3: Perform the actual evaluation, checking for builtin special cases. */
+        return executeCall(frame, func, argValues, signature, callerFrame);
+    }
+
+    /* This exists solely for forceAndCall builtin (R3.2.3) */
+    @Specialization
+    protected Object doDoCall(VirtualFrame frame, RFunction func, RArgsValuesAndNames args, @SuppressWarnings("unused") RNull env) {
+        return executeCall(frame, func, args.getArguments(), args.getSignature(), null);
+    }
+
+    private Object executeCall(VirtualFrame frame, RFunction funcArg, Object[] argValues, ArgumentsSignature signature, MaterializedFrame callerFrameArg) {
+        RFunction func = funcArg;
+        MaterializedFrame callerFrame = callerFrameArg;
+        RBuiltinDescriptor builtin = func.getRBuiltin();
         if (func.isBuiltin() && builtin.getDispatch() == RDispatch.INTERNAL_GENERIC) {
             if (dispatchLookup == null) {
                 dispatchLookup = insert(S3FunctionLookupNode.create(true, false));
@@ -169,6 +191,7 @@ public abstract class DoCall extends RBuiltinNode {
         Object[] callArgs = argsNode.execute(func, caller, callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getArguments(), reorderedArgs.getSignature(), null);
         RArguments.setIsIrregular(callArgs, true);
         return callCache.execute(frame, func.getTarget(), callArgs);
+
     }
 
     private MaterializedFrame getCallerFrame(VirtualFrame frame, MaterializedFrame callerFrame) {
