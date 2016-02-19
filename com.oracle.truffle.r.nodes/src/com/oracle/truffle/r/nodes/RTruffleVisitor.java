@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
 import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.binary.ColonNode;
 import com.oracle.truffle.r.nodes.control.BlockNode;
 import com.oracle.truffle.r.nodes.control.BreakNode;
 import com.oracle.truffle.r.nodes.control.ForNode;
@@ -70,7 +69,6 @@ import com.oracle.truffle.r.parser.ast.Function;
 import com.oracle.truffle.r.parser.ast.If;
 import com.oracle.truffle.r.parser.ast.Missing;
 import com.oracle.truffle.r.parser.ast.Next;
-import com.oracle.truffle.r.parser.ast.Operation.ArithmeticOperator;
 import com.oracle.truffle.r.parser.ast.Repeat;
 import com.oracle.truffle.r.parser.ast.Replacement;
 import com.oracle.truffle.r.parser.ast.Sequence;
@@ -267,21 +265,17 @@ public final class RTruffleVisitor implements Visitor<RSyntaxNode> {
     public RSyntaxNode visit(BinaryOperation op) {
         RSyntaxNode left = op.getLHS().accept(this);
         RSyntaxNode right = op.getRHS().accept(this);
-        if (op.getOperator() == ArithmeticOperator.COLON) {
-            return ColonNode.create(op.getSource(), left.asRNode(), right.asRNode());
-        } else {
-            String functionName = op.getOperator().getName();
-            if (RGroupGenerics.isGroupGeneric(functionName)) {
-                return GroupDispatchNode.create(functionName, op.getSource(), ArgumentsSignature.empty(2), left, right);
-            }
-            // create a SourceSection for the operator
-            SourceSection opSrc = op.getSource();
-            String code = opSrc.getCode();
-            String opName = op.getOperator().getName();
-            int charIndex = code.indexOf(opName);
-            SourceSection opNameSrc = opSrc.getSource().createSection(opSrc.getIdentifier(), opSrc.getCharIndex() + charIndex, opName.length());
-            return RCallNode.createOpCall(op.getSource(), opNameSrc, functionName, left, right);
+        String functionName = op.getOperator().getName();
+        if (RGroupGenerics.isGroupGeneric(functionName)) {
+            return GroupDispatchNode.create(functionName, op.getSource(), ArgumentsSignature.empty(2), left, right);
         }
+        // create a SourceSection for the operator
+        SourceSection opSrc = op.getSource();
+        String code = opSrc.getCode();
+        String opName = op.getOperator().getName();
+        int charIndex = code.indexOf(opName);
+        SourceSection opNameSrc = opSrc.getSource().createSection(opSrc.getIdentifier(), opSrc.getCharIndex() + charIndex, opName.length());
+        return RCallNode.createOpCall(op.getSource(), opNameSrc, functionName, left, right);
     }
 
     @Override
