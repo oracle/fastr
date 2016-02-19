@@ -99,7 +99,8 @@ public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
 
     private static final Set<String> wellKnownFunctions = new HashSet<>(Arrays.asList("c", "$", "@", "[", "[[", "any", "dim", "dimnames", "rownames", "colnames", "is.null", "list", "names", "return",
                     "print", "length", "rep", "min", "max", "matrix", "table", "is.array", "is.element", "is.character", "exp", "all", "pmin", "pmax", "as.numeric", "proc.time", "as.integer",
-                    "as.character", "as.matrix", ".Call", "sum", "order", "rev", "integer", "double", "as.numeric", "as.list", "as.integer", ".Call", ".FastR", "unname", "log", "lgamma"));
+                    "as.character", "as.matrix", ".Call", "sum", "order", "rev", "integer", "double", "as.numeric", "as.list", "as.integer", ".Call", ".FastR", "unname", "log", "lgamma",
+                    "sin", "cos", "tan", "exp", "log", "expm1", "sinh", "sinpi", "cosh", "cospi", "tanh", "tanpi", "asin", "asinh", "acos", "acosh", "atan", "atanh"));
 
     private EvaluatedArgumentsVisitor() {
         // private constructor
