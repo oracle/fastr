@@ -487,14 +487,24 @@ public class ForeignFunctions {
                     return new CountFields();
                 case "readtablehead":
                     return new ReadTableHead();
+                case "pnorm":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Pnorm());
+                case "qnorm":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Qnorm());
                 case "rnorm":
                     return RnormNodeGen.create();
                 case "runif":
                     return RunifNodeGen.create();
                 case "qgamma":
                     return QgammaNodeGen.create();
+                case "dbinom":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new Dbinom());
                 case "qbinom":
-                    return QbinomNodeGen.create();
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Qbinom());
+                case "rbinom":
+                    return RbinomNodeGen.create();
+                case "pbinom":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Pbinom());
                 case "download":
                     return new Download();
                 case "unzip":

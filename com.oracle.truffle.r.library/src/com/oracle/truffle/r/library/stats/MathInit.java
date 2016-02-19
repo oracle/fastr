@@ -15,7 +15,7 @@ import static com.oracle.truffle.r.library.stats.MathConstants.M_LOG10_2;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 
-// transcribed from pbeta.c
+// transcribed from init.c
 
 public final class MathInit {
     private MathInit() {

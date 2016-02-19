@@ -88,4 +88,9 @@ public final class MathConstants {
     public static double logspaceAdd(double logx, double logy) {
         return Math.max(logx, logy) + Math.log1p(Math.exp(-Math.abs(logx - logy)));
     }
+
+    // R_forceint
+    public static long forceint(double x) {
+        return Math.round(x);
+    }
 }

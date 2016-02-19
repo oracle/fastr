@@ -83,29 +83,78 @@ public class TOMS708 {
     private static final double DBL_MIN = Double.MIN_NORMAL;
     private static final double INV_SQRT_2_PI = .398942280401433; /* == 1/sqrt(2*pi); */
 
+    public static final class MathException extends RuntimeException {
+        private static final long serialVersionUID = -4745984791703065276L;
+
+        private final int code;
+
+        public MathException(int code) {
+            this.code = code;
+        }
+
+        public int getCode() {
+            return code;
+        }
+    }
+
     public static final class Bratio {
         public double w;
         public double w1;
         public int ierr;
 
+        private Bratio(double w, double w1, int ierr) {
+            this.w = w;
+            this.w1 = w1;
+            this.ierr = ierr;
+        }
+
         private enum States {
             Start,
             L131,
             L140,
-            L200,
-            L210,
-            L211,
-            L201,
             L_w_bpser,
             L_w1_bpser,
             L_end_from_w1_log,
             L_end_from_w1,
-            L_end,
             L_end_from_w,
             L_bfrac,
         }
 
-        public void bratio(double a, double b, double x, double y, boolean logP) {
+        private static Bratio result(double w, double w1, int ierr) {
+            return new Bratio(w, w1, ierr);
+        }
+
+        public static Bratio bratio(double a, double b, double x, double y, boolean logP) {
+            /*
+             * -----------------------------------------------------------------------
+             * 
+             * Evaluation of the Incomplete Beta function I_x(a,b)
+             * 
+             * --------------------
+             * 
+             * It is assumed that a and b are nonnegative, and that x <= 1 and y = 1 - x. Bratio
+             * assigns w and w1 the values
+             * 
+             * w = I_x(a,b) w1 = 1 - I_x(a,b)
+             * 
+             * ierr is a variable that reports the status of the results. If no input errors are
+             * detected then ierr is set to 0 and w and w1 are computed. otherwise, if an error is
+             * detected, then w and w1 are assigned the value 0 and ierr is set to one of the
+             * following values ...
+             * 
+             * ierr = 1 if a or b is negative ierr = 2 if a = b = 0 ierr = 3 if x < 0 or x > 1 ierr
+             * = 4 if y < 0 or y > 1 ierr = 5 if x + y != 1 ierr = 6 if x = a = 0 ierr = 7 if y = b
+             * = 0 ierr = 8 "error" in bgrat()
+             * 
+             * -------------------- Written by Alfred H. Morris, Jr. Naval Surface Warfare Center
+             * Dahlgren, Virginia Revised ... Nov 1991
+             * -----------------------------------------------------------------------
+             */
+
+            double w;
+            double w1;
+            int ierr = 0;
+
             boolean doSwap = false;
             int n = 0;
             double z = 0;
@@ -115,422 +164,380 @@ public class TOMS708 {
             double y0 = 0;
             double eps = 0;
             double lambda = 0;
-            States state = States.Start;
-            Bgrat bgrat = new Bgrat();
-            while (true) {
-                switch (state) {
-/*
- * -----------------------------------------------------------------------
- * 
- * Evaluation of the Incomplete Beta function I_x(a,b)
- * 
- * --------------------
- * 
- * It is assumed that a and b are nonnegative, and that x <= 1 and y = 1 - x. Bratio assigns w and
- * w1 the values
- * 
- * w = I_x(a,b) w1 = 1 - I_x(a,b)
- * 
- * ierr is a variable that reports the status of the results. If no input errors are detected then
- * ierr is set to 0 and w and w1 are computed. otherwise, if an error is detected, then w and w1 are
- * assigned the value 0 and ierr is set to one of the following values ...
- * 
- * ierr = 1 if a or b is negative ierr = 2 if a = b = 0 ierr = 3 if x < 0 or x > 1 ierr = 4 if y < 0
- * or y > 1 ierr = 5 if x + y != 1 ierr = 6 if x = a = 0 ierr = 7 if y = b = 0 ierr = 8 "error" in
- * bgrat()
- * 
- * -------------------- Written by Alfred H. Morris, Jr. Naval Surface Warfare Center Dahlgren,
- * Virginia Revised ... Nov 1991
- * -----------------------------------------------------------------------
- */
-                    case Start:
 
 /*
  * eps is a machine dependent constant: the smallest floating point number for which 1.0 + eps > 1.0
  */
-                        eps = RRuntime.EPSILON; /* == DBL_EPSILON (in R, Rmath) */
+            eps = RRuntime.EPSILON; /* == DBL_EPSILON (in R, Rmath) */
 
 /* ----------------------------------------------------------------------- */
-                        w = DPQ.d0(logP);
-                        w1 = DPQ.d0(logP);
+            w = DPQ.d0(logP);
+            w1 = DPQ.d0(logP);
 
-                        if (a < 0.0 || b < 0.0) {
-                            ierr = 1;
-                            return;
-                        }
-                        if (a == 0.0 && b == 0.0) {
-                            ierr = 2;
-                            return;
-                        }
-                        if (x < 0.0 || x > 1.0) {
-                            ierr = 3;
-                            return;
-                        }
-                        if (y < 0.0 || y > 1.0) {
-                            ierr = 4;
-                            return;
-                        }
+            if (a < 0.0 || b < 0.0) {
+                return result(w, w1, 1);
+            }
+            if (a == 0.0 && b == 0.0) {
+                return result(w, w1, 2);
+            }
+            if (x < 0.0 || x > 1.0) {
+                return result(w, w1, 3);
+            }
+            if (y < 0.0 || y > 1.0) {
+                return result(w, w1, 4);
+            }
 
-                        /* check that 'y == 1 - x' : */
-                        z = x + y - 0.5 - 0.5;
+            /* check that 'y == 1 - x' : */
+            z = x + y - 0.5 - 0.5;
 
-                        if (Math.abs(z) > eps * 3.0) {
-                            ierr = 5;
-                            return;
-                        }
-                        debugPrintf("bratio(a=%f, b=%f, x=%9f, y=%9f, .., log_p=%b): ",
-                                        a, b, x, y, logP);
+            if (Math.abs(z) > eps * 3.0) {
+                return result(w, w1, 5);
+            }
+            debugPrintf("bratio(a=%f, b=%f, x=%9f, y=%9f, .., log_p=%b): ", a, b, x, y, logP);
 
-                        ierr = 0;
-                        if (x == 0.0) {
-                            state = States.L200;
-                            continue;
-                        }
-                        if (y == 0.0) {
-                            state = States.L210;
-                            continue;
-                        }
+            if (x == 0.0) {
+                if (a == 0.0) {
+                    return result(w, w1, 6);
+                }
+                // else:
+                w = DPQ.d0(logP);
+                w1 = DPQ.d1(logP);
+                return result(w, w1, 0);
+            }
+            if (y == 0.0) {
+                if (b == 0.0) {
+                    return result(w, w1, 7);
+                }
+                // else:
+                w = DPQ.d1(logP);
+                w1 = DPQ.d0(logP);
+                return result(w, w1, 0);
+            }
 
-                        if (a == 0.0) {
-                            state = States.L211;
-                            continue;
-                        }
-                        if (b == 0.0) {
-                            state = States.L201;
-                            continue;
-                        }
+            if (a == 0.0) {
+                // else:
+                w = DPQ.d1(logP);
+                w1 = DPQ.d0(logP);
+                return result(w, w1, 0);
+            }
+            if (b == 0.0) {
+                w = DPQ.d0(logP);
+                w1 = DPQ.d1(logP);
+                return result(w, w1, 0);
+            }
 
-                        eps = Math.max(eps, 1e-15);
-                        boolean aLtB = a < b;
-                        if (/* max(a,b) */(aLtB ? b : a) < eps * .001) { /*
-                                                                          * procedure for a and b <
-                                                                          * 0.001 * eps
-                                                                          */
-                            // L230: -- result *independent* of x (!)
-                            // *w = a/(a+b) and w1 = b/(a+b) :
-                            if (logP) {
-                                if (aLtB) {
-                                    w = Math.log1p(-a / (a + b)); // notably if a << b
-                                    w1 = Math.log(a / (a + b));
-                                } else { // b <= a
-                                    w = Math.log(b / (a + b));
-                                    w1 = Math.log1p(-b / (a + b));
-                                }
-                            } else {
-                                w = b / (a + b);
-                                w1 = a / (a + b);
-                            }
-                            debugPrintf("a & b very small -> simple ratios (%f,%f)\n", w, w1);
-                            return;
-                        }
+            eps = Math.max(eps, 1e-15);
+            boolean aLtB = a < b;
+            if (/* max(a,b) */(aLtB ? b : a) < eps * .001) {
+                /* procedure for a and b < 0.001 * eps */
+                // L230: -- result *independent* of x (!)
+                // *w = a/(a+b) and w1 = b/(a+b) :
+                if (logP) {
+                    if (aLtB) {
+                        w = Math.log1p(-a / (a + b)); // notably if a << b
+                        w1 = Math.log(a / (a + b));
+                    } else { // b <= a
+                        w = Math.log(b / (a + b));
+                        w1 = Math.log1p(-b / (a + b));
+                    }
+                } else {
+                    w = b / (a + b);
+                    w1 = a / (a + b);
+                }
+                debugPrintf("a & b very small -> simple ratios (%f,%f)\n", w, w1);
+                return result(w, w1, 0);
+            }
 
-                        if (Math.min(a, b) <= 1.) { /*------------------------ a <= 1  or  b <= 1 ---- */
+            States state = States.Start;
+            Bgrat bgrat = new Bgrat();
+            L_end: while (true) {
+                while (true) {
+                    switch (state) {
+                        case Start:
 
-                            doSwap = (x > 0.5);
-                            if (doSwap) {
-                                a0 = b;
-                                x0 = y;
-                                b0 = a;
-                                y0 = x;
-                            } else {
-                                a0 = a;
-                                x0 = x;
-                                b0 = b;
-                                y0 = y;
-                            }
-                            /* now have x0 <= 1/2 <= y0 (still x0+y0 == 1) */
-                            debugPrintf(" min(a,b) <= 1, do_swap=%b;", doSwap);
+                            if (Math.min(a, b) <= 1.) { /*------------------------ a <= 1  or  b <= 1 ---- */
 
-                            if (b0 < Math.min(eps, eps * a0)) { /* L80: */
-                                w = fpser(a0, b0, x0, eps, logP);
-                                w1 = logP ? log1Exp(w) : 0.5 - w + 0.5;
-                                debugPrintf("  b0 small -> w := fpser(*) = %.15f\n", w);
-                                state = States.L_end;
-                                continue;
-                            }
-
-                            if (a0 < Math.min(eps, eps * b0) && b0 * x0 <= 1.0) { /* L90: */
-                                w1 = apser(a0, b0, x0, eps);
-                                debugPrintf("  a0 small -> w1 := apser(*) = %.15fg\n", w1);
-                                state = States.L_end_from_w1;
-                                continue;
-                            }
-
-                            boolean didBup = false;
-                            if (Math.max(a0, b0) > 1.0) {
-                                /* L20: min(a,b) <= 1 < max(a,b) */
-                                debugPrintf("\n L20:  min(a,b) <= 1 < max(a,b); ");
-                                if (b0 <= 1.0) {
-                                    state = States.L_w_bpser;
-                                    continue;
-                                }
-
-                                if (x0 >= 0.29) {
-                                    /* was 0.3, PR#13786 */
-                                    state = States.L_w1_bpser;
-                                    continue;
-                                }
-
-                                if (x0 < 0.1 && Math.pow(x0 * b0, a0) <= 0.7) {
-                                    state = States.L_w_bpser;
-                                    continue;
-                                }
-
-                                if (b0 > 15.0) {
-                                    w1 = 0.;
-                                    state = States.L131;
-                                }
-                            } else { /* a, b <= 1 */
-                                debugPrintf("\n      both a,b <= 1; ");
-                                if (a0 >= Math.min(0.2, b0)) {
-                                    state = States.L_w_bpser;
-                                    continue;
-                                }
-
-                                if (Math.pow(x0, a0) <= 0.9) {
-                                    state = States.L_w_bpser;
-                                    continue;
-                                }
-
-                                if (x0 >= 0.3) {
-                                    state = States.L_w1_bpser;
-                                    continue;
-                                }
-                            }
-                            if (state != States.L131) {
-                                n = 20; /* goto L130; */
-                                w1 = bup(b0, a0, y0, x0, n, eps, false);
-                                debugPrintf("  ... n=20 and *w1 := bup(*) = %.15f; ", w1);
-                                didBup = true;
-
-                                b0 += n;
-                            }
-                            debugPrintf(" L131: bgrat(*, w1=%.15f) ", w1);
-                            bgrat.w = w1;
-                            bgrat.bgrat(b0, a0, y0, x0, 15 * eps, false);
-                            w1 = bgrat.w;
-
-                            if (w1 == 0 || (0 < w1 && w1 < 1e-310)) { // w1=0 or very close:
-                                // "almost surely" from underflow, try more: [2013-03-04]
-                                // FIXME: it is even better to do this in bgrat *directly* at least
-// for the case
-                                // !did_bup, i.e., where *w1 = (0 or -Inf) on entry
-                                if (didBup) { // re-do that part on log scale:
-                                    w1 = bup(b0 - n, a0, y0, x0, n, eps, true);
+                                doSwap = (x > 0.5);
+                                if (doSwap) {
+                                    a0 = b;
+                                    x0 = y;
+                                    b0 = a;
+                                    y0 = x;
                                 } else {
-                                    w1 = Double.NEGATIVE_INFINITY; // = 0 on log-scale
+                                    a0 = a;
+                                    x0 = x;
+                                    b0 = b;
+                                    y0 = y;
                                 }
+                                /* now have x0 <= 1/2 <= y0 (still x0+y0 == 1) */
+                                debugPrintf(" min(a,b) <= 1, do_swap=%b;", doSwap);
+
+                                if (b0 < Math.min(eps, eps * a0)) { /* L80: */
+                                    w = fpser(a0, b0, x0, eps, logP);
+                                    w1 = logP ? log1Exp(w) : 0.5 - w + 0.5;
+                                    debugPrintf("  b0 small -> w := fpser(*) = %.15f\n", w);
+                                    break L_end;
+                                }
+
+                                if (a0 < Math.min(eps, eps * b0) && b0 * x0 <= 1.0) { /* L90: */
+                                    w1 = apser(a0, b0, x0, eps);
+                                    debugPrintf("  a0 small -> w1 := apser(*) = %.15fg\n", w1);
+                                    state = States.L_end_from_w1;
+                                    continue;
+                                }
+
+                                boolean didBup = false;
+                                if (Math.max(a0, b0) > 1.0) {
+                                    /* L20: min(a,b) <= 1 < max(a,b) */
+                                    debugPrintf("\n L20:  min(a,b) <= 1 < max(a,b); ");
+                                    if (b0 <= 1.0) {
+                                        state = States.L_w_bpser;
+                                        continue;
+                                    }
+
+                                    if (x0 >= 0.29) {
+                                        /* was 0.3, PR#13786 */
+                                        state = States.L_w1_bpser;
+                                        continue;
+                                    }
+
+                                    if (x0 < 0.1 && Math.pow(x0 * b0, a0) <= 0.7) {
+                                        state = States.L_w_bpser;
+                                        continue;
+                                    }
+
+                                    if (b0 > 15.0) {
+                                        w1 = 0.;
+                                        state = States.L131;
+                                    }
+                                } else { /* a, b <= 1 */
+                                    debugPrintf("\n      both a,b <= 1; ");
+                                    if (a0 >= Math.min(0.2, b0)) {
+                                        state = States.L_w_bpser;
+                                        continue;
+                                    }
+
+                                    if (Math.pow(x0, a0) <= 0.9) {
+                                        state = States.L_w_bpser;
+                                        continue;
+                                    }
+
+                                    if (x0 >= 0.3) {
+                                        state = States.L_w1_bpser;
+                                        continue;
+                                    }
+                                }
+                                if (state != States.L131) {
+                                    n = 20; /* goto L130; */
+                                    w1 = bup(b0, a0, y0, x0, n, eps, false);
+                                    debugPrintf("  ... n=20 and *w1 := bup(*) = %.15f; ", w1);
+                                    didBup = true;
+
+                                    b0 += n;
+                                }
+                                debugPrintf(" L131: bgrat(*, w1=%.15f) ", w1);
                                 bgrat.w = w1;
                                 bgrat.bgrat(b0, a0, y0, x0, 15 * eps, false);
                                 w1 = bgrat.w;
+
+                                if (w1 == 0 || (0 < w1 && w1 < 1e-310)) { // w1=0 or very close:
+                                    // "almost surely" from underflow, try more: [2013-03-04]
+                                    // FIXME: it is even better to do this in bgrat *directly* at
+                                    // least for the case
+                                    // !did_bup, i.e., where *w1 = (0 or -Inf) on entry
+                                    if (didBup) { // re-do that part on log scale:
+                                        w1 = bup(b0 - n, a0, y0, x0, n, eps, true);
+                                    } else {
+                                        w1 = Double.NEGATIVE_INFINITY; // = 0 on log-scale
+                                    }
+                                    bgrat.w = w1;
+                                    bgrat.bgrat(b0, a0, y0, x0, 15 * eps, false);
+                                    w1 = bgrat.w;
+                                    if (bgrat.ierr != 0) {
+                                        ierr = 8;
+                                    }
+                                    state = States.L_end_from_w1_log;
+                                    continue;
+                                }
+                                // else
                                 if (bgrat.ierr != 0) {
                                     ierr = 8;
                                 }
-                                state = States.L_end_from_w1_log;
-                                continue;
-                            }
-                            // else
-                            if (bgrat.ierr != 0) {
-                                ierr = 8;
-                            }
-                            if (w1 < 0) {
-                                RError.warning(RError.SHOW_CALLER, Message.GENERIC, String.format("bratio(a=%f, b=%f, x=%f): bgrat() -> w1 = %f",
-                                                a, b, x, w1));
-                            }
-                            state = States.L_end_from_w1;
-                            continue;
-                        } else { /* L30: -------------------- both a, b > 1 {a0 > 1 & b0 > 1} --- */
-
-                            if (a > b) {
-                                lambda = (a + b) * y - b;
-                            } else {
-                                lambda = a - (a + b) * x;
-                            }
-
-                            doSwap = (lambda < 0.0);
-                            if (doSwap) {
-                                lambda = -lambda;
-                                a0 = b;
-                                x0 = y;
-                                b0 = a;
-                                y0 = x;
-                            } else {
-                                a0 = a;
-                                x0 = x;
-                                b0 = b;
-                                y0 = y;
-                            }
-
-                            debugPrintf("  L30:  both  a, b > 1; |lambda| = %f, do_swap = %b\n",
-                                            lambda, doSwap);
-
-                            if (b0 < 40.0) {
-                                debugPrintf("  b0 < 40;");
-                                if (b0 * x0 <= 0.7 || (logP && lambda > 650.)) {
-                                    state = States.L_w_bpser;
-                                    continue;
-                                } else {
-                                    state = States.L140;
-                                    continue;
+                                if (w1 < 0) {
+                                    RError.warning(RError.SHOW_CALLER, Message.GENERIC, String.format("bratio(a=%f, b=%f, x=%f): bgrat() -> w1 = %f", a, b, x, w1));
                                 }
-                            } else if (a0 > b0) { /* ---- a0 > b0 >= 40 ---- */
-                                debugPrintf("  a0 > b0 >= 40;");
-                                if (b0 <= 100.0 || lambda > b0 * 0.03) {
+                                state = States.L_end_from_w1;
+                                continue;
+                            } else { /*
+                                      * L30: -------------------- both a, b > 1 {a0 > 1 & b0 > 1}
+                                      * ---
+                                      */
+
+                                if (a > b) {
+                                    lambda = (a + b) * y - b;
+                                } else {
+                                    lambda = a - (a + b) * x;
+                                }
+
+                                doSwap = (lambda < 0.0);
+                                if (doSwap) {
+                                    lambda = -lambda;
+                                    a0 = b;
+                                    x0 = y;
+                                    b0 = a;
+                                    y0 = x;
+                                } else {
+                                    a0 = a;
+                                    x0 = x;
+                                    b0 = b;
+                                    y0 = y;
+                                }
+
+                                debugPrintf("  L30:  both  a, b > 1; |lambda| = %f, do_swap = %b\n", lambda, doSwap);
+
+                                if (b0 < 40.0) {
+                                    debugPrintf("  b0 < 40;");
+                                    if (b0 * x0 <= 0.7 || (logP && lambda > 650.)) {
+                                        state = States.L_w_bpser;
+                                        continue;
+                                    } else {
+                                        state = States.L140;
+                                        continue;
+                                    }
+                                } else if (a0 > b0) { /* ---- a0 > b0 >= 40 ---- */
+                                    debugPrintf("  a0 > b0 >= 40;");
+                                    if (b0 <= 100.0 || lambda > b0 * 0.03) {
+                                        state = States.L_bfrac;
+                                        continue;
+                                    }
+                                } else if (a0 <= 100.0) {
+                                    debugPrintf("  a0 <= 100; a0 <= b0 >= 40;");
+                                    state = States.L_bfrac;
+                                    continue;
+                                } else if (lambda > a0 * 0.03) {
+                                    debugPrintf("  b0 >= a0 > 100; lambda > a0 * 0.03 ");
                                     state = States.L_bfrac;
                                     continue;
                                 }
-                            } else if (a0 <= 100.0) {
-                                debugPrintf("  a0 <= 100; a0 <= b0 >= 40;");
-                                state = States.L_bfrac;
-                                continue;
-                            } else if (lambda > a0 * 0.03) {
-                                debugPrintf("  b0 >= a0 > 100; lambda > a0 * 0.03 ");
-                                state = States.L_bfrac;
-                                continue;
-                            }
 
-                            /* else if none of the above L180: */
-                            w = basym(a0, b0, lambda, eps * 100.0, logP);
-                            w1 = logP ? log1Exp(w) : 0.5 - w + 0.5;
-                            debugPrintf("  b0 >= a0 > 100; lambda <= a0 * 0.03: *w:= basym(*) =%.15f\n",
-                                            w);
-                            state = States.L_end;
-                            continue;
+                                /* else if none of the above L180: */
+                                w = basym(a0, b0, lambda, eps * 100.0, logP);
+                                w1 = logP ? log1Exp(w) : 0.5 - w + 0.5;
+                                debugPrintf("  b0 >= a0 > 100; lambda <= a0 * 0.03: *w:= basym(*) =%.15f\n", w);
+                                break L_end;
 
-                        } /* else: a, b > 1 */
+                            } /* else: a, b > 1 */
 
 /* EVALUATION OF THE APPROPRIATE ALGORITHM */
 
-                    case L_w_bpser: // was L100
-                        w = bpser(a0, b0, x0, eps, logP);
-                        w1 = logP ? log1Exp(w) : 0.5 - w + 0.5;
-                        debugPrintf(" L_w_bpser: *w := bpser(*) = %.1fg\n", w);
-                        state = States.L_end;
-                        continue;
+                        case L_w_bpser: // was L100
+                            w = bpser(a0, b0, x0, eps, logP);
+                            w1 = logP ? log1Exp(w) : 0.5 - w + 0.5;
+                            debugPrintf(" L_w_bpser: *w := bpser(*) = %.1fg\n", w);
+                            break L_end;
 
-                    case L_w1_bpser:  // was L110
-                        w1 = bpser(b0, a0, y0, eps, logP);
-                        w = logP ? log1Exp(w1) : 0.5 - w1 + 0.5;
-                        debugPrintf(" L_w1_bpser: *w1 := bpser(*) = %.15f\n", w1);
-                        state = States.L_end;
-                        continue;
+                        case L_w1_bpser:  // was L110
+                            w1 = bpser(b0, a0, y0, eps, logP);
+                            w = logP ? log1Exp(w1) : 0.5 - w1 + 0.5;
+                            debugPrintf(" L_w1_bpser: *w1 := bpser(*) = %.15f\n", w1);
+                            break L_end;
 
-                    case L_bfrac:
-                        w = bfrac(a0, b0, x0, y0, lambda, eps * 15.0, logP);
-                        w1 = logP ? log1Exp(w) : 0.5 - w + 0.5;
-                        debugPrintf(" L_bfrac: *w := bfrac(*) = %f\n", w);
-                        state = States.L_end;
-                        continue;
+                        case L_bfrac:
+                            w = bfrac(a0, b0, x0, y0, lambda, eps * 15.0, logP);
+                            w1 = logP ? log1Exp(w) : 0.5 - w + 0.5;
+                            debugPrintf(" L_bfrac: *w := bfrac(*) = %f\n", w);
+                            break L_end;
 
-                    case L140:
-                        /* b0 := fractional_part( b0 ) in (0, 1] */
-                        n = (int) b0;
-                        b0 -= n;
-                        if (b0 == 0.) {
-                            --n;
-                            b0 = 1.;
-                        }
+                        case L140:
+                            /* b0 := fractional_part( b0 ) in (0, 1] */
+                            n = (int) b0;
+                            b0 -= n;
+                            if (b0 == 0.) {
+                                --n;
+                                b0 = 1.;
+                            }
 
-                        w = bup(b0, a0, y0, x0, n, eps, false);
+                            w = bup(b0, a0, y0, x0, n, eps, false);
 
-                        debugPrintf(" L140: *w := bup(b0=%g,..) = %.15f; ", b0, w);
-                        if (w < DBL_MIN && logP) { /* do not believe it; try bpser() : */
-                            /* revert: */b0 += n;
-                            /* which is only valid if b0 <= 1 || b0*x0 <= 0.7 */
-                            state = States.L_w_bpser;
-                            continue;
-                        }
-                        if (x0 <= 0.7) {
-                            /* log_p : TODO: w = bup(.) + bpser(.) -- not so easy to use log-scale */
-                            w += bpser(a0, b0, x0, eps, /* log_p = */false);
-                            debugPrintf(" x0 <= 0.7: *w := *w + bpser(*) = %.15f\n", w);
+                            debugPrintf(" L140: *w := bup(b0=%g,..) = %.15f; ", b0, w);
+                            if (w < DBL_MIN && logP) { /* do not believe it; try bpser() : */
+                                /* revert: */b0 += n;
+                                /* which is only valid if b0 <= 1 || b0*x0 <= 0.7 */
+                                state = States.L_w_bpser;
+                                continue;
+                            }
+                            if (x0 <= 0.7) {
+                                /*
+                                 * log_p : TODO: w = bup(.) + bpser(.) -- not so easy to use
+                                 * log-scale
+                                 */
+                                w += bpser(a0, b0, x0, eps, /* log_p = */false);
+                                debugPrintf(" x0 <= 0.7: *w := *w + bpser(*) = %.15f\n", w);
+                                state = States.L_end_from_w;
+                                continue;
+                            }
+                            /* L150: */
+                            if (a0 <= 15.0) {
+                                n = 20;
+                                w += bup(a0, b0, x0, y0, n, eps, false);
+                                debugPrintf("\n a0 <= 15: *w := *w + bup(*) = %.15f;", w);
+                                a0 += n;
+                            }
+                            debugPrintf(" bgrat(*, w=%.15f) ", w);
+                            bgrat.w = w;
+                            bgrat.bgrat(a0, b0, x0, y0, 15 * eps, false);
+                            w = bgrat.w;
+                            if (bgrat.ierr != 0) {
+                                ierr = 8;
+                            }
                             state = States.L_end_from_w;
                             continue;
-                        }
-                        /* L150: */
-                        if (a0 <= 15.0) {
-                            n = 20;
-                            w += bup(a0, b0, x0, y0, n, eps, false);
-                            debugPrintf("\n a0 <= 15: *w := *w + bup(*) = %.15f;", w);
-                            a0 += n;
-                        }
-                        debugPrintf(" bgrat(*, w=%.15f) ", w);
-                        bgrat.w = w;
-                        bgrat.bgrat(a0, b0, x0, y0, 15 * eps, false);
-                        w = bgrat.w;
-                        if (bgrat.ierr != 0) {
-                            ierr = 8;
-                        }
-                        state = States.L_end_from_w;
-                        continue;
 
 /* TERMINATION OF THE PROCEDURE */
 
-                    case L200:
-                    case L201:
-                        if (state == States.L200 && a == 0.0) {
-                            ierr = 6;
-                            return;
-                        }
-                        // else:
-                        w = DPQ.d0(logP);
-                        w1 = DPQ.d1(logP);
-                        return;
+                        case L_end_from_w:
+                            if (logP) {
+                                w1 = Math.log1p(-w);
+                                w = Math.log(w);
+                            } else {
+                                w1 = 0.5 - w + 0.5;
+                            }
+                            break L_end;
 
-                    case L210:
-                    case L211:
-                        if (state == States.L210 && b == 0.0) {
-                            ierr = 7;
-                            return;
-                        }
-                        // else:
-                        w = DPQ.d1(logP);
-                        w1 = DPQ.d0(logP);
-                        return;
+                        case L_end_from_w1:
+                            if (logP) {
+                                w = Math.log1p(-w1);
+                                w1 = Math.log(w1);
+                            } else {
+                                w = 0.5 - w1 + 0.5;
+                            }
+                            break L_end;
 
-                    case L_end_from_w:
-                        if (logP) {
-                            w1 = Math.log1p(-w);
-                            w = Math.log(w);
-                        } else {
-                            w1 = 0.5 - w + 0.5;
-                        }
-                        state = States.L_end;
-                        continue;
-
-                    case L_end_from_w1:
-                        if (logP) {
-                            w = Math.log1p(-w1);
-                            w1 = Math.log(w1);
-                        } else {
-                            w = 0.5 - w1 + 0.5;
-                        }
-                        state = States.L_end;
-                        continue;
-
-                    case L_end_from_w1_log:
-                        // *w1 = log(w1) already; w = 1 - w1 ==> log(w) = log(1 - w1) = log(1 -
+                        case L_end_from_w1_log:
+                            // *w1 = log(w1) already; w = 1 - w1 ==> log(w) = log(1 - w1) = log(1 -
 // exp(*w1))
-                        if (logP) {
-                            w = log1Exp(w1);
-                        } else {
-                            w = /* 1 - exp(*w1) */-Math.expm1(w1);
-                            w1 = Math.exp(w1);
-                        }
-                        state = States.L_end;
-                        continue;
+                            if (logP) {
+                                w = log1Exp(w1);
+                            } else {
+                                w = /* 1 - exp(*w1) */-Math.expm1(w1);
+                                w1 = Math.exp(w1);
+                            }
+                            break L_end;
 
-                    case L_end:
-                        if (doSwap) { /* swap */
-                            double t = w;
-                            w = w1;
-                            w1 = t;
-                        }
-                        return;
-                    default:
-                        throw RInternalError.shouldNotReachHere("state: " + state);
-                }/* bratio */
+                        default:
+                            throw RInternalError.shouldNotReachHere("state: " + state);
+                    }/* bratio */
+                }
+                // unreachable:
+                // break;
             }
+// L_end:
+            if (doSwap) { /* swap */
+                double t = w;
+                w = w1;
+                w1 = t;
+            }
+            return result(w, w1, ierr);
         }
     }
 
@@ -654,11 +661,11 @@ public class TOMS708 {
     private static double fpser(double a, double b, double x, double eps, boolean logP) {
 /*
  * ----------------------------------------------------------------------- *
- * 
+ *
  * EVALUATION OF I (A,B) X
- * 
+ *
  * FOR B < MIN(EPS, EPS*A) AND X <= 0.5
- * 
+ *
  * -----------------------------------------------------------------------
  */
 
@@ -1322,7 +1329,7 @@ public class TOMS708 {
  * ----------------------------------------------------------------------- Scaled complement of
  * incomplete gamma ratio function grat_r(a,x,r) := Q(a,x) / r where Q(a,x) = pgamma(x,a,
  * lower.tail=false) and r = e^(-x)* x^a / Gamma(a) == exp(log_r)
- * 
+ *
  * It is assumed that a <= 1. eps is the tolerance to be used.
  * -----------------------------------------------------------------------
  */
@@ -1897,13 +1904,13 @@ public class TOMS708 {
         double x = initialX;
 /*
  * ---------------------------------------------------------------------
- * 
+ *
  * Evaluation of the Digamma function psi(x)
- * 
+ *
  * -----------
- * 
+ *
  * Psi(xx) is assigned the value 0 when the digamma function cannot be computed.
- * 
+ *
  * The main computation involves evaluation of rational Chebyshev approximations published in Math.
  * Comp. 27, 123-127(1973) by Cody, Strecok and Thacher.
  */

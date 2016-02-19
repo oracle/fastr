@@ -12,18 +12,13 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
-public abstract class Qbinom extends RExternalBuiltinNode.Arg5 {
+// transcribed from qbinom.c
+
+public final class Qbinom implements StatsFunctions.Function3_2 {
 
     private static final class Search {
         private double z;
@@ -32,13 +27,13 @@ public abstract class Qbinom extends RExternalBuiltinNode.Arg5 {
             this.z = z;
         }
 
-        double doSearch(double initialY, double p, double n, double pr, double incr) {
+        double doSearch(double initialY, double p, double n, double pr, double incr, Pbinom pbinom1, Pbinom pbinom2) {
             double y = initialY;
             if (z >= p) {
                 /* search to the left */
                 for (;;) {
                     double newz;
-                    if (y == 0 || (newz = Pbinom.pbinom(y - incr, n, pr, /* l._t. */true, /* logP */false)) < p) {
+                    if (y == 0 || (newz = pbinom1.evaluate(y - incr, n, pr, true, false)) < p) {
                         return y;
                     }
                     y = Math.max(0, y - incr);
@@ -47,7 +42,7 @@ public abstract class Qbinom extends RExternalBuiltinNode.Arg5 {
             } else { /* search to the right */
                 for (;;) {
                     y = Math.min(y + incr, n);
-                    if (y == n || (z = Pbinom.pbinom(y, n, pr, /* l._t. */true, /* logP */false)) >= p) {
+                    if (y == n || (z = pbinom2.evaluate(y, n, pr, true, false)) >= p) {
                         return y;
                     }
                 }
@@ -55,31 +50,42 @@ public abstract class Qbinom extends RExternalBuiltinNode.Arg5 {
         }
     }
 
-    @TruffleBoundary
-    private static double qbinom(double initialP, double n, double pr, boolean lowerTail, boolean logP) {
+    private final BranchProfile nanProfile = BranchProfile.create();
+    private final ConditionProfile smallNProfile = ConditionProfile.createBinaryProfile();
+    private final Pbinom pbinom = new Pbinom();
+    private final Pbinom pbinomSearch1 = new Pbinom();
+    private final Pbinom pbinomSearch2 = new Pbinom();
+
+    public double evaluate(double initialP, double n, double pr, boolean lowerTail, boolean logProb) {
         double p = initialP;
 
         if (Double.isNaN(p) || Double.isNaN(n) || Double.isNaN(pr)) {
+            nanProfile.enter();
             return p + n + pr;
         }
 
         if (!Double.isFinite(n) || !Double.isFinite(pr)) {
+            nanProfile.enter();
             return Double.NaN;
         }
         /* if logP is true, p = -Inf is a legitimate value */
-        if (!Double.isFinite(p) && !logP) {
+        if (!Double.isFinite(p) && !logProb) {
+            nanProfile.enter();
             return Double.NaN;
         }
 
         if (n != Math.floor(n + 0.5)) {
+            nanProfile.enter();
             return Double.NaN;
         }
         if (pr < 0 || pr > 1 || n < 0) {
+            nanProfile.enter();
             return Double.NaN;
         }
 
-        if (logP) {
+        if (logProb) {
             if (p > 0) {
+                nanProfile.enter();
                 return Double.NaN;
             }
             if (p == 0) {
@@ -90,6 +96,7 @@ public abstract class Qbinom extends RExternalBuiltinNode.Arg5 {
             }
         } else { /* !logP */
             if (p < 0 || p > 1) {
+                nanProfile.enter();
                 return Double.NaN;
             }
             if (p == 0) {
@@ -100,12 +107,12 @@ public abstract class Qbinom extends RExternalBuiltinNode.Arg5 {
             }
         }
 
-        if (pr == 0. || n == 0) {
-            return 0.;
+        if (pr == 0 || n == 0) {
+            return 0;
         }
 
         double q = 1 - pr;
-        if (q == 0.) {
+        if (q == 0) {
             /* covers the full range of the distribution */
             return n;
         }
@@ -117,12 +124,12 @@ public abstract class Qbinom extends RExternalBuiltinNode.Arg5 {
          * Note : "same" code in qpois.c, qbinom.c, qnbinom.c -- FIXME: This is far from optimal
          * [cancellation for p ~= 1, etc]:
          */
-        if (!lowerTail || logP) {
-            p = DPQ.dtQIv(logP, lowerTail, p); /* need check again (cancellation!): */
-            if (p == 0.) {
-                return 0.;
+        if (!lowerTail || logProb) {
+            p = DPQ.dtQIv(p, lowerTail, logProb); /* need check again (cancellation!): */
+            if (p == 0) {
+                return 0;
             }
-            if (p == 1.) {
+            if (p == 1) {
                 return n;
             }
         }
@@ -141,58 +148,24 @@ public abstract class Qbinom extends RExternalBuiltinNode.Arg5 {
             y = n;
         }
 
-        z = Pbinom.pbinom(y, n, pr, /* lowerTail */true, /* logP */false);
+        z = pbinom.evaluate(y, n, pr, /* lowerTail */true, /* logP */false);
 
         /* fuzz to ensure left continuity: */
         p *= 1 - 64 * RRuntime.EPSILON;
 
         Search search = new Search(z);
 
-        if (n < 1e5) {
-            return search.doSearch(y, p, n, pr, 1);
+        if (smallNProfile.profile(n < 1e5)) {
+            return search.doSearch(y, p, n, pr, 1, pbinomSearch1, pbinomSearch2);
         }
         /* Otherwise be a bit cleverer in the search */
         double incr = Math.floor(n * 0.001);
         double oldincr;
         do {
             oldincr = incr;
-            y = search.doSearch(y, p, n, pr, incr);
+            y = search.doSearch(y, p, n, pr, incr, pbinomSearch1, pbinomSearch2);
             incr = Math.max(1, Math.floor(incr / 100));
         } while (oldincr > 1 && incr > n * 1e-15);
         return y;
-    }
-
-    @Override
-    protected void createCasts(CastBuilder casts) {
-        casts.toDouble(0).toDouble(1).toDouble(2).firstBoolean(3).firstBoolean(4);
-    }
-
-    @Specialization
-    protected Object qbinom(RAbstractDoubleVector p, RAbstractDoubleVector n, RAbstractDoubleVector pr, boolean lowerTail, boolean logP, //
-                    @Cached("create()") NAProfile na) {
-        int pLength = p.getLength();
-        int nLength = n.getLength();
-        int prLength = pr.getLength();
-        if (pLength == 0 || nLength == 0 || prLength == 0) {
-            return RDataFactory.createEmptyDoubleVector();
-        }
-        int length = Math.max(pLength, Math.max(nLength, prLength));
-        double[] result = new double[length];
-
-        boolean complete = true;
-        boolean nans = false;
-        for (int i = 0; i < length; i++) {
-            double value = qbinom(p.getDataAt(i % pLength), n.getDataAt(i % nLength), pr.getDataAt(i % prLength), lowerTail, logP);
-            if (na.isNA(value)) {
-                complete = false;
-            } else if (Double.isNaN(value)) {
-                nans = true;
-            }
-            result[i] = value;
-        }
-        if (nans) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.NAN_PRODUCED);
-        }
-        return RDataFactory.createDoubleVector(result, complete);
     }
 }
