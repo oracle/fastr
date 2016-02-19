@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
@@ -118,17 +119,21 @@ public abstract class ReplaceVectorNode extends Node {
             writtenValue = ((RDouble) writtenValue).getValue();
         }
         Object position = positions[0];
-        if (position instanceof String || position instanceof Double || position instanceof Integer) {
-            return ForeignAccess.execute(foreignRead, frame, object, new Object[]{position, writtenValue});
-        } else if (position instanceof RAbstractStringVector) {
-            String string = firstString.executeString(castNode.execute(position));
-            return ForeignAccess.execute(foreignRead, frame, object, new Object[]{string, writtenValue});
-        } else if (position instanceof RAbstractDoubleVector) {
-            return ForeignAccess.execute(foreignRead, frame, object, new Object[]{((RAbstractDoubleVector) position).getDataAt(0), writtenValue});
-        } else if (position instanceof RAbstractIntVector) {
-            return ForeignAccess.execute(foreignRead, frame, object, new Object[]{((RAbstractIntVector) position).getDataAt(0), writtenValue});
-        } else {
-            throw RError.error(this, RError.Message.GENERIC, "invalid index during foreign access");
+        try {
+            if (position instanceof String || position instanceof Double || position instanceof Integer) {
+                return ForeignAccess.send(foreignRead, frame, object, new Object[]{position, writtenValue});
+            } else if (position instanceof RAbstractStringVector) {
+                String string = firstString.executeString(castNode.execute(position));
+                return ForeignAccess.send(foreignRead, frame, object, new Object[]{string, writtenValue});
+            } else if (position instanceof RAbstractDoubleVector) {
+                return ForeignAccess.send(foreignRead, frame, object, new Object[]{((RAbstractDoubleVector) position).getDataAt(0), writtenValue});
+            } else if (position instanceof RAbstractIntVector) {
+                return ForeignAccess.send(foreignRead, frame, object, new Object[]{((RAbstractIntVector) position).getDataAt(0), writtenValue});
+            } else {
+                throw RError.error(this, RError.Message.GENERIC, "invalid index during foreign access");
+            }
+        } catch (InteropException e) {
+            throw RError.interopError(RError.findParentRBase(this), e);
         }
     }
 

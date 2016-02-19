@@ -49,7 +49,7 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
             RSyntaxNode snode = lang.getRep().asRSyntaxNode();
             RSyntaxNode subRNode = snode.substituteImpl(env);
             // remove old source sections
-            clearSourceSection(subRNode.asRNode());
+            unsetSourceSections(subRNode.asRNode());
             // create source for entire tree
             RASTDeparse.ensureSourceSection(subRNode);
             return RASTUtils.createLanguageElement(subRNode.asRNode());
@@ -80,9 +80,12 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
         return list2EnvNode.execute(list, env);
     }
 
-    private static void clearSourceSection(Node node) {
+    private static void unsetSourceSections(Node node) {
         node.accept(n -> {
-            n.clearSourceSection();
+            if (n instanceof RSyntaxNode) {
+                RSyntaxNode sn = (RSyntaxNode) n;
+                sn.unsetSourceSection();
+            }
             return true;
         });
     }

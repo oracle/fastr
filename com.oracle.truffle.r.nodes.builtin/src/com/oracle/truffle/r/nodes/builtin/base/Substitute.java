@@ -118,13 +118,13 @@ public abstract class Substitute extends RBuiltinNode {
         RSyntaxNode rNode = (RSyntaxNode) NodeUtil.cloneNode(node);
         RSyntaxNode subRNode = rNode.substituteImpl(env);
         // remove old source sections
-        clearSourceSection(subRNode.asRNode());
+        unsetSourceSections(subRNode.asRNode());
         // create source for entire tree
         RASTDeparse.ensureSourceSection(subRNode);
         return RASTUtils.createLanguageElement(subRNode.asRNode());
     }
 
-    private static void clearSourceSection(Node node) {
+    private static void unsetSourceSections(Node node) {
         node.accept(n -> {
             if (n instanceof RSyntaxNode) {
                 RSyntaxNode sn = (RSyntaxNode) n;

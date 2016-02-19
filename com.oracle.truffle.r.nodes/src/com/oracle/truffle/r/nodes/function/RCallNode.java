@@ -315,7 +315,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode {
                 foreignCallArgCount = argumentsArray.length;
             }
             try {
-                return ForeignAccess.execute(foreignCall, frame, (TruffleObject) functionObject, argumentsArray);
+                return ForeignAccess.send(foreignCall, frame, (TruffleObject) functionObject, argumentsArray);
             } catch (Throwable e) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.GENERIC, "Foreign function failed: " + getMessage(e));

@@ -14,6 +14,7 @@ package com.oracle.truffle.r.runtime;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.*;
@@ -129,7 +130,12 @@ public final class RError extends RuntimeException {
         throw error0(findParentRBase(node), msg, (Object[]) null);
     }
 
-    private static RBaseNode findParentRBase(Node node) {
+    @TruffleBoundary
+    public static RError interopError(RBaseNode node, InteropException e) {
+        throw error0(node, RError.Message.GENERIC, "Foreign function failed: " + e.getMessage() != null ? e.getMessage() : e.toString());
+    }
+
+    public static RBaseNode findParentRBase(Node node) {
         Node current = node;
         while (current != null) {
             if (current instanceof RBaseNode) {
