@@ -121,8 +121,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
         String gen = castStringScalar.executeString(genObj);
         if (sameNamesProfile.profile(gen == fname)) {
             return stdGenericInternal(frame, fVec, fn);
-        }
-        else {
+        } else {
             // in many cases == is good enough (and this will be the fastest path), but it's not
             // always sufficient
             if (!gen.equals(fname)) {

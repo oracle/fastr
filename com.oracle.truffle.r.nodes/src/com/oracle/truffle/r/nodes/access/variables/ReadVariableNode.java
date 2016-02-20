@@ -919,11 +919,9 @@ abstract class CheckTypeNode extends RBaseNode {
     boolean checkType(Object o) {
         if (type == RType.Any) {
             return true;
-        }
-        else if (type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special) {
+        } else if (type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special) {
             return o instanceof TruffleObject && !(o instanceof RTypedValue);
-        }
-        else {
+        } else {
             return false;
         }
     }
