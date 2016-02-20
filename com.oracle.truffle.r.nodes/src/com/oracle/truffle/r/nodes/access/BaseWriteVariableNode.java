@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.profiles.*;
@@ -68,6 +69,8 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode.Mode, boolean)
      */
     protected final Object shareObjectValue(Frame frame, FrameSlot frameSlot, Object value, Mode mode, boolean isSuper) {
+        CompilerAsserts.compilationConstant(mode);
+        CompilerAsserts.compilationConstant(isSuper);
         Object newValue = value;
         // for the meaning of INVISIBLE mode see the comment preceding the current method;
         // also change state when assigning to the enclosing frame as there must
