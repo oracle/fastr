@@ -41,97 +41,97 @@ import com.oracle.truffle.r.runtime.RError;
 
 public final class CastBuilder {
 
-        private static final CastNode[] EMPTY_CASTS_ARRAY = new CastNode[0];
+    private static final CastNode[] EMPTY_CASTS_ARRAY = new CastNode[0];
 
-        private CastNode[] casts = EMPTY_CASTS_ARRAY;
+    private CastNode[] casts = EMPTY_CASTS_ARRAY;
 
-        private CastBuilder insert(int index, CastNode cast) {
-            if (index >= casts.length) {
-                casts = Arrays.copyOf(casts, index + 1);
-            }
-            if (casts[index] == null) {
-                casts[index] = cast;
-            } else {
-                casts[index] = new ChainedCastNode(casts[index], cast);
-            }
-            return this;
+    private CastBuilder insert(int index, CastNode cast) {
+        if (index >= casts.length) {
+            casts = Arrays.copyOf(casts, index + 1);
         }
-
-        public CastNode[] getCasts() {
-            return casts;
+        if (casts[index] == null) {
+            casts[index] = cast;
+        } else {
+            casts[index] = new ChainedCastNode(casts[index], cast);
         }
+        return this;
+    }
 
-        public CastBuilder toAttributable(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            return insert(index, CastToAttributableNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
-        }
+    public CastNode[] getCasts() {
+        return casts;
+    }
 
-        public CastBuilder toVector(int index) {
-            return toVector(index, false);
-        }
+    public CastBuilder toAttributable(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+        return insert(index, CastToAttributableNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
+    }
 
-        public CastBuilder toVector(int index, boolean nonVectorPreserved) {
-            return insert(index, CastToVectorNodeGen.create(nonVectorPreserved));
-        }
+    public CastBuilder toVector(int index) {
+        return toVector(index, false);
+    }
 
-        public CastBuilder toInteger(int index) {
-            return toInteger(index, false, false, false);
-        }
+    public CastBuilder toVector(int index, boolean nonVectorPreserved) {
+        return insert(index, CastToVectorNodeGen.create(nonVectorPreserved));
+    }
 
-        public CastBuilder toInteger(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            return insert(index, CastIntegerNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
-        }
+    public CastBuilder toInteger(int index) {
+        return toInteger(index, false, false, false);
+    }
 
-        public CastBuilder toDouble(int index) {
-            return toDouble(index, false, false, false);
-        }
+    public CastBuilder toInteger(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+        return insert(index, CastIntegerNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
+    }
 
-        public CastBuilder toDouble(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            return insert(index, CastDoubleNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
-        }
+    public CastBuilder toDouble(int index) {
+        return toDouble(index, false, false, false);
+    }
 
-        public CastBuilder toLogical(int index) {
-            return toLogical(index, false, false, false);
-        }
+    public CastBuilder toDouble(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+        return insert(index, CastDoubleNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
+    }
 
-        public CastBuilder toLogical(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            return insert(index, CastLogicalNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
-        }
+    public CastBuilder toLogical(int index) {
+        return toLogical(index, false, false, false);
+    }
 
-        public CastBuilder toCharacter(int index) {
-            return toCharacter(index, false, false, false, false);
-        }
+    public CastBuilder toLogical(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+        return insert(index, CastLogicalNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
+    }
 
-        public CastBuilder toCharacter(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation, boolean emptyVectorConvertedToNull) {
-            return insert(index, CastStringNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation, emptyVectorConvertedToNull));
-        }
+    public CastBuilder toCharacter(int index) {
+        return toCharacter(index, false, false, false, false);
+    }
 
-        public CastBuilder boxPrimitive(int index) {
-            return insert(index, BoxPrimitiveNodeGen.create());
-        }
+    public CastBuilder toCharacter(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation, boolean emptyVectorConvertedToNull) {
+        return insert(index, CastStringNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation, emptyVectorConvertedToNull));
+    }
 
-        public CastBuilder custom(int index, CastNode cast) {
-            return insert(index, cast);
-        }
+    public CastBuilder boxPrimitive(int index) {
+        return insert(index, BoxPrimitiveNodeGen.create());
+    }
 
-        public CastBuilder firstIntegerWithWarning(int index, int intNa, String name) {
-            insert(index, CastIntegerNodeGen.create(false, false, false));
-            return insert(index, FirstIntNode.createWithWarning(RError.Message.FIRST_ELEMENT_USED, name, intNa));
-        }
+    public CastBuilder custom(int index, CastNode cast) {
+        return insert(index, cast);
+    }
 
-        public CastBuilder convertToInteger(int index) {
-            return insert(index, ConvertIntNodeGen.create());
-        }
+    public CastBuilder firstIntegerWithWarning(int index, int intNa, String name) {
+        insert(index, CastIntegerNodeGen.create(false, false, false));
+        return insert(index, FirstIntNode.createWithWarning(RError.Message.FIRST_ELEMENT_USED, name, intNa));
+    }
 
-        public CastBuilder firstIntegerWithError(int index, RError.Message error, String name) {
-            insert(index, CastIntegerNodeGen.create(false, false, false));
-            return insert(index, FirstIntNode.createWithError(error, name));
-        }
+    public CastBuilder convertToInteger(int index) {
+        return insert(index, ConvertIntNodeGen.create());
+    }
 
-        public CastBuilder firstStringWithError(int index, RError.Message error, String name) {
-            return insert(index, FirstStringNode.createWithError(error, name));
-        }
+    public CastBuilder firstIntegerWithError(int index, RError.Message error, String name) {
+        insert(index, CastIntegerNodeGen.create(false, false, false));
+        return insert(index, FirstIntNode.createWithError(error, name));
+    }
 
-        public CastBuilder firstBoolean(int index) {
-            return insert(index, FirstBooleanNodeGen.create());
-        }
+    public CastBuilder firstStringWithError(int index, RError.Message error, String name) {
+        return insert(index, FirstStringNode.createWithError(error, name));
+    }
+
+    public CastBuilder firstBoolean(int index) {
+        return insert(index, FirstBooleanNodeGen.create());
+    }
 }

@@ -18,13 +18,13 @@ public final class MathConstants {
         // private
     }
 
-/* ----- The following constants and entry points are part of the R API ---- */
+    /* ----- The following constants and entry points are part of the R API ---- */
 
-/* 30 Decimal-place constants */
-/* Computed with bc -l (scale=32; proper round) */
+    /* 30 Decimal-place constants */
+    /* Computed with bc -l (scale=32; proper round) */
 
-/* SVID & X/Open Constants */
-/* Names from Solaris math.h */
+    /* SVID & X/Open Constants */
+    /* Names from Solaris math.h */
 
     // e
     public static final double M_E = 2.718281828459045235360287471353;
@@ -55,7 +55,7 @@ public final class MathConstants {
     // 1/sqrt(2)
     public static final double M_SQRT1_2 = 0.707106781186547524400844362105;
 
-/* R-Specific Constants */
+    /* R-Specific Constants */
     // sqrt(3)
     public static final double M_SQRT_3 = 1.732050807568877293527446341506;
     // sqrt(32)

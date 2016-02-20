@@ -165,12 +165,13 @@ public class TOMS708 {
             double eps = 0;
             double lambda = 0;
 
-/*
- * eps is a machine dependent constant: the smallest floating point number for which 1.0 + eps > 1.0
- */
+            /*
+             * eps is a machine dependent constant: the smallest floating point number for which 1.0
+             * + eps > 1.0
+             */
             eps = RRuntime.EPSILON; /* == DBL_EPSILON (in R, Rmath) */
 
-/* ----------------------------------------------------------------------- */
+            /* ----------------------------------------------------------------------- */
             w = DPQ.d0(logP);
             w1 = DPQ.d0(logP);
 
@@ -428,7 +429,7 @@ public class TOMS708 {
 
                             } /* else: a, b > 1 */
 
-/* EVALUATION OF THE APPROPRIATE ALGORITHM */
+                            /* EVALUATION OF THE APPROPRIATE ALGORITHM */
 
                         case L_w_bpser: // was L100
                             w = bpser(a0, b0, x0, eps, logP);
@@ -493,7 +494,7 @@ public class TOMS708 {
                             state = States.L_end_from_w;
                             continue;
 
-/* TERMINATION OF THE PROCEDURE */
+                            /* TERMINATION OF THE PROCEDURE */
 
                         case L_end_from_w:
                             if (logP) {
@@ -515,7 +516,7 @@ public class TOMS708 {
 
                         case L_end_from_w1_log:
                             // *w1 = log(w1) already; w = 1 - w1 ==> log(w) = log(1 - w1) = log(1 -
-// exp(*w1))
+                            // exp(*w1))
                             if (logP) {
                                 w = log1Exp(w1);
                             } else {
@@ -531,7 +532,7 @@ public class TOMS708 {
                 // unreachable:
                 // break;
             }
-// L_end:
+            // L_end:
             if (doSwap) { /* swap */
                 double t = w;
                 w = w1;
@@ -548,15 +549,16 @@ public class TOMS708 {
         private double w;
 
         void bgrat(double a, double b, double x, double y, double eps, boolean logW) {
-/*
- * ----------------------------------------------------------------------- Asymptotic Expansion for
- * I_x(a,b) when a is larger than b. Compute w := w + I_x(a,b) It is assumed a >= 15 and b <= 1. eps
- * is the tolerance used. ierr is a variable that reports the status of the results.
- *
- * if(log_w), *w itself must be in log-space; compute w := w + I_x(a,b) but return *w = log(w): *w
- * := log(exp(*w) + I_x(a,b)) = logspace_add(*w, log( I_x(a,b) ))
- * -----------------------------------------------------------------------
- */
+            /*
+             * ----------------------------------------------------------------------- Asymptotic
+             * Expansion for I_x(a,b) when a is larger than b. Compute w := w + I_x(a,b) It is
+             * assumed a >= 15 and b <= 1. eps is the tolerance used. ierr is a variable that
+             * reports the status of the results.
+             * 
+             * if(log_w), *w itself must be in log-space; compute w := w + I_x(a,b) but return *w =
+             * log(w): *w := log(exp(*w) + I_x(a,b)) = logspace_add(*w, log( I_x(a,b) ))
+             * -----------------------------------------------------------------------
+             */
 
             double[] c = new double[n_terms_bgrat];
             double[] d = new double[n_terms_bgrat];
@@ -578,7 +580,7 @@ public class TOMS708 {
                 return;
             }
 
-/* COMPUTATION OF THE EXPANSION */
+            /* COMPUTATION OF THE EXPANSION */
             /*
              * r1 = b * (gam1(b) + 1.0) * exp(b * log(z)),// = b/gamma(b+1) z^b = z^b / gamma(b) set
              * r := exp(-z) * z^b / gamma(b) ; gam1(b) = 1/gamma(b+1) - 1 , b in [-1/2, 3/2]
@@ -646,7 +648,7 @@ public class TOMS708 {
                 }
             }
 
-/* ADD THE RESULTS TO W */
+            /* ADD THE RESULTS TO W */
             ierr = 0;
             if (logW) {
                 // *w is in log space already:
@@ -659,15 +661,15 @@ public class TOMS708 {
     }
 
     private static double fpser(double a, double b, double x, double eps, boolean logP) {
-/*
- * ----------------------------------------------------------------------- *
- *
- * EVALUATION OF I (A,B) X
- *
- * FOR B < MIN(EPS, EPS*A) AND X <= 0.5
- *
- * -----------------------------------------------------------------------
- */
+        /*
+         * ----------------------------------------------------------------------- *
+         * 
+         * EVALUATION OF I (A,B) X
+         * 
+         * FOR B < MIN(EPS, EPS*A) AND X <= 0.5
+         * 
+         * -----------------------------------------------------------------------
+         */
 
         double ans;
 
@@ -684,7 +686,7 @@ public class TOMS708 {
             ans = 1.;
         }
 
-/* NOTE THAT 1/B(A,B) = B */
+        /* NOTE THAT 1/B(A,B) = B */
 
         if (logP) {
             ans += log(b) - log(a);
@@ -713,12 +715,12 @@ public class TOMS708 {
     } /* fpser */
 
     static double apser(double a, double b, double x, double eps) {
-/*
- * ----------------------------------------------------------------------- apser() yields the
- * incomplete beta ratio I_{1-x}(b,a) for a <= min(eps,eps*b), b*x <= 1, and x <= 0.5, i.e., a is
- * very small. Use only if above inequalities are satisfied.
- * -----------------------------------------------------------------------
- */
+        /*
+         * ----------------------------------------------------------------------- apser() yields
+         * the incomplete beta ratio I_{1-x}(b,a) for a <= min(eps,eps*b), b*x <= 1, and x <= 0.5,
+         * i.e., a is very small. Use only if above inequalities are satisfied.
+         * -----------------------------------------------------------------------
+         */
 
         double g = .577215664901533;
 
@@ -747,18 +749,18 @@ public class TOMS708 {
     } /* apser */
 
     static double bpser(double a, double b, double x, double eps, boolean logP) {
-/*
- * ----------------------------------------------------------------------- Power SERies expansion
- * for evaluating I_x(a,b) when b <= 1 or b*x <= 0.7. eps is the tolerance used.
- * -----------------------------------------------------------------------
- */
+        /*
+         * ----------------------------------------------------------------------- Power SERies
+         * expansion for evaluating I_x(a,b) when b <= 1 or b*x <= 0.7. eps is the tolerance used.
+         * -----------------------------------------------------------------------
+         */
 
         if (x == 0.) {
             return DPQ.d0(logP);
         }
-/* ----------------------------------------------------------------------- */
-/* compute the factor x^a/(a*Beta(a,b)) */
-/* ----------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------------- */
+        /* compute the factor x^a/(a*Beta(a,b)) */
+        /* ----------------------------------------------------------------------- */
         double ans;
         double a0 = min(a, b);
         if (a0 >= 1.0) { /* ------ 1 <= a0 <= b0 ------ */
@@ -846,9 +848,9 @@ public class TOMS708 {
             return ans;
         }
 
-/* ----------------------------------------------------------------------- */
-/* COMPUTE THE SERIES */
-/* ----------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------------- */
+        /* COMPUTE THE SERIES */
+        /* ----------------------------------------------------------------------- */
         double sum = 0.;
         double n = 0.;
         double c = 1.;
@@ -881,12 +883,12 @@ public class TOMS708 {
     } /* bpser */
 
     static double bup(double a, double b, double x, double y, int n, double eps, boolean giveLog) {
-/* ----------------------------------------------------------------------- */
-/* EVALUATION OF I_x(A,B) - I_x(A+N,B) WHERE N IS A POSITIVE INT. */
-/* EPS IS THE TOLERANCE USED. */
-/* ----------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------------- */
+        /* EVALUATION OF I_x(A,B) - I_x(A+N,B) WHERE N IS A POSITIVE INT. */
+        /* EPS IS THE TOLERANCE USED. */
+        /* ----------------------------------------------------------------------- */
 
-// Obtain the scaling factor exp(-mu) and exp(mu)*(x^a * y^b / beta(a,b))/a
+        // Obtain the scaling factor exp(-mu) and exp(mu)*(x^a * y^b / beta(a,b))/a
 
         double apb = a + b;
         double ap1 = a + 1.0;
@@ -914,7 +916,7 @@ public class TOMS708 {
         int nm1 = n - 1;
         double w = d;
 
-/* LET K BE THE INDEX OF THE MAXIMUM TERM */
+        /* LET K BE THE INDEX OF THE MAXIMUM TERM */
 
         boolean doL40 = false;
         int k = 0;
@@ -938,9 +940,9 @@ public class TOMS708 {
                 k = nm1;
             }
 
-/* ADD THE INCREASING TERMS OF THE SERIES */
+            /* ADD THE INCREASING TERMS OF THE SERIES */
 
-/* L30: */
+            /* L30: */
             for (int i = 1; i <= k; ++i) {
                 double l = i - 1;
                 d = (apb + l) / (ap1 + l) * x * d;
@@ -976,11 +978,11 @@ public class TOMS708 {
     } /* bup */
 
     static double bfrac(double a, double b, double x, double y, double lambda, double eps, boolean logP) {
-/*
- * ----------------------------------------------------------------------- Continued fraction
- * expansion for I_x(a,b) when a, b > 1. It is assumed that lambda = (a + b)*y - b.
- * -----------------------------------------------------------------------
- */
+        /*
+         * ----------------------------------------------------------------------- Continued
+         * fraction expansion for I_x(a,b) when a, b > 1. It is assumed that lambda = (a + b)*y - b.
+         * -----------------------------------------------------------------------
+         */
 
         double brc = brcomp(a, b, x, y, logP);
 
@@ -1003,7 +1005,7 @@ public class TOMS708 {
         double bnp1 = c / c1;
         double r = c1 / c;
 
-/* CONTINUED FRACTION CALCULATION */
+        /* CONTINUED FRACTION CALCULATION */
 
         do {
             n += 1.0;
@@ -1043,10 +1045,10 @@ public class TOMS708 {
     } /* bfrac */
 
     static double brcomp(double a, double b, double x, double y, boolean logP) {
-/*
- * ----------------------------------------------------------------------- Evaluation of x^a * y^b /
- * Beta(a,b) -----------------------------------------------------------------------
- */
+        /*
+         * ----------------------------------------------------------------------- Evaluation of x^a
+         * * y^b / Beta(a,b) -----------------------------------------------------------------------
+         */
 
         /* R has M_1_SQRT_2PI , and M_LN_SQRT_2PI = ln(sqrt(2*pi)) = 0.918938.. */
 
@@ -1076,9 +1078,9 @@ public class TOMS708 {
                 return DPQ.dExp(z, logP);
             }
 
-/* ----------------------------------------------------------------------- */
-/* PROCEDURE FOR a < 1 OR b < 1 */
-/* ----------------------------------------------------------------------- */
+            /* ----------------------------------------------------------------------- */
+            /* PROCEDURE FOR a < 1 OR b < 1 */
+            /* ----------------------------------------------------------------------- */
 
             double b0 = max(a, b);
             if (b0 >= 8.0) { /* L80: */
@@ -1136,9 +1138,9 @@ public class TOMS708 {
             return (logP ? log(a0) + z + log1p(gam1(b0)) - log(t) : a0 * exp(z) * (gam1(b0) + 1.0) / t);
 
         } else {
-/* ----------------------------------------------------------------------- */
-/* PROCEDURE FOR A >= 8 AND B >= 8 */
-/* ----------------------------------------------------------------------- */
+            /* ----------------------------------------------------------------------- */
+            /* PROCEDURE FOR A >= 8 AND B >= 8 */
+            /* ----------------------------------------------------------------------- */
             double h;
             double x0;
             double y0;
@@ -1177,13 +1179,14 @@ public class TOMS708 {
         }
     } /* brcomp */
 
-// called only once from bup(), as r = brcmp1(mu, a, b, x, y, false) / a;
-// -----
+    // called only once from bup(), as r = brcmp1(mu, a, b, x, y, false) / a;
+    // -----
     static double brcmp1(int mu, double a, double b, double x, double y, boolean giveLog) {
-/*
- * ----------------------------------------------------------------------- Evaluation of exp(mu) *
- * x^a * y^b / beta(a,b) -----------------------------------------------------------------------
- */
+        /*
+         * ----------------------------------------------------------------------- Evaluation of
+         * exp(mu) * x^a * y^b / beta(a,b)
+         * -----------------------------------------------------------------------
+         */
 
         /* R has M_1_SQRT_2PI */
 
@@ -1273,9 +1276,9 @@ public class TOMS708 {
 
         } else {
 
-/* ----------------------------------------------------------------------- */
-/* PROCEDURE FOR A >= 8 AND B >= 8 */
-/* ----------------------------------------------------------------------- */
+            /* ----------------------------------------------------------------------- */
+            /* PROCEDURE FOR A >= 8 AND B >= 8 */
+            /* ----------------------------------------------------------------------- */
             // L100:
             double h;
             double x0;
@@ -1323,16 +1326,16 @@ public class TOMS708 {
 
     } /* brcmp1 */
 
-// called only from bgrat() , as q_r = grat_r(b, z, log_r, eps) :
+    // called only from bgrat() , as q_r = grat_r(b, z, log_r, eps) :
     static double gratR(double a, double x, double logR, double eps) {
-/*
- * ----------------------------------------------------------------------- Scaled complement of
- * incomplete gamma ratio function grat_r(a,x,r) := Q(a,x) / r where Q(a,x) = pgamma(x,a,
- * lower.tail=false) and r = e^(-x)* x^a / Gamma(a) == exp(log_r)
- *
- * It is assumed that a <= 1. eps is the tolerance to be used.
- * -----------------------------------------------------------------------
- */
+        /*
+         * ----------------------------------------------------------------------- Scaled complement
+         * of incomplete gamma ratio function grat_r(a,x,r) := Q(a,x) / r where Q(a,x) = pgamma(x,a,
+         * lower.tail=false) and r = e^(-x)* x^a / Gamma(a) == exp(log_r)
+         * 
+         * It is assumed that a <= 1. eps is the tolerance to be used.
+         * -----------------------------------------------------------------------
+         */
 
         if (a * x == 0.0) { /* L130: */
             if (x <= a) {
@@ -1424,17 +1427,17 @@ public class TOMS708 {
     private static final int num_IT = 20;
 
     static double basym(double a, double b, double lambda, double eps, boolean logP) {
-/* ----------------------------------------------------------------------- */
-/* ASYMPTOTIC EXPANSION FOR I_x(A,B) FOR LARGE A AND B. */
-/* LAMBDA = (A + B)*Y - B AND EPS IS THE TOLERANCE USED. */
-/* IT IS ASSUMED THAT LAMBDA IS NONNEGATIVE AND THAT */
-/* A AND B ARE GREATER THAN OR EQUAL TO 15. */
-/* ----------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------------- */
+        /* ASYMPTOTIC EXPANSION FOR I_x(A,B) FOR LARGE A AND B. */
+        /* LAMBDA = (A + B)*Y - B AND EPS IS THE TOLERANCE USED. */
+        /* IT IS ASSUMED THAT LAMBDA IS NONNEGATIVE AND THAT */
+        /* A AND B ARE GREATER THAN OR EQUAL TO 15. */
+        /* ----------------------------------------------------------------------- */
 
-/* ------------------------ */
-/* ****** NUM IS THE MAXIMUM VALUE THAT N CAN TAKE IN THE DO LOOP */
-/* ENDING AT STATEMENT 50. IT IS REQUIRED THAT NUM BE EVEN. */
-/* THE ARRAYS A0, B0, C, D HAVE DIMENSION NUM + 1. */
+        /* ------------------------ */
+        /* ****** NUM IS THE MAXIMUM VALUE THAT N CAN TAKE IN THE DO LOOP */
+        /* ENDING AT STATEMENT 50. IT IS REQUIRED THAT NUM BE EVEN. */
+        /* THE ARRAYS A0, B0, C, D HAVE DIMENSION NUM + 1. */
 
         double e0 = 1.12837916709551; // e0 == 2/sqrt(pi)
         double e1 = .353553390593274; // e1 == 2^(-3/2)
@@ -1540,19 +1543,19 @@ public class TOMS708 {
     } /* basym_ */
 
     static double exparg(int l) {
-/* -------------------------------------------------------------------- */
-/*
- * IF L = 0 THEN EXPARG(L) = THE LARGEST POSITIVE W FOR WHICH EXP(W) CAN BE COMPUTED. ==> exparg(0)
- * = 709.7827 nowadays.
- */
+        /* -------------------------------------------------------------------- */
+        /*
+         * IF L = 0 THEN EXPARG(L) = THE LARGEST POSITIVE W FOR WHICH EXP(W) CAN BE COMPUTED. ==>
+         * exparg(0) = 709.7827 nowadays.
+         */
 
-/*
- * IF L IS NONZERO THEN EXPARG(L) = THE LARGEST NEGATIVE W FOR WHICH THE COMPUTED VALUE OF EXP(W) IS
- * NONZERO. ==> exparg(1) = -708.3964 nowadays.
- */
+        /*
+         * IF L IS NONZERO THEN EXPARG(L) = THE LARGEST NEGATIVE W FOR WHICH THE COMPUTED VALUE OF
+         * EXP(W) IS NONZERO. ==> exparg(1) = -708.3964 nowadays.
+         */
 
-/* Note... only an approximate value for exparg(L) is needed. */
-/* -------------------------------------------------------------------- */
+        /* Note... only an approximate value for exparg(L) is needed. */
+        /* -------------------------------------------------------------------- */
 
         double lnb = .69314718055995;
         int m = (l == 0) ? MathInit.i1mach(16) : MathInit.i1mach(15) - 1;
@@ -1561,9 +1564,9 @@ public class TOMS708 {
     } /* exparg */
 
     static double esum(int mu, double x, boolean giveLog) {
-/* ----------------------------------------------------------------------- */
-/* EVALUATION OF EXP(MU + X) */
-/* ----------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------------- */
+        /* EVALUATION OF EXP(MU + X) */
+        /* ----------------------------------------------------------------------- */
 
         if (giveLog) {
             return x + mu;
@@ -1592,9 +1595,9 @@ public class TOMS708 {
     } /* esum */
 
     private static double rexpm1(double x) {
-/* ----------------------------------------------------------------------- */
-/* EVALUATION OF THE FUNCTION EXP(X) - 1 */
-/* ----------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------------- */
+        /* EVALUATION OF THE FUNCTION EXP(X) - 1 */
+        /* ----------------------------------------------------------------------- */
 
         double p1 = 9.14041914819518e-10;
         double p2 = .0238082361044469;
@@ -1617,10 +1620,11 @@ public class TOMS708 {
     } /* rexpm1 */
 
     static double alnrel(double a) {
-/*
- * ----------------------------------------------------------------------- Evaluation of the
- * function ln(1 + a) -----------------------------------------------------------------------
- */
+        /*
+         * ----------------------------------------------------------------------- Evaluation of the
+         * function ln(1 + a)
+         * -----------------------------------------------------------------------
+         */
 
         if (fabs(a) > 0.375) {
             return log(1. + a);
@@ -1640,10 +1644,11 @@ public class TOMS708 {
     } /* alnrel */
 
     static double rlog1(double x) {
-/*
- * ----------------------------------------------------------------------- Evaluation of the
- * function x - ln(1 + x) -----------------------------------------------------------------------
- */
+        /*
+         * ----------------------------------------------------------------------- Evaluation of the
+         * function x - ln(1 + x)
+         * -----------------------------------------------------------------------
+         */
 
         double a = .0566749439387324;
         double b = .0456512608815524;
@@ -1672,7 +1677,7 @@ public class TOMS708 {
             w1 = 0.0;
         }
 
-/* L30: Series Expansion */
+        /* L30: Series Expansion */
 
         double r = h / (h + 2.0);
         double t = r * r;
@@ -1682,10 +1687,11 @@ public class TOMS708 {
     } /* rlog1 */
 
     static double erf(double x) {
-/*
- * ----------------------------------------------------------------------- EVALUATION OF THE REAL
- * ERROR FUNCTION -----------------------------------------------------------------------
- */
+        /*
+         * ----------------------------------------------------------------------- EVALUATION OF THE
+         * REAL ERROR FUNCTION
+         * -----------------------------------------------------------------------
+         */
 
         /* Initialized data */
 
@@ -1738,12 +1744,12 @@ public class TOMS708 {
     } /* erf */
 
     static double erfc1(int ind, double x) {
-/* ----------------------------------------------------------------------- */
-/* EVALUATION OF THE COMPLEMENTARY ERROR FUNCTION */
+        /* ----------------------------------------------------------------------- */
+        /* EVALUATION OF THE COMPLEMENTARY ERROR FUNCTION */
 
-/* ERFC1(IND,X) = ERFC(X) IF IND = 0 */
-/* ERFC1(IND,X) = EXP(X*X)*ERFC(X) OTHERWISE */
-/* ----------------------------------------------------------------------- */
+        /* ERFC1(IND,X) = ERFC(X) IF IND = 0 */
+        /* ERFC1(IND,X) = EXP(X*X)*ERFC(X) OTHERWISE */
+        /* ----------------------------------------------------------------------- */
 
         /* Initialized data */
 
@@ -1816,9 +1822,9 @@ public class TOMS708 {
     } /* erfc1 */
 
     static double gam1(double a) {
-/* ------------------------------------------------------------------ */
-/* COMPUTATION OF 1/GAMMA(A+1) - 1 FOR -0.5 <= A <= 1.5 */
-/* ------------------------------------------------------------------ */
+        /* ------------------------------------------------------------------ */
+        /* COMPUTATION OF 1/GAMMA(A+1) - 1 FOR -0.5 <= A <= 1.5 */
+        /* ------------------------------------------------------------------ */
 
         double t = a;
         double d = a - 0.5;
@@ -1861,9 +1867,9 @@ public class TOMS708 {
     } /* gam1 */
 
     static double gamln1(double a) {
-/* ----------------------------------------------------------------------- */
-/* EVALUATION OF LN(GAMMA(1 + A)) FOR -0.2 <= A <= 1.25 */
-/* ----------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------------- */
+        /* EVALUATION OF LN(GAMMA(1 + A)) FOR -0.2 <= A <= 1.25 */
+        /* ----------------------------------------------------------------------- */
 
         double w;
         if (a < 0.6) {
@@ -1902,84 +1908,85 @@ public class TOMS708 {
 
     static double psi(double initialX) {
         double x = initialX;
-/*
- * ---------------------------------------------------------------------
- *
- * Evaluation of the Digamma function psi(x)
- *
- * -----------
- *
- * Psi(xx) is assigned the value 0 when the digamma function cannot be computed.
- *
- * The main computation involves evaluation of rational Chebyshev approximations published in Math.
- * Comp. 27, 123-127(1973) by Cody, Strecok and Thacher.
- */
+        /*
+         * ---------------------------------------------------------------------
+         * 
+         * Evaluation of the Digamma function psi(x)
+         * 
+         * -----------
+         * 
+         * Psi(xx) is assigned the value 0 when the digamma function cannot be computed.
+         * 
+         * The main computation involves evaluation of rational Chebyshev approximations published
+         * in Math. Comp. 27, 123-127(1973) by Cody, Strecok and Thacher.
+         */
 
-/* --------------------------------------------------------------------- */
-/* Psi was written at Argonne National Laboratory for the FUNPACK */
-/* package of special function subroutines. Psi was modified by */
-/* A.H. Morris (NSWC). */
-/* --------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------- */
+        /* Psi was written at Argonne National Laboratory for the FUNPACK */
+        /* package of special function subroutines. Psi was modified by */
+        /* A.H. Morris (NSWC). */
+        /* --------------------------------------------------------------------- */
 
         double piov4 = .785398163397448; /* == pi / 4 */
-/* dx0 = zero of psi() to extended precision : */
+        /* dx0 = zero of psi() to extended precision : */
         double dx0 = 1.461632144968362341262659542325721325;
 
-/* --------------------------------------------------------------------- */
-/* COEFFICIENTS FOR RATIONAL APPROXIMATION OF */
-/* PSI(X) / (X - X0), 0.5 <= X <= 3.0 */
+        /* --------------------------------------------------------------------- */
+        /* COEFFICIENTS FOR RATIONAL APPROXIMATION OF */
+        /* PSI(X) / (X - X0), 0.5 <= X <= 3.0 */
         double[] p1 = {.0089538502298197, 4.77762828042627, 142.441585084029, 1186.45200713425, 3633.51846806499, 4138.10161269013, 1305.60269827897};
         double[] q1 = {44.8452573429826, 520.752771467162, 2210.0079924783, 3641.27349079381, 1908.310765963, 6.91091682714533e-6};
-/* --------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------- */
 
-/* --------------------------------------------------------------------- */
-/* COEFFICIENTS FOR RATIONAL APPROXIMATION OF */
-/* PSI(X) - LN(X) + 1 / (2*X), X > 3.0 */
+        /* --------------------------------------------------------------------- */
+        /* COEFFICIENTS FOR RATIONAL APPROXIMATION OF */
+        /* PSI(X) - LN(X) + 1 / (2*X), X > 3.0 */
 
         double[] p2 = {-2.12940445131011, -7.01677227766759, -4.48616543918019, -.648157123766197};
         double[] q2 = {32.2703493791143, 89.2920700481861, 54.6117738103215, 7.77788548522962};
-/* --------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------- */
 
-/* MACHINE DEPENDENT CONSTANTS ... */
+        /* MACHINE DEPENDENT CONSTANTS ... */
 
-/* --------------------------------------------------------------------- */
-/*
- * XMAX1 = THE SMALLEST POSITIVE FLOATING POINT CONSTANT WITH ENTIRELY INT REPRESENTATION. ALSO USED
- * AS NEGATIVE OF LOWER BOUND ON ACCEPTABLE NEGATIVE ARGUMENTS AND AS THE POSITIVE ARGUMENT BEYOND
- * WHICH PSI MAY BE REPRESENTED AS LOG(X). Originally: xmax1 = amin1(ipmpar(3), 1./spmpar(1))
- */
+        /* --------------------------------------------------------------------- */
+        /*
+         * XMAX1 = THE SMALLEST POSITIVE FLOATING POINT CONSTANT WITH ENTIRELY INT REPRESENTATION.
+         * ALSO USED AS NEGATIVE OF LOWER BOUND ON ACCEPTABLE NEGATIVE ARGUMENTS AND AS THE POSITIVE
+         * ARGUMENT BEYOND WHICH PSI MAY BE REPRESENTED AS LOG(X). Originally: xmax1 =
+         * amin1(ipmpar(3), 1./spmpar(1))
+         */
         double xmax1 = INT_MAX;
         double d2 = 0.5 / MathInit.d1mach(3); /* = 0.5 / (0.5 * DBL_EPS) = 1/DBL_EPSILON = 2^52 */
         if (xmax1 > d2) {
             xmax1 = d2;
         }
 
-/* --------------------------------------------------------------------- */
-/* XSMALL = ABSOLUTE ARGUMENT BELOW WHICH PI*COTAN(PI*X) */
-/* MAY BE REPRESENTED BY 1/X. */
+        /* --------------------------------------------------------------------- */
+        /* XSMALL = ABSOLUTE ARGUMENT BELOW WHICH PI*COTAN(PI*X) */
+        /* MAY BE REPRESENTED BY 1/X. */
         double xsmall = 1e-9;
-/* --------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------- */
         double aug = 0.0;
         if (x < 0.5) {
-/* --------------------------------------------------------------------- */
-/* X < 0.5, USE REFLECTION FORMULA */
-/* PSI(1-X) = PSI(X) + PI * COTAN(PI*X) */
-/* --------------------------------------------------------------------- */
+            /* --------------------------------------------------------------------- */
+            /* X < 0.5, USE REFLECTION FORMULA */
+            /* PSI(1-X) = PSI(X) + PI * COTAN(PI*X) */
+            /* --------------------------------------------------------------------- */
             if (fabs(x) <= xsmall) {
 
                 if (x == 0.0) {
                     // goto L_err;
                     return 0.;
                 }
-/* --------------------------------------------------------------------- */
-/* 0 < |X| <= XSMALL. USE 1/X AS A SUBSTITUTE */
-/* FOR PI*COTAN(PI*X) */
-/* --------------------------------------------------------------------- */
+                /* --------------------------------------------------------------------- */
+                /* 0 < |X| <= XSMALL. USE 1/X AS A SUBSTITUTE */
+                /* FOR PI*COTAN(PI*X) */
+                /* --------------------------------------------------------------------- */
                 aug = -1.0 / x;
             } else { /* |x| > xsmall */
-/* --------------------------------------------------------------------- */
-/* REDUCTION OF ARGUMENT FOR COTAN */
-/* --------------------------------------------------------------------- */
+                /* --------------------------------------------------------------------- */
+                /* REDUCTION OF ARGUMENT FOR COTAN */
+                /* --------------------------------------------------------------------- */
                 /* L100: */
                 double w = -x;
                 double sgn = piov4;
@@ -1987,9 +1994,9 @@ public class TOMS708 {
                     w = -w;
                     sgn = -sgn;
                 }
-/* --------------------------------------------------------------------- */
-/* MAKE AN ERROR EXIT IF |X| >= XMAX1 */
-/* --------------------------------------------------------------------- */
+                /* --------------------------------------------------------------------- */
+                /* MAKE AN ERROR EXIT IF |X| >= XMAX1 */
+                /* --------------------------------------------------------------------- */
                 if (w >= xmax1) {
                     // goto L_err;
                     return 0.;
@@ -1998,11 +2005,11 @@ public class TOMS708 {
                 w -= nq;
                 nq = (int) (w * 4.0);
                 w = (w - nq * 0.25) * 4.0;
-/* --------------------------------------------------------------------- */
-/* W IS NOW RELATED TO THE FRACTIONAL PART OF 4.0 * X. */
-/* ADJUST ARGUMENT TO CORRESPOND TO VALUES IN FIRST */
-/* QUADRANT AND DETERMINE SIGN */
-/* --------------------------------------------------------------------- */
+                /* --------------------------------------------------------------------- */
+                /* W IS NOW RELATED TO THE FRACTIONAL PART OF 4.0 * X. */
+                /* ADJUST ARGUMENT TO CORRESPOND TO VALUES IN FIRST */
+                /* QUADRANT AND DETERMINE SIGN */
+                /* --------------------------------------------------------------------- */
                 int n = nq / 2;
                 if (n + n != nq) {
                     w = 1.0 - w;
@@ -2012,24 +2019,24 @@ public class TOMS708 {
                 if (m + m != n) {
                     sgn = -sgn;
                 }
-/* --------------------------------------------------------------------- */
-/* DETERMINE FINAL VALUE FOR -PI*COTAN(PI*X) */
-/* --------------------------------------------------------------------- */
+                /* --------------------------------------------------------------------- */
+                /* DETERMINE FINAL VALUE FOR -PI*COTAN(PI*X) */
+                /* --------------------------------------------------------------------- */
                 n = (nq + 1) / 2;
                 m = n / 2;
                 m += m;
                 if (m == n) {
-/* --------------------------------------------------------------------- */
-/* CHECK FOR SINGULARITY */
-/* --------------------------------------------------------------------- */
+                    /* --------------------------------------------------------------------- */
+                    /* CHECK FOR SINGULARITY */
+                    /* --------------------------------------------------------------------- */
                     if (z == 0.0) {
                         // goto L_err;
                         return 0.;
                     }
-/* --------------------------------------------------------------------- */
-/* USE COS/SIN AS A SUBSTITUTE FOR COTAN, AND */
-/* SIN/COS AS A SUBSTITUTE FOR TAN */
-/* --------------------------------------------------------------------- */
+                    /* --------------------------------------------------------------------- */
+                    /* USE COS/SIN AS A SUBSTITUTE FOR COTAN, AND */
+                    /* SIN/COS AS A SUBSTITUTE FOR TAN */
+                    /* --------------------------------------------------------------------- */
                     aug = sgn * (cos(z) / sin(z) * 4.0);
 
                 } else { /* L140: */
@@ -2042,9 +2049,9 @@ public class TOMS708 {
         }
         /* L200: */
         if (x <= 3.0) {
-/* --------------------------------------------------------------------- */
-/* 0.5 <= X <= 3.0 */
-/* --------------------------------------------------------------------- */
+            /* --------------------------------------------------------------------- */
+            /* 0.5 <= X <= 3.0 */
+            /* --------------------------------------------------------------------- */
             double den = x;
             double upper = p1[0] * x;
 
@@ -2058,13 +2065,13 @@ public class TOMS708 {
             return den * xmx0 + aug;
         }
 
-/* --------------------------------------------------------------------- */
-/* IF X >= XMAX1, PSI = LN(X) */
-/* --------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------- */
+        /* IF X >= XMAX1, PSI = LN(X) */
+        /* --------------------------------------------------------------------- */
         if (x < xmax1) {
-/* --------------------------------------------------------------------- */
-/* 3.0 < X < XMAX1 */
-/* --------------------------------------------------------------------- */
+            /* --------------------------------------------------------------------- */
+            /* 3.0 < X < XMAX1 */
+            /* --------------------------------------------------------------------- */
             double w = 1.0 / (x * x);
             double den = w;
             double upper = p2[0] * w;
@@ -2078,19 +2085,19 @@ public class TOMS708 {
         }
         return aug + log(x);
 
-/* --------------------------------------------------------------------- */
-/* ERROR RETURN */
-/* --------------------------------------------------------------------- */
-// L_err:
+        /* --------------------------------------------------------------------- */
+        /* ERROR RETURN */
+        /* --------------------------------------------------------------------- */
+        // L_err:
         // return 0.;
     } /* psi */
 
     static double betaln(double a0, double b0) {
-/*
- * ----------------------------------------------------------------------- Evaluation of the
- * logarithm of the beta function ln(beta(a0,b0))
- * -----------------------------------------------------------------------
- */
+        /*
+         * ----------------------------------------------------------------------- Evaluation of the
+         * logarithm of the beta function ln(beta(a0,b0))
+         * -----------------------------------------------------------------------
+         */
 
         double e = .918938533204673; // e == 0.5*LN(2*PI)
 
@@ -2099,9 +2106,9 @@ public class TOMS708 {
 
         if (a < 8.0) {
             if (a < 1.0) {
-/* ----------------------------------------------------------------------- */
-// A < 1
-/* ----------------------------------------------------------------------- */
+                /* ----------------------------------------------------------------------- */
+                // A < 1
+                /* ----------------------------------------------------------------------- */
                 if (b < 8.0) {
                     return gamln(a) + (gamln(b) - gamln(a + b));
                 } else {
@@ -2109,9 +2116,9 @@ public class TOMS708 {
                 }
             }
             /* else */
-/* ----------------------------------------------------------------------- */
-// 1 <= A < 8
-/* ----------------------------------------------------------------------- */
+            /* ----------------------------------------------------------------------- */
+            // 1 <= A < 8
+            /* ----------------------------------------------------------------------- */
             double w = 0.0;
             boolean doL40 = false;
             if (a < 2.0) {
@@ -2146,7 +2153,7 @@ public class TOMS708 {
                     }
                 }
                 // else
-// L40:
+                // L40:
                 // reduction of B when B < 8
                 n = (int) (b - 1.0);
                 double z = 1.0;
@@ -2166,9 +2173,9 @@ public class TOMS708 {
             }
 
         } else {
-/* ----------------------------------------------------------------------- */
+            /* ----------------------------------------------------------------------- */
             // L60: A >= 8
-/* ----------------------------------------------------------------------- */
+            /* ----------------------------------------------------------------------- */
 
             double w = bcorr(a, b);
             double h = a / b;
@@ -2184,10 +2191,10 @@ public class TOMS708 {
     } /* betaln */
 
     static double gsumln(double a, double b) {
-/* ----------------------------------------------------------------------- */
-/* EVALUATION OF THE FUNCTION LN(GAMMA(A + B)) */
-/* FOR 1 <= A <= 2 AND 1 <= B <= 2 */
-/* ----------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------------- */
+        /* EVALUATION OF THE FUNCTION LN(GAMMA(A + B)) */
+        /* FOR 1 <= A <= 2 AND 1 <= B <= 2 */
+        /* ----------------------------------------------------------------------- */
 
         double x = a + b - 2.; // in [0, 2]
 
@@ -2204,13 +2211,13 @@ public class TOMS708 {
     } /* gsumln */
 
     static double bcorr(double a0, double b0) {
-/* ----------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------------- */
 
-/* EVALUATION OF DEL(A0) + DEL(B0) - DEL(A0 + B0) WHERE */
-/* LN(GAMMA(A)) = (A - 0.5)*LN(A) - A + 0.5*LN(2*PI) + DEL(A). */
-/* IT IS ASSUMED THAT A0 >= 8 AND B0 >= 8. */
+        /* EVALUATION OF DEL(A0) + DEL(B0) - DEL(A0 + B0) WHERE */
+        /* LN(GAMMA(A)) = (A - 0.5)*LN(A) - A + 0.5*LN(2*PI) + DEL(A). */
+        /* IT IS ASSUMED THAT A0 >= 8 AND B0 >= 8. */
 
-/* ----------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------------- */
         /* Initialized data */
 
         double c0 = .0833333333333333;
@@ -2220,7 +2227,7 @@ public class TOMS708 {
         double c4 = 8.37308034031215e-4;
         double c5 = -.00165322962780713;
 
-/* ------------------------ */
+        /* ------------------------ */
         double a = min(a0, b0);
         double b = max(a0, b0);
 
@@ -2229,7 +2236,7 @@ public class TOMS708 {
         double x = 1.0 / (h + 1.0);
         double x2 = x * x;
 
-/* SET SN = (1 - X^N)/(1 - X) */
+        /* SET SN = (1 - X^N)/(1 - X) */
 
         double s3 = x + x2 + 1.0;
         double s5 = x + x2 * s3 + 1.0;
@@ -2237,33 +2244,33 @@ public class TOMS708 {
         double s9 = x + x2 * s7 + 1.0;
         double s11 = x + x2 * s9 + 1.0;
 
-/* SET W = DEL(B) - DEL(A + B) */
+        /* SET W = DEL(B) - DEL(A + B) */
 
-/* Computing 2nd power */
+        /* Computing 2nd power */
         double r1 = 1.0 / b;
         double t = r1 * r1;
         double w = ((((c5 * s11 * t + c4 * s9) * t + c3 * s7) * t + c2 * s5) * t + c1 * s3) * t + c0;
         w *= c / b;
 
-/* COMPUTE DEL(A) + W */
+        /* COMPUTE DEL(A) + W */
 
-/* Computing 2nd power */
+        /* Computing 2nd power */
         r1 = 1.0 / a;
         t = r1 * r1;
         return (((((c5 * t + c4) * t + c3) * t + c2) * t + c1) * t + c0) / a + w;
     } /* bcorr */
 
     static double algdiv(double a, double b) {
-/* ----------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------------- */
 
-/* COMPUTATION OF LN(GAMMA(B)/GAMMA(A+B)) WHEN B >= 8 */
+        /* COMPUTATION OF LN(GAMMA(B)/GAMMA(A+B)) WHEN B >= 8 */
 
-/* -------- */
+        /* -------- */
 
-/* IN THIS ALGORITHM, DEL(X) IS THE FUNCTION DEFINED BY */
-/* LN(GAMMA(X)) = (X - 0.5)*LN(X) - X + 0.5*LN(2*PI) + DEL(X). */
+        /* IN THIS ALGORITHM, DEL(X) IS THE FUNCTION DEFINED BY */
+        /* LN(GAMMA(X)) = (X - 0.5)*LN(X) - X + 0.5*LN(2*PI) + DEL(X). */
 
-/* ----------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------------- */
 
         /* Initialized data */
 
@@ -2279,7 +2286,7 @@ public class TOMS708 {
         double x;
         double d;
 
-/* ------------------------ */
+        /* ------------------------ */
         if (a > b) {
             h = b / a;
             c = 1.0 / (h + 1.0);
@@ -2292,7 +2299,7 @@ public class TOMS708 {
             d = b + (a - 0.5);
         }
 
-/* Set s<n> = (1 - x^n)/(1 - x) : */
+        /* Set s<n> = (1 - x^n)/(1 - x) : */
 
         double x2 = x * x;
         double s3 = x + x2 + 1.0;
@@ -2301,13 +2308,13 @@ public class TOMS708 {
         double s9 = x + x2 * s7 + 1.0;
         double s11 = x + x2 * s9 + 1.0;
 
-/* w := Del(b) - Del(a + b) */
+        /* w := Del(b) - Del(a + b) */
 
         double t = 1. / (b * b);
         double w = ((((c5 * s11 * t + c4 * s9) * t + c3 * s7) * t + c2 * s5) * t + c1 * s3) * t + c0;
         w *= c / b;
 
-/* COMBINE THE RESULTS */
+        /* COMBINE THE RESULTS */
 
         double u = d * alnrel(a / b);
         double v = a * (log(b) - 1.0);
@@ -2319,15 +2326,15 @@ public class TOMS708 {
     } /* algdiv */
 
     static double gamln(double a) {
-/*
- * ----------------------------------------------------------------------- Evaluation of
- * ln(gamma(a)) for positive a
- * -----------------------------------------------------------------------
- */
-/* Written by Alfred H. Morris */
-/* Naval Surface Warfare Center */
-/* Dahlgren, Virginia */
-/* ----------------------------------------------------------------------- */
+        /*
+         * ----------------------------------------------------------------------- Evaluation of
+         * ln(gamma(a)) for positive a
+         * -----------------------------------------------------------------------
+         */
+        /* Written by Alfred H. Morris */
+        /* Naval Surface Warfare Center */
+        /* Dahlgren, Virginia */
+        /* ----------------------------------------------------------------------- */
 
         double d = .418938533204673; // d == 0.5*(LN(2*PI) - 1)
 

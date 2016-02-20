@@ -33,8 +33,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 /**
  * Deparse support for AST instances.
  *
- * N.B. We ignore the {@link SourceSection} for GnuR compatibility. E.g. in
- * <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/deparse.html">deparse
+ * N.B. We ignore the {@link SourceSection} for GnuR compatibility. E.g. in <a
+ * href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/deparse.html">deparse
  * specification</a>: "To avoid the risk of a source attribute out of sync with the actual function
  * definition, the source attribute of a function will never be deparsed as an attribute."
  *
@@ -210,7 +210,7 @@ public class RASTDeparse {
                     }
                     return RDeparse.checkPrec(mainop, arginfo, isLeft);
 
-                // CheckStyle: stop case fall through check
+                    // CheckStyle: stop case fall through check
                 case UNARY:
                     if (mainop.prec > arginfo.prec || (mainop.prec == arginfo.prec && isLeft == mainop.rightassoc)) {
                         return true;

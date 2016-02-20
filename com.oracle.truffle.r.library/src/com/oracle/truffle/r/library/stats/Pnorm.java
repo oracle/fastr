@@ -167,9 +167,9 @@ public final class Pnorm implements StatsFunctions.Function3_2 {
                 /*
                  * else |x| > sqrt(32) = 5.657 : the next two case differentiations were really for
                  * lower=T, log=F Particularly *not* for log_p !
-                 *
+                 * 
                  * Cody had (-37.5193 < x && x < 8.2924) ; R originally had y < 50
-                 *
+                 * 
                  * Note that we do want symmetry(0), lower/upper -> hence use y
                  */
             } else if ((logP && y < 1e170) /* avoid underflow below */
