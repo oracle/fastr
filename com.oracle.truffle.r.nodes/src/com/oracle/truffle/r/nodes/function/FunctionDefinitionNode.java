@@ -139,14 +139,14 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     private final BranchProfile returnProfile = BranchProfile.create();
 
-    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, BodyNode body, FormalArguments formals, String description, boolean substituteFrame,
+    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame,
                     PostProcessArgumentsNode argPostProcess) {
         this(src, frameDesc, body, formals, description, substituteFrame, false, argPostProcess);
     }
 
     // TODO skipOnExit: Temporary solution to allow onExit to be switched of; used for
     // REngine.evalPromise
-    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, BodyNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit,
+    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit,
                     PostProcessArgumentsNode argPostProcess) {
         super(src, formals, frameDesc);
         assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
@@ -167,7 +167,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         FrameDescriptor frameDesc = new FrameDescriptor();
         FunctionUID thisUuid = uuid;
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(description != null && !description.isEmpty() ? description : "<function>", frameDesc);
-        FunctionDefinitionNode result = new FunctionDefinitionNode(getSourceSection(), frameDesc, (BodyNode) body.unwrap().deepCopy(), getFormalArguments(), description, substituteFrame,
+        FunctionDefinitionNode result = new FunctionDefinitionNode(getSourceSection(), frameDesc, (RNode) body.deepCopy(), getFormalArguments(), description, substituteFrame,
                         argPostProcess == null ? null
                                         : argPostProcess.deepCopyUnconditional());
         // Instrumentation depends on this copy having same uuid
@@ -175,7 +175,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return result;
     }
 
-    private static boolean containsAnyDispatch(BodyNode body) {
+    private static boolean containsAnyDispatch(RNode body) {
         NodeCountFilter dispatchingMethodsFilter = node -> {
             if (node instanceof ReadVariableNode) {
                 ReadVariableNode rvn = (ReadVariableNode) node;
