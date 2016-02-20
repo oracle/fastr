@@ -79,7 +79,7 @@ public final class RASTProber implements ASTProber {
                 if (FastROptions.debugMatches("RASTProberTag")) {
                     System.out.printf("Tagging function uid %s%n", uid);
                 }
-                RSyntaxNode.accept(body, 0, visitor);
+                RSyntaxNode.accept(body, 0, visitor, false);
                 fdn.setInstrumented();
             }
         }

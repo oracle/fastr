@@ -116,8 +116,10 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
      * N.B. A {@code ReplacementNode} is a very special case as we don't want to visit the
      * transformation denoted by the child nodes, so we use the special lhs/rhs accessors and visit
      * those.
+     *
+     * @param visitReplacement TODO
      */
-    static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor) {
+    static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor, boolean visitReplacement) {
         boolean visitChildren = true;
         int incDepth = 0;
         if (RBaseNode.isRSyntaxNode(node)) {
@@ -129,13 +131,15 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
         }
         if (visitChildren) {
             RSyntaxNode[] rnChildren = RContext.getRRuntimeASTAccess().isReplacementNode(node);
-            if (rnChildren != null) {
-                accept(rnChildren[0].asNode(), depth + incDepth, nodeVisitor);
-                accept(rnChildren[1].asNode(), depth + incDepth, nodeVisitor);
-            } else {
-                for (Node child : node.getChildren()) {
-                    if (child != null) {
-                        accept(child, depth + incDepth, nodeVisitor);
+            if (visitReplacement) {
+                if (rnChildren != null) {
+                    accept(rnChildren[0].asNode(), depth + incDepth, nodeVisitor, visitReplacement);
+                    accept(rnChildren[1].asNode(), depth + incDepth, nodeVisitor, visitReplacement);
+                } else {
+                    for (Node child : node.getChildren()) {
+                        if (child != null) {
+                            accept(child, depth + incDepth, nodeVisitor, visitReplacement);
+                        }
                     }
                 }
             }

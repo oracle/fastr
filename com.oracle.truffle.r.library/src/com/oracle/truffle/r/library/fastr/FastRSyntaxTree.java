@@ -72,7 +72,7 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg3 {
                     System.out.println();
                     return true;
                 }
-            });
+            }, true);
         }
         return RNull.instance;
     }
