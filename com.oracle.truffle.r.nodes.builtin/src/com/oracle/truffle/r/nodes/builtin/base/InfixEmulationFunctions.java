@@ -388,16 +388,6 @@ public class InfixEmulationFunctions {
             // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
             throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
         }
-
-    }
-
-    @RBuiltin(name = ":", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"from", "to"})
-    public abstract static class ColonBuiltin extends ErrorAdapter {
-        @SuppressWarnings("unused")
-        @Specialization
-        protected Object doIt(Object from, Object to) {
-            throw nyi();
-        }
     }
 
     @RBuiltin(name = "{", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})

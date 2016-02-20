@@ -24,21 +24,41 @@ package com.oracle.truffle.r.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrument.WrapperNode;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.binary.ColonNode;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
+import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.CallArgumentsNode;
+import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.WrapArgumentBaseNode;
+import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
+import com.oracle.truffle.r.runtime.Arguments;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RDeparse.State;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * A collection of useful methods for working with {@code AST} instances.
@@ -229,8 +249,6 @@ public class RASTUtils {
             return ((RCallNode) node).getArguments();
         } else if (node instanceof GroupDispatchNode) {
             return ((GroupDispatchNode) node).getArguments();
-        } else if (node instanceof ColonNode) {
-            return ((ColonNode) node).getArguments();
         }
         throw RInternalError.shouldNotReachHere();
     }
@@ -298,12 +316,12 @@ public class RASTUtils {
 
     @TruffleBoundary
     /**
-     * The heart of the {@code substitute} function, where we look up the
-     * value of {@code name} in {@code env} and, if bound, return whatever
-     * value it had (as an {@link RSyntaxNode},or {@code null} if not bound.
+     * The heart of the {@code substitute} function, where we look up the value of {@code name} in
+     * {@code env} and, if bound, return whatever value it had (as an {@link RSyntaxNode},or
+     * {@code null} if not bound.
      *
-     * N.B. It is <b>very</b> important that the result is cloned or created
-     * as otherwise we risk accidental sharing between ASTs.
+     * N.B. It is <b>very</b> important that the result is cloned or created as otherwise we risk
+     * accidental sharing between ASTs.
      */
     public static RSyntaxNode substituteName(String name, REnvironment env) {
         Object val = env.get(name);

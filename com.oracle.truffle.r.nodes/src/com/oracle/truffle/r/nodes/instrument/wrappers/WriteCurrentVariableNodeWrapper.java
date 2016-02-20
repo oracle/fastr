@@ -108,4 +108,9 @@ public final class WriteCurrentVariableNodeWrapper extends com.oracle.truffle.r.
         return false;
     }
 
+    @Override
+    public boolean isSyntax() {
+        return false;
+    }
+
 }

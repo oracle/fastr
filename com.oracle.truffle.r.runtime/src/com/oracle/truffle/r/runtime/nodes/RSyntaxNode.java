@@ -114,10 +114,9 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
      * {@code true} to {@link #isBackbone()}.
      *
      * N.B. A {@code ReplacementNode} is a very special case as we don't want to visit the
-     * transformation denoted by the child nodes, so we use the special lhs/rhs accessors and visit
-     * those.
-     *
-     * @param visitReplacement TODO
+     * transformation denoted by the child nodes (which include syntax nodes), so we use the special
+     * lhs/rhs accessors and visit those. In some cases we don't want to visit the children at all,
+     * which is controlled by {@code visitReplacement}.
      */
     static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor, boolean visitReplacement) {
         boolean visitChildren = true;
@@ -131,17 +130,15 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
         }
         if (visitChildren) {
             RSyntaxNode[] rnChildren = RContext.getRRuntimeASTAccess().isReplacementNode(node);
-            if (visitReplacement) {
-                if (rnChildren != null) {
-                    accept(rnChildren[0].asNode(), depth + incDepth, nodeVisitor, visitReplacement);
-                    accept(rnChildren[1].asNode(), depth + incDepth, nodeVisitor, visitReplacement);
-                } else {
-                    for (Node child : node.getChildren()) {
-                        if (child != null) {
-                            accept(child, depth + incDepth, nodeVisitor, visitReplacement);
-                        }
+            if (rnChildren == null) {
+                for (Node child : node.getChildren()) {
+                    if (child != null) {
+                        accept(child, depth + incDepth, nodeVisitor, visitReplacement);
                     }
                 }
+            } else if (visitReplacement) {
+                accept(rnChildren[0].asNode(), depth + incDepth, nodeVisitor, visitReplacement);
+                accept(rnChildren[1].asNode(), depth + incDepth, nodeVisitor, visitReplacement);
             }
         }
     }

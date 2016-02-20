@@ -5,45 +5,51 @@
  *
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2014, The R Core Team
- * Copyright (c) 2004, The R Foundation
+ * Copyright (c) 2007, The R Foundation
  * Copyright (c) 2016, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RError;
 
-public abstract class Pbinom extends RExternalBuiltinNode.Arg5 {
+public final class Pbinom implements StatsFunctions.Function3_2 {
 
-    static double pbinom(double initialX, double initialN, double p, boolean lowerTail, boolean logP) {
-        double x = initialX;
-        double n = initialN;
-        if (Double.isNaN(x) || Double.isNaN(n) || Double.isNaN(p)) {
-            return x + n + p;
+    private final BranchProfile nanProfile = BranchProfile.create();
+
+    public double evaluate(double initialQ, double initialSize, double prob, boolean lowerTail, boolean logP) {
+        double q = initialQ;
+        double size = initialSize;
+        if (Double.isNaN(q) || Double.isNaN(size) || Double.isNaN(prob)) {
+            nanProfile.enter();
+            return q + size + prob;
         }
-        if (!Double.isFinite(n) || !Double.isFinite(p)) {
+        if (!Double.isFinite(size) || !Double.isFinite(prob)) {
+            nanProfile.enter();
             return Double.NaN;
         }
 
-        if (DPQ.nonint(n)) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, String.format("non-integer n = %f", n));
+        if (DPQ.nonint(size)) {
+            nanProfile.enter();
+            RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, String.format("non-integer n = %f", size));
             return Double.NaN;
         }
-        n = Math.round(n);
+        size = Math.round(size);
         /* PR#8560: n=0 is a valid value */
-        if (n < 0 || p < 0 || p > 1) {
+        if (size < 0 || prob < 0 || prob > 1) {
+            nanProfile.enter();
             return Double.NaN;
         }
 
-        if (x < 0) {
+        if (q < 0) {
             return DPQ.dt0(logP, lowerTail);
         }
-        x = Math.floor(x + 1e-7);
-        if (n <= x) {
+        q = Math.floor(q + 1e-7);
+        if (size <= q) {
             return DPQ.dt1(logP, lowerTail);
         }
-        return Pbeta.pbeta(p, x + 1, n - x, !lowerTail, logP);
+        return Pbeta.pbeta(prob, q + 1, size - q, !lowerTail, logP, nanProfile);
     }
 }
