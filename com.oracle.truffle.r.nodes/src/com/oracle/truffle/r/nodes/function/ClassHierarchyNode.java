@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -66,7 +65,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     private final boolean withS4;
     private final ConditionProfile noAttributesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile nullAttributeProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile isS4 = BranchProfile.create();
+    private final ConditionProfile isS4Profile = ConditionProfile.createBinaryProfile();
 
     protected ClassHierarchyNode(boolean withImplicitTypes, boolean withS4) {
         this.withImplicitTypes = withImplicitTypes;
@@ -109,11 +108,16 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     @Specialization
     protected RStringVector getClassHrStorage(RAttributeStorage arg, //
                     @Cached("createClassProfile()") ValueProfile argProfile) {
-        return getClassHrAttributable(arg, argProfile);
+        return getClassHrAttributableInternal(arg, argProfile);
     }
 
     @Specialization(contains = "getClassHrStorage")
     protected RStringVector getClassHrAttributable(RAttributable arg, //
+                    @Cached("createClassProfile()") ValueProfile argProfile) {
+        return getClassHrAttributableInternal(arg, argProfile);
+    }
+
+    protected RStringVector getClassHrAttributableInternal(RAttributable arg, //
                     @Cached("createClassProfile()") ValueProfile argProfile) {
         RAttributable profiledArg = argProfile.profile(arg);
         RAttributes attributes = profiledArg.getAttributes();
@@ -124,15 +128,12 @@ public abstract class ClassHierarchyNode extends UnaryNode {
             }
             RStringVector classHierarchy = (RStringVector) access.execute(attributes);
             if (nullAttributeProfile.profile(classHierarchy != null)) {
-                if (withS4 && arg.isS4()) {
-                    isS4.enter();
-                    if (classHierarchy.getLength() > 0) {
-                        if (s4Class == null) {
-                            CompilerDirectives.transferToInterpreterAndInvalidate();
-                            s4Class = insert(S4ClassNodeGen.create());
-                        }
-                        return s4Class.executeRStringVector(classHierarchy.getDataAt(0));
+                if (isS4Profile.profile(withS4 && profiledArg.isS4() && classHierarchy.getLength() > 0)) {
+                    if (s4Class == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        s4Class = insert(S4ClassNodeGen.create());
                     }
+                    return s4Class.executeRStringVector(classHierarchy.getDataAt(0));
                 }
                 return classHierarchy;
             }
@@ -179,12 +180,22 @@ abstract class S4Class extends RBaseNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "classAttr.equals(cachedClassAttr)")
-    protected RStringVector getS4ClassCached(String classAttr, @Cached("classAttr") String cachedClassAttr, @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
+    @Specialization(guards = "classAttr == cachedClassAttr")
+    protected RStringVector getS4ClassCachedEqOp(String classAttr, @Cached("classAttr") String cachedClassAttr, @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
         return s4Classes;
     }
 
-    @Specialization(contains = "getS4ClassCached")
+    /*
+     * Class names are normally string literals with == operator being sufficient for comparison,
+     * but we probably cannot rely on this 100% of time and should use equals() method as backup.
+     */
+    @SuppressWarnings("unused")
+    @Specialization(contains = "getS4ClassCachedEqOp", guards = "classAttr.equals(cachedClassAttr)")
+    protected RStringVector getS4ClassCachedEqMethod(String classAttr, @Cached("classAttr") String cachedClassAttr, @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
+        return s4Classes;
+    }
+
+    @Specialization(contains = "getS4ClassCachedEqMethod")
     protected RStringVector getS4Class(String classAttr) {
         return getS4ClassInternal(classAttr);
     }

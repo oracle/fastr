@@ -28,6 +28,7 @@ import java.util.regex.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.context.*;
@@ -785,6 +786,10 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      */
     public MaterializedFrame getFrame() {
         return frameAccess.getFrame();
+    }
+
+    public MaterializedFrame getFrame(ValueProfile frameAccessProfile) {
+        return frameAccessProfile.profile(frameAccess).getFrame();
     }
 
     public void lock(boolean bindings) {

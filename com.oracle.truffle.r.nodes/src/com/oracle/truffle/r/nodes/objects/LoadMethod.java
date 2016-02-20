@@ -15,11 +15,13 @@ package com.oracle.truffle.r.nodes.objects;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
@@ -66,7 +68,9 @@ public abstract class LoadMethod extends RBaseNode {
     private final RCaller caller = RDataFactory.createCaller(this);
 
     @Specialization
-    protected RFunction loadMethod(VirtualFrame frame, RFunction fdef, String fname) {
+    protected RFunction loadMethod(VirtualFrame frame, RFunction fdef, String fname, //
+                    @Cached("createClassProfile()") ValueProfile regFrameAccessProfile, //
+                    @Cached("createClassProfile()") ValueProfile methodsFrameAccessProfile) {
         RAttributes attributes = fdef.getAttributes();
         assert attributes != null; // should have at least class attribute
         int found;
@@ -108,7 +112,7 @@ public abstract class LoadMethod extends RBaseNode {
         RFunction ret;
         if (moreAttributes.profile(found < fdef.getAttributes().size())) {
             RFunction currentFunction;
-            REnvironment methodsEnv = (REnvironment) methodsEnvRead.execute(frame, REnvironment.getNamespaceRegistry().getFrame());
+            REnvironment methodsEnv = (REnvironment) methodsEnvRead.execute(frame, REnvironment.getNamespaceRegistry().getFrame(regFrameAccessProfile));
             if (loadMethodFind == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 loadMethodFind = insert(ReadVariableNode.createFunctionLookup(null, "loadMethod"));
@@ -117,7 +121,7 @@ public abstract class LoadMethod extends RBaseNode {
                 loadMethodCall = insert(Truffle.getRuntime().createDirectCallNode(loadMethodFunction.getTarget()));
                 RError.performanceWarning("loadMethod executing slow path");
             } else {
-                currentFunction = (RFunction) loadMethodFind.execute(frame, methodsEnv.getFrame());
+                currentFunction = (RFunction) loadMethodFind.execute(frame, methodsEnv.getFrame(methodsFrameAccessProfile));
             }
             if (cached.profile(currentFunction == loadMethodFunction)) {
                 Object[] args = argsNode.execute(loadMethodFunction, caller, null, RArguments.getDepth(frame) + 1, new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())},
