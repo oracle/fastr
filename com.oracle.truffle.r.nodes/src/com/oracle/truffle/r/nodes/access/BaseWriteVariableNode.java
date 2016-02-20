@@ -62,7 +62,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * replacement forms of vector updates where a vector is assigned to a temporary (visible)
      * variable and then, again, to the original variable (which would cause the vector to be copied
      * each time); (non-Javadoc)
-     * 
+     *
      * @see
      * com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode#shareObjectValue(com.oracle.truffle
      * .api.frame.Frame, com.oracle.truffle.api.frame.FrameSlot, java.lang.Object,
@@ -90,7 +90,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
                             if (isSuper) {
                                 // if non-local assignment, increment conservatively
                                 rShareable.incRefCount();
-                            } else if (!isSharedProfile.profile(rShareable.isShared())) {
+                            } else if (isSharedProfile.profile(!rShareable.isShared())) {
                                 // don't increment if already shared - will not get "unshared" until
                                 // this function exits anyway
                                 rShareable.incRefCount();

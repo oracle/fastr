@@ -18,6 +18,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
@@ -63,6 +65,9 @@ public abstract class StandardGeneric extends RBuiltinNode {
     @Child private CollectGenericArgumentsNode collectArgumentsNode;
     @Child private DispatchGeneric dispatchGeneric = DispatchGenericNodeGen.create();
 
+    private final BranchProfile noGenFunFound = BranchProfile.create();
+    private final ConditionProfile sameNamesProfile = ConditionProfile.createBinaryProfile();
+
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     private Object stdGenericInternal(VirtualFrame frame, RAbstractStringVector fVec, RFunction fdef) {
@@ -93,27 +98,39 @@ public abstract class StandardGeneric extends RBuiltinNode {
     }
 
     private Object getFunction(VirtualFrame frame, RAbstractStringVector fVec, String fname, Object fnObj) {
-        if (fnObj != RNull.instance) {
-            RFunction fn = (RFunction) fnObj;
-            Object genObj = null;
-            RAttributes attributes = fn.getAttributes();
-            if (attributes == null) {
-                return null;
-            }
-            if (genericAttrAccess == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                genericAttrAccess = insert(AttributeAccessNodeGen.create(RRuntime.GENERIC_ATTR_KEY));
-            }
-            genObj = genericAttrAccess.execute(attributes);
-            if (genObj == null) {
-                return null;
-            }
-            String gen = castStringScalar.executeString(genObj);
-            if (gen.equals(fname)) {
-                return stdGenericInternal(frame, fVec, fn);
-            }
+        if (fnObj == RNull.instance) {
+            noGenFunFound.enter();
+            return null;
         }
-        return null;
+        RFunction fn = (RFunction) fnObj;
+        Object genObj = null;
+        RAttributes attributes = fn.getAttributes();
+        if (attributes == null) {
+            noGenFunFound.enter();
+            return null;
+        }
+        if (genericAttrAccess == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            genericAttrAccess = insert(AttributeAccessNodeGen.create(RRuntime.GENERIC_ATTR_KEY));
+        }
+        genObj = genericAttrAccess.execute(attributes);
+        if (genObj == null) {
+            noGenFunFound.enter();
+            return null;
+        }
+        String gen = castStringScalar.executeString(genObj);
+        if (sameNamesProfile.profile(gen == fname)) {
+            return stdGenericInternal(frame, fVec, fn);
+        }
+        else {
+            // in many cases == is good enough (and this will be the fastest path), but it's not
+            // always sufficient
+            if (!gen.equals(fname)) {
+                noGenFunFound.enter();
+                return null;
+            }
+            return stdGenericInternal(frame, fVec, fn);
+        }
     }
 
     @Specialization(guards = "fVec.getLength() > 0")
