@@ -878,7 +878,7 @@ abstract class CheckTypeNode extends RBaseNode {
 
     private final RType type;
 
-    public CheckTypeNode(RType type) {
+    CheckTypeNode(RType type) {
         this.type = type;
     }
 
