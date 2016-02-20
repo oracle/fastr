@@ -37,6 +37,8 @@ public abstract class WrapArgumentBaseNode extends RNode {
     private final BranchProfile everSeenDataFrame;
     private final BranchProfile everSeenFactor;
     private final BranchProfile everSeenLanguage;
+    private final BranchProfile everSeenFunction;
+    private final BranchProfile everSeenS4Object;
 
     protected final BranchProfile shareable;
     protected final BranchProfile nonShareable;
@@ -48,6 +50,8 @@ public abstract class WrapArgumentBaseNode extends RNode {
             everSeenDataFrame = BranchProfile.create();
             everSeenFactor = BranchProfile.create();
             everSeenLanguage = BranchProfile.create();
+            everSeenFunction = BranchProfile.create();
+            everSeenS4Object = BranchProfile.create();
             shareable = BranchProfile.create();
             nonShareable = BranchProfile.create();
         } else {
@@ -55,6 +59,8 @@ public abstract class WrapArgumentBaseNode extends RNode {
             everSeenDataFrame = null;
             everSeenFactor = null;
             everSeenLanguage = null;
+            everSeenFunction = null;
+            everSeenS4Object = null;
             shareable = null;
             nonShareable = null;
         }
@@ -74,10 +80,10 @@ public abstract class WrapArgumentBaseNode extends RNode {
             everSeenLanguage.enter();
             return (RLanguage) result;
         } else if (result instanceof RFunction) {
-            everSeenLanguage.enter();
+            everSeenFunction.enter();
             return (RFunction) result;
         } else if (result instanceof RS4Object) {
-            everSeenLanguage.enter();
+            everSeenS4Object.enter();
             return (RS4Object) result;
         } else {
             nonShareable.enter();
