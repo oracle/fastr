@@ -65,8 +65,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Specialization(guards = "fVec.getLength() > 0")
-    protected Object stdGeneric(VirtualFrame frame, RAbstractStringVector fVec, RFunction fdef) {
+    private Object stdGenericInternal(VirtualFrame frame, RAbstractStringVector fVec, RFunction fdef) {
         controlVisibility();
         String fname = fVec.getDataAt(0);
         MaterializedFrame fnFrame = fdef.getEnclosingFrame();
@@ -111,10 +110,15 @@ public abstract class StandardGeneric extends RBuiltinNode {
             }
             String gen = castStringScalar.executeString(genObj);
             if (gen.equals(fname)) {
-                return stdGeneric(frame, fVec, fn);
+                return stdGenericInternal(frame, fVec, fn);
             }
         }
         return null;
+    }
+
+    @Specialization(guards = "fVec.getLength() > 0")
+    protected Object stdGeneric(VirtualFrame frame, RAbstractStringVector fVec, RFunction fdef) {
+        return stdGenericInternal(frame, fVec, fdef);
     }
 
     @Specialization(guards = "fVec.getLength() > 0")
