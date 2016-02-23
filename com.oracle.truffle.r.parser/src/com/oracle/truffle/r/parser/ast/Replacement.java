@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.oracle.truffle.api.source.SourceSection;
 
 public final class Replacement extends ASTNode {
@@ -32,16 +29,18 @@ public final class Replacement extends ASTNode {
     private final boolean isSuper;
     private final ASTNode lhs;
     private final ASTNode rhs;
+    private final SourceSection opSource;
 
-    private Replacement(SourceSection source, boolean isSuper, ASTNode lhs, ASTNode rhs) {
+    Replacement(SourceSection source, SourceSection opSource, boolean isSuper, ASTNode lhs, ASTNode rhs) {
         super(source);
+        this.opSource = opSource;
         this.isSuper = isSuper;
         this.lhs = lhs;
         this.rhs = rhs;
     }
 
-    public static Replacement create(SourceSection source, boolean isSuper, ASTNode lhs, ASTNode rhs) {
-        return new Replacement(source, isSuper, lhs, rhs);
+    public SourceSection getOpSource() {
+        return opSource;
     }
 
     public boolean isSuper() {
@@ -54,11 +53,6 @@ public final class Replacement extends ASTNode {
 
     public ASTNode getRhs() {
         return rhs;
-    }
-
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Arrays.asList(lhs.accept(v), rhs.accept(v));
     }
 
     @Override

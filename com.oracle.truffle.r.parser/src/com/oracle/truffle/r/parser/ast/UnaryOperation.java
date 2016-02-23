@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -14,13 +14,8 @@ import com.oracle.truffle.api.source.*;
 
 public final class UnaryOperation extends Operation {
 
-    private UnaryOperation(SourceSection source, ArithmeticOperator op, ASTNode operand) {
-        super(source, op, operand);
-    }
-
-    public static ASTNode create(SourceSection source, ArithmeticOperator op, ASTNode operand) {
-        assert op.isUnary();
-        return new UnaryOperation(source, op, operand);
+    UnaryOperation(SourceSection source, SourceSection opSource, ArithmeticOperator op, ASTNode operand) {
+        super(source, opSource, op, operand);
     }
 
     @Override

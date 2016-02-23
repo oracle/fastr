@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -14,11 +14,7 @@ import com.oracle.truffle.api.source.*;
 
 public final class Next extends ControlStatement {
 
-    public static Next create(SourceSection source) {
-        return new Next(source);
-    }
-
-    private Next(SourceSection src) {
+    Next(SourceSection src) {
         super(src);
     }
 

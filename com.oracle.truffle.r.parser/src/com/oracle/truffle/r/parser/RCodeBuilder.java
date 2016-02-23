@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,42 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.parser.ast;
+package com.oracle.truffle.r.parser;
 
-import java.util.*;
+import java.util.List;
 
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RError;
 
-public final class Formula extends ASTNode {
+public interface RCodeBuilder<T, ArgT> {
 
-    private final ASTNode response;
-    private final ASTNode model;
+    ArgT argument(SourceSection source, String name, T expression);
 
-    private Formula(SourceSection source, ASTNode response, ASTNode model) {
-        super(source);
-        this.response = response;
-        this.model = model;
-    }
+    ArgT argument(T expression);
 
-    public static Formula create(SourceSection source, ASTNode response, ASTNode model) {
-        return new Formula(source, response, model);
-    }
+    ArgT argumentEmpty();
 
-    public ASTNode getResponse() {
-        return response;
-    }
+    T call(SourceSection source, T lhs, @SuppressWarnings("unchecked") ArgT... arguments);
 
-    public ASTNode getModel() {
-        return model;
-    }
+    T call(SourceSection source, T lhs, List<ArgT> arguments);
 
-    @Override
-    public <R> R accept(Visitor<R> v) {
-        return v.visit(this);
-    }
+    T constant(SourceSection source, Object value);
 
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        throw new IllegalStateException("should not reach here");
-    }
+    T lookup(SourceSection source, String symbol, boolean functionLookup);
+
+    T function(SourceSection source, List<ArgT> arguments, T body);
+
+    void warning(RError.Message message, Object... arguments);
 }

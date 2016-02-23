@@ -48,6 +48,7 @@ import com.oracle.truffle.r.parser.ast.Repeat;
 import com.oracle.truffle.r.parser.ast.Replacement;
 import com.oracle.truffle.r.parser.ast.Sequence;
 import com.oracle.truffle.r.parser.ast.UnaryOperation;
+import com.oracle.truffle.r.parser.ast.Visitor;
 import com.oracle.truffle.r.parser.ast.While;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
@@ -95,7 +96,7 @@ final class Info {
     }
 }
 
-public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
+public final class EvaluatedArgumentsVisitor implements Visitor<Info> {
 
     private static final Set<String> wellKnownFunctions = new HashSet<>(Arrays.asList("c", "$", "@", "[", "[[", "any", "dim", "dimnames", "rownames", "colnames", "is.null", "list", "names", "return",
                     "print", "length", "rep", "min", "max", "matrix", "table", "is.array", "is.element", "is.character", "exp", "all", "pmin", "pmax", "as.numeric", "proc.time", "as.integer",
@@ -104,11 +105,6 @@ public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
 
     private EvaluatedArgumentsVisitor() {
         // private constructor
-    }
-
-    @Override
-    public Info visit(ASTNode n) {
-        return Info.ANY;
     }
 
     @Override
@@ -295,5 +291,9 @@ public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
                 }
             };
         }
+    }
+
+    public Info visit(ArgNode arg) {
+        return Info.ANY;
     }
 }

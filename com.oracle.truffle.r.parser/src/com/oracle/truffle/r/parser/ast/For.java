@@ -10,9 +10,7 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
-import java.util.*;
-
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.source.SourceSection;
 
 public final class For extends Loop {
 
@@ -31,11 +29,6 @@ public final class For extends Loop {
 
     public String getVariable() {
         return variable;
-    }
-
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Arrays.asList(getBody().accept(v), range.accept(v));
     }
 
     @Override

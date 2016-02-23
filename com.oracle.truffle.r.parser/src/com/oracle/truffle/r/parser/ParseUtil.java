@@ -4,11 +4,13 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.parser;
+
+import java.util.List;
 
 import org.antlr.runtime.*;
 
@@ -34,13 +36,17 @@ public class ParseUtil {
         return new String(new int[]{value}, 0, 1);
     }
 
-    public static ASTNode parseAST(ANTLRStringStream stream, Source source) throws RecognitionException {
+    public static List<ASTNode> parseAST(ANTLRStringStream stream, Source source) throws RecognitionException {
         CommonTokenStream tokens = new CommonTokenStream();
-        RLexer lexer = new RLexer(stream);
-        tokens.setTokenSource(lexer);
+        tokens.setTokenSource(new RLexer(stream));
         RParser parser = new RParser(tokens);
-        parser.setSource(source);
-        return parser.script().v;
+        parser.initialize(source, new RASTBuilder());
+        return parser.script();
+    }
+
+    public static Sequence parseAsSequence(ANTLRStringStream antlrStringStream, Source source) throws RecognitionException {
+        List<ASTNode> list = parseAST(antlrStringStream, source);
+        return new Sequence(source.createSection(null, 0, source.getLength()), list.toArray(new ASTNode[list.size()]));
     }
 
 }

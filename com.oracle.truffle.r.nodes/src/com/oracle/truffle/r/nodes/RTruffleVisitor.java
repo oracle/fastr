@@ -64,7 +64,6 @@ import com.oracle.truffle.r.parser.ast.Break;
 import com.oracle.truffle.r.parser.ast.Call;
 import com.oracle.truffle.r.parser.ast.Constant;
 import com.oracle.truffle.r.parser.ast.For;
-import com.oracle.truffle.r.parser.ast.Formula;
 import com.oracle.truffle.r.parser.ast.Function;
 import com.oracle.truffle.r.parser.ast.If;
 import com.oracle.truffle.r.parser.ast.Missing;
@@ -113,25 +112,6 @@ public final class RTruffleVisitor implements Visitor<RSyntaxNode> {
     }
 
     @Override
-    public RSyntaxNode visit(Formula formula) {
-        // response may be omitted
-        RSyntaxNode response = formula.getResponse() == null ? null : formula.getResponse().accept(this);
-        RSyntaxNode model = formula.getModel().accept(this);
-        RSyntaxNode[] tildeArgs = new RSyntaxNode[response == null ? 1 : 2];
-        int ix = 0;
-        if (response != null) {
-            tildeArgs[ix++] = response;
-        }
-        tildeArgs[ix++] = model;
-        SourceSection formulaSrc = formula.getSource();
-        String formulaCode = formulaSrc.getCode();
-        int tildeIndex = formulaCode.indexOf('~');
-        SourceSection tildeSrc = ASTNode.adjustedSource(formulaSrc, formulaSrc.getCharIndex() + tildeIndex, 1);
-        RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", tildeArgs);
-        return call;
-    }
-
-    @Override
     public RSyntaxNode visit(Missing m) {
         return ConstantNode.create(REmpty.instance);
     }
@@ -151,8 +131,7 @@ public final class RTruffleVisitor implements Visitor<RSyntaxNode> {
             if (RGroupGenerics.isGroupGeneric(callName)) {
                 return GroupDispatchNode.create(callName, callSource, signature, nodes);
             }
-            SourceSection varSource = ASTNode.adjustedSource(callSource, callSource.getCharIndex(), callName.length());
-            lhs = ReadVariableNode.createForcedFunctionLookup(varSource, callName);
+            lhs = ReadVariableNode.createForcedFunctionLookup(call.getLhsSource(), callName);
         } else {
             lhs = call.getLhsNode().accept(this).asRNode();
         }
@@ -269,13 +248,7 @@ public final class RTruffleVisitor implements Visitor<RSyntaxNode> {
         if (RGroupGenerics.isGroupGeneric(functionName)) {
             return GroupDispatchNode.create(functionName, op.getSource(), ArgumentsSignature.empty(2), left, right);
         }
-        // create a SourceSection for the operator
-        SourceSection opSrc = op.getSource();
-        String code = opSrc.getCode();
-        String opName = op.getOperator().getName();
-        int charIndex = code.indexOf(opName);
-        SourceSection opNameSrc = opSrc.getSource().createSection(opSrc.getIdentifier(), opSrc.getCharIndex() + charIndex, opName.length());
-        return RCallNode.createOpCall(op.getSource(), opNameSrc, functionName, left, right);
+        return RCallNode.createOpCall(op.getSource(), op.getOpSource(), functionName, left, right);
     }
 
     @Override
@@ -318,7 +291,7 @@ public final class RTruffleVisitor implements Visitor<RSyntaxNode> {
             argNodes[i] = i == 0 ? newLhs : visit(arguments.get(i));
         }
 
-        ReadVariableNode function = ReadVariableNode.createForcedFunctionLookup(null, fun.getName());
+        ReadVariableNode function = ReadVariableNode.createForcedFunctionLookup(fun.getLhsSource(), fun.getName());
         return RCallNode.createCall(fun.getSource(), function, ArgumentsSignature.get(names), argNodes);
     }
 
@@ -345,7 +318,7 @@ public final class RTruffleVisitor implements Visitor<RSyntaxNode> {
             // work properly
             argNodes[0] = GetNonSharedNodeGen.create(argNodes[0].asRNode());
         }
-        ReadVariableNode function = ReadVariableNode.createForcedFunctionLookup(null, fun.getName() + "<-");
+        ReadVariableNode function = ReadVariableNode.createForcedFunctionLookup(fun.getLhsSource(), fun.getName() + "<-");
         return RCallNode.createCall(source, function, ArgumentsSignature.get(names), argNodes);
     }
 
@@ -431,7 +404,7 @@ public final class RTruffleVisitor implements Visitor<RSyntaxNode> {
 
     @Override
     public RSyntaxNode visit(AccessVariable n) {
-        return ReadVariableNode.create(n.getSource(), n.getVariable(), false);
+        return n.isFunctionLookup() ? ReadVariableNode.createForcedFunctionLookup(n.getSource(), n.getVariable()) : ReadVariableNode.create(n.getSource(), n.getVariable(), false);
     }
 
     @Override

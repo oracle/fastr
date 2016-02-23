@@ -10,9 +10,7 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
-import java.util.*;
-
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.source.SourceSection;
 
 public final class While extends Loop {
 
@@ -25,11 +23,6 @@ public final class While extends Loop {
 
     public ASTNode getCondition() {
         return condition;
-    }
-
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Arrays.asList(getCondition().accept(v), getBody().accept(v));
     }
 
     @Override

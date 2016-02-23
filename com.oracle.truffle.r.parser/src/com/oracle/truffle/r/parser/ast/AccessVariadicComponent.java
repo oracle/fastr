@@ -22,22 +22,20 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
-import java.util.*;
-
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.source.SourceSection;
 
 public final class AccessVariadicComponent extends ASTNode {
 
     private final int index;
     private final String name;
 
-    private AccessVariadicComponent(SourceSection source, String name) {
+    AccessVariadicComponent(SourceSection source, String name) {
         super(source);
         index = getVariadicComponentIndex(name);
         this.name = name;
     }
 
-    private static int getVariadicComponentIndex(String symbol) {
+    public static int getVariadicComponentIndex(String symbol) {
         if (symbol.length() > 2 && symbol.charAt(0) == '.' && symbol.charAt(1) == '.') {
             for (int i = 2; i < symbol.length(); i++) {
                 if (symbol.charAt(i) < '\u0030' || symbol.charAt(i) > '\u0039') {
@@ -60,14 +58,5 @@ public final class AccessVariadicComponent extends ASTNode {
     @Override
     public <R> R accept(Visitor<R> v) {
         return v.visit(this);
-    }
-
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Collections.emptyList();
-    }
-
-    public static ASTNode create(SourceSection src, String name) {
-        return new AccessVariadicComponent(src, name);
     }
 }

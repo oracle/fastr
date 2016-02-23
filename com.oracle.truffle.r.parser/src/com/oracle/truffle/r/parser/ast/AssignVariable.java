@@ -10,10 +10,8 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
-import java.util.*;
-
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RInternalError;
 
 public final class AssignVariable extends ASTNode {
 
@@ -45,14 +43,9 @@ public final class AssignVariable extends ASTNode {
         return v.visit(this);
     }
 
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Arrays.asList(getExpr().accept(v));
-    }
-
-    public static ASTNode create(boolean isSuper, SourceSection operatorSource, ASTNode lhs, ASTNode rhs) {
+    static ASTNode create(SourceSection source, SourceSection operatorSource, boolean isSuper, ASTNode lhs, ASTNode rhs) {
         if (lhs instanceof Call) {
-            return Replacement.create(operatorSource, isSuper, lhs, rhs);
+            return new Replacement(source, operatorSource, isSuper, lhs, rhs);
         } else {
             String name;
             if (lhs instanceof AccessVariable) {
@@ -67,7 +60,7 @@ public final class AssignVariable extends ASTNode {
             } else {
                 throw RInternalError.unimplemented("unexpected lhs type: " + lhs.getClass());
             }
-            return new AssignVariable(null, isSuper, name, rhs);
+            return new AssignVariable(source, isSuper, name, rhs);
         }
     }
 }

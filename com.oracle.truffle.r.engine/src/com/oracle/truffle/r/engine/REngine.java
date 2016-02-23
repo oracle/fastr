@@ -281,7 +281,7 @@ final class REngine implements Engine, Engine.Timings {
     private static ASTNode parseImpl(Source source) throws ParseException {
         try {
             try {
-                return ParseUtil.parseAST(new ANTLRStringStream(source.getCode()), source);
+                return ParseUtil.parseAsSequence(new ANTLRStringStream(source.getCode()), source);
             } catch (IllegalArgumentException e) {
                 // the lexer will wrap exceptions in IllegalArgumentExceptions
                 if (e.getCause() instanceof RecognitionException) {

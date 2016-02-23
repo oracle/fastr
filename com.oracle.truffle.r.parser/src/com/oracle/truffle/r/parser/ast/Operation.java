@@ -10,121 +10,74 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
-import java.util.*;
-
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.source.SourceSection;
 
 public abstract class Operation extends ASTNode {
 
-    static final int MIN_PRECEDENCE = 0;
-    static final int MAX_PRECEDENCE = 100;
-
-    private static final int EQ_PRECEDENCE = 1;
-    private static final int OR_PRECEDENCE = EQ_PRECEDENCE + 1;
-    private static final int AND_PRECEDENCE = OR_PRECEDENCE + 1;
-    private static final int NOT_PRECEDENCE = AND_PRECEDENCE + 1;
-    private static final int COMPARE_PRECEDENCE = NOT_PRECEDENCE + 1;
-
-    private static final int ADD_PRECEDENCE = COMPARE_PRECEDENCE + 1;
-    private static final int SUB_PRECEDENCE = ADD_PRECEDENCE;
-
-    private static final int MULT_PRECEDENCE = SUB_PRECEDENCE + 1;
-
-    private static final int MAT_MULT_PRECEDENCE = MULT_PRECEDENCE + 1;
-    private static final int OUTER_MULT_PRECEDENCE = MAT_MULT_PRECEDENCE;
-    private static final int INTEGER_DIV_PRECEDENCE = MAT_MULT_PRECEDENCE;
-    private static final int IN_PRECEDENCE = MAT_MULT_PRECEDENCE;
-    private static final int MOD_PRECEDENCE = MAT_MULT_PRECEDENCE;
-
-    private static final int COLON_PRECEDENCE = MAT_MULT_PRECEDENCE + 1;
-    private static final int SIGN_PRECEDENCE = COLON_PRECEDENCE + 1;
-    private static final int POW_PRECEDENCE = SIGN_PRECEDENCE + 1;
-
     public interface Operator {
         String getName();
-
-        boolean isUnary();
     }
 
     public enum ArithmeticOperator implements Operator {
-        ADD("+", ADD_PRECEDENCE, false),
-        SUB("-", SUB_PRECEDENCE, false),
-        MULT("*", MULT_PRECEDENCE, false),
-        DIV("/", MULT_PRECEDENCE, false),
-        MOD("%%", MOD_PRECEDENCE, false),
+        ADD("+"),
+        SUB("-"),
+        MULT("*"),
+        DIV("/"),
+        MOD("%%"),
 
-        POW("^", POW_PRECEDENCE, false),
+        POW("^"),
 
-        COLON(":", COLON_PRECEDENCE, false),
+        COLON(":"),
 
-        GE(">=", COMPARE_PRECEDENCE, false),
-        GT(">", COMPARE_PRECEDENCE, false),
-        LE("<=", COMPARE_PRECEDENCE, false),
-        LT("<", COMPARE_PRECEDENCE, false),
-        EQ("==", EQ_PRECEDENCE, false),
-        NE("!=", EQ_PRECEDENCE, false),
+        GE(">="),
+        GT(">"),
+        LE("<="),
+        LT("<"),
+        EQ("=="),
+        NE("!="),
 
-        OR("||", OR_PRECEDENCE, false),
-        ELEMENTWISEOR("|", OR_PRECEDENCE, false),
-        AND("&&", AND_PRECEDENCE, false),
-        ELEMENTWISEAND("&", AND_PRECEDENCE, false),
+        OR("||"),
+        ELEMENTWISEOR("|"),
+        AND("&&"),
+        ELEMENTWISEAND("&"),
+        NOT("!"),
 
-        OUTER_MULT("%o%", OUTER_MULT_PRECEDENCE, false),
-        MATMULT("%*%", MAT_MULT_PRECEDENCE, false),
-        INTEGER_DIV("%/%", INTEGER_DIV_PRECEDENCE, false),
-        IN("%in%", IN_PRECEDENCE, false),
-
-        UNARY_PLUS("+", SIGN_PRECEDENCE, true),
-        UNARY_MINUS("-", SIGN_PRECEDENCE, true),
-        UNARY_NOT("!", NOT_PRECEDENCE, true);
+        OUTER_MULT("%o%"),
+        MATMULT("%*%"),
+        INTEGER_DIV("%/%"),
+        IN("%in%");
 
         private final String name;
-        private final int precedence;
-        private final boolean isUnary;
 
-        ArithmeticOperator(String name, int precedence, boolean isUnary) {
+        ArithmeticOperator(String name) {
             this.name = name;
-            this.precedence = precedence;
-            this.isUnary = isUnary;
         }
 
         public String getName() {
             return name;
         }
-
-        public int getPrecedence() {
-            return precedence;
-        }
-
-        public boolean isUnary() {
-            return isUnary;
-        }
     }
 
     private final ASTNode lhs;
     private final ArithmeticOperator op;
+    private final SourceSection opSource;
 
-    protected Operation(SourceSection source, ArithmeticOperator op, ASTNode left) {
+    protected Operation(SourceSection source, SourceSection opSource, ArithmeticOperator op, ASTNode left) {
         super(source);
-        this.op = op;
         this.lhs = left;
+        this.op = op;
+        this.opSource = opSource;
     }
 
-    public ArithmeticOperator getOperator() {
+    public final ArithmeticOperator getOperator() {
         return op;
     }
 
-    @Override
-    public int getPrecedence() {
-        return op.getPrecedence();
+    public final SourceSection getOpSource() {
+        return opSource;
     }
 
-    public ASTNode getLHS() {
+    public final ASTNode getLHS() {
         return lhs;
-    }
-
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Arrays.asList(getLHS().accept(v));
     }
 }

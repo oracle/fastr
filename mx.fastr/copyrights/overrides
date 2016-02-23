@@ -188,7 +188,6 @@ com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ast/Break.java,purdu
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ast/Call.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ast/Constant.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ast/ControlStatement.java,purdue.copyright
-com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ast/FieldOperator.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ast/For.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ast/Function.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ast/If.java,purdue.copyright
@@ -202,9 +201,6 @@ com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ast/Visitor.java,pur
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ast/While.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ParseUtil.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/R.g,purdue.copyright
-com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/tools/BasicVisitor.java,purdue.copyright
-com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/tools/PrettyPrinter.java,purdue.copyright
-com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/tools/TreeViewer.java,purdue.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/data/RTypedValue.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ffi/DLL.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/gnur/SEXPTYPE.java,gnu_r.copyright

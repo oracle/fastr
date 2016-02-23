@@ -4,23 +4,21 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.parser.ast;
 
-import java.util.*;
-
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.source.SourceSection;
 
 public final class Sequence extends ASTNode {
 
     private final ASTNode[] expressions;
 
-    private Sequence(SourceSection source, ASTNode[] expressions) {
+    public Sequence(SourceSection source, ASTNode[] expressions) {
         super(source);
-        this.expressions = expressions; // FIXME or not ... do we need to duplicate this array
+        this.expressions = expressions;
     }
 
     @Override
@@ -30,18 +28,5 @@ public final class Sequence extends ASTNode {
 
     public ASTNode[] getExpressions() {
         return expressions;
-    }
-
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        List<R> list = new ArrayList<>();
-        for (ASTNode e : expressions) {
-            list.add(e.accept(v));
-        }
-        return list;
-    }
-
-    public static ASTNode create(SourceSection src, ArrayList<ASTNode> exprs) {
-        return new Sequence(src, exprs.toArray(new ASTNode[exprs.size()]));
     }
 }

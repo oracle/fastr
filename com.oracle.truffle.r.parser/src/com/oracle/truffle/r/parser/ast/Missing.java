@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,24 +22,14 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
-import java.util.*;
-
-import com.oracle.truffle.api.source.*;
-
 public final class Missing extends ASTNode {
 
-    public Missing(SourceSection source) {
-        super(source);
-    }
-
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Collections.emptyList();
+    Missing() {
+        super(null);
     }
 
     @Override
     public <R> R accept(Visitor<R> v) {
         return v.visit(this);
     }
-
 }

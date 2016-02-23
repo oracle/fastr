@@ -670,7 +670,10 @@ public final class RError extends RuntimeException {
         NO_GENERIC_FUN("no generic function definition found for '%s'"),
         NO_GENERIC_FUN_IN_ENV("no generic function definition found for '%s' in the supplied environment"),
         INVALID_PRIM_METHOD_CODE("invalid primitive methods code (\"%s\"): should be \"clear\", \"reset\", \"set\", or \"suppress\""),
-        PRIM_GENERIC_NOT_FUNCTION("the formal definition of a primitive generic must be a function object (got type '%s')");
+        PRIM_GENERIC_NOT_FUNCTION("the formal definition of a primitive generic must be a function object (got type '%s')"),
+        NON_INTEGER_VALUE("non-integer value %s qualified with L; using numeric value"),
+        INTEGER_VALUE_DECIAML("integer literal %s contains decimal; using numeric value"),
+        INTEGER_VALUE_UNNECESARY_DECIMAL("integer literal %s contains unnecessary decimal point");
 
         public final String message;
         final boolean hasArgs;

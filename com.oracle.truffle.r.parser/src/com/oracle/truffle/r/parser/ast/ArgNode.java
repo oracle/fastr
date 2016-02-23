@@ -22,23 +22,17 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
-import java.util.*;
-
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.source.SourceSection;
 
 public final class ArgNode extends ASTNode {
 
     private final String name;
     private ASTNode value;
 
-    private ArgNode(SourceSection source, String name, ASTNode value) {
+    ArgNode(SourceSection source, String name, ASTNode value) {
         super(source);
         this.name = name;
         this.value = value;
-    }
-
-    public static ArgNode create(SourceSection source, String name, ASTNode value) {
-        return new ArgNode(source, name, value);
     }
 
     public String getName() {
@@ -56,10 +50,5 @@ public final class ArgNode extends ASTNode {
     @Override
     public <R> R accept(Visitor<R> v) {
         return v.visit(this);
-    }
-
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Arrays.asList(getValue().accept(v));
     }
 }

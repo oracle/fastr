@@ -10,40 +10,29 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
-import java.util.Collections;
-import java.util.List;
-
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.source.SourceSection;
 
 public final class AccessVariable extends ASTNode {
 
     private final String variable;
+    private final boolean functionLookup;
 
-    private AccessVariable(SourceSection source, String variable) {
+    AccessVariable(SourceSection source, String variable, boolean functionLookup) {
         super(source);
         this.variable = variable;
+        this.functionLookup = functionLookup;
     }
 
     public String getVariable() {
         return variable;
     }
 
-    @Override
-    public int getPrecedence() {
-        return Operation.MAX_PRECEDENCE;
+    public boolean isFunctionLookup() {
+        return functionLookup;
     }
 
     @Override
     public <R> R accept(Visitor<R> v) {
         return v.visit(this);
-    }
-
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Collections.emptyList();
-    }
-
-    public static ASTNode create(SourceSection src, String name) {
-        return new AccessVariable(src, name);
     }
 }
