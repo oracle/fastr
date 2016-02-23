@@ -139,7 +139,7 @@ expr_wo_assign returns [ASTNode v]
 
 sequence returns [ASTNode v]
     @init  { ArrayList<ArgNode> stmts = new ArrayList<>(); }
-    @after { $v = builder.call(src($start, $stop), operator($op), stmts.toArray(new ArgNode[stmts.size()])); }
+    @after { $v = builder.call(src($start, $stop), operator($op), stmts); }
     : op=LBRACE n_multi?
       (
         e=expr_or_assign           { stmts.add(builder.argument($e.v)); }
@@ -151,9 +151,9 @@ sequence returns [ASTNode v]
 
 assign returns [ASTNode v]
     : l=tilde_expr
-      ( op=(ARROW | SUPER_ARROW) n_ r=expr { $v = builder.call(src($l.start, $r.stop), operator($op), builder.argument($l.v), builder.argument($r.v)); }
-      | op=RIGHT_ARROW n_ r=expr           { $v = builder.call(src($l.start, $r.stop), builder.lookup(src($op), "<-", true), builder.argument($r.v), builder.argument($l.v)); }
-      | op=SUPER_RIGHT_ARROW n_ r=expr     { $v = builder.call(src($l.start, $r.stop), builder.lookup(src($op), "<<-", true), builder.argument($r.v), builder.argument($l.v)); }
+      ( op=(ARROW | SUPER_ARROW) n_ r=expr { $v = builder.call(src($l.start, $r.stop), operator($op), $l.v, $r.v); }
+      | op=RIGHT_ARROW n_ r=expr           { $v = builder.call(src($l.start, $r.stop), builder.lookup(src($op), "<-", true), $r.v, $l.v); }
+      | op=SUPER_RIGHT_ARROW n_ r=expr     { $v = builder.call(src($l.start, $r.stop), builder.lookup(src($op), "<<-", true), $r.v, $l.v); }
       | { $v = $l.v; }
       )
     ;
@@ -161,9 +161,9 @@ assign returns [ASTNode v]
 alter_assign returns [ASTNode v]
     : l=tilde_expr
       ( (ARROW|SUPER_ARROW|ASSIGN) => op=(ARROW | SUPER_ARROW | ASSIGN) n_ r=expr_or_assign
-                                                                      { $v = builder.call(src($l.start, $r.stop), operator($op), builder.argument($l.v), builder.argument($r.v)); }
-      | (RIGHT_ARROW)=>op=RIGHT_ARROW n_ r=expr_or_assign             { $v = builder.call(src($l.start, $r.stop), builder.lookup(src($op), "<-", true), builder.argument($r.v), builder.argument($l.v)); }
-      | (SUPER_RIGHT_ARROW)=>op=SUPER_RIGHT_ARROW n_ r=expr_or_assign { $v = builder.call(src($l.start, $r.stop), builder.lookup(src($op), "<<-", true), builder.argument($r.v), builder.argument($l.v)); }
+                                                                      { $v = builder.call(src($l.start, $r.stop), operator($op), $l.v, $r.v); }
+      | (RIGHT_ARROW)=>op=RIGHT_ARROW n_ r=expr_or_assign             { $v = builder.call(src($l.start, $r.stop), builder.lookup(src($op), "<-", true), $r.v, $l.v); }
+      | (SUPER_RIGHT_ARROW)=>op=SUPER_RIGHT_ARROW n_ r=expr_or_assign { $v = builder.call(src($l.start, $r.stop), builder.lookup(src($op), "<<-", true), $r.v, $l.v); }
       | { $v = $l.v; }
       )
     ;
@@ -172,28 +172,28 @@ if_expr returns [ASTNode v]
     : op=IF n_ LPAR n_ cond=expr_or_assign n_ RPAR n_ t=expr_or_assign
       (
         (n_ ELSE)=>(options { greedy=false; backtrack = true; }: n_ ELSE n_ f=expr_or_assign
-              { $v = builder.call(src($start, $f.stop), operator($op), builder.argument($cond.v), builder.argument($t.v), builder.argument($f.v)); })
-      |       { $v = builder.call(src($start, $t.stop), operator($op), builder.argument($cond.v), builder.argument($t.v)); }
+              { $v = builder.call(src($start, $f.stop), operator($op), $cond.v, $t.v, $f.v); })
+      |       { $v = builder.call(src($start, $t.stop), operator($op), $cond.v, $t.v); }
       )
     ;
 
 while_expr returns [ASTNode v]
     @after {
-        $v = builder.call(src($start, $stop), operator($op), builder.argument($c.v), builder.argument($body.v));
+        $v = builder.call(src($start, $stop), operator($op), $c.v, $body.v);
     }
     : op=WHILE n_ LPAR n_ c=expr_or_assign n_ RPAR n_ body=expr_or_assign
     ;
 
 for_expr returns [ASTNode v]
     @after {
-        $v = builder.call(src($start, $stop), operator($op), builder.argument(builder.lookup(src($i), $i.text, false)), builder.argument($in.v), builder.argument($body.v));
+        $v = builder.call(src($start, $stop), operator($op), builder.lookup(src($i), $i.text, false), $in.v, $body.v);
     }
     : op=FOR n_ LPAR n_ i=ID n_ IN n_ in=expr_or_assign n_ RPAR n_ body=expr_or_assign
     ;
 
 repeat_expr returns [ASTNode v]
     @after {
-        $v = builder.call(src($start, $stop), operator($op), builder.argument($body.v));
+        $v = builder.call(src($start, $stop), operator($op), $body.v);
     }
     : op=REPEAT n_ body=expr_or_assign 
     ;
@@ -222,7 +222,7 @@ par_decl [List<ArgNode> l]
 
 tilde_expr returns [ASTNode v]
     : l=utilde_expr { $v = $l.v; }
-      ( ((TILDE) => op=TILDE n_ r=utilde_expr { $v = builder.call(src($l.start, $r.stop), operator($op), builder.argument($v), builder.argument($r.v)); }) )*
+      ( ((TILDE) => op=TILDE n_ r=utilde_expr { $v = builder.call(src($l.start, $r.stop), operator($op), $v, $r.v); }) )*
     ;
 
 utilde_expr returns [ASTNode v]
@@ -232,53 +232,53 @@ utilde_expr returns [ASTNode v]
 
 or_expr returns [ASTNode v]
     : l=and_expr { $v = $l.v; }
-      ( ((or_operator)=>op=or_operator n_ r=and_expr { $v = builder.call(src($l.start, $r.stop), operator($op.v), builder.argument($v), builder.argument($r.v)); }) )*
+      ( ((or_operator)=>op=or_operator n_ r=and_expr { $v = builder.call(src($l.start, $r.stop), operator($op.v), $v, $r.v); }) )*
     ;
 
 and_expr returns [ASTNode v]
     : l=not_expr { $v = $l.v; }
-      ( ((and_operator)=>op=and_operator n_ r=not_expr { $v = builder.call(src($l.start, $r.stop), operator($op.v), builder.argument($v), builder.argument($r.v)); }) )*
+      ( ((and_operator)=>op=and_operator n_ r=not_expr { $v = builder.call(src($l.start, $r.stop), operator($op.v), $v, $r.v); }) )*
     ;
 
 not_expr returns [ASTNode v]
-    : {true}? op=NOT n_ l=not_expr { $v = builder.call(src($op, $l.stop), operator($op), builder.argument($l.v)); }
+    : {true}? op=NOT n_ l=not_expr { $v = builder.call(src($op, $l.stop), operator($op), $l.v); }
     | b=comp_expr         { $v = $b.v; }
     ;
 
 comp_expr returns [ASTNode v]
     : l=add_expr { $v = $l.v; }
-      ( ((comp_operator)=>op=comp_operator n_ r=add_expr { $v = builder.call(src($l.start, $r.stop), operator($op.v), builder.argument($v), builder.argument($r.v)); }) )*
+      ( ((comp_operator)=>op=comp_operator n_ r=add_expr { $v = builder.call(src($l.start, $r.stop), operator($op.v), $v, $r.v); }) )*
     ;
 
 add_expr returns [ASTNode v]
     : l=mult_expr { $v = $l.v; }
-      ( ((add_operator)=>op=add_operator n_ r=mult_expr { $v = builder.call(src($l.start, $r.stop), operator($op.v), builder.argument($v), builder.argument($r.v)); }) )*
+      ( ((add_operator)=>op=add_operator n_ r=mult_expr { $v = builder.call(src($l.start, $r.stop), operator($op.v), $v, $r.v); }) )*
     ;
 
 mult_expr returns [ASTNode v]
     : l=operator_expr { $v = $l.v; }
-      ( ((mult_operator)=>op=mult_operator n_ r=operator_expr { $v = builder.call(src($l.start, $r.stop), operator($op.v), builder.argument($v), builder.argument($r.v)); }) )*
+      ( ((mult_operator)=>op=mult_operator n_ r=operator_expr { $v = builder.call(src($l.start, $r.stop), operator($op.v), $v, $r.v); }) )*
     ;
 
 operator_expr returns [ASTNode v]
     : l=colon_expr { $v = $l.v; }
-      ( (OP)=>op=OP n_ r=colon_expr { $v = builder.call(src($l.start, $r.stop), operator($op), builder.argument($v), builder.argument($r.v)); } )*
+      ( (OP)=>op=OP n_ r=colon_expr { $v = builder.call(src($l.start, $r.stop), operator($op), $v, $r.v); } )*
     ;
 
 colon_expr returns [ASTNode v] // FIXME
     : l=unary_expression { $v = $l.v; }
-      ( ((COLON)=>op=COLON n_ r=unary_expression { $v = builder.call(src($l.start, $r.stop), operator($op), builder.argument($v), builder.argument($r.v)); }) )*
+      ( ((COLON)=>op=COLON n_ r=unary_expression { $v = builder.call(src($l.start, $r.stop), operator($op), $v, $r.v); }) )*
     ;
 
 unary_expression returns [ASTNode v]
-    : op=(PLUS | MINUS | NOT) n_ l=unary_expression { $v = builder.call(src($op, $l.stop), operator($op), builder.argument($l.v)); }
+    : op=(PLUS | MINUS | NOT) n_ l=unary_expression { $v = builder.call(src($op, $l.stop), operator($op), $l.v); }
     | b=power_expr                                  { $v = $b.v; }
     ;
 
 power_expr returns [ASTNode v]
     : l=basic_expr { $v = $l.v; }
       (
-        ((power_operator)=>op=power_operator n_ r=unary_expression { $v = builder.call(src($l.start, $r.stop), operator($op.v), builder.argument($v), builder.argument($r.v)); } )
+        ((power_operator)=>op=power_operator n_ r=unary_expression { $v = builder.call(src($l.start, $r.stop), operator($op.v), $v, $r.v); } )
       |
       )
     ;
@@ -294,8 +294,8 @@ basic_expr returns [ASTNode v]
     )
     (
       ((FIELD|AT|LBRAKET|LBB|LPAR) => (
-          (op=(FIELD|AT) n_ name=id                    { $v = builder.call(src($start, $name.stop), operator($op), builder.argument($v), builder.argument(builder.constant(src($name.v), $name.v.getText()))); })
-        | (op=(FIELD|AT) n_ sname=conststring          { $v = builder.call(src($start, $sname.stop), operator($op), builder.argument($v), builder.argument($sname.v)); })
+          (op=(FIELD|AT) n_ name=id                    { $v = builder.call(src($start, $name.stop), operator($op), $v, builder.constant(src($name.v), $name.v.getText())); })
+        | (op=(FIELD|AT) n_ sname=conststring          { $v = builder.call(src($start, $sname.stop), operator($op), $v, $sname.v); })
         | (op=LBRAKET subset=args[$v] y=RBRAKET        {
                                                            if ($subset.v.size() == 1) {
                                                                $subset.v.add(builder.argumentEmpty());
@@ -330,14 +330,14 @@ simple_expr returns [ASTNode v]
     | num=number                                { $v = $num.v; }
     | cstr=conststring                          { $v = $cstr.v; }
     | pkg=id op=(NS_GET|NS_GET_INT) n_ comp=id {
-        ArgNode[] args = new ArgNode[2];
+        List<ArgNode> args = new ArrayList<>();
         SourceSection pkgSource = src($pkg.v);
         SourceSection compSource = src($comp.v);
-        args[0] = builder.argument(pkgSource, "pkg", builder.lookup(pkgSource, $pkg.text, false));
-        args[1] = builder.argument(compSource, "name", builder.lookup(compSource, $comp.text, false));
+        args.add(builder.argument(pkgSource, "pkg", builder.lookup(pkgSource, $pkg.text, false)));
+        args.add(builder.argument(compSource, "name", builder.lookup(compSource, $comp.text, false)));
         $v = builder.call(src($pkg.v, $comp.v), operator($op), args);
     }
-    | op=LPAR n_ ea=expr_or_assign n_ y=RPAR    { $v = builder.call(src($op, $y), operator($op), builder.argument($ea.v)); }
+    | op=LPAR n_ ea=expr_or_assign n_ y=RPAR    { $v = builder.call(src($op, $y), operator($op), $ea.v); }
     | s=sequence                                { $v = $s.v; }
     | e=expr_wo_assign                          { $v = $e.v; }
     ;

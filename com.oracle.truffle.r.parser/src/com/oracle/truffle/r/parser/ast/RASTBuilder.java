@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
-import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.source.SourceSection;
@@ -31,6 +30,8 @@ import com.oracle.truffle.r.parser.ast.Operation.ArithmeticOperator;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RNull;
 
 public final class RASTBuilder implements RCodeBuilder<ASTNode, ArgNode> {
 
@@ -46,74 +47,70 @@ public final class RASTBuilder implements RCodeBuilder<ASTNode, ArgNode> {
         return new ArgNode(null, null, new Missing());
     }
 
-    public ASTNode call(SourceSection source, ASTNode lhs, ArgNode... arguments) {
+    public ASTNode call(SourceSection source, ASTNode lhs, List<ArgNode> arguments) {
         if (lhs instanceof AccessVariable) {
             String symbol = ((AccessVariable) lhs).getVariable();
-            if (arguments.length == 0) {
+            if (arguments.size() == 0) {
                 switch (symbol) {
                     case "break":
                         return new Break(source);
                     case "next":
                         return new Next(source);
                 }
-            } else if (arguments.length == 1) {
+            } else if (arguments.size() == 1) {
                 // handle unary arithmetics, for the time being
                 for (ArithmeticOperator op : ArithmeticOperator.values()) {
                     if (op.getName().equals(symbol)) {
-                        return new UnaryOperation(source, lhs.getSource(), op, arguments[0].getValue());
+                        return new UnaryOperation(source, lhs.getSource(), op, arguments.get(0).getValue());
                     }
                 }
                 switch (symbol) {
                     case "repeat":
-                        return new Repeat(source, arguments[0].getValue());
+                        return new Repeat(source, arguments.get(0).getValue());
                     case "(":
-                        return arguments[0].getValue();
+                        return arguments.get(0).getValue();
                 }
-            } else if (arguments.length == 2) {
+            } else if (arguments.size() == 2) {
                 // handle binary arithmetics, for the time being
                 for (ArithmeticOperator op : ArithmeticOperator.values()) {
                     if (op.getName().equals(symbol)) {
-                        return new BinaryOperation(source, lhs.getSource(), op, arguments[0].getValue(), arguments[1].getValue());
+                        return new BinaryOperation(source, lhs.getSource(), op, arguments.get(0).getValue(), arguments.get(1).getValue());
                     }
                 }
                 switch (symbol) {
                     case "while":
-                        return new While(source, arguments[0].getValue(), arguments[1].getValue());
+                        return new While(source, arguments.get(0).getValue(), arguments.get(1).getValue());
                     case "if":
-                        return new If(source, arguments[0].getValue(), arguments[1].getValue(), null);
+                        return new If(source, arguments.get(0).getValue(), arguments.get(1).getValue(), null);
                     case "=":
                     case "<-":
                     case ":=":
-                        return AssignVariable.create(source, lhs.getSource(), false, arguments[0].getValue(), arguments[1].getValue());
+                        return AssignVariable.create(source, lhs.getSource(), false, arguments.get(0).getValue(), arguments.get(1).getValue());
                     case "<<-":
-                        return AssignVariable.create(source, lhs.getSource(), true, arguments[0].getValue(), arguments[1].getValue());
+                        return AssignVariable.create(source, lhs.getSource(), true, arguments.get(0).getValue(), arguments.get(1).getValue());
                     case "->":
-                        return AssignVariable.create(source, lhs.getSource(), false, arguments[1].getValue(), arguments[0].getValue());
+                        return AssignVariable.create(source, lhs.getSource(), false, arguments.get(1).getValue(), arguments.get(0).getValue());
                     case "->>":
-                        return AssignVariable.create(source, lhs.getSource(), true, arguments[1].getValue(), arguments[0].getValue());
+                        return AssignVariable.create(source, lhs.getSource(), true, arguments.get(1).getValue(), arguments.get(0).getValue());
                 }
-            } else if (arguments.length == 3) {
+            } else if (arguments.size() == 3) {
                 switch (symbol) {
                     case "for":
-                        if (arguments[0].getValue() instanceof AccessVariable) {
-                            String name = ((AccessVariable) arguments[0].getValue()).getVariable();
-                            return new For(source, name, arguments[1].getValue(), arguments[2].getValue());
+                        if (arguments.get(0).getValue() instanceof AccessVariable) {
+                            String name = ((AccessVariable) arguments.get(0).getValue()).getVariable();
+                            return new For(source, name, arguments.get(1).getValue(), arguments.get(2).getValue());
                         }
                         break;
                     case "if":
-                        return new If(source, arguments[0].getValue(), arguments[1].getValue(), arguments[2].getValue());
+                        return new If(source, arguments.get(0).getValue(), arguments.get(1).getValue(), arguments.get(2).getValue());
                 }
             }
             switch (symbol) {
                 case "{":
-                    return new Sequence(source, Arrays.stream(arguments).map(ArgNode::getValue).toArray(ASTNode[]::new));
+                    return new Sequence(source, arguments.stream().map(ArgNode::getValue).toArray(ASTNode[]::new));
             }
         }
-        return Call.create(source, lhs.getSource(), lhs, Arrays.asList(arguments));
-    }
-
-    public ASTNode call(SourceSection source, ASTNode lhs, List<ArgNode> arguments) {
-        return call(source, lhs, arguments.toArray(new ArgNode[arguments.size()]));
+        return Call.create(source, lhs.getSource(), lhs, arguments);
     }
 
     public ASTNode function(SourceSection source, List<ArgNode> params, ASTNode body) {
@@ -121,6 +118,7 @@ public final class RASTBuilder implements RCodeBuilder<ASTNode, ArgNode> {
     }
 
     public ASTNode constant(SourceSection source, Object value) {
+        assert value instanceof Byte || value instanceof Integer || value instanceof Double || value instanceof RComplex || value instanceof String || value instanceof RNull : value.getClass();
         if (value instanceof String && !RRuntime.isNA((String) value)) {
             return new Constant(source, ((String) value).intern());
         } else {
