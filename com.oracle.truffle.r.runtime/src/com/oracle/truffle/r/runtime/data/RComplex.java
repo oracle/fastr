@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public final class RComplex extends RScalarVector implements RAbstractComplexVector {
 
     public static final RComplex NA = new RComplex(RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART);
-    public static final RComplex DEFAULT = new RComplex(0.0, 0.0);
 
     private final double realPart;
     private final double imaginaryPart;
