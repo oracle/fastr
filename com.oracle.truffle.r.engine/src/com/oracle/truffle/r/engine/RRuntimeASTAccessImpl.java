@@ -252,7 +252,8 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     public Object callback(RFunction f, Object[] args) {
         boolean gd = DebugHandling.globalDisable(true);
         try {
-            return RContext.getEngine().evalFunction(f, null, args);
+            Frame frame = Utils.getActualCurrentFrame();
+            return RContext.getEngine().evalFunction(f, frame == null ? REnvironment.globalEnv().getFrame() : frame.materialize(), args);
         } catch (ReturnException ex) {
             // cannot throw return exceptions further up.
             return ex.getResult();
