@@ -688,3 +688,10 @@ com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/library/base/TestSimpleV
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple/data/tree2/incx.r,no.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple/data/tree2/setx.r,no.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/TestBase.java,purdue.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/AttributesPrinter.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/DoublePrinter.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/DoubleVectorPrinter.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/PrintParameters.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/StringPrinter.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/StringVectorPrinter.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/VectorPrinter.java,gnu_r_gentleman_ihaka2.copyright

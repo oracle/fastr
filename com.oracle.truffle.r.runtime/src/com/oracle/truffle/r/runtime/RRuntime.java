@@ -154,6 +154,10 @@ public class RRuntime {
     public static final String R_LOAD_METHOD_NAME = "loadMethod";
     public static final String R_DOT_METHODS = ".Methods";
     public static final String R_SOURCE = "source";
+    public static final String R_COMMENT = "comment";
+    public static final String R_SRCREF = "srcref";
+    public static final String R_WHOLE_SRCREF = "wholeSrcref";
+    public static final String R_SRCFILE = "srcfile";
 
     public static final String NULL = "NULL";
     public static final String UNBOUND = "UNBOUND";

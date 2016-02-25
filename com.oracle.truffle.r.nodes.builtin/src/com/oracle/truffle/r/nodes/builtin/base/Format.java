@@ -31,6 +31,12 @@ public abstract class Format extends RBuiltinNode {
 
     protected final BranchProfile errorProfile = BranchProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    /**
+     * This is just a dummy object used to invoke getNames on RAbstractDoubleVector. The
+     * RAbstractDoubleVector has no method for obtaining the names associated with the values in the
+     * vector other than getNames(RAttributeProfiles).
+     */
+    private static final RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     public static final int R_MAX_DIGITS_OPT = 22;
     public static final int R_MIN_DIGITS_OPT = 0;
@@ -216,7 +222,7 @@ public abstract class Format extends RBuiltinNode {
             addSpaces(data, width);
         }
         // vector is complete because strings are created by string builder
-        return RDataFactory.createStringVector(data, complete);
+        return RDataFactory.createStringVector(data, complete, value.getNames(dummyAttrProfiles));
     }
 
     @Specialization

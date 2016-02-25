@@ -63,6 +63,8 @@ public class IsTypeFunctions {
     @RBuiltin(name = "is.array", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class IsArray extends MissingAdapter {
 
+        public abstract byte execute(Object value);
+
         @Specialization
         protected byte isType(RAbstractVector vector) {
             controlVisibility();
@@ -302,6 +304,8 @@ public class IsTypeFunctions {
 
         private final ConditionProfile isListProfile = ConditionProfile.createBinaryProfile();
 
+        public abstract byte execute(Object value);
+
         @Specialization
         protected byte isType(RList value) {
             controlVisibility();
@@ -434,6 +438,8 @@ public class IsTypeFunctions {
     public abstract static class IsObject extends MissingAdapter {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+        public abstract byte execute(Object value);
 
         @Specialization
         protected byte isObject(RAttributable arg) {

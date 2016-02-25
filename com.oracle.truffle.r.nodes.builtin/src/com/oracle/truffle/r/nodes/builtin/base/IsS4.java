@@ -39,6 +39,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "isS4", kind = PRIMITIVE, parameterNames = {"object"})
 public abstract class IsS4 extends RBuiltinNode {
 
+    public abstract byte execute(Object value);
+
     @Specialization
     protected byte isS4(RNull object) {
         return RRuntime.asLogical(RContext.getInstance().isNullS4Object());

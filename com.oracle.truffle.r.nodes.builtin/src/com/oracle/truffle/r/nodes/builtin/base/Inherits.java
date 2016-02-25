@@ -28,7 +28,7 @@ public abstract class Inherits extends RBuiltinNode {
 
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    protected abstract Object execute(Object x, Object what, Object which);
+    public abstract Object execute(Object x, Object what, Object which);
 
     @Child private InheritsNode inheritsNode;
     @Child private Inherits recursiveInherits;

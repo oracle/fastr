@@ -13,6 +13,7 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.*;
 
 import com.oracle.truffle.r.test.*;
+import com.sun.source.tree.AssertTree;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_format extends TestBase {
@@ -183,7 +184,8 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat33() {
-        assertEval(Ignored.Unknown, "argv <- list(0+1i, TRUE, NULL, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        assertEval(Ignored.Unknown,
+                        "argv <- list(0+1i, TRUE, NULL, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -305,6 +307,15 @@ public class TestBuiltin_format extends TestBase {
     @Test
     public void testformat56() {
         assertEval(Ignored.Unknown, "argv <- structure(list(x = 0.04, digits = 3, nsmall = 3), .Names = c('x',     'digits', 'nsmall'));do.call('format', argv)");
+    }
+
+    /**
+     * This test checks whether the names of double values in a vector are present in the formatted
+     * output.
+     */
+    @Test
+    public void testformat57() {
+        assertEval("x <- c(1.0,2.0);names(x) <- c(\"x\",\"y\");argv <- list(x, FALSE, NULL, 0L, NULL, 0L, FALSE, FALSE);names(.Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]])))");
     }
 
     public void testFormat() {
