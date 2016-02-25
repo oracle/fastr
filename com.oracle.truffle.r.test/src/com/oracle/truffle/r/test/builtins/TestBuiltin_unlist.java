@@ -362,5 +362,7 @@ public class TestBuiltin_unlist extends TestBase {
         assertEval("{ x <- list(a=list(\"1\",FALSE,b=list(2:4))) ; unlist(x) }");
 
         assertEval("{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }");
+
+        assertEval("{ x<-quote(f(1,2)); y<-function(z) 42; l<-list(x, y, NULL); y<-unlist(l); c(length(y), typeof(y)) }");
     }
 }

@@ -69,6 +69,18 @@ public abstract class Unlist extends RBuiltinNode {
             return 0;
         }
 
+        @Specialization
+        protected int getLength(@SuppressWarnings("unused") RLanguage l) {
+            // language object do not get expanded - as such their length for the purpose of unlist
+            // is 1
+            return 1;
+        }
+
+        @Specialization
+        protected int getLength(@SuppressWarnings("unused") RFunction l) {
+            return 1;
+        }
+
         @Specialization(guards = "!isVectorList(vector)")
         protected int getLength(RAbstractVector vector) {
             return vector.getLength();
@@ -268,7 +280,8 @@ public abstract class Unlist extends RBuiltinNode {
                 return RDataFactory.createStringVector(result, RDataFactory.INCOMPLETE_VECTOR,
                                 namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
             }
-            case PrecedenceNode.LIST_PRECEDENCE: {
+            case PrecedenceNode.LIST_PRECEDENCE:
+            case PrecedenceNode.EXPRESSION_PRECEDENCE: {
                 Object[] result = new Object[totalSize];
                 if (!recursive) {
                     RStringVector listNames = useNames && list.getNames(attrProfiles) != null ? list.getNames(attrProfiles) : null;
