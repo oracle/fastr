@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -31,7 +31,7 @@ public class TestBuiltin_digamma extends TestBase {
 
     @Test
     public void testdigamma3() {
-        assertEval(Output.ContainsWarning, "argv <- list(FALSE);digamma(argv[[1]]);");
+        assertEval("argv <- list(FALSE);digamma(argv[[1]]);");
     }
 
     @Test
@@ -51,8 +51,8 @@ public class TestBuiltin_digamma extends TestBase {
         assertEval("{ digamma(7.42) }");
         assertEval("{ digamma(as.double(NA)) }");
         assertEval("{ digamma(c(100, 2.2)) }");
-        assertEval(Output.ContainsWarning, "{ digamma(FALSE) }");
-        assertEval(Output.ContainsError, "{ digamma(as.raw(1)) }");
+        assertEval("{ digamma(FALSE) }");
+        assertEval("{ digamma(as.raw(1)) }");
         assertEval(Output.ContainsError, "{ digamma(1+1i) }");
     }
 }

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -83,7 +83,7 @@ public class FileFunctions {
              * There are two simple (non-trivial) cases and one tricky 1. 1. Append one or more
              * files to a single file (len1 == 1, len2 >= 1) 2. Append one file to one file for
              * several files (len1 == len2)
-             *
+             * 
              * The tricky case is when len1 > 1 && len2 > len1. E.g. f1,f2 <- g1,g2,g3 In this case,
              * this is really f1,f2,f1 <- g1,g2,g3
              */
@@ -203,7 +203,7 @@ public class FileFunctions {
     @RBuiltin(name = "file.info", kind = INTERNAL, parameterNames = {"fn"})
     public abstract static class FileInfo extends RBuiltinNode {
         // @formatter:off
-        private static enum Column {
+        private  enum Column {
             size, isdir, mode, mtime, ctime, atime, uid, gid, uname, grname;
             private static final Column[] VALUES = values();
         }
@@ -221,7 +221,7 @@ public class FileFunctions {
              * the information. The R closure that called the .Internal turns the result into a
              * dataframe and sets the row.names attributes to the paths in vec. It also updates the
              * mtime, ctime, atime fields using .POSIXct.
-             *
+             * 
              * We try to use the JDK classes, even though they provide a more abstract interface
              * than R. In particular there seems to be no way to get the uid/gid values. We might be
              * better off justing using a native call.

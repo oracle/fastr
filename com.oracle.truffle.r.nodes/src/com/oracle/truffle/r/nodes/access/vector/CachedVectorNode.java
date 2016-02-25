@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.runtime.*;
@@ -47,7 +48,10 @@ abstract class CachedVectorNode extends RBaseNode {
 
     @Child private GetDataFrameDimensionNode getDataFrameDimension;
 
-    public CachedVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, boolean recursive) {
+    // if this is non-null, the node needs to throw the error whenever it is executed
+    @CompilationFinal protected Runnable error;
+
+    CachedVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, boolean recursive) {
         this.mode = mode;
         this.vectorType = vector.getRType();
         this.recursive = recursive;
@@ -58,7 +62,9 @@ abstract class CachedVectorNode extends RBaseNode {
             this.numberOfDimensions = filteredPositionsLength;
         }
         if (!isSubsetable(vectorType)) {
-            throw RError.error(this, RError.Message.OBJECT_NOT_SUBSETTABLE, vectorType.getName());
+            error = () -> {
+                throw RError.error(this, RError.Message.OBJECT_NOT_SUBSETTABLE, vectorType.getName());
+            };
         }
     }
 

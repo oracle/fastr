@@ -8,7 +8,7 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -100,15 +100,15 @@ public class GraphicsCCalls {
         }
 
         private void extractArgumentsFrom(RArgsValuesAndNames args) {
-// text = args.getArgument(0); // postpone for now
+            // text = args.getArgument(0); // postpone for now
             side = extractFirstDoubleValueFrom(args.getArgument(1));
             line = extractFirstDoubleValueFrom(args.getArgument(2));
-// outer = extractFirstDoubleValueFrom(args.getArgument(3));
+            // outer = extractFirstDoubleValueFrom(args.getArgument(3));
             at = extractFirstDoubleValueFrom(args.getArgument(4));
             adj = extractFirstDoubleValueFrom(args.getArgument(5));
             padj = extractFirstDoubleValueFrom(args.getArgument(6));
             cex = extractFirstDoubleValueFrom(args.getArgument(7));
-// col = extractFirstDoubleValueFrom(args.getArgument(8));
+            // col = extractFirstDoubleValueFrom(args.getArgument(8));
             font = extractFirstDoubleValueFrom(args.getArgument(9));
         }
 

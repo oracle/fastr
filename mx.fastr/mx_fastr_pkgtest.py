@@ -29,6 +29,8 @@ from argparse import ArgumentParser
 from HTMLParser import HTMLParser
 from datetime import datetime
 
+_verbose = False
+
 def _gather_test_outputs_forpkg(pkgdirpath):
     '''return a sorted list of paths to .Rout/.fail files in pkgdirpath'''
     result = []
@@ -137,7 +139,7 @@ def rpt_list_testdates(args):
     _add_common_args(parser)
     parser.add_argument('--printdir', action='store_true', help='print directory containing tests')
     _add_pattern_arg(parser)
-    args = parser.parse_args(args)
+    args = _check_verbose(parser.parse_args(args))
     fastr = dict()
     local_dirs = get_local_dirs(args.logdir)
     for local_dir in local_dirs:
@@ -176,7 +178,7 @@ def rpt_compare(args):
     parser.add_argument('--diff', action='store_true', help='execute given diff program on differing outputs')
     parser.add_argument('--difftool', action='store', help='diff tool', default='diff')
     _add_pattern_arg(parser)
-    args = parser.parse_args(args)
+    args = _check_verbose(parser.parse_args(args))
 
     if args.pkg:
         # backwards compatibility
@@ -259,21 +261,32 @@ def _rpt_compare_pkgs(gnur, fastr, verbose, pattern, diff=False, difftool=None):
                 break
     return result
 
-def check_install(result, text):
+def check_install(text):
+    '''
+    Analyze test (an install log) and return a dict with an InstallStatus object for each attempted
+    package installation. Since packages always also install their dependencies (unless already
+    installed), the log may have many of these dependent installations before the * DONE line.
+    We skip over these looking for the specific "* installing *source* package" trace which
+    indicates the start of the actual install of a package after all the dependents are
+    installed. N.B. if dependents fail to install, this trace will be missing.
+    '''
     lines = text.split("\n")
     nlines = len(lines)
-    result_data = ""
+    install_status = dict()
 
     def find_done(index, pkgname):
-        exception = False
+        fail_categories = []
         for i in range(index, nlines):
             line = lines[i]
-            if 'exception' in line:
-                exception = True
+            if 'Exception: ' in line or 'ERROR: dependenc' in line or 'ERROR: config' in line:
+                fail_categories.append(line)
             if line.startswith("* DONE"):
                 done_pkgname = line[line.find("(") + 1 : line.rfind(")")]
-                return pkgname == done_pkgname and not exception
-        return False
+                ok = pkgname == done_pkgname and len(fail_categories) == 0
+                return InstallStatus(ok, fail_categories)
+
+        # Never found the "DONE
+        return InstallStatus(False, fail_categories)
 
     start_index = None
     for i in range(nlines):
@@ -285,27 +298,47 @@ def check_install(result, text):
     if start_index is not None:
         for i in range(start_index, nlines):
             line = lines[i]
-            if line.startswith("* installing *source* package"):
-                pkgname = _extract_pkgname(line)
-                result_data += pkgname
-                if find_done(i, pkgname):
-                    result_data += ": OK\n"
+            if line.startswith('installing: '):
+                ex = line.find('(')
+                if ex > 0:
+                    pkgname = line[12 : ex - 1]
                 else:
-                    result_data += ": FAILED\n"
-                    result = 1
+                    # old style logs
+                    pkgname = line.rstrip()[12 :]
+                install_status[pkgname] = InstallStatus(False, ['unknown'])
+                fail_categories = []
+                for j in range(i + 1, nlines):
+                    line = lines[j]
+                    if line.startswith('* installing *source*') and _extract_pkgname(line) == pkgname:
+                        install_status[pkgname] = find_done(j, pkgname)
+                        break
+                    elif line.startswith('ERROR: dependenc') and _extract_depend_pkgname(line) == pkgname:
+                        fail_categories = [line]
+                    elif line.startswith('* removing') and _extract_remove_pkgname(line) == pkgname:
+                        install_status[pkgname] = InstallStatus(False, fail_categories)
+                        break
 
-    return result, result_data
+
+
+    return install_status
 
 def rpt_check_install_log(args):
     parser = ArgumentParser(prog='mx rpt-check-install-log')
     parser.add_argument('--log', action='store', help='file containing install log', required=True)
+    parser.add_argument('--fail-detail', action='store_true', help='provide detail on failures')
     args = parser.parse_args(args)
 
     with open(args.log) as f:
         content = f.read()
-        _, result_data = check_install(0, content)
+        install_status = check_install(content)
 
-    print result_data
+    for pkgname in sorted(install_status):
+        pkg_install_status = install_status[pkgname]
+        status_str = str(pkg_install_status)
+        print pkgname +  ": " + status_str
+        if not pkg_install_status.ok and args.fail_detail:
+            for c in pkg_install_status.fail_categories:
+                print "  " + c
 
 def _extract_pkgname(line):
     sx = line.find("'")
@@ -314,6 +347,16 @@ def _extract_pkgname(line):
         sx = line.find("\xe2") + 2
         ex = line.rfind("\xe2")
     pkgname = line[sx + 1 : ex]
+    return pkgname
+
+def _extract_remove_pkgname(line):
+    path = _extract_pkgname(line)
+    return os.path.basename(path)
+
+def _extract_depend_pkgname(line):
+    tag = 'available for package'
+    sx = line.find(tag)
+    pkgname = _extract_pkgname(line[sx + len(tag) : ])
     return pkgname
 
 class DirHTMLParser(HTMLParser):
@@ -347,21 +390,29 @@ class ResultInfo:
         self.test_outputs[pkg] = outputs
 
 class Result:
-    def __init__(self, resultInfo, content, rawData=None):
+    def __init__(self, resultInfo, install_status, rawData=None):
         self.resultInfo = resultInfo
-        self.content = content.split('\n')
+        self.install_status = install_status
         self.rawData = rawData
 
     def __str__(self):
         return str(self.resultInfo)
 
-class PkgStatus:
-    def __init__(self, resultInfo, status):
-        self.resultInfo = resultInfo
-        self.status = status
+class InstallStatus:
+    def __init__(self, ok, fail_categories):
+        self.ok = ok
+        self.fail_categories = fail_categories
 
     def __str__(self):
-        return "{0}: {1}".format(str(self.resultInfo), self.status)
+        return "OK" if self.ok else "FAILED"
+
+class PkgStatus:
+    def __init__(self, resultInfo, install_status):
+        self.resultInfo = resultInfo
+        self.install_status = install_status
+
+    def __str__(self):
+        return "{0}: {1}".format(str(self.resultInfo), str(self.install_status))
 
 gate_url = 'http://diy-3-16/test_logs/fastr/'
 
@@ -401,7 +452,7 @@ class DefaultMatchClass(MatchClass):
                     print line_file[1]
 
 
-def find_matches(results, match_string, print_matches, list_file_matches, match_klass_name):
+def _find_matches(results, match_string, print_matches, list_file_matches, match_klass_name):
     if match_klass_name:
         mod = sys.modules[__name__]
         match_klass = getattr(mod, match_klass_name)
@@ -437,26 +488,21 @@ def _get_results(logdir):
     for localdir in localdirs:
         if 'result' in localdir:
             with open(os.path.join(logdir, localdir, 'testlog')) as f:
+                if _verbose:
+                    print 'processing: ' + localdir
                 rawData = f.read()
-                result_data = check_install(0, rawData)[1]
-                results.append(Result(ResultInfo(localdir), result_data, rawData))
+                install_status = check_install(rawData)
+                results.append(Result(ResultInfo(localdir), install_status, rawData))
     return results
 
 def _build_pkgtable(results):
     # process files and build pkgtable
     pkgtable = dict()
     for result in results:
-        for line in result.content:
-            if len(line) == 0:
-                continue
-            pkg_status = line.split(':')
-            if len(pkg_status) != 2:
-                print 'ignoring ' + line
-                continue
-            pkgname = pkg_status[0]
+        for pkgname in result.install_status.iterkeys():
             if not pkgname in pkgtable:
                 pkgtable[pkgname] = []
-            pkgtable[pkgname].append(PkgStatus(result.resultInfo, pkg_status[1].lstrip()))
+            pkgtable[pkgname].append(PkgStatus(result.resultInfo, result.install_status[pkgname]))
 
     # sort occurrences by result date
     for _, occurrences in pkgtable.iteritems():
@@ -467,6 +513,12 @@ def _build_pkgtable(results):
 def _add_common_args(parser):
     parser.add_argument("--logdir", action='store', help='directory of complete log files', default='install.cran.logs')
     parser.add_argument("--verbose", action='store_true', help='verbose output')
+
+def _check_verbose(parsed_args):
+    if parsed_args.verbose:
+        global _verbose
+        _verbose = parsed_args.verbose
+    return parsed_args
 
 def _add_pattern_arg(parser):
     parser.add_argument('pattern', help='regexp pattern for pkg match', nargs='?', default='.*')
@@ -512,7 +564,7 @@ def _strip_slash(d):
 def rpt_listnew(args):
     parser = ArgumentParser(prog='mx rpt-listnew')
     _add_common_args(parser)
-    args = parser.parse_args(args)
+    args = _check_verbose(parser.parse_args(args))
 
     localdirs = get_local_dirs(args.logdir)
     gatedirs = get_gate_dirs(gate_url, _is_result_dir, _strip_dotslash)
@@ -530,7 +582,7 @@ def _safe_mkdir(d):
 def rpt_getnew(args):
     parser = ArgumentParser(prog='mx rpt-getnew')
     _add_common_args(parser)
-    args = parser.parse_args(args)
+    args = _check_verbose(parser.parse_args(args))
 
     if not os.path.exists(args.logdir):
         _safe_mkdir(args.logdir)
@@ -580,65 +632,74 @@ def _copy_files(url, local, pkg):
 def rpt_install_summary(args):
     parser = ArgumentParser(prog='mx rpt-install-summary')
     _add_common_args(parser)
-    args = parser.parse_args(args)
+    args = _check_verbose(parser.parse_args(args))
 
     pkgtable = _build_pkgtable(_get_results(args.logdir))
     ok = 0
     failed = 0
     for _, occurrences in pkgtable.iteritems():
-        if occurrences[0].status == "OK":
+        if occurrences[0].install_status.ok:
             ok = ok + 1
-        elif occurrences[0].status == "FAILED":
+        else:
             failed = failed + 1
     print "package installs: " + str(len(pkgtable)) + ", ok: " + str(ok) + ", failed: " + str(failed)
 
-def rpt_findmatches(args):
-    parser = ArgumentParser(prog='mx rpt-findmatches')
+def rpt_find_matches(args):
+    parser = ArgumentParser(prog='mx rpt-find-matches')
     parser.add_argument("--print-matches", action='store_true', help='print matching lines in find-matches')
     parser.add_argument("--list-file-matches", action='store_true', help='show files in find-matches')
     parser.add_argument('--match-class', action='store', help='override default MatchClass')
+    parser.add_argument('--match-string', action='store', help='string to match', required=True)
     _add_common_args(parser)
-    args = parser.parse_args(args)
+    args = _check_verbose(parser.parse_args(args))
 
     results = _get_results(args.logdir)
-    find_matches(results, args.find_matches, args.print_matches, args.list_file_matches, args.match_class)
+    _find_matches(results, args.match_string, args.print_matches, args.list_file_matches, args.match_class)
 
 def rpt_install_status(args):
     parser = ArgumentParser(prog='mx rpt-install-status')
     parser.add_argument('--detail', action='store_true', help='display package status')
     parser.add_argument('--displaymode', action='store', default='latest', help='display mode: all | latest')
     parser.add_argument('--failed', action='store_true', help='list packages that failed to install')
+    parser.add_argument('--ok-any', action='store_true', help='treat as OK if a package ever installed')
     _add_pattern_arg(parser)
     _add_common_args(parser)
-    args = parser.parse_args(args)
+    args = _check_verbose(parser.parse_args(args))
 
     pkgtable = _build_pkgtable(_get_results(args.logdir))
-
-    if args.detail:
-        for pkgname, occurrences in pkgtable.iteritems():
-            if re.search(args.pattern, pkgname) is None:
-                continue
-            print pkgname
-            if args.displaymode == 'all':
-                for occurrence in occurrences:
-                    print occurrence
-            else:
-                print occurrences[0]
 
     pkgnames = []
     for pkgname, occurrences in pkgtable.iteritems():
         if re.search(args.pattern, pkgname) is None:
             continue
-        status = occurrences[0].status
+        status = _check_any_ok(occurrences, args.ok_any)
         if args.failed:
-            if status == "FAILED":
+            if not status:
                 pkgnames.append(pkgname)
         else:
-            if status == "OK":
+            if status:
                 pkgnames.append(pkgname)
+
     pkgnames.sort()
     for pkgname in pkgnames:
         print pkgname
+        if args.detail:
+            if args.displaymode == 'all':
+                occurrences = pkgtable[pkgname]
+                for occurrence in occurrences:
+                    print "  ${0}".format(str(occurrence))
+            else:
+                print "  ${0}".format(str(occurrences[0]))
+
+
+def _check_any_ok(occurrences, ok_any):
+    if ok_any:
+        for occurrence in occurrences:
+            if occurrence.install_status.ok:
+                return True
+        return False
+    else:
+        return occurrences[0].install_status.ok
 
 def rpt_test_status(args):
     parser = ArgumentParser(prog='mx rpt-test-status')
@@ -646,7 +707,7 @@ def rpt_test_status(args):
     _add_pattern_arg(parser)
     parser.add_argument('--all', action='store_true', help='shows status for all runs')
     parser.add_argument('--regressions', action='store_true', help='show regressions (i.e. latest failed when previous ok')
-    args = parser.parse_args(args)
+    args = _check_verbose(parser.parse_args(args))
 
     gnur = _gather_test_outputs(join(os.getcwd(), "test_gnur"))
     fastr_resultInfo_map = _gather_all_test_outputs(args.logdir, args.all)
@@ -690,7 +751,7 @@ def rpt_test_summary(args):
     parser = ArgumentParser(prog='mx rpt-test-summary')
     _add_common_args(parser)
     _add_pattern_arg(parser)
-    args = parser.parse_args(args)
+    args = _check_verbose(parser.parse_args(args))
 
     fastr_resultInfo_map = _gather_all_test_outputs(args.logdir)
     fastr = _get_test_outputs(fastr_resultInfo_map)
@@ -725,12 +786,13 @@ class SymbolClassMatch(MatchClass):
         except subprocess.CalledProcessError:
             print sym
 
+
 _commands = {
     'rpt-listnew' : [rpt_listnew, '[options]'],
     'rpt-getnew' : [rpt_getnew, '[options]'],
     'rpt-install-summary' : [rpt_install_summary, '[options]'],
     'rpt-test-summary' : [rpt_test_summary, '[options]'],
-    'rpt-findmatches' : [rpt_findmatches, '[options]'],
+    'rpt-findmatches' : [rpt_find_matches, '[options]'],
     'rpt-install-status' : [rpt_install_status, '[options]'],
     'rpt-test-status' : [rpt_test_status, '[options]'],
     'rpt-compare': [rpt_compare, '[options]'],

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -141,9 +141,9 @@ public class TestBuiltin_sum extends TestBase {
 
         assertEval("{ is.logical(sum(TRUE, FALSE)) }");
         assertEval("{ is.logical(sum(TRUE)) }");
-        assertEval(Output.ContainsError, "{ sum(as.raw(42), as.raw(7)) }");
+        assertEval("{ sum(as.raw(42), as.raw(7)) }");
         assertEval("{ sum(42+42i, 7+7i) }");
-        assertEval(Output.ContainsError, "{ sum(\"42\", \"7\") }");
+        assertEval("{ sum(\"42\", \"7\") }");
 
         assertEval("{ sum(as.double(NA), na.rm=TRUE) }");
         assertEval("{ sum(as.double(NA), na.rm=FALSE) }");

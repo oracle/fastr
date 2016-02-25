@@ -24,21 +24,18 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.*;
 
-public final class RBuiltinRootNode extends RRootNode implements RSyntaxNode {
+public final class RBuiltinRootNode extends RRootNode {
 
     @Child private RBuiltinNode builtin;
 
     public RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
-        super(createSourceSection(builtin, formalArguments), formalArguments, frameDescriptor);
+        super(null, formalArguments, frameDescriptor);
         this.builtin = builtin;
     }
 
@@ -74,9 +71,9 @@ public final class RBuiltinRootNode extends RRootNode implements RSyntaxNode {
         return builtin.getBuiltin().isAlwaysSplit();
     }
 
-    public RBuiltinNode inline(ArgumentsSignature signature, RNode[] args, SourceSection callSrc) {
+    public RBuiltinNode inline(ArgumentsSignature signature, RNode[] args) {
         assert builtin.getSuppliedSignature() != null : this;
-        return builtin.inline(signature, args, callSrc);
+        return builtin.inline(signature, args);
     }
 
     public Object getDefaultParameterValue(int index) {
@@ -94,42 +91,4 @@ public final class RBuiltinRootNode extends RRootNode implements RSyntaxNode {
         return "RBuiltin(" + builtin + ")";
     }
 
-    public void deparseImpl(State state) {
-        state.startNodeDeparse(this);
-        state.append(deparseImplHelper(this.getBuiltin(), this.getFormalArguments()));
-        state.endNodeDeparse(this);
-    }
-
-    private static String deparseImplHelper(RBuiltinNode builtin, @SuppressWarnings("unused") FormalArguments formalArguments) {
-        // TODO we ignore formals for now, as they are typically null
-        return "function() .Primitive(\"" + builtin.getBuiltin().getName() + "\")";
-    }
-
-    private static SourceSection createSourceSection(RBuiltinNode builtin, FormalArguments formalArguments) {
-        String s = deparseImplHelper(builtin, formalArguments);
-        Source callSource = Source.fromText(s, builtin.getBuiltin().getName());
-        return callSource.createSection("", 0, s.length());
-    }
-
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    public int getRlengthImpl() {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
-    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,6 +54,8 @@ public final class LocalReadVariableNode extends Node {
     @CompilationFinal private FrameSlot frameSlot;
     @CompilationFinal private Assumption notInFrame;
 
+    private final ValueProfile frameProfile = ValueProfile.createClassProfile();
+
     public static LocalReadVariableNode create(Object identifier, boolean forceResult) {
         return new LocalReadVariableNode(identifier, forceResult);
     }
@@ -72,21 +74,22 @@ public final class LocalReadVariableNode extends Node {
     }
 
     public Object execute(VirtualFrame frame, Frame variableFrame) {
+        Frame profiledVariableFrame = frameProfile.profile(variableFrame);
         if (frameSlot == null && notInFrame == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (identifier.toString().isEmpty()) {
-                throw RError.error(RError.NO_NODE, RError.Message.ZERO_LENGTH_VARIABLE);
+                throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
             }
-            frameSlot = variableFrame.getFrameDescriptor().findFrameSlot(identifier);
-            notInFrame = frameSlot == null ? variableFrame.getFrameDescriptor().getNotInFrameAssumption(identifier) : null;
+            frameSlot = profiledVariableFrame.getFrameDescriptor().findFrameSlot(identifier);
+            notInFrame = frameSlot == null ? profiledVariableFrame.getFrameDescriptor().getNotInFrameAssumption(identifier) : null;
         }
         // check if the slot is missing / wrong type in current frame
         if (frameSlot == null) {
             try {
                 notInFrame.check();
             } catch (InvalidAssumptionException e) {
-                frameSlot = variableFrame.getFrameDescriptor().findFrameSlot(identifier);
-                notInFrame = frameSlot == null ? variableFrame.getFrameDescriptor().getNotInFrameAssumption(identifier) : null;
+                frameSlot = profiledVariableFrame.getFrameDescriptor().findFrameSlot(identifier);
+                notInFrame = frameSlot == null ? profiledVariableFrame.getFrameDescriptor().getNotInFrameAssumption(identifier) : null;
             }
         }
         if (frameSlot == null) {
@@ -99,7 +102,7 @@ public final class LocalReadVariableNode extends Node {
             isNullProfile = ConditionProfile.createBinaryProfile();
             isMissingProfile = ConditionProfile.createBinaryProfile();
         }
-        result = valueProfile.profile(ReadVariableNode.profiledGetValue(seenValueKinds, variableFrame, frameSlot));
+        result = valueProfile.profile(ReadVariableNode.profiledGetValue(seenValueKinds, profiledVariableFrame, frameSlot));
         if (isNullProfile.profile(result == null) || isMissingProfile.profile(result == RMissing.instance)) {
             return null;
         }

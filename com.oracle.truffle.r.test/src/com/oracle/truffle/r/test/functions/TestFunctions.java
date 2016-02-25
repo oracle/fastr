@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -20,6 +20,23 @@ public class TestFunctions extends TestBase {
     public void testFunctionLookup() {
         assertEval("{ f<-1; f() }");
         assertEval("{ abs }");
+        assertEval("{ foo() }");
+        assertEval("{ 'foo'() }");
+        // these errors will be fixed by proper handling of "("
+        assertEval(Ignored.ImplementationError, "{ (foo)() }");
+        assertEval(Output.ContainsError, "{ ('foo')() }");
+        assertEval("{ foo <- function() 1; foo() }");
+        assertEval("{ foo <- function() 1; 'foo'() }");
+        assertEval("{ foo <- function() 1; `foo`() }");
+        assertEval("{ foo <- function() 1; (foo)() }");
+        assertEval(Output.ContainsError, "{ foo <- function() 1; ('foo')() }");
+        assertEval("{ foo <- function() 1; (`foo`)() }");
+        assertEval("{ sum <- 1; sum(1,2) }");
+        assertEval("{ sum <- 1; `sum`(1,2) }");
+        assertEval("{ sum <- 1; 'sum'(1,2) }");
+        assertEval(Ignored.ImplementationError, "{ sum <- 1; (sum)(1,2) }");
+        assertEval(Output.ContainsError, "{ sum <- 1; ('sum')(1,2) }");
+        assertEval(Ignored.ImplementationError, "{ sum <- 1; (`sum`)(1,2) }");
     }
 
     @Test
@@ -41,9 +58,9 @@ public class TestFunctions extends TestBase {
         assertEval("{ g <- function(...) { max(...) } ; g(1,2) }");
         assertEval("{ f <- function(a, ...) { list(...) } ; f(1) }");
 
-        assertEval(Output.ContainsError, "{ rnorm(n = 1, n = 2) }");
-        assertEval(Output.ContainsError, "{ rnorm(s = 1, s = 1) }");
-        assertEval(Output.ContainsError, "{ matrix(1:4, n = 2) }");
+        assertEval("{ rnorm(n = 1, n = 2) }");
+        assertEval("{ rnorm(s = 1, s = 1) }");
+        assertEval("{ matrix(1:4, n = 2) }");
 
         assertEval("{ matrix(da=1:3,1) }");
 
@@ -124,8 +141,8 @@ public class TestFunctions extends TestBase {
     @Test
     public void testErrors() {
         assertEval(Output.ContainsError, "{ x<-function(){1} ; x(y=sum(1:10)) }");
-        assertEval(Output.ContainsError, "{ x<-function(){1} ; x(1) }");
-        assertEval(Output.ContainsError, "{ f <- function(x) { x } ; f() }");
+        assertEval("{ x<-function(){1} ; x(1) }");
+        assertEval("{ f <- function(x) { x } ; f() }");
         assertEval(Output.ContainsError, "{ x<-function(y,b){1} ; x(y=1,y=3,4) }");
         assertEval(Output.ContainsError, "{ x<-function(foo,bar){foo*bar} ; x(fo=10,f=1,2) }");
         assertEval(Output.ContainsError, "{ x<-function(){1} ; x(y=1) }");
@@ -191,7 +208,7 @@ public class TestFunctions extends TestBase {
         assertEval("{ f <- function(a) { g <- function(b) { a <<- 3; b } ; g(a) } ; x <- 1 ; f(x) }");
         assertEval("{ f <- function(x) { function() {x} } ; a <- 1 ; b <- f(a) ; a <- 10 ; b() }");
 
-        assertEval(Output.ContainsError, "{ f <- function(x = y, y = x) { y } ; f() }");
+        assertEval("{ f <- function(x = y, y = x) { y } ; f() }");
     }
 
     @Test
@@ -205,8 +222,8 @@ public class TestFunctions extends TestBase {
     public void testMatching() {
         assertEval("{ x<-function(foo,bar){foo*bar} ; x(f=10,2) }");
         assertEval("{ x<-function(foo,bar){foo*bar} ; x(fo=10, bar=2) }");
-        assertEval(Output.ContainsError, "{ f <- function(hello, hi) { hello + hi } ; f(h = 1) }");
-        assertEval(Output.ContainsError, "{ f <- function(hello, hi) { hello + hi } ; f(hello = 1, bye = 3) }");
+        assertEval("{ f <- function(hello, hi) { hello + hi } ; f(h = 1) }");
+        assertEval("{ f <- function(hello, hi) { hello + hi } ; f(hello = 1, bye = 3) }");
         assertEval(Output.ContainsError, "{ f <- function(a) { a } ; f(1,2) }");
 
         // with ... partial-match only if formal parameter are before ...
@@ -254,12 +271,12 @@ public class TestFunctions extends TestBase {
 
         assertEval(Output.ContainsError, "{ f <- function(...) { ..3 } ; f(1,2) }");
 
-        assertEval(Output.ContainsError, "{ f <- function() { dummy() } ; f() }");
-        assertEval(Output.ContainsError, "{ f <- function() { if (FALSE) { dummy <- 2 } ; dummy() } ; f() }");
-        assertEval(Output.ContainsError, "{ f <- function() { if (FALSE) { dummy <- 2 } ; g <- function() { dummy() } ; g() } ; f() }");
-        assertEval(Output.ContainsError, "{ f <- function() { dummy <- 2 ; g <- function() { dummy() } ; g() } ; f() }");
-        assertEval(Output.ContainsError, "{ f <- function() { dummy() } ; dummy <- 2 ; f() }");
-        assertEval(Output.ContainsError, "{ dummy <- 2 ; dummy() }");
+        assertEval("{ f <- function() { dummy() } ; f() }");
+        assertEval("{ f <- function() { if (FALSE) { dummy <- 2 } ; dummy() } ; f() }");
+        assertEval("{ f <- function() { if (FALSE) { dummy <- 2 } ; g <- function() { dummy() } ; g() } ; f() }");
+        assertEval("{ f <- function() { dummy <- 2 ; g <- function() { dummy() } ; g() } ; f() }");
+        assertEval("{ f <- function() { dummy() } ; dummy <- 2 ; f() }");
+        assertEval("{ dummy <- 2 ; dummy() }");
         assertEval(Output.ContainsError, "{ f <- function(a, b) { a + b } ; g <- function(...) { f(a=1, ...) } ; g(a=2) }");
         assertEval(Output.ContainsError, "{ f <- function(a, barg, bextra) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }");
         assertEval(Output.ContainsError, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,bex=3, 3) }");

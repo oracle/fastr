@@ -29,7 +29,7 @@ public class RRuntime {
     // Parts of the welcome message originate from GNU R.
     public static final String WELCOME_MESSAGE =
         "FastR version " + RVersionNumber.FULL + "\n" +
-        "Copyright (c) 2013-6, Oracle and/or its affiliates\n" +
+        "Copyright (c) 2013-16, Oracle and/or its affiliates\n" +
         "Copyright (c) 1995-2015, The R Core Team\n" +
         "Copyright (c) 2015 The R Foundation\n" +
         "Copyright (c) 2012-4 Purdue University\n" +
@@ -117,17 +117,17 @@ public class RRuntime {
 
     public static final String RS3MethodsTable = ".__S3MethodsTable__.";
 
-    public static final String RDotGeneric = ".Generic";
+    public static final String R_DOT_GENERIC = ".Generic";
 
-    public static final String RDotMethod = ".Method";
+    public static final String R_DOT_METHOD = ".Method";
 
-    public static final String RDotClass = ".Class";
+    public static final String R_DOT_CLASS = ".Class";
 
-    public static final String RDotGenericCallEnv = ".GenericCallEnv";
+    public static final String R_DOT_GENERIC_CALL_ENV = ".GenericCallEnv";
 
-    public static final String RDotGenericDefEnv = ".GenericDefEnv";
+    public static final String R_DOT_GENERIC_DEF_ENV = ".GenericDefEnv";
 
-    public static final String RDotGroup = ".Group";
+    public static final String R_DOT_GROUP = ".Group";
 
     public static final String RDOT = ".";
 
@@ -160,6 +160,7 @@ public class RRuntime {
     public static final String R_SRCFILE = "srcfile";
 
     public static final String NULL = "NULL";
+    public static final RSymbol PSEUDO_NULL = new RSymbol("\u0001NULL\u0001");
     public static final String UNBOUND = "UNBOUND";
 
     @CompilationFinal private static final String[] numberStringCache = new String[4096];
@@ -562,10 +563,10 @@ public class RRuntime {
         if (operand > 1000000000000L) {
             return String.format((Locale) null, "%.6e", operand);
         }
-// if (true || operand < 0.0001) {
-// // not quite correct but better than nothing for now...
-// return String.format((Locale) null, "%.22e", new BigDecimal(operand));
-// }
+        // if (true || operand < 0.0001) {
+        // // not quite correct but better than nothing for now...
+        // return String.format((Locale) null, "%.22e", new BigDecimal(operand));
+        // }
         if (digitsBehindDot == -1) {
             return Double.toString(operand);
         } else {

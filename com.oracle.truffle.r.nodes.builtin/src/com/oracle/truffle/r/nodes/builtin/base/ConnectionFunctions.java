@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -390,13 +390,21 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "readLines", kind = INTERNAL, parameterNames = {"con", "n", "ok", "warn", "encoding", "skipNul"})
     public abstract static class ReadLines extends InternalCloseHelper {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toLogical(2);
+            casts.toLogical(3);
+            casts.toLogical(5);
+        }
+
         @Specialization
         @TruffleBoundary
-        protected Object readLines(RConnection con, int n, byte ok, @SuppressWarnings("unused") byte warn, @SuppressWarnings("unused") String encoding, @SuppressWarnings("unused") byte skipNul) {
+        protected Object readLines(RConnection con, int n, byte ok, byte warn, @SuppressWarnings("unused") String encoding, byte skipNul) {
             // TODO implement all the arguments
             controlVisibility();
             try (RConnection openConn = con.forceOpen("rt")) {
-                String[] lines = openConn.readLines(n);
+                String[] lines = openConn.readLines(n, RRuntime.fromLogical(warn), RRuntime.fromLogical(skipNul));
                 if (n > 0 && lines.length < n && ok == RRuntime.LOGICAL_FALSE) {
                     throw RError.error(this, RError.Message.TOO_FEW_LINES_READ_LINES);
                 }

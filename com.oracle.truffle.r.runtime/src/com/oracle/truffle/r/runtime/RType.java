@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -54,7 +54,7 @@ public enum RType {
     private final String name;
     private final int precedence;
 
-    private RType(String name, int precedence) {
+    RType(String name, int precedence) {
         this.name = name;
         this.precedence = precedence;
     }

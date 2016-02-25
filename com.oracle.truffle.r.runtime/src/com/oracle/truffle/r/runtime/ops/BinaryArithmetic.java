@@ -6,7 +6,7 @@
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
  * Copyright (c) 2012-2013, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -949,7 +949,7 @@ public abstract class BinaryArithmetic extends Operation {
         private final BranchProfile zeroProfile = BranchProfile.create();
         private final ConditionProfile compareProfile = ConditionProfile.createBinaryProfile();
 
-        public Max() {
+        Max() {
             super(true, true, true);
         }
 
@@ -996,7 +996,7 @@ public abstract class BinaryArithmetic extends Operation {
         private final BranchProfile zeroProfile = BranchProfile.create();
         private final ConditionProfile compareProfile = ConditionProfile.createBinaryProfile();
 
-        public Min() {
+        Min() {
             super(true, true, true);
         }
 

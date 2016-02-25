@@ -54,7 +54,8 @@ import com.oracle.truffle.r.runtime.context.*;
  * invoked by the corresponding methods on {@link RBaseNode} after the correct {@link RSyntaxNode}
  * is located.
  */
-public interface RSyntaxNode extends RSyntaxNodeSPI {
+public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
+
     /**
      * A convenience method that captures the fact that, while the notion of a syntax node is
      * described in this interface, in practice all {@link RSyntaxNode} instances are also
@@ -93,21 +94,16 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
     SourceSection SOURCE_UNAVAILABLE = SourceSection.createUnavailable("R", "unavailable");
 
     /*
-     * Convenience methods that also handle the fact that an {@code FunctionDefinitionNode} is not
-     * an {@code RNode}.
+     * Every implementor of this interface must either inherit or directly implement the following
+     * three methods. N.B. removeSourceSection and setSourceSection are deliberately renamed from
+     * the previous (now deprecated) methods on the Node class.
      */
 
-    default SourceSection getSourceSection() {
-        return (asNode().getSourceSection());
-    }
+    SourceSection getSourceSection();
 
-    default void clearSourceSection() {
-        asNode().clearSourceSection();
-    }
+    void unsetSourceSection();
 
-    default void assignSourceSection(SourceSection section) {
-        asNode().assignSourceSection(section);
-    }
+    void setSourceSection(SourceSection sourceSection);
 
     /**
      * Traverses the entire tree but only invokes the {@code visit} method for nodes that return
@@ -118,11 +114,12 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
      * node. We visit but do not call the {@code nodeVisitor} on {@link RSyntaxNode}s that return
      * {@code true} to {@link #isBackbone()}.
      *
-     * N.B. A {@code ReplacementNode} is a very special case. Its children are {@link RSyntaxNode}s,
-     * but we do not want to visit them at all. TODO perhaps we should visit the associated
-     * {@code syntaxAST}.
+     * N.B. A {@code ReplacementNode} is a very special case as we don't want to visit the
+     * transformation denoted by the child nodes (which include syntax nodes), so we use the special
+     * lhs/rhs accessors and visit those. In some cases we don't want to visit the children at all,
+     * which is controlled by {@code visitReplacement}.
      */
-    static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor) {
+    static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor, boolean visitReplacement) {
         boolean visitChildren = true;
         int incDepth = 0;
         if (RBaseNode.isRSyntaxNode(node)) {
@@ -132,13 +129,17 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
             }
             incDepth = 1;
         }
-        if (!RContext.getRRuntimeASTAccess().isReplacementNode(node)) {
-            if (visitChildren) {
+        if (visitChildren) {
+            RSyntaxNode[] rnChildren = RContext.getRRuntimeASTAccess().isReplacementNode(node);
+            if (rnChildren == null) {
                 for (Node child : node.getChildren()) {
                     if (child != null) {
-                        accept(child, depth + incDepth, nodeVisitor);
+                        accept(child, depth + incDepth, nodeVisitor, visitReplacement);
                     }
                 }
+            } else if (visitReplacement) {
+                accept(rnChildren[0].asNode(), depth + incDepth, nodeVisitor, visitReplacement);
+                accept(rnChildren[1].asNode(), depth + incDepth, nodeVisitor, visitReplacement);
             }
         }
     }

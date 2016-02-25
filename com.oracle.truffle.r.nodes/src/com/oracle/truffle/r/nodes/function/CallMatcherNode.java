@@ -4,28 +4,42 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
-import com.oracle.truffle.r.nodes.function.signature.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RArguments.S3Args;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
+import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
+import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class CallMatcherNode extends RBaseNode {
 
@@ -50,10 +64,9 @@ public abstract class CallMatcherNode extends RBaseNode {
         return new CallMatcherUninitializedNode(forNextMethod, argsAreEvaluated);
     }
 
-    public abstract Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, S3Args s3Args);
+    public abstract Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, DispatchArgs dispatchArgs);
 
-    private static CallMatcherCachedNode specialize(ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, CallMatcherNode specializer, boolean forNextMethod,
-                    boolean argsAreEvaluated, CallMatcherNode next) {
+    protected CallMatcherCachedNode specialize(ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, CallMatcherNode next) {
 
         int argCount = suppliedArguments.length;
         int argListSize = argCount;
@@ -86,13 +99,13 @@ public abstract class CallMatcherNode extends RBaseNode {
 
         assert resultSignature != null;
         ArgumentsSignature formalSignature = ArgumentMatcher.getFunctionSignature(function);
-        MatchPermutation permutation = ArgumentMatcher.matchArguments(resultSignature, formalSignature, specializer, forNextMethod, function.getRBuiltin());
+        MatchPermutation permutation = ArgumentMatcher.matchArguments(resultSignature, formalSignature, this, forNextMethod, function.getRBuiltin());
 
-        return new CallMatcherCachedNode(suppliedSignature, varArgSignatures, function, preparePermutation, permutation, specializer, forNextMethod, argsAreEvaluated, next);
+        return new CallMatcherCachedNode(suppliedSignature, varArgSignatures, function, preparePermutation, permutation, forNextMethod, argsAreEvaluated, next);
     }
 
-    protected Object[] prepareArguments(VirtualFrame frame, Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, S3Args s3Args) {
-        return argsNode.execute(function, caller, null, RArguments.getDepth(frame) + 1, reorderedArgs, reorderedSignature, s3Args);
+    protected Object[] prepareArguments(VirtualFrame frame, Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, DispatchArgs dispatchArgs) {
+        return argsNode.execute(function, caller, null, RArguments.getDepth(frame) + 1, reorderedArgs, reorderedSignature, dispatchArgs);
     }
 
     protected final void evaluatePromises(VirtualFrame frame, RFunction function, Object[] args, int varArgIndex) {
@@ -133,24 +146,24 @@ public abstract class CallMatcherNode extends RBaseNode {
 
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class CallMatcherUninitializedNode extends CallMatcherNode {
-        public CallMatcherUninitializedNode(boolean forNextMethod, boolean argsAreEvaluated) {
+        CallMatcherUninitializedNode(boolean forNextMethod, boolean argsAreEvaluated) {
             super(forNextMethod, argsAreEvaluated);
         }
 
         private int depth;
 
         @Override
-        public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, S3Args s3Args) {
+        public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, DispatchArgs dispatchArgs) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (++depth > MAX_CACHE_DEPTH) {
-                return replace(new CallMatcherGenericNode(forNextMethod, argsAreEvaluated)).execute(frame, suppliedSignature, suppliedArguments, function, s3Args);
+                return replace(new CallMatcherGenericNode(forNextMethod, argsAreEvaluated)).execute(frame, suppliedSignature, suppliedArguments, function, dispatchArgs);
             } else {
-                CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, this, forNextMethod, argsAreEvaluated, this));
+                CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, this));
                 // for splitting if necessary
                 if (cachedNode.call != null && RCallNode.needsSplitting(function)) {
                     cachedNode.call.cloneCallTarget();
                 }
-                return cachedNode.execute(frame, suppliedSignature, suppliedArguments, function, s3Args);
+                return cachedNode.execute(frame, suppliedSignature, suppliedArguments, function, dispatchArgs);
             }
         }
 
@@ -176,8 +189,8 @@ public abstract class CallMatcherNode extends RBaseNode {
         private final MatchPermutation permutation;
         private final FormalArguments formals;
 
-        public CallMatcherCachedNode(ArgumentsSignature suppliedSignature, ArgumentsSignature[] varArgSignatures, RFunction function, long[] preparePermutation, MatchPermutation permutation,
-                        CallMatcherNode specializer, boolean forNextMethod, boolean argsAreEvaluated, CallMatcherNode next) {
+        CallMatcherCachedNode(ArgumentsSignature suppliedSignature, ArgumentsSignature[] varArgSignatures, RFunction function, long[] preparePermutation, MatchPermutation permutation,
+                        boolean forNextMethod, boolean argsAreEvaluated, CallMatcherNode next) {
             super(forNextMethod, argsAreEvaluated);
             this.cachedSuppliedSignature = suppliedSignature;
             this.cachedVarArgSignatures = varArgSignatures;
@@ -188,7 +201,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             this.formals = ((RRootNode) cachedFunction.getRootNode()).getFormalArguments();
             if (function.isBuiltin()) {
                 RBuiltinRootNode builtinRoot = RCallNode.findBuiltinRootNode(function.getTarget());
-                this.builtin = builtinRoot.inline(formals.getSignature(), null, specializer.getRSyntaxNode().getSourceSection());
+                this.builtin = builtinRoot.inline(formals.getSignature(), null);
                 this.builtinArgumentCasts = builtin.getCasts();
             } else {
                 this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
@@ -197,7 +210,7 @@ public abstract class CallMatcherNode extends RBaseNode {
         }
 
         @Override
-        public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, S3Args s3Args) {
+        public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, DispatchArgs dispatchArgs) {
             if (suppliedSignature == cachedSuppliedSignature && function == cachedFunction && checkLastArgSignature(cachedSuppliedSignature, suppliedArguments)) {
 
                 Object[] preparedArguments = prepareSuppliedArgument(preparePermutation, suppliedArguments);
@@ -205,14 +218,14 @@ public abstract class CallMatcherNode extends RBaseNode {
                 Object[] reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(permutation, preparedArguments, formals);
                 evaluatePromises(frame, cachedFunction, reorderedArgs, formals.getSignature().getVarArgIndex());
                 if (call != null) {
-                    Object[] arguments = prepareArguments(frame, reorderedArgs, formals.getSignature(), cachedFunction, s3Args);
+                    Object[] arguments = prepareArguments(frame, reorderedArgs, formals.getSignature(), cachedFunction, dispatchArgs);
                     return call.call(frame, arguments);
                 } else {
                     applyCasts(reorderedArgs);
                     return builtin.execute(frame, reorderedArgs);
                 }
             } else {
-                return next.execute(frame, suppliedSignature, suppliedArguments, function, s3Args);
+                return next.execute(frame, suppliedSignature, suppliedArguments, function, dispatchArgs);
             }
         }
 
@@ -272,7 +285,7 @@ public abstract class CallMatcherNode extends RBaseNode {
 
     private static final class CallMatcherGenericNode extends CallMatcherNode {
 
-        public CallMatcherGenericNode(boolean forNextMethod, boolean argsAreEvaluated) {
+        CallMatcherGenericNode(boolean forNextMethod, boolean argsAreEvaluated) {
             super(forNextMethod, argsAreEvaluated);
         }
 
@@ -282,10 +295,10 @@ public abstract class CallMatcherNode extends RBaseNode {
         private final ConditionProfile hasVarArgsProfile = ConditionProfile.createBinaryProfile();
 
         @Override
-        public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, S3Args s3Args) {
+        public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, DispatchArgs dispatchArgs) {
             EvaluatedArguments reorderedArgs = reorderArguments(suppliedArguments, function, suppliedSignature);
             evaluatePromises(frame, function, reorderedArgs.getArguments(), reorderedArgs.getSignature().getVarArgIndex());
-            Object[] arguments = prepareArguments(frame, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function, s3Args);
+            Object[] arguments = prepareArguments(frame, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function, dispatchArgs);
             return call.call(frame, function.getTarget(), arguments);
         }
 

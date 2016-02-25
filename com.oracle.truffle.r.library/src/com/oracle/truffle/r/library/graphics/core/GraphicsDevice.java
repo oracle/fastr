@@ -8,7 +8,7 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -33,7 +33,7 @@ public interface GraphicsDevice {
 
     void drawPolyline(Coordinates coordinates, DrawingParameters drawingParameters);
 
-    public enum Mode {
+    enum Mode {
         GRAPHICS_ON,    // allow graphics output
         GRAPHICS_OFF    // disable graphics output
     }

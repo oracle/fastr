@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -148,7 +148,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (value instanceof String) {
             return RDataFactory.createStringVector((String) value);
         } else {
-            throw RError.error(RError.NO_NODE, RError.Message.SET_INVALID_CLASS_ATTR);
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.SET_INVALID_CLASS_ATTR);
         }
     }
 

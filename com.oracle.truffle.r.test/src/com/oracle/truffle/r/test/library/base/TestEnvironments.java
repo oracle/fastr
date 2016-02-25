@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -202,14 +202,14 @@ public class TestEnvironments extends TestBase {
         assertEval("{ is.environment(1) }");
 
         // as.environment
-        assertEval(Output.ContainsError, "{ as.environment(-1) }");
+        assertEval("{ as.environment(-1) }");
         assertEval("{ f <- function()  { as.environment(-1) } ; f() }");
-        assertEval(Output.ContainsError, "{ as.environment(0) }");
+        assertEval("{ as.environment(0) }");
         assertEval("{ as.environment(1) }");
         // GnuR has more packages loaded so can't test in the middle
         assertEval("{ as.environment(length(search())) }");
         assertEval("{ as.environment(length(search()) + 1) }");
-        assertEval(Output.ContainsError, "{ as.environment(length(search()) + 2) }");
+        assertEval("{ as.environment(length(search()) + 2) }");
 
         assertEval("{ as.environment(\".GlobalEnv\") }");
         assertEval("{ as.environment(\"package:base\") }");
@@ -231,10 +231,10 @@ public class TestEnvironments extends TestBase {
         // locking
         assertEval("{ e<-new.env(); environmentIsLocked(e) }");
         assertEval("{ e<-new.env(); lockEnvironment(e); environmentIsLocked(e) }");
-        assertEval(Output.ContainsError, "{ e<-new.env(); lockEnvironment(e); assign(\"a\", 1, e) }");
+        assertEval("{ e<-new.env(); lockEnvironment(e); assign(\"a\", 1, e) }");
         assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e); assign(\"a\", 2, e) }");
-        assertEval(Output.ContainsError, "{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e, TRUE); assign(\"a\", 2, e) }");
-        assertEval(Output.ContainsError, "{ e<-new.env(); assign(\"a\", 1, e); lockBinding(\"a\", e); assign(\"a\", 2, e) }");
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e, TRUE); assign(\"a\", 2, e) }");
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e); lockBinding(\"a\", e); assign(\"a\", 2, e) }");
         assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e, TRUE); unlockBinding(\"a\", e); assign(\"a\", 2, e) }");
         assertEval("{ e<-new.env(); assign(\"a\", 1, e); bindingIsLocked(\"a\", e) }");
         assertEval("{ e<-new.env(); assign(\"a\", 1, e); lockBinding(\"a\", e); bindingIsLocked(\"a\", e) }");
@@ -264,7 +264,7 @@ public class TestEnvironments extends TestBase {
         assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
 
         // Requires generic specialization
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ as.environment(as.environment) }");
+        assertEval("{ as.environment(as.environment) }");
     }
 
     @Test
@@ -284,7 +284,7 @@ public class TestEnvironments extends TestBase {
         assertEval("{ e <- new.env(); assign(\"x\", \"abc\", e); attach(e, 2); r <- x; detach(2); r }");
         assertEval("{ attach(.Platform, 2); r <- file.sep; detach(2); r }");
         assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); r <- x; detach(2); r }");
-        assertEval(Output.ContainsError, "{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2); x }");
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2); x }");
         assertEval(Output.ContainsError, "{ detach(\"missing\"); x }");
     }
 }

@@ -32,6 +32,8 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * A collection of methods that need access to the AST types, needed by code that resides in the
@@ -114,7 +116,7 @@ public interface RRuntimeASTAccess {
      * @param call may be {@code null} or it may be the {@link Node} that was executing when the
      *            error.warning was generated (builtin or associated node).
      */
-    Object findCaller(Node call);
+    Object findCaller(RBaseNode call);
 
     /**
      * Convenience method for {@code getCallerSource(getSyntaxCaller(caller))}.
@@ -160,10 +162,10 @@ public interface RRuntimeASTAccess {
     Engine createEngine(RContext context);
 
     /**
-     * Returns {@code true} iff {@code node} is an instance of {@code ReplacementNode}, which is not
-     * visible from {@code runtime}, or {@code false} otherwise.
+     * Returns {@code null} if {@code node} is not an instance of {@code ReplacementNode}, else the
+     * lhs,rhs pair.
      */
-    boolean isReplacementNode(Node node);
+    RSyntaxNode[] isReplacementNode(Node node);
 
     /**
      * Returns {@code true} iff {@code node} is an instance of {@code FunctionDefinitionNode}, which

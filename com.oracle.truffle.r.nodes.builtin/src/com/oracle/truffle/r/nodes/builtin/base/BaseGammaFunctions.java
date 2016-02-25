@@ -6,7 +6,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2012, The R Core Team
  * Copyright (c) 2004, The R Foundation
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -224,7 +224,7 @@ public class BaseGammaFunctions {
             double[] trmr = new double[n_max + 1];
 
             // non-zero ierr always results in generating a NaN
-// mVal.ierr = 0;
+            // mVal.ierr = 0;
             if (n < 0 || kode < 1 || kode > 2 || m < 1) {
                 return Double.NaN;
             }
@@ -235,8 +235,8 @@ public class BaseGammaFunctions {
                  */
                 if (x == Math.round(x)) {
                     /* non-positive integer : +Inf or NaN depends on n */
-// for(j=0; j < m; j++) /* k = j + n : */
-// ans[j] = ((j+n) % 2) ? ML_POSINF : ML_NAN;
+                    // for(j=0; j < m; j++) /* k = j + n : */
+                    // ans[j] = ((j+n) % 2) ? ML_POSINF : ML_NAN;
                     // m is always 1
                     ans = (n % 2) != 0 ? Double.POSITIVE_INFINITY : Double.NaN;
                     return ans;
@@ -251,7 +251,7 @@ public class BaseGammaFunctions {
                 if (m > 1 || n > 3) { /* doesn't happen for digamma() .. pentagamma() */
                     /* not yet implemented */
                     // non-zero ierr always results in generating a NaN
-// mVal.ierr = 4;
+                    // mVal.ierr = 4;
                     return Double.NaN;
                 }
                 x *= M_PI; /* pi * x */
@@ -282,12 +282,12 @@ public class BaseGammaFunctions {
                     if (j >= 0) { /* by cheat above, tt === d_k(x) */
                         // j must always be 0
                         assert j == 0;
-// ans[j] = s*(ans[j] + t1/t2 * tt);
+                        // ans[j] = s*(ans[j] + t1/t2 * tt);
                         ans = s * (ans + t1 / t2 * tt);
                     }
                 }
                 if (n == 0 && kode == 2) { /* unused from R, but "wrong": xln === 0 : */
-// ans[0] += xln;
+                    // ans[0] += xln;
                     ans += xln;
                 }
                 return ans;
@@ -295,16 +295,16 @@ public class BaseGammaFunctions {
 
             /* else : x > 0 */
             // nz not used
-// mVal.nz = 0;
+            // mVal.nz = 0;
             xln = Math.log(x);
             if (kode == 1 /* && m == 1 */) { /* the R case --- for very large x: */
                 double lrg = 1 / (2. * DBLEPSILON);
                 if (n == 0 && x * xln > lrg) {
-// ans[0] = -xln;
+                    // ans[0] = -xln;
                     ans = -xln;
                     return ans;
                 } else if (n >= 1 && x > n * lrg) {
-// ans[0] = exp(-n * xln)/n; /* == x^-n / n == 1/(n * x^n) */
+                    // ans[0] = exp(-n * xln)/n; /* == x^-n / n == 1/(n * x^n) */
                     ans = Math.exp(-n * xln) / n;
                     return ans;
                 }
@@ -329,24 +329,24 @@ public class BaseGammaFunctions {
                 if (Math.abs(t) > elim) {
                     if (t <= 0.0) {
                         // nz not used
-// mVal.nz = 0;
+                        // mVal.nz = 0;
                         // non-zero ierr always results in generating a NaN
-// mVal.ierr = 2;
+                        // mVal.ierr = 2;
                         return Double.NaN;
                     }
                 } else {
                     if (x < wdtol) {
-// ans[0] = R_pow_di(x, -n-1);
+                        // ans[0] = R_pow_di(x, -n-1);
                         ans = Math.pow(x, -n - 1);
                         if (mm != 1) {
-// for(k = 1; k < mm ; k++)
-// ans[k] = ans[k-1] / x;
+                            // for(k = 1; k < mm ; k++)
+                            // ans[k] = ans[k-1] / x;
                             assert mm < 2;
                             // int the original code, ans should not be accessed beyond the 0th
-// index
+                            // index
                         }
                         if (n == 0 && kode == 2) {
-// ans[0] += xln;
+                            // ans[0] += xln;
                             ans += xln;
                         }
                         return ans;
@@ -398,9 +398,9 @@ public class BaseGammaFunctions {
                     }
                 }
                 // nz not used
-// mVal.nz++; /* underflow */
+                // mVal.nz++; /* underflow */
                 mm--;
-// ans[mm] = 0.;
+                // ans[mm] = 0.;
                 assert mm == 0;
                 ans = 0.;
                 if (mm == 0) {
@@ -418,31 +418,31 @@ public class BaseGammaFunctions {
                 trm[i] = Math.pow(den, -np);
                 s += trm[i];
             }
-// ans[0] = s;
+            // ans[0] = s;
             ans = s;
             if (n == 0 && kode == 2) {
-// ans[0] = s + xln;
+                // ans[0] = s + xln;
                 ans = s + xln;
             }
 
             if (mm != 1) { /* generate higher derivatives, j > n */
                 assert false;
-// tol = wdtol / 5.0;
-// for(j = 1; j < mm; j++) {
-// t /= x;
-// s = t;
-// tols = t * tol;
-// den = x;
-// for(i=1; i <= nn; i++) {
-// den += 1.;
-// trm[i] /= den;
-// s += trm[i];
-// if (trm[i] < tols) {
-// break;
-// }
-// }
-// ans[j] = s;
-// }
+                // tol = wdtol / 5.0;
+                // for(j = 1; j < mm; j++) {
+                // t /= x;
+                // s = t;
+                // tols = t * tol;
+                // den = x;
+                // for(i=1; i <= nn; i++) {
+                // den += 1.;
+                // trm[i] /= den;
+                // s += trm[i];
+                // if (trm[i] < tols) {
+                // break;
+                // }
+                // }
+                // ans[j] = s;
+                // }
             }
             return ans;
 
@@ -488,9 +488,9 @@ public class BaseGammaFunctions {
                 double np = nn + 1;
                 if (nx > n_max) {
                     // nz not used
-// mVal.nz = 0;
+                    // mVal.nz = 0;
                     // non-zero ierr always results in generating a NaN
-// mVal.ierr = 3;
+                    // mVal.ierr = 3;
                     return Double.NaN;
                 } else {
                     if (nn == 0) {
@@ -508,7 +508,7 @@ public class BaseGammaFunctions {
                     }
                 }
             }
-// ans[mm-1] = s;
+            // ans[mm-1] = s;
             assert (mm - 1) == 0;
             ans = s;
             if (fn == 0) {
@@ -551,7 +551,7 @@ public class BaseGammaFunctions {
                         fx = x + xm;
                     }
                 }
-// ans[mm - j] = s;
+                // ans[mm - j] = s;
                 assert (mm - j) == 0;
                 ans = s;
                 if (fn == 0) {
@@ -574,12 +574,12 @@ public class BaseGammaFunctions {
         private static double l30(double xdmln, double xdmy, double x, double s, int kode, double ansOld) {
             double ans = ansOld;
             if (kode != 2) { /* always */
-// ans[0] = s - xdmln;
+                // ans[0] = s - xdmln;
                 ans = s - xdmln;
             } else if (xdmy != x) {
                 double xq;
                 xq = xdmy / x;
-// ans[0] = s - log(xq);
+                // ans[0] = s - log(xq);
                 ans = s - Math.log(xq);
             }
             return ans;

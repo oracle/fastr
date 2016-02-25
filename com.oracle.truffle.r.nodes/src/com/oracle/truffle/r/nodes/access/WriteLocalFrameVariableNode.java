@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,7 +86,7 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
             CompilerDirectives.transferToInterpreterAndInvalidate();
             // it's slow path (unconditional replace) so toString() is fine as well
             if (getName().toString().isEmpty()) {
-                throw RError.error(this, RError.Message.ZERO_LENGTH_VARIABLE);
+                throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
             }
             FrameSlot frameSlot = findOrAddFrameSlot(frame.getFrameDescriptor(), getName(), initialKind);
             replace(ResolvedWriteLocalFrameVariableNode.create(getRhs(), getName(), frameSlot, getMode())).execute(frame, value);

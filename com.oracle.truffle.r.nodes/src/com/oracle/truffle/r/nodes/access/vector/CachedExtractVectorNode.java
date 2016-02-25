@@ -66,7 +66,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
      */
     private final AlwaysOnBranchProfile metadataApplied = AlwaysOnBranchProfile.create();
 
-    public CachedExtractVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, RTypedValue exact, RTypedValue dropDimensions, boolean recursive) {
+    CachedExtractVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, RTypedValue exact, RTypedValue dropDimensions, boolean recursive) {
         super(mode, vector, positions, recursive);
         this.targetClass = vector.getClass();
         this.exactClass = exact.getClass();
@@ -76,7 +76,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         this.exact = logicalAsBoolean(exact, DEFAULT_EXACT);
         this.dropDimensions = logicalAsBoolean(dropDimensions, DEFAULT_DROP_DIMENSION);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, this.exact, false, recursive);
-        if (vectorType != RType.Null && vectorType != RType.Environment) {
+        if (error == null && vectorType != RType.Null && vectorType != RType.Environment) {
             this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length, true, false, false);
         }
     }
@@ -95,6 +95,10 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private final ConditionProfile oneDimensionProfile = ConditionProfile.createBinaryProfile();
 
     public Object apply(Object originalVector, Object[] originalPositions, PositionProfile[] originalProfiles, Object originalExact, Object originalDropDimensions) {
+        if (error != null) {
+            CompilerDirectives.transferToInterpreter();
+            error.run();
+        }
         final Object[] positions = filterPositions(originalPositions);
 
         assert isSupported(originalVector, positions, originalExact, originalDropDimensions);
@@ -419,7 +423,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
         @Children private final CachedExtractVectorNode[] extractNodes;
 
-        public ExtractDimNamesNode(int dimensions) {
+        ExtractDimNamesNode(int dimensions) {
             this.extractNodes = new CachedExtractVectorNode[dimensions];
         }
 

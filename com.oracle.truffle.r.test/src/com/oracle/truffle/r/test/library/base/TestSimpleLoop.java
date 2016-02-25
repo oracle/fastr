@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -51,8 +51,12 @@ public class TestSimpleLoop extends TestBase {
     public void testLoopsErrors() {
         assertEval(Output.ContainsError, "{ while (1 < NA) { 1 } }");
 
-        assertEval(Output.ContainsError, "{ break; }");
-        assertEval(Output.ContainsError, "{ next; }");
+        assertEval("{ break; }");
+        assertEval("{ next; }");
+        assertEval("{ break(); }");
+        assertEval("{ next(); }");
+        assertEval("{ break(1,2,3); }");
+        assertEval("{ next(1,2,$$); }");
     }
 
     @Test

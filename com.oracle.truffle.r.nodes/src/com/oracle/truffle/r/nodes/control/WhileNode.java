@@ -22,20 +22,36 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.gnur.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.LoopNode;
+import com.oracle.truffle.api.nodes.RepeatingNode;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.unary.ConvertBooleanNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RAllNames;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, VisibilityController {
+public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RSyntaxCall, VisibilityController {
 
     @Child private LoopNode loop;
 
@@ -44,14 +60,14 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
      */
     private final boolean isRepeat;
 
-    private WhileNode(RSyntaxNode condition, RSyntaxNode body, boolean isRepeat) {
+    private WhileNode(SourceSection src, RSyntaxNode condition, RSyntaxNode body, boolean isRepeat) {
+        super(src);
         this.loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(this, ConvertBooleanNode.create(condition), body.asRNode()));
         this.isRepeat = isRepeat;
     }
 
     public static WhileNode create(SourceSection src, RSyntaxNode condition, RSyntaxNode body, boolean isRepeat) {
-        WhileNode result = new WhileNode(condition, body, isRepeat);
-        result.assignSourceSection(src);
+        WhileNode result = new WhileNode(src, condition, body, isRepeat);
         return result;
     }
 
@@ -163,7 +179,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
         // used as RSyntaxNode
         private final WhileNode whileNode;
 
-        public WhileRepeatingNode(WhileNode whileNode, ConvertBooleanNode condition, RNode body) {
+        WhileRepeatingNode(WhileNode whileNode, ConvertBooleanNode condition, RNode body) {
             this.whileNode = whileNode;
             this.condition = condition;
             this.body = body;
@@ -217,5 +233,22 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
             }
             return String.format("while loop at %s<%s:%d>", function, shortDescription, startLine);
         }
+    }
+
+    public RSyntaxElement getSyntaxLHS() {
+        return RSyntaxLookup.createDummyLookup(getSourceSection(), isRepeat ? "repeat" : "while", true);
+    }
+
+    public RSyntaxElement[] getSyntaxArguments() {
+        WhileRepeatingNode repeatingNode = (WhileRepeatingNode) loop.getRepeatingNode();
+        if (isRepeat) {
+            return new RSyntaxElement[]{repeatingNode.body.asRSyntaxNode()};
+        } else {
+            return new RSyntaxElement[]{repeatingNode.condition.asRSyntaxNode(), repeatingNode.body.asRSyntaxNode()};
+        }
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(isRepeat ? 1 : 2);
     }
 }

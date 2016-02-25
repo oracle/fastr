@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RDispatch;
+import com.oracle.truffle.r.runtime.RGroupGenerics;
 
 public abstract class RBuiltinDescriptor {
 
@@ -67,8 +70,7 @@ public abstract class RBuiltinDescriptor {
             // currently tough to do as builtin descriptors seem to be created before the primordial
             // context is fully initialized but code inspection shows that the assertion holds)
             primitiveMethodIndex = primitiveMethodCount++;
-        }
-        else {
+        } else {
             primitiveMethodIndex = PrimitiveMethodsInfo.INVALID_INDEX;
         }
     }

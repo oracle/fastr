@@ -38,7 +38,7 @@ public interface Engine {
 
     String EVAL_FUNCTION_NAME = "<eval wrapper>";
 
-    public static class ParseException extends IOException {
+    class ParseException extends IOException {
         private static final long serialVersionUID = 1L;
 
         private final Source source;
@@ -73,7 +73,7 @@ public interface Engine {
         }
     }
 
-    public static final class IncompleteSourceException extends ParseException {
+    final class IncompleteSourceException extends ParseException {
         private static final long serialVersionUID = -6688699706193438722L;
 
         public IncompleteSourceException(Throwable cause, Source source, String token, String substring, int line) {

@@ -23,25 +23,54 @@
 package com.oracle.truffle.r.engine;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.instrument.debug.*;
-import com.oracle.truffle.r.nodes.runtime.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
+import com.oracle.truffle.r.nodes.control.IfNode;
+import com.oracle.truffle.r.nodes.control.ReplacementNode;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.instrument.debug.DebugHandling;
+import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
+import com.oracle.truffle.r.runtime.Arguments;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse.State;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.gnur.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.Engine;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RUnboundValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Implementation of {@link RRuntimeASTAccess}.
@@ -196,7 +225,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             String[] newNames = new String[sig.getLength()];
             int argNamesLength = names.getLength() - 1;
             if (argNamesLength > sig.getLength()) {
-                throw RError.error(RError.NO_NODE, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, "names", names.getLength(), sig.getLength() + 1);
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, "names", names.getLength(), sig.getLength() + 1);
             }
             for (int i = 0, j = 1; i < sig.getLength() && j <= argNamesLength; i++, j++) {
                 newNames[i] = names.getDataAt(j);
@@ -223,7 +252,8 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     public Object callback(RFunction f, Object[] args) {
         boolean gd = DebugHandling.globalDisable(true);
         try {
-            return RContext.getEngine().evalFunction(f, null, args);
+            Frame frame = Utils.getActualCurrentFrame();
+            return RContext.getEngine().evalFunction(f, frame == null ? REnvironment.globalEnv().getFrame() : frame.materialize(), args);
         } catch (ReturnException ex) {
             // cannot throw return exceptions further up.
             return ex.getResult();
@@ -310,8 +340,25 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     public RLanguage getSyntaxCaller(RCaller rl) {
-        RSyntaxNode sn = RASTUtils.unwrap(rl.getRep()).asRSyntaxNode();
-        return RDataFactory.createLanguage(sn.asRNode());
+        RBaseNode bn = RASTUtils.unwrap(rl.getRep());
+        return RDataFactory.createLanguage(checkBuiltin(bn).asRSyntaxNode().asRNode());
+    }
+
+    private static RBaseNode checkBuiltin(RBaseNode bn) {
+        if (bn instanceof RBuiltinNode) {
+            RSyntaxNode sn = ((RBuiltinNode) bn).getOriginalCall();
+            if (sn == null) {
+                /*
+                 * TODO Ideally this never happens but do.call creates trees that make finding the
+                 * original call impossible.
+                 */
+                return null;
+            } else {
+                return (RBaseNode) sn;
+            }
+        } else {
+            return bn;
+        }
     }
 
     public String getCallerSource(RLanguage rl) {
@@ -320,65 +367,54 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         if (ss == null) {
             return "<no source>";
         } else {
-            return ss.getCode();
-        }
-    }
-
-    private static RBuiltinNode isBuiltin(Node node) {
-        Node n = node;
-        while (n != null) {
-            if (n instanceof RBuiltinNode) {
-                RBuiltinNode result = (RBuiltinNode) n;
-                /* Sometimes builtins are used a children of other builtins */
-                if (result.getBuiltin() != null) {
-                    return result;
+            String code = ss.getCode();
+            int pos = code.indexOf('{');
+            if (pos != -1) {
+                code = code.substring(0, pos);
+            }
+            pos = code.indexOf('\n');
+            if (pos != -1) {
+                code = code.substring(0, pos);
+            }
+            if (code.length() > 60) {
+                pos = code.indexOf(' ', 60);
+                if (pos != -1) {
+                    code = code.substring(0, pos + 1);
                 }
             }
-            n = n.getParent();
+            return code;
         }
-        return null;
     }
 
     /**
-     * This is where all the complexity in locating the caller for an error/warning is located. When
-     * {@code call == null}, it's pretty simple as we just back off to the frame, where the call
-     * will have been stored. Otherwise, we have to deal with the different ways in which the
-     * internal implementation can generate an error/warning and locate the correct node, and try to
-     * match the behavior of GnuR regarding {@code .Internal} (TODO).
+     * This is where all the complexity in locating the caller for an error/warning is located. If a
+     * specific node is provided as {@code call}, then this node is used as the caller context for
+     * the error message. Other cases are represented by {@link RError#NO_CALLER},
+     * {@link RError#SHOW_CALLER} and {@link RError#SHOW_CALLER2}.
      */
-    public Object findCaller(Node call) {
-        Frame frame = Utils.getActualCurrentFrame();
-        if (call != null) {
-            if (call == RError.NO_CALLER) {
-                return RNull.instance;
+    @Override
+    public Object findCaller(RBaseNode call) {
+        if (call == RError.NO_CALLER) {
+            return RNull.instance;
+        } else if (call == RError.SHOW_CALLER) {
+            Frame frame = Utils.getActualCurrentFrame();
+            return findCallerFromFrame(frame);
+        } else if (call == RError.SHOW_CALLER2) {
+            Frame frame = Utils.getActualCurrentFrame();
+            if (RArguments.isRFrame(frame) && frame != null) {
+                frame = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
             }
-            RBuiltinNode builtIn = isBuiltin(call);
-            if (builtIn != null) {
-                // .Internal at outer level?
-                if (builtIn.getBuiltin().getKind() == RBuiltinKind.INTERNAL && getCallerFromFrame(frame) == RNull.instance) {
-                    return RNull.instance;
-                }
-                /*
-                 * Currently builtins called through do.call do not have a (meaningful) source
-                 * section.
-                 */
-                if (builtIn.getSourceSection() != null) {
-                    // look for the surrounding RCallNode
-                    Node node = builtIn;
-                    if (builtIn.getBuiltin().getKind() == RBuiltinKind.INTERNAL) {
-                        while (!(node instanceof RCallNode)) {
-                            node = node.getParent();
-                        }
-                    }
-                    return RDataFactory.createLanguage((RNode) node);
-                }
-                // We see some RSyntaxNodes with null SourceSections (which should never happen)
-            } else if (call instanceof RSyntaxNode && call.getSourceSection() != null) {
-                return RDataFactory.createLanguage((RNode) call);
+            return findCallerFromFrame(frame);
+        } else {
+            RBaseNode originalCall = checkBuiltin(call);
+            if (originalCall != null && originalCall.checkasRSyntaxNode() != null) {
+                return RDataFactory.createLanguage(originalCall.asRSyntaxNode().asRNode());
+            } else {
+                // See checkBuiltin. Also some RBaseNode subclasses do not provide an RSyntaxNode.
+                Frame frame = Utils.getActualCurrentFrame();
+                return findCallerFromFrame(frame);
             }
         }
-        // else drop through to frame case
-        return findCallerFromFrame(frame);
     }
 
     private static Object getCallerFromFrame(Frame frame) {
@@ -407,8 +443,13 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return getSyntaxCaller((RCaller) caller);
     }
 
-    public boolean isReplacementNode(Node node) {
-        return node instanceof ReplacementNode;
+    public RSyntaxNode[] isReplacementNode(Node node) {
+        if (node instanceof ReplacementNode) {
+            ReplacementNode rn = (ReplacementNode) node;
+            return new RSyntaxNode[]{rn.getLhs(), rn.getRhs()};
+        } else {
+            return null;
+        }
     }
 
     public boolean isFunctionDefinitionNode(Node node) {

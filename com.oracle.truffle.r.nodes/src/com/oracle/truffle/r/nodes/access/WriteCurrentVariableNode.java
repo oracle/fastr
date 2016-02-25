@@ -22,28 +22,41 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.instrument.wrappers.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrument.WrapperNode;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.instrument.wrappers.WriteCurrentVariableNodeWrapper;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RAllNames;
+import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.NeedsWrapper;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * The "syntax" variant corresponding to {@code x <- y} in the source.
  */
 @NodeInfo(cost = NodeCost.NONE)
 @NeedsWrapper
-public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, VisibilityController {
+public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, RSyntaxCall, VisibilityController {
     @Child WriteLocalFrameVariableNode writeLocalFrameVariableNode;
 
+    protected WriteCurrentVariableNode(SourceSection src) {
+        super(src);
+    }
+
     static WriteCurrentVariableNode create(SourceSection src, String name, RNode rhs) {
-        WriteCurrentVariableNode result = new WriteCurrentVariableNode();
-        result.assignSourceSection(src);
+        WriteCurrentVariableNode result = new WriteCurrentVariableNode(src);
         result.writeLocalFrameVariableNode = result.insert(WriteLocalFrameVariableNode.create(name, rhs, Mode.REGULAR));
         return result;
     }
@@ -124,4 +137,15 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
         return new WriteCurrentVariableNodeWrapper(this);
     }
 
+    public RSyntaxElement getSyntaxLHS() {
+        return RSyntaxLookup.createDummyLookup(null, "<-", true);
+    }
+
+    public RSyntaxElement[] getSyntaxArguments() {
+        return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(getSourceSection(), (String) getName(), false), getRhs().asRSyntaxNode()};
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(2);
+    }
 }

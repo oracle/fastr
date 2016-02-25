@@ -34,17 +34,16 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
-import com.oracle.truffle.r.parser.ast.ASTNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -63,6 +62,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -388,16 +388,6 @@ public class InfixEmulationFunctions {
             // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
             throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
         }
-
-    }
-
-    @RBuiltin(name = ":", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"from", "to"})
-    public abstract static class ColonBuiltin extends ErrorAdapter {
-        @SuppressWarnings("unused")
-        @Specialization
-        protected Object doIt(Object from, Object to) {
-            throw nyi();
-        }
     }
 
     @RBuiltin(name = "{", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
@@ -420,11 +410,9 @@ public class InfixEmulationFunctions {
 
     /**
      * This a rather strange function. It is where, in GnuR, that the "formula" class is set and the
-     * ".Environment" attribute on the "call". Unfortunately, in FastR we have lost access to the
-     * {@link RCallNode} that the parser created, so we recreate it and wrap it up an
-     * {@link RLanguage}. object. N.B. the "response" can be missing, which is actually handled by
-     * an evaluated argument of type {@link RMissing}, although it appears as if the "model"
-     * argument is missing, i.e. {@code ~ x} result in {@code `~`(x)}.
+     * ".Environment" attribute on the "call". N.B. the "response" can be missing, which is actually
+     * handled by an evaluated argument of type {@link RMissing}, although it appears as if the
+     * "model" argument is missing, i.e. {@code ~ x} result in {@code `~`(x)}.
      */
     @RBuiltin(name = "~", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "y"}, nonEvalArgs = {0, 1})
     public abstract static class TildeBuiltin extends RBuiltinNode {
@@ -445,18 +433,8 @@ public class InfixEmulationFunctions {
             return doTilde(frame, ((RNode) response.getRep()).asRSyntaxNode(), ((RNode) model.getRep()).asRSyntaxNode());
         }
 
-        private RLanguage doTilde(VirtualFrame frame, RSyntaxNode response, RSyntaxNode model) {
-            RSyntaxNode[] tildeArgs = new RSyntaxNode[response == null ? 1 : 2];
-            int ix = 0;
-            if (response != null) {
-                tildeArgs[ix++] = response;
-            }
-            tildeArgs[ix++] = model;
-            SourceSection formulaSrc = this.getSourceSection();
-            String formulaCode = formulaSrc.getCode();
-            int tildeIndex = formulaCode.indexOf('~');
-            SourceSection tildeSrc = ASTNode.adjustedSource(formulaSrc, formulaSrc.getCharIndex() + tildeIndex, 1);
-            RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", tildeArgs);
+        private RLanguage doTilde(VirtualFrame frame, @SuppressWarnings("unused") RSyntaxNode response, @SuppressWarnings("unused") RSyntaxNode model) {
+            RCallNode call = (RCallNode) ((RBaseNode) getParent()).asRSyntaxNode();
             RLanguage lang = RDataFactory.createLanguage(call);
             lang.setClassAttr(FORMULA_CLASS, false);
             REnvironment env = REnvironment.frameToEnvironment(frame.materialize());

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -330,8 +330,8 @@ public class TestSimpleArithmetic extends TestBase {
 
     @Test
     public void testVectorsNonConformable() {
-        assertEval(Output.ContainsError, "{ x <- 1:2 ; dim(x) <- 1:2 ; y <- 2:3 ; dim(y) <- 2:1 ; x + y }");
-        assertEval(Output.ContainsError, "{ x <- 1:2 ; dim(x) <- 1:2 ; y <- 2:3 ; dim(y) <- c(1,1,2) ; x + y }");
+        assertEval("{ x <- 1:2 ; dim(x) <- 1:2 ; y <- 2:3 ; dim(y) <- 2:1 ; x + y }");
+        assertEval("{ x <- 1:2 ; dim(x) <- 1:2 ; y <- 2:3 ; dim(y) <- c(1,1,2) ; x + y }");
     }
 
     @Test
@@ -366,9 +366,9 @@ public class TestSimpleArithmetic extends TestBase {
 
     @Test
     public void testUnaryNotError() {
-        assertEval(Output.ContainsError, "{ l <- c(\"hello\", \"hi\") ; !l }");
-        assertEval(Output.ContainsError, "{ l <- function(){1} ; !l }");
-        assertEval(Output.ContainsError, "{ l <- list(1); !l }");
+        assertEval("{ l <- c(\"hello\", \"hi\") ; !l }");
+        assertEval("{ l <- function(){1} ; !l }");
+        assertEval("{ l <- list(1); !l }");
         assertEval("{ x<-1:4; dim(x)<-c(2, 2); names(x)<-101:104; attr(x, \"dimnames\")<-list(c(\"201\", \"202\"), c(\"203\", \"204\")); attr(x, \"foo\")<-\"foo\"; y<-!x; attributes(y) }");
     }
 
@@ -430,9 +430,9 @@ public class TestSimpleArithmetic extends TestBase {
 
     @Test
     public void testUnaryMinusErrors() {
-        assertEval(Output.ContainsError, "{ z <- \"hello\" ; -z }");
-        assertEval(Output.ContainsError, "{ z <- c(\"hello\",\"hi\") ; -z }");
-        assertEval(Output.ContainsError, "{ f <- function(z) { -z } ; f(1:3) ; f(\"hello\") }");
+        assertEval("{ z <- \"hello\" ; -z }");
+        assertEval("{ z <- c(\"hello\",\"hi\") ; -z }");
+        assertEval("{ f <- function(z) { -z } ; f(1:3) ; f(\"hello\") }");
     }
 
     @Test
@@ -471,7 +471,7 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ m <- double() ; dim(m) <- c(0,0) ; m %*% m }");
         assertEval("{ m <- matrix(c(NA,1,4,2), nrow=2) ; t(m) %*% m }");
         assertEval("{ matrix(c(3,1,0/0,2), nrow=2) %*% matrix(1:6,nrow=2) }");
-        assertEval(Output.ContainsError, "{ as.raw(1:3) %*% 1:3 }");
+        assertEval("{ as.raw(1:3) %*% 1:3 }");
         assertEval("{ matrix(c(NaN,1,7,2,4,NA), nrow=3) %*% matrix(c(3,1,NA,2,NaN,5,6,7), nrow=2) }");
         assertEval("{ c(1,2,NA,NaN) %*% c(1,3,3,4) }");
         assertEval("{ c(1,2,NaN,NA) %*% c(1,3,3,4) }");
@@ -482,7 +482,7 @@ public class TestSimpleArithmetic extends TestBase {
     @Test
     public void testMatricesOuterProduct() {
         assertEval("{ 1:3 %o% 1:2 }");
-        assertEval(Output.ContainsError, "{ 1:4 %*% 1:3 }");
+        assertEval("{ 1:4 %*% 1:3 }");
         assertEval(Output.ContainsError, "{ 1:3 %*% as.raw(c(1,2,3)) }");
         assertEval("{ 1:3 %*% c(TRUE,FALSE,TRUE) }");
         assertEval(Output.ContainsError, "{ as.raw(1:3) %o% 1:3 }");
@@ -537,10 +537,10 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ c(1+1i, 0+0i) && 1 }");
         assertEval("{ 1.0 && c(1+1i, 0+0i) }");
         assertEval("{ c(1+1i, 0+0i) && c(1+1i, 0+0i) }");
-        assertEval(Output.ContainsError, "{ c(\"1\", \"0\") && TRUE }");
-        assertEval(Output.ContainsError, "{ c(1, 0) && \"1\" }");
-        assertEval(Output.ContainsError, "{ \"1\" && c(1, 0) }");
-        assertEval(Output.ContainsError, "{ as.raw(c(1, 0)) && TRUE }");
+        assertEval("{ c(\"1\", \"0\") && TRUE }");
+        assertEval("{ c(1, 0) && \"1\" }");
+        assertEval("{ \"1\" && c(1, 0) }");
+        assertEval("{ as.raw(c(1, 0)) && TRUE }");
     }
 
     @Test
@@ -560,8 +560,8 @@ public class TestSimpleArithmetic extends TestBase {
     public void testNonvectorizedLogicalSpecialChecks() {
         assertEval("{ FALSE && \"hello\" }");
         assertEval("{ TRUE || \"hello\" }");
-        assertEval(Output.ContainsError, "{ \"hello\" || TRUE }");
-        assertEval(Output.ContainsError, "{ FALSE || \"hello\" }");
+        assertEval("{ \"hello\" || TRUE }");
+        assertEval("{ FALSE || \"hello\" }");
 
         assertEval("{ 0 && \"hello\" }");
         assertEval("{ 0.0 && \"hello\" }");
@@ -569,21 +569,21 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ 1+2i && TRUE }");
         assertEval("{ TRUE && 0+0i}");
         assertEval("{ 1.0 && 0+0i}");
-        assertEval(Output.ContainsError, "{ 1 && \"hello\" }");
-        assertEval(Output.ContainsError, "{ 0.1 && \"hello\" }");
-        assertEval(Output.ContainsError, "{ TRUE && \"hello\" }");
-        assertEval(Output.ContainsError, "{ \"hello\" && TRUE }");
-        assertEval(Output.ContainsError, "{ \"hello\" && 1 }");
-        assertEval(Output.ContainsError, "{ \"hello\" && 1L }");
-        assertEval(Output.ContainsError, "{ NULL && 1 }");
-        assertEval(Output.ContainsError, "{ 0.1 && NULL }");
-        assertEval(Output.ContainsError, "{ as.raw(1) && 1 }");
-        assertEval(Output.ContainsError, "{ 0.1 && as.raw(1) }");
+        assertEval("{ 1 && \"hello\" }");
+        assertEval("{ 0.1 && \"hello\" }");
+        assertEval("{ TRUE && \"hello\" }");
+        assertEval("{ \"hello\" && TRUE }");
+        assertEval("{ \"hello\" && 1 }");
+        assertEval("{ \"hello\" && 1L }");
+        assertEval("{ NULL && 1 }");
+        assertEval("{ 0.1 && NULL }");
+        assertEval("{ as.raw(1) && 1 }");
+        assertEval("{ 0.1 && as.raw(1) }");
         assertEval("{ logical(0) && logical(0) }");
         assertEval("{ logical(0) && TRUE }");
         assertEval("{ logical(0) && FALSE }");
-        assertEval(Output.ContainsError, "{ character(0) && FALSE }");
-        assertEval(Output.ContainsError, "{ character(0) && TRUE }");
+        assertEval("{ character(0) && FALSE }");
+        assertEval("{ character(0) && TRUE }");
 
         assertEval("{ 1 || \"hello\" }");
         assertEval("{ FALSE || 1+2i }");
@@ -591,16 +591,16 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ 1.1 || \"hello\" }");
         assertEval("{ 1+2i || 0 }");
         assertEval("{ 1+2i || 1.0 }");
-        assertEval(Output.ContainsError, "{ 0 || \"hello\" }");
-        assertEval(Output.ContainsError, "{ 0L || \"hello\" }");
-        assertEval(Output.ContainsError, "{ \"hello\" || FALSE }");
-        assertEval(Output.ContainsError, "{ \"hello\" || 1 }");
-        assertEval(Output.ContainsError, "{ \"hello\" || 1L }");
-        assertEval(Output.ContainsError, "{ NULL || 1 }");
-        assertEval(Output.ContainsError, "{ 0 || NULL }");
-        assertEval(Output.ContainsError, "{ as.raw(1) || 1 }");
-        assertEval(Output.ContainsError, "{ 0 || as.raw(1) }");
-        assertEval(Output.ContainsError, "{ as.raw(10) && \"hi\" }");
+        assertEval("{ 0 || \"hello\" }");
+        assertEval("{ 0L || \"hello\" }");
+        assertEval("{ \"hello\" || FALSE }");
+        assertEval("{ \"hello\" || 1 }");
+        assertEval("{ \"hello\" || 1L }");
+        assertEval("{ NULL || 1 }");
+        assertEval("{ 0 || NULL }");
+        assertEval("{ as.raw(1) || 1 }");
+        assertEval("{ 0 || as.raw(1) }");
+        assertEval("{ as.raw(10) && \"hi\" }");
         assertEval("{ c(TRUE,FALSE) | logical() }");
         assertEval("{ logical() | c(TRUE,FALSE) }");
         assertEval("{ as.raw(c(1,4)) | raw() }");
@@ -608,8 +608,8 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ logical(0) || logical(0) }");
         assertEval("{ logical(0) || TRUE }");
         assertEval("{ logical(0) || FALSE }");
-        assertEval(Output.ContainsError, "{ character(0) || FALSE }");
-        assertEval(Output.ContainsError, "{ character(0) || TRUE }");
+        assertEval("{ character(0) || FALSE }");
+        assertEval("{ character(0) || TRUE }");
     }
 
     @Test
@@ -685,13 +685,13 @@ public class TestSimpleArithmetic extends TestBase {
 
     @Test
     public void testVectorizedLogicalTypeCheck() {
-        assertEval(Output.ContainsError, "{ TRUE | \"hello\" }");
-        assertEval(Output.ContainsError, "{ f <- function(a,b) { a & b } ; f(TRUE, 1L) ; f(as.raw(10), 12) }");
-        assertEval(Output.ContainsError, "{ f <- function(a,b) { a & b } ; f(TRUE, 1L) ; f(FALSE, as.raw(10)) }");
-        assertEval(Output.ContainsError, "{ f <- function(a,b) { a | b } ; f(as.raw(c(1,4)), as.raw(3)) ; f(as.raw(4), FALSE) }");
-        assertEval(Output.ContainsError, "{ f <- function(a,b) { a | b } ; f(as.raw(c(1,4)), as.raw(3)) ; f(FALSE, as.raw(4)) }");
-        assertEval(Output.ContainsError, "{ f <- function(a,b) { a | b } ; f(as.raw(c(1,4)), 3) }");
-        assertEval(Output.ContainsError, "{ f <- function(a,b) { a | b } ; f(3, as.raw(c(1,4))) }");
+        assertEval("{ TRUE | \"hello\" }");
+        assertEval("{ f <- function(a,b) { a & b } ; f(TRUE, 1L) ; f(as.raw(10), 12) }");
+        assertEval("{ f <- function(a,b) { a & b } ; f(TRUE, 1L) ; f(FALSE, as.raw(10)) }");
+        assertEval("{ f <- function(a,b) { a | b } ; f(as.raw(c(1,4)), as.raw(3)) ; f(as.raw(4), FALSE) }");
+        assertEval("{ f <- function(a,b) { a | b } ; f(as.raw(c(1,4)), as.raw(3)) ; f(FALSE, as.raw(4)) }");
+        assertEval("{ f <- function(a,b) { a | b } ; f(as.raw(c(1,4)), 3) }");
+        assertEval("{ f <- function(a,b) { a | b } ; f(3, as.raw(c(1,4))) }");
     }
 
     @Test

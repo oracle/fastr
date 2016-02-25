@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -21,7 +21,7 @@ public class TestBuiltin_environmentassign extends TestBase {
     public void testenvironmentassign1() {
         assertEval("{ e1 <- new.env(); environment(e1) <- NULL }");
         assertEval("{ e1 <- new.env(); e2 <- new.env(); environment(e1) <- e2 }");
-        assertEval(Output.ContainsError, "{ e1 <- new.env(); environment(e1) <- 3 }");
+        assertEval("{ e1 <- new.env(); environment(e1) <- 3 }");
 
         assertEval("{ f <- function() {}; e1 <- new.env(); environment(f) <- e1 }");
         assertEval("{ f <- function() x; f2 <- f; e <- new.env(); assign('x', 2, envir=e); x <- 1; environment(f) <- e; c(f(), f2())}");

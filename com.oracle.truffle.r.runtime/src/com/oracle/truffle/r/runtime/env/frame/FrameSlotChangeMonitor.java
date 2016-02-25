@@ -288,11 +288,11 @@ public final class FrameSlotChangeMonitor {
         return target;
     }
 
-    public static synchronized boolean hasEnclosingFrameDescriptor(FrameDescriptor descriptor, Frame newEnclosingFrame) {
+    public static synchronized boolean isEnclosingFrameDescriptor(FrameDescriptor descriptor, Frame newEnclosingFrame) {
         CompilerAsserts.neverPartOfCompilation();
         FrameDescriptorMetaData target = getDescriptorMetaData(descriptor);
         FrameDescriptor newEnclosingDescriptor = handleBaseNamespaceEnv(newEnclosingFrame);
-        return !(target.enclosingFrameDescriptor.getValue() != newEnclosingDescriptor && target.enclosingFrameDescriptor.getValue() == null);
+        return target.enclosingFrameDescriptor.getValue() == newEnclosingDescriptor;
     }
 
     public static synchronized void initializeEnclosingFrame(FrameDescriptor descriptor, Frame newEnclosingFrame) {
@@ -428,7 +428,7 @@ public final class FrameSlotChangeMonitor {
         @CompilationFinal private StableValue<Object> stableValue;
         private int invalidationCount;
 
-        public FrameSlotInfoImpl(boolean isSingletonFrame, boolean isGlobalEnv, Object identifier) {
+        FrameSlotInfoImpl(boolean isSingletonFrame, boolean isGlobalEnv, Object identifier) {
             if (isSingletonFrame) {
                 stableValue = new StableValue<>(null, identifier.toString());
                 invalidationCount = isGlobalEnv ? MAX_GLOBAL_ENV_INVALIDATION_COUNT : MAX_INVALIDATION_COUNT;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -260,7 +260,7 @@ public class RNodeTimer {
              * source. Since there is never a line 0, we use that to compute the total.
              */
             final long[] times = new long[fdi.source.getLineCount() + 1];
-            RSyntaxNode.accept(fdi.node.getBody(), 0, new LineTimesNodeVisitor(fdi.node.getUID(), times));
+            RSyntaxNode.accept(fdi.node.getBody(), 0, new LineTimesNodeVisitor(fdi.node.getUID(), times), false);
             return times;
         }
 

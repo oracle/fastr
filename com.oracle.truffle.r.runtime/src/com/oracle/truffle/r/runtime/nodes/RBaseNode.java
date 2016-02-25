@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
-import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.SourceSection;
@@ -44,21 +43,19 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * It also overrides the implementations of {@link #getSourceSection()},
  * {@link #assignSourceSection}, {@link #clearSourceSection()} and
  * {@link #getEncapsulatingSourceSection()} to enforce the FastR invariant that <b>only</b>nodes
- * that implement {@link #getRSyntaxNode()} should have a {@link SourceSection} attribute.
+ * that implement {@link RSyntaxNode} should have a {@link SourceSection} attribute (typically
+ * subclasses of {@link RSourceSectionNode}).
  *
  * Is it ever acceptable to subclass {@link Node} directly? The answer is yes, with the following
  * caveats:
  * <ul>
  * <li>The code in the subclass does not invoke methods in the {@link RError} class <b>or</b>takes
- * the responsibility to locate the appropriate {@link RBaseNode} to pass</li>
+ * the responsibility to locate the appropriate {@link RBaseNode} to pass (
+ * {@link RError#error(Node, RError.Message)} can be used find the base node hierarchically)</li>
  * <li>An instance of the subclass is never used to {@link #replace} an instance of
  * {@link RBaseNode}.</li>
  * </ul>
  *
- * N.B. When a {@link WrapperNode} replaces a node for instrumentation, the {@link SourceSection} is
- * propagated to the wrapper node by code in {@link Node#replace}. We can't do anything about this
- * other than special case it, even though FastR does not treat a {@link WrapperNode} as a
- * {@link RSyntaxNode}.
  */
 public abstract class RBaseNode extends Node {
 
@@ -90,10 +87,33 @@ public abstract class RBaseNode extends Node {
     }
 
     /**
+     * See comment on {@link #checkGetRSyntaxNode()}.
+     */
+    public RSyntaxNode checkasRSyntaxNode() {
+        if (isRSyntaxNode()) {
+            return (RSyntaxNode) this;
+        } else {
+            return checkGetRSyntaxNode();
+        }
+    }
+
+    /**
      * Many nodes organize themselves in such a way that the relevant {@link RSyntaxNode} can be
      * found by following the parent chain, which is therefore the default implementation.
      */
     protected RSyntaxNode getRSyntaxNode() {
+        RSyntaxNode result = checkGetRSyntaxNode();
+        RInternalError.guarantee(result != null, "getRSyntaxNode");
+        return result;
+    }
+
+    /**
+     * If every {@link RBaseNode} subclass either overrides {@link #getRSyntaxNode()} or works
+     * correctly with the default hierarchical implementation, this method would be redundant.
+     * However, currently that is not always the case, so this method can be used by defensive code.
+     * It returns {@code null} if the {@link RSyntaxNode} cannot be located.
+     */
+    private RSyntaxNode checkGetRSyntaxNode() {
         Node current = this;
         while (current != null) {
             if (current instanceof RSyntaxNode && ((RSyntaxNode) current).isSyntax()) {
@@ -101,7 +121,7 @@ public abstract class RBaseNode extends Node {
             }
             current = current.getParent();
         }
-        throw RInternalError.shouldNotReachHere("getRSyntaxNode");
+        return null;
     }
 
     public void deparse(State state) {
@@ -142,43 +162,19 @@ public abstract class RBaseNode extends Node {
 
     @Override
     public SourceSection getSourceSection() {
-        if (this instanceof WrapperNode) {
-            return super.getSourceSection();
-        }
-        /* Explicitly allow on a node for which isSyntax() == false */
-        if (this instanceof RSyntaxNode) {
-            return super.getSourceSection();
-        } else {
-            throw RInternalError.shouldNotReachHere("getSourceSection on non-syntax node");
-        }
+        throw RInternalError.shouldNotReachHere("getSourceSection in RBaseNode");
     }
 
+    @Deprecated
     @Override
     public void assignSourceSection(SourceSection section) {
-        if (this instanceof WrapperNode) {
-            super.assignSourceSection(section);
-            return;
-        }
-        /* Explicitly allow on a node for which isSyntax() == false */
-        if (this instanceof RSyntaxNode) {
-            super.assignSourceSection(section);
-        } else {
-            throw RInternalError.shouldNotReachHere("assignSourceSection on non-syntax node");
-        }
+        throw RInternalError.shouldNotReachHere("assignSourceSection in RBaseNode");
     }
 
+    @Deprecated
     @Override
     public void clearSourceSection() {
-        /* Explicitly allow on a node for which isSyntax() == false */
-        if (this instanceof RSyntaxNode) {
-            super.clearSourceSection();
-        } else {
-            /*
-             * Eventually this should be an error but currently "substitute" walks the entire tree
-             * calling this method.
-             */
-            super.clearSourceSection();
-        }
+        throw RInternalError.shouldNotReachHere("clearSourceSection in RBaseNode");
     }
 
     @Override

@@ -57,7 +57,7 @@ public class RChannel {
 
     public static int createChannel(int key) {
         if (key == 0) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "channel's key must be non-zero");
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "channel's key must be non-zero");
         }
         try {
             create.acquire();
@@ -67,7 +67,7 @@ public class RChannel {
                 // value
                 for (int i = 1; i < keys.length; i++) {
                     if (keys[i] == key) {
-                        throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "channel with specified key already exists");
+                        throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "channel with specified key already exists");
                     }
                     if (keys[i] == 0 && freeSlot == -1) {
                         freeSlot = i;
@@ -90,7 +90,7 @@ public class RChannel {
                 }
             }
         } catch (InterruptedException x) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error creating a channel");
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating a channel");
         } finally {
             create.release();
         }
@@ -106,11 +106,11 @@ public class RChannel {
                 }
             }
         } catch (InterruptedException x) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error accessing channel");
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error accessing channel");
         } finally {
             create.release();
         }
-        throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "channel does not exist");
+        throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "channel does not exist");
     }
 
     public static void closeChannel(int id) {
@@ -118,12 +118,12 @@ public class RChannel {
         try {
             create.acquire();
             if (actualId == 0 || actualId >= channels.length || channels[actualId] == null) {
-                throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "channel with specified id does not exist");
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "channel with specified id does not exist");
             }
             keys[actualId] = 0;
             channels[actualId] = null;
         } catch (InterruptedException x) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error closing channel");
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error closing channel");
         } finally {
             create.release();
         }
@@ -134,12 +134,12 @@ public class RChannel {
         try {
             create.acquire();
             if (actualId == 0 || actualId >= channels.length || channels[actualId] == null) {
-                throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "channel with specified id does not exist");
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "channel with specified id does not exist");
             }
             RChannel channel = channels[actualId];
             return channel;
         } catch (InterruptedException x) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error transmitting through channel");
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error transmitting through channel");
         } finally {
             create.release();
         }
@@ -149,7 +149,7 @@ public class RChannel {
 
         private RList list;
 
-        public SerializedList(RList list) {
+        SerializedList(RList list) {
             this.list = list;
         }
 
@@ -284,7 +284,7 @@ public class RChannel {
             try {
                 msg = convertPrivateList(msg);
             } catch (IOException x) {
-                throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error creating shareable list");
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable list");
             }
         } else if (!serializeObject(msg)) {
             // make sure that what's passed through the channel will be copied on the first
@@ -295,7 +295,7 @@ public class RChannel {
                     msg = convertObjectAttributesToPrivate(msg);
                 }
             } catch (IOException x) {
-                throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error creating channel message");
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating channel message");
             }
         } else {
             msg = RSerialize.serialize(msg, false, true, RSerialize.DEFAULT_VERSION, null);
@@ -303,7 +303,7 @@ public class RChannel {
         try {
             (id > 0 ? channel.masterToClient : channel.clientToMaster).put(msg);
         } catch (InterruptedException x) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error sending through the channel");
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error sending through the channel");
         }
     }
 
@@ -370,9 +370,9 @@ public class RChannel {
                 return msg;
             }
         } catch (InterruptedException x) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error receiving from the channel");
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error receiving from the channel");
         } catch (IOException x) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error unserializing msg from the channel");
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error unserializing msg from the channel");
         }
     }
 }

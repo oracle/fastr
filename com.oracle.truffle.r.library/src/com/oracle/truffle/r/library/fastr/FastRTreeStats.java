@@ -100,7 +100,7 @@ public abstract class FastRTreeStats extends RExternalBuiltinNode.Arg2 {
         String[] names = new String[functionCounts.size()];
         for (int i = 0; i < listData.length; i++) {
             SyntaxNodeCount snc = functionCounts.get(i);
-            listData[i] = RDataFactory.createIntVector(new int[]{snc.total(), snc.nonSyntaxNodeCount, snc.syntaxNodeCount}, RDataFactory.COMPLETE_VECTOR, COLNAMES);
+            listData[i] = RDataFactory.createIntVector(new int[]{snc.total(), snc.syntaxNodeCount, snc.nonSyntaxNodeCount}, RDataFactory.COMPLETE_VECTOR, COLNAMES);
             names[i] = snc.name();
         }
         return RDataFactory.createList(listData, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));

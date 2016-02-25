@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -48,6 +49,7 @@ public abstract class AccessSlotNode extends RNode {
     @Child private ClassHierarchyNode classHierarchy;
     @Child private TypeofNode typeofNode;
     private final BranchProfile noSlot = BranchProfile.create();
+    private final BranchProfile symbolValue = BranchProfile.create();
 
     protected AttributeAccess createAttrAccess(String name) {
         return AttributeAccessNodeGen.create(name);
@@ -64,7 +66,10 @@ public abstract class AccessSlotNode extends RNode {
                 }
                 return classHierarchy.execute(object);
             } else if (name == RRuntime.DOT_DATA) {
-                return getDataPart(object);
+                // TODO: any way to cache it or use a mechanism similar to overrides?
+                REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
+                RFunction dataPart = getDataPartFunction(methodsNamespace);
+                return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), object);
             } else if (name == RRuntime.NAMES_ATTR_KEY && object instanceof RAbstractVector) {
                 assert false; // RS4Object can never be a vector?
                 return RNull.instance;
@@ -79,6 +84,12 @@ public abstract class AccessSlotNode extends RNode {
                 throw RError.error(this, RError.Message.SLOT_CANNOT_GET, name, typeofNode.execute(object).getName());
             } else {
                 throw RError.error(this, RError.Message.SLOT_NONE, name, classAttr.getLength() == 0 ? RRuntime.STRING_NA : classAttr.getDataAt(0));
+            }
+        }
+        if (value instanceof RSymbol) {
+            symbolValue.enter();
+            if (((RSymbol) value).getName() == RRuntime.PSEUDO_NULL.getName()) {
+                return RNull.instance;
             }
         }
         return value;
@@ -108,17 +119,13 @@ public abstract class AccessSlotNode extends RNode {
         return (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
     }
 
-    private Object getDataPart(RAttributable object) {
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"!object.isS4()", "isDotData(name)"})
+    protected Object getSlotNonS4(RAttributable object, String name) {
         // TODO: any way to cache it or use a mechanism similar to overrides?
         REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
         RFunction dataPart = getDataPartFunction(methodsNamespace);
         return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), object);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"!object.isS4()", "isDotData(name)"})
-    protected Object getSlotNonS4(RAttributable object, String name) {
-        return getDataPart(object);
     }
 
     // this is really a fallback specialization but @Fallback does not work here (because of the

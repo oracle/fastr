@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,13 +45,13 @@ public abstract class RConnection extends RAttributeStorage implements RTypedVal
 
     private LinkedList<String> pushBack;
 
-    public abstract String[] readLinesInternal(int n) throws IOException;
+    public abstract String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException;
 
     public RType getRType() {
         return RType.Integer;
     }
 
-    private String readOneLineWithPushBack(String[] res, int ind) {
+    private String readOneLineWithPushBack(String[] res, int ind, @SuppressWarnings("unused") boolean warn, @SuppressWarnings("unused") boolean skipNul) {
         String s = pushBack.pollLast();
         if (s == null) {
             return null;
@@ -93,14 +93,14 @@ public abstract class RConnection extends RAttributeStorage implements RTypedVal
     }
 
     @TruffleBoundary
-    private String[] readLinesWithPushBack(int n) throws IOException {
+    private String[] readLinesWithPushBack(int n, boolean warn, boolean skipNul) throws IOException {
         String[] res = new String[n];
         for (int i = 0; i < n; i++) {
-            String s = readOneLineWithPushBack(res, i);
+            String s = readOneLineWithPushBack(res, i, warn, skipNul);
             if (s == null) {
                 if (res[i] == null) {
                     // no more push back value
-                    System.arraycopy(readLinesInternal(n - i), 0, res, i, n - i);
+                    System.arraycopy(readLinesInternal(n - i, warn, skipNul), 0, res, i, n - i);
                     pushBack = null;
                     break;
                 }
@@ -108,7 +108,7 @@ public abstract class RConnection extends RAttributeStorage implements RTypedVal
             } else {
                 // reached the last push back value without reaching and of line
                 assert pushBack.size() == 0;
-                System.arraycopy(readLinesInternal(n - i), 0, res, i, n - i);
+                System.arraycopy(readLinesInternal(n - i, warn, skipNul), 0, res, i, n - i);
                 res[i] = s + res[i];
                 pushBack = null;
                 break;
@@ -119,16 +119,17 @@ public abstract class RConnection extends RAttributeStorage implements RTypedVal
 
     /**
      * Read (n > 0 up to n else unlimited) lines on the connection.
+     *
      */
     @TruffleBoundary
-    public String[] readLines(int n) throws IOException {
+    public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
         if (pushBack == null) {
-            return readLinesInternal(n);
+            return readLinesInternal(n, warn, skipNul);
         } else if (pushBack.size() == 0) {
             pushBack = null;
-            return readLinesInternal(n);
+            return readLinesInternal(n, warn, skipNul);
         } else {
-            return readLinesWithPushBack(n);
+            return readLinesWithPushBack(n, warn, skipNul);
         }
     }
 

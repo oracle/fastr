@@ -41,15 +41,15 @@ public class TestBase {
 
     private static final boolean ProcessFailedTests = Boolean.getBoolean("ProcessFailedTests");
 
-    public static enum Output implements TestTrait {
-        ContainsError,
-        ContainsAmbiguousError,
-        ContainsWarning,
+    public enum Output implements TestTrait {
+        ContainsError, // the error context is ignored (e.g., "a+b" vs. "a + b")
+        ContainsAmbiguousError, // the actual error message is ignored
+        ContainsWarning, // the warning context is ignored
         MayContainError,
         MayContainWarning;
     }
 
-    public static enum Ignored implements TestTrait {
+    public enum Ignored implements TestTrait {
         Unknown("failing tests that have not been classified yet"),
         Unstable("tests that produce inconsistent results in GNUR"),
         OutputFormatting("tests that fail because of problems with output formatting"),
@@ -65,7 +65,7 @@ public class TestBase {
 
         private final String description;
 
-        private Ignored(String description) {
+        Ignored(String description) {
             this.description = description;
         }
 
@@ -143,6 +143,9 @@ public class TestBase {
                             throw new RuntimeException("RunListener arg: " + arg + " invalid");
                         }
                     }
+                }
+                if (genExpected) {
+                    System.setProperty("GenerateExpectedOutput", "true");
                 }
                 expectedOutputManager = new ExpectedTestOutputManager(expectedOutputFile, genExpected, checkExpected, genExpectedQuiet);
                 fastROutputManager = new FastRTestOutputManager(fastROutputFile);
@@ -488,7 +491,7 @@ public class TestBase {
         public final String result;
         public final String expected;
 
-        public CheckResult(boolean ok, String result, String expected) {
+        CheckResult(boolean ok, String result, String expected) {
             this.ok = ok;
             this.result = result;
             this.expected = expected;
@@ -503,6 +506,12 @@ public class TestBase {
         String expected = originalExpected;
         if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError)) {
             ok = true;
+            if (containsError && !ambiguousError) {
+                System.out.println("unexpected correct error message: " + getTestContext());
+            }
+            if (containsWarning) {
+                System.out.println("unexpected correct warning message: " + getTestContext());
+            }
         } else {
             if (containsWarning || (mayContainWarning && expected.contains(WARNING))) {
                 String resultWarning = getWarningMessage(result);

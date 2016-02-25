@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
  */
 public class RegExp {
 
-    private static enum Predefined {
+    private enum Predefined {
         alnum("\\p{Alnum}"),
         alpha("\\p{Alpha}"),
         blank("\\p{Blank}"),
@@ -47,7 +47,7 @@ public class RegExp {
         private final String syntax;
         private final int syntaxLength;
 
-        private Predefined(String replacement) {
+        Predefined(String replacement) {
             this.replacement = replacement;
             syntax = "[:" + name() + ":]";
             syntaxLength = syntax.length();

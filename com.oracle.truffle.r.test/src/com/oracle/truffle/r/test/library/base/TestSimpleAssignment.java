@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -105,13 +105,13 @@ public class TestSimpleAssignment extends TestBase {
     @Test
     public void testMisc() {
         // some tests are just for corner cases of lookup, not necessarily with assignment
-        assertEval(Output.ContainsError, "{ nonexistent }");
-        assertEval(Output.ContainsError, "{ f <- function(i) { if (i==1) { x <- 1 } ; x } ; f(1) ; f(2) }");
+        assertEval("{ nonexistent }");
+        assertEval("{ f <- function(i) { if (i==1) { x <- 1 } ; x } ; f(1) ; f(2) }");
         assertEval("{ f <- function(i) { if (i==1) { c <- 1 } ; c } ; f(1) ; typeof(f(2)) }");
-        assertEval(Output.ContainsError, "{ f <- function(i) { if (i==1) { x <- 1 } ; x } ; f(1) ; f(1) ; f(2) }");
+        assertEval("{ f <- function(i) { if (i==1) { x <- 1 } ; x } ; f(1) ; f(1) ; f(2) }");
         assertEval("{ f <- function(i) { if (i==1) { c <- 1 ; x <- 1 } ; if (i!=2) { x } else { c }} ; f(1) ; f(1) ; typeof(f(2)) }");
         assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; g <- function() { assign(\"y\", 3) ; hh <- function() { assign(\"z\", 6) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x } ; h() } ; hh() } ; g()  } ; f() }");
-        assertEval(Output.ContainsError, "{ f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() }");
+        assertEval("{ f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() }");
         assertEval("{ f <- function() { if (FALSE) { c <- 1 } ; g <- function() { c } ; g() } ; typeof(f()) }");
         assertEval("{ `f<-` <- function(x, y=42, value) { x[1]<-value+y; x }; y<-1:10; f(y)<-7; y }");
     }

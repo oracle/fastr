@@ -35,7 +35,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.PrintContext;
 import com.oracle.truffle.r.nodes.builtin.base.printer.PrintParameters;
@@ -47,8 +47,6 @@ import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinters;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -111,8 +109,8 @@ public class PrintFunctions {
             return ReadVariableNode.createFunctionLookup(null, "show");
         }
 
-        RFunction createShowFunction(ReadVariableNode showFind) {
-            return (RFunction) showFind.execute((VirtualFrame) Utils.getActualCurrentFrame());
+        RFunction createShowFunction(VirtualFrame frame, ReadVariableNode showFind) {
+            return (RFunction) showFind.execute(frame);
         }
 
         DirectCallNode createCallNode(RFunction f) {
@@ -120,10 +118,9 @@ public class PrintFunctions {
         }
 
         @SuppressWarnings("unused")
-        @TruffleBoundary
         @Specialization(guards = "isS4(o)")
-        protected Object printDefaultS4(RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt,
-                        @Cached("createShowFind()") ReadVariableNode showFind, @Cached("createShowFunction(showFind)") RFunction showFunction) {
+        protected Object printDefaultS4(VirtualFrame frame, RTypedValue o, Object digits, byte quote, Object naPrint, Object printGap, byte right, Object max, Object useSource, Object noOpt,
+                        @Cached("createShowFind()") ReadVariableNode showFind, @Cached("createShowFunction(frame, showFind)") RFunction showFunction) {
             RContext.getEngine().evalFunction(showFunction, null, o);
             return null;
         }

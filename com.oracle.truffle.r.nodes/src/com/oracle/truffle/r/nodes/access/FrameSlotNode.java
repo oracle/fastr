@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,7 +87,7 @@ public abstract class FrameSlotNode extends RBaseNode {
         private final Object identifier;
         private final boolean createIfAbsent;
 
-        public UnresolvedFrameSlotNode(Object identifier, boolean createIfAbsent) {
+        UnresolvedFrameSlotNode(Object identifier, boolean createIfAbsent) {
             this.identifier = identifier;
             this.createIfAbsent = createIfAbsent;
         }
@@ -118,7 +118,7 @@ public abstract class FrameSlotNode extends RBaseNode {
         @CompilationFinal private Assumption assumption;
         private final Object identifier;
 
-        public AbsentFrameSlotNode(Assumption assumption, Object identifier) {
+        AbsentFrameSlotNode(Assumption assumption, Object identifier) {
             this.assumption = assumption;
             this.identifier = identifier;
         }
@@ -152,7 +152,7 @@ public abstract class FrameSlotNode extends RBaseNode {
 
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
 
-        public PresentFrameSlotNode(FrameSlot frameSlot) {
+        PresentFrameSlotNode(FrameSlot frameSlot) {
             this.frameSlot = frameSlot;
         }
 

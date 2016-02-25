@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -264,6 +264,6 @@ public class TestBuiltin_isna extends TestBase {
         assertEval("{ is.na(c(1[10],2[10],3)) }");
         assertEval("{ is.na(list(1[10],1L[10],list(),integer())) }");
         assertEval(Output.ContainsWarning, "is.na(quote(x()))");
-        assertEval(Output.ContainsWarning, "is.na(is.na))");
+        assertEval("is.na(is.na))");
     }
 }

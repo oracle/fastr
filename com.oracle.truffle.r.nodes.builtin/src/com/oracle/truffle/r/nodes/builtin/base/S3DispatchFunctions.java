@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -156,11 +156,11 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
     @RBuiltin(name = "NextMethod", kind = SUBSTITUTE, parameterNames = {"generic", "object", "..."})
     public abstract static class NextMethod extends S3DispatchFunctions {
 
-        @Child private LocalReadVariableNode rvnGroup = LocalReadVariableNode.create(RRuntime.RDotGroup, false);
-        @Child private LocalReadVariableNode rvnClass = LocalReadVariableNode.create(RRuntime.RDotClass, false);
-        @Child private LocalReadVariableNode rvnGeneric = LocalReadVariableNode.create(RRuntime.RDotGeneric, false);
-        @Child private LocalReadVariableNode rvnCall = LocalReadVariableNode.create(RRuntime.RDotGenericCallEnv, false);
-        @Child private LocalReadVariableNode rvnDef = LocalReadVariableNode.create(RRuntime.RDotGenericDefEnv, false);
+        @Child private LocalReadVariableNode rvnGroup = LocalReadVariableNode.create(RRuntime.R_DOT_GROUP, false);
+        @Child private LocalReadVariableNode rvnClass = LocalReadVariableNode.create(RRuntime.R_DOT_CLASS, false);
+        @Child private LocalReadVariableNode rvnGeneric = LocalReadVariableNode.create(RRuntime.R_DOT_GENERIC, false);
+        @Child private LocalReadVariableNode rvnCall = LocalReadVariableNode.create(RRuntime.R_DOT_GENERIC_CALL_ENV, false);
+        @Child private LocalReadVariableNode rvnDef = LocalReadVariableNode.create(RRuntime.R_DOT_GENERIC_DEF_ENV, false);
 
         @Child private CombineSignaturesNode combineSignatures;
         @Child private CollectArgumentsNode collectArguments = CollectArgumentsNodeGen.create();

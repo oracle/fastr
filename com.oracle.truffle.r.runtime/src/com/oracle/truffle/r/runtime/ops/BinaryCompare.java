@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,9 +68,9 @@ public abstract class BinaryCompare extends BooleanOperation {
         super(commutative, false);
     }
 
-    public static final class NotEqual extends BinaryCompare {
+    private static final class NotEqual extends BinaryCompare {
 
-        public NotEqual() {
+        NotEqual() {
             super(true);
         }
 
@@ -100,9 +100,9 @@ public abstract class BinaryCompare extends BooleanOperation {
         }
     }
 
-    public static final class Equal extends BinaryCompare {
+    private static final class Equal extends BinaryCompare {
 
-        public Equal() {
+        Equal() {
             super(true);
         }
 
@@ -134,7 +134,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
     private static final class GreaterEqual extends BinaryCompare {
 
-        public GreaterEqual() {
+        GreaterEqual() {
             super(false);
         }
 
@@ -166,7 +166,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
     private static final class GreaterThan extends BinaryCompare {
 
-        public GreaterThan() {
+        GreaterThan() {
             super(false);
         }
 
@@ -198,7 +198,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
     private static final class LessEqual extends BinaryCompare {
 
-        public LessEqual() {
+        LessEqual() {
             super(false);
         }
 
@@ -230,7 +230,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
     private static final class LessThan extends BinaryCompare {
 
-        public LessThan() {
+        LessThan() {
             super(false);
         }
 

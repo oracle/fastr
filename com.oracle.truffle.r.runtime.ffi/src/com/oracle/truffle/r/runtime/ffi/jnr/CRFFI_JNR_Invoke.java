@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,7 @@ public class CRFFI_JNR_Invoke implements CRFFI {
         try {
             mh.invokeWithArguments(args);
         } catch (Throwable ex) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, ex.getMessage());
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ex.getMessage());
         }
     }
 }

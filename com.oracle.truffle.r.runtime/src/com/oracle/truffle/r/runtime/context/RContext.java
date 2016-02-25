@@ -338,7 +338,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public void joinThread() throws InterruptedException {
         EvalThread t = this.evalThread;
         if (t == null) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "no eval thread in a given context");
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "no eval thread in a given context");
         }
         this.evalThread = null;
         t.join();
@@ -438,7 +438,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
         if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
             if (info.getParent().sharedChild != null) {
-                throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "can't have multiple active SHARED_PARENT_RW contexts");
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "can't have multiple active SHARED_PARENT_RW contexts");
             }
             info.getParent().sharedChild = this;
             // this one must be shared between contexts - otherwise testing contexts do not know
@@ -575,8 +575,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             assert info.getKind() != ContextKind.SHARE_NOTHING;
             assert info.getParent() != null;
             return info.getParent().getPrimitiveMethodsInfo();
-        }
-        else {
+        } else {
             return primitiveMethodsInfo;
         }
     }

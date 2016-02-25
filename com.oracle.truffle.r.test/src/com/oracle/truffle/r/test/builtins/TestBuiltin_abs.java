@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -150,7 +150,7 @@ public class TestBuiltin_abs extends TestBase {
         assertEval("{ abs(NA+0.1) }");
         assertEval("{ abs((0+0i)/0) }");
         assertEval("{ abs(c(1, -2, NA)) }");
-        assertEval(Output.ContainsError, "{ abs(NULL) }");
+        assertEval("{ abs(NULL) }");
 
         assertEval(Ignored.Unknown, "{ abs(c(0/0,1i)) }");
         assertEval("{ abs(1:3) }");

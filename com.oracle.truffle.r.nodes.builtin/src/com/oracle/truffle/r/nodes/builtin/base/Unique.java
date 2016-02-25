@@ -127,7 +127,7 @@ public abstract class Unique extends RBuiltinNode {
         int[] backingArray;
         int index;
 
-        public IntArray(int len) {
+        IntArray(int len) {
             this.backingArray = new int[len];
             index = 0;
         }
@@ -158,7 +158,7 @@ public abstract class Unique extends RBuiltinNode {
         double[] backingArray;
         int index;
 
-        public DoubleArray(int len) {
+        DoubleArray(int len) {
             this.backingArray = new double[len];
             index = 0;
         }
@@ -189,7 +189,7 @@ public abstract class Unique extends RBuiltinNode {
         double[] backingArray;
         int index;
 
-        public DoubleArrayForComplex(int len) {
+        DoubleArrayForComplex(int len) {
             this.backingArray = new double[len << 1];
             index = 0;
         }
@@ -221,7 +221,7 @@ public abstract class Unique extends RBuiltinNode {
         byte[] backingArray;
         int index;
 
-        public ByteArray(int len) {
+        ByteArray(int len) {
             this.backingArray = new byte[len];
             index = 0;
         }
@@ -329,7 +329,7 @@ public abstract class Unique extends RBuiltinNode {
         private int size;
         private boolean containsZero;
 
-        public NonRecursiveHashSetInt() {
+        NonRecursiveHashSetInt() {
             keys = new int[64];
         }
 

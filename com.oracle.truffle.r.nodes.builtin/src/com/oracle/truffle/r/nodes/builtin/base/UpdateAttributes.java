@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -233,11 +232,11 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                         throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
                     }
                     if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
-                        Object attrValue = RRuntime.asString(list.getDataAt(i));
+                        Object attrValue = list.getDataAt(i);
                         if (attrValue == null) {
                             throw RError.error(this, RError.Message.SET_INVALID_CLASS_ATTR);
                         }
-                        attrObj.setClassAttr(RDataFactory.createStringVectorFromScalar((String) attrValue), false);
+                        attrObj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue), false);
                     } else {
                         attrObj.setAttr(attrName, list.getDataAt(i));
                     }

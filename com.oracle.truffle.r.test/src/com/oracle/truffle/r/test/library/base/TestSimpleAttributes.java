@@ -119,6 +119,7 @@ public class TestSimpleAttributes extends TestBase {
 
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; array(x) }");
         assertEval("{ x <- \"a\" ; attr(x, \"myatt\") <- 1; toupper(x) }");
+        assertEval("{ x <- \"a\" ; attr(x, \"myatt\") <- 1; tolower(x) }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ;  diag(m) <- c(1,1) ; m }");
         assertEval("{ x <- c(a=1) ; attr(x, \"myatt\") <- 1; log10(x) }");
         assertEval("{ x <- c(a=1) ; attr(x, \"myatt\") <- 1; nchar(x) }"); // specific to

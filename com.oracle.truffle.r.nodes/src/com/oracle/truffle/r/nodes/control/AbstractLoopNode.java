@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 /** Marker class for loops. */
-public abstract class AbstractLoopNode extends RNode {
+public abstract class AbstractLoopNode extends RSourceSectionNode {
+    protected AbstractLoopNode(SourceSection sourceSection) {
+        super(sourceSection);
+    }
 
 }

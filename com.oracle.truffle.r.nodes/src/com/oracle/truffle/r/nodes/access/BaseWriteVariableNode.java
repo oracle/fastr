@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.profiles.*;
@@ -61,13 +62,15 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * replacement forms of vector updates where a vector is assigned to a temporary (visible)
      * variable and then, again, to the original variable (which would cause the vector to be copied
      * each time); (non-Javadoc)
-     * 
+     *
      * @see
      * com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode#shareObjectValue(com.oracle.truffle
      * .api.frame.Frame, com.oracle.truffle.api.frame.FrameSlot, java.lang.Object,
      * com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode.Mode, boolean)
      */
     protected final Object shareObjectValue(Frame frame, FrameSlot frameSlot, Object value, Mode mode, boolean isSuper) {
+        CompilerAsserts.compilationConstant(mode);
+        CompilerAsserts.compilationConstant(isSuper);
         Object newValue = value;
         // for the meaning of INVISIBLE mode see the comment preceding the current method;
         // also change state when assigning to the enclosing frame as there must
@@ -87,7 +90,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
                             if (isSuper) {
                                 // if non-local assignment, increment conservatively
                                 rShareable.incRefCount();
-                            } else if (!isSharedProfile.profile(rShareable.isShared())) {
+                            } else if (isSharedProfile.profile(!rShareable.isShared())) {
                                 // don't increment if already shared - will not get "unshared" until
                                 // this function exits anyway
                                 rShareable.incRefCount();

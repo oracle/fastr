@@ -22,31 +22,57 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.*;
+import java.util.ArrayList;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrument.QuitException;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.NodeUtil.NodeCountFilter;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.InlineCacheNode;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.access.FrameSlotNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.control.BreakException;
+import com.oracle.truffle.r.nodes.control.NextException;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.BrowserQuitException;
+import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RAllNames.State;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
+import com.oracle.truffle.r.runtime.RArguments.S4Args;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RErrorHandling;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.instrument.FunctionUIDFactory;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode {
 
@@ -65,8 +91,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      * unknown.
      */
     private String description;
-    private final FunctionUID uuid;
+    private FunctionUID uuid;
     private boolean instrumented = false;
+    private SourceSection sourceSection;
 
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode onExitExpressionCache;
@@ -77,12 +104,18 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private final BranchProfile nextProfile = BranchProfile.create();
 
     @CompilationFinal private BranchProfile invalidateFrameSlotProfile;
+    // S3/S4 slots
     @Child private FrameSlotNode dotGenericSlot;
     @Child private FrameSlotNode dotMethodSlot;
+    // S3 slots
     @Child private FrameSlotNode dotClassSlot;
     @Child private FrameSlotNode dotGenericCallEnvSlot;
     @Child private FrameSlotNode dotGenericCallDefSlot;
     @Child private FrameSlotNode dotGroupSlot;
+    // S4 slots
+    @Child private FrameSlotNode dotDefinedSlot;
+    @Child private FrameSlotNode dotTargetSlot;
+    @Child private FrameSlotNode dotMethodsSlot;
 
     @Child private PostProcessArgumentsNode argPostProcess;
 
@@ -106,17 +139,18 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     private final BranchProfile returnProfile = BranchProfile.create();
 
-    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, BodyNode body, FormalArguments formals, String description, boolean substituteFrame,
+    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame,
                     PostProcessArgumentsNode argPostProcess) {
         this(src, frameDesc, body, formals, description, substituteFrame, false, argPostProcess);
     }
 
     // TODO skipOnExit: Temporary solution to allow onExit to be switched of; used for
     // REngine.evalPromise
-    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, BodyNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit,
+    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit,
                     PostProcessArgumentsNode argPostProcess) {
         super(src, formals, frameDesc);
         assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
+        this.sourceSection = src;
         this.body = body;
         this.uninitializedBody = body;
         this.description = description;
@@ -131,16 +165,23 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public RRootNode duplicateWithNewFrameDescriptor() {
         FrameDescriptor frameDesc = new FrameDescriptor();
+        FunctionUID thisUuid = uuid;
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(description != null && !description.isEmpty() ? description : "<function>", frameDesc);
-        return new FunctionDefinitionNode(getSourceSection(), frameDesc, (BodyNode) body.unwrap().deepCopy(), getFormalArguments(), description, substituteFrame, argPostProcess == null ? null
-                        : argPostProcess.deepCopyUnconditional());
+        FunctionDefinitionNode result = new FunctionDefinitionNode(getSourceSection(), frameDesc, (RNode) body.deepCopy(), getFormalArguments(), description, substituteFrame,
+                        argPostProcess == null ? null : argPostProcess.deepCopyUnconditional());
+        // Instrumentation depends on this copy having same uuid
+        result.uuid = thisUuid;
+        return result;
     }
 
-    private static boolean containsAnyDispatch(BodyNode body) {
+    private static boolean containsAnyDispatch(RNode body) {
         NodeCountFilter dispatchingMethodsFilter = node -> {
             if (node instanceof ReadVariableNode) {
-                String identifier = ((ReadVariableNode) node).getIdentifier();
-                return "UseMethod".equals(identifier) /* || "NextMethod".equals(identifier) */;
+                ReadVariableNode rvn = (ReadVariableNode) node;
+                String identifier = rvn.getIdentifier();
+                // TODO: can we also do this for S4 new?
+                return rvn.getMode() == RType.Function && ("UseMethod".equals(identifier) || "standardGeneric".equals(identifier));
+                /* || "NextMethod".equals(identifier) */
             }
             return false;
         };
@@ -170,28 +211,28 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                      * to do this. If a function uses lapply anywhere as name then it gets split.
                      * This could get exploited.
                      */
-                    RBuiltinDescriptor directBuiltin = RContext.lookupBuiltinDescriptor(readInternal.getIdentifier());
-                    if (directBuiltin != null && directBuiltin.isSplitCaller()) {
-                        return true;
-                    }
+                        RBuiltinDescriptor directBuiltin = RContext.lookupBuiltinDescriptor(readInternal.getIdentifier());
+                        if (directBuiltin != null && directBuiltin.isSplitCaller()) {
+                            return true;
+                        }
 
-                    if (readInternal.getIdentifier().equals(".Internal")) {
-                        Node internalFunctionArgument = RASTUtils.unwrap(internalCall.getArguments().getArguments()[0]);
-                        if (internalFunctionArgument instanceof RCallNode) {
-                            RCallNode innerCall = (RCallNode) internalFunctionArgument;
-                            if (innerCall.getFunctionNode() instanceof ReadVariableNode) {
-                                ReadVariableNode readInnerCall = (ReadVariableNode) innerCall.getFunctionNode();
-                                RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(readInnerCall.getIdentifier());
-                                if (builtin != null && builtin.isSplitCaller()) {
-                                    return true;
+                        if (readInternal.getIdentifier().equals(".Internal")) {
+                            Node internalFunctionArgument = RASTUtils.unwrap(internalCall.getArguments().getArguments()[0]);
+                            if (internalFunctionArgument instanceof RCallNode) {
+                                RCallNode innerCall = (RCallNode) internalFunctionArgument;
+                                if (innerCall.getFunctionNode() instanceof ReadVariableNode) {
+                                    ReadVariableNode readInnerCall = (ReadVariableNode) innerCall.getFunctionNode();
+                                    RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(readInnerCall.getIdentifier());
+                                    if (builtin != null && builtin.isSplitCaller()) {
+                                        return true;
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-            return false;
-        };
+                return false;
+            };
         return NodeUtil.countNodes(this, findAlwaysSplitInternal) > 0;
 
     }
@@ -232,7 +273,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         boolean runOnExitHandlers = true;
         try {
             verifyEnclosingAssumptions(vf);
-            setupS3Slots(vf);
+            setupDispatchSlots(vf);
             Object result = body.execute(vf);
             normalExit.enter();
             return result;
@@ -302,29 +343,56 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         }
     }
 
-    private void setupS3Slots(VirtualFrame frame) {
-        S3Args args = RArguments.getS3Args(frame);
-        if (args == null) {
+    private void setupDispatchSlots(VirtualFrame frame) {
+        DispatchArgs dispatchArgs = RArguments.getDispatchArgs(frame);
+        if (dispatchArgs == null) {
             return;
         }
         if (dotGenericSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            assert invalidateFrameSlotProfile == null && dotMethodSlot == null && dotClassSlot == null && dotGenericCallEnvSlot == null && dotGenericCallDefSlot == null && dotGroupSlot == null;
+            assert invalidateFrameSlotProfile == null && dotMethodSlot == null;
             invalidateFrameSlotProfile = BranchProfile.create();
             FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-            dotGenericSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.RDotGeneric, true));
-            dotMethodSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.RDotMethod, true));
-            dotClassSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.RDotClass, true));
-            dotGenericCallEnvSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.RDotGenericCallEnv, true));
-            dotGenericCallDefSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.RDotGenericDefEnv, true));
-            dotGroupSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.RDotGroup, true));
+
+            dotGenericSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_GENERIC, true));
+            dotMethodSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_METHOD, true));
         }
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericSlot.executeFrameSlot(frame), args.generic, false, invalidateFrameSlotProfile);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodSlot.executeFrameSlot(frame), args.method, false, invalidateFrameSlotProfile);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotClassSlot.executeFrameSlot(frame), args.clazz, false, invalidateFrameSlotProfile);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallEnvSlot.executeFrameSlot(frame), args.callEnv, false, invalidateFrameSlotProfile);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallDefSlot.executeFrameSlot(frame), args.defEnv, false, invalidateFrameSlotProfile);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGroupSlot.executeFrameSlot(frame), args.group, false, invalidateFrameSlotProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericSlot.executeFrameSlot(frame), dispatchArgs.generic, false, invalidateFrameSlotProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodSlot.executeFrameSlot(frame), dispatchArgs.method, false, invalidateFrameSlotProfile);
+
+        if (dispatchArgs instanceof S3Args) {
+            S3Args s3Args = (S3Args) dispatchArgs;
+            if (dotClassSlot == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                assert dotGenericCallEnvSlot == null && dotGenericCallDefSlot == null && dotGroupSlot == null;
+                invalidateFrameSlotProfile = BranchProfile.create();
+                FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+
+                dotClassSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_CLASS, true));
+                dotGenericCallEnvSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_GENERIC_CALL_ENV, true));
+                dotGenericCallDefSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_GENERIC_DEF_ENV, true));
+                dotGroupSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_GROUP, true));
+            }
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotClassSlot.executeFrameSlot(frame), s3Args.clazz, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallEnvSlot.executeFrameSlot(frame), s3Args.callEnv, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallDefSlot.executeFrameSlot(frame), s3Args.defEnv, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGroupSlot.executeFrameSlot(frame), s3Args.group, false, invalidateFrameSlotProfile);
+        } else {
+            S4Args s4Args = (S4Args) dispatchArgs;
+            if (dotDefinedSlot == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                assert dotTargetSlot == null && dotMethodsSlot == null;
+                invalidateFrameSlotProfile = BranchProfile.create();
+                FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+
+                dotDefinedSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_DEFINED, true));
+                dotTargetSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_TARGET, true));
+                dotMethodsSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_METHODS, true));
+            }
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotDefinedSlot.executeFrameSlot(frame), s4Args.defined, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotTargetSlot.executeFrameSlot(frame), s4Args.target, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodsSlot.executeFrameSlot(frame), s4Args.methods, false, invalidateFrameSlotProfile);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -379,7 +447,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         FrameDescriptor frameDesc = new FrameDescriptor();
 
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<substituted function>", frameDesc);
-        return new FunctionDefinitionNode(null, frameDesc, (BodyNode) body.substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
+        BodyNode substituteBody = (BodyNode) body.substitute(env).asRNode();
+        return new FunctionDefinitionNode(null, frameDesc, substituteBody, getFormalArguments(), null, substituteFrame, argPostProcess);
     }
 
     /**
@@ -563,6 +632,20 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     public void allNamesImpl(State state) {
         state.addName("function");
         body.allNames(state);
+    }
+
+    public void setSourceSection(SourceSection sourceSection) {
+        this.sourceSection = sourceSection;
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        return sourceSection;
+    }
+
+    @Override
+    public void unsetSourceSection() {
+        sourceSection = null;
     }
 
 }

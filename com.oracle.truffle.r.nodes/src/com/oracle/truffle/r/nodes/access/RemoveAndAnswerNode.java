@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,22 +22,23 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNodeFactory.RemoveAndAnswerResolvedNodeGen;
-import com.oracle.truffle.r.parser.ast.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * This node removes a slot from the current frame (i.e., sets it to {@code null} to allow fast-path
  * usage) and returns the slot's value. The node must be used with extreme caution as it does not
- * perform checking; it is to be used for internal purposes. A sample use case is a
- * {@linkplain RTruffleVisitor#visit(Replacement) replacement}.
+ * perform checking; it is to be used for internal purposes. A sample use case is a replacement.
  */
 public abstract class RemoveAndAnswerNode extends RNode {
 
@@ -65,7 +66,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
 
         private RemoveAndAnswerNode specialize(FrameSlot fs) {
             if (fs == null) {
-                RError.warning(this, RError.Message.UNKNOWN_OBJECT, name);
+                RError.warning(RError.SHOW_CALLER, RError.Message.UNKNOWN_OBJECT, name);
             }
             return replace(RemoveAndAnswerResolvedNodeGen.create(fs));
         }

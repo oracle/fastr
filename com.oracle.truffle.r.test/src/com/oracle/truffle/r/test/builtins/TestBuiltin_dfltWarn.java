@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -30,7 +30,7 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn3() {
-        assertEval(Output.ContainsWarning, "argv <- list('glm.fit: algorithm stopped at boundary value', NULL); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('glm.fit: algorithm stopped at boundary value', NULL); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -41,8 +41,7 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn5() {
-        assertEval(Output.ContainsWarning,
-                        "argv <- list('‘graphics’ namespace cannot be unloaded:\\n  namespace ‘graphics’ is imported by ‘stats’ so cannot be unloaded', NULL); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('‘graphics’ namespace cannot be unloaded:\\n  namespace ‘graphics’ is imported by ‘stats’ so cannot be unloaded', NULL); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test

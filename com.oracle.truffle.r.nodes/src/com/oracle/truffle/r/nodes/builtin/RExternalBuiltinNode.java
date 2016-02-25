@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,15 +36,30 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
 
     public abstract Object call(RArgsValuesAndNames args);
 
+    protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
+        // nothing to do
+    }
+
+    public CastNode[] getCasts() {
+        CastBuilder builder = new CastBuilder();
+        createCasts(builder);
+        return builder.getCasts();
+    }
+
     // TODO: these should be in the build nodes
     @Child private CastLogicalNode castLogical;
     @Child private CastIntegerNode castInt;
     @Child private CastDoubleNode castDouble;
     @Child private CastComplexNode castComplex;
     @Child private CastToVectorNode castVector;
+    @Children private final CastNode[] argumentCasts;
 
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     protected final BranchProfile errorProfile = BranchProfile.create();
+
+    public RExternalBuiltinNode() {
+        this.argumentCasts = getCasts();
+    }
 
     protected byte castLogical(RAbstractVector operand) {
         if (castLogical == null) {
@@ -107,6 +122,10 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
         }
     }
 
+    protected Object castArg(RArgsValuesAndNames args, int index) {
+        return index < argumentCasts.length && argumentCasts[index] != null ? argumentCasts[index].execute(args.getArgument(index)) : args.getArgument(index);
+    }
+
     public abstract static class Arg0 extends RExternalBuiltinNode {
         public abstract Object execute();
 
@@ -123,7 +142,7 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
         @Override
         public final Object call(RArgsValuesAndNames args) {
             checkLength(args, 1);
-            return execute(args.getArgument(0));
+            return execute(castArg(args, 0));
         }
     }
 
@@ -133,7 +152,7 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
         @Override
         public final Object call(RArgsValuesAndNames args) {
             checkLength(args, 2);
-            return execute(args.getArgument(0), args.getArgument(1));
+            return execute(castArg(args, 0), castArg(args, 1));
         }
     }
 
@@ -143,7 +162,7 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
         @Override
         public final Object call(RArgsValuesAndNames args) {
             checkLength(args, 3);
-            return execute(args.getArgument(0), args.getArgument(1), args.getArgument(2));
+            return execute(castArg(args, 0), castArg(args, 1), castArg(args, 2));
         }
     }
 
@@ -153,7 +172,7 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
         @Override
         public final Object call(RArgsValuesAndNames args) {
             checkLength(args, 4);
-            return execute(args.getArgument(0), args.getArgument(1), args.getArgument(2), args.getArgument(3));
+            return execute(castArg(args, 0), castArg(args, 1), castArg(args, 2), castArg(args, 3));
         }
     }
 
@@ -163,7 +182,7 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
         @Override
         public final Object call(RArgsValuesAndNames args) {
             checkLength(args, 5);
-            return execute(args.getArgument(0), args.getArgument(1), args.getArgument(2), args.getArgument(3), args.getArgument(4));
+            return execute(castArg(args, 0), castArg(args, 1), castArg(args, 2), castArg(args, 3), castArg(args, 4));
         }
     }
 
@@ -173,7 +192,7 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
         @Override
         public final Object call(RArgsValuesAndNames args) {
             checkLength(args, 6);
-            return execute(args.getArgument(0), args.getArgument(1), args.getArgument(2), args.getArgument(3), args.getArgument(4), args.getArgument(5));
+            return execute(castArg(args, 0), castArg(args, 1), castArg(args, 2), castArg(args, 3), castArg(args, 4), castArg(args, 5));
         }
     }
 
@@ -184,7 +203,7 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
         @Override
         public final Object call(RArgsValuesAndNames args) {
             checkLength(args, 7);
-            return execute(args.getArgument(0), args.getArgument(1), args.getArgument(2), args.getArgument(3), args.getArgument(4), args.getArgument(5), args.getArgument(6));
+            return execute(castArg(args, 0), castArg(args, 1), castArg(args, 2), castArg(args, 3), castArg(args, 4), castArg(args, 5), castArg(args, 6));
         }
     }
 
@@ -195,7 +214,7 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
         @Override
         public final Object call(RArgsValuesAndNames args) {
             checkLength(args, 8);
-            return execute(args.getArgument(0), args.getArgument(1), args.getArgument(2), args.getArgument(3), args.getArgument(4), args.getArgument(5), args.getArgument(6), args.getArgument(7));
+            return execute(castArg(args, 0), castArg(args, 1), castArg(args, 2), castArg(args, 3), castArg(args, 4), castArg(args, 5), castArg(args, 6), castArg(args, 7));
         }
     }
 }

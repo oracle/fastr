@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.GetGenericInternalNodeGen;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
@@ -24,7 +25,6 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.objects.ExecuteMethod;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -166,21 +166,17 @@ public class MethodsListDispatch {
             MethodCode code;
             if (codeVec.charAt(0) == 'c') {
                 code = MethodCode.NO_METHODS;
-            }
-            else if (codeVec.charAt(0) == 'r') {
+            } else if (codeVec.charAt(0) == 'r') {
                 code = MethodCode.NEEDS_RESET;
-            }
-            else if (codeVec.startsWith("se")) {
+            } else if (codeVec.startsWith("se")) {
                 code = MethodCode.HAS_METHODS;
-            }
-            else if (codeVec.startsWith("su")) {
+            } else if (codeVec.startsWith("su")) {
                 code = MethodCode.SUPPRESSED;
-            }
-            else {
-                throw RError.error(RError.NO_NODE, RError.Message.INVALID_PRIM_METHOD_CODE, codeVec);
+            } else {
+                throw RError.error(RError.SHOW_CALLER, RError.Message.INVALID_PRIM_METHOD_CODE, codeVec);
             }
             if (!(op instanceof RFunction) || !((RFunction) op).isBuiltin()) {
-                throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "invalid object: must be a primitive function");
+                throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, "invalid object: must be a primitive function");
             }
             int primMethodIndex = ((RFunction) op).getRBuiltin().getPrimMethodIndex();
             assert primMethodIndex != PrimitiveMethodsInfo.INVALID_INDEX;
@@ -198,7 +194,7 @@ public class MethodsListDispatch {
                     primMethodsInfo.setPrimMethodList(primMethodIndex, null);
                 } else if (fundef != RNull.instance && value == null) {
                     if (!(fundef instanceof RFunction)) {
-                        throw RError.error(RError.NO_NODE, RError.Message.PRIM_GENERIC_NOT_FUNCTION, fundef.getRType().getName());
+                        throw RError.error(RError.SHOW_CALLER, RError.Message.PRIM_GENERIC_NOT_FUNCTION, fundef.getRType().getName());
                     }
                     primMethodsInfo.setPrimGeneric(primMethodIndex, (RFunction) fundef);
                 }
@@ -291,7 +287,7 @@ public class MethodsListDispatch {
                     break;
                 }
                 FrameDescriptor currentFrameDesc = currentFrame.getFrameDescriptor();
-                Object o = ExecuteMethod.slotRead(currentFrame, currentFrameDesc, name);
+                Object o = slotRead(currentFrame, currentFrameDesc, name);
                 if (o != null) {
                     if (o instanceof RPromise) {
                         o = PromiseHelperNode.evaluateSlowPath(null, (RPromise) o);
@@ -322,6 +318,16 @@ public class MethodsListDispatch {
             // being a symbol but at this point this case is not handled (even possible?) in
             // FastR
             return generic == null ? RNull.instance : generic;
+        }
+
+        @TruffleBoundary
+        private static Object slotRead(MaterializedFrame currentFrame, FrameDescriptor desc, String name) {
+            FrameSlot slot = desc.findFrameSlot(name);
+            if (slot != null) {
+                return currentFrame.getValue(slot);
+            } else {
+                return null;
+            }
         }
     }
 
@@ -365,7 +371,7 @@ public class MethodsListDispatch {
             for (int i = 0; i < args.length; i++) {
                 args[i] = ReadVariableNode.create(sig.getName(i));
             }
-            RLanguage newCall = RDataFactory.createLanguage(new RCallNode(f, args, sig));
+            RLanguage newCall = RDataFactory.createLanguage(new RCallNode(RSyntaxNode.SOURCE_UNAVAILABLE, f, args, sig));
             Object res = RContext.getEngine().eval(newCall, ev.getFrame());
             return res;
         }

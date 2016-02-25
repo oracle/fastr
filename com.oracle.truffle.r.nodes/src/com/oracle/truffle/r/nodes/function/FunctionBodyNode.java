@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.RASTUtils;
@@ -41,18 +42,19 @@ import com.oracle.truffle.r.runtime.nodes.*;
  */
 public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
 
+    @CompilationFinal private SourceSection sourceSection;
     @Child private RNode saveArgs;
 
     public FunctionBodyNode(SaveArgumentsNode saveArgs, FunctionStatementsNode statements) {
         super(statements);
         this.saveArgs = saveArgs;
-        assignSourceSection(statements.getSourceSection());
+        this.sourceSection = statements.getSourceSection();
     }
 
     private FunctionBodyNode(RNode saveArgs, RNode statements) {
         super(statements);
         this.saveArgs = saveArgs;
-        assignSourceSection(statements.getSourceSection());
+        this.sourceSection = statements.getSourceSection();
     }
 
     @Override
@@ -130,6 +132,20 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
         } else {
             return false;
         }
+    }
+
+    public void setSourceSection(SourceSection sourceSection) {
+        this.sourceSection = sourceSection;
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        return sourceSection;
+    }
+
+    @Override
+    public void unsetSourceSection() {
+        sourceSection = null;
     }
 
 }

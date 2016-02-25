@@ -37,86 +37,72 @@ public abstract class IntersectFastPath extends RFastPathNode {
 
     @Specialization(guards = {"x.getLength() > 0", "y.getLength() > 0"})
     protected RAbstractIntVector intersect(RAbstractIntVector x, RAbstractIntVector y, //
-                    @Cached("createBinaryProfile()") ConditionProfile isSortedProfile) {
-        reportWork(x.getLength() + y.getLength());
-        int lastValue = x.getDataAt(0);
-        boolean xSorted = true;
-        for (int i = 1; i < x.getLength(); i++) {
-            int value = x.getDataAt(i);
-            if (value < lastValue) {
-                xSorted = false;
-                break;
-            }
-            lastValue = value;
-        }
-        boolean ySorted = true;
-        lastValue = y.getDataAt(0);
-        for (int i = 0; i < y.getLength(); i++) {
-            int value = y.getDataAt(i);
-            if (value < lastValue) {
-                ySorted = false;
-                break;
-            }
-            lastValue = value;
-        }
-        int[] result = new int[Math.min(x.getLength(), y.getLength())];
+                    @Cached("createBinaryProfile()") ConditionProfile isXSortedProfile, //
+                    @Cached("createBinaryProfile()") ConditionProfile isYSortedProfile, //
+                    @Cached("createBinaryProfile()") ConditionProfile resultLengthMatchProfile) {
+        int xLength = x.getLength();
+        int yLength = y.getLength();
+        reportWork(xLength + yLength);
+
         int count = 0;
-        if (isSortedProfile.profile(xSorted && ySorted)) {
-            int xPos = 0;
-            int yPos = 0;
-            while (xPos < x.getLength() && yPos < y.getLength()) {
-                int xValue = x.getDataAt(xPos);
-                int yValue = y.getDataAt(yPos);
-                if (xValue == yValue) {
-                    result[count++] = xValue;
-                    // advance over similar entries
-                    while (xPos < x.getLength() - 1 && xValue == x.getDataAt(xPos + 1)) {
-                        xPos++;
-                        xValue = x.getDataAt(xPos);
-                    }
-                    xPos++;
-                    yPos++;
-                } else if (xValue < yValue) {
-                    xPos++;
-                } else {
-                    yPos++;
+        int[] result = new int[Math.min(xLength, yLength)];
+        if (isXSortedProfile.profile(isSorted(x))) {
+            RAbstractIntVector tempY;
+            if (!isYSortedProfile.profile(isSorted(y))) {
+                int[] temp = new int[yLength];
+                for (int i = 0; i < yLength; i++) {
+                    temp[i] = y.getDataAt(i);
                 }
+                sort(temp);
+                tempY = RDataFactory.createIntVector(temp, y.isComplete());
+            } else {
+                tempY = y;
             }
-        } else if (xSorted) {
-            int[] temp = new int[y.getLength()];
-            for (int i = 0; i < y.getLength(); i++) {
-                temp[i] = y.getDataAt(i);
-            }
-            sort(temp);
             int xPos = 0;
             int yPos = 0;
-            while (xPos < x.getLength() && yPos < y.getLength()) {
-                int xValue = x.getDataAt(xPos);
-                int yValue = temp[yPos];
+            int xValue = x.getDataAt(xPos);
+            int yValue = tempY.getDataAt(yPos);
+            while (true) {
                 if (xValue == yValue) {
                     result[count++] = xValue;
                     // advance over similar entries
-                    while (xPos < x.getLength() - 1 && xValue == x.getDataAt(xPos + 1)) {
+                    while (true) {
+                        if (xPos >= xLength - 1) {
+                            break;
+                        }
+                        int nextValue = x.getDataAt(xPos + 1);
+                        if (xValue != nextValue) {
+                            break;
+                        }
                         xPos++;
-                        xValue = x.getDataAt(xPos);
+                        xValue = nextValue;
                     }
-                    xPos++;
-                    yPos++;
+                    if (++xPos >= xLength || ++yPos >= yLength) {
+                        break;
+                    }
+                    xValue = x.getDataAt(xPos);
+                    yValue = tempY.getDataAt(yPos);
                 } else if (xValue < yValue) {
-                    xPos++;
+                    if (++xPos >= xLength) {
+                        break;
+                    }
+                    xValue = x.getDataAt(xPos);
                 } else {
-                    yPos++;
+                    if (++yPos >= yLength) {
+                        break;
+                    }
+                    yValue = tempY.getDataAt(yPos);
                 }
             }
         } else {
-            int[] temp = new int[y.getLength()];
-            boolean[] used = new boolean[y.getLength()];
-            for (int i = 0; i < y.getLength(); i++) {
+            int[] temp = new int[yLength];
+            boolean[] used = new boolean[yLength];
+            for (int i = 0; i < yLength; i++) {
                 temp[i] = y.getDataAt(i);
             }
             sort(temp);
 
-            for (int i = 0; i < x.getLength(); i++) {
+            for (int i = 0; i < xLength; i++) {
                 int value = x.getDataAt(i);
                 int pos = Arrays.binarySearch(temp, value);
                 if (pos >= 0 && !used[pos]) {
@@ -125,7 +111,20 @@ public abstract class IntersectFastPath extends RFastPathNode {
                 }
             }
         }
-        return RDataFactory.createIntVector(count == x.getLength() ? result : Arrays.copyOf(result, count), x.isComplete() || y.isComplete());
+        return RDataFactory.createIntVector(resultLengthMatchProfile.profile(count == xLength) ? result : Arrays.copyOf(result, count), x.isComplete() | y.isComplete());
+    }
+
+    private static boolean isSorted(RAbstractIntVector vector) {
+        int length = vector.getLength();
+        int lastValue = vector.getDataAt(0);
+        for (int i = 1; i < length; i++) {
+            int value = vector.getDataAt(i);
+            if (value < lastValue) {
+                return false;
+            }
+            lastValue = value;
+        }
+        return true;
     }
 
     @TruffleBoundary

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,10 +42,10 @@ public class TestSimpleLists extends TestBase {
 
         assertEval("{ l <- list(1,2,3) ; l[5] }");
         assertEval("{ l <- list(1,2,3) ; typeof(l[5]) }");
-        assertEval(Output.ContainsError, "{ l <- list(1,2,3) ; l[[5]] }");
+        assertEval("{ l <- list(1,2,3) ; l[[5]] }");
 
         assertEval("{ l <- list(1,2,3) ; l[0] }");
-        assertEval(Output.ContainsError, "{ l <- list(1,2,3) ; l[[0]] }");
+        assertEval("{ l <- list(1,2,3) ; l[[0]] }");
 
         assertEval("{ l <- list(1,2,3) ; l[[NA]] }");
         assertEval("{ l <- list(1,2,3) ; typeof(l[[NA]]) }");
@@ -56,10 +56,10 @@ public class TestSimpleLists extends TestBase {
         assertEval("{ l <- list(1,2,3) ; l[-2] }");
         assertEval("{ l <- list(1,2,3) ; typeof(l[-2]) }");
 
-        assertEval(Output.ContainsError, "{ l <- list(1,2,3) ; l[[-2]] }");
+        assertEval("{ l <- list(1,2,3) ; l[[-2]] }");
 
         assertEval("{ l <- list(1,2,3) ; l[-5] }");
-        assertEval(Output.ContainsError, "{ l <- list(1,2,3) ; l[[-5]] }");
+        assertEval("{ l <- list(1,2,3) ; l[[-5]] }");
 
         assertEval("{ a <- list(1,NULL,list()) ; a[3] }");
         assertEval("{ a <- list(1,NULL,list()) ; a[[3]] }");
@@ -67,7 +67,7 @@ public class TestSimpleLists extends TestBase {
         assertEval("{ a <- list(1,NULL,list()) ; typeof(a[[3]]) }");
 
         assertEval("{ a <- list(1,2,3) ; x <- integer() ; a[x] }");
-        assertEval(Output.ContainsError, "{ a <- list(1,2,3) ; x <- integer() ; a[[x]] }");
+        assertEval("{ a <- list(1,2,3) ; x <- integer() ; a[[x]] }");
     }
 
     @Test

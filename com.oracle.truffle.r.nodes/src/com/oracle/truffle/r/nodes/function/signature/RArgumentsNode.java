@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ public abstract class RArgumentsNode extends RBaseNode {
      * certain parameters, on which Truffle DSL cannot specialize.
      */
 
-    public abstract Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, S3Args s3Args);
+    public abstract Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, DispatchArgs dispatchArgs);
 
     public static RArgumentsNode create() {
         return new RArgumentsUninitializedNode();
@@ -50,34 +50,34 @@ public abstract class RArgumentsNode extends RBaseNode {
 
     private static final class RArgumentsUninitializedNode extends RArgumentsNode {
         @Override
-        public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, S3Args s3Args) {
+        public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, DispatchArgs dispatchArgs) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            return replace(new RArgumentsCachedNode(function)).execute(function, caller, callerFrame, depth, evaluatedArgs, signature, s3Args);
+            return replace(new RArgumentsCachedNode(function)).execute(function, caller, callerFrame, depth, evaluatedArgs, signature, dispatchArgs);
         }
     }
 
     private static final class RArgumentsCachedNode extends RArgumentsNode {
         private final RFunction cachedFunction;
 
-        public RArgumentsCachedNode(RFunction cachedFunction) {
+        RArgumentsCachedNode(RFunction cachedFunction) {
             this.cachedFunction = cachedFunction;
         }
 
         @Override
-        public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, S3Args s3Args) {
+        public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, DispatchArgs dispatchArgs) {
             if (function == cachedFunction) {
-                return RArguments.create(cachedFunction, caller, callerFrame, depth, evaluatedArgs, signature, cachedFunction.getEnclosingFrame(), s3Args);
+                return RArguments.create(cachedFunction, caller, callerFrame, depth, evaluatedArgs, signature, cachedFunction.getEnclosingFrame(), dispatchArgs);
             } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new RArgumentsGenericNode()).execute(function, caller, callerFrame, depth, evaluatedArgs, signature, s3Args);
+                return replace(new RArgumentsGenericNode()).execute(function, caller, callerFrame, depth, evaluatedArgs, signature, dispatchArgs);
             }
         }
     }
 
     private static final class RArgumentsGenericNode extends RArgumentsNode {
         @Override
-        public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, S3Args s3Args) {
-            return RArguments.create(function, caller, callerFrame, depth, evaluatedArgs, signature, function.getEnclosingFrame(), s3Args);
+        public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, DispatchArgs dispatchArgs) {
+            return RArguments.create(function, caller, callerFrame, depth, evaluatedArgs, signature, function.getEnclosingFrame(), dispatchArgs);
         }
     }
 }

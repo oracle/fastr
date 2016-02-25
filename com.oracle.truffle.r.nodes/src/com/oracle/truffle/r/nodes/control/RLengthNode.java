@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,12 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.profile.*;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -120,7 +122,11 @@ public abstract class RLengthNode extends RNode {
 
     @Specialization(guards = "isForeignObject(object)")
     protected int getForeignSize(VirtualFrame frame, TruffleObject object, @Cached("createGetSize()") Node foreignNode) {
-        return (int) ForeignAccess.execute(foreignNode, frame, object);
+        try {
+            return (int) ForeignAccess.send(foreignNode, frame, object);
+        } catch (InteropException e) {
+            throw RError.interopError(this, e);
+        }
     }
 
 }

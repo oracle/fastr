@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,7 +121,7 @@ public class ConnectionSupport {
                     return setConnection(i, con);
                 }
             }
-            throw RError.error(RError.NO_NODE, RError.Message.ALL_CONNECTIONS_IN_USE);
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.ALL_CONNECTIONS_IN_USE);
         }
 
         @Override
@@ -147,7 +147,7 @@ public class ConnectionSupport {
                 }
                 BaseRConnection con = ref.get();
                 if (con instanceof TextConnections.TextRConnection) {
-                    RError.warning(RError.NO_NODE, RError.Message.UNUSED_TEXTCONN, con.descriptor, ((TextConnections.TextRConnection) con).description);
+                    RError.warning(RError.SHOW_CALLER2, RError.Message.UNUSED_TEXTCONN, con.descriptor, ((TextConnections.TextRConnection) con).description);
                 }
                 if (con != null) {
                     int index = con.descriptor;
@@ -342,12 +342,12 @@ public class ConnectionSupport {
         private static final int INVALID_DESCRIPTOR = -1;
 
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
 
         @Override
-        public String[] readLines(int n) throws IOException {
+        public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
 
@@ -633,9 +633,9 @@ public class ConnectionSupport {
         }
 
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             checkOpen();
-            return theConnection.readLinesInternal(n);
+            return theConnection.readLinesInternal(n, warn, skipNul);
         }
 
         @Override
@@ -789,8 +789,11 @@ public class ConnectionSupport {
          * {@code readLines} from an {@link InputStream}. It would be convenient to use a
          * {@link BufferedReader} but mixing binary and text operations, which is a requirement,
          * would then be difficult.
+         *
+         * @param warn TODO
+         * @param skipNul TODO
          */
-        default String[] readLinesHelper(InputStream in, int n) throws IOException {
+        default String[] readLinesHelper(InputStream in, int n, boolean warn, boolean skipNul) throws IOException {
             ArrayList<String> lines = new ArrayList<>();
             int totalRead = 0;
             byte[] buffer = new byte[64];
@@ -813,7 +816,9 @@ public class ConnectionSupport {
                          * "name" for the warning.
                          */
                         lines.add(new String(buffer, 0, totalRead));
-                        RError.warning(RError.NO_NODE, RError.Message.INCOMPLETE_FINAL_LINE, "TODO: connection path");
+                        if (warn) {
+                            RError.warning(RError.SHOW_CALLER2, RError.Message.INCOMPLETE_FINAL_LINE, "TODO: connection path");
+                        }
                     }
                     break;
                 }
@@ -969,7 +974,7 @@ public class ConnectionSupport {
 
         @Override
         public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            throw RError.error(RError.NO_NODE, RError.Message.UNSEEKABLE_CONNECTION);
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.UNSEEKABLE_CONNECTION);
         }
 
     }
@@ -1031,7 +1036,7 @@ public class ConnectionSupport {
         }
 
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
         }
 

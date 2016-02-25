@@ -22,28 +22,46 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.instrument.wrappers.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrument.WrapperNode;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.instrument.wrappers.WriteSuperVariableNodeWrapper;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RAllNames;
+import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.NeedsWrapper;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * The "syntax" variant corresponding to {@code x <<- y} in the source.
+ *
+ * Owing to type hierarchy restrictions (and lack of multiple (state) inheritance) this cannot
+ * extend {@link RSourceSectionNode}, so we store the field in {@link WriteVariableNodeSyntaxHelper}
+ * .
  */
 @NodeInfo(cost = NodeCost.NONE)
 @NeedsWrapper
-public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, VisibilityController {
+public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, RSyntaxCall, VisibilityController {
 
     @Child WriteVariableNode writeSuperFrameVariableNode;
 
+    protected WriteSuperVariableNode(SourceSection src) {
+        super(src);
+    }
+
     public static WriteSuperVariableNode create(SourceSection src, String name, RNode rhs) {
-        WriteSuperVariableNode result = new WriteSuperVariableNode();
-        result.assignSourceSection(src);
+        WriteSuperVariableNode result = new WriteSuperVariableNode(src);
         result.writeSuperFrameVariableNode = result.insert(WriteSuperFrameVariableNode.create(name, rhs, Mode.REGULAR));
         return result;
     }
@@ -114,4 +132,15 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
         return new WriteSuperVariableNodeWrapper(this);
     }
 
+    public RSyntaxElement getSyntaxLHS() {
+        return RSyntaxLookup.createDummyLookup(null, "<<-", true);
+    }
+
+    public RSyntaxElement[] getSyntaxArguments() {
+        return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(getSourceSection(), (String) getName(), false), getRhs().asRSyntaxNode()};
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(2);
+    }
 }

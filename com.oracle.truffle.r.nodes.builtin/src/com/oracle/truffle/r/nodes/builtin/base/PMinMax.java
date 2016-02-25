@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -142,7 +142,7 @@ public abstract class PMinMax extends RBuiltinNode {
                     RAbstractIntVector vec = (RAbstractIntVector) argValues[j];
                     na.enable(vec);
                     if (vec.getLength() > 1 && vec.getLength() < maxLength && !warningAdded) {
-                        RError.warning(this, RError.Message.ARG_RECYCYLED);
+                        RError.warning(RError.SHOW_CALLER2, RError.Message.ARG_RECYCYLED);
                         warningAdded = true;
                     }
                     int v = vec.getDataAt(i % vec.getLength());
@@ -205,7 +205,7 @@ public abstract class PMinMax extends RBuiltinNode {
             naCheckX.enable(x);
             naCheckY.enable(y);
             if ((xLength > 1 && xLength < maxLength) || (yLength > 1 && yLength < maxLength)) {
-                RError.warning(this, RError.Message.ARG_RECYCYLED);
+                RError.warning(RError.SHOW_CALLER2, RError.Message.ARG_RECYCYLED);
             }
             boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
             double[] data = new double[maxLength];
@@ -246,7 +246,7 @@ public abstract class PMinMax extends RBuiltinNode {
                 RAbstractDoubleVector vec = (RAbstractDoubleVector) argValues[j];
                 na.enable(vec);
                 if (vec.getLength() > 1 && vec.getLength() < maxLength && !warningAdded) {
-                    RError.warning(this, RError.Message.ARG_RECYCYLED);
+                    RError.warning(RError.SHOW_CALLER2, RError.Message.ARG_RECYCYLED);
                     warningAdded = true;
                 }
             }
@@ -403,7 +403,7 @@ public abstract class PMinMax extends RBuiltinNode {
             byte warningAdded = warning;
             RAbstractStringVector vec = (RAbstractStringVector) argValues[offset];
             if (vec.getLength() > 1 && vec.getLength() < maxLength && warningAdded == RRuntime.LOGICAL_FALSE) {
-                RError.warning(this, RError.Message.ARG_RECYCYLED);
+                RError.warning(RError.SHOW_CALLER2, RError.Message.ARG_RECYCYLED);
                 warningAdded = RRuntime.LOGICAL_TRUE;
             }
             String result = vec.getDataAt(ind % vec.getLength());

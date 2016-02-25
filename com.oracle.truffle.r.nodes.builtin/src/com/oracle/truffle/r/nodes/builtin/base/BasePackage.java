@@ -48,7 +48,8 @@ public class BasePackage extends RBuiltinPackage {
         add(UnaryNotNode.class, UnaryNotNodeGen::create);
 
         add(BinaryArithmetic.AddBuiltin.class, (arguments, builtin, signature) -> BinaryArithmeticNodeGen.create(BinaryArithmetic.ADD, UnaryArithmetic.PLUS, arguments, builtin, signature));
-        add(BinaryArithmetic.SubtractBuiltin.class, (arguments, builtin, signature) -> BinaryArithmeticNodeGen.create(BinaryArithmetic.SUBTRACT, UnaryArithmetic.NEGATE, arguments, builtin, signature));
+        add(BinaryArithmetic.SubtractBuiltin.class,
+                        (arguments, builtin, signature) -> BinaryArithmeticNodeGen.create(BinaryArithmetic.SUBTRACT, UnaryArithmetic.NEGATE, arguments, builtin, signature));
         add(BinaryArithmetic.DivBuiltin.class, (arguments, builtin, signature) -> BinaryArithmeticNodeGen.create(BinaryArithmetic.DIV, null, arguments, builtin, signature));
         add(BinaryArithmetic.IntegerDivBuiltin.class, (arguments, builtin, signature) -> BinaryArithmeticNodeGen.create(BinaryArithmetic.INTEGER_DIV, null, arguments, builtin, signature));
         add(BinaryArithmetic.ModBuiltin.class, (arguments, builtin, signature) -> BinaryArithmeticNodeGen.create(BinaryArithmetic.MOD, null, arguments, builtin, signature));
@@ -117,6 +118,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Ceiling.class, CeilingNodeGen::create);
         add(CharMatch.class, CharMatchNodeGen::create);
         add(Col.class, ColNodeGen::create);
+        add(ColonNode.class, ColonNodeGen::create);
         add(ColMeans.class, ColMeansNodeGen::create);
         add(ColSums.class, ColSumsNodeGen::create);
         add(Combine.class, CombineNodeGen::create);
@@ -298,7 +300,6 @@ public class BasePackage extends RBuiltinPackage {
         add(InfixEmulationFunctions.AssignOuterBuiltin.class, InfixEmulationFunctionsFactory.AssignOuterBuiltinNodeGen::create);
         add(InfixEmulationFunctions.BraceBuiltin.class, InfixEmulationFunctionsFactory.BraceBuiltinNodeGen::create);
         add(InfixEmulationFunctions.BreakBuiltin.class, InfixEmulationFunctionsFactory.BreakBuiltinNodeGen::create);
-        add(InfixEmulationFunctions.ColonBuiltin.class, InfixEmulationFunctionsFactory.ColonBuiltinNodeGen::create);
         add(InfixEmulationFunctions.ForBuiltin.class, InfixEmulationFunctionsFactory.ForBuiltinNodeGen::create);
         add(InfixEmulationFunctions.FunctionBuiltin.class, InfixEmulationFunctionsFactory.FunctionBuiltinNodeGen::create);
         add(InfixEmulationFunctions.IfBuiltin.class, InfixEmulationFunctionsFactory.IfBuiltinNodeGen::create);
@@ -461,7 +462,6 @@ public class BasePackage extends RBuiltinPackage {
         add(StandardGeneric.class, StandardGenericNodeGen::create);
         add(Stop.class, StopNodeGen::create);
         add(Strtoi.class, StrtoiNodeGen::create);
-        add(Structure.class, StructureNodeGen::create);
         add(Substitute.class, SubstituteNodeGen::create);
         add(Substr.class, SubstrNodeGen::create);
         add(Sum.class, SumNodeGen::create);
@@ -481,8 +481,8 @@ public class BasePackage extends RBuiltinPackage {
         add(Tabulate.class, TabulateNodeGen::create);
         add(TempDir.class, TempDirNodeGen::create);
         add(TempFile.class, TempFileNodeGen::create);
-        add(ToLower.class, ToLowerNodeGen::create);
-        add(ToUpper.class, ToUpperNodeGen::create);
+        add(ToLowerOrUpper.ToLower.class, ToLowerOrUpper::createToLower);
+        add(ToLowerOrUpper.ToUpper.class, ToLowerOrUpper::createToUpper);
         add(Traceback.class, TracebackNodeGen::create);
         add(TraceFunctions.PrimTrace.class, TraceFunctionsFactory.PrimTraceNodeGen::create);
         add(TraceFunctions.PrimUnTrace.class, TraceFunctionsFactory.PrimUnTraceNodeGen::create);

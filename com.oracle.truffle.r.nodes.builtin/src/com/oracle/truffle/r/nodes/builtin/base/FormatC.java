@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -39,18 +39,21 @@ public abstract class FormatC extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-// if (children.length != getSuppliedSignature().getLength()) {
-// errorProfile.enter();
-// throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED,
-// children.length, ".Internal(formatC)", getSuppliedSignature().getLength());
-// }
-// // cast to vector as appropriate to eliminate NULL values
-// children[2] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[2], false, false,
-// false, false), false, false, false);
-// children[3] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[3], false, false,
-// false, false), false, false, false);
-// children[6] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[6], false, false,
-// false, false), false, false, false);
+        // if (children.length != getSuppliedSignature().getLength()) {
+        // errorProfile.enter();
+        // throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED,
+        // children.length, ".Internal(formatC)", getSuppliedSignature().getLength());
+        // }
+        // // cast to vector as appropriate to eliminate NULL values
+        // children[2] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[2], false,
+        // false,
+        // false, false), false, false, false);
+        // children[3] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[3], false,
+        // false,
+        // false, false), false, false, false);
+        // children[6] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[6], false,
+        // false,
+        // false, false), false, false, false);
         casts.toInteger(2).toInteger(3).toInteger(6);
     }
 

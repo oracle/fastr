@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -126,13 +126,13 @@ public class TestBuiltin_asinteger extends TestBase {
         assertEval("{ as.integer(as.raw(c(1,2,3,4))) }");
         assertEval(Output.ContainsWarning, "{ as.integer(10+2i) }");
         assertEval(Output.ContainsWarning, "{ as.integer(c(3+3i, 4+4i)) }");
-        assertEval(Output.ContainsWarning, "{ as.integer(10000000000000) }");
+        assertEval("{ as.integer(10000000000000) }");
         assertEval("{ as.integer(list(c(1),2,3)) }");
         assertEval("{ as.integer(list(integer(),2,3)) }");
         assertEval("{ as.integer(list(list(1),2,3)) }");
         assertEval("{ as.integer(list(1,2,3,list())) }");
-        assertEval(Output.ContainsWarning, "{ as.integer(10000000000) }");
-        assertEval(Output.ContainsWarning, "{ as.integer(-10000000000) }");
+        assertEval("{ as.integer(10000000000) }");
+        assertEval("{ as.integer(-10000000000) }");
         assertEval(Output.ContainsWarning, "{ as.integer(c(\"1\",\"hello\")) }");
         assertEval(Output.ContainsWarning, "{ as.integer(\"TRUE\") }");
         assertEval("{ as.integer(as.raw(1)) }");

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -101,8 +101,7 @@ public class TestBuiltin_attributes extends TestBase {
 
     @Test
     public void testattributes17() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(L = structure(c('Min.   :14.00  ', '1st Qu.:26.00  ', 'Median :29.50  ', 'Mean   :36.39  ', '3rd Qu.:49.25  ', 'Max.   :70.00  ', 'A:9  ', 'B:9  ', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c('', '', '', '', '', ''), c('    breaks', 'wool')), class = 'table'), M = structure(c('Min.   :12.00  ', '1st Qu.:18.25  ', 'Median :27.00  ', 'Mean   :26.39  ', '3rd Qu.:33.75  ', 'Max.   :42.00  ', 'A:9  ', 'B:9  ', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c('', '', '', '', '', ''), c('    breaks', 'wool')), class = 'table'), H = structure(c('Min.   :10.00  ', '1st Qu.:15.25  ', 'Median :20.50  ', 'Mean   :21.67  ', '3rd Qu.:25.50  ', 'Max.   :43.00  ', 'A:9  ', 'B:9  ', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c('', '', '', '', '', ''), c('    breaks', 'wool')), class = 'table')), .Dim = 3L, .Dimnames = structure(list(`warpbreaks[, 'tension']` = c('L', 'M', 'H')), .Names = 'warpbreaks[, \\\'tension\\\']')));attributes(argv[[1]]);");
+        assertEval("argv <- list(structure(list(L = structure(c('Min.   :14.00  ', '1st Qu.:26.00  ', 'Median :29.50  ', 'Mean   :36.39  ', '3rd Qu.:49.25  ', 'Max.   :70.00  ', 'A:9  ', 'B:9  ', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c('', '', '', '', '', ''), c('    breaks', 'wool')), class = 'table'), M = structure(c('Min.   :12.00  ', '1st Qu.:18.25  ', 'Median :27.00  ', 'Mean   :26.39  ', '3rd Qu.:33.75  ', 'Max.   :42.00  ', 'A:9  ', 'B:9  ', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c('', '', '', '', '', ''), c('    breaks', 'wool')), class = 'table'), H = structure(c('Min.   :10.00  ', '1st Qu.:15.25  ', 'Median :20.50  ', 'Mean   :21.67  ', '3rd Qu.:25.50  ', 'Max.   :43.00  ', 'A:9  ', 'B:9  ', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c('', '', '', '', '', ''), c('    breaks', 'wool')), class = 'table')), .Dim = 3L, .Dimnames = structure(list(`warpbreaks[, 'tension']` = c('L', 'M', 'H')), .Names = 'warpbreaks[, \\\'tension\\\']')));attributes(argv[[1]]);");
     }
 
     @Test
@@ -184,10 +183,10 @@ public class TestBuiltin_attributes extends TestBase {
         assertEval("{ x <- 1 ; attributes(x) <- list(hi=3, hello=2) ; x }");
         assertEval("{ x <- 1 ; attributes(x) <- list(hi=3, names=\"name\") ; x }");
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(names=NULL) ; x }");
-        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; attributes(x) <- list(hi = 1, 2) ; x }");
-        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2) ; x }");
-        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; attributes(x) <- list(ho = 1, 2, 3) ; x }");
-        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2, 3) ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi = 1, 2) ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2) ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(ho = 1, 2, 3) ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2, 3) ; x }");
         assertEval(Output.ContainsError, "{ x <- c(hello=1) ; y<-list(1,2); names(y)<-c(\"hi\", \"\"); attributes(x)<-y; x }");
         assertEval("{ x <- 1; attributes(x) <- list(my = 1) ; y <- x; attributes(y) <- list(his = 2) ; x }");
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi=1) ;  attributes(x) <- NULL ; x }");

@@ -653,9 +653,7 @@ public class RSerialize {
                     int len = stream.readInt();
                     String s = stream.readString(len);
                     result = RContext.lookupBuiltin(s);
-                    if (result == null) {
-                        throw RInternalError.shouldNotReachHere("lookup failed in unserialize for builtin: " + s);
-                    }
+                    RInternalError.guarantee(result != null, "lookup failed in unserialize for builtin: " + s);
                     break;
                 }
 
@@ -1139,7 +1137,7 @@ public class RSerialize {
     }
 
     // Serialize support is currently very limited, essentially to saving the CRAN package format
-// info,
+    // info,
 
     private abstract static class POutputStream {
         protected OutputStream os;
@@ -1355,7 +1353,7 @@ public class RSerialize {
                     addReadRef(obj);
                     String name = null;
                     if ((name = env.isPackageEnv()) != null) {
-                        RError.warning(RError.NO_NODE, RError.Message.PACKAGE_AVAILABLE, name);
+                        RError.warning(RError.SHOW_CALLER2, RError.Message.PACKAGE_AVAILABLE, name);
                         stream.writeInt(SEXPTYPE.PACKAGESXP.code);
                         stream.writeString(name);
                     } else if (env.isNamespaceEnv()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -557,62 +557,69 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     // @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "zero(start, to)"})
-// protected double seq(RAbstractLogicalVector start, RAbstractLogicalVector to, Object stride,
-// RMissing lengthOut, RMissing alongWith) {
-// controlVisibility();
-// return 0;
-// }
-//
-// @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-// protected RIntSequence seq(RAbstractLogicalVector start, RAbstractLogicalVector to, RMissing
-// stride, RMissing lengthOut, RMissing alongWith) {
-// controlVisibility();
-// validateParams(start, to);
-// return RDataFactory.createIntSequence(RRuntime.logical2int(start.getDataAt(0)), ascending(start,
-// to) ? 1 : -1,
-// Math.abs(RRuntime.logical2int(to.getDataAt(0)) - RRuntime.logical2int(start.getDataAt(0))) + 1);
-// }
-//
-// @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!lengthZero(lengthOut)"})
-// protected RDoubleVector seq(RAbstractLogicalVector start, RAbstractLogicalVector to, RMissing
-// stride, int lengthOut, RMissing alongWith) {
-// controlVisibility();
-// validateParams(start, to);
-// return getVectorWithComputedStride(RRuntime.logical2double(start.getDataAt(0)),
-// RRuntime.logical2double(to.getDataAt(0)), RRuntime.int2double(lengthOut), ascending(start, to));
-// }
-//
-// @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!lengthZero(lengthOut)"})
-// protected RDoubleVector seq(RAbstractLogicalVector start, RAbstractLogicalVector to, RMissing
-// stride, double lengthOut, RMissing alongWith) {
-// controlVisibility();
-// validateParams(start, to);
-// return getVectorWithComputedStride(RRuntime.logical2double(start.getDataAt(0)),
-// RRuntime.logical2double(to.getDataAt(0)), lengthOut, ascending(start, to));
-// }
-//
-// @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "lengthZero(lengthOut)"})
-// protected RIntVector seqLengthZero(RAbstractLogicalVector start, RAbstractLogicalVector to,
-// RMissing stride, double lengthOut, RMissing alongWith) {
-// controlVisibility();
-// validateParams(start, to);
-// return RDataFactory.createEmptyIntVector();
-// }
-//
-// @Specialization(guards = "!startEmpty(start)")
-// protected RIntSequence seqFromOneArg(RAbstractLogicalVector start, RMissing to, RMissing stride,
-// RMissing lengthOut, RMissing alongWith) {
-// controlVisibility();
-// validateParam(RRuntime.logical2int(start.getDataAt(0)), "to");
-// // GNU R really does that (take the length of start to create a sequence)
-// return RDataFactory.createIntSequence(1, 1, start.getLength());
-// }
-//
-// @Specialization(guards = "startEmpty(start)")
-// protected RIntVector seqFromOneArgEmpty(RAbstractLogicalVector start, RMissing to, RMissing
-// stride, RMissing lengthOut, RMissing alongWith) {
-// return RDataFactory.createEmptyIntVector();
-// }
+    // protected double seq(RAbstractLogicalVector start, RAbstractLogicalVector to, Object stride,
+    // RMissing lengthOut, RMissing alongWith) {
+    // controlVisibility();
+    // return 0;
+    // }
+    //
+    // @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
+    // protected RIntSequence seq(RAbstractLogicalVector start, RAbstractLogicalVector to, RMissing
+    // stride, RMissing lengthOut, RMissing alongWith) {
+    // controlVisibility();
+    // validateParams(start, to);
+    // return RDataFactory.createIntSequence(RRuntime.logical2int(start.getDataAt(0)),
+    // ascending(start,
+    // to) ? 1 : -1,
+    // Math.abs(RRuntime.logical2int(to.getDataAt(0)) - RRuntime.logical2int(start.getDataAt(0))) +
+    // 1);
+    // }
+    //
+    // @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)",
+    // "!lengthZero(lengthOut)"})
+    // protected RDoubleVector seq(RAbstractLogicalVector start, RAbstractLogicalVector to, RMissing
+    // stride, int lengthOut, RMissing alongWith) {
+    // controlVisibility();
+    // validateParams(start, to);
+    // return getVectorWithComputedStride(RRuntime.logical2double(start.getDataAt(0)),
+    // RRuntime.logical2double(to.getDataAt(0)), RRuntime.int2double(lengthOut), ascending(start,
+    // to));
+    // }
+    //
+    // @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)",
+    // "!lengthZero(lengthOut)"})
+    // protected RDoubleVector seq(RAbstractLogicalVector start, RAbstractLogicalVector to, RMissing
+    // stride, double lengthOut, RMissing alongWith) {
+    // controlVisibility();
+    // validateParams(start, to);
+    // return getVectorWithComputedStride(RRuntime.logical2double(start.getDataAt(0)),
+    // RRuntime.logical2double(to.getDataAt(0)), lengthOut, ascending(start, to));
+    // }
+    //
+    // @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)",
+    // "lengthZero(lengthOut)"})
+    // protected RIntVector seqLengthZero(RAbstractLogicalVector start, RAbstractLogicalVector to,
+    // RMissing stride, double lengthOut, RMissing alongWith) {
+    // controlVisibility();
+    // validateParams(start, to);
+    // return RDataFactory.createEmptyIntVector();
+    // }
+    //
+    // @Specialization(guards = "!startEmpty(start)")
+    // protected RIntSequence seqFromOneArg(RAbstractLogicalVector start, RMissing to, RMissing
+    // stride,
+    // RMissing lengthOut, RMissing alongWith) {
+    // controlVisibility();
+    // validateParam(RRuntime.logical2int(start.getDataAt(0)), "to");
+    // // GNU R really does that (take the length of start to create a sequence)
+    // return RDataFactory.createIntSequence(1, 1, start.getLength());
+    // }
+    //
+    // @Specialization(guards = "startEmpty(start)")
+    // protected RIntVector seqFromOneArgEmpty(RAbstractLogicalVector start, RMissing to, RMissing
+    // stride, RMissing lengthOut, RMissing alongWith) {
+    // return RDataFactory.createEmptyIntVector();
+    // }
 
     @Specialization(guards = "lengthZero(lengthOut)")
     protected RIntVector seqLengthZero(RMissing start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {

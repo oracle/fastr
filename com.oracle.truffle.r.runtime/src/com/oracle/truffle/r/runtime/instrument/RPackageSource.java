@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -135,7 +135,7 @@ public class RPackageSource {
                  * multiple names in the same package, or the same (likely trivial) body is assigned
                  * to several unrelated functions. These are annoying but essentially benign.
                  */
-                RError.warning(RError.NO_NODE, RError.Message.GENERIC, "two package functions with same fingerprint, prev: '" + qualName(prev.pkg, prev.sourceName) + "', this '" +
+                RError.warning(RError.SHOW_CALLER2, RError.Message.GENERIC, "two package functions with same fingerprint, prev: '" + qualName(prev.pkg, prev.sourceName) + "', this '" +
                                 qualName(pkg, fname) + "'");
                 return;
             }
@@ -195,7 +195,7 @@ public class RPackageSource {
             String qualName = qualName(pkg, fname);
             if (deparseResult != null) {
                 if (deparseError) {
-                    RError.warning(RError.NO_NODE, RError.Message.GENERIC, "the function '" + qualName + "' did not deparse successfully");
+                    RError.warning(RError.SHOW_CALLER2, RError.Message.GENERIC, "the function '" + qualName + "' did not deparse successfully");
                     // write the file anyway
                 }
                 try {
@@ -205,10 +205,10 @@ public class RPackageSource {
                     }
                     register(fname, pkg, target);
                 } catch (IOException ex) {
-                    throw RError.error(RError.NO_NODE, RError.Message.GENERIC, ex.getMessage());
+                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ex.getMessage());
                 }
             } else {
-                RError.warning(RError.NO_NODE, RError.Message.GENERIC, "the function '" + qualName + "' has already been unserialized");
+                RError.warning(RError.SHOW_CALLER2, RError.Message.GENERIC, "the function '" + qualName + "' has already been unserialized");
             }
         }
     }
@@ -219,9 +219,7 @@ public class RPackageSource {
 
     public static String decodeName(String path) {
         String name = pathToNameMap.get(path);
-        if (name == null) {
-            throw RInternalError.shouldNotReachHere();
-        }
+        RInternalError.guarantee(name != null);
         return name;
     }
 

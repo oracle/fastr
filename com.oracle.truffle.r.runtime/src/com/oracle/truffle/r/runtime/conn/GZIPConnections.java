@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,18 +85,18 @@ public class GZIPConnections {
                     delegate = new GZIPOutputRConnection(this);
                     break;
                 default:
-                    throw RError.nyi(RError.NO_NODE, "open mode: " + getOpenMode());
+                    throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + getOpenMode());
             }
             setDelegate(delegate);
         }
 
-// @Override
+        // @Override
         /**
          * GnuR behavior for lazy connections is odd, e.g. gzfile returns "text", even though the
          * default mode is "rb".
          */
-// public boolean isTextMode() {
-// }
+        // public boolean isTextMode() {
+        // }
     }
 
     private static class GZIPInputRConnection extends DelegateReadRConnection implements ReadWriteHelper {
@@ -128,8 +128,8 @@ public class GZIPConnections {
         }
 
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
-            return readLinesHelper(inputStream, n);
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+            return readLinesHelper(inputStream, n, warn, skipNul);
         }
 
         @Override

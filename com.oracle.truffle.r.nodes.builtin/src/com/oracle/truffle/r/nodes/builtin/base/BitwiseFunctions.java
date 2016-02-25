@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2015, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -47,7 +47,7 @@ public class BitwiseFunctions {
 
             private final String name;
 
-            private Operation(String name) {
+            Operation(String name) {
                 this.name = name;
             }
         }

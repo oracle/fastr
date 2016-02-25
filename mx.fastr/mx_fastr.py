@@ -224,13 +224,6 @@ def build(args):
         os.environ['LFLAGS'] = '-Xlinker -lstdc++'
     return mx_jvm().build(args)
 
-def pylint(args):
-    return mx.pylint(['--primary'])
-
-def eclipseformat(args):
-    mx.log("Note: eclipseformat is currently not supported for FastR")
-    return 0
-
 def _fastr_gate_runner(args, tasks):
     # Until fixed, we call Checkstyle here and limit to primary
     with mx_gate.Task('Checkstyle check', tasks) as t:
@@ -269,7 +262,7 @@ mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
 def gate(args):
     '''Run the R gate'''
     # exclude findbugs until compliant
-    mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Checkstyle,Distribution Overlap Check,BuildJavaWithEcj'])
+    mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj'])
 
 def _test_harness_body_install_new(args, vmArgs):
     '''the callback from mx.test'''
@@ -571,14 +564,12 @@ _commands = {
     'junitsimple' : [junit_simple, ['options']],
     'junitdefault' : [junit_default, ['options']],
     'junitgate' : [junit_gate, ['options']],
-    'pylint' : [pylint, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, ['options']],
     'rcmplib' : [rcmplib, ['options']],
     'test' : [test, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'installcran' : [installcran, '[options]'],
-    'eclipseformat' : [eclipseformat, '[options]'],
     }
 
 _commands.update(mx_fastr_pkgtest._commands)

@@ -29,6 +29,8 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -36,6 +38,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.nodes.NodeUtil;
@@ -65,12 +68,16 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameAndSlotLookupResult;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.LookupResult;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -78,7 +85,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * a particular layout of frame descriptors and enclosing environments, and re-specializes in case
  * the layout changes.
  */
-public final class ReadVariableNode extends RNode implements RSyntaxNode, VisibilityController {
+public final class ReadVariableNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup, VisibilityController {
 
     private static final int MAX_INVALIDATION_COUNT = 2;
 
@@ -95,38 +102,35 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     }
 
     public static ReadVariableNode create(String name) {
-        return new ReadVariableNode(name, RType.Any, ReadKind.Normal);
+        return new ReadVariableNode(RSyntaxNode.SOURCE_UNAVAILABLE, name, RType.Any, ReadKind.Normal);
     }
 
     public static ReadVariableNode create(SourceSection src, String name, boolean shouldCopyValue) {
-        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
-        rvn.assignSourceSection(src);
+        ReadVariableNode rvn = new ReadVariableNode(src, name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
         return rvn;
     }
 
     public static ReadVariableNode createSilent(String name, RType mode) {
-        return new ReadVariableNode(name, mode, ReadKind.Silent);
+        return new ReadVariableNode(RSyntaxNode.SOURCE_UNAVAILABLE, name, mode, ReadKind.Silent);
     }
 
     public static ReadVariableNode createSuperLookup(SourceSection src, String name) {
-        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, ReadKind.Super);
-        rvn.assignSourceSection(src);
+        ReadVariableNode rvn = new ReadVariableNode(src, name, RType.Any, ReadKind.Super);
         return rvn;
     }
 
     public static ReadVariableNode createFunctionLookup(SourceSection src, String identifier) {
-        ReadVariableNode result = new ReadVariableNode(identifier, RType.Function, ReadKind.Normal);
-        result.assignSourceSection(src);
+        ReadVariableNode result = new ReadVariableNode(src, identifier, RType.Function, ReadKind.Normal);
         return result;
     }
 
     public static ReadVariableNode createForcedFunctionLookup(SourceSection src, String name) {
-        ReadVariableNode result = new ReadVariableNode(name, RType.Function, ReadKind.ForcedTypeCheck);
-        result.assignSourceSection(src);
+        ReadVariableNode result = new ReadVariableNode(src, name, RType.Function, ReadKind.ForcedTypeCheck);
         return result;
     }
 
     @Child protected PromiseHelperNode promiseHelper;
+    @Child protected CheckTypeNode checkTypeNode;
     @CompilationFinal private FrameLevel read;
     @CompilationFinal private boolean needsCopying;
 
@@ -143,7 +147,8 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     @CompilationFinal private final boolean[] seenValueKinds = new boolean[FrameSlotKind.values().length];
 
-    private ReadVariableNode(Object identifier, RType mode, ReadKind kind) {
+    private ReadVariableNode(SourceSection sourceSection, Object identifier, RType mode, ReadKind kind) {
+        super(sourceSection);
         this.identifier = identifier;
         this.identifierAsString = identifier.toString().intern();
         this.mode = mode;
@@ -289,6 +294,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         private final FrameLevel next;
         private final FrameSlot slot;
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
+        private final ValueProfile frameProfile = ValueProfile.createClassProfile();
 
         private Mismatch(FrameLevel next, FrameSlot slot) {
             this.next = next;
@@ -297,12 +303,13 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
-            Object value = profiledGetValue(seenValueKinds, variableFrame, slot);
+            Frame profiledVariableFrame = frameProfile.profile(variableFrame);
+            Object value = profiledGetValue(seenValueKinds, profiledVariableFrame, slot);
             if (checkType(frame, value, isNullProfile)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw new LayoutChangedException();
             }
-            return next.execute(frame, variableFrame);
+            return next.execute(frame, profiledVariableFrame);
         }
 
         @Override
@@ -337,6 +344,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
         private final FrameSlot slot;
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
+        private final ValueProfile frameProfile = ValueProfile.createClassProfile();
 
         private Match(FrameSlot slot) {
             this.slot = slot;
@@ -344,7 +352,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
-            Object value = profiledGetValue(seenValueKinds, variableFrame, slot);
+            Object value = profiledGetValue(seenValueKinds, frameProfile.profile(variableFrame), slot);
             if (!checkType(frame, value, isNullProfile)) {
                 throw new LayoutChangedException();
             }
@@ -364,7 +372,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
             if (kind == ReadKind.Silent) {
                 return null;
             } else {
-                throw RError.error(RError.NO_NODE, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
+                throw RError.error(RError.SHOW_CALLER, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
             }
         }
 
@@ -496,7 +504,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
             if (kind == ReadKind.Silent) {
                 return null;
             } else {
-                throw RError.error(RError.NO_NODE, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
+                throw RError.error(RError.SHOW_CALLER, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
             }
         }
 
@@ -515,6 +523,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     private final class LookupLevel extends DescriptorLevel {
 
         private final LookupResult lookup;
+        private final ValueProfile frameProfile = ValueProfile.createClassProfile();
 
         private LookupLevel(LookupResult lookup) {
             this.lookup = lookup;
@@ -525,12 +534,12 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
             Object value;
             if (lookup instanceof FrameAndSlotLookupResult) {
                 FrameAndSlotLookupResult frameAndSlotLookupResult = (FrameAndSlotLookupResult) lookup;
-                value = profiledGetValue(seenValueKinds, frameAndSlotLookupResult.getFrame(), frameAndSlotLookupResult.getSlot());
+                value = profiledGetValue(seenValueKinds, frameProfile.profile(frameAndSlotLookupResult.getFrame()), frameAndSlotLookupResult.getSlot());
             } else {
                 value = lookup.getValue();
             }
             if (kind != ReadKind.Silent && value == null) {
-                throw RError.error(RError.NO_NODE, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
+                throw RError.error(RError.SHOW_CALLER, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
             }
             return value;
         }
@@ -538,7 +547,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     private FrameLevel initialize(VirtualFrame frame, Frame variableFrame) {
         if (identifier.toString().isEmpty()) {
-            throw RError.error(RError.NO_NODE, RError.Message.ZERO_LENGTH_VARIABLE);
+            throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
         }
 
         /*
@@ -678,7 +687,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
                 if (value != null) {
                     if (value == RMissing.instance) {
-                        throw RError.error(RError.NO_NODE, RError.Message.ARGUMENT_MISSING, identifier);
+                        throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, identifier);
                     }
                     if (value instanceof RPromise) {
                         RPromise promise = (RPromise) value;
@@ -785,7 +794,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         }
         if (obj == RMissing.instance) {
             unexpectedMissingProfile.enter();
-            throw RError.error(RError.NO_NODE, RError.Message.ARGUMENT_MISSING, getIdentifier());
+            throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, getIdentifier());
         }
         if (mode == RType.Any) {
             return true;
@@ -808,7 +817,11 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
                 obj = promise.getValue();
             }
         }
-        return RRuntime.checkType(obj, mode);
+        if (checkTypeNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            checkTypeNode = insert(CheckTypeNodeGen.create(mode));
+        }
+        return checkTypeNode.executeBoolean(obj);
     }
 
     private static final ThreadLocal<String> slowPathEvaluationName = new ThreadLocal<>();
@@ -820,7 +833,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
             return false;
         }
         if (obj == RMissing.instance) {
-            throw RError.error(RError.NO_NODE, RError.Message.ARGUMENT_MISSING, getIdentifier());
+            throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, getIdentifier());
         }
         if (mode == RType.Any) {
             return true;
@@ -854,5 +867,64 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     public boolean isForceForTypeCheck() {
         return kind == ReadKind.ForcedTypeCheck;
+    }
+
+    public boolean isFunctionLookup() {
+        return mode == RType.Function;
+    }
+}
+
+/*
+ * This is RRuntime.checkType in the node form.
+ */
+abstract class CheckTypeNode extends RBaseNode {
+
+    public abstract boolean executeBoolean(Object o);
+
+    private final RType type;
+
+    CheckTypeNode(RType type) {
+        this.type = type;
+    }
+
+    @Specialization
+    boolean checkType(@SuppressWarnings("unused") Integer o) {
+        return type == RType.Any || type == RType.Integer || type == RType.Double || type == RType.Numeric ? true : false;
+    }
+
+    @Specialization
+    boolean checkType(@SuppressWarnings("unused") Double o) {
+        return type == RType.Any || type == RType.Integer || type == RType.Double || type == RType.Numeric ? true : false;
+    }
+
+    @Specialization
+    boolean checkType(@SuppressWarnings("unused") Byte o) {
+        return type == RType.Any || type == RType.Logical ? true : false;
+    }
+
+    @Specialization
+    boolean checkType(@SuppressWarnings("unused") String o) {
+        return type == RType.Any || type == RType.Character ? true : false;
+    }
+
+    @Specialization
+    boolean checkType(@SuppressWarnings("unused") RStringVector o) {
+        return type == RType.Any || type == RType.Character ? true : false;
+    }
+
+    @Specialization
+    boolean checkType(@SuppressWarnings("unused") RFunction o) {
+        return type == RType.Any || type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special ? true : false;
+    }
+
+    @Fallback
+    boolean checkType(Object o) {
+        if (type == RType.Any) {
+            return true;
+        } else if (type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special) {
+            return o instanceof TruffleObject && !(o instanceof RTypedValue);
+        } else {
+            return false;
+        }
     }
 }

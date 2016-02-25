@@ -24,9 +24,9 @@ package com.oracle.truffle.r.engine;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.MismatchedTokenException;
 import org.antlr.runtime.NoViableAltException;
 import org.antlr.runtime.RecognitionException;
@@ -55,14 +55,15 @@ import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactory;
 import com.oracle.truffle.r.engine.interop.RFunctionAccessFactory;
 import com.oracle.truffle.r.engine.interop.RListAccessFactory;
 import com.oracle.truffle.r.library.graphics.RGraphics;
+import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
-import com.oracle.truffle.r.nodes.RTruffleVisitor;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
+import com.oracle.truffle.r.nodes.control.SequenceNode;
 import com.oracle.truffle.r.nodes.function.BodyNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
@@ -71,10 +72,7 @@ import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
-import com.oracle.truffle.r.parser.ParseUtil;
-import com.oracle.truffle.r.parser.ast.ASTNode;
-import com.oracle.truffle.r.parser.ast.Function;
-import com.oracle.truffle.r.parser.ast.Sequence;
+import com.oracle.truffle.r.parser.RParser;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -248,8 +246,9 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public Object parseAndEval(Source source, MaterializedFrame frame, boolean printResult) throws ParseException {
-        RSyntaxNode node = transform(parseImpl(source));
-        RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>");
+        List<RSyntaxNode> list = parseImplDirect(source);
+        SequenceNode sequence = new SequenceNode(list.toArray(new RNode[list.size()]));
+        RootCallTarget callTarget = doMakeCallTarget(sequence, "<repl wrapper>");
         try {
             return runCall(callTarget, frame, printResult, true);
         } catch (ReturnException ex) {
@@ -278,10 +277,11 @@ final class REngine implements Engine, Engine.Timings {
         return parseAndEval(source, globalFrame, printResult);
     }
 
-    private static ASTNode parseImpl(Source source) throws ParseException {
+    private static List<RSyntaxNode> parseImplDirect(Source source) throws ParseException {
         try {
             try {
-                return ParseUtil.parseAST(new ANTLRStringStream(source.getCode()), source);
+                RParser<RSyntaxNode> parser = new RParser<>(source, new RASTBuilder());
+                return parser.script();
             } catch (IllegalArgumentException e) {
                 // the lexer will wrap exceptions in IllegalArgumentExceptions
                 if (e.getCause() instanceof RecognitionException) {
@@ -291,58 +291,64 @@ final class REngine implements Engine, Engine.Timings {
                 }
             }
         } catch (RecognitionException e) {
-            String line = e.line <= source.getLineCount() ? source.getCode(e.line) : "";
-            String substring = line.substring(0, Math.min(line.length(), e.charPositionInLine + 1));
-            String token = e.token == null ? (substring.length() == 0 ? "" : substring.substring(substring.length() - 1)) : e.token.getText();
-            if (e.token != null && e.token.getType() == Token.EOF && (e instanceof NoViableAltException || e instanceof MismatchedTokenException)) {
-                // the parser got stuck at the eof, request another line
-                throw new IncompleteSourceException(e, source, token, substring, e.line);
-            } else {
-                throw new ParseException(e, source, token, substring, e.line);
-            }
+            throw handleRecognitionException(source, e);
+        }
+    }
+
+    private static ParseException handleRecognitionException(Source source, RecognitionException e) throws IncompleteSourceException, ParseException {
+        String line = e.line <= source.getLineCount() ? source.getCode(e.line) : "";
+        String substring = line.substring(0, Math.min(line.length(), e.charPositionInLine + 1));
+        String token = e.token == null ? (substring.length() == 0 ? "" : substring.substring(substring.length() - 1)) : e.token.getText();
+        if (e.token != null && e.token.getType() == Token.EOF && (e instanceof NoViableAltException || e instanceof MismatchedTokenException)) {
+            // the parser got stuck at the eof, request another line
+            throw new IncompleteSourceException(e, source, token, substring, e.line);
+        } else {
+            throw new ParseException(e, source, token, substring, e.line);
         }
     }
 
     public RExpression parse(Source source) throws ParseException {
-        Sequence seq = (Sequence) parseImpl(source);
-        Object[] data = Arrays.stream(seq.getExpressions()).map(expr -> RDataFactory.createLanguage(transform(expr).asRNode())).toArray();
+        List<RSyntaxNode> list = parseImplDirect(source);
+        Object[] data = list.stream().map(node -> RDataFactory.createLanguage(node.asRNode())).toArray();
         return RDataFactory.createExpression(RDataFactory.createList(data));
     }
 
     public RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws ParseException {
-        Sequence seq = (Sequence) parseImpl(source);
-        ASTNode[] exprs = seq.getExpressions();
-        assert exprs.length == 1;
-
-        return new RTruffleVisitor().transformFunction(name, (Function) exprs[0], enclosingFrame);
+        RParser<RSyntaxNode> parser = new RParser<>(source, new RASTBuilder());
+        try {
+            return parser.root_function(name, enclosingFrame);
+        } catch (RecognitionException e) {
+            throw handleRecognitionException(source, e);
+        }
     }
 
     @Override
     public CallTarget parseToCallTarget(Source source) throws ParseException {
-        return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(parseImpl(source)));
+        List<RSyntaxNode> list = parseImplDirect(source);
+        SequenceNode sequence = new SequenceNode(list.toArray(new RNode[list.size()]));
+
+        return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(sequence));
     }
 
     private static class PolyglotEngineRootNode extends RootNode {
 
-        private final ASTNode ast;
+        private final SequenceNode sequence;
 
         @SuppressWarnings("unchecked") @Child private FindContextNode<RContext> findContext = (FindContextNode<RContext>) TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
-        PolyglotEngineRootNode(ASTNode ast) {
+        PolyglotEngineRootNode(SequenceNode sequence) {
             super(TruffleRLanguage.class, SourceSection.createUnavailable("repl", "<repl wrapper>"), new FrameDescriptor());
-            this.ast = ast;
+            this.sequence = sequence;
         }
 
         /**
-         * The normal {@link #transform} and {@link #doMakeCallTarget} happen first, then we
-         * actually run the call using the standard FastR machinery, saving and restoring the
-         * {@link RContext}, since we have no control over what that might be when the call is
-         * initiated.
+         * The normal {@link #doMakeCallTarget} happens first, then we actually run the call using
+         * the standard FastR machinery, saving and restoring the {@link RContext}, since we have no
+         * control over what that might be when the call is initiated.
          */
         @Override
         public Object execute(VirtualFrame frame) {
-            RSyntaxNode node = transform(ast);
-            RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>");
+            RootCallTarget callTarget = doMakeCallTarget(sequence, "<repl wrapper>");
 
             RContext oldContext = RContext.threadLocalContext.get();
             RContext context = findContext.executeFindContext();
@@ -451,17 +457,6 @@ final class REngine implements Engine, Engine.Timings {
         return runCall(callTarget, vFrame, false, false);
     }
 
-    /**
-     * Transforms an AST produced by the parser into a Truffle AST.
-     *
-     * @param astNode parser AST instance
-     * @return the root node of the Truffle AST
-     */
-    @TruffleBoundary
-    private static RSyntaxNode transform(ASTNode astNode) {
-        return new RTruffleVisitor().transform(astNode);
-    }
-
     @Override
     public RootCallTarget makePromiseCallTarget(Object bodyArg, String funName) {
         RNode body = (RNode) bodyArg;
@@ -469,8 +464,8 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     /**
-     * Creates an anonymous function, with no arguments to evaluate {@code body}. If {@body} is a
-     * not a syntax node, uses a simple {@link BodyNode} with no source information. Otherwise
+     * Creates an anonymous function, with no arguments to evaluate {@code body}. If {@body}
+     * is a not a syntax node, uses a simple {@link BodyNode} with no source information. Otherwise
      * creates a {@link FunctionStatementsNode} using {@code body}. and ensures that the
      * {@link FunctionBodyNode} has a {@link SourceSection}, for instrumentation, although the
      * anonymous {@link FunctionDefinitionNode} itself does not need one.
@@ -528,7 +523,7 @@ final class REngine implements Engine, Engine.Timings {
             throw ex;
         } catch (BreakException | NextException cfe) {
             if (topLevel) {
-                throw RError.error(RError.NO_NODE, RError.Message.NO_LOOP_FOR_BREAK_NEXT);
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.NO_LOOP_FOR_BREAK_NEXT);
             } else {
                 // there can be an outer loop
                 throw cfe;

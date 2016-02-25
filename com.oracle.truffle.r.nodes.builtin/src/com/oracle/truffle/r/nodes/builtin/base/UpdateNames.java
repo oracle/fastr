@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,18 +22,20 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import java.util.*;
-
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "names<-", kind = PRIMITIVE, parameterNames = {"x", "value"})
 public abstract class UpdateNames extends RInvisibleBuiltinNode {
@@ -52,46 +54,28 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected RAbstractContainer updateNames(RAbstractContainer container, @SuppressWarnings("unused") RNull names) {
-        controlVisibility();
-        RAbstractContainer result = container.materializeNonShared();
-        result.setNames(null);
-        return result;
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected RAbstractContainer updateNames(RAbstractContainer container, RStringVector names) {
-        controlVisibility();
-        RAbstractContainer result = container.materializeNonShared();
-        RStringVector namesVector = names;
-        if (names.getLength() < result.getLength()) {
-            namesVector = names.copyResized(result.getLength(), true);
-        }
-        result.setNames(namesVector);
-        return result;
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected RAbstractContainer updateNames(RAbstractContainer container, String name) {
-        controlVisibility();
-        RAbstractContainer result = container.materializeNonShared();
-        String[] names = new String[result.getLength()];
-        Arrays.fill(names, RRuntime.STRING_NA);
-        names[0] = name;
-        RStringVector namesVector = RDataFactory.createStringVector(names, names.length <= 1);
-        result.setNames(namesVector);
-        return result;
-    }
-
-    @Specialization
     protected RAbstractContainer updateNames(RAbstractContainer container, Object names) {
         controlVisibility();
-        if (names instanceof RAbstractVector) {
-            return updateNames(container, (RStringVector) castString(names));
-        } else {
-            return updateNames(container, (String) castString(names));
+        Object newNames = castString(names);
+        if (newNames == RNull.instance) {
+            RAbstractContainer result = container.materializeNonShared();
+            result.setNames(null);
+            return result;
         }
+
+        RStringVector stringVector;
+        if (newNames instanceof String) {
+            stringVector = RDataFactory.createStringVector((String) newNames);
+        } else {
+            stringVector = (RStringVector) ((RAbstractVector) newNames).materialize();
+        }
+        RAbstractContainer result = container.materializeNonShared();
+        if (stringVector.getLength() < result.getLength()) {
+            stringVector = stringVector.copyResized(result.getLength(), true);
+        } else if (stringVector == container) {
+            stringVector = (RStringVector) stringVector.copy();
+        }
+        result.setNames(stringVector);
+        return result;
     }
 }

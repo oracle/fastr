@@ -74,7 +74,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     @Child private CachedReplaceVectorNode copyPositionNames;
     @Child private DeleteElementsNode deleteElementsNode;
 
-    public CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, RTypedValue value, boolean updatePositionNames, boolean recursive) {
+    CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, RTypedValue value, boolean updatePositionNames, boolean recursive) {
         super(mode, vector, positions, recursive);
 
         if (numberOfDimensions == 1 && positions[0] instanceof String || positions[0] instanceof RAbstractStringVector) {
@@ -86,7 +86,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         this.vectorClass = vector.getClass();
         this.valueClass = value.getClass();
         this.valueType = value.getRType();
-        this.castType = verifyCastType(resolveCastVectorType());
+        this.castType = resolveCastVectorType();
+        verifyCastType(this.castType);
         this.castVectorNode = createCastVectorNode();
         this.deleteElementsNode = isDeleteElements() ? new DeleteElementsNode() : null;
 
@@ -106,6 +107,10 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     }
 
     public Object apply(Object originalVector, Object[] originalPositions, Object originalValues) {
+        if (error != null) {
+            CompilerDirectives.transferToInterpreter();
+            error.run();
+        }
         final Object[] positions = filterPositions(originalPositions);
         assert isSupported(originalVector, positions, originalValues);
 
@@ -286,8 +291,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
     }
 
-    private RType verifyCastType(RType compatibleType) {
-        if (compatibleType == null && (vectorType.isNull() || vectorType.isVector())) {
+    private void verifyCastType(RType compatibleType) {
+        if (error == null && compatibleType == null && (vectorType.isNull() || vectorType.isVector())) {
             Message message;
             if (mode.isSubset()) {
                 message = RError.Message.SUBASSIGN_TYPE_FIX;
@@ -298,9 +303,10 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                     message = RError.Message.SUBASSIGN_TYPE_FIX;
                 }
             }
-            throw RError.error(this, message, valueType.getName(), vectorType.getName(), false);
+            error = () -> {
+                throw RError.error(this, message, valueType.getName(), vectorType.getName(), false);
+            };
         }
-        return compatibleType;
     }
 
     private CastNode createCastVectorNode() {
@@ -333,6 +339,9 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             case DataFrame:
             case Expression:
             case PairList:
+                vector = RType.List;
+                break;
+            case Environment:
                 vector = RType.List;
                 break;
             default:

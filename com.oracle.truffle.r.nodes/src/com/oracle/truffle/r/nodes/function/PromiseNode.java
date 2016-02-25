@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -175,7 +176,7 @@ public abstract class PromiseNode extends RNode {
      */
     private static final class OptVariableSuppliedPromiseNode extends OptVariablePromiseBaseNode {
 
-        public OptVariableSuppliedPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
+        OptVariableSuppliedPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
             super(factory, rvn, wrapIndex);
         }
 
@@ -184,14 +185,14 @@ public abstract class PromiseNode extends RNode {
             return new PromisedNode(factory);
         }
 
-// @TruffleBoundary
+        // @TruffleBoundary
         public void onSuccess(RPromise promise) {
-// System.err.println("Opt SUCCESS: " + promise.getOptType());
+            // System.err.println("Opt SUCCESS: " + promise.getOptType());
         }
 
-// @TruffleBoundary
+        // @TruffleBoundary
         public void onFailure(RPromise promise) {
-// System.err.println("Opt FAILURE: " + promise.getOptType());
+            // System.err.println("Opt FAILURE: " + promise.getOptType());
             rewriteToFallback();
         }
     }
@@ -212,7 +213,7 @@ public abstract class PromiseNode extends RNode {
         private final BranchProfile isVarArgProfile = BranchProfile.create();
         private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
 
-        public InlinedSuppliedArgumentNode(RNode expression, Object defaultValue, boolean unwrap) {
+        InlinedSuppliedArgumentNode(RNode expression, Object defaultValue, boolean unwrap) {
             // TODO assert RSyntaxNode?
             this.expression = expression;
             this.defaultValue = defaultValue;
@@ -348,6 +349,20 @@ public abstract class PromiseNode extends RNode {
         @Override
         public boolean getRequalsImpl(RSyntaxNode other) {
             throw RInternalError.unimplemented();
+        }
+
+        public void setSourceSection(SourceSection sourceSection) {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public void unsetSourceSection() {
+            throw RInternalError.shouldNotReachHere();
         }
     }
 

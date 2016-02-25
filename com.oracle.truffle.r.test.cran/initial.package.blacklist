@@ -13,15 +13,6 @@ Reason: C++
 Package:adaptivetau
 Reason: C++
 
-Package:geepack
-Reason: C++
-
-Package:caTools
-Reason: C++
-
-Package:amap
-Reason: C++
-
 Package:rgenoud
 Reason: C++
 
@@ -31,19 +22,7 @@ Reason: C++
 Package:rjson
 Reason: C++
 
-Package:ars,
-Reason: C++
-
-Package:e1071
-Reason: C++
-
 Package:aylmer
-Reason: C++
-
-Package:cpm
-Reason: C++
-
-Package: cheddar
 Reason: C++
 
 Package: intervals
@@ -53,12 +32,6 @@ Package: FNN
 Reason: C++
 
 Package: DatABEL
-Reason: C++
-
-Package: glmmGS
-Reason: C++
-
-Package: flsa
 Reason: C++
 
 Package: LiblineaR

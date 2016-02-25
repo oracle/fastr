@@ -52,7 +52,7 @@ public class DLL {
      */
     private static final AtomicInteger ID = new AtomicInteger();
 
-    public static enum NativeSymbolType {
+    public enum NativeSymbolType {
         C,
         Call,
         Fortran,
@@ -279,7 +279,7 @@ public class DLL {
                     RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(symbolInfo.address, symbolInfo.symbol, new Object[]{dllInfo});
                 } catch (ReturnException ex) {
                     // An error call can, due to condition handling, throw this which we must
-// propogate
+                    // propogate
                     throw ex;
                 } catch (Throwable ex) {
                     if (RContext.isInitialContextInitialized()) {

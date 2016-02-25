@@ -5,13 +5,14 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.StatsUtil.*;
+import static com.oracle.truffle.r.library.stats.StatsUtil.rdtciv;
+import static com.oracle.truffle.r.library.stats.StatsUtil.rdtqiv;
 
 /*
  * Logic derived from GNU-R, see inline comments.
@@ -20,11 +21,6 @@ public class Random2 {
 
     // from GNUR: qnorm.c
     public static double qnorm5(double p, double mu, double sigma, boolean lowerTail, boolean logP) {
-        double pU;
-        double q;
-        double r;
-        double val;
-
         // R_Q_P01_boundaries(p, ML_NEGINF, ML_POSINF);
 
         // if(sigma < 0) { ML_ERR_return_NAN; }
@@ -32,11 +28,12 @@ public class Random2 {
             return mu;
         }
 
-        pU = rdtqiv(p, lowerTail, logP); /* real lower_tail prob. p */
-        q = pU - 0.5;
+        double pU = rdtqiv(p, lowerTail, logP); /* real lower_tail prob. p */
+        double q = pU - 0.5;
 
+        double val;
         if (Math.abs(q) <= .425) { /* 0.075 <= p <= 0.925 */
-            r = .180625 - q * q;
+            double r = .180625 - q * q;
             val = q *
                             (((((((r * 2509.0809287301226727 + 33430.575583588128105) * r + 67265.770927008700853) * r + 45921.953931549871457) * r + 13731.693765509461125) * r + 1971.5909503065514427) *
                                             r + 133.14166789178437745) *
@@ -47,6 +44,7 @@ public class Random2 {
         } else { /* closer than 0.075 from {0,1} boundary */
 
             /* r = min(p, 1-p) < 0.075 */
+            double r;
             if (q > 0) {
                 r = rdtciv(p, lowerTail, logP); /* 1-p */
             } else {

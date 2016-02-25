@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -22,7 +22,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @RBuiltin(name = "encodeString", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "width", "quote", "justify", "na.encode"})
 public abstract class EncodeString extends RBuiltinNode {
 
-    private static enum JUSTIFY {
+    private enum JUSTIFY {
         LEFT,
         RIGHT,
         CENTER,

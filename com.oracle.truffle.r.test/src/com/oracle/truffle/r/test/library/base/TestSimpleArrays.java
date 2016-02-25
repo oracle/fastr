@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -18,7 +18,7 @@ public class TestSimpleArrays extends TestBase {
 
     @Test
     public void testAccess() {
-        assertEval(Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); x[1, 1, 1, 1] }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[1, 1, 1, 1] }");
         assertEval(Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); x[42,1,1] }");
         assertEval("{ x<-1:8; dim(x)<-c(1,2,4); dim(x[1,0,3]) }");
         assertEval("{ x<-1:8; dim(x)<-c(1,2,4); dim(x[1,0,-1]) }");
@@ -58,13 +58,13 @@ public class TestSimpleArrays extends TestBase {
 
         assertEval("{ x<-(1:8); dim(x)<-c(2, 2, 2); dim(x[0,0,0]) }");
         assertEval("{ x<-(1:8); dim(x)<-c(2, 2, 2); x[0,0,1] }");
-        assertEval(Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); x[[, 1, 1]] }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[[, 1, 1]] }");
 
         assertEval("{ v<-c(\"a\", \"b\"); dim(v)<-c(1,2); dimnames(v)<-list(\"x\", c(\"y\", \"z\")); v[1, c(1,2), drop=FALSE] }");
 
         assertEval("{ e <- new.env(); assign(\"a\", 1, e); e[[\"a\"]] }");
-        assertEval(Output.ContainsError, "{ e <- new.env(); assign(\"a\", 1, e); e[\"a\"] }");
-        assertEval(Output.ContainsError, "{ e <- new.env(); assign(\"a\", 1, e); e[[1]] }");
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); e[\"a\"] }");
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); e[[1]] }");
 
         assertEval("{ x <- c(1, 2); names(x) <- c(\"A\", \"A2\"); x[\"A\"] }");
 
@@ -342,25 +342,25 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ m <- matrix(list(1,2,3,4,5,6), nrow=3) ; m[c(2,3,4,6)] <- NULL ; m }");
 
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); x[1:2,1:2,1]<-y; x }");
-        assertEval(Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); x[1, 1] <- y; x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); x[1, 1] <- y; x }");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:102); z<-(x[1:2,c(1,2,0),1]<-y); x }");
-        assertEval(Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:120); z<-(x[1:2, c(1, 2, 0), 1] <- y); x }");
-        assertEval(Output.ContainsError, "{ x<-1:16; dim(x)<-c(2,2,2,2); y<-c(101:108); dim(y)<-c(2,4); x[1:2, 1:2, 1] <- y; x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:120); z<-(x[1:2, c(1, 2, 0), 1] <- y); x }");
+        assertEval("{ x<-1:16; dim(x)<-c(2,2,2,2); y<-c(101:108); dim(y)<-c(2,4); x[1:2, 1:2, 1] <- y; x }");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,1),1]<-y); x }");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,0),1]<-y); x }");
-        assertEval(Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2, c(1, 2, 1), 1] <- y); x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2, c(1, 2, 1), 1] <- y); x }");
         assertEval("{ x<-as.double(1:8); dim(x)<-c(2,2,2); x[1,1,1]<-42L; x }");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,1:2,0]<-y); x }");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,1:2,c(0,0)]<-y); x }");
         assertEval(Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[0,5,1] <- y); x }");
-        assertEval(Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2, c(1, NA), 1] <- y); x }");
-        assertEval(Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x }");
-        assertEval(Output.ContainsError, "{ x<-1.1:8.8; dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x }");
-        assertEval(Output.ContainsError, "({ x<-1:8; dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })");
-        assertEval(Output.ContainsError, "({ x<-as.double(1:8); dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })");
-        assertEval(Output.ContainsError, "({ x<-as.logical(1:8); dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })");
-        assertEval(Output.ContainsError, "({ x<-as.character(1:8); dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })");
-        assertEval(Output.ContainsError, "({ x<-as.complex(1:8); dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2, c(1, NA), 1] <- y); x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x }");
+        assertEval("{ x<-1.1:8.8; dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x }");
+        assertEval("({ x<-1:8; dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })");
+        assertEval("({ x<-as.double(1:8); dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })");
+        assertEval("({ x<-as.logical(1:8); dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })");
+        assertEval("({ x<-as.character(1:8); dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })");
+        assertEval("({ x<-as.complex(1:8); dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); z<-(x[1,1,1]<-42); z }");
 
         // proper update in place
@@ -370,26 +370,26 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ m <- matrix(list(1,2,3,4,5,6), nrow=3) ; m[2] <- list(100) ; m }");
 
         // error in lengths
-        assertEval(Output.ContainsError, "{ m <- matrix(1,2,2) ; m[, 1] = c(1, 2, 3, 4) ; m }");
+        assertEval("{ m <- matrix(1,2,2) ; m[, 1] = c(1, 2, 3, 4) ; m }");
 
         // column update
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[,2] <- 10:11 ; m }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[,2:3] <- 10:11 ; m }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[,integer()] <- integer() ; m }");
-        assertEval(Output.ContainsError, "{ m <- matrix(1:6, nrow=2) ; m[, 2] <- integer() }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; m[, 2] <- integer() }");
 
         // error reporting
         // Checkstyle: stop
-        assertEval(Output.ContainsError, "{ a <- 1:9 ; a[, , 1] <- 10L }");
+        assertEval("{ a <- 1:9 ; a[, , 1] <- 10L }");
         // Checkstyle: resume
-        assertEval(Output.ContainsError, "{ a <- 1:9 ; a[, 1] <- 10L }");
-        assertEval(Output.ContainsError, "{ a <- 1:9 ; a[1, 1] <- 10L }");
-        assertEval(Output.ContainsError, "{ a <- 1:9 ; a[1, 1, 1] <- 10L }");
+        assertEval("{ a <- 1:9 ; a[, 1] <- 10L }");
+        assertEval("{ a <- 1:9 ; a[1, 1] <- 10L }");
+        assertEval("{ a <- 1:9 ; a[1, 1, 1] <- 10L }");
 
-        assertEval(Output.ContainsError, "{ m <- matrix(1:6, nrow=2) ; m[[1, 1]] <- integer() }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; m[[1, 1]] <- integer() }");
         assertEval(Output.ContainsAmbiguousError, "{ m <- matrix(1:6, nrow=2) ; m[[1:2, 1]] <- integer() }");
-        assertEval(Output.ContainsError, "{ m <- matrix(1:6, nrow=2) ; m[1, 2] <- integer() }");
-        assertEval(Output.ContainsError, "{ m <- matrix(1:6, nrow=2) ; m[1, 2] <- 1:3 }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; m[1, 2] <- integer() }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; m[1, 2] <- 1:3 }");
 
         // pushback child of a selector node
         assertEval("{ m <- matrix(1:100, nrow=10) ; z <- 1; s <- 0 ; for(i in 1:3) { m[z <- z + 1,z <- z + 1] <- z * z * 1000 } ; sum(m) }");

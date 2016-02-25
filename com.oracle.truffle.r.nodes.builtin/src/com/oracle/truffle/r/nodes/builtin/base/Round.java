@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,21 +51,24 @@ public abstract class Round extends RBuiltinNode {
     }
 
     @Specialization
-    protected int round(int x, @SuppressWarnings("unused") int digits) {
+    protected double round(int x, @SuppressWarnings("unused") int digits) {
         controlVisibility();
-        return roundOp.op(x);
+        check.enable(x);
+        return check.check(x) ? RRuntime.DOUBLE_NA : x;
     }
 
     @Specialization(guards = "digits == 0")
     protected double round(double x, @SuppressWarnings("unused") int digits) {
         controlVisibility();
-        return roundOp.op(x);
+        check.enable(x);
+        return check.check(x) ? RRuntime.DOUBLE_NA : roundOp.op(x);
     }
 
     @Specialization(guards = "digits != 0")
     protected double roundDigits(double x, int digits) {
         controlVisibility();
-        return roundOp.opd(x, digits);
+        check.enable(x);
+        return check.check(x) ? RRuntime.DOUBLE_NA : roundOp.opd(x, digits);
     }
 
     @Specialization(guards = "digits == 0")
@@ -74,8 +77,8 @@ public abstract class Round extends RBuiltinNode {
         double[] result = new double[x.getLength()];
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
-            result[i] = round(x.getDataAt(i), digits);
-            check.check(result[i]);
+            double value = x.getDataAt(i);
+            result[i] = check.check(value) ? RRuntime.DOUBLE_NA : round(value, digits);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(result, check.neverSeenNA());
         ret.copyAttributesFrom(attrProfiles, x);
@@ -88,8 +91,8 @@ public abstract class Round extends RBuiltinNode {
         double[] result = new double[x.getLength()];
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
-            result[i] = roundDigits(x.getDataAt(i), digits);
-            check.check(result[i]);
+            double value = x.getDataAt(i);
+            result[i] = check.check(value) ? RRuntime.DOUBLE_NA : roundDigits(value, digits);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(result, check.neverSeenNA());
         ret.copyAttributesFrom(attrProfiles, x);
@@ -99,13 +102,15 @@ public abstract class Round extends RBuiltinNode {
     @Specialization(guards = "digits == 0")
     protected RComplex round(RComplex x, @SuppressWarnings("unused") int digits) {
         controlVisibility();
-        return roundOp.op(x.getRealPart(), x.getImaginaryPart());
+        check.enable(x);
+        return check.check(x) ? RComplex.NA : roundOp.op(x.getRealPart(), x.getImaginaryPart());
     }
 
     @Specialization(guards = "digits != 0")
     protected RComplex roundDigits(RComplex x, int digits) {
         controlVisibility();
-        return roundOp.opd(x.getRealPart(), x.getImaginaryPart(), digits);
+        check.enable(x);
+        return check.check(x) ? RComplex.NA : roundOp.opd(x.getRealPart(), x.getImaginaryPart(), digits);
     }
 
     @Specialization(guards = "digits == 0")
@@ -115,7 +120,7 @@ public abstract class Round extends RBuiltinNode {
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
             RComplex z = x.getDataAt(i);
-            RComplex r = round(z, digits);
+            RComplex r = check.check(z) ? RComplex.NA : round(z, digits);
             result[2 * i] = r.getRealPart();
             result[2 * i + 1] = r.getImaginaryPart();
             check.check(r);
@@ -132,7 +137,7 @@ public abstract class Round extends RBuiltinNode {
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
             RComplex z = x.getDataAt(i);
-            RComplex r = roundDigits(z, digits);
+            RComplex r = check.check(z) ? RComplex.NA : roundDigits(z, digits);
             result[2 * i] = r.getRealPart();
             result[2 * i + 1] = r.getImaginaryPart();
             check.check(r);

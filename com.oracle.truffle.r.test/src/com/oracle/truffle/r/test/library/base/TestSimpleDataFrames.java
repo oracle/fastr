@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -118,7 +118,7 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ x<-data.frame(a=list(1,2), b=list(11,12)); x[[1,2]] }");
         assertEval("{ x<-data.frame(a=list(1,2), b=list(11,12)); x[1,2] }");
         assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[c(1,2),2] }");
-        assertEval(Output.ContainsError, "{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[c(1,2),2]] }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[c(1,2),2]] }");
 
         assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); attr(x, \"foo\")<-\"foo\"; x[1, c(1,2)] }");
         assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); attr(x, \"foo\")<-\"foo\"; attributes(x[1, c(1,2)]) }");

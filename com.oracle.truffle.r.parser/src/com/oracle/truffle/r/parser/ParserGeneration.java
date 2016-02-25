@@ -73,6 +73,11 @@ public class ParserGeneration {
         "allow multiple semicolons in {}",
         "allow .. as identifier",
         "rename Operator class",
-        "remove FieldAccess, small refactorings"
+        "remove FieldAccess, small refactorings",
+        "allow backslash at line end",
+        "maintain proper operator source sections",
+        "remove special handling for formulas",
+        "remove source section identifiers",
+        "transform parser to a generic class via the annotation processor"
     };
 }

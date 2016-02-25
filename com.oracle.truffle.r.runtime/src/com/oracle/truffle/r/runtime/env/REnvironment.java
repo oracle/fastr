@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import java.util.regex.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.context.*;
@@ -632,7 +633,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
             try {
                 result.put(names.getDataAt(i), list.getDataAt(i));
             } catch (PutException ex) {
-                throw RError.error(RError.NO_NODE, ex);
+                throw RError.error(RError.SHOW_CALLER2, ex);
             }
         }
         return result;
@@ -785,6 +786,10 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      */
     public MaterializedFrame getFrame() {
         return frameAccess.getFrame();
+    }
+
+    public MaterializedFrame getFrame(ValueProfile frameAccessProfile) {
+        return frameAccessProfile.profile(frameAccess).getFrame();
     }
 
     public void lock(boolean bindings) {
@@ -941,7 +946,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * the creation of {@link Function} environments to ensure the <i>at most one>/i> invariant and
      * store the value in the frame immediately.
      */
-    private static final class Function extends REnvironment {
+    public static final class Function extends REnvironment {
 
         private Function(MaterializedFrame frame) {
             // function environments are not named

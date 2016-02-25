@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -406,10 +406,6 @@ public class RErrorHandling {
         return errorcallDfltWithCall(showCall ? findCaller(callObj) : RNull.instance, msg, objects);
     }
 
-    static RError errorcallDflt(RBaseNode callObj, Message msg, Object... objects) throws RError {
-        return errorcallDfltWithCall(findCaller(callObj), msg, objects);
-    }
-
     /**
      * The default error handler. This is where all the error message formatting is done and the
      * output.
@@ -492,13 +488,13 @@ public class RErrorHandling {
      * @param immediate {@code true} iff the output should be immediate
      * @param noBreakWarning TODOx
      */
-    public static void warningcallInternal(boolean showCall, RBaseNode callObj, String message, boolean immediate, boolean noBreakWarning) {
+    public static void warningcallInternal(boolean showCall, String message, boolean immediate, boolean noBreakWarning) {
         // TODO handle noBreakWarning
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         boolean immediateWarningSave = errorHandlingState.immediateWarning;
         try {
             errorHandlingState.immediateWarning = immediate;
-            warningcall(showCall, callObj, RError.Message.GENERIC, message);
+            warningcall(showCall, RError.SHOW_CALLER2, RError.Message.GENERIC, message);
         } finally {
             errorHandlingState.immediateWarning = immediateWarningSave;
         }
@@ -620,8 +616,21 @@ public class RErrorHandling {
             } else if (nWarnings <= 10) {
                 Utils.writeStderr("Warning messages:", true);
                 for (int i = 0; i < nWarnings; i++) {
-                    Utils.writeStderr((i + 1) + ":", true);
-                    Utils.writeStderr("  " + warnings.get(i).message, true);
+                    Object call = warnings.get(i).call;
+                    String message = warnings.get(i).message;
+                    if (call == RNull.instance || ((RLanguage) call).getRep().getSourceSection() == null) {
+                        Utils.writeStderr((i + 1) + ":", true);
+                        Utils.writeStderr("  " + warnings.get(i).message, true);
+                    } else {
+                        String callString = RContext.getRRuntimeASTAccess().getCallerSource((RLanguage) call);
+                        // this can be enabled when deparsing is completely stable:
+                        // callString = RDeparse.deparse1Line(call, false);
+                        Utils.writeStderr((i + 1) + ": In ", false);
+                        int firstLineLength = message.contains("\n") ? message.indexOf('\n') : message.length();
+                        boolean nl = callString.length() + firstLineLength > 65;
+                        Utils.writeStderr(callString + " :", nl);
+                        Utils.writeStderr((nl ? "  " : " ") + message, true);
+                    }
                 }
             } else {
                 if (nWarnings < errorHandlingState.maxWarnings) {
@@ -684,7 +693,8 @@ public class RErrorHandling {
     static String createKindMessage(String kind, Object call, String formattedMsg) {
         String preamble = kind;
         String errorMsg = null;
-        if (call == RNull.instance) {
+        assert call instanceof RNull || call instanceof RLanguage;
+        if (call == RNull.instance || ((RLanguage) call).getRep().getSourceSection() == null) {
             // generally means top-level of shell or similar
             preamble += ": ";
             errorMsg = preamble + formattedMsg;

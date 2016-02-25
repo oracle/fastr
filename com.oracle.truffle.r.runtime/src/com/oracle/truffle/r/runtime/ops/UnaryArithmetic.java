@@ -7,7 +7,7 @@
  * Copyright (c) 1998, Ross Ihaka
  * Copyright (c) 1998-2012, The R Core Team
  * Copyright (c) 2005, The R Foundation
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -192,13 +192,15 @@ public abstract class UnaryArithmetic extends Operation {
             } else if (dig > 0) {
                 pow10 = rpowdi(10.0, dig);
                 intx = Math.floor(xx);
-// System.out.println(String.format("X %.22f RINT1 %.22f POW10 %.22f INTX %.22f", new BigDecimal(x),
-// new BigDecimal(Math.rint((xx - intx) * pow10)), new BigDecimal(pow10),
-// new BigDecimal(intx)));
+                // System.out.println(String.format("X %.22f RINT1 %.22f POW10 %.22f INTX %.22f",
+                // new BigDecimal(x),
+                // new BigDecimal(Math.rint((xx - intx) * pow10)), new BigDecimal(pow10),
+                // new BigDecimal(intx)));
                 return sgn * (intx + Math.rint((xx - intx) * pow10) / pow10);
             } else {
                 pow10 = rpowdi(10.0, -dig);
-// System.out.println(String.format("RINT2 %.22f", new BigDecimal(Math.rint(xx / pow10))));
+                // System.out.println(String.format("RINT2 %.22f", new BigDecimal(Math.rint(xx /
+                // pow10))));
                 return sgn * Math.rint(xx / pow10) * pow10;
             }
         }

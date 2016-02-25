@@ -93,6 +93,9 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -132,12 +135,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary
- * 
+ *
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
- * 
+ *
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -150,11 +153,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * non varargs, max depth:
  * |
  * D-D-D-U
- * 
+ *
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- * 
+ *
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -162,7 +165,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- * 
+ *
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -174,7 +177,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    DGV
- * 
+ *
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -204,10 +207,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * with the same arguments, and there will very rarely be the case that the same arguments get
  * passed via "..." to the same functions.
  *
- * TODO Many of the classes here do not really need to implement {@link RSyntaxNode}.
  */
 @NodeInfo(cost = NodeCost.NONE)
-public final class RCallNode extends RNode implements RSyntaxNode {
+public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
     private static final int FUNCTION_INLINE_CACHE_SIZE = 4;
     private static final int VARARGS_INLINE_CACHE_SIZE = 4;
@@ -265,7 +267,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     @CompilationFinal private int foreignCallArgCount;
     @Child private CallArgumentsNode foreignCallArguments;
 
-    public RCallNode(RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
+    public RCallNode(SourceSection sourceSection, RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
+        super(sourceSection);
         this.functionNode = function;
         this.arguments = new SyntaxArguments(arguments);
         this.signature = signature;
@@ -314,7 +317,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 foreignCallArgCount = argumentsArray.length;
             }
             try {
-                return ForeignAccess.execute(foreignCall, frame, (TruffleObject) functionObject, argumentsArray);
+                return ForeignAccess.send(foreignCall, frame, (TruffleObject) functionObject, argumentsArray);
             } catch (Throwable e) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.GENERIC, "Foreign function failed: " + getMessage(e));
@@ -651,13 +654,12 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      * original call.
      *
      * @param frame The frame to create the inlined builtins in
-     * @param src source section to use (from original call)
      * @param internalCallArg the {@link UninitializedCallNode} corresponding to the argument to the
      *            {code .Internal}.
      * @param function the resolved {@link RFunction}.
      * @param name The name of the function
      */
-    public static LeafCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, String name) {
+    public static LeafCallNode createInternalCall(VirtualFrame frame, RCallNode internalCallArg, RFunction function, String name) {
         CompilerAsserts.neverPartOfCompilation();
         return UninitializedCallNode.createCacheNode(frame, internalCallArg.createArguments(null, false, true), internalCallArg, function);
     }
@@ -673,7 +675,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         for (int i = 0; i < args.length; i++) {
             args[i] = i < replacementArgs.length ? replacementArgs[i] : call.arguments.v[i];
         }
-        return new RCallNode(NodeUtil.cloneNode(call.functionNode), args, call.signature);
+        return new RCallNode(call.getSourceSection(), NodeUtil.cloneNode(call.functionNode), args, call.signature);
     }
 
     /**
@@ -682,11 +684,9 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      * valid {@link SourceSection}.
      */
     public static RCallNode createCall(SourceSection src, RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        RCallNode call = new RCallNode(function, arguments, signature);
+        RCallNode call = new RCallNode(src, function, arguments, signature);
         if (src == null) {
             RASTDeparse.ensureSourceSection(call);
-        } else {
-            call.assignSourceSection(src);
         }
         return call;
     }
@@ -697,7 +697,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      * {@code LApply}).
      */
     public static RCallNode createCallNotSyntax(RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        RCallNode call = new RCallNode(function, arguments, signature);
+        RCallNode call = new RCallNode(RSyntaxNode.SOURCE_UNAVAILABLE, function, arguments, signature);
         return call;
     }
 
@@ -827,7 +827,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 // We inline the given arguments here, as builtins are executed inside the same
                 // frame as they are called.
                 InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, creator);
-                callNode = new BuiltinCallNode(root.inline(inlinedArgs.getSignature(), inlinedArgs.getArguments(), creator.getSourceSection()));
+                callNode = new BuiltinCallNode(root.inline(inlinedArgs.getSignature(), inlinedArgs.getArguments()), creator);
             } else {
                 // Now we need to distinguish: Do supplied arguments vary between calls?
                 if (args.containsVarArgsSymbol()) {
@@ -838,7 +838,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 } else {
                     // Nope! (peeewh)
                     MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, args, creator, false);
-                    callNode = new DispatchedCallNode(function, matchedArgs);
+                    callNode = new DispatchedCallNode(function, matchedArgs, creator);
                 }
             }
 
@@ -911,6 +911,19 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      * @see RCallNode
      */
     public abstract static class LeafCallNode extends RBaseNode {
+        /**
+         * The original {@link RSyntaxNode} this derives from.
+         */
+        protected final RCallNode originalCall;
+
+        private LeafCallNode(RCallNode originalCall) {
+            this.originalCall = originalCall;
+        }
+
+        @Override
+        public RSyntaxNode getRSyntaxNode() {
+            return originalCall;
+        }
 
         public abstract Object execute(VirtualFrame frame, RFunction function, S3Args s3Args);
     }
@@ -920,7 +933,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
 
         @Child private RBuiltinNode builtin;
 
-        BuiltinCallNode(RBuiltinNode builtin) {
+        BuiltinCallNode(RBuiltinNode builtin, RCallNode originalCall) {
+            super(originalCall);
             this.builtin = builtin;
         }
 
@@ -948,7 +962,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         private final RootCallTarget callTarget;
         @CompilationFinal private boolean needsSplitting;
 
-        DispatchedCallNode(RFunction function, MatchedArguments matchedArgs) {
+        DispatchedCallNode(RFunction function, MatchedArguments matchedArgs, RCallNode originalCall) {
+            super(originalCall);
             this.matchedArgs = matchedArgs.createNode();
             this.needsCallerFrame = function.containsDispatch();
             this.needsSplitting = needsSplitting(function);
@@ -997,6 +1012,10 @@ public final class RCallNode extends RNode implements RSyntaxNode {
 
         @Child private ReadVariableNode lookupVarArgs = ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any);
 
+        private VarArgsCacheCallNode(RCallNode originalCallNode) {
+            super(originalCallNode);
+        }
+
         @Override
         public final Object execute(VirtualFrame frame, RFunction function, S3Args s3Args) {
             Object varArgs = lookupVarArgs.execute(frame);
@@ -1005,7 +1024,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             }
             if (varArgs == null || !(varArgs instanceof RArgsValuesAndNames)) {
                 CompilerDirectives.transferToInterpreter();
-                RError.error(this, RError.Message.NO_DOT_DOT_DOT);
+                RError.error(RError.SHOW_CALLER, RError.Message.NO_DOT_DOT_DOT);
             }
             return execute(frame, function, ((RArgsValuesAndNames) varArgs).getSignature(), s3Args);
         }
@@ -1023,7 +1042,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         @Child private CallArgumentsNode args;
         private int depth = 1;  // varargs cached is started with a [DV] DispatchedVarArgsCallNode
 
-        public UninitializedVarArgsCacheCallNode(CallArgumentsNode args, @SuppressWarnings("unused") RCallNode creator) {
+        public UninitializedVarArgsCacheCallNode(CallArgumentsNode args, RCallNode creator) {
+            super(creator);
             this.args = args;
         }
 
@@ -1044,7 +1064,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 return this;
             } else {
                 CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
-                return new DispatchedGenericVarArgsCallNode(function, clonedArgs);
+                return new DispatchedGenericVarArgsCallNode(function, clonedArgs, originalCall);
             }
         }
     }
@@ -1066,7 +1086,9 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         private final boolean needsCallerFrame;
         @CompilationFinal private boolean needsSplitting;
 
-        protected DispatchedVarArgsCallNode(CallArgumentsNode args, VarArgsCacheCallNode next, RFunction function, ArgumentsSignature varArgsSignature, MatchedArguments matchedArgs) {
+        protected DispatchedVarArgsCallNode(CallArgumentsNode args, VarArgsCacheCallNode next, RFunction function, ArgumentsSignature varArgsSignature, MatchedArguments matchedArgs,
+                        RCallNode originalCall) {
+            super(originalCall);
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
             this.args = args;
             this.next = next;
@@ -1084,7 +1106,15 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                         ArgumentsSignature varArgsSignature) {
             UnrolledVariadicArguments unrolledArguments = args.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, unrolledArguments, creator, false);
-            return new DispatchedVarArgsCallNode(args, next, function, varArgsSignature, matchedArgs);
+            RCallNode originalCall;
+            if (creator instanceof LeafCallNode) {
+                originalCall = ((LeafCallNode) creator).originalCall;
+            } else if (creator instanceof RCallNode) {
+                originalCall = (RCallNode) creator;
+            } else {
+                throw RInternalError.shouldNotReachHere();
+            }
+            return new DispatchedVarArgsCallNode(args, next, function, varArgsSignature, matchedArgs, originalCall);
         }
 
         @Override
@@ -1124,7 +1154,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         private final RCaller caller = RDataFactory.createCaller(this);
         @CompilationFinal private boolean needsCallerFrame;
 
-        DispatchedGenericVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs) {
+        DispatchedGenericVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs, RCallNode originalCall) {
+            super(originalCall);
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
             this.suppliedArgs = suppliedArgs;
         }
@@ -1145,5 +1176,17 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             Object[] argsObject = RArguments.create(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
         }
+    }
+
+    public RSyntaxElement getSyntaxLHS() {
+        return functionNode.asRSyntaxNode();
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return signature;
+    }
+
+    public RSyntaxElement[] getSyntaxArguments() {
+        return arguments.v;
     }
 }

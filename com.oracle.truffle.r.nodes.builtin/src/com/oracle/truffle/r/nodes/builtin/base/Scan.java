@@ -225,7 +225,7 @@ public abstract class Scan extends RBuiltinNode {
 
         try (RConnection openConn = data.con.forceOpen("r")) {
             if (nskip > 0) {
-                openConn.readLines(nskip);
+                openConn.readLines(nskip, true, RRuntime.fromLogical(skipNull));
             }
             if (what instanceof RList) {
                 return scanFrame((RList) what, nmax, nlines, flush == RRuntime.LOGICAL_TRUE, fill == RRuntime.LOGICAL_TRUE, strip == RRuntime.LOGICAL_TRUE, blSkip == RRuntime.LOGICAL_TRUE,
@@ -335,7 +335,7 @@ public abstract class Scan extends RBuiltinNode {
 
     private static String[] getItems(LocalData data, boolean blSkip) throws IOException {
         while (true) {
-            String[] str = data.con.readLines(1);
+            String[] str = data.con.readLines(1, true, false);
             if (str == null || str.length == 0) {
                 return null;
             } else {

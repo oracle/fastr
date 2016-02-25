@@ -25,33 +25,15 @@ package com.oracle.truffle.r.parser.tools;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import com.oracle.truffle.r.parser.ast.ASTNode;
-import com.oracle.truffle.r.parser.ast.AccessVariable;
-import com.oracle.truffle.r.parser.ast.AccessVariadicComponent;
-import com.oracle.truffle.r.parser.ast.ArgNode;
-import com.oracle.truffle.r.parser.ast.AssignVariable;
-import com.oracle.truffle.r.parser.ast.BinaryOperation;
-import com.oracle.truffle.r.parser.ast.Break;
-import com.oracle.truffle.r.parser.ast.Call;
-import com.oracle.truffle.r.parser.ast.Constant;
-import com.oracle.truffle.r.parser.ast.For;
-import com.oracle.truffle.r.parser.ast.Function;
-import com.oracle.truffle.r.parser.ast.If;
-import com.oracle.truffle.r.parser.ast.Missing;
-import com.oracle.truffle.r.parser.ast.Next;
-import com.oracle.truffle.r.parser.ast.Operation.ArithmeticOperator;
-import com.oracle.truffle.r.parser.ast.Operation.Operator;
-import com.oracle.truffle.r.parser.ast.Repeat;
-import com.oracle.truffle.r.parser.ast.Replacement;
-import com.oracle.truffle.r.parser.ast.Sequence;
-import com.oracle.truffle.r.parser.ast.UnaryOperation;
-import com.oracle.truffle.r.parser.ast.While;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.data.FastPathFactory;
-import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 final class Info {
     public static final Info EMPTY = new Info(Collections.emptySet(), Collections.emptySet(), false);
@@ -95,204 +77,117 @@ final class Info {
     }
 }
 
-public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
+public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
 
     private static final Set<String> wellKnownFunctions = new HashSet<>(Arrays.asList("c", "$", "@", "[", "[[", "any", "dim", "dimnames", "rownames", "colnames", "is.null", "list", "names", "return",
                     "print", "length", "rep", "min", "max", "matrix", "table", "is.array", "is.element", "is.character", "exp", "all", "pmin", "pmax", "as.numeric", "proc.time", "as.integer",
-                    "as.character", "as.matrix", ".Call", "sum", "order", "rev", "integer", "double", "as.numeric", "as.list", "as.integer", ".Call", "unname", "log", "lgamma"));
+                    "as.character", "as.matrix", ".Call", "sum", "order", "rev", "integer", "double", "as.numeric", "as.list", "as.integer", ".Call", ".FastR", "unname", "log", "lgamma",
+                    "sin", "cos", "tan", "exp", "log", "expm1", "sinh", "sinpi", "cosh", "cospi", "tanh", "tanpi", "asin", "asinh", "acos", "acosh", "atan", "atanh", "<-", "+", "-",
+                    "*", "/", "%%", "^", ":", ">=", ">", "<=", "<", "==", "!=", "||", "|", "&&", "&", "!", "%o%", "%*%", "%/%", "%in%", "{", "for", "while", "repeat", "if", "attributes", "attr"));
 
     private EvaluatedArgumentsVisitor() {
         // private constructor
     }
 
     @Override
-    public Info visit(ASTNode n) {
-        return Info.ANY;
-    }
-
-    @Override
-    public Info visit(Next n) {
-        return Info.EMPTY;
-    }
-
-    @Override
-    public Info visit(Break n) {
-        return Info.EMPTY;
-    }
-
-    @Override
-    public Info visit(AccessVariadicComponent n) {
-        return Info.EMPTY;
-    }
-
-    @Override
-    public Info visit(Missing m) {
-        return Info.EMPTY;
-    }
-
-    @Override
-    public Info visit(Sequence n) {
-        ASTNode[] exprs = n.getExpressions();
-
-        Info info = Info.createNew();
-        for (int i = exprs.length - 1; i >= 0; i--) {
-            info.addBefore(exprs[i].accept(this));
-        }
-        return info;
-    }
-
-    @Override
-    public Info visit(If n) {
-        Info info;
-        ASTNode t = n.getTrueCase();
-        ASTNode f = n.getFalseCase();
-        if (f == null) {
-            info = Info.alternative(t.accept(this), Info.EMPTY);
-        } else {
-            info = Info.alternative(t.accept(this), f.accept(this));
-        }
-        info.addBefore(n.getCondition().accept(this));
-        return info;
-    }
-
-    @Override
-    public Info visit(BinaryOperation op) {
-        Operator operator = op.getOperator();
-        ASTNode left = op.getLHS();
-        ASTNode right = op.getRHS();
-
-        Info info = Info.createNew();
-        if (operator == ArithmeticOperator.OR || operator == ArithmeticOperator.AND) {
-            info.addBefore(Info.alternative(right.accept(this), Info.EMPTY));
-            info.addBefore(left.accept(this));
-        } else {
-            info.addBefore(right.accept(this));
-            info.addBefore(left.accept(this));
-        }
-        return info;
-    }
-
-    @Override
-    public Info visit(UnaryOperation op) {
-        return op.getLHS().accept(this);
-    }
-
-    @Override
-    public Info visit(Constant n) {
-        return Info.EMPTY;
-    }
-
-    @Override
-    public Info visit(Repeat n) {
-        return Info.alternative(n.getBody().accept(this), Info.EMPTY);
-    }
-
-    @Override
-    public Info visit(While n) {
-        Info info = Info.createNew();
-        info.addBefore(Info.alternative(n.getBody().accept(this), Info.EMPTY));
-        info.addBefore(n.getCondition().accept(this));
-        return info;
-    }
-
-    @Override
-    public Info visit(For n) {
-        Info info = Info.createNew();
-        info.addBefore(Info.alternative(n.getBody().accept(this), Info.EMPTY));
-        info.addBefore(n.getRange().accept(this));
-        return info;
-    }
-
-    @Override
-    public Info visit(AssignVariable n) {
-        if (n.isSuper()) {
-            return Info.ANY;
-        } else {
-            Info info = Info.createNew();
-            info.maybeAssignedNames.add(n.getVariable());
-            info.addBefore(n.getExpr().accept(this));
-            return info;
-        }
-    }
-
-    @Override
-    public Info visit(Replacement n) {
-        if (n.isSuper()) {
-            return Info.ANY;
-        } else {
-            Info info = Info.createNew();
-            info.addBefore(n.getLhs().accept(this));
-            info.addBefore(n.getRhs().accept(this));
-            return info;
-        }
-    }
-
-    @Override
-    public Info visit(Call n) {
-        if (n.getLhs() instanceof String && wellKnownFunctions.contains(n.getLhs())) {
-            List<ArgNode> arguments = n.getArguments();
-            Info info = Info.createNew();
-            for (int i = arguments.size() - 1; i >= 0; i--) {
-                if (arguments.get(i).getValue() != null) {
-                    info.addBefore(arguments.get(i).getValue().accept(this));
+    protected Info visit(RSyntaxCall element) {
+        if (element.getSyntaxLHS() instanceof RSyntaxLookup) {
+            String symbol = ((RSyntaxLookup) element.getSyntaxLHS()).getIdentifier();
+            RSyntaxElement[] arguments = element.getSyntaxArguments();
+            if (wellKnownFunctions.contains(symbol)) {
+                Info info = Info.createNew();
+                switch (symbol) {
+                    case "||":
+                    case "&&":
+                        assert arguments.length == 2;
+                        if (arguments[1] != null) {
+                            info.addBefore(Info.alternative(accept(arguments[1]), Info.EMPTY));
+                        }
+                        if (arguments[0] != null) {
+                            info.addBefore(accept(arguments[0]));
+                        }
+                        return info;
+                    case "<-":
+                        assert arguments.length == 2;
+                        RSyntaxElement current = arguments[0];
+                        if (arguments[0] instanceof RSyntaxLookup) {
+                            info.maybeAssignedNames.add(((RSyntaxLookup) arguments[0]).getIdentifier());
+                        } else {
+                            info.addBefore(accept(arguments[0]));
+                            while (!(current instanceof RSyntaxLookup)) {
+                                current = ((RSyntaxCall) current).getSyntaxArguments()[0];
+                            }
+                            info.evaluatedNames.add(((RSyntaxLookup) current).getIdentifier());
+                        }
+                        info.addBefore(accept(arguments[1]));
+                        return info;
+                    case "repeat":
+                        assert arguments.length == 1;
+                        return accept(arguments[0]);
+                    case "while":
+                        assert arguments.length == 2;
+                        info.addBefore(Info.alternative(accept(arguments[1]), Info.EMPTY));
+                        info.addBefore(accept(arguments[0]));
+                        return info;
+                    case "for":
+                        assert arguments.length == 3;
+                        info.addBefore(Info.alternative(accept(arguments[2]), Info.EMPTY));
+                        info.addBefore(accept(arguments[1]));
+                        return info;
+                    case "if":
+                        assert arguments.length == 2 || arguments.length == 3;
+                        if (arguments.length == 2) {
+                            info = Info.alternative(accept(arguments[1]), Info.EMPTY);
+                        } else {
+                            info = Info.alternative(accept(arguments[1]), accept(arguments[2]));
+                        }
+                        info.addBefore(accept(arguments[0]));
+                        return info;
+                    default:
+                        for (int i = arguments.length - 1; i >= 0; i--) {
+                            if (arguments[i] != null) {
+                                info.addBefore(accept(arguments[i]));
+                            }
+                        }
+                        return info;
                 }
             }
-            return info;
-        } else {
-            return Info.ANY;
         }
-    }
-
-    @Override
-    public Info visit(Function n) {
         return Info.ANY;
     }
 
     @Override
-    public Info visit(AccessVariable n) {
+    protected Info visit(RSyntaxConstant element) {
+        return Info.EMPTY;
+    }
+
+    @Override
+    protected Info visit(RSyntaxLookup element) {
         Info info = Info.createNew();
-        info.evaluatedNames.add(n.getVariable());
+        info.evaluatedNames.add(element.getIdentifier());
         return info;
     }
 
-    public static FastPathFactory process(Function func) {
-        Info info = func.getBody().accept(new EvaluatedArgumentsVisitor());
-        boolean[] forcedArgument = new boolean[func.getSignature().size()];
+    @Override
+    protected Info visit(RSyntaxFunction element) {
+        return Info.ANY;
+    }
+
+    public static EvaluatedArgumentsFastPath process(RSyntaxElement body, ArgumentsSignature signature) {
+        Info info = new EvaluatedArgumentsVisitor().accept(body);
+        boolean[] forcedArguments = new boolean[signature.getLength()];
         int cnt = 0;
-        for (int i = 0; i < func.getSignature().size(); i++) {
-            String argName = func.getSignature().get(i).getName();
+        for (int i = 0; i < signature.getLength(); i++) {
+            String argName = signature.getName(i);
             if (argName != null && !ArgumentsSignature.VARARG_NAME.equals(argName) && info.evaluatedNames.contains(argName)) {
-                forcedArgument[i] = true;
+                forcedArguments[i] = true;
                 cnt++;
             }
         }
         if (cnt == 0) {
             return null;
         } else {
-            return new FastPathFactory() {
-                public RFastPathNode create() {
-                    return null;
-                }
-
-                public boolean evaluatesArgument(int index) {
-                    return false;
-                }
-
-                public boolean forcedEagerPromise(int index) {
-                    return forcedArgument[index];
-                }
-
-                @Override
-                public String toString() {
-                    StringBuilder str = new StringBuilder();
-                    for (int i = 0; i < func.getSignature().size(); i++) {
-                        if (forcedArgument[i]) {
-                            str.append(func.getSignature().get(i).getName()).append(' ');
-                        }
-                    }
-                    return str.toString();
-                }
-            };
+            return new EvaluatedArgumentsFastPath(forcedArguments);
         }
     }
 }

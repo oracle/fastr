@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,7 +76,7 @@ public class FileConnections {
                     delegate = new FileReadWriteConnection(this);
                     break;
                 default:
-                    throw RError.nyi(RError.NO_NODE, "open mode: " + getOpenMode());
+                    throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + getOpenMode());
             }
             setDelegate(delegate);
         }
@@ -110,18 +110,18 @@ public class FileConnections {
 
         @Override
         public int readBin(ByteBuffer buffer) throws IOException {
-            throw RError.error(RError.NO_NODE, RError.Message.ONLY_READ_BINARY_CONNECTION);
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.ONLY_READ_BINARY_CONNECTION);
         }
 
         @Override
         public byte[] readBinChars() throws IOException {
-            throw RError.error(RError.NO_NODE, RError.Message.ONLY_READ_BINARY_CONNECTION);
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.ONLY_READ_BINARY_CONNECTION);
         }
 
         @TruffleBoundary
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
-            return readLinesHelper(inputStream, n);
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+            return readLinesHelper(inputStream, n, warn, skipNul);
         }
 
         @Override
@@ -162,7 +162,7 @@ public class FileConnections {
 
         @Override
         public void writeBin(ByteBuffer buffer) throws IOException {
-            throw RError.error(RError.NO_NODE, RError.Message.ONLY_WRITE_BINARY_CONNECTION);
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.ONLY_WRITE_BINARY_CONNECTION);
         }
 
         @Override
@@ -223,8 +223,8 @@ public class FileConnections {
 
         @TruffleBoundary
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
-            return readLinesHelper(inputStream, n);
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+            return readLinesHelper(inputStream, n, warn, skipNul);
         }
 
         @Override
@@ -382,9 +382,9 @@ public class FileConnections {
         }
 
         @Override
-        public String[] readLinesInternal(int n) throws IOException {
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             raf.seek(readOffset);
-            return readLinesHelper(inputStream, n);
+            return readLinesHelper(inputStream, n, warn, skipNul);
         }
 
         @Override

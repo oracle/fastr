@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,7 @@ public abstract class ReadDCF extends RBuiltinNode {
                     keepWhiteSet.add(keepWhite.getDataAt(i));
                 }
             }
-            dcf = DCF.read(openConn.readLines(0), keepWhiteSet);
+            dcf = DCF.read(openConn.readLines(0, true, false), keepWhiteSet);
         } catch (IOException ex) {
             throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
         }

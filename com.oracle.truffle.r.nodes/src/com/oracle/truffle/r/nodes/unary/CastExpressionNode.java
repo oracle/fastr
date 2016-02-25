@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,7 @@ public abstract class CastExpressionNode extends CastBaseNode {
 
     @Specialization
     protected RExpression doFunction(RFunction value) {
-        throw RError.error(this, RError.Message.CANNOT_COERCE, value.isBuiltin() ? "builtin" : "closure", "expression");
+        throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE, value.isBuiltin() ? "builtin" : "closure", "expression");
     }
 
     @Specialization

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -166,7 +166,7 @@ public class PromiseHelperNode extends RBaseNode {
 
         // Check for dependency cycle
         if (isUnderEvaluation(current)) {
-            throw RError.error(this, RError.Message.PROMISE_CYCLE);
+            throw RError.error(RError.SHOW_CALLER, RError.Message.PROMISE_CYCLE);
         }
 
         Object obj;
@@ -257,7 +257,7 @@ public class PromiseHelperNode extends RBaseNode {
 
         // Check for dependency cycle
         if (current.isUnderEvaluation()) {
-            throw RError.error(RError.NO_NODE, RError.Message.PROMISE_CYCLE);
+            throw RError.error(RError.SHOW_CALLER, RError.Message.PROMISE_CYCLE);
         }
 
         Object obj;

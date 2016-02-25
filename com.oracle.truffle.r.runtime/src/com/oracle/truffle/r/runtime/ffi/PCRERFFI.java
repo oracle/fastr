@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ public interface PCRERFFI {
      * in this class. The {@code result} value (which is typically an opaque pointer to an internal
      * C struct), is the actual result of the function as per the PCRE spec.
      */
-    public class Result {
+    class Result {
         public final long result;
         public final String errorMessage;
         public final int errOffset;

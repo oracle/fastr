@@ -22,19 +22,31 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.profiles.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.gnur.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.nodes.unary.ConvertBooleanNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class IfNode extends RNode implements RSyntaxNode, VisibilityController {
+public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall, VisibilityController {
 
     @Child private ConvertBooleanNode condition;
     @Child private RNode thenPart;
@@ -42,16 +54,16 @@ public final class IfNode extends RNode implements RSyntaxNode, VisibilityContro
 
     private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
-    private IfNode(RSyntaxNode condition, RSyntaxNode thenPart, RSyntaxNode elsePart) {
+    private IfNode(SourceSection src, RSyntaxNode condition, RSyntaxNode thenPart, RSyntaxNode elsePart) {
+        super(src);
         this.condition = ConvertBooleanNode.create(condition);
         this.thenPart = thenPart.asRNode();
         this.elsePart = elsePart == null ? null : elsePart.asRNode();
     }
 
     public static IfNode create(SourceSection src, RSyntaxNode condition, RSyntaxNode thenPart, RSyntaxNode elsePart) {
-        IfNode i = new IfNode(condition, thenPart, elsePart == null ? null : elsePart);
-        i.assignSourceSection(src);
-        return i;
+        IfNode ifNode = new IfNode(src, condition, thenPart, elsePart == null ? null : elsePart);
+        return ifNode;
     }
 
     /**
@@ -186,4 +198,19 @@ public final class IfNode extends RNode implements RSyntaxNode, VisibilityContro
         return false;
     }
 
+    public RSyntaxElement getSyntaxLHS() {
+        return RSyntaxLookup.createDummyLookup(getSourceSection(), "if", true);
+    }
+
+    public RSyntaxElement[] getSyntaxArguments() {
+        if (elsePart == null) {
+            return new RSyntaxElement[]{condition.asRSyntaxNode(), thenPart.asRSyntaxNode()};
+        } else {
+            return new RSyntaxElement[]{condition.asRSyntaxNode(), thenPart.asRSyntaxNode(), elsePart.asRSyntaxNode()};
+        }
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(elsePart == null ? 2 : 3);
+    }
 }
