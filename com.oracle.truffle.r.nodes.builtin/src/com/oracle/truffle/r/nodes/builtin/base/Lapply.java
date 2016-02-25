@@ -72,7 +72,7 @@ public abstract class Lapply extends RBuiltinNode {
 
         public abstract Object[] execute(VirtualFrame frame, Object vector, RFunction function, RArgsValuesAndNames additionalArguments);
 
-        private Object[] cachedLApplyInternal(VirtualFrame frame, Object vector, RFunction function, RCallNode callNode) {
+        private Object[] lApplyInternal(VirtualFrame frame, Object vector, RFunction function, RCallNode callNode) {
             int length = lengthNode.executeInt(frame, vector);
             Object[] result = new Object[length];
             for (int i = 1; i <= length; i++) {
@@ -89,19 +89,16 @@ public abstract class Lapply extends RBuiltinNode {
                         @Cached("function.getTarget()") RootCallTarget cachedTarget, //
                         @Cached("additionalArguments.getSignature()") ArgumentsSignature cachedSignature, //
                         @Cached("createCallNode(cachedTarget, additionalArguments)") RCallNode callNode) {
-            return cachedLApplyInternal(frame, vector, function, callNode);
+            return lApplyInternal(frame, vector, function, callNode);
         }
 
-        @SuppressWarnings("unused")
         @Specialization(contains = "cachedLApply")
-        @TruffleBoundary
-        protected Object[] genericLApply(VirtualFrame frame, Object vector, RFunction function, RArgsValuesAndNames additionalArguments, //
-                        @Cached("createCallNode(function.getTarget(), additionalArguments)") RCallNode callNode) {
+        protected Object[] genericLApply(VirtualFrame frame, Object vector, RFunction function, RArgsValuesAndNames additionalArguments) {
 
             // TODO: implement more efficiently (how much does it matter considering that there is
             // cached version?); previous comment here implied that having RCallNode executing with
             // an evaluated RArgsValuesAndNames would help
-            return cachedLApplyInternal(frame, vector, function, callNode);
+            return lApplyInternal(frame, vector, function, createCallNode(function.getTarget(), additionalArguments));
         }
 
         private static RNode createIndexedLoad() {
@@ -121,6 +118,7 @@ public abstract class Lapply extends RBuiltinNode {
          *
          * @param additionalArguments may be {@link RMissing#instance} to indicate empty "..."!
          */
+        @TruffleBoundary
         protected RCallNode createCallNode(RootCallTarget callTarget, RArgsValuesAndNames additionalArguments) {
             /* TODO: R switches to double if x.getLength() is greater than 2^31-1 */
             FormalArguments formalArgs = ((RRootNode) callTarget.getRootNode()).getFormalArguments();
