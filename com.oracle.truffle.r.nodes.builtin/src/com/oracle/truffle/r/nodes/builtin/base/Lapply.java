@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -71,13 +72,7 @@ public abstract class Lapply extends RBuiltinNode {
 
         public abstract Object[] execute(VirtualFrame frame, Object vector, RFunction function, RArgsValuesAndNames additionalArguments);
 
-        @SuppressWarnings("unused")
-        @Specialization(limit = "5", guards = {"function.getTarget() == cachedTarget", "additionalArguments.getSignature() == cachedSignature"})
-        protected Object[] cachedLApply(VirtualFrame frame, Object vector, RFunction function, RArgsValuesAndNames additionalArguments, //
-                        @Cached("function.getTarget()") RootCallTarget cachedTarget, //
-                        @Cached("additionalArguments.getSignature()") ArgumentsSignature cachedSignature, //
-                        @Cached("createCallNode(cachedTarget, additionalArguments)") RCallNode callNode) {
-
+        private Object[] cachedLApplyInternal(VirtualFrame frame, Object vector, RFunction function, RCallNode callNode) {
             int length = lengthNode.executeInt(frame, vector);
             Object[] result = new Object[length];
             for (int i = 1; i <= length; i++) {
@@ -89,14 +84,24 @@ public abstract class Lapply extends RBuiltinNode {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(contains = "cachedLApply")
-        protected Object[] genericLApply(Object vector, RFunction function, RArgsValuesAndNames additionalArguments) {
+        @Specialization(limit = "5", guards = {"function.getTarget() == cachedTarget", "additionalArguments.getSignature() == cachedSignature"})
+        protected Object[] cachedLApply(VirtualFrame frame, Object vector, RFunction function, RArgsValuesAndNames additionalArguments, //
+                        @Cached("function.getTarget()") RootCallTarget cachedTarget, //
+                        @Cached("additionalArguments.getSignature()") ArgumentsSignature cachedSignature, //
+                        @Cached("createCallNode(cachedTarget, additionalArguments)") RCallNode callNode) {
+            return cachedLApplyInternal(frame, vector, function, callNode);
+        }
 
-            /*
-             * It might be rather straight forward to implement as soon as RCallNode supports
-             * executing with an evaluated RArgsValuesAndNames. This should be implemented first.
-             */
-            throw RError.nyi(this, "generic lApply");
+        @SuppressWarnings("unused")
+        @Specialization(contains = "cachedLApply")
+        @TruffleBoundary
+        protected Object[] genericLApply(VirtualFrame frame, Object vector, RFunction function, RArgsValuesAndNames additionalArguments, //
+                        @Cached("createCallNode(function.getTarget(), additionalArguments)") RCallNode callNode) {
+
+            // TODO: implement more efficiently (how much does it matter considering that there is
+            // cached version?); previous comment here implied that having RCallNode executing with
+            // an evaluated RArgsValuesAndNames would help
+            return cachedLApplyInternal(frame, vector, function, callNode);
         }
 
         private static RNode createIndexedLoad() {
