@@ -168,8 +168,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         FunctionUID thisUuid = uuid;
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(description != null && !description.isEmpty() ? description : "<function>", frameDesc);
         FunctionDefinitionNode result = new FunctionDefinitionNode(getSourceSection(), frameDesc, (RNode) body.deepCopy(), getFormalArguments(), description, substituteFrame,
-                        argPostProcess == null ? null
-                                        : argPostProcess.deepCopyUnconditional());
+                        argPostProcess == null ? null : argPostProcess.deepCopyUnconditional());
         // Instrumentation depends on this copy having same uuid
         result.uuid = thisUuid;
         return result;
@@ -448,7 +447,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         FrameDescriptor frameDesc = new FrameDescriptor();
 
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<substituted function>", frameDesc);
-        return new FunctionDefinitionNode(null, frameDesc, (BodyNode) body.substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
+        BodyNode substituteBody = (BodyNode) body.substitute(env).asRNode();
+        return new FunctionDefinitionNode(null, frameDesc, substituteBody, getFormalArguments(), null, substituteFrame, argPostProcess);
     }
 
     /**
