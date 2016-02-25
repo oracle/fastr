@@ -1406,7 +1406,7 @@ public class RDeparse {
         return false;
     }
 
-    private static boolean isValidName(String name) {
+    public static boolean isValidName(String name) {
         char ch = safeCharAt(name, 0);
         if (ch != '.' && !Character.isLetter(ch)) {
             return false;

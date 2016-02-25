@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,15 @@
  */
 package com.oracle.truffle.r.test.parser;
 
-import java.io.*;
+import java.io.File;
 
-import org.antlr.runtime.*;
-import org.junit.*;
+import org.antlr.runtime.RecognitionException;
+import org.junit.Test;
 
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.parser.*;
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.nodes.RASTBuilder;
+import com.oracle.truffle.r.parser.RParser;
+import com.oracle.truffle.r.test.TestBase;
 
 public class TestParser extends TestBase {
 
@@ -78,7 +79,7 @@ public class TestParser extends TestBase {
                 Source source = null;
                 try {
                     source = Source.fromURL(file.toURL(), file.getName());
-                    ParseUtil.parseAST(new ANTLRStringStream(source.getCode()), source);
+                    new RParser<>(source, new RASTBuilder()).script();
                 } catch (Throwable e) {
                     errorCount++;
                     Throwable t = e;

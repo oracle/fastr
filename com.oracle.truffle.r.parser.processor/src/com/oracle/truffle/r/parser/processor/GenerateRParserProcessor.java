@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,31 @@
  */
 package com.oracle.truffle.r.parser.processor;
 
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.Set;
 
-import javax.annotation.processing.*;
-import javax.lang.model.*;
-import javax.lang.model.element.*;
-import javax.tools.*;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedSourceVersion;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes("com.oracle.truffle.r.parser.processor.GenerateRParser")
@@ -134,7 +150,10 @@ public class GenerateRParserProcessor extends AbstractProcessor {
             is.read(content);
             os.write("// GENERATED CONTENT - DO NOT EDIT\n".getBytes());
             os.write("// Checkstyle: stop\n".getBytes());
-            os.write(content);
+            String contentString = new String(content, StandardCharsets.UTF_8);
+            // make the parser generic
+            contentString = contentString.replace("public class RParser extends Parser", "public class RParser<T> extends Parser");
+            os.write(contentString.getBytes(StandardCharsets.UTF_8));
         }
     }
 

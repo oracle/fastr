@@ -60,11 +60,11 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, RSyntaxCall,
     /**
      * Ensures that {@code node} is a {@link BlockNode}.
      */
-    public static RSyntaxNode ensureBlock(SourceSection src, RSyntaxNode node) {
+    public static RSyntaxNode ensureBlock(RSyntaxNode node) {
         if (node == null || node instanceof BlockNode) {
             return node;
         } else {
-            return new BlockNode(src, new RNode[]{node.asRNode()});
+            return new BlockNode(node.getSourceSection(), new RNode[]{node.asRNode()});
         }
     }
 

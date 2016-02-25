@@ -10,13 +10,6 @@
  */
 package com.oracle.truffle.r.parser;
 
-import java.util.List;
-
-import org.antlr.runtime.*;
-
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.parser.ast.*;
-
 public class ParseUtil {
 
     static String hexChar(String... chars) {
@@ -35,18 +28,4 @@ public class ParseUtil {
         value &= 0xff; // octal escape sequences are clamped the 0-255 range
         return new String(new int[]{value}, 0, 1);
     }
-
-    public static List<ASTNode> parseAST(ANTLRStringStream stream, Source source) throws RecognitionException {
-        CommonTokenStream tokens = new CommonTokenStream();
-        tokens.setTokenSource(new RLexer(stream));
-        RParser parser = new RParser(tokens);
-        parser.initialize(source, new RASTBuilder());
-        return parser.script();
-    }
-
-    public static Sequence parseAsSequence(ANTLRStringStream antlrStringStream, Source source) throws RecognitionException {
-        List<ASTNode> list = parseAST(antlrStringStream, source);
-        return new Sequence(source.createSection(null, 0, source.getLength()), list.toArray(new ASTNode[list.size()]));
-    }
-
 }

@@ -29,6 +29,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
@@ -52,19 +53,18 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class FunctionExpressionNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxFunction {
 
-    public static FunctionExpressionNode create(SourceSection src, RootCallTarget callTarget, FastPathFactory fastPath) {
-        return new FunctionExpressionNode(src, callTarget, fastPath);
+    public static FunctionExpressionNode create(SourceSection src, RootCallTarget callTarget) {
+        return new FunctionExpressionNode(src, callTarget);
     }
 
     @CompilationFinal private RootCallTarget callTarget;
     private final PromiseDeoptimizeFrameNode deoptFrameNode;
-    private final FastPathFactory fastPath;
+    @CompilationFinal private FastPathFactory fastPath;
 
     @CompilationFinal private boolean initialized = false;
 
-    private FunctionExpressionNode(SourceSection src, RootCallTarget callTarget, FastPathFactory fastPath) {
+    private FunctionExpressionNode(SourceSection src, RootCallTarget callTarget) {
         super(src);
-        this.fastPath = fastPath;
         this.callTarget = callTarget;
         this.deoptFrameNode = EagerEvalHelper.optExprs() || EagerEvalHelper.optVars() || EagerEvalHelper.optDefault() ? new PromiseDeoptimizeFrameNode() : null;
     }
@@ -92,6 +92,7 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
                 }
                 FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), frame);
             }
+            fastPath = RASTBuilder.createFunctionFastPath(callTarget);
             initialized = true;
         }
         boolean containsDispatch = ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch();
@@ -143,7 +144,7 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
     public RSyntaxNode substituteImpl(REnvironment env) {
         FunctionDefinitionNode thisFdn = (FunctionDefinitionNode) callTarget.getRootNode();
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) thisFdn.substituteImpl(env);
-        return new FunctionExpressionNode(null, Truffle.getRuntime().createCallTarget(fdn), fastPath);
+        return new FunctionExpressionNode(null, Truffle.getRuntime().createCallTarget(fdn));
     }
 
     public int getRlengthImpl() {

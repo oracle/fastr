@@ -26,29 +26,76 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RFunction;
 
 /**
- * Implementers of this interface can be used to generate a representation of an R closure, with
- * given types as node and argument node types.
+ * Implementers of this interface can be used to generate a representation of an R closure.
  */
-public interface RCodeBuilder<T, ArgT> {
+public interface RCodeBuilder<T> {
+
+    final class Argument<T> {
+        public final SourceSection source;
+        public final String name;
+        public final T value;
+
+        private Argument(SourceSection source, String name, T value) {
+            this.source = source;
+            this.name = name;
+            this.value = value;
+        }
+    }
 
     /**
      * Creates a function call argument.
      */
-    ArgT argument(SourceSection source, String name, T expression);
+    static <T> Argument<T> argument(SourceSection source, String name, T expression) {
+        return new Argument<>(source, name, expression);
+    }
 
     /**
      * Creates an unnamed function call argument.
      */
-    ArgT argument(T expression);
+    static <T> Argument<T> argument(T expression) {
+        return new Argument<>(null, null, expression);
+    }
 
     /**
      * Creates an empty function call argument.
      */
-    ArgT argumentEmpty();
+    static <T> Argument<T> argumentEmpty() {
+        return new Argument<>(null, null, null);
+    }
+
+    /**
+     * Create a call with an arbitrary number of named or unnamed arguments.
+     */
+    T call(SourceSection source, T lhs, List<Argument<T>> arguments);
+
+    /**
+     * Creates a constant, the value is expected to be one of FastR's scalar types (byte, int,
+     * double, RComplex, String, RNull).
+     */
+    T constant(SourceSection source, Object value);
+
+    /**
+     * Creates a symbol lookup, either of mode "function" if {@code functionLookup} is true, and
+     * "any" otherwise.
+     */
+    T lookup(SourceSection source, String symbol, boolean functionLookup);
+
+    /**
+     * Creates a function expression literal. {@code assignedTo} can be used to determine function
+     * names - if it is non-null, it represents the left hand side that this function is assigned
+     * to.
+     */
+    T function(SourceSection source, List<Argument<T>> arguments, T body, T assignedTo);
+
+    /**
+     * Creates a new RFunction object from a given function expression literal.
+     */
+    RFunction rootFunction(SourceSection source, List<Argument<T>> arguments, T body, String name, MaterializedFrame enclosing);
 
     /**
      * Helper function: create a call with no arguments.
@@ -77,31 +124,4 @@ public interface RCodeBuilder<T, ArgT> {
     default T call(SourceSection source, T lhs, T argument1, T argument2, T argument3) {
         return call(source, lhs, Arrays.asList(argument(argument1), argument(argument2), argument(argument3)));
     }
-
-    /**
-     * Create a call with an arbitrary number of named or unnamed arguments.
-     */
-    T call(SourceSection source, T lhs, List<ArgT> arguments);
-
-    /**
-     * Creates a constant, the value is expected to be one of FastR's scalar types (byte, int,
-     * double, RComplex, String, RNull).
-     */
-    T constant(SourceSection source, Object value);
-
-    /**
-     * Creates a symbol lookup, either of mode "function" if {@code functionLookup} is true, and
-     * "any" otherwise.
-     */
-    T lookup(SourceSection source, String symbol, boolean functionLookup);
-
-    /**
-     * Creates a function expression literal.
-     */
-    T function(SourceSection source, List<ArgT> arguments, T body);
-
-    /**
-     * This function can be used to emit warnings during parsing.
-     */
-    void warning(RError.Message message, Object... arguments);
 }
