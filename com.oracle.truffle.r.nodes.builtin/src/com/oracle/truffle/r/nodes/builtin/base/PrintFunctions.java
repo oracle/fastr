@@ -81,8 +81,8 @@ public class PrintFunctions {
             return ReadVariableNode.createFunctionLookup(null, "show");
         }
 
-        RFunction createShowFunction(ReadVariableNode showFind) {
-            return (RFunction) showFind.execute((VirtualFrame) Utils.getActualCurrentFrame());
+        RFunction createShowFunction(VirtualFrame frame, ReadVariableNode showFind) {
+            return (RFunction) showFind.execute(frame);
         }
 
         DirectCallNode createCallNode(RFunction f) {
@@ -90,10 +90,9 @@ public class PrintFunctions {
         }
 
         @SuppressWarnings("unused")
-        @TruffleBoundary
         @Specialization(guards = "isS4(o)")
-        protected Object printDefaultS4(RTypedValue o, Object digits, byte quote, Object naPrint, Object printGap, byte right, Object max, Object useSource, Object noOpt,
-                        @Cached("createShowFind()") ReadVariableNode showFind, @Cached("createShowFunction(showFind)") RFunction showFunction) {
+        protected Object printDefaultS4(VirtualFrame frame, RTypedValue o, Object digits, byte quote, Object naPrint, Object printGap, byte right, Object max, Object useSource, Object noOpt,
+                        @Cached("createShowFind()") ReadVariableNode showFind, @Cached("createShowFunction(frame, showFind)") RFunction showFunction) {
             RContext.getEngine().evalFunction(showFunction, null, o);
             return null;
         }
