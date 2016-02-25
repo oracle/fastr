@@ -131,9 +131,7 @@ public class RInstrument {
         NodeId(FunctionUID uid, RSyntaxNode node) {
             this.uid = uid;
             SourceSection ss = node.getSourceSection();
-            if (ss == null) {
-                throw RInternalError.shouldNotReachHere();
-            }
+            RInternalError.guarantee(ss != null);
             this.charIndex = ss.getCharIndex();
         }
 

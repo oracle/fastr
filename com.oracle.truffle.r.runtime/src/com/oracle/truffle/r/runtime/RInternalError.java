@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,6 +53,20 @@ public final class RInternalError extends Error {
 
     public String getVerboseStackTrace() {
         return verboseStackTrace;
+    }
+
+    public static void guarantee(boolean condition, String message) {
+        CompilerDirectives.transferToInterpreter();
+        if (!condition) {
+            throw shouldNotReachHere("failed guarantee: " + message);
+        }
+    }
+
+    public static void guarantee(boolean condition) {
+        CompilerDirectives.transferToInterpreter();
+        if (!condition) {
+            throw shouldNotReachHere("failed guarantee");
+        }
     }
 
     public static RuntimeException unimplemented() {
