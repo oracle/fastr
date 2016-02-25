@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
-public final class ForNode extends AbstractLoopNode implements VisibilityController, RSyntaxNode {
+public final class ForNode extends AbstractLoopNode implements VisibilityController, RSyntaxNode, RSyntaxCall {
 
     @Child private WriteVariableNode writeLengthNode;
     @Child private WriteVariableNode writeIndexNode;
@@ -250,5 +250,19 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
             }
             return String.format("for-<%s:%d>", function, startLine);
         }
+    }
+
+    public RSyntaxElement getSyntaxLHS() {
+        return RSyntaxLookup.createDummyLookup(getSourceSection(), "for", true);
+    }
+
+    public RSyntaxElement[] getSyntaxArguments() {
+        ForRepeatingNode repeatingNode = (ForRepeatingNode) loopNode.getRepeatingNode();
+        return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(null, (String) repeatingNode.writeElementNode.getName(), false), writeRangeNode.getRhs().asRSyntaxNode(),
+                        repeatingNode.body.asRSyntaxNode()};
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(4);
     }
 }

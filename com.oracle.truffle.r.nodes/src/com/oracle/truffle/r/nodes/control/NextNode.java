@@ -22,14 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class NextNode extends RSourceSectionNode implements RSyntaxNode, VisibilityController {
+public final class NextNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall, VisibilityController {
 
     public NextNode(SourceSection src) {
         super(src);
@@ -71,4 +79,15 @@ public final class NextNode extends RSourceSectionNode implements RSyntaxNode, V
         throw RInternalError.unimplemented();
     }
 
+    public RSyntaxElement getSyntaxLHS() {
+        return RSyntaxLookup.createDummyLookup(getSourceSection(), "next", true);
+    }
+
+    public RSyntaxElement[] getSyntaxArguments() {
+        return new RSyntaxElement[0];
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(0);
+    }
 }

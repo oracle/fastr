@@ -76,6 +76,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameAndSlotLookupResult;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.LookupResult;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -84,7 +85,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * a particular layout of frame descriptors and enclosing environments, and re-specializes in case
  * the layout changes.
  */
-public final class ReadVariableNode extends RSourceSectionNode implements RSyntaxNode, VisibilityController {
+public final class ReadVariableNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup, VisibilityController {
 
     private static final int MAX_INVALIDATION_COUNT = 2;
 
@@ -867,6 +868,10 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     public boolean isForceForTypeCheck() {
         return kind == ReadKind.ForcedTypeCheck;
     }
+
+    public boolean isFunctionLookup() {
+        return mode == RType.Function;
+    }
 }
 
 /*
@@ -922,5 +927,4 @@ abstract class CheckTypeNode extends RBaseNode {
             return false;
         }
     }
-
 }

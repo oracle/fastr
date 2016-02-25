@@ -29,10 +29,12 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -44,9 +46,11 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class FunctionExpressionNode extends RSourceSectionNode implements RSyntaxNode {
+public final class FunctionExpressionNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxFunction {
 
     public static FunctionExpressionNode create(SourceSection src, RootCallTarget callTarget, FastPathFactory fastPath) {
         return new FunctionExpressionNode(src, callTarget, fastPath);
@@ -154,5 +158,17 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
     @Override
     public boolean getRequalsImpl(RSyntaxNode other) {
         throw RInternalError.unimplemented();
+    }
+
+    public RSyntaxElement[] getSyntaxArgumentDefaults() {
+        return RASTUtils.asSyntaxNodes(((FunctionDefinitionNode) callTarget.getRootNode()).getFormalArguments().getArguments());
+    }
+
+    public RSyntaxElement getSyntaxBody() {
+        return ((FunctionDefinitionNode) callTarget.getRootNode()).getUninitializedBody().getStatements();
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return ((FunctionDefinitionNode) callTarget.getRootNode()).getFormalArguments().getSignature();
     }
 }

@@ -89,6 +89,14 @@ public class RASTUtils {
         }
     }
 
+    public static RSyntaxNode[] asSyntaxNodes(RNode[] nodes) {
+        RSyntaxNode[] result = new RSyntaxNode[nodes.length];
+        for (int i = 0; i < nodes.length; i++) {
+            result[i] = nodes[i] == null ? null : nodes[i].asRSyntaxNode();
+        }
+        return result;
+    }
+
     /**
      * Creates a standard {@link ReadVariableNode}.
      */

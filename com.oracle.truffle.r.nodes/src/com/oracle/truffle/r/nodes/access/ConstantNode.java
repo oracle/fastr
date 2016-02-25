@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
-public abstract class ConstantNode extends RSourceSectionNode implements RSyntaxNode, VisibilityController {
+public abstract class ConstantNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxConstant, VisibilityController {
 
     protected ConstantNode(SourceSection sourceSection) {
         super(sourceSection);

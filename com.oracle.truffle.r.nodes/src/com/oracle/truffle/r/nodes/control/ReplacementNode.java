@@ -31,6 +31,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
@@ -39,6 +40,9 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -46,7 +50,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * debug handling.
  *
  */
-public final class ReplacementNode extends RSourceSectionNode implements RSyntaxNode {
+public final class ReplacementNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
     /**
      * This is just the left hand side of the assignment and only used for {@link #deparseImpl} etc.
@@ -155,5 +159,17 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
     @Override
     public boolean getRequalsImpl(RSyntaxNode other) {
         throw RInternalError.unimplemented();
+    }
+
+    public RSyntaxElement getSyntaxLHS() {
+        return RSyntaxLookup.createDummyLookup(null, isSuper ? "<<-" : "<-", true);
+    }
+
+    public RSyntaxElement[] getSyntaxArguments() {
+        return new RSyntaxElement[]{syntaxLhs, storeRhs.getRhs().asRSyntaxNode()};
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(2);
     }
 }
