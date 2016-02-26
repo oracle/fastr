@@ -59,7 +59,8 @@ public class PrintParameters {
             // test com.oracle.truffle.r.test.builtins.TestBuiltin_printdefault, which fails if the
             // condition is present complaining about an invalid na.print specification.
             // if (!(naPrint instanceof RString) || ((RString) naPrint).getValue().length() < 1)
-            // throw new IllegalArgumentException(String.format("invalid 'na.print' specification"));
+            // throw new
+            // IllegalArgumentException(String.format("invalid 'na.print' specification"));
             String nav = naPrint.toString();
             if (!"".equals(nav)) {
                 this.na_string = this.na_string_noquote = ((RString) naPrint).getValue();
