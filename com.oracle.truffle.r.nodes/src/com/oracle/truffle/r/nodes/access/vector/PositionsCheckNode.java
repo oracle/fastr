@@ -174,7 +174,7 @@ final class PositionsCheckNode extends Node {
     public boolean isMissing() {
         return positionsCheck.length == 1 && //
                         (positionsCheck[0].getPositionClass() == RMissing.class || positionsCheck[0].getPositionClass() == REmpty.class || //
-                                        positionsCheck[0].getPositionClass() == RSymbol.class);
+                        positionsCheck[0].getPositionClass() == RSymbol.class);
     }
 
     final class PositionProfile {

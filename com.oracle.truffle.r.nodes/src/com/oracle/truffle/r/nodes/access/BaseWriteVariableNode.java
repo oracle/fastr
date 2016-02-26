@@ -33,8 +33,8 @@ import com.oracle.truffle.r.runtime.nodes.*;
 @NodeChild(value = "rhs", type = RNode.class)
 @NodeFields({@NodeField(name = "name", type = Object.class)})
 /**
- * Common code/state for all the variants of {@code WriteVariableNode}. At this level, we just have
- * a {@code name} for the variable and expression {@code rhs} to be assigned to.
+ * Common code/state for all the variants of {@code WriteVariableNode}.
+ * At this level, we just have a {@code name} for the variable and expression {@code rhs} to be assigned to.
  *
  * There are no create methods as this class is truly abstract.
  */
@@ -63,8 +63,9 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * variable and then, again, to the original variable (which would cause the vector to be copied
      * each time); (non-Javadoc)
      *
-     * @see com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode#shareObjectValue(com.oracle.
-     * truffle .api.frame.Frame, com.oracle.truffle.api.frame.FrameSlot, java.lang.Object,
+     * @see
+     * com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode#shareObjectValue(com.oracle.truffle
+     * .api.frame.Frame, com.oracle.truffle.api.frame.FrameSlot, java.lang.Object,
      * com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode.Mode, boolean)
      */
     protected final Object shareObjectValue(Frame frame, FrameSlot frameSlot, Object value, Mode mode, boolean isSuper) {

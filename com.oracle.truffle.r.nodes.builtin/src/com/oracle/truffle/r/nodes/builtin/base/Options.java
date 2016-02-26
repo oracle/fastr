@@ -38,8 +38,7 @@ import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = "options", kind = INTERNAL, parameterNames = {"..."})
 /**
- * This could be refactored using a recursive child node to handle simple cases, but it's unlikely
- * to be the fast path.
+ * This could be refactored using a recursive child node to handle simple cases, but it's unlikely to be the fast path.
  */
 public abstract class Options extends RBuiltinNode {
 

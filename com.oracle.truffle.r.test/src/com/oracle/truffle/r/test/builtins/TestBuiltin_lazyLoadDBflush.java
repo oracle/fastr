@@ -21,15 +21,13 @@ public class TestBuiltin_lazyLoadDBflush extends TestBase {
     public void testlazyLoadDBflush1() {
         // disabled because it accesses files
         // assertEval(Ignored.Unknown,
-        // "argv <- list('/home/roman/r-instrumented/library/tools/R/tools.rdb');
-        // .Internal(lazyLoadDBflush(argv[[1]]))");
+        // "argv <- list('/home/roman/r-instrumented/library/tools/R/tools.rdb'); .Internal(lazyLoadDBflush(argv[[1]]))");
     }
 
     @Test
     public void testlazyLoadDBflush2() {
         // disabled because it accesses files
         // assertEval(Ignored.Unknown,
-        // "argv <- list('/home/lzhao/hg/r-instrumented/library/stats4/R/stats4.rdb');
-        // .Internal(lazyLoadDBflush(argv[[1]]))");
+        // "argv <- list('/home/lzhao/hg/r-instrumented/library/stats4/R/stats4.rdb'); .Internal(lazyLoadDBflush(argv[[1]]))");
     }
 }

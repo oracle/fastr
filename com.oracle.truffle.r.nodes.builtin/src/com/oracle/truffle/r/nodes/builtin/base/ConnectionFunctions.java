@@ -640,8 +640,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object readBin(RConnection con, RAbstractStringVector whatVec, RAbstractIntVector nVec, @SuppressWarnings("unused") int size, @SuppressWarnings("unused") byte signedArg,
-                        byte swapArg) {
+        protected Object readBin(RConnection con, RAbstractStringVector whatVec, RAbstractIntVector nVec, @SuppressWarnings("unused") int size, @SuppressWarnings("unused") byte signedArg, byte swapArg) {
             boolean swap = RRuntime.fromLogical(swapArg);
             RVector result = null;
             int n = nVec.getDataAt(0);

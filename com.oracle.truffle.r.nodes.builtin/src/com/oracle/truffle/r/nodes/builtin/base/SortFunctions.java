@@ -117,9 +117,9 @@ public class SortFunctions {
     }
 
     /**
-     * In GnuR this is a shell sort variant, see
-     * <a href = "https://stat.ethz.ch/R-manual/R-devel/library/base/html/sort.html>here">here</a>.
-     * The JDK does not have a shell sort so for now we just use the default JDK sort (quicksort).
+     * In GnuR this is a shell sort variant, see <a href =
+     * "https://stat.ethz.ch/R-manual/R-devel/library/base/html/sort.html>here">here</a>. The JDK
+     * does not have a shell sort so for now we just use the default JDK sort (quicksort).
      *
      * N.B. The R code strips out {@code NA} and {@code NaN} values before calling the builtin.
      */

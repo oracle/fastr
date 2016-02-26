@@ -178,8 +178,7 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist29() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(a = 'a', b = 2, c = 3.14159265358979+2i), .Names = c('a', 'b', 'c')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(a = 'a', b = 2, c = 3.14159265358979+2i), .Names = c('a', 'b', 'c')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

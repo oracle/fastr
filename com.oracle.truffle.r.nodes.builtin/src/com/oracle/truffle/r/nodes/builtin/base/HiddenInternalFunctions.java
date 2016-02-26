@@ -204,8 +204,8 @@ public class HiddenInternalFunctions {
             boolean rc = true;
             /*
              * compression may have value 0, 1, 2 or 3. Value 1 is gzip and the data starts at
-             * "offset + 4". Values 2 and 3 have a "type" field at "offset + 4
-             * " and the data starts at "offset + 5". The type field is 'Z' for lzma, '2' for bzip,
+             * "offset + 4". Values 2 and 3 have a "type" field at "offset +
+             * 4" and the data starts at "offset + 5". The type field is 'Z' for lzma, '2' for bzip,
              * '1' for zip and '0' for no compression. From GnuR code, the only difference between
              * compression=2 and compression=3 is that type='Z' is only possible for the latter.
              */

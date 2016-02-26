@@ -93,8 +93,7 @@ public class TestBuiltin_dimnamesassign extends TestBase {
 
     @Test
     public void testdimnamesassign14() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(0, 0, 0, 0), .Dim = c(2L, 2L), .Dimnames = list(NULL, c('A', 'B'))), value = list(NULL, c('A', 'B')));`dimnames<-`(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(0, 0, 0, 0), .Dim = c(2L, 2L), .Dimnames = list(NULL, c('A', 'B'))), value = list(NULL, c('A', 'B')));`dimnames<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test

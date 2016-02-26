@@ -11,6 +11,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
+import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.asBlankArg;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -22,8 +24,6 @@ import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.*;
 
 //Transcribed from GnuR, src/main/print.c, src/main/printarray.c, src/main/printvector.c
 
@@ -116,9 +116,6 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                     title = null;
                     names = null;
                     jobMode = JobMode.array;
-                    // SEXP dimnames;
-                    // dimnames = GetArrayDimnames(s);
-                    // printArray(s, t, R_print.quote, R_print.right, dimnames);
                 }
             } else {
                 dims = null;

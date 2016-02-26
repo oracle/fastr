@@ -29,8 +29,7 @@ public class TestBuiltin_abs extends TestBase {
 
     @Test
     public void testabs3() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(-0.510763209393394, Inf, 1, 1, Inf, 1, 0, -1.95785440613009, -48.49854545454, -Inf, 1, 1, 0.342969776609699, 0.00707175387211123));abs(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(c(-0.510763209393394, Inf, 1, 1, Inf, 1, 0, -1.95785440613009, -48.49854545454, -Inf, 1, 1, 0.342969776609699, 0.00707175387211123));abs(argv[[1]]);");
     }
 
     @Test

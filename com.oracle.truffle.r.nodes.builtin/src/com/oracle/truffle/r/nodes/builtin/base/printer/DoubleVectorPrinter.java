@@ -166,7 +166,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
          */
 
         /*-- These 'mxsl' & 'rgt' are used in F Format
-        * AND in the ____ if(.) "F" else "E" ___ below: */
+         * AND in the ____ if(.) "F" else "E" ___ below: */
         if (pp.getDigits() == 0) {
             rgt = 0;
         }
@@ -181,7 +181,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         wF = mxsl + rgt + (rgt != 0 ? 1 : 0); /* width for F format */
 
         /*-- 'see' how "E" Exponential format would be like : */
-        e = (mxl > 100 || mnl <= -99) ? 2 /* 3 digit exponent */ : 1;
+        e = (mxl > 100 || mnl <= -99) ? 2 /* 3 digit exponent */: 1;
         if (mxns != RRuntime.INT_MIN_VALUE) {
             d = mxns - 1;
             w = neg + (d != 0 ? 1 : 1) + d + 4 + e; /* width for E format */

@@ -551,10 +551,10 @@ public class RSerialize {
                     return checkResult(result);
                 }
 
-                    /*
-                     * These break out of the switch to have their ATTR, LEVELS, and OBJECT fields
-                     * filled in.
-                     */
+                /*
+                 * These break out of the switch to have their ATTR, LEVELS, and OBJECT fields
+                 * filled in.
+                 */
 
                 case EXPRSXP:
                 case VECSXP: {
@@ -1495,9 +1495,9 @@ public class RSerialize {
                             break;
                         }
 
-                            /*
-                             * FastR scalar, (length 1) "vectors"
-                             */
+                        /*
+                         * FastR scalar, (length 1) "vectors"
+                         */
 
                         case FASTR_INT: {
                             Integer value = (Integer) obj;
@@ -1539,11 +1539,10 @@ public class RSerialize {
                             break;
                         }
 
-                            /*
-                             * The objects that GnuR represents as a pairlist. To avoid stack
-                             * overflow, these utilize manual tail recursion on the cdr of the
-                             * pairlist.
-                             */
+                        /*
+                         * The objects that GnuR represents as a pairlist. To avoid stack overflow,
+                         * these utilize manual tail recursion on the cdr of the pairlist.
+                         */
 
                         case FUNSXP:
                         case PROMSXP:

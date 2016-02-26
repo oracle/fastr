@@ -20,8 +20,8 @@ public class TestBuiltin_sweep extends TestBase {
 
     @Test
     public void testsweep1() {
-        assertEval(Ignored.Unknown,
-                        "argv <- structure(list(x = structure(integer(0), .Dim = c(5L,     0L)), MARGIN = 2, STATS = integer(0)), .Names = c('x', 'MARGIN',     'STATS'));" + "do.call('sweep', argv)");
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(integer(0), .Dim = c(5L,     0L)), MARGIN = 2, STATS = integer(0)), .Names = c('x', 'MARGIN',     'STATS'));"
+                        + "do.call('sweep', argv)");
     }
 
     @Test

@@ -20,8 +20,8 @@ public class TestBuiltin_attributesassign_ extends TestBase {
 
     @Test
     public void testattributesassign_1() {
-        assertEval(Ignored.Unknown,
-                        "argv <- structure(list(structure(list(), class = structure('L',     package = '.GlobalEnv')), value = NULL), .Names = c('', 'value'));" + "do.call('attributes<-', argv)");
+        assertEval(Ignored.Unknown, "argv <- structure(list(structure(list(), class = structure('L',     package = '.GlobalEnv')), value = NULL), .Names = c('', 'value'));"
+                        + "do.call('attributes<-', argv)");
     }
 
 }

@@ -173,21 +173,22 @@ public final class Pnorm implements StatsFunctions.Function3_2 {
                  * Note that we do want symmetry(0), lower/upper -> hence use y
                  */
             } else if ((logP && y < 1e170) /* avoid underflow below */
-            /*
-             * ^^^^^ MM FIXME: can speedup for log_p and much larger |x| ! Then, make use of
-             * Abramowitz & Stegun, 26.2.13, something like
-             * 
-             * xsq = x*x;
-             * 
-             * if(xsq * DBL_EPSILON < 1.) del = (1. - (1. - 5./(xsq+6.)) / (xsq+4.)) / (xsq+2.);
-             * else del = 0.;cum = -.5*xsq - M_LN_SQRT_2PI - log(x) + log1p(-del);ccum =
-             * log1p(-exp(*cum)); /.* ~ log(1) = 0 *./
-             * 
-             * swap_tail;
-             * 
-             * [Yes, but xsq might be infinite.]
-             */
-            || (lower && -37.5193 < x && x < 8.2924) || (upper && -8.2924 < x && x < 37.5193)) {
+                            /*
+                             * ^^^^^ MM FIXME: can speedup for log_p and much larger |x| ! Then,
+                             * make use of Abramowitz & Stegun, 26.2.13, something like
+                             * 
+                             * xsq = x*x;
+                             * 
+                             * if(xsq * DBL_EPSILON < 1.) del = (1. - (1. - 5./(xsq+6.)) / (xsq+4.))
+                             * / (xsq+2.); else del = 0.;cum = -.5*xsq - M_LN_SQRT_2PI - log(x) +
+                             * log1p(-del);ccum = log1p(-exp(*cum)); /.* ~ log(1) = 0 *./
+                             * 
+                             * swap_tail;
+                             * 
+                             * [Yes, but xsq might be infinite.]
+                             */
+                            || (lower && -37.5193 < x && x < 8.2924)
+                            || (upper && -8.2924 < x && x < 37.5193)) {
 
                 /* Evaluate pnorm for x in (-37.5, -5.657) union (5.657, 37.5) */
                 double xsq = 1.0 / (x * x); /* (1./x)*(1./x) might be better */
