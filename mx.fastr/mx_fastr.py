@@ -149,6 +149,9 @@ def setREnvironment():
     if not os.environ.has_key('R_HOME'):
         os.environ['R_HOME'] = _fastr_suite.dir
 
+    # Make sure that native code formats numbers consistently
+    os.environ['LC_NUMERIC'] = 'C'
+
     osname = platform.system()
     if osname != 'Darwin':
         lib_env = 'LD_LIBRARY_PATH'

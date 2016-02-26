@@ -85,7 +85,7 @@ public class SplineFunctions {
     /*
      * Periodic Spline --------------- The end conditions here match spline (and its derivatives) at
      * x[1] and x[n].
-     *
+     * 
      * Note: There is an explicit check that the user has supplied data with y[1] equal to y[n].
      */
     private static void periodicSpline(int n, double[] x, double[] y, double[] b, double[] c, double[] d) {
@@ -95,9 +95,7 @@ public class SplineFunctions {
 
         double[] e = new double[n];
 
-        if (n < 2 || y[0] != y[n - 1]) {
-            throw RInternalError.shouldNotReachHere("periodic spline: domain error");
-        }
+        RInternalError.guarantee(n >= 2 && y[0] == y[n - 1], "periodic spline: domain error");
 
         if (n == 2) {
             b[0] = 0.0;
@@ -204,7 +202,7 @@ public class SplineFunctions {
     /*
      * Natural Splines --------------- Here the end-conditions are determined by setting the second
      * derivative of the spline at the end-points to equal to zero.
-     *
+     * 
      * There are n-2 unknowns (y[i]'' at x[2], ..., x[n-1]) and n-2 equations to determine them.
      * Either Choleski or Gaussian elimination could be used.
      */
@@ -213,9 +211,7 @@ public class SplineFunctions {
         int i;
         double t;
 
-        if (n < 2) {
-            throw RInternalError.shouldNotReachHere("periodic spline: domain error");
-        }
+        RInternalError.guarantee(n >= 2, "periodic spline: domain error");
 
         if (n < 3) {
             t = (y[1] - y[0]);
@@ -289,9 +285,7 @@ public class SplineFunctions {
         int i;
         double t;
 
-        if (n < 2) {
-            throw RInternalError.shouldNotReachHere("periodic spline: domain error");
-        }
+        RInternalError.guarantee(n >= 2, "periodic spline: domain error");
 
         if (n < 3) {
             t = (y[1] - y[0]);

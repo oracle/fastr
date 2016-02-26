@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,46 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.parser.ast;
+package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import java.util.*;
+import java.io.PrintWriter;
 
-import com.oracle.truffle.api.source.*;
+public class PrintContext {
+    private final ValuePrinterNode pn;
+    private final PrintParameters params;
+    private final PrintWriter out;
 
-public final class ArgNode extends ASTNode {
-
-    private final String name;
-    private ASTNode value;
-
-    private ArgNode(SourceSection source, String name, ASTNode value) {
-        super(source);
-        this.name = name;
-        this.value = value;
+    public PrintContext(ValuePrinterNode printerNode, PrintParameters parameters, PrintWriter output) {
+        this.pn = printerNode;
+        this.params = parameters;
+        this.out = output;
     }
 
-    public static ArgNode create(SourceSection source, String name, ASTNode value) {
-        return new ArgNode(source, name, value);
+    public PrintParameters parameters() {
+        return params;
     }
 
-    public String getName() {
-        return name;
+    public ValuePrinterNode printerNode() {
+        return pn;
     }
 
-    public ASTNode getValue() {
-        return value;
+    public PrintWriter output() {
+        return out;
     }
 
-    public void setValue(ASTNode value) {
-        this.value = value;
+    public PrintContext cloneContext() {
+        return new PrintContext(pn, params.cloneParameters(), out);
     }
 
-    @Override
-    public <R> R accept(Visitor<R> v) {
-        return v.visit(this);
-    }
-
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Arrays.asList(getValue().accept(v));
-    }
 }

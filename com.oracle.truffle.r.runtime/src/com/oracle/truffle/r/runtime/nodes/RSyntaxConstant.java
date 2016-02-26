@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,42 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.parser.ast;
+package com.oracle.truffle.r.runtime.nodes;
 
-import java.util.*;
+/**
+ * Represents a constant (logical, character, integer, double, complex, NULL or missing/empty) in
+ * the tree of elements that make up an R closure.
+ */
+public interface RSyntaxConstant extends RSyntaxElement {
 
-import com.oracle.truffle.api.source.*;
-
-public final class Formula extends ASTNode {
-
-    private final ASTNode response;
-    private final ASTNode model;
-
-    private Formula(SourceSection source, ASTNode response, ASTNode model) {
-        super(source);
-        this.response = response;
-        this.model = model;
-    }
-
-    public static Formula create(SourceSection source, ASTNode response, ASTNode model) {
-        return new Formula(source, response, model);
-    }
-
-    public ASTNode getResponse() {
-        return response;
-    }
-
-    public ASTNode getModel() {
-        return model;
-    }
-
-    @Override
-    public <R> R accept(Visitor<R> v) {
-        return v.visit(this);
-    }
-
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        throw new IllegalStateException("should not reach here");
-    }
+    Object getValue();
 }

@@ -107,7 +107,8 @@ public class TestSimpleArithmetic extends TestBase {
 
     @Test
     /**
-     * FIXME These expressions evaluate correctly in the shell but produce 1+0i in unit test environment
+     * FIXME These expressions evaluate correctly in the shell but produce 1+0i in unit test
+     * environment
      */
     public void testScalarsComplexIgnore() {
         assertEval("{ (1+2i)^(-2) }");

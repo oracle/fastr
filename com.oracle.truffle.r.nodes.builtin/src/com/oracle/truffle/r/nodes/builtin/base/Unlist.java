@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -67,6 +67,18 @@ public abstract class Unlist extends RBuiltinNode {
         @Specialization
         protected int getLength(@SuppressWarnings("unused") RNull vector) {
             return 0;
+        }
+
+        @Specialization
+        protected int getLength(@SuppressWarnings("unused") RLanguage l) {
+            // language object do not get expanded - as such their length for the purpose of unlist
+            // is 1
+            return 1;
+        }
+
+        @Specialization
+        protected int getLength(@SuppressWarnings("unused") RFunction l) {
+            return 1;
         }
 
         @Specialization(guards = "!isVectorList(vector)")
@@ -268,7 +280,8 @@ public abstract class Unlist extends RBuiltinNode {
                 return RDataFactory.createStringVector(result, RDataFactory.INCOMPLETE_VECTOR,
                                 namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
             }
-            case PrecedenceNode.LIST_PRECEDENCE: {
+            case PrecedenceNode.LIST_PRECEDENCE:
+            case PrecedenceNode.EXPRESSION_PRECEDENCE: {
                 Object[] result = new Object[totalSize];
                 if (!recursive) {
                     RStringVector listNames = useNames && list.getNames(attrProfiles) != null ? list.getNames(attrProfiles) : null;

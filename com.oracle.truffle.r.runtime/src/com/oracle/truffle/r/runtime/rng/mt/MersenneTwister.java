@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 1997-2002, Makoto Matsumoto and Takuji Nishimura
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -156,11 +156,9 @@ public final class MersenneTwister extends RNGInitAdapter {
         double[] result = new double[count];
 
         localMti = localDummy0;
-        if (localMti == N + 1) {
-            throw RInternalError.shouldNotReachHere();
-            // It appears that this never happens
-            // sgenrand(4357);
-        }
+        // It appears that this never happens
+        // sgenrand(4357);
+        RInternalError.guarantee(localMti != N + 1);
 
         int pos = 0;
         while (pos < count && localMti < N) {
@@ -239,11 +237,9 @@ public final class MersenneTwister extends RNGInitAdapter {
         int y2y;
         int kk;
 
-        if (mti == N + 1) {
-            throw RInternalError.shouldNotReachHere();
-            // It appears that this never happens
-            // sgenrand(4357);
-        }
+        // It appears that this never happens
+        // sgenrand(4357);
+        RInternalError.guarantee(mti != N + 1);
 
         for (kk = 0; kk < N - M; kk++) {
             y2y = (mt[kk] & UPPERMASK) | (mt[kk + 1] & LOWERMASK);

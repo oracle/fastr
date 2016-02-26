@@ -34,8 +34,8 @@ import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
- * This class provides methods that match the functionality of the macro/function definitions in
- * thye R header files, e.g. {@code Rinternals.h} that are used by C/C++ code. For ease of
+ * This class provides methods that match the functionality of the macro/function definitions in the
+ * R header files, e.g. {@code Rinternals.h} that are used by C/C++ code. For ease of
  * identification, we use method names that, as far as possible, match the names in the header
  * files. These methods should never be called from normal FastR code.
  */

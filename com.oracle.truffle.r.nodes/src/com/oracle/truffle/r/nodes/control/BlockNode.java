@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * A {@link BlockNode} represents a sequence of statements such as the body of a {@code while} loop.
  *
  */
-public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityController {
+public class BlockNode extends SequenceNode implements RSyntaxNode, RSyntaxCall, VisibilityController {
     public static final RNode[] EMPTY_BLOCK = new RNode[0];
     private SourceSection sourceSectionR;
 
@@ -74,11 +74,11 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
     /**
      * Ensures that {@code node} is a {@link BlockNode}.
      */
-    public static RSyntaxNode ensureBlock(SourceSection src, RSyntaxNode node) {
+    public static RSyntaxNode ensureBlock(RSyntaxNode node) {
         if (node == null || node instanceof BlockNode) {
             return node;
         } else {
-            return new BlockNode(src, new RNode[]{node.asRNode()});
+            return new BlockNode(node.getSourceSection(), new RNode[]{node.asRNode()});
         }
     }
 
@@ -120,7 +120,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
          * it is represented as a LANGSXP with symbol "{" and a NULL cdr, representing the empty
          * sequence. This is an unpleasant special case in FastR that we can only detect by
          * re-examining the original source.
-         * 
+         *
          * A sequence of length 1, i.e. a single statement, is represented as itself, e.g. a SYMSXP
          * for "x" or a LANGSXP for a function call. Otherwise, the representation is a LISTSXP
          * pairlist, where the car is the statement and the cdr is either NILSXP or a LISTSXP for
@@ -226,4 +226,15 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
         sourceSectionR = null;
     }
 
+    public RSyntaxElement getSyntaxLHS() {
+        return RSyntaxLookup.createDummyLookup(getSourceSection(), "{", true);
+    }
+
+    public RSyntaxNode[] getSyntaxArguments() {
+        return RASTUtils.asSyntaxNodes(sequence);
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(sequence.length);
+    }
 }

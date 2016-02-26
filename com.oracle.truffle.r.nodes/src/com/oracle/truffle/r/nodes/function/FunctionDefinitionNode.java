@@ -175,8 +175,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         FrameDescriptor frameDesc = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(description != null && !description.isEmpty() ? description : "<function>", frameDesc);
         FunctionDefinitionNode result = new FunctionDefinitionNode(getSourceSection(), frameDesc, (RNode) body.deepCopy(), getFormalArguments(), description, substituteFrame,
-                        false, argPostProcess == null ? null
-                                        : argPostProcess.deepCopyUnconditional(), uuid);
+                        false, argPostProcess == null ? null : argPostProcess.deepCopyUnconditional(), uuid);
         return result;
     }
 

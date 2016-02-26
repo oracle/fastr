@@ -273,9 +273,7 @@ public class HiddenInternalFunctions {
         protected RList getRegisteredRoutines(RExternalPtr externalPtr) {
             Object[] data = new Object[NAMES.getLength()];
             DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.getAddr());
-            if (dllInfo == null) {
-                throw RInternalError.shouldNotReachHere();
-            }
+            RInternalError.guarantee(dllInfo != null);
             for (DLL.NativeSymbolType nst : DLL.NativeSymbolType.values()) {
                 DLL.DotSymbol[] symbols = dllInfo.getNativeSymbols(nst);
                 if (symbols == null) {
@@ -457,7 +455,7 @@ public class HiddenInternalFunctions {
 
     /*
      * Created as primitive function to avoid incrementing reference count for the argument.
-     *
+     * 
      * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
      * SHARED_PERMANENT_VAL for permanent shared
      */

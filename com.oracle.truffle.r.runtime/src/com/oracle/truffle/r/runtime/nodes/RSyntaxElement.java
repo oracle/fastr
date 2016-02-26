@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,26 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.parser.ast;
+package com.oracle.truffle.r.runtime.nodes;
 
-import java.util.*;
+import com.oracle.truffle.api.source.SourceSection;
 
-import com.oracle.truffle.api.source.*;
+/**
+ * This is the base interface for all nodes in the tree of elements that make up an R closure.
+ * Implementations of this interface do not necessarily need to be Truffle nodes, and some Truffle
+ * nodes synthesize RSyntaxElements in order to simulate the R-level structure of code. (e.g., an
+ * "if" node may return a synthetic lookup of "if" as the call's left hand side)
+ */
+public interface RSyntaxElement {
 
-public final class Missing extends ASTNode {
-
-    public Missing(SourceSection source) {
-        super(source);
-    }
-
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public <R> R accept(Visitor<R> v) {
-        return v.visit(this);
-    }
+    SourceSection getSourceSection();
 
 }

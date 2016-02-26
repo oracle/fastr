@@ -43,9 +43,12 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class GroupDispatchNode extends RSourceSectionNode implements RSyntaxNode {
+public final class GroupDispatchNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
     @Child private CallArgumentsNode callArgsNode;
     @Child private S3FunctionLookupNode functionLookupL;
@@ -279,5 +282,17 @@ public final class GroupDispatchNode extends RSourceSectionNode implements RSynt
             throw RError.nyi(this, "missing builtin function '" + genericName + "'");
         }
         return callMatcher.execute(frame, signature, evaluatedArgs, function, s3Args);
+    }
+
+    public RSyntaxElement getSyntaxLHS() {
+        return RSyntaxLookup.createDummyLookup(null, fixedGenericName, true);
+    }
+
+    public RSyntaxElement[] getSyntaxArguments() {
+        return callArgsNode.getSyntaxArguments();
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return callArgsNode.getSignature();
     }
 }

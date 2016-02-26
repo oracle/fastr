@@ -54,7 +54,8 @@ import com.oracle.truffle.r.runtime.context.*;
  * invoked by the corresponding methods on {@link RBaseNode} after the correct {@link RSyntaxNode}
  * is located.
  */
-public interface RSyntaxNode extends RSyntaxNodeSPI {
+public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
+
     /**
      * A convenience method that captures the fact that, while the notion of a syntax node is
      * described in this interface, in practice all {@link RSyntaxNode} instances are also

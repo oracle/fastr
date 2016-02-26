@@ -103,11 +103,8 @@ public abstract class RBaseNode extends Node {
      */
     protected RSyntaxNode getRSyntaxNode() {
         RSyntaxNode result = checkGetRSyntaxNode();
-        if (result == null) {
-            throw RInternalError.shouldNotReachHere("getRSyntaxNode");
-        } else {
-            return result;
-        }
+        RInternalError.guarantee(result != null, "getRSyntaxNode");
+        return result;
     }
 
     /**

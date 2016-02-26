@@ -219,9 +219,7 @@ public class RPackageSource {
 
     public static String decodeName(String path) {
         String name = pathToNameMap.get(path);
-        if (name == null) {
-            throw RInternalError.shouldNotReachHere();
-        }
+        RInternalError.guarantee(name != null);
         return name;
     }
 
