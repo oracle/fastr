@@ -541,7 +541,8 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doListFiles(RAbstractStringVector vec, RAbstractStringVector patternVec, byte allFiles, byte fullNames, byte recursive, byte ignoreCase, byte includeDirs, byte noDotDot) {
+        protected RStringVector doListFiles(RAbstractStringVector vec, RAbstractStringVector patternVec, byte allFiles, byte fullNames, byte recursive, byte ignoreCase, byte includeDirs,
+                        byte noDotDot) {
             /*
              * Pattern in first element of vector, remaining elements are ignored (as per GnuR).
              * N.B. The pattern matches file names not paths, which means we cannot just use the
@@ -555,7 +556,8 @@ public class FileFunctions {
             return doListFilesBody(vec, pattern, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
         }
 
-        protected RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, byte allFilesL, byte fullNamesL, byte recursiveL, byte ignoreCaseL, byte includeDirsL, byte noDotDotL) {
+        protected RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, byte allFilesL, byte fullNamesL, byte recursiveL, byte ignoreCaseL, byte includeDirsL,
+                        byte noDotDotL) {
             controlVisibility();
             boolean allFiles = RRuntime.fromLogical(allFilesL);
             boolean fullNames = RRuntime.fromLogical(fullNamesL);

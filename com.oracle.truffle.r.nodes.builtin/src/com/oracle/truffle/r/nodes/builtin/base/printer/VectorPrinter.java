@@ -116,9 +116,9 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                     title = null;
                     names = null;
                     jobMode = JobMode.array;
-// SEXP dimnames;
-// dimnames = GetArrayDimnames(s);
-// printArray(s, t, R_print.quote, R_print.right, dimnames);
+                    // SEXP dimnames;
+                    // dimnames = GetArrayDimnames(s);
+                    // printArray(s, t, R_print.quote, R_print.right, dimnames);
                 }
             } else {
                 dims = null;

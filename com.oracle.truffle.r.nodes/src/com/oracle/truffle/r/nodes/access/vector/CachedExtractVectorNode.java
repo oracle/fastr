@@ -83,9 +83,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     public boolean isSupported(Object target, Object[] positions, Object exactValue, Object dropDimensionsValue) {
         if (targetClass == target.getClass() && exactValue.getClass() == this.exactClass //
-                        && logicalAsBoolean(dropDimensionsClass.cast(dropDimensionsValue), DEFAULT_DROP_DIMENSION) == this.dropDimensions //
-                        && dropDimensionsValue.getClass() == this.dropDimensionsClass //
-                        && logicalAsBoolean(exactClass.cast(exactValue), DEFAULT_EXACT) == this.exact) {
+        && logicalAsBoolean(dropDimensionsClass.cast(dropDimensionsValue), DEFAULT_DROP_DIMENSION) == this.dropDimensions //
+        && dropDimensionsValue.getClass() == this.dropDimensionsClass //
+        && logicalAsBoolean(exactClass.cast(exactValue), DEFAULT_EXACT) == this.exact) {
             return positionsCheckNode.isSupported(positions);
         }
         return false;

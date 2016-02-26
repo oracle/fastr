@@ -49,10 +49,10 @@ import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
- * sys.R. See <a
- * href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/sys.parent.html">here</a>. N.B. The
- * frame for the sys functions themselves is not counted in the R spec. Frames are numbered 0, 1, ..
- * starting from .GlobalEnv. Non-negative arguments are frame numbers, negative arguments are
+ * sys.R. See
+ * <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/sys.parent.html">here</a>. N.B.
+ * The frame for the sys functions themselves is not counted in the R spec. Frames are numbered 0,
+ * 1, .. starting from .GlobalEnv. Non-negative arguments are frame numbers, negative arguments are
  * relative to the current frame.
  */
 public class FrameFunctions {
@@ -137,7 +137,8 @@ public class FrameFunctions {
      * unlike, {@code sys.call}, the {@code call} argument can be provided by the caller. "..." is a
      * significant complication for two reasons:
      * <ol>
-     * <li>If {@code expand.dots} is {@code false} the "..." args are wrapped in a {@code pairlist}</li>
+     * <li>If {@code expand.dots} is {@code false} the "..." args are wrapped in a {@code pairlist}
+     * </li>
      * <li>One of the args might itself be "..." in which case the values have to be retrieved from
      * the environment associated with caller of the function containing {@code match.call}.</li>
      * </ol>

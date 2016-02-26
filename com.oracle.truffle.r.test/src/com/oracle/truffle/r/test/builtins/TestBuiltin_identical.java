@@ -190,15 +190,15 @@ public class TestBuiltin_identical extends TestBase {
 
     @Test
     public void testidentical36() {
-        assertEval("argv <- structure(list(x = structure(list(X1.4 = 1:4), .Names = 'X1.4',     row.names = c(NA, -4L), class = 'data.frame'), y = structure(list(X1.4 = 1:4),     .Names = 'X1.4', row.names = c('1', '2', '3', '4'), class = 'data.frame')),     .Names = c('x', 'y'));"
-                        + "do.call('identical', argv)");
+        assertEval("argv <- structure(list(x = structure(list(X1.4 = 1:4), .Names = 'X1.4',     row.names = c(NA, -4L), class = 'data.frame'), y = structure(list(X1.4 = 1:4),     .Names = 'X1.4', row.names = c('1', '2', '3', '4'), class = 'data.frame')),     .Names = c('x', 'y'));" +
+                        "do.call('identical', argv)");
     }
 
     @Test
     public void testidentical37() {
         assertEval(Ignored.Unknown,
-                        "argv <- structure(list(x = structure(list(a = NA, b = NA_integer_,     c = NA_real_, d = NA_complex_, e = 1, f = 1L, g = 1:3, h = c(NA,         1L, 2L, 3L), i = NA_character_, j = c('foo', NA, 'bar')),     .Names = c('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j')),     y = structure(list(a = NA, b = NA_integer_, c = NA_real_,         d = NA_complex_, e = 1, f = 1L, g = 1:3, h = c(NA, 1L,             2L, 3L), i = NA_character_, j = c('foo', NA, 'bar')),         .Names = c('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',             'j'))), .Names = c('x', 'y'));"
-                                        + "do.call('identical', argv)");
+                        "argv <- structure(list(x = structure(list(a = NA, b = NA_integer_,     c = NA_real_, d = NA_complex_, e = 1, f = 1L, g = 1:3, h = c(NA,         1L, 2L, 3L), i = NA_character_, j = c('foo', NA, 'bar')),     .Names = c('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j')),     y = structure(list(a = NA, b = NA_integer_, c = NA_real_,         d = NA_complex_, e = 1, f = 1L, g = 1:3, h = c(NA, 1L,             2L, 3L), i = NA_character_, j = c('foo', NA, 'bar')),         .Names = c('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',             'j'))), .Names = c('x', 'y'));" +
+                                        "do.call('identical', argv)");
     }
 
     @Test

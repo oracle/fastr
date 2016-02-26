@@ -21,7 +21,7 @@ public class TestBuiltin_setHook extends TestBase {
     @Test
     public void testsetHook1() {
         assertEval(Ignored.SideEffects,
-                        "argv <- structure(list(hookName = 'UserHook::stats4::onUnload',     value = function(pkgname, ...) cat('onUnload', sQuote(pkgname),         'B', '\\n')), .Names = c('hookName', 'value'));"
-                                        + "do.call('setHook', argv)");
+                        "argv <- structure(list(hookName = 'UserHook::stats4::onUnload',     value = function(pkgname, ...) cat('onUnload', sQuote(pkgname),         'B', '\\n')), .Names = c('hookName', 'value'));" +
+                                        "do.call('setHook', argv)");
     }
 }

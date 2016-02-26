@@ -54,22 +54,22 @@ public final class MathInit {
             case 4:
                 return 0;
 
-                // case 5: return CHAR_BIT * sizeof(int);
-                // case 6: return sizeof(int)/sizeof(char);
+            // case 5: return CHAR_BIT * sizeof(int);
+            // case 6: return sizeof(int)/sizeof(char);
 
             case 7:
                 return 2;
-                // case 8: return CHAR_BIT * sizeof(int) - 1;
+            // case 8: return CHAR_BIT * sizeof(int) - 1;
             case 9:
                 return Integer.MAX_VALUE;
 
-                // case 10: return FLT_RADIX;
-                //
-                // case 11: return FLT_MANT_DIG;
-                // case 12: return FLT_MIN_EXP;
-                // case 13: return FLT_MAX_EXP;
-                //
-                // case 14: return DBL_MANT_DIG;
+            // case 10: return FLT_RADIX;
+            //
+            // case 11: return FLT_MANT_DIG;
+            // case 12: return FLT_MIN_EXP;
+            // case 13: return FLT_MAX_EXP;
+            //
+            // case 14: return DBL_MANT_DIG;
             case 15:
                 return Double.MIN_EXPONENT;
             case 16:

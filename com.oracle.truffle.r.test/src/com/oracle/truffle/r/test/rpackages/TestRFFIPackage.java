@@ -52,12 +52,12 @@ public class TestRFFIPackage extends TestRPackages {
 
     @BeforeClass
     public static void setupInstallMyTestPackages() {
-// setupInstallTestPackages(TEST_PACKAGES);
+        // setupInstallTestPackages(TEST_PACKAGES);
     }
 
     @AfterClass
     public static void tearDownUninstallMyTestPackages() {
-// tearDownUninstallTestPackages(TEST_PACKAGES);
+        // tearDownUninstallTestPackages(TEST_PACKAGES);
     }
 
     @Test

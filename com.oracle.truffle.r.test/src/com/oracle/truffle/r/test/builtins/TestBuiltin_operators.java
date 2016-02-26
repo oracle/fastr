@@ -150,7 +150,8 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators26() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(1+1i, 2+2i, 1.2+10i, 2.4+20i), .Dim = c(2L, 2L), .Dimnames = list(c('x', ''), c('a', 'b'))), 3.14159265358979);`+`(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown,
+                        "argv <- list(structure(c(1+1i, 2+2i, 1.2+10i, 2.4+20i), .Dim = c(2L, 2L), .Dimnames = list(c('x', ''), c('a', 'b'))), 3.14159265358979);`+`(argv[[1]],argv[[2]]);");
     }
 
     @Test

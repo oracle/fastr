@@ -142,7 +142,7 @@ public class ArgumentMatcher {
         CompilerAsserts.neverPartOfCompilation();
         MatchPermutation match = permuteArguments(suppliedSignature, formalSignature, callingNode, forNextMethod, index -> {
             throw RInternalError.unimplemented("S3Dispatch should not have arg length mismatch");
-        }, index -> suppliedSignature.getName(index), builtin);
+        } , index -> suppliedSignature.getName(index), builtin);
         return match;
     }
 
@@ -208,7 +208,7 @@ public class ArgumentMatcher {
         FormalArguments formals = rootNode.getFormalArguments();
         MatchPermutation match = permuteArguments(evaluatedArgs.getSignature(), formals.getSignature(), callingNode, forNextMethod, index -> {
             throw RInternalError.unimplemented("S3Dispatch should not have arg length mismatch");
-        }, index -> evaluatedArgs.getSignature().getName(index), null);
+        } , index -> evaluatedArgs.getSignature().getName(index), null);
 
         Object[] evaledArgs = new Object[match.resultPermutation.length];
 

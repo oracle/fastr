@@ -52,7 +52,8 @@ public class SerializeFunctions {
         }
 
         @TruffleBoundary
-        protected Object doSerializeToConnBase(Object object, RConnection conn, byte asciiLogical, byte xdrLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook) {
+        protected Object doSerializeToConnBase(Object object, RConnection conn, byte asciiLogical, byte xdrLogical, @SuppressWarnings("unused") RNull version,
+                        @SuppressWarnings("unused") RNull refhook) {
             controlVisibility();
             boolean ascii = RRuntime.fromLogical(asciiLogical);
             // xdr is only relevant if ascii is false

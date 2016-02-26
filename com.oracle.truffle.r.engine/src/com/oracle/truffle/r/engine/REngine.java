@@ -464,8 +464,8 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     /**
-     * Creates an anonymous function, with no arguments to evaluate {@code body}. If {@body}
-     * is a not a syntax node, uses a simple {@link BodyNode} with no source information. Otherwise
+     * Creates an anonymous function, with no arguments to evaluate {@code body}. If {@body} is a
+     * not a syntax node, uses a simple {@link BodyNode} with no source information. Otherwise
      * creates a {@link FunctionStatementsNode} using {@code body}. and ensures that the
      * {@link FunctionBodyNode} has a {@link SourceSection}, for instrumentation, although the
      * anonymous {@link FunctionDefinitionNode} itself does not need one.

@@ -986,7 +986,9 @@ public class RDeparse {
      *  base::mean(x)
      * </pre>
      *
-     * but <pre< (f+g)(z) (function(x) 1)(x) </pre> etc.
+     * but <pre< (f+g)(z) (function(x) 1)(x)
+     * </pre>
+     * etc.
      */
     private static boolean parenthesizeCaller(Object s) {
         if (s instanceof RPairList) {
@@ -1115,7 +1117,9 @@ public class RDeparse {
     }
 
     @TruffleBoundary
-    /** Handles {@link RList}, (@link RExpression}, {@link RDataFrame} and {@link RFactor}. Method name same as GnuR.
+    /**
+     * Handles {@link RList}, (@link RExpression}, {@link RDataFrame} and {@link RFactor}. Method
+     * name same as GnuR.
      */
     private static State vec2buff(State state, RVector v) {
         int n = v.getLength();
