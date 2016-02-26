@@ -23,7 +23,7 @@ public class TestFunctions extends TestBase {
         assertEval("{ foo() }");
         assertEval("{ 'foo'() }");
         // these errors will be fixed by proper handling of "("
-        assertEval(Ignored.ImplementationError, "{ (foo)() }");
+        assertEval("{ (foo)() }");
         assertEval(Output.ContainsError, "{ ('foo')() }");
         assertEval("{ foo <- function() 1; foo() }");
         assertEval("{ foo <- function() 1; 'foo'() }");

@@ -109,6 +109,18 @@ package com.oracle.truffle.r.parser;
         throw new MismatchedTokenException(expected, input);
     }
 }
+@lexer::members {
+    /*
+     * The nesting level is maintained for "{", "(", "[" and "[[", so that
+     * LINE_BREAK can be ignored while the nesting is larger than zero.
+     */
+    private int incompleteNesting;
+    private final ArrayList<Integer> nestingStack = new ArrayList<>();
+}
+
+@lexer::init{
+    incompleteNesting = 0;
+}
 
 /****************************************************
 ** Known errors :
@@ -452,7 +464,7 @@ arg_expr [List<Argument<T>> l]
 /// Lexer
 ///
 
-COMMENT : '#' ~('\n'|'\r'|'\f')* (LINE_BREAK | EOF) ;
+COMMENT : '#' ~('\n'|'\r'|'\f')* (LINE_BREAK | EOF) { if(incompleteNesting > 0) $channel=HIDDEN; } ;
 
 ARROW             : '<-' | ':=' ;
 SUPER_ARROW       : '<<-' ;
@@ -480,13 +492,13 @@ ELEMENTWISEAND : '&' ;
 OR             : '||' ;
 ELEMENTWISEOR  : '|' ;
 
-LBRACE  : '{' ;
-RBRACE  : '}' ;
-LPAR    : '(' ;
-RPAR    : ')' ;
-LBB     : '[[' ;
-LBRAKET : '[' ;
-RBRAKET : ']' ;
+LBRACE  : '{' { nestingStack.add(incompleteNesting); incompleteNesting = 0; } ;
+RBRACE  : '}' { if (!nestingStack.isEmpty()) { incompleteNesting = nestingStack.remove(nestingStack.size() - 1); } } ;
+LPAR    : '(' { incompleteNesting++; } ;
+RPAR    : ')' { incompleteNesting--; } ;
+LBB     : '[[' { incompleteNesting+=2; } ;
+LBRAKET : '[' { incompleteNesting++; } ;
+RBRAKET : ']' { incompleteNesting--; } ;
 
 CARET : '^' | '**' ;
 TILDE : '~' ;
@@ -522,7 +534,7 @@ NEXT   : 'next' ;
 BREAK  : 'break' ;
 
 WS      : ('\u0009'|'\u0020'|'\u00A0') { $channel=HIDDEN; } ;
-NEWLINE : LINE_BREAK ;
+NEWLINE : LINE_BREAK { if(incompleteNesting > 0) $channel=HIDDEN; } ;
 
 INTEGER
     : ('0'..'9')+ '.' ('0'..'9')* 'L' { setText(getText().substring(0, getText().length()-1)); }
