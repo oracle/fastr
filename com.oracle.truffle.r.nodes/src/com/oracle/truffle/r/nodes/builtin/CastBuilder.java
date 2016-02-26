@@ -132,6 +132,10 @@ public final class CastBuilder {
     }
 
     public CastBuilder firstBoolean(int index) {
-        return insert(index, FirstBooleanNodeGen.create());
+        return insert(index, FirstBooleanNodeGen.create(null));
+    }
+
+    public CastBuilder firstBoolean(int index, String invalidValueName) {
+        return insert(index, FirstBooleanNodeGen.create(invalidValueName));
     }
 }
