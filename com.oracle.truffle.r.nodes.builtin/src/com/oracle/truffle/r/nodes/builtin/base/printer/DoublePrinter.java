@@ -120,8 +120,9 @@ public final class DoublePrinter extends AbstractValuePrinter<Double> {
             } else if (kp <= R_dec_min_exponent) {
                 /*
                  * on IEEE 1e-308 is not representable except by gradual underflow. Shifting by 303
-                 * allows for any potential denormalized numbers x, and makes the reasonable assumption
-                 * that R_dec_min_exponent+303 is in range. Representation of 1e+303 has low error.
+                 * allows for any potential denormalized numbers x, and makes the reasonable
+                 * assumption that R_dec_min_exponent+303 is in range. Representation of 1e+303 has
+                 * low error.
                  */
                 rPrec = (rPrec * 1e+303) / Math.pow(10, kp + 303);
             } else {
