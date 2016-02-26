@@ -21,16 +21,16 @@ import com.oracle.truffle.r.runtime.data.RString;
 
 public class PrintParameters {
     private int width;
-    private int na_width;
-    private int na_width_noquote;
+    private int naWidth;
+    private int naWidthNoquote;
     private int digits;
     private int scipen;
     private int gap;
     private boolean quote;
     private boolean right;
     private int max;
-    private String na_string;
-    private String na_string_noquote;
+    private String naString;
+    private String naStringNoquote;
     private boolean useSource;
     private int cutoff; // for deparsed language objects
 
@@ -63,8 +63,8 @@ public class PrintParameters {
             // IllegalArgumentException(String.format("invalid 'na.print' specification"));
             String nav = naPrint.toString();
             if (!"".equals(nav)) {
-                this.na_string = this.na_string_noquote = ((RString) naPrint).getValue();
-                this.na_width = this.na_width_noquote = this.na_string.length();
+                this.naString = this.naStringNoquote = ((RString) naPrint).getValue();
+                this.naWidth = this.naWidthNoquote = this.naString.length();
             }
         }
 
@@ -91,10 +91,10 @@ public class PrintParameters {
 
     public PrintParameters cloneParameters() {
         PrintParameters cloned = new PrintParameters();
-        cloned.na_string = this.na_string;
-        cloned.na_string_noquote = this.na_string_noquote;
-        cloned.na_width = this.na_width;
-        cloned.na_width_noquote = this.na_string_noquote.length();
+        cloned.naString = this.naString;
+        cloned.naStringNoquote = this.naStringNoquote;
+        cloned.naWidth = this.naWidth;
+        cloned.naWidthNoquote = this.naStringNoquote.length();
         cloned.quote = this.quote;
         cloned.right = this.right;
         cloned.digits = this.digits;
@@ -108,10 +108,10 @@ public class PrintParameters {
     }
 
     private void setDefaults() {
-        this.na_string = RRuntime.STRING_NA;
-        this.na_string_noquote = "<NA>";
-        this.na_width = this.na_string.length();
-        this.na_width_noquote = this.na_string_noquote.length();
+        this.naString = RRuntime.STRING_NA;
+        this.naStringNoquote = "<NA>";
+        this.naWidth = this.naString.length();
+        this.naWidthNoquote = this.naStringNoquote.length();
         this.quote = true;
         this.right = false;
         this.digits = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("digits"));
@@ -139,20 +139,20 @@ public class PrintParameters {
         this.width = width;
     }
 
-    public int getNa_width() {
-        return na_width;
+    public int getNaWidth() {
+        return naWidth;
     }
 
-    public void setNa_width(int na_width) {
-        this.na_width = na_width;
+    public void setNaWidth(int naWidth) {
+        this.naWidth = naWidth;
     }
 
-    public int getNa_width_noquote() {
-        return na_width_noquote;
+    public int getNaWidthNoquote() {
+        return naWidthNoquote;
     }
 
-    public void setNa_width_noquote(int na_width_noquote) {
-        this.na_width_noquote = na_width_noquote;
+    public void setNaWidthNoquote(int naWidthNoquote) {
+        this.naWidthNoquote = naWidthNoquote;
     }
 
     public int getDigits() {
@@ -203,20 +203,20 @@ public class PrintParameters {
         this.max = max;
     }
 
-    public String getNa_string() {
-        return na_string;
+    public String getNaString() {
+        return naString;
     }
 
-    public void setNa_string(String na_string) {
-        this.na_string = na_string;
+    public void setNaString(String naString) {
+        this.naString = naString;
     }
 
-    public String getNa_string_noquote() {
-        return na_string_noquote;
+    public String getNaStringNoquote() {
+        return naStringNoquote;
     }
 
-    public void setNa_string_noquote(String na_string_noquote) {
-        this.na_string_noquote = na_string_noquote;
+    public void setNaStringNoquote(String naStringNoquote) {
+        this.naStringNoquote = naStringNoquote;
     }
 
     public boolean getUseSource() {

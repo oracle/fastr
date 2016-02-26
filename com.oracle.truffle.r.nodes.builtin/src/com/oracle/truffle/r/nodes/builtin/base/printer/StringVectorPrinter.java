@@ -98,7 +98,7 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
             String xi = quote ? RRuntime.quoteString(s) : s;
 
             if (xi == RRuntime.STRING_NA) {
-                l = quote ? pp.getNa_width() : pp.getNa_width_noquote();
+                l = quote ? pp.getNaWidth() : pp.getNaWidthNoquote();
             } else {
                 l = xi.length();
             }

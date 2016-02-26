@@ -181,7 +181,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         wF = mxsl + rgt + (rgt != 0 ? 1 : 0); /* width for F format */
 
         /*-- 'see' how "E" Exponential format would be like : */
-        e = (mxl > 100 || mnl <= -99) ? 2 /* 3 digit exponent */: 1;
+        e = (mxl > 100 || mnl <= -99) ? 2 : 1; /* 3 digit exponent */
         if (mxns != RRuntime.INT_MIN_VALUE) {
             d = mxns - 1;
             w = neg + (d != 0 ? 1 : 1) + d + 4 + e; /* width for E format */
@@ -199,8 +199,8 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
             d = 0;
             e = 0;
         }
-        if (naflag && w < pp.getNa_width()) {
-            w = pp.getNa_width();
+        if (naflag && w < pp.getNaWidth()) {
+            w = pp.getNaWidth();
         }
         if (nanflag && w < 3) {
             w = 3;

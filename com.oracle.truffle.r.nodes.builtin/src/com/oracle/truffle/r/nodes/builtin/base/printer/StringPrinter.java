@@ -30,13 +30,13 @@ public final class StringPrinter extends AbstractValuePrinter<String> {
         final String s;
         if (quote) {
             if (RRuntime.isNA(value)) {
-                s = pp.getNa_string();
+                s = pp.getNaString();
             } else {
                 s = RRuntime.quoteString(value);
             }
         } else {
             if (RRuntime.isNA(value)) {
-                s = pp.getNa_string_noquote();
+                s = pp.getNaStringNoquote();
             } else {
                 s = value;
             }

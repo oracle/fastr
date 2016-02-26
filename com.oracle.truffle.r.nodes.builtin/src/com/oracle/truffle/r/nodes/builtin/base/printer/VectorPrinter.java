@@ -67,7 +67,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
 
         protected final T vector;
         protected final int n;
-        protected final int n_pr;
+        protected final int nPr;
         protected final int indx;
         protected final int labwidth;
         protected final boolean quote;
@@ -146,7 +146,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
             this.out = this.printCtx.output();
             this.n = vector.getLength();
             int max = printCtx.parameters().getMax();
-            this.n_pr = (n <= max + 1) ? n : max;
+            this.nPr = (n <= max + 1) ? n : max;
             this.labwidth = indexWidth(n) + 2;
             this.matrixDimNames = mdn;
         }
@@ -189,7 +189,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
             FormatMetrics fm = formatVector(0, n);
             final int w = fm.maxWidth;
 
-            for (int i = 0; i < n_pr; i++) {
+            for (int i = 0; i < nPr; i++) {
                 if (i > 0 && width + w + gap > totalWidth) {
                     out.println();
                     width = doLab(i);
@@ -199,8 +199,8 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                 width += w + gap;
             }
             out.println();
-            if (n_pr < n) {
-                out.printf(" [ reached getOption(\"max.print\") -- omitted %d entries ]\n", n - n_pr);
+            if (nPr < n) {
+                out.printf(" [ reached getOption(\"max.print\") -- omitted %d entries ]\n", n - nPr);
             }
         }
 
@@ -270,7 +270,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
             String cn = matrixDimNames.cn;
             int r = dims.getDataAt(0);
             int c = dims.getDataAt(1);
-            int r_pr;
+            int rpr;
 
             /* PR#850 */
             if (rl != null && r > rl.getLength()) {
@@ -283,23 +283,23 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                 out.println("<0 x 0 matrix>");
                 return;
             }
-            r_pr = r;
+            rpr = r;
             if (c > 0 && pp.getMax() / c < r) {
                 /* using floor(), not ceil(), since 'c' could be huge: */
-                r_pr = pp.getMax() / c;
+                rpr = pp.getMax() / c;
             }
 
-            printMatrix(offset, r_pr, r, c, rl, cl, rn, cn, true);
+            printMatrix(offset, rpr, r, c, rl, cl, rn, cn, true);
 
-            if (r_pr < r) {
-                out.printf(" [ reached getOption(\"max.print\") -- omitted %d rows ]\n", r - r_pr);
+            if (rpr < r) {
+                out.printf(" [ reached getOption(\"max.print\") -- omitted %d rows ]\n", r - rpr);
             }
 
         }
 
-        private void printMatrix(int offset, int r_pr, int r, int c,
+        private void printMatrix(int offset, int rpr, int r, int c,
                         RAbstractStringVector rl, RAbstractStringVector cl, String rn, String cn,
-                        boolean print_ij) throws IOException {
+                        boolean printij) throws IOException {
             // _PRINT_INIT_rl_rn
 
             PrintParameters pp = printCtx.parameters();
@@ -334,7 +334,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
             // define _COMPUTE_W2_(_FORMAT_j_, _LAST_j_)
             /* compute w[j] = column-width of j(+1)-th column : */
             for (j = 0; j < c; j++) {
-                if (print_ij) {
+                if (printij) {
                     w[j] = formatVector(offset + j * r, r);
                 } else {
                     w[j] = formatVector(0, 0);
@@ -343,7 +343,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                 if (cl != null) {
                     String clj = cl.getDataAt(j);
                     if (RRuntime.isNA(clj)) {
-                        clabw = pp.getNa_width_noquote();
+                        clabw = pp.getNaWidthNoquote();
                     } else {
                         clabw = clj.length();
                     }
@@ -382,9 +382,9 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
 
                     printMatrixColumnLabels(cl, jmin, jmax, w);
 
-                    for (i = 0; i < r_pr; i++) {
+                    for (i = 0; i < rpr; i++) {
                         matrixRowLabel(rl, i, rlabw, lbloff); /* starting with an "\n" */
-                        if (print_ij) {
+                        if (printij) {
                             for (j = jmin; j < jmax; j++) {
                                 printCell(i + j * r, w[j]);
                             }
@@ -423,7 +423,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
 
             if (cl != null) {
                 String tmp = cl.getDataAt(j);
-                int l = (RRuntime.isNA(tmp)) ? pp.getNa_width_noquote() : tmp.length();
+                int l = (RRuntime.isNA(tmp)) ? pp.getNaWidthNoquote() : tmp.length();
                 int gap = w - l;
                 String fmt = "%" + asBlankArg(gap) + "s%s";
 
@@ -443,7 +443,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
 
             if (cl != null) {
                 String tmp = cl.getDataAt(j);
-                int l = (RRuntime.isNA(tmp)) ? pp.getNa_width_noquote() : tmp.length();
+                int l = (RRuntime.isNA(tmp)) ? pp.getNaWidthNoquote() : tmp.length();
                 /*
                  * This does not work correctly at least on FC3 Rprintf("%*s", R_print.gap+w,
                  * EncodeString(tmp, l, 0, Rprt_adj_right));
@@ -468,7 +468,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
 
             if (cl != null) {
                 String tmp = cl.getDataAt(j);
-                int l = (RRuntime.isNA(tmp)) ? pp.getNa_width_noquote() : tmp.length();
+                int l = (RRuntime.isNA(tmp)) ? pp.getNaWidthNoquote() : tmp.length();
                 String g1 = asBlankArg(pp.getGap());
                 String g2 = asBlankArg(w - l);
                 String fmt = "%" + g1 + "s%s%" + g2 + "s";
@@ -490,7 +490,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
 
             if (rl != null) {
                 String tmp = rl.getDataAt(i);
-                int l = (RRuntime.isNA(tmp)) ? pp.getNa_width_noquote() : tmp.length();
+                int l = (RRuntime.isNA(tmp)) ? pp.getNaWidthNoquote() : tmp.length();
                 String gap = asBlankArg(rlabw - l - lbloff);
                 String fmt = "\n%" + asBlankArg(lbloff) + "s%s%" + gap + "s";
 

@@ -109,35 +109,33 @@ public final class DoublePrinter extends AbstractValuePrinter<Double> {
             kp = (int) Math.floor(Math.log10(r)) - pp.getDigits() + 1; // r = |x|;
                                                                        // 10^(kp + digits - 1) <= r
 
-            double r_prec = r;
+            double rPrec = r;
             /* use exact scaling factor in double precision, if possible */
             if (Math.abs(kp) <= 22) {
                 if (kp >= 0) {
-                    r_prec /= tbl[kp + 1];
+                    rPrec /= tbl[kp + 1];
                 } else {
-                    r_prec *= tbl[-kp + 1];
+                    rPrec *= tbl[-kp + 1];
                 }
-            }
-            /*
-             * on IEEE 1e-308 is not representable except by gradual underflow. Shifting by 303
-             * allows for any potential denormalized numbers x, and makes the reasonable assumption
-             * that R_dec_min_exponent+303 is in range. Representation of 1e+303 has low error.
-             */
-
-            else if (kp <= R_dec_min_exponent) {
-                r_prec = (r_prec * 1e+303) / Math.pow(10, kp + 303);
+            } else if (kp <= R_dec_min_exponent) {
+                /*
+                 * on IEEE 1e-308 is not representable except by gradual underflow. Shifting by 303
+                 * allows for any potential denormalized numbers x, and makes the reasonable assumption
+                 * that R_dec_min_exponent+303 is in range. Representation of 1e+303 has low error.
+                 */
+                rPrec = (rPrec * 1e+303) / Math.pow(10, kp + 303);
             } else {
-                r_prec /= Math.pow(10, kp);
+                rPrec /= Math.pow(10, kp);
             }
-            if (r_prec < tbl[pp.getDigits()]) {
-                r_prec *= 10.0;
+            if (rPrec < tbl[pp.getDigits()]) {
+                rPrec *= 10.0;
                 kp--;
             }
             /* round alpha to integer, 10^(digits-1) <= alpha <= 10^digits */
             /*
              * accuracy limited by double rounding problem, alpha already rounded to 53 bits
              */
-            alpha = Math.round(r_prec);
+            alpha = Math.round(rPrec);
 
             nsig = pp.getDigits();
             for (j = 1; j <= pp.getDigits(); j++) {
@@ -185,7 +183,7 @@ public final class DoublePrinter extends AbstractValuePrinter<Double> {
             int numBlanks = Math.min(w, (NB - 1));
             String naFmt = "%" + numBlanks + "s";
             if (RRuntime.isNA(x)) {
-                buff = snprintf(NB, naFmt, pp.getNa_string());
+                buff = snprintf(NB, naFmt, pp.getNaString());
             } else if (RRuntime.isNAorNaN(x)) {
                 buff = snprintf(NB, naFmt, "NaN");
             } else if (x > 0) {
