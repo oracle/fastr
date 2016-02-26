@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.env.*;
@@ -37,11 +38,24 @@ import com.oracle.truffle.r.runtime.nodes.*;
  */
 public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityController {
     public static final RNode[] EMPTY_BLOCK = new RNode[0];
-    private SourceSection sourceSection;
+    private SourceSection sourceSectionR;
 
     public BlockNode(SourceSection src, RNode[] sequence) {
         super(sequence);
-        this.sourceSection = src;
+        this.sourceSectionR = src;
+        // tag sequence members as statements
+        for (int i = 0; i < sequence.length; i++) {
+            RNode n = sequence[i];
+            if (n instanceof RSyntaxNode) {
+                RSyntaxNode sn = (RSyntaxNode) n;
+                SourceSection sns = sn.getSourceSection();
+                if (!sns.hasTag(RSyntaxTags.STATEMENT)) {
+                    sn.setSourceSection(RSyntaxTags.addTags(sns, RSyntaxTags.STATEMENT));
+                }
+            } else {
+                throw RInternalError.shouldNotReachHere();
+            }
+        }
     }
 
     /**
@@ -199,17 +213,17 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
     }
 
     public void setSourceSection(SourceSection sourceSection) {
-        this.sourceSection = sourceSection;
+        this.sourceSectionR = sourceSection;
     }
 
     @Override
     public SourceSection getSourceSection() {
-        return sourceSection;
+        return sourceSectionR;
     }
 
     @Override
     public void unsetSourceSection() {
-        sourceSection = null;
+        sourceSectionR = null;
     }
 
 }

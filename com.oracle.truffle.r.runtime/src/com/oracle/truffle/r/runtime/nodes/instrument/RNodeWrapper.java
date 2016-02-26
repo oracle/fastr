@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,15 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.nodes;
+package com.oracle.truffle.r.runtime.nodes.instrument;
 
 import com.oracle.truffle.api.instrument.Probe;
 import com.oracle.truffle.api.instrument.EventHandlerNode;
 import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @NodeInfo(cost = NodeCost.NONE)
-public final class RNodeWrapper extends com.oracle.truffle.r.runtime.nodes.RNode implements WrapperNode {
+public final class RNodeWrapper extends RNode implements WrapperNode {
     @Child com.oracle.truffle.r.runtime.nodes.RNode child;
     @Child private EventHandlerNode eventHandlerNode;
 

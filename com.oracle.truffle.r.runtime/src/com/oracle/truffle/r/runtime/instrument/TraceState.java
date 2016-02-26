@@ -24,31 +24,46 @@ package com.oracle.truffle.r.runtime.instrument;
 
 import java.util.WeakHashMap;
 
-import com.oracle.truffle.api.instrument.StandardInstrumentListener;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.context.RContext;
 
+/**
+ * The tracingState is a global variable in R, so we store it (and the associated listener objects)
+ * in the {@link RContext}. To finesse the temporary existence of two instrumentation frameworks the
+ * receiver is typed as {@link Object}.
+ *
+ */
 public class TraceState {
     public static class ContextStateImpl implements RContext.ContextState {
 
         /**
-         * Records all functions that have debug receivers installed.
+         * Records all functions that have trace listeners installed.
          */
-        private final WeakHashMap<FunctionUID, StandardInstrumentListener> receiverMap = new WeakHashMap<>();
-        private boolean tracingState;
+        private final WeakHashMap<FunctionUID, Object> listenerMap = new WeakHashMap<>();
+        private boolean tracingState = true;
 
-        public void put(FunctionUID functionUID, StandardInstrumentListener listener) {
-            receiverMap.put(functionUID, listener);
+        public void put(FunctionUID functionUID, Object listener) {
+            listenerMap.put(functionUID, listener);
         }
 
-        public StandardInstrumentListener get(FunctionUID functionUID) {
-            return receiverMap.get(functionUID);
+        public Object get(FunctionUID functionUID) {
+            return listenerMap.get(functionUID);
         }
 
         public boolean setTracingState(boolean state) {
             boolean prev = tracingState;
             tracingState = state;
             return prev;
+        }
+
+        public boolean getTracingState() {
+            return tracingState;
+        }
+
+        public Object[] getListeners() {
+            Object[] result = new Object[listenerMap.size()];
+            listenerMap.values().toArray(result);
+            return result;
         }
     }
 

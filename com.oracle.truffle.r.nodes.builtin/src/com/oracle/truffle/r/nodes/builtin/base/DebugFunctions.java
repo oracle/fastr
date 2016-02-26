@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.instrument.debug.DebugHandling;
+import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -40,7 +40,7 @@ public class DebugFunctions {
         protected void doDebug(RFunction fun, Object text, Object condition, boolean once) throws RError {
             // GnuR does not generate an error for builtins, but debug (obviously) has no effect
             if (!fun.isBuiltin()) {
-                if (!DebugHandling.enableDebug(fun, text, condition, once)) {
+                if (!RInstrumentFactory.getInstance().enableDebug(fun, text, condition, once)) {
                     throw RError.error(this, RError.Message.GENERIC, "failed to attach debug handler (not instrumented?)");
                 }
             }
@@ -99,7 +99,7 @@ public class DebugFunctions {
         @TruffleBoundary
         protected RNull undebug(RFunction func) {
             controlVisibility();
-            if (!DebugHandling.undebug(func)) {
+            if (!RInstrumentFactory.getInstance().undebug(func)) {
                 throw RError.error(this, RError.Message.NOT_DEBUGGED);
             }
             return RNull.instance;
@@ -119,7 +119,7 @@ public class DebugFunctions {
         @TruffleBoundary
         protected byte isDebugged(RFunction func) {
             forceVisibility(true);
-            return RRuntime.asLogical(DebugHandling.isDebugged(func));
+            return RRuntime.asLogical(RInstrumentFactory.getInstance().isDebugged(func));
         }
     }
 }

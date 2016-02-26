@@ -46,6 +46,7 @@ import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
+import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FunctionUID;
@@ -93,7 +94,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private String description;
     private FunctionUID uuid;
     private boolean instrumented = false;
-    private SourceSection sourceSection;
+    private SourceSection sourceSectionR;
 
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode onExitExpressionCache;
@@ -148,30 +149,34 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     // REngine.evalPromise
     public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit,
                     PostProcessArgumentsNode argPostProcess) {
-        super(src, formals, frameDesc);
+        this(src, frameDesc, body, formals, description, substituteFrame, skipExit, argPostProcess, FunctionUIDFactory.get().createUID());
+    }
+
+    private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit,
+                    PostProcessArgumentsNode argPostProcess, FunctionUID uuid) {
+        super(null, formals, frameDesc);
         assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
-        this.sourceSection = src;
+        assert src != null;
+        this.sourceSectionR = src;
         this.body = body;
         this.uninitializedBody = body;
         this.description = description;
         this.substituteFrame = substituteFrame;
         this.onExitSlot = skipExit ? null : FrameSlotNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
-        this.uuid = FunctionUIDFactory.get().createUID();
+        this.uuid = uuid;
         this.needsSplitting = needsAnyBuiltinSplitting();
         this.containsDispatch = containsAnyDispatch(body);
         this.argPostProcess = argPostProcess;
+        RInstrumentFactory.getInstance().registerFunctionDefinitionNode(this);
     }
 
     @Override
     public RRootNode duplicateWithNewFrameDescriptor() {
         FrameDescriptor frameDesc = new FrameDescriptor();
-        FunctionUID thisUuid = uuid;
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(description != null && !description.isEmpty() ? description : "<function>", frameDesc);
         FunctionDefinitionNode result = new FunctionDefinitionNode(getSourceSection(), frameDesc, (RNode) body.deepCopy(), getFormalArguments(), description, substituteFrame,
-                        argPostProcess == null ? null
-                                        : argPostProcess.deepCopyUnconditional());
-        // Instrumentation depends on this copy having same uuid
-        result.uuid = thisUuid;
+                        false, argPostProcess == null ? null
+                                        : argPostProcess.deepCopyUnconditional(), uuid);
         return result;
     }
 
@@ -448,7 +453,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         FrameDescriptor frameDesc = new FrameDescriptor();
 
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<substituted function>", frameDesc);
-        return new FunctionDefinitionNode(null, frameDesc, (BodyNode) body.substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
+        return new FunctionDefinitionNode(null, frameDesc, body.substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
     }
 
     /**
@@ -635,17 +640,17 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     public void setSourceSection(SourceSection sourceSection) {
-        this.sourceSection = sourceSection;
+        this.sourceSectionR = sourceSection;
     }
 
     @Override
     public SourceSection getSourceSection() {
-        return sourceSection;
+        return sourceSectionR;
     }
 
     @Override
     public void unsetSourceSection() {
-        sourceSection = null;
+        sourceSectionR = null;
     }
 
 }

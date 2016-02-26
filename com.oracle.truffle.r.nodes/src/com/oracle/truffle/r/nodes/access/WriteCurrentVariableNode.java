@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.instrument.NeedsWrapper;
 
 /**
  * The "syntax" variant corresponding to {@code x <- y} in the source.

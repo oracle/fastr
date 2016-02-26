@@ -26,7 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.WrapperNode;
+import com.oracle.truffle.api.instrumentation.Instrumentable;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 @TypeSystemReference(RTypes.class)
-@NeedsWrapper
+@Instrumentable(factory = com.oracle.truffle.r.runtime.nodes.instrumentation.RNodeWrapperFactory.class)
 public abstract class RNode extends RBaseNode implements RInstrumentableNode {
 
     @CompilationFinal public static final RNode[] EMTPY_RNODE_ARRAY = new RNode[0];
@@ -199,8 +199,8 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
         return a.getLength() == b.getLength();
     }
 
-    public WrapperNode createRWrapperNode() {
-        return new RNodeWrapper(this);
+    public com.oracle.truffle.api.instrument.WrapperNode createRWrapperNode() {
+        return new com.oracle.truffle.r.runtime.nodes.instrument.RNodeWrapper(this);
     }
 
     public boolean isRInstrumentable() {

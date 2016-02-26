@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -42,19 +43,18 @@ import com.oracle.truffle.r.runtime.nodes.*;
  */
 public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
 
-    @CompilationFinal private SourceSection sourceSection;
+    @CompilationFinal private SourceSection sourceSectionR;
     @Child private RNode saveArgs;
 
     public FunctionBodyNode(SaveArgumentsNode saveArgs, FunctionStatementsNode statements) {
-        super(statements);
-        this.saveArgs = saveArgs;
-        this.sourceSection = statements.getSourceSection();
+        this(saveArgs, (RNode) statements);
     }
 
     private FunctionBodyNode(RNode saveArgs, RNode statements) {
         super(statements);
         this.saveArgs = saveArgs;
-        this.sourceSection = statements.getSourceSection();
+        // Same source section as statements but different tag
+        this.sourceSectionR = statements.getSourceSection().withTags(RSyntaxTags.ENTER_FUNCTION);
     }
 
     @Override
@@ -135,17 +135,17 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
     }
 
     public void setSourceSection(SourceSection sourceSection) {
-        this.sourceSection = sourceSection;
+        this.sourceSectionR = sourceSection;
     }
 
     @Override
     public SourceSection getSourceSection() {
-        return sourceSection;
+        return sourceSectionR;
     }
 
     @Override
     public void unsetSourceSection() {
-        sourceSection = null;
+        sourceSectionR = null;
     }
 
 }

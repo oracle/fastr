@@ -32,10 +32,10 @@ import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
-    @CompilationFinal private SourceSection sourceSection;
+    @CompilationFinal private SourceSection sourceSectionR;
 
     protected WriteVariableNodeSyntaxHelper(SourceSection sourceSection) {
-        this.sourceSection = sourceSection;
+        this.sourceSectionR = sourceSection;
     }
 
     protected void deparseHelper(RDeparse.State state, String op) {
@@ -90,15 +90,15 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
     }
 
     public void setSourceSection(SourceSection sourceSection) {
-        this.sourceSection = sourceSection;
+        this.sourceSectionR = sourceSection;
     }
 
     @Override
     public SourceSection getSourceSection() {
-        return sourceSection;
+        return sourceSectionR;
     }
 
     public void unsetSourceSection() {
-        sourceSection = null;
+        sourceSectionR = null;
     }
 }

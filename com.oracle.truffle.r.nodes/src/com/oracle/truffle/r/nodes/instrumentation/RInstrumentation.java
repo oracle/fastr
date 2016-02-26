@@ -20,29 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.instrument;
+package com.oracle.truffle.r.nodes.instrumentation;
 
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.instrumentation.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.instrument.debug.*;
-import com.oracle.truffle.r.nodes.instrument.trace.*;
+import com.oracle.truffle.r.nodes.instrumentation.debug.*;
+import com.oracle.truffle.r.nodes.instrumentation.trace.TraceHandling;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.instrument.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 
 /**
- * Handles the initialization of the instrumentation system which sets up various instruments
+ * Handles the initialization of the (NEW) instrumentation system which sets up various instruments
  * depending on command line options.
  *
  */
-public class RInstrument {
+public class RInstrumentation {
 
     /**
      * Collects together all the relevant data for a function, keyed by the {@link FunctionUID},
@@ -50,6 +51,9 @@ public class RInstrument {
      */
     private static Map<FunctionUID, FunctionData> functionMap = new HashMap<>();
 
+    /**
+     * Created lazily as needed.
+     */
     public static class FunctionIdentification {
         public final Source source;
         public final String name;
@@ -64,10 +68,12 @@ public class RInstrument {
         }
     }
 
+    /**
+     * Created for every {@link FunctionDefinitionNode}. maybe could be lazier.
+     */
     private static class FunctionData {
         private final FunctionUID uid;
         private final FunctionDefinitionNode fdn;
-        private ArrayList<Probe> probes = new ArrayList<>();
         private FunctionIdentification ident;
 
         FunctionData(FunctionUID uid, FunctionDefinitionNode fdn) {
@@ -121,83 +127,7 @@ public class RInstrument {
         }
     }
 
-    /**
-     * Abstracts how nodes are identified in instrumentation maps.
-     */
-    public static class NodeId {
-        public final FunctionUID uid;
-        public final int charIndex;
-
-        NodeId(FunctionUID uid, RSyntaxNode node) {
-            this.uid = uid;
-            SourceSection ss = node.getSourceSection();
-            if (ss == null) {
-                throw RInternalError.shouldNotReachHere();
-            }
-            this.charIndex = ss.getCharIndex();
-        }
-
-        @Override
-        public int hashCode() {
-            return uid.hashCode() ^ charIndex;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (other instanceof NodeId) {
-                NodeId otherNodeId = (NodeId) other;
-                return otherNodeId.uid.equals(uid) && otherNodeId.charIndex == charIndex;
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public String toString() {
-            return Integer.toString(charIndex);
-        }
-    }
-
-    private static class RProbeListener implements ProbeListener {
-
-        @Override
-        public void startASTProbing(RootNode rootNode) {
-        }
-
-        @Override
-        public void newProbeInserted(Probe probe) {
-        }
-
-        @Override
-        public void probeTaggedAs(Probe probe, SyntaxTag tag, Object tagValue) {
-            if (tag == StandardSyntaxTag.START_METHOD) {
-                putProbe((FunctionUID) tagValue, probe);
-                if (FastROptions.TraceCalls.getBooleanValue()) {
-                    TraceHandling.attachTraceHandler((FunctionUID) tagValue);
-                }
-                if (REntryCounters.Function.enabled()) {
-                    getInstrumenter().attach(probe, new REntryCounters.Function((FunctionUID) tagValue), "R function entry counter");
-                }
-            } else if (tag == StandardSyntaxTag.STATEMENT) {
-                if (RNodeTimer.Statement.enabled()) {
-                    getInstrumenter().attach(probe, new RNodeTimer.Statement((NodeId) tagValue), RNodeTimer.Statement.INFO);
-                }
-            }
-        }
-
-        @Override
-        public void endASTProbing(RootNode rootNode) {
-        }
-
-    }
-
     @CompilationFinal private static Instrumenter instrumenter;
-
-    /**
-     * Controls whether ASTs are instrumented after parse. The default value controlled by
-     * {@code FastROptions.Option.Instrument}.
-     */
-    @CompilationFinal private static boolean instrumentingEnabled;
 
     /**
      * The function names that were requested to be used in implicit {@code debug(f)} calls, when
@@ -206,59 +136,112 @@ public class RInstrument {
     @CompilationFinal private static String[] debugFunctionNames;
 
     /**
-     * Called back from {@link RASTProber} so that we can record the {@link FunctionUID} and use
-     * {@code fdn} as the canonical {@link FunctionDefinitionNode}.
+     * Called back from {@link FunctionDefinitionNode} so that we can record the {@link FunctionUID}
+     * and use {@code fdn} as the canonical {@link FunctionDefinitionNode}.
+     *
+     * TODO Remove hack to tag with {@code uidTag} once {@link SourceSectionFilter} provides a
+     * builtin way.
      *
      * @param fdn
      */
     public static void registerFunctionDefinition(FunctionDefinitionNode fdn) {
         FunctionUID uid = fdn.getUID();
         FunctionData fd = functionMap.get(uid);
-        // Owing to FDN duplication, fdn may be registered multiple times
-        if (fd == null) {
-            functionMap.put(uid, new FunctionData(uid, fdn));
+        if (fd != null) {
+            // duplicate
+            return;
         }
+        assert fd == null;
+        functionMap.put(uid, new FunctionData(uid, fdn));
+        String uidTag = RSyntaxTags.createUidTag(uid);
+        RSyntaxNode.accept(fdn, 0, new RSyntaxNodeVisitor() {
+
+            public boolean visit(RSyntaxNode node, int depth) {
+                SourceSection ss = node.getSourceSection();
+                assert ss != null;
+                String[] tags = RSyntaxTags.getTags(ss);
+                if (tags != null) {
+                    String[] updatedTags = new String[tags.length + 1];
+                    System.arraycopy(tags, 0, updatedTags, 0, tags.length);
+                    updatedTags[tags.length] = uidTag;
+                    node.setSourceSection(ss.withTags(updatedTags));
+                }
+                return true;
+            }
+
+        }, false);
     }
 
     public static FunctionIdentification getFunctionIdentification(FunctionUID uid) {
         return functionMap.get(uid).getIdentification();
     }
 
-    private static void putProbe(FunctionUID uid, Probe probe) {
-        ArrayList<Probe> list = functionMap.get(uid).probes;
-        list.add(probe);
+    public static FunctionDefinitionNode getFunctionDefinitionNode(RFunction func) {
+        assert !func.isBuiltin();
+        return (FunctionDefinitionNode) func.getRootNode();
     }
 
     /**
-     * Initialize the instrumentation system. {@link RASTProber} is registered to tag interesting
-     * nodes. {@link RProbeListener} is added to (optionally) add probes to nodes tagged by
-     * {@link RASTProber}.
+     * Create a filter that matches all the statement nodes in {@code func}.
+     */
+    public static SourceSectionFilter.Builder createFunctionStatementFilter(RFunction func) {
+        return createFunctionFilter(func, RSyntaxTags.STATEMENT);
+    }
+
+    public static SourceSectionFilter.Builder createFunctionStatementFilter(FunctionDefinitionNode fdn) {
+        return createFunctionFilter(fdn, RSyntaxTags.STATEMENT);
+    }
+
+    public static SourceSectionFilter.Builder createFunctionFilter(RFunction func, String tag) {
+        FunctionDefinitionNode fdn = getFunctionDefinitionNode(func);
+        return createFunctionFilter(fdn, tag);
+    }
+
+    public static SourceSectionFilter.Builder createFunctionFilter(FunctionDefinitionNode fdn, String tag) {
+        /* Filter needs to check for statement tags in the range of the function in the Source */
+        SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
+        builder.tagIs(tag);
+        SourceSection fdns = fdn.getSourceSection();
+        builder.indexIn(fdns.getCharIndex(), fdns.getCharLength());
+        builder.sourceIs(fdns.getSource());
+        // TODO remove when UID tag redundant
+        builder.tagIs(RSyntaxTags.createUidTag(fdn.getUID()));
+        return builder;
+
+    }
+
+    /**
+     * Create a filter that matches the start function node (tag) in {@code func}.
+     */
+    public static SourceSectionFilter.Builder createFunctionStartFilter(RFunction func) {
+        FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
+        SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
+        builder.tagIs(RSyntaxTags.START_FUNCTION);
+        FunctionStatementsNode fsn = ((FunctionBodyNode) fdn.getBody()).getStatements();
+        builder.sourceSectionEquals(fsn.getSourceSection());
+        return builder;
+    }
+
+    /**
+     * Initialize the instrumentation system.
      *
-     * As a convenience we force {@link #instrumentingEnabled} on if those {@code RPerfStats}
-     * features that need it are also enabled.
      */
     public static void initialize(Instrumenter instrumenterArg) {
         instrumenter = instrumenterArg;
-        instrumentingEnabled = FastROptions.Instrument.getBooleanValue() || FastROptions.TraceCalls.getBooleanValue() || FastROptions.Rdebug.getStringValue() != null ||
-                        REntryCounters.Function.enabled() || RNodeTimer.Statement.enabled();
-        if (instrumentingEnabled) {
-            instrumenter.addProbeListener(new RProbeListener());
-        }
-        if (instrumentingEnabled || FastROptions.LoadPkgSourcesIndex.getBooleanValue()) {
+        if (FastROptions.LoadPkgSourcesIndex.getBooleanValue()) {
             RPackageSource.initialize();
         }
         String rdebugValue = FastROptions.Rdebug.getStringValue();
         if (rdebugValue != null) {
             debugFunctionNames = rdebugValue.split(",");
         }
+        REntryCounters.FunctionListener.installCounters();
+        RNodeTimer.StatementListener.installTimers();
+        TraceHandling.traceAllFunctions();
     }
 
     public static Instrumenter getInstrumenter() {
         return instrumenter;
-    }
-
-    public static boolean instrumentingEnabled() {
-        return instrumentingEnabled;
     }
 
     public static void checkDebugRequested(RFunction func) {
@@ -270,25 +253,6 @@ public class RInstrument {
                 }
             }
         }
-    }
-
-    /**
-     * Returns the {@link Probe} with the given tag for the given function, or {@code null} if not
-     * found.
-     */
-    public static Probe findSingleProbe(FunctionUID uid, SyntaxTag tag) {
-        if (!instrumentingEnabled) {
-            return null;
-        }
-        ArrayList<Probe> list = functionMap.get(uid).probes;
-        if (list != null) {
-            for (Probe probe : list) {
-                if (probe.isTaggedAs(tag)) {
-                    return probe;
-                }
-            }
-        }
-        return null;
     }
 
     private static Map<FunctionUID, String> functionNameMap;

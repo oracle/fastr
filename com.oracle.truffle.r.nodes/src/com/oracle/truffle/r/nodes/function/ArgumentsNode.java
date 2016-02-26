@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.instrument.NeedsWrapper;
 
 /**
  * Base class that represents a list of argument/name pairs with some convenience methods. Semantics

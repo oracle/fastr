@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
-import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.SourceSection;
@@ -166,7 +165,15 @@ public abstract class RBaseNode extends Node {
 
     @Override
     public SourceSection getSourceSection() {
-        throw RInternalError.shouldNotReachHere("getSourceSection in RBaseNode");
+        /*
+         * All the RSyntaxNode implementors (should) override this method, but it may be called on
+         * any Node by the Truffle instrumentation machinery, in which case we return null.
+         */
+        if (this instanceof RSyntaxNode) {
+            throw RInternalError.shouldNotReachHere("getSourceSection in RBaseNode");
+        } else {
+            return null;
+        }
     }
 
     @Deprecated

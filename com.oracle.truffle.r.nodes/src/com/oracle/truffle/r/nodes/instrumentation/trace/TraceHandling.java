@@ -20,59 +20,42 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.instrument.trace;
+package com.oracle.truffle.r.nodes.instrumentation.trace;
 
 import java.io.FileWriter;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrument.Probe;
-import com.oracle.truffle.api.instrument.StandardInstrumentListener;
-import com.oracle.truffle.api.instrument.StandardSyntaxTag;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.utilities.CyclicAssumption;
-import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
-import com.oracle.truffle.r.nodes.instrument.RInstrument;
-import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.FunctionUID;
-import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RCaller;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.instrumentation.*;
+import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.instrumentation.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * Handles everything related to the R {@code trace} function. Also used by
- * {@link FastROptions#TraceCalls} option.
- *
- * Output normally goes to the connection associated with the standard output, which can be
- * redirected via the {@code sink} R function. However, for use with {@link FastROptions#TraceCalls}
- * ,it may also be explicitly directed to the file {@code fastr_tracecalls.log}.
+ * Handles everything related to the R {@code trace} function.
  */
 public class TraceHandling {
 
     public static boolean enableTrace(RFunction func) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-        TraceFunctionEventReceiver fbr = (TraceFunctionEventReceiver) RContext.getInstance().stateTraceHandling.get(fdn.getUID());
+        TraceFunctionEventListener fbr = (TraceFunctionEventListener) RContext.getInstance().stateTraceHandling.get(fdn.getUID());
         if (fbr == null) {
-            Probe probe = attachTraceHandler(fdn.getUID());
-            return probe != null;
+            attachTraceHandler(func);
         } else {
             fbr.enable();
-            return true;
         }
-
+        return true;
     }
 
     public static boolean disableTrace(RFunction func) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-        TraceFunctionEventReceiver fbr = (TraceFunctionEventReceiver) RContext.getInstance().stateTraceHandling.get(fdn.getUID());
+        TraceFunctionEventListener fbr = (TraceFunctionEventListener) RContext.getInstance().stateTraceHandling.get(fdn.getUID());
         if (fbr == null) {
             return false;
         } else {
@@ -84,7 +67,7 @@ public class TraceHandling {
     public static void setTracingState(boolean state) {
         Object[] listeners = RContext.getInstance().stateTraceHandling.getListeners();
         for (int i = 0; i < listeners.length; i++) {
-            TraceFunctionEventReceiver tl = (TraceFunctionEventReceiver) listeners[i];
+            TraceFunctionEventListener tl = (TraceFunctionEventListener) listeners[i];
             if (state) {
                 tl.enable();
             } else {
@@ -93,38 +76,34 @@ public class TraceHandling {
         }
     }
 
+    public static void traceAllFunctions() {
+        if (FastROptions.TraceCalls.getBooleanValue()) {
+            TraceFunctionEventListener fser = new TraceFunctionEventListener();
+            SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
+            builder.tagIs(RSyntaxTags.START_FUNCTION);
+            SourceSectionFilter filter = builder.build();
+            RInstrumentation.getInstrumenter().attachListener(filter, fser);
+        }
+    }
+
     @SuppressWarnings("unused")
     public static boolean enableStatementTrace(RFunction func, RSyntaxNode tracer) {
         return false;
     }
 
-    public static Probe attachTraceHandler(FunctionUID uid) {
-        Probe probe = RInstrument.findSingleProbe(uid, StandardSyntaxTag.START_METHOD);
-        if (probe == null) {
-            return null;
-        }
-        TraceFunctionEventReceiver fser = new TraceFunctionEventReceiver();
-        RInstrument.getInstrumenter().attach(probe, fser, "trace");
-        RContext.getInstance().stateTraceHandling.put(uid, fser);
-        if (outputHandler == null) {
-            setOutputHandler();
-        }
-        return probe;
+    public static void attachTraceHandler(RFunction func) {
+        TraceFunctionEventListener fser = new TraceFunctionEventListener();
+        RInstrumentation.getInstrumenter().attachListener(RInstrumentation.createFunctionStartFilter(func).build(), fser);
+        setOutputHandler();
+        RContext.getInstance().stateTraceHandling.put(RInstrumentation.getFunctionDefinitionNode(func).getUID(), fser);
     }
 
-    private abstract static class TraceEventReceiver implements StandardInstrumentListener {
+    private abstract static class TraceEventListener implements ExecutionEventListener {
 
         @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("trace event disabled state unchanged");
 
-        protected TraceEventReceiver() {
-        }
-
-        @Override
-        public void onReturnVoid(Probe probe, Node node, VirtualFrame frame) {
-            if (!disabled()) {
-                throw RInternalError.shouldNotReachHere();
-            }
+        protected TraceEventListener() {
         }
 
         boolean disabled() {
@@ -183,20 +162,17 @@ public class TraceHandling {
     }
 
     private static void setOutputHandler() {
-        outputHandler = FastROptions.TraceCallsToFile.getBooleanValue() ? new FileOutputHandler() : new StdoutOutputHandler();
+        if (outputHandler == null) {
+            outputHandler = FastROptions.TraceCallsToFile.getBooleanValue() ? new FileOutputHandler() : new StdoutOutputHandler();
+        }
     }
 
     private static OutputHandler outputHandler;
 
-    private static class TraceFunctionEventReceiver extends TraceEventReceiver {
-
-        TraceFunctionEventReceiver() {
-        }
-
-        public void onEnter(Probe probe, Node node, VirtualFrame frame) {
+    private static class TraceFunctionEventListener extends TraceEventListener {
+        @Override
+        public void onEnter(EventContext context, VirtualFrame frame) {
             if (!disabled()) {
-                @SuppressWarnings("unused")
-                FunctionStatementsNode fsn = (FunctionStatementsNode) node;
                 int depth = RArguments.getDepth(frame);
                 try {
                     for (int i = 0; i < depth; i++) {
@@ -217,37 +193,34 @@ public class TraceHandling {
         }
 
         @Override
-        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Throwable exception) {
+        public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
         }
 
         @Override
-        public void onReturnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
+        public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
         }
 
     }
 
     @SuppressWarnings("unused")
-    private static class TraceStatementEventReceiver extends TraceEventReceiver {
+    private static class TraceStatementEventReceiver extends TraceEventListener {
 
-        public void onEnter(Probe probe, Node node, VirtualFrame vFrame) {
+        public void onEnter(EventContext context, VirtualFrame frame) {
             if (!disabled()) {
                 //
             }
-
         }
 
-        public void onReturnValue(Probe probe, Node node, VirtualFrame vFrame, Object result) {
+        public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 //
             }
-
         }
 
-        public void onReturnExceptional(Probe probe, Node node, VirtualFrame vFrame, Throwable exception) {
+        public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
             if (!disabled()) {
                 //
             }
-
         }
     }
 

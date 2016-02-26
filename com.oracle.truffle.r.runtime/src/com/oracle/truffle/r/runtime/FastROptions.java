@@ -39,8 +39,8 @@ public enum FastROptions {
     PrintErrorStacktracesToFile("Dumps Java and R stack traces to 'fastr_errors.log' for all errors", true),
     CheckResultCompleteness("Assert completeness of results vectors after evaluating unit tests and R shell commands", true),
     Debug("Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.", null, true),
-    Instrument("Enable Instrumentation", false),
-    TraceCalls("Trace all R function calls (implies +Instrument)", false),
+    Instrument("Enable (Old) Instrumentation", false),
+    TraceCalls("Trace all R function calls", false),
     TraceCallsToFile("TraceCalls output is sent to 'fastr_tracecalls.log'", false),
     TraceNativeCalls("Trace all native function calls (performed via .Call, .External, etc.)", false),
     PerfStats("PerfStats=p1,p2,...; Collect performance stats identified by p1, etc.", null, true),
@@ -55,6 +55,7 @@ public enum FastROptions {
     NewStateTransition("Experimental state transition implementation", true),
     RefCountIncrementOnly("Disable reference count decrements for experimental state transition implementation", false),
     UseInternalGraphics("Whether the internal (Java) graphics subsystem should be used", false),
+    UseOldInstrument("Use old instrumentation framework", false),
 
     // Promises optimizations
     EagerEval("If enabled, overrides all other EagerEval switches (see EagerEvalHelper)", false),

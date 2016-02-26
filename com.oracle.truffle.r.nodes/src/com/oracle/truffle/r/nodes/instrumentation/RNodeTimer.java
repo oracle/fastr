@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.instrument;
+package com.oracle.truffle.r.nodes.instrumentation;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,76 +28,137 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.oracle.truffle.api.instrument.Probe;
-import com.oracle.truffle.api.instrument.SimpleInstrumentListener;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.EventContext;
+import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
+import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.instrument.RInstrument.FunctionIdentification;
-import com.oracle.truffle.r.nodes.instrument.RInstrument.NodeId;
-import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.nodes.control.BlockNode;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation.FunctionIdentification;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RPerfStats;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 
 /**
- * Basic support for adding as timer to a node. A timer must be identified with some unique value
- * that enables it to be retrieved.
+ * Basic support for adding as timer to a node. Currently limited to "statement" timing.
  *
  * The instrument records the cumulative time spent executing this node during the process execution
  * using {@link System#nanoTime()}.
  *
  */
-
 public class RNodeTimer {
-    private static HashMap<Object, Basic> timerMap = new HashMap<>();
 
-    public static class Basic implements SimpleInstrumentListener {
-
-        public static final String INFO = "R node timer";
-
+    public static final class TimeInfo {
+        private final Object ident;
         protected long enterTime;
         protected long cumulativeTime;
 
-        public Basic(RInstrument.NodeId tag) {
-            timerMap.put(tag, this);
-        }
-
-        @Override
-        public void onEnter(Probe probe) {
-            enterTime = System.nanoTime();
-        }
-
-        private void returnAny(@SuppressWarnings("unused") Probe probe) {
-            cumulativeTime += System.nanoTime() - enterTime;
-        }
-
-        @Override
-        public void onReturnVoid(Probe probe) {
-            returnAny(probe);
-        }
-
-        @Override
-        public void onReturnValue(Probe probe, Object result) {
-            returnAny(probe);
-        }
-
-        @Override
-        public void onReturnExceptional(Probe probe, Throwable exception) {
-            returnAny(probe);
+        TimeInfo(Object ident) {
+            this.ident = ident;
         }
 
         public long getTime() {
             return cumulativeTime;
         }
 
+        public Object getIdent() {
+            return ident;
+        }
+
     }
 
-    public static class Statement extends Basic {
-        public Statement(RInstrument.NodeId tag) {
-            super(tag);
+    public abstract static class BasicListener implements ExecutionEventListener {
+        private HashMap<SourceSection, TimeInfo> timeInfoMap = new HashMap<>();
+
+        private TimeInfo getTimeInfo(EventContext context) {
+            SourceSection ss = context.getInstrumentedSourceSection();
+            TimeInfo timeInfo = timeInfoMap.get(ss);
+            if (timeInfo == null) {
+                Object obj = timeInfoCreated(context);
+                timeInfo = new TimeInfo(obj);
+                timeInfoMap.put(ss, timeInfo);
+            }
+            return timeInfo;
         }
+
+        protected TimeInfo getTimeInfo(SourceSection sourceSection) {
+            TimeInfo timeInfo = timeInfoMap.get(sourceSection);
+            assert timeInfo != null;
+            return timeInfo;
+        }
+
+        protected Map<SourceSection, TimeInfo> getTimeInfoMap() {
+            return timeInfoMap;
+        }
+
+        public void onEnter(EventContext context, VirtualFrame frame) {
+            getTimeInfo(context).enterTime = System.nanoTime();
+        }
+
+        public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
+            TimeInfo timeInfo = getTimeInfo(context);
+            timeInfo.cumulativeTime += System.nanoTime() - timeInfo.enterTime;
+        }
+
+        public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
+            onReturnValue(context, frame, exception);
+        }
+
+        protected abstract Object timeInfoCreated(EventContext context);
+
+    }
+
+    public static class StatementListener extends BasicListener {
+        private static final StatementListener singleton = new StatementListener();
+
+        public static long findTimer(RFunction func) {
+            FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
+            FunctionUID uid = fdn.getUID();
+            long cumTime = 0;
+            for (Map.Entry<SourceSection, TimeInfo> entry : StatementListener.singleton.getTimeInfoMap().entrySet()) {
+                TimeInfo timeInfo = entry.getValue();
+                Node node = (Node) timeInfo.getIdent();
+                FunctionDefinitionNode entryFdn = (FunctionDefinitionNode) node.getRootNode();
+                FunctionUID entryUid = entryFdn.getUID();
+                if (entryUid.equals(uid)) {
+                    // statement in "func"
+                    cumTime += timeInfo.cumulativeTime;
+                }
+            }
+            return cumTime;
+        }
+
+        public static void installTimers() {
+            if (enabled()) {
+                SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
+                builder.tagIs(RSyntaxTags.STATEMENT);
+                SourceSectionFilter filter = builder.build();
+                RInstrumentation.getInstrumenter().attachListener(filter, singleton);
+            }
+        }
+
+        public static void installTimer(RFunction func) {
+            RInstrumentation.getInstrumenter().attachListener(RInstrumentation.createFunctionStatementFilter(func).build(), singleton);
+        }
+
+        @Override
+        protected Node timeInfoCreated(EventContext context) {
+            return context.getInstrumentedNode();
+        }
+
+        // PerfStats support
 
         static {
             RPerfStats.register(new PerfHandler());
+        }
+
+        public static boolean enabled() {
+            return RPerfStats.enabled(PerfHandler.NAME);
         }
 
         private static class TimingData implements Comparable<TimingData> {
@@ -154,16 +215,17 @@ public class RNodeTimer {
             public void report() {
                 Map<FunctionUID, TimingData> functionMap = new TreeMap<>();
 
-                for (Map.Entry<Object, Basic> entry : timerMap.entrySet()) {
-                    if (entry.getValue() instanceof Statement) {
-                        NodeId nodeId = (NodeId) entry.getKey();
-                        TimingData timingData = functionMap.get(nodeId.uid);
-                        if (timingData == null) {
-                            timingData = new TimingData(nodeId.uid);
-                            functionMap.put(nodeId.uid, timingData);
-                        }
-                        timingData.addTime(millis(entry.getValue().cumulativeTime));
+                for (Map.Entry<SourceSection, TimeInfo> entry : StatementListener.singleton.getTimeInfoMap().entrySet()) {
+                    TimeInfo timeInfo = entry.getValue();
+                    Node node = (Node) timeInfo.getIdent();
+                    FunctionDefinitionNode fdn = (FunctionDefinitionNode) node.getRootNode();
+                    FunctionUID uid = fdn.getUID();
+                    TimingData timingData = functionMap.get(uid);
+                    if (timingData == null) {
+                        timingData = new TimingData(uid);
+                        functionMap.put(uid, timingData);
                     }
+                    timingData.addTime(millis(entry.getValue().cumulativeTime));
                 }
 
                 Collection<TimingData> values = functionMap.values();
@@ -175,10 +237,11 @@ public class RNodeTimer {
                     totalTime += t.time;
                 }
 
+                RPerfStats.out().printf("Total (user) time %d ms%n", totalTime);
                 for (TimingData t : sortedData) {
                     if (t.time > 0) {
                         if (t.time > threshold) {
-                            FunctionIdentification fdi = RInstrument.getFunctionIdentification(t.functionUID);
+                            FunctionIdentification fdi = RInstrumentation.getFunctionIdentification(t.functionUID);
                             /*
                              * Currently a problem with the way source sections are used in some
                              * promises and eval wrappers, that cause ArrayIndexOutOfBounds
@@ -216,7 +279,33 @@ public class RNodeTimer {
             return ((double) a * 100) / b;
         }
 
-        private static class LineTimesNodeVisitor extends RASTProber.StatementVisitor {
+        public abstract static class StatementVisitor implements RSyntaxNodeVisitor {
+            protected final FunctionUID uid;
+
+            StatementVisitor(FunctionUID uid) {
+                this.uid = uid;
+            }
+
+            @Override
+            public boolean visit(RSyntaxNode node, int depth) {
+                if (node instanceof BlockNode) {
+                    BlockNode sequenceNode = (BlockNode) node;
+                    RNode[] block = sequenceNode.getSequence();
+                    for (int i = 0; i < block.length; i++) {
+                        RSyntaxNode n = block[i].unwrap().asRSyntaxNode();
+                        if (!callback(n)) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            protected abstract boolean callback(RSyntaxNode node);
+
+        }
+
+        private static class LineTimesNodeVisitor extends StatementVisitor {
             private final long[] times;
 
             LineTimesNodeVisitor(FunctionUID uid, long[] time) {
@@ -227,30 +316,17 @@ public class RNodeTimer {
             @Override
             protected boolean callback(RSyntaxNode node) {
                 SourceSection ss = node.getSourceSection();
-                if (ss != null) {
-                    NodeId nodeId = new NodeId(uid, node);
-                    Statement stmt = (Statement) timerMap.get(nodeId);
-                    if (stmt != null) {
-                        assert ss.getStartLine() != 0;
-                        long stmtTime = millis(stmt.cumulativeTime);
-                        times[0] += stmtTime;
-                        times[ss.getStartLine()] += stmtTime;
-                    } else {
-                        /*
-                         * This happens because default arguments are not visited during the AST
-                         * probe walk.
-                         */
-                        if (FastROptions.debugMatches("nodetimer")) {
-                            System.out.printf("Failed to find map entry: %s%n", nodeId);
-                            System.out.printf("Map entries for function: %s%n", uid);
-                            for (Map.Entry<Object, Basic> entry : timerMap.entrySet()) {
-                                NodeId nid = (NodeId) entry.getKey();
-                                if (nid.uid.equals(uid)) {
-                                    System.out.printf("%d%n", nid.charIndex);
-                                }
-                            }
-                        }
-                    }
+                TimeInfo timeInfo = singleton.getTimeInfoMap().get(ss);
+                if (timeInfo != null) {
+                    assert ss.getStartLine() != 0;
+                    long stmtTime = millis(timeInfo.cumulativeTime);
+                    times[0] += stmtTime;
+                    times[ss.getStartLine()] += stmtTime;
+                } else {
+                    /*
+                     * This happens because default arguments are not visited during the AST probe
+                     * walk.
+                     */
                 }
                 return true;
             }
@@ -271,16 +347,6 @@ public class RNodeTimer {
             return times;
         }
 
-        public static boolean enabled() {
-            return RPerfStats.enabled(PerfHandler.NAME);
-        }
-
-        /**
-         * Return the timer tagged with {@code tag}, or {@code null} if not found.
-         */
-        public static RNodeTimer.Basic findTimer(Object tag) {
-            return timerMap.get(tag);
-        }
     }
 
 }

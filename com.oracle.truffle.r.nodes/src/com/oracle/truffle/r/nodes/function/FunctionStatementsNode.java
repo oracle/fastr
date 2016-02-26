@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.*;
 
@@ -40,7 +41,7 @@ public class FunctionStatementsNode extends BlockNode {
     }
 
     public FunctionStatementsNode(SourceSection src, RSyntaxNode sequence) {
-        super(src, sequence);
+        super(src.withTags(RSyntaxTags.START_FUNCTION), sequence);
     }
 
     @Override

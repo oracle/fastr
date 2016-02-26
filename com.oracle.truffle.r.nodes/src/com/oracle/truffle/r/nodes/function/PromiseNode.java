@@ -357,7 +357,7 @@ public abstract class PromiseNode extends RNode {
 
         @Override
         public SourceSection getSourceSection() {
-            throw RInternalError.shouldNotReachHere();
+            return null;
         }
 
         @Override

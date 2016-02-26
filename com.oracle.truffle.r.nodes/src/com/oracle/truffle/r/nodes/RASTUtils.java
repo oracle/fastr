@@ -72,7 +72,7 @@ public class RASTUtils {
     public static RBaseNode unwrap(Object node) {
         if (node instanceof WrapArgumentBaseNode) {
             return unwrap(((WrapArgumentBaseNode) node).getOperand());
-        } else if (node instanceof RInstrumentableNode) {
+        } else if (node instanceof com.oracle.truffle.r.runtime.nodes.RInstrumentableNode) {
             return ((RInstrumentableNode) node).unwrap();
         } else {
             return (RBaseNode) node;

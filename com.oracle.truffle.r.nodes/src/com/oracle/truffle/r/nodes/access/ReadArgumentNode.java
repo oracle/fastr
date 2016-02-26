@@ -27,6 +27,7 @@ import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.instrument.NeedsWrapper;
 
 @NeedsWrapper
 public class ReadArgumentNode extends RNode {

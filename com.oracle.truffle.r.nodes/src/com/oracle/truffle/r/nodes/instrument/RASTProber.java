@@ -72,7 +72,6 @@ public final class RASTProber implements ASTProber {
                 }
                 RInstrument.registerFunctionDefinition(fdn);
                 FunctionUID uid = fdn.getUID();
-                instrumenter.probe(body).tagAs(RSyntaxTag.FUNCTION_BODY, uid);
                 FunctionBodyNode fBody = (FunctionBodyNode) body;
                 instrumenter.probe(fBody.getStatements()).tagAs(START_METHOD, uid);
                 TaggingNodeVisitor visitor = new TaggingNodeVisitor(uid, instrumenter);
