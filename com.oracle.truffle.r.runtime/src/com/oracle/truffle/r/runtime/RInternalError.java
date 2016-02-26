@@ -56,15 +56,15 @@ public final class RInternalError extends Error {
     }
 
     public static void guarantee(boolean condition, String message) {
-        CompilerDirectives.transferToInterpreter();
         if (!condition) {
+            CompilerDirectives.transferToInterpreter();
             throw shouldNotReachHere("failed guarantee: " + message);
         }
     }
 
     public static void guarantee(boolean condition) {
-        CompilerDirectives.transferToInterpreter();
         if (!condition) {
+            CompilerDirectives.transferToInterpreter();
             throw shouldNotReachHere("failed guarantee");
         }
     }
