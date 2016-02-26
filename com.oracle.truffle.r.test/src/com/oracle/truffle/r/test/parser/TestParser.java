@@ -56,6 +56,23 @@ public class TestParser extends TestBase {
         assertEval("'\\ ' == ' '");
     }
 
+    @Test
+    public void testNewLinesNesting() {
+        assertEval("y <- 2; z <- 5; x <- (y +\n  z)");
+        assertEval("y <- 2; z <- 5; x <- (y \n + z)");
+        assertEval("y <- 2; z <- 5; x <- ({y +\n  z})");
+        assertEval("y <- 2; z <- 5; x <- ({y \n + z})");
+        assertEval("y <- 2; z <- 5; x <- (y *\n  z)");
+        assertEval("y <- 2; z <- 5; x <- (y \n * z)");
+        assertEval("y <- 2; z <- 5; x <- ({y *\n  z})");
+        assertEval(Output.ContainsAmbiguousError, "y <- 2; z <- 5; x <- ({y \n * z})");
+        assertEval("y <- 2; z <- 5; x <- ({(y *\n  z)})");
+        assertEval("y <- 2; z <- 5; x <- ({(y \n * z)})");
+        assertEval("a <- 1:100; y <- 2; z <- 5; x <- ({(a[y *\n  z])})");
+        assertEval("a <- 1:100; y <- 2; z <- 5; x <- ({(a[[y \n * z]])})");
+        assertEval(Output.ContainsAmbiguousError, "a <- 1:100; y <- 2; z <- 5; x <- (a[[{y \n * z}]])");
+    }
+
     /**
      * Recursively look for .r source files in the args[0] directory and parse them.
      */
