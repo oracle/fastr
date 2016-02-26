@@ -271,6 +271,6 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
     }
 
     public ArgumentsSignature getSyntaxSignature() {
-        return ArgumentsSignature.empty(4);
+        return ArgumentsSignature.empty(3);
     }
 }
