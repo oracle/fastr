@@ -119,7 +119,7 @@ public class PrintFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isS4(o)")
-        protected Object printDefaultS4(VirtualFrame frame, RTypedValue o, Object digits, byte quote, Object naPrint, Object printGap, byte right, Object max, Object useSource, Object noOpt,
+        protected Object printDefaultS4(VirtualFrame frame, RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt,
                         @Cached("createShowFind()") ReadVariableNode showFind, @Cached("createShowFunction(frame, showFind)") RFunction showFunction) {
             RContext.getEngine().evalFunction(showFunction, null, o);
             return null;
