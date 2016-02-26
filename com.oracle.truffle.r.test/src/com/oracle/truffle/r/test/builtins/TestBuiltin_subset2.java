@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -69,8 +69,7 @@ public class TestBuiltin_subset2 extends TestBase {
 
     @Test
     public void testsubset212() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(Res.Df = c(20, 21), RSS = c(652424.52183908, 658770.746755654), Df = c(NA, -1), `Sum of Sq` = c(NA, -6346.22491657443), F = c(NA, 0.194542807762205), `Pr(>F)` = c(NA, 0.663893424608742)), .Names = c('Res.Df', 'RSS', 'Df', 'Sum of Sq', 'F', 'Pr(>F)'), row.names = c('1', '2'), class = c('anova', 'data.frame'), heading = c('Analysis of Variance Table\\n', 'Model 1: birthw ~ sex + sex:age - 1\\nModel 2: birthw ~ sex + age - 1')), 6L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(Res.Df = c(20, 21), RSS = c(652424.52183908, 658770.746755654), Df = c(NA, -1), `Sum of Sq` = c(NA, -6346.22491657443), F = c(NA, 0.194542807762205), `Pr(>F)` = c(NA, 0.663893424608742)), .Names = c('Res.Df', 'RSS', 'Df', 'Sum of Sq', 'F', 'Pr(>F)'), row.names = c('1', '2'), class = c('anova', 'data.frame'), heading = c('Analysis of Variance Table\\n', 'Model 1: birthw ~ sex + sex:age - 1\\nModel 2: birthw ~ sex + age - 1')), 6L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test

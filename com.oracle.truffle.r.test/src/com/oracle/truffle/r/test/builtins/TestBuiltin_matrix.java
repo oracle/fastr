@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -129,7 +129,7 @@ public class TestBuiltin_matrix extends TestBase {
 
     @Test
     public void testmatrix23() {
-        assertEval(Ignored.Unknown, "argv <- list(character(0), 0L, 17L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(character(0), 0L, 17L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -140,8 +140,7 @@ public class TestBuiltin_matrix extends TestBase {
 
     @Test
     public void testmatrix25() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(0.342020143325669, 0, -0.939692620785908, 0, 1, 0, 0.939692620785908, 0, 0.342020143325669), 3, 3, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(c(0.342020143325669, 0, -0.939692620785908, 0, 1, 0, 0.939692620785908, 0, 0.342020143325669), 3, 3, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -161,13 +160,12 @@ public class TestBuiltin_matrix extends TestBase {
 
     @Test
     public void testmatrix29() {
-        assertEval(Ignored.Unknown, "argv <- list(NA_character_, 4L, 17L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(NA_character_, 4L, 17L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testmatrix30() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(2.8421709430404e-14, 0, 0, 0, 0, 0, 0, -4.44089209850063e-16, 0, 0, 0, 0, 0, 0, 4.44089209850063e-16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7.105427357601e-15), 6L, 6L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(c(2.8421709430404e-14, 0, 0, 0, 0, 0, 0, -4.44089209850063e-16, 0, 0, 0, 0, 0, 0, 4.44089209850063e-16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7.105427357601e-15), 6L, 6L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -230,7 +228,7 @@ public class TestBuiltin_matrix extends TestBase {
 
     @Test
     public void testmatrix42() {
-        assertEval(Ignored.Unknown, "argv <- list(NA_character_, 1L, 17L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(NA_character_, 1L, 17L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test

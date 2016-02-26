@@ -35,7 +35,7 @@ public class TestBuiltin_lgamma extends TestBase {
 
     @Test
     public void testlgamma4() {
-        assertEval(Ignored.Unknown, "argv <- list(0.999935539560166);lgamma(argv[[1]]);");
+        assertEval("argv <- list(0.999935539560166);lgamma(argv[[1]]);");
     }
 
     @Test

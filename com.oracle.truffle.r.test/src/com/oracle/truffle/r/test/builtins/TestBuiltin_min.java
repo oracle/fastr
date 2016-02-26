@@ -49,7 +49,7 @@ public class TestBuiltin_min extends TestBase {
 
     @Test
     public void testmin7() {
-        assertEval(Ignored.Unknown, "argv <- list(1.234e+100);min(argv[[1]]);");
+        assertEval("argv <- list(1.234e+100);min(argv[[1]]);");
     }
 
     @Test
@@ -64,8 +64,7 @@ public class TestBuiltin_min extends TestBase {
 
     @Test
     public void testmin10() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(2.00256647265648e-308, 2.22284878464869e-308, 2.22507363599982e-308, 2.2250738585072e-308, 2.22507408101459e-308, 2.22729893236571e-308, 2.44758124435792e-308));min(argv[[1]]);");
+        assertEval("argv <- list(c(2.00256647265648e-308, 2.22284878464869e-308, 2.22507363599982e-308, 2.2250738585072e-308, 2.22507408101459e-308, 2.22729893236571e-308, 2.44758124435792e-308));min(argv[[1]]);");
     }
 
     @Test
@@ -105,7 +104,7 @@ public class TestBuiltin_min extends TestBase {
 
     @Test
     public void testmin18() {
-        assertEval(Ignored.Unknown, "argv <- list(c(4.5241870901798, 0.211646098116025, 1.86003798801034e-43));min(argv[[1]]);");
+        assertEval("argv <- list(c(4.5241870901798, 0.211646098116025, 1.86003798801034e-43));min(argv[[1]]);");
     }
 
     @Test

@@ -43,8 +43,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat6() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(47.97, 57.9, 74.76, 868.88), .Names = c('<none>', '- x4', '- x2', '- x1')), FALSE, 5L, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        assertEval("argv <- list(structure(c(47.97, 57.9, 74.76, 868.88), .Names = c('<none>', '- x4', '- x2', '- x1')), FALSE, 5L, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -71,8 +70,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat11() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(1L, 2L, 1L), .Dim = 3L, .Dimnames = structure(list(c('1', '2', NA)), .Names = '')), FALSE, 7L, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        assertEval("argv <- list(structure(c(1L, 2L, 1L), .Dim = 3L, .Dimnames = structure(list(c('1', '2', NA)), .Names = '')), FALSE, 7L, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -279,8 +277,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat51() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(2, NA), .Names = c('N:P:K', 'Residuals')), FALSE, 5L, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        assertEval("argv <- list(structure(c(2, NA), .Names = c('N:P:K', 'Residuals')), FALSE, 5L, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
