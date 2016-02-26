@@ -36,9 +36,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFr
 import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -115,11 +113,6 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
     }
 
     @Override
-    public void allNamesImpl(RAllNames.State state) {
-        ((FunctionDefinitionNode) callTarget.getRootNode()).allNamesImpl(state);
-    }
-
-    @Override
     public void serializeImpl(RSerialize.State state) {
         state.setAsBuiltin("function");
         state.openPairList(SEXPTYPE.LISTSXP);
@@ -145,20 +138,6 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
         FunctionDefinitionNode thisFdn = (FunctionDefinitionNode) callTarget.getRootNode();
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) thisFdn.substituteImpl(env);
         return new FunctionExpressionNode(null, Truffle.getRuntime().createCallTarget(fdn));
-    }
-
-    public int getRlengthImpl() {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
     }
 
     public RSyntaxElement[] getSyntaxArgumentDefaults() {

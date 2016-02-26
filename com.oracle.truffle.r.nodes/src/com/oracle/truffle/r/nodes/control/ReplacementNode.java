@@ -28,14 +28,11 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -136,29 +133,6 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
     public RSyntaxNode substituteImpl(REnvironment env) {
         // TODO: implement this correctly
         return this;
-    }
-
-    public int getRlengthImpl() {
-        return 3;
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        switch (index) {
-            case 0:
-                return RDataFactory.createSymbolInterned(getSymbol());
-            case 1:
-                return RASTUtils.createLanguageElement(syntaxLhs.asRNode());
-            case 2:
-                return RASTUtils.createLanguageElement(storeRhs.getRhs());
-            default:
-                throw RInternalError.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
     }
 
     public RSyntaxElement getSyntaxLHS() {

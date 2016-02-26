@@ -337,20 +337,6 @@ public abstract class PromiseNode extends RNode {
             throw RInternalError.unimplemented();
         }
 
-        public int getRlengthImpl() {
-            throw RInternalError.unimplemented();
-        }
-
-        @Override
-        public Object getRelementImpl(@SuppressWarnings("hiding") int index) {
-            throw RInternalError.unimplemented();
-        }
-
-        @Override
-        public boolean getRequalsImpl(RSyntaxNode other) {
-            throw RInternalError.unimplemented();
-        }
-
         public void setSourceSection(SourceSection sourceSection) {
             throw RInternalError.shouldNotReachHere();
         }
