@@ -378,6 +378,9 @@ def junit(args):
 def junit_simple(args):
     return mx.command_function('junit')(['--tests', _library_unit_tests()] + args)
 
+def junit_noapps(args):
+    return mx.command_function('junit')(['--tests', _gate_noapps_unit_tests()] + args)
+
 def junit_default(args):
     return mx.command_function('junit')(['--tests', _all_unit_tests()] + args)
 
@@ -393,11 +396,20 @@ def _test_subpackage(name):
 def _library_unit_tests():
     return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr']))
 
+def _tests_unit_tests():
+    return ','.join(map(_test_subpackage, ['rffi', 'rpackages', 'builtins', 'functions', 'tck', 'parser', 'S4']))
+
 def _nodes_unit_tests():
     return 'com.oracle.truffle.r.nodes.test'
 
+def _apps_unit_tests():
+    return _test_subpackage('apps')
+
+def _gate_noapps_unit_tests():
+    return ','.join([_library_unit_tests(), _nodes_unit_tests(), _tests_unit_tests()])
+
 def _gate_unit_tests():
-    return ','.join([_library_unit_tests(), _nodes_unit_tests()] + map(_test_subpackage, ['rffi', 'rpackages', 'builtins', 'functions', 'apps', 'tck', 'parser', 'S4']))
+    return ','.join([_gate_noapps_unit_tests(), _apps_unit_tests()])
 
 def _all_unit_tests():
     return _gate_unit_tests()
@@ -564,6 +576,7 @@ _commands = {
     'junitsimple' : [junit_simple, ['options']],
     'junitdefault' : [junit_default, ['options']],
     'junitgate' : [junit_gate, ['options']],
+    'junitnoapps' : [junit_noapps, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, ['options']],
     'rcmplib' : [rcmplib, ['options']],
