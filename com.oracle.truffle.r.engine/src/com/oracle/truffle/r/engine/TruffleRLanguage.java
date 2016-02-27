@@ -147,6 +147,12 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         return createFindContextNode();
     }
 
+    @SuppressWarnings("deprecation")
+    @Override
+    protected Visualizer getVisualizer() {
+        return null;
+    }
+
     @Override
     protected boolean isInstrumentable(Node node) {
         RNode rNode = (RNode) node;
