@@ -47,8 +47,6 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
             RLanguage lang = (RLanguage) object;
             RSyntaxNode snode = lang.getRep().asRSyntaxNode();
             RSyntaxNode subRNode = snode.substituteImpl(env);
-            // remove old source sections
-// unsetSourceSections(subRNode.asRNode());
             // create source for entire tree
             RASTDeparse.ensureSourceSection(subRNode);
             return RASTUtils.createLanguageElement(subRNode.asRNode());
