@@ -284,11 +284,19 @@ public final class Utils {
      */
     @TruffleBoundary
     public static Frame getStackFrame(FrameAccess fa, int depth) {
-        return Truffle.getRuntime().iterateFrames(frameInstance -> {
-            Frame f = RArguments.unwrap(frameInstance.getFrame(fa, false));
-            if (RArguments.isRFrame(f)) {
-                return RArguments.getDepth(f) == depth ? f : null;
-            } else {
+        return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
+            boolean first = true;
+
+            public Frame visitFrame(FrameInstance frameInstance) {
+                if (!first) {
+                    Frame f = RArguments.unwrap(frameInstance.getFrame(fa, false));
+                    if (RArguments.isRFrame(f)) {
+                        return RArguments.getDepth(f) == depth ? f : null;
+                    } else {
+                        return null;
+                    }
+                }
+                first = false;
                 return null;
             }
         });
@@ -421,8 +429,9 @@ public final class Utils {
                         }
                     } catch (Throwable t) {
                         // RLanguage values may not react kindly to getLength() calls
-                        str.append("<exception ").append(t.getClass().getSimpleName()).append(" while printing value of type ").append(value == null ? "null" : value.getClass().getSimpleName()).append(
-                                        '>');
+                        str.append("<exception ").append(t.getClass().getSimpleName()).append(" while printing value of type ").append(
+                                        value == null ? "null" : value.getClass().getSimpleName()).append(
+                                                        '>');
                     }
                 }
             }
