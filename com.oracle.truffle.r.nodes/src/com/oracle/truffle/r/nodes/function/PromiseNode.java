@@ -360,10 +360,6 @@ public abstract class PromiseNode extends RNode {
             return null;
         }
 
-        @Override
-        public void unsetSourceSection() {
-            throw RInternalError.shouldNotReachHere();
-        }
     }
 
     @TruffleBoundary

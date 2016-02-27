@@ -157,7 +157,7 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        return create(null, condition.substitute(env), thenPart.substitute(env), elsePart == null ? null : elsePart.substitute(env));
+        return create(RSyntaxNode.EAGER_DEPARSE, condition.substitute(env), thenPart.substitute(env), elsePart == null ? null : elsePart.substitute(env));
     }
 
     @Override

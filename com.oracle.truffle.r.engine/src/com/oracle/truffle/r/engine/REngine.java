@@ -473,7 +473,7 @@ final class REngine implements Engine, Engine.Timings {
     @TruffleBoundary
     private static RootCallTarget doMakeCallTarget(RNode body, String description) {
         BodyNode fbn;
-        SourceSection sourceSection = RSyntaxNode.SOURCE_UNAVAILABLE;
+        SourceSection sourceSection = RSyntaxNode.WRAPPER;
         if (RBaseNode.isRSyntaxNode(body)) {
             RSyntaxNode synBody = (RSyntaxNode) body;
             RASTDeparse.ensureSourceSection(synBody);
@@ -483,8 +483,6 @@ final class REngine implements Engine, Engine.Timings {
             if (sourceSection.getSource() != null) {
                 String funPlusBody = "function() " + sourceSection.getCode();
                 sourceSection = Source.fromText(funPlusBody, description).createSection("", 0, funPlusBody.length());
-            } else {
-                throw RInternalError.shouldNotReachHere();
             }
         } else {
             fbn = new BodyNode(body);

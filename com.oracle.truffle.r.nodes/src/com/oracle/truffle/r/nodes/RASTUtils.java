@@ -226,7 +226,7 @@ public class RASTUtils {
         if (fn instanceof ConstantNode) {
             fn = ((ConstantNode) fn).getValue();
         }
-        SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : null;
+        SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.EAGER_DEPARSE;
         if (fn instanceof String) {
             return RCallNode.createCall(sourceSection, RASTUtils.createReadVariableNode(((String) fn)), signature, arguments);
         } else if (fn instanceof ReadVariableNode) {
@@ -449,10 +449,6 @@ public class RASTUtils {
             throw RInternalError.shouldNotReachHere();
         }
 
-        @Override
-        public void unsetSourceSection() {
-            throw RInternalError.shouldNotReachHere();
-        }
     }
 
     /**

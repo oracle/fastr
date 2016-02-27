@@ -452,7 +452,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         FrameDescriptor frameDesc = new FrameDescriptor();
 
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<substituted function>", frameDesc);
-        return new FunctionDefinitionNode(null, frameDesc, body.substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
+        return new FunctionDefinitionNode(RSyntaxNode.EAGER_DEPARSE, frameDesc, body.substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
     }
 
     /**
@@ -639,17 +639,13 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     public void setSourceSection(SourceSection sourceSection) {
+        assert sourceSection != null;
         this.sourceSectionR = sourceSection;
     }
 
     @Override
     public SourceSection getSourceSection() {
         return sourceSectionR;
-    }
-
-    @Override
-    public void unsetSourceSection() {
-        sourceSectionR = null;
     }
 
 }

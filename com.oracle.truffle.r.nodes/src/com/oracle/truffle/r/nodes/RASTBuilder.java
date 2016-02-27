@@ -186,7 +186,9 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
 
         ArgumentsSignature signature = createSignature(args);
-        RSyntaxNode[] nodes = args.stream().map(arg -> (arg.value == null && arg.name == null) ? ConstantNode.create(arg.source, REmpty.instance) : arg.value).toArray(RSyntaxNode[]::new);
+        RSyntaxNode[] nodes = args.stream().map(
+                        arg -> (arg.value == null && arg.name == null) ? ConstantNode.create(arg.source == null ? RSyntaxNode.SOURCE_UNAVAILABLE : arg.source, REmpty.instance) : arg.value).toArray(
+                        RSyntaxNode[]::new);
 
         if (lhs instanceof RSyntaxLookup) {
             String symbol = ((RSyntaxLookup) lhs).getIdentifier();
@@ -446,7 +448,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         return -1;
     }
 
-    public RSyntaxNode lookup(SourceSection source, String symbol, boolean functionLookup) {
+    public RSyntaxNode lookup(SourceSection sourceIn, String symbol, boolean functionLookup) {
+        SourceSection source = sourceIn == null ? RSyntaxNode.SOURCE_UNAVAILABLE : sourceIn;
         if (!functionLookup && getVariadicComponentIndex(symbol) != -1) {
             int ind = getVariadicComponentIndex(symbol);
             return new ReadVariadicComponentNode(source, ind > 0 ? ind - 1 : ind);

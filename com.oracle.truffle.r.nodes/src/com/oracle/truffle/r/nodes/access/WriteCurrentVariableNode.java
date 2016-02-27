@@ -115,7 +115,7 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
         if (getRhs() != null) {
             rhsSub = getRhs().substitute(env).asRNode();
         }
-        return create(null, name, rhsSub);
+        return create(RSyntaxNode.EAGER_DEPARSE, name, rhsSub);
     }
 
     public int getRlengthImpl() {

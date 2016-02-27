@@ -35,6 +35,7 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
     @CompilationFinal private SourceSection sourceSectionR;
 
     protected WriteVariableNodeSyntaxHelper(SourceSection sourceSection) {
+        assert sourceSection != null;
         this.sourceSectionR = sourceSection;
     }
 

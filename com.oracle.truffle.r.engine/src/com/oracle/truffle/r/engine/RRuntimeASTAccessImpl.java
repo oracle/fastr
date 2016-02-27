@@ -231,7 +231,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 newNames[i] = names.getDataAt(j);
             }
             // copying is already handled by RShareable
-            rl.setRep(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), ArgumentsSignature.get(newNames), args.getArguments()));
+            rl.setRep(RCallNode.createCall(RSyntaxNode.INTERNAL, ((RCallNode) node).getFunctionNode(), ArgumentsSignature.get(newNames), args.getArguments()));
         } else if (node instanceof GroupDispatchNode) {
             throw RError.nyi(null, "group dispatch names update");
         } else {

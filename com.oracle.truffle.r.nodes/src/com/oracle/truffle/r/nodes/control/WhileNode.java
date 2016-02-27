@@ -126,7 +126,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        return create(null, getCondition().substitute(env), getBody().substitute(env), isRepeat);
+        return create(RSyntaxNode.EAGER_DEPARSE, getCondition().substitute(env), getBody().substitute(env), isRepeat);
     }
 
     @Override

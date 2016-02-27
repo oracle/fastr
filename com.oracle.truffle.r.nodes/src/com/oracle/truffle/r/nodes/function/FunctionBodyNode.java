@@ -135,17 +135,13 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
     }
 
     public void setSourceSection(SourceSection sourceSection) {
+        assert sourceSection != null;
         this.sourceSectionR = sourceSection;
     }
 
     @Override
     public SourceSection getSourceSection() {
         return sourceSectionR;
-    }
-
-    @Override
-    public void unsetSourceSection() {
-        sourceSectionR = null;
     }
 
 }

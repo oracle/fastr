@@ -142,7 +142,7 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
     public RSyntaxNode substituteImpl(REnvironment env) {
         FunctionDefinitionNode thisFdn = (FunctionDefinitionNode) callTarget.getRootNode();
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) thisFdn.substituteImpl(env);
-        return new FunctionExpressionNode(null, Truffle.getRuntime().createCallTarget(fdn));
+        return new FunctionExpressionNode(RSyntaxNode.EAGER_DEPARSE, Truffle.getRuntime().createCallTarget(fdn));
     }
 
     public int getRlengthImpl() {

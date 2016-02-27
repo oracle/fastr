@@ -133,7 +133,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        return create(null, (WriteVariableNode) getCvar().substitute(env), getRange().substitute(env), getBody().substitute(env));
+        return create(RSyntaxNode.EAGER_DEPARSE, (WriteVariableNode) getCvar().substitute(env), getRange().substitute(env), getBody().substitute(env));
     }
 
     @Override
@@ -205,10 +205,10 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
 
         private static RNode createIndexedLoad(String indexName, String rangeName) {
             RASTBuilder builder = new RASTBuilder();
-            RSyntaxNode receiver = builder.lookup(null, rangeName, false);
-            RSyntaxNode index = builder.lookup(null, indexName, false);
-            RSyntaxNode access = builder.lookup(null, "[[", true);
-            return builder.call(null, access, receiver, index).asRNode();
+            RSyntaxNode receiver = builder.lookup(RSyntaxNode.INTERNAL, rangeName, false);
+            RSyntaxNode index = builder.lookup(RSyntaxNode.INTERNAL, indexName, false);
+            RSyntaxNode access = builder.lookup(RSyntaxNode.INTERNAL, "[[", true);
+            return builder.call(RSyntaxNode.INTERNAL, access, receiver, index).asRNode();
         }
 
         public boolean executeRepeating(VirtualFrame frame) {

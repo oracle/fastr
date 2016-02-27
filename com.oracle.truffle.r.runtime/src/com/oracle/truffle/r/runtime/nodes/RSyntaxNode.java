@@ -49,6 +49,12 @@ import com.oracle.truffle.r.runtime.context.*;
  * workaround, the {@link #isSyntax} method can be overridden in such nodes, using some contextual
  * information, to return {@code false}.
  *
+ * It is an invariant that every RSyntaxNode has a non-null {@link SourceSection}, but to handle the
+ * cases alluded to above, several {@link SourceSection} values are defined in this interface, e.g.
+ * {@link #SOURCE_UNAVAILABLE}, that can be used instead of {@code null} and identify the situation.
+ * One particular case is {@link #LAZY_DEPARSE} which indicates that a valid {@link SourceSection}
+ * can be produced for the associated node, but it is computed lazily, when requested.
+ *
  * Every implementor of this interface must provide an implementation of the {@link #deparseImpl},
  * {@link #serializeImpl}, {@link #allNamesImpl}, and {@link #substituteImpl} methods. These are
  * invoked by the corresponding methods on {@link RBaseNode} after the correct {@link RSyntaxNode}
@@ -89,19 +95,41 @@ public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
     }
 
     /**
-     * A canonical "unavailable" {@link SourceSection}.
+     * Indicates the case where a node that should have a valid {@link SourceSection} but for reason
+     * does not have. Ideally never required.
      */
     SourceSection SOURCE_UNAVAILABLE = SourceSection.createUnavailable("R", "unavailable");
 
+    /**
+     * Indicates a node that was created as part of an AST transformation related to the internal
+     * execution process. This should never be used for a node that could manifest to the R
+     * programmer.
+     */
+    SourceSection INTERNAL = SourceSection.createUnavailable("R", "internal");
+
+    /**
+     * Indicates that this {@link SourceSection} can be created on demand if required.
+     */
+    SourceSection LAZY_DEPARSE = SourceSection.createUnavailable("R", "lazy deparse");
+
+    /**
+     * Indicates that, after creating the node, which requires a non-null {@link SourceSection} it
+     * should be created and updated by deparsing. This is generally used in specific situations,
+     * e.g., the {@code substitute} builtin.
+     */
+    SourceSection EAGER_DEPARSE = SourceSection.createUnavailable("R", "eager deparse");
+
+    /**
+     * Indicates a wrapper "function" created for "eval" or an expression entered into shell.
+     */
+    SourceSection WRAPPER = SourceSection.createUnavailable("R", "wrapper");
+
     /*
      * Every implementor of this interface must either inherit or directly implement the following
-     * three methods. N.B. removeSourceSection and setSourceSection are deliberately renamed from
-     * the previous (now deprecated) methods on the Node class.
+     * methods.
      */
 
     SourceSection getSourceSection();
-
-    void unsetSourceSection();
 
     void setSourceSection(SourceSection sourceSection);
 

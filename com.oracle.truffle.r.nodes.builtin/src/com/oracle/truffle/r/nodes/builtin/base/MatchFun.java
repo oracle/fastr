@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "match.fun", kind = SUBSTITUTE, parameterNames = {"fun", "descend"})
 // TODO revert to R
@@ -60,7 +61,7 @@ public abstract class MatchFun extends RBuiltinNode {
         if (lookup == null || !fun.equals(lastFun)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastFun = fun;
-            ReadVariableNode rvn = ReadVariableNode.createFunctionLookup(null, fun);
+            ReadVariableNode rvn = ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, fun);
             lookup = lookup == null ? insert(rvn) : lookup.replace(rvn);
         }
         Object r = lookup.execute(frame);

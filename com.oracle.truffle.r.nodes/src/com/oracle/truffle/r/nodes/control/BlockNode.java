@@ -42,6 +42,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, RSyntaxCall,
 
     public BlockNode(SourceSection src, RNode[] sequence) {
         super(sequence);
+        assert src != null;
         this.sourceSectionR = src;
         // tag sequence members as statements
         for (int i = 0; i < sequence.length; i++) {
@@ -120,7 +121,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, RSyntaxCall,
          * it is represented as a LANGSXP with symbol "{" and a NULL cdr, representing the empty
          * sequence. This is an unpleasant special case in FastR that we can only detect by
          * re-examining the original source.
-         *
+         * 
          * A sequence of length 1, i.e. a single statement, is represented as itself, e.g. a SYMSXP
          * for "x" or a LANGSXP for a function call. Otherwise, the representation is a LISTSXP
          * pairlist, where the car is the statement and the cdr is either NILSXP or a LISTSXP for
@@ -147,7 +148,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, RSyntaxCall,
         for (int i = 0; i < sequence.length; i++) {
             sequenceSubs[i] = sequence[i].substitute(env).asRNode();
         }
-        return new BlockNode(null, sequenceSubs);
+        return new BlockNode(RSyntaxNode.EAGER_DEPARSE, sequenceSubs);
     }
 
     @Override
@@ -213,17 +214,13 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, RSyntaxCall,
     }
 
     public void setSourceSection(SourceSection sourceSection) {
+        assert sourceSection != null;
         this.sourceSectionR = sourceSection;
     }
 
     @Override
     public SourceSection getSourceSection() {
         return sourceSectionR;
-    }
-
-    @Override
-    public void unsetSourceSection() {
-        sourceSectionR = null;
     }
 
     public RSyntaxElement getSyntaxLHS() {
