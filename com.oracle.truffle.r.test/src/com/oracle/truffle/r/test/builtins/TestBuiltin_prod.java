@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -54,7 +54,7 @@ public class TestBuiltin_prod extends TestBase {
 
     @Test
     public void testprod8() {
-        assertEval(Ignored.Unknown, "argv <- list(c(0.138260298853371, 0.000636169906925458));prod(argv[[1]]);");
+        assertEval("argv <- list(c(0.138260298853371, 0.000636169906925458));prod(argv[[1]]);");
     }
 
     @Test

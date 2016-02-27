@@ -113,20 +113,6 @@ public class ReadVariadicComponentNode extends RSourceSectionNode implements RSy
         state.setCarAsSymbol(getPrintForm());
     }
 
-    public int getRlengthImpl() {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public Object getRelementImpl(@SuppressWarnings("hiding") int index) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
-    }
-
     public String getIdentifier() {
         return getPrintForm();
     }

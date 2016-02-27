@@ -56,9 +56,8 @@ import com.oracle.truffle.r.runtime.context.*;
  * can be produced for the associated node, but it is computed lazily, when requested.
  *
  * Every implementor of this interface must provide an implementation of the {@link #deparseImpl},
- * {@link #serializeImpl}, {@link #allNamesImpl}, and {@link #substituteImpl} methods. These are
- * invoked by the corresponding methods on {@link RBaseNode} after the correct {@link RSyntaxNode}
- * is located.
+ * {@link #serializeImpl}, and {@link #substituteImpl} methods. These are invoked by the
+ * corresponding methods on {@link RBaseNode} after the correct {@link RSyntaxNode} is located.
  */
 public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
 

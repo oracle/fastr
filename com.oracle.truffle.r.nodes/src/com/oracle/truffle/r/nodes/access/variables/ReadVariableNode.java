@@ -52,7 +52,6 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
@@ -63,7 +62,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.StableValue;
 import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -75,9 +73,9 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameAndSlotLookupResult;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.LookupResult;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -173,31 +171,8 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     @Override
-    public void allNamesImpl(RAllNames.State state) {
-        state.addName(identifierAsString);
-    }
-
-    @Override
     public void serializeImpl(RSerialize.State state) {
         state.setCarAsSymbol(identifierAsString);
-    }
-
-    public int getRlengthImpl() {
-        return 1;
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        return RDataFactory.createSymbol(identifierAsString);
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        if (other instanceof ReadVariableNode) {
-            return identifierAsString.equals(((ReadVariableNode) other).identifier);
-        } else {
-            return false;
-        }
     }
 
     @Override

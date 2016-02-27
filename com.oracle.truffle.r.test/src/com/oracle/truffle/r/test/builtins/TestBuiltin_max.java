@@ -90,7 +90,7 @@ public class TestBuiltin_max extends TestBase {
 
     @Test
     public void testmax15() {
-        assertEval(Ignored.Unknown, "argv <- list(c(1.2e+100, 1.3e+100));max(argv[[1]]);");
+        assertEval("argv <- list(c(1.2e+100, 1.3e+100));max(argv[[1]]);");
     }
 
     @Test

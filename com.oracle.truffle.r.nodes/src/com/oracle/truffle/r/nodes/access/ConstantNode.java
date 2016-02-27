@@ -76,31 +76,8 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
     }
 
     @Override
-    public void allNamesImpl(RAllNames.State state) {
-        // No name
-    }
-
-    @Override
     public void serializeImpl(RSerialize.State state) {
         state.setCar(getValue());
-    }
-
-    public int getRlengthImpl() {
-        return 1;
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        return getValue();
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        if (other.getClass() == getClass()) {
-            return getValue().equals(((ConstantNode) other).getValue());
-        } else {
-            return false;
-        }
     }
 
     public static Object getConstant(RNode node) {

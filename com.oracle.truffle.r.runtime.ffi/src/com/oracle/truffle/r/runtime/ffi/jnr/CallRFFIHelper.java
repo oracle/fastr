@@ -102,6 +102,8 @@ public class CallRFFIHelper {
             return ((Integer) x).intValue();
         } else if (x instanceof Double) {
             return RRuntime.double2int((Double) x);
+        } else if (x instanceof Byte) {
+            return RRuntime.logical2int((Byte) x);
         } else {
             guaranteeInstanceOf(x, RIntVector.class);
             return ((RIntVector) x).getDataAt(0);

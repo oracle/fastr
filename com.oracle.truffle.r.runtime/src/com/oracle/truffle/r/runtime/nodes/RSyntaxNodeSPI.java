@@ -22,10 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * The following methods must be implemented by all implementors of {@link RSyntaxNode}. However,
@@ -53,32 +53,5 @@ public interface RSyntaxNodeSPI {
      * create the virtual pairlist for this node,
      */
     void serializeImpl(RSerialize.State state);
-
-    /* Methods to support access on an RLanguage object, e.g. length(quote(f(a,b,c)))) */
-
-    /**
-     * Return the "length" of this node in the R sense.
-     */
-    int getRlengthImpl();
-
-    /**
-     * Return a value (usually an {@link RLanguage} instance) for the element of this node at
-     * {@code index}.
-     */
-    Object getRelementImpl(int index);
-
-    /**
-     * Return {@code true} iff this node "equals" {@code other} in the R sense. (Used for
-     * {@code identical} builtin).
-     */
-    boolean getRequalsImpl(RSyntaxNode other);
-
-    /**
-     * Support for the {@code all.names} builtin. Names in this node should be accumulated in the
-     * state.
-     */
-    default void allNamesImpl(@SuppressWarnings("unused") RAllNames.State state) {
-        throw RInternalError.unimplemented();
-    }
 
 }

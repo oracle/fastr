@@ -92,7 +92,7 @@ public class RInstrumentation {
                 String idName = fdn.toString();
                 Source idSource = null;
                 String idOrigin = null;
-                if (ss != null) {
+                if (ss.getSource() != null) {
                     idSource = ss.getSource();
                     String sourceName = idSource.getName();
                     idOrigin = sourceName;
@@ -107,18 +107,9 @@ public class RInstrumentation {
                         idOrigin = sourceName;
                     }
                 } else {
-                    /*
-                     * This (pseudo) function was not parsed from source, e.g. eval(quote(x+1)). We
-                     * deparse it and truncate to 40 for the name, then create a Source for it. N.B.
-                     * There is no value in deparsing the funcion signature as it always of the form
-                     * "function() { expr }" and only the "expr" in interesting.
-                     */
-                    RDeparse.State state = RDeparse.State.createPrintableState();
-                    fdn.getBody().deparse(state);
-                    String functionBody = state.toString();
+                    // One of the RSyntaxNode "unavailable"s.
                     idOrigin = idName;
-                    idName = functionBody.substring(0, Math.min(functionBody.length(), 40)).replace("\n", "\\n");
-                    idSource = Source.fromText(functionBody, "<deparsed>");
+                    idSource = Source.fromText(idName, idName);
                 }
                 ident = new FunctionIdentification(idSource, idName, idOrigin, fdn);
             }

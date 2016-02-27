@@ -47,10 +47,8 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FunctionUID;
-import com.oracle.truffle.r.runtime.RAllNames.State;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
@@ -489,53 +487,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         state.setCdr(state.closePairList());
     }
 
-    public int getRlengthImpl() {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        FunctionDefinitionNode otherFdn = (FunctionDefinitionNode) other;
-        if (!compareFormals(otherFdn)) {
-            return false;
-        }
-        RSyntaxNode syntaxBody = body.asRSyntaxNode();
-        return syntaxBody.getRequalsImpl(otherFdn.body.asRSyntaxNode());
-    }
-
-    private boolean compareFormals(FunctionDefinitionNode other) {
-        FormalArguments formals = getFormalArguments();
-        ArgumentsSignature signature = formals.getSignature();
-        int formalsLength = signature.getLength();
-        FormalArguments otherFormals = other.getFormalArguments();
-        ArgumentsSignature otherSignature = otherFormals.getSignature();
-        if (formalsLength != otherSignature.getLength()) {
-            return false;
-        }
-        for (int i = 0; i < formalsLength; i++) {
-            // The signature has the formal names
-            if (!signature.getName(i).equals(otherSignature.getName(i))) {
-                return false;
-            }
-            RNode defaultArg = formals.getDefaultArgument(i);
-            RNode otherDefaultArg = otherFormals.getDefaultArgument(i);
-            if (defaultArg == null && otherDefaultArg != null || defaultArg != null && otherDefaultArg == null) {
-                return false;
-            }
-            if (defaultArg != null) {
-                if (!defaultArg.asRSyntaxNode().getRequalsImpl(otherDefaultArg.asRSyntaxNode())) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
     /**
      * Also called by {@link FunctionExpressionNode}.
      */
@@ -631,11 +582,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             ix++;
         }
         return false;
-    }
-
-    public void allNamesImpl(State state) {
-        state.addName("function");
-        body.allNames(state);
     }
 
     public void setSourceSection(SourceSection sourceSection) {

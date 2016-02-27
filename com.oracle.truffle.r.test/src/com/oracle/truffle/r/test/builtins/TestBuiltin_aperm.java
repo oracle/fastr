@@ -30,8 +30,7 @@ public class TestBuiltin_aperm extends TestBase {
 
     @Test
     public void testaperm3() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667), .Dim = c(1L, 9L)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(c(0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667), .Dim = c(1L, 9L)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

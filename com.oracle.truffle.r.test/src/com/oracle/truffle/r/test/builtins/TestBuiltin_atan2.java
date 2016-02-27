@@ -39,7 +39,7 @@ public class TestBuiltin_atan2 extends TestBase {
 
     @Test
     public void testatan25() {
-        assertEval(Ignored.Unknown, "argv <- list(2.43782895752771e-05, 0.999996523206508); .Internal(atan2(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(2.43782895752771e-05, 0.999996523206508); .Internal(atan2(argv[[1]], argv[[2]]))");
     }
 
     @Test

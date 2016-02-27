@@ -87,8 +87,7 @@ public class TestBuiltin_unique extends TestBase {
 
     @Test
     public void testunique14() {
-        assertEval(Ignored.OutputFormatting,
-                        "argv <- list(c(9.18429112061858e-05, 0.0238094009226188, 0.0498038685764186), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(c(9.18429112061858e-05, 0.0238094009226188, 0.0498038685764186), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
