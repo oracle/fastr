@@ -148,11 +148,6 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     @Override
-    protected Visualizer getVisualizer() {
-        return new TruffleRLanguageDebug.RVisualizer();
-    }
-
-    @Override
     protected boolean isInstrumentable(Node node) {
         RNode rNode = (RNode) node;
         return rNode.isRInstrumentable();

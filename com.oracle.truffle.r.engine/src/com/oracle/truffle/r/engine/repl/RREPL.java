@@ -22,14 +22,13 @@
  */
 package com.oracle.truffle.r.engine.repl;
 
-import com.oracle.truffle.r.engine.TruffleRLanguageDebug;
 import com.oracle.truffle.tools.debug.shell.server.REPLServer;
 
 public final class RREPL {
     public static void main(String[] args) {
 
         // Cheating for the prototype: start from SL, rather than from the client.
-        final REPLServer server = new REPLServer("application/x-r", new TruffleRLanguageDebug.RVisualizer());
+        final REPLServer server = new REPLServer("application/x-r");
         server.start();
     }
 

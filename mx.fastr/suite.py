@@ -27,7 +27,7 @@ suite = {
     "suites" : [
             {
                "name" : "graal-core",
-               "version" : "aee4ede1f3a9adbb690379cccb8d3080b75bc8dc",
+               "version" : "a0e54263b5001f68e25e329f9ebc9f3444a880c7",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal-core", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},

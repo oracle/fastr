@@ -144,12 +144,14 @@ public abstract class RBaseNode extends Node {
         throw RInternalError.shouldNotReachHere("getSourceSection in RBaseNode");
     }
 
+    @SuppressWarnings("deprecation")
     @Deprecated
     @Override
     public void assignSourceSection(SourceSection section) {
         throw RInternalError.shouldNotReachHere("assignSourceSection in RBaseNode");
     }
 
+    @SuppressWarnings("deprecation")
     @Deprecated
     @Override
     public void clearSourceSection() {
@@ -158,9 +160,9 @@ public abstract class RBaseNode extends Node {
 
     @Override
     /**
-     * Returns the {@link SourceSection} for this node, by locating the associated {@link RSyntaxNode}.
-     * We do not want any code in FastR calling this method as it is subsumed by {@link #getRSyntaxNode}.
-     * However, tools code may call it, so we simply delegate the call.
+     * Returns the {@link SourceSection} for this node, by locating the associated
+     * {@link RSyntaxNode}. We do not want any code in FastR calling this method as it is subsumed
+     * by {@link #getRSyntaxNode}. However, tools code may call it, so we simply delegate the call.
      */
     public SourceSection getEncapsulatingSourceSection() {
         return getRSyntaxNode().getSourceSection();

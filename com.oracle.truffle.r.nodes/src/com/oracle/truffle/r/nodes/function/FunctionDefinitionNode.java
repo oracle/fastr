@@ -32,7 +32,6 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrument.QuitException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.NodeUtil.NodeCountFilter;
@@ -292,7 +291,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         } catch (RError e) {
             CompilerDirectives.transferToInterpreter();
             throw e;
-        } catch (DebugExitException | QuitException | BrowserQuitException e) {
+        } catch (DebugExitException | BrowserQuitException e) {
             /*
              * These relate to the debugging support. exitHandlers must be suppressed and the
              * exceptions must pass through unchanged; they are not errors
