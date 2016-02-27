@@ -431,7 +431,7 @@ public final class Utils {
                         // RLanguage values may not react kindly to getLength() calls
                         str.append("<exception ").append(t.getClass().getSimpleName()).append(" while printing value of type ").append(
                                         value == null ? "null" : value.getClass().getSimpleName()).append(
-                                                        '>');
+                                        '>');
                     }
                 }
             }
