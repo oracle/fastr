@@ -47,9 +47,9 @@ public class RInstrumentation {
 
     /**
      * Collects together all the relevant data for a function, keyed by the {@link FunctionUID},
-     * which is unique.
+     * which is unique, for {@link RPerfStats} use.
      */
-    private static Map<FunctionUID, FunctionData> functionMap = new HashMap<>();
+    private static Map<FunctionUID, FunctionData> functionMap;
 
     /**
      * Created lazily as needed.
@@ -130,20 +130,33 @@ public class RInstrumentation {
      * Called back from {@link FunctionDefinitionNode} so that we can record the {@link FunctionUID}
      * and use {@code fdn} as the canonical {@link FunctionDefinitionNode}.
      *
+     * @param fdn
+     */
+    public static void registerFunctionDefinition(FunctionDefinitionNode fdn) {
+        fixupTags(fdn);
+        // For PerfStats we need to record the info on fdn for the report
+        if (functionMap != null) {
+            FunctionUID uid = fdn.getUID();
+            FunctionData fd = functionMap.get(uid);
+            if (fd != null) {
+                // duplicate
+                return;
+            }
+            assert fd == null;
+            functionMap.put(uid, new FunctionData(uid, fdn));
+        }
+    }
+
+    /**
+     * (Temporarily) tag with the function uid, and also with support for the repl debugger.
+     *
      * TODO Remove hack to tag with {@code uidTag} once {@link SourceSectionFilter} provides a
      * builtin way.
      *
      * @param fdn
      */
-    public static void registerFunctionDefinition(FunctionDefinitionNode fdn) {
+    private static void fixupTags(FunctionDefinitionNode fdn) {
         FunctionUID uid = fdn.getUID();
-        FunctionData fd = functionMap.get(uid);
-        if (fd != null) {
-            // duplicate
-            return;
-        }
-        assert fd == null;
-        functionMap.put(uid, new FunctionData(uid, fdn));
         String uidTag = RSyntaxTags.createUidTag(uid);
         RSyntaxNode.accept(fdn, 0, new RSyntaxNodeVisitor() {
 
@@ -152,6 +165,14 @@ public class RInstrumentation {
                 assert ss != null;
                 String[] tags = RSyntaxTags.getTags(ss);
                 if (tags != null) {
+                    if (RSyntaxTags.containsTag(tags, RSyntaxTags.STATEMENT)) {
+                        String[] updatedTags = new String[tags.length + 1];
+                        System.arraycopy(tags, 0, updatedTags, 0, tags.length);
+                        updatedTags[tags.length] = "debug-HALT";
+                        node.setSourceSection(ss.withTags(updatedTags));
+                        tags = updatedTags;
+                    }
+                    // tag with function uid (will go away)
                     String[] updatedTags = new String[tags.length + 1];
                     System.arraycopy(tags, 0, updatedTags, 0, tags.length);
                     updatedTags[tags.length] = uidTag;
@@ -161,6 +182,7 @@ public class RInstrumentation {
             }
 
         }, false);
+
     }
 
     public static FunctionIdentification getFunctionIdentification(FunctionUID uid) {
@@ -226,8 +248,11 @@ public class RInstrumentation {
         if (rdebugValue != null) {
             debugFunctionNames = rdebugValue.split(",");
         }
-        REntryCounters.FunctionListener.installCounters();
-        RNodeTimer.StatementListener.installTimers();
+        if (REntryCounters.FunctionListener.enabled() || RNodeTimer.StatementListener.enabled()) {
+            functionMap = new HashMap<>();
+            REntryCounters.FunctionListener.installCounters();
+            RNodeTimer.StatementListener.installTimers();
+        }
         TraceHandling.traceAllFunctions();
     }
 

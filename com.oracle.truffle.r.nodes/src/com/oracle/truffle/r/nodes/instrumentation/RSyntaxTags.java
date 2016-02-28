@@ -79,6 +79,15 @@ public class RSyntaxTags {
         }
     }
 
+    public static boolean containsTag(String[] tags, String atag) {
+        for (String tag : tags) {
+            if (tag.equals(atag)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Return a new {@link SourceSection} that adds {@code newTags} checking for duplicates.
      */
