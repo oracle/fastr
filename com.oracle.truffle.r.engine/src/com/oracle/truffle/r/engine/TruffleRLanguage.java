@@ -144,9 +144,10 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         return createFindContextNode();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected Visualizer getVisualizer() {
-        return new TruffleRLanguageDebug.RVisualizer();
+        return null;
     }
 
     @Override
