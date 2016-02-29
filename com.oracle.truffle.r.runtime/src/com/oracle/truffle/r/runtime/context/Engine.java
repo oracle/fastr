@@ -33,6 +33,7 @@ import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public interface Engine {
 
@@ -193,7 +194,7 @@ public interface Engine {
      *
      * @param body The AST for the body of the wrapper, i.e., the expression being evaluated.
      */
-    RootCallTarget makePromiseCallTarget(Object body, String funName);
+    RootCallTarget makePromiseCallTarget(RNode body, String funName);
 
     /**
      * Used by Truffle debugger; invokes the internal "print" support in R for {@code value}.

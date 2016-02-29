@@ -440,8 +440,7 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
-    public RootCallTarget makePromiseCallTarget(Object bodyArg, String funName) {
-        RNode body = (RNode) bodyArg;
+    public RootCallTarget makePromiseCallTarget(RNode body, String funName) {
         return doMakeCallTarget(body, funName);
     }
 
