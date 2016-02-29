@@ -13,7 +13,6 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.*;
 
 import com.oracle.truffle.r.test.*;
-import com.sun.source.tree.AssertTree;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_format extends TestBase {
