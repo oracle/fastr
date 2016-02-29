@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RAttributes;
 
 public abstract class AbstractValuePrinter<T> implements ValuePrinter<T> {
 
@@ -38,9 +37,6 @@ public abstract class AbstractValuePrinter<T> implements ValuePrinter<T> {
         if (value instanceof RAttributeStorage) {
             AttributesPrinter.INSTANCE.print((RAttributeStorage) value, printCtx);
         }
-    }
-
-    protected void printAttributes(T value, RAttributes attrs, PrintContext printCtx) throws IOException {
     }
 
     protected abstract void printValue(T value, PrintContext printCtx) throws IOException;

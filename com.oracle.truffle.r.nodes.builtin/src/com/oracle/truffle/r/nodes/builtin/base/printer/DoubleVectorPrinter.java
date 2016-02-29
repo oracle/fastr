@@ -28,7 +28,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         return new DoubleVectorPrintJob(vector, indx, quote, printCtx);
     }
 
-    private class DoubleVectorPrintJob extends VectorPrintJob {
+    private final class DoubleVectorPrintJob extends VectorPrintJob {
 
         protected DoubleVectorPrintJob(RAbstractDoubleVector vector, int indx, boolean quote, PrintContext printCtx) {
             super(vector, indx, quote, printCtx);
@@ -54,6 +54,11 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         @Override
         protected void printEmptyVector() throws IOException {
             out.println("numeric(0)");
+        }
+
+        @Override
+        protected String elementTypeName() {
+            return "double";
         }
 
     }
