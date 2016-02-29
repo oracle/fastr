@@ -66,6 +66,8 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.RFFIContextStateFactory;
 import com.oracle.truffle.r.runtime.instrument.TraceState;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 /**
@@ -302,6 +304,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     /*
      * Workarounds to finesse project circularities between runtime/nodes.
      */
+    @CompilationFinal private static RCodeBuilder<RSyntaxNode> astBuilder;
     @CompilationFinal private static RRuntimeASTAccess runtimeASTAccess;
     @CompilationFinal private static RBuiltinLookup builtinLookup;
     @CompilationFinal private static boolean initialContextInitialized;
@@ -313,9 +316,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     /**
      * Initialize VM-wide static values.
      */
-    public static void initialize(RRuntimeASTAccess rASTHelperArg, RBuiltinLookup rBuiltinLookupArg) {
-        runtimeASTAccess = rASTHelperArg;
-        builtinLookup = rBuiltinLookupArg;
+    public static void initialize(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, RBuiltinLookup rBuiltinLookup) {
+        RContext.astBuilder = rAstBuilder;
+        RContext.runtimeASTAccess = rRuntimeASTAccess;
+        RContext.builtinLookup = rBuiltinLookup;
     }
 
     /**
@@ -586,6 +590,13 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public ConsoleHandler getConsoleHandler() {
         return info.getConsoleHandler();
+    }
+
+    /**
+     * This is a static property of the implementation and not context-specific.
+     */
+    public static RCodeBuilder<RSyntaxNode> getASTBuilder() {
+        return astBuilder;
     }
 
     /**

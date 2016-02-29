@@ -54,7 +54,6 @@ import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
-import com.oracle.truffle.r.parser.RCodeBuilder;
 import com.oracle.truffle.r.parser.tools.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -68,6 +67,7 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -86,10 +86,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  */
 public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
-    /**
-     * This method returns a newly created AST fragment for the given original element. This
-     * functionality can be used to quickly create new AST snippets for existing code.
-     */
+    @Override
     public RSyntaxNode process(RSyntaxElement original) {
         return new RSyntaxVisitor<RSyntaxNode>() {
 
@@ -125,6 +122,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }.accept(original);
     }
 
+    @Override
     public RSyntaxNode call(SourceSection source, RSyntaxNode lhs, List<Argument<RSyntaxNode>> args) {
         if (lhs instanceof RSyntaxLookup) {
             String symbol = ((RSyntaxLookup) lhs).getIdentifier();
@@ -413,12 +411,14 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         return EvaluatedArgumentsVisitor.process(body, def.getSignature());
     }
 
+    @Override
     public RSyntaxNode function(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, RSyntaxNode assignedTo) {
         String description = getFunctionDescription(source, assignedTo);
         RootCallTarget callTarget = createFunctionCallTarget(source, params, body, description);
         return FunctionExpressionNode.create(source, callTarget);
     }
 
+    @Override
     public RFunction rootFunction(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, String name, MaterializedFrame enclosing) {
         RootCallTarget callTarget = createFunctionCallTarget(source, params, body, name);
         FastPathFactory fastPath = createFunctionFastPath(callTarget);
@@ -426,6 +426,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         return RDataFactory.createFunction(name, callTarget, null, enclosing, fastPath, ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch());
     }
 
+    @Override
     public RSyntaxNode constant(SourceSection source, Object value) {
         assert value instanceof Byte || value instanceof Integer || value instanceof Double || value instanceof RComplex || value instanceof String || value instanceof RNull ||
                         value instanceof REmpty : value.getClass();
@@ -448,6 +449,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         return -1;
     }
 
+    @Override
     public RSyntaxNode lookup(SourceSection sourceIn, String symbol, boolean functionLookup) {
         SourceSection source = sourceIn == null ? RSyntaxNode.SOURCE_UNAVAILABLE : sourceIn;
         if (!functionLookup && getVariadicComponentIndex(symbol) != -1) {
