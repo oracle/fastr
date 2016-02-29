@@ -70,6 +70,11 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -110,16 +115,72 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @TruffleBoundary
     @Override
     public int getLength(RLanguage rl) {
-        RBaseNode node = RASTUtils.unwrap(rl.getRep());
-        return node.getRLength();
+        RSyntaxElement s = RASTUtils.unwrap(rl.getRep()).asRSyntaxNode();
+
+        if (s instanceof RSyntaxCall) {
+            return ((RSyntaxCall) s).getSyntaxSignature().getLength() + 1;
+        } else if (s instanceof RSyntaxFunction) {
+            return 4;
+        } else {
+            /*
+             * We do not expect RSyntaxConstant and RSyntaxLookup here (see getDataAtAsObject).
+             */
+            throw RInternalError.shouldNotReachHere("unexpected type: " + s.getClass());
+        }
     }
 
     @TruffleBoundary
     @Override
     public Object getDataAtAsObject(RLanguage rl, final int index) {
         // index has already been range checked based on getLength
-        RBaseNode node = RASTUtils.unwrap(rl.getRep());
-        return node.getRelement(index);
+        RSyntaxElement s = RASTUtils.unwrap(rl.getRep()).asRSyntaxNode();
+
+        RSyntaxElement result;
+        if (s instanceof RSyntaxCall) {
+            RSyntaxCall call = (RSyntaxCall) s;
+            if (index == 0) {
+                result = call.getSyntaxLHS();
+            } else {
+                result = call.getSyntaxArguments()[index - 1];
+                if (result == null) {
+                    result = RSyntaxLookup.createDummyLookup(null, "", false);
+                }
+            }
+        } else if (s instanceof RSyntaxFunction) {
+            switch (index) {
+                case 0:
+                    result = RSyntaxLookup.createDummyLookup(null, "function", true);
+                    break;
+                case 1:
+                    throw RInternalError.unimplemented("arguments of 'function'");
+                case 2:
+                    result = ((RSyntaxFunction) s).getSyntaxBody();
+                    break;
+                case 3:
+                    throw RInternalError.unimplemented("srcref of 'function'");
+                default:
+                    throw RInternalError.shouldNotReachHere();
+            }
+        } else {
+            /*
+             * We do not expect RSyntaxConstant and RSyntaxLookup here: RSyntaxConstant should have
+             * been converted to the constant value, and RSyntaxLookup should have been converted to
+             * an RSymbol (see below).
+             */
+            throw RInternalError.shouldNotReachHere("unexpected type: " + s.getClass());
+        }
+
+        /*
+         * Constants and lookups are converted to their intrinsic value:
+         */
+        if (result instanceof RSyntaxConstant) {
+            return ((RSyntaxConstant) result).getValue();
+        } else if (result instanceof RSyntaxLookup) {
+            return RDataFactory.createSymbolInterned(((RSyntaxLookup) result).getIdentifier());
+        } else {
+            assert result instanceof RSyntaxCall || result instanceof RSyntaxFunction : result.getClass();
+            return RDataFactory.createLanguage(((RSyntaxNode) result).asRNode());
+        }
     }
 
     @TruffleBoundary
@@ -231,7 +292,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 newNames[i] = names.getDataAt(j);
             }
             // copying is already handled by RShareable
-            rl.setRep(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), ArgumentsSignature.get(newNames), args.getArguments()));
+            rl.setRep(RCallNode.createCall(RSyntaxNode.INTERNAL, ((RCallNode) node).getFunctionNode(), ArgumentsSignature.get(newNames), args.getArguments()));
         } else if (node instanceof GroupDispatchNode) {
             throw RError.nyi(null, "group dispatch names update");
         } else {

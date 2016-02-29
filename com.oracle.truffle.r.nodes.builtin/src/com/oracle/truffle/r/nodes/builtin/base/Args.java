@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  */
 @RBuiltin(name = "args", kind = RBuiltinKind.INTERNAL, parameterNames = {"name"})
 public abstract class Args extends RBuiltinNode {
-    private static final FunctionStatementsNode nullBody = new FunctionStatementsNode(null, ConstantNode.create(RNull.instance));
+    private static final FunctionStatementsNode nullBody = new FunctionStatementsNode(RSyntaxNode.INTERNAL, ConstantNode.create(RNull.instance));
     @Child private GetFunctions.Get getNode;
     @Child private FrameFunctions.ParentFrame parentFrameNode;
 
@@ -70,7 +70,7 @@ public abstract class Args extends RBuiltinNode {
         FormalArguments formals = rootNode.getFormalArguments();
         FunctionBodyNode newBody = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, nullBody);
         String newDesc = "args(" + rootNode.getDescription() + ")";
-        FunctionDefinitionNode newNode = new FunctionDefinitionNode(null, rootNode.getFrameDescriptor(), newBody, formals, newDesc, false, null);
+        FunctionDefinitionNode newNode = new FunctionDefinitionNode(RSyntaxNode.INTERNAL, rootNode.getFrameDescriptor(), newBody, formals, newDesc, false, null);
         return RDataFactory.createFunction(newDesc, Truffle.getRuntime().createCallTarget(newNode), null, REnvironment.globalEnv().getFrame(), null, false);
     }
 

@@ -101,18 +101,9 @@ public class RInstrument {
                         idOrigin = sourceName;
                     }
                 } else {
-                    /*
-                     * This (pseudo) function was not parsed from source, e.g. eval(quote(x+1)). We
-                     * deparse it and truncate to 40 for the name, then create a Source for it. N.B.
-                     * There is no value in deparsing the funcion signature as it always of the form
-                     * "function() { expr }" and only the "expr" in interesting.
-                     */
-                    RDeparse.State state = RDeparse.State.createPrintableState();
-                    fdn.getBody().deparse(state);
-                    String functionBody = state.toString();
+                    // One of the RSyntaxNode "unavailable"s.
                     idOrigin = idName;
-                    idName = functionBody.substring(0, Math.min(functionBody.length(), 40)).replace("\n", "\\n");
-                    idSource = Source.fromText(functionBody, "<deparsed>");
+                    idSource = Source.fromText(idName, idName);
                 }
                 ident = new FunctionIdentification(idSource, idName, idOrigin, fdn);
             }
@@ -168,15 +159,13 @@ public class RInstrument {
 
         @Override
         public void probeTaggedAs(Probe probe, SyntaxTag tag, Object tagValue) {
-            if (tag == RSyntaxTag.FUNCTION_BODY) {
-                putProbe((FunctionUID) tagValue, probe);
-                if (REntryCounters.Function.enabled()) {
-                    getInstrumenter().attach(probe, new REntryCounters.Function((FunctionUID) tagValue), "R function entry counter");
-                }
-            } else if (tag == StandardSyntaxTag.START_METHOD) {
+            if (tag == StandardSyntaxTag.START_METHOD) {
                 putProbe((FunctionUID) tagValue, probe);
                 if (FastROptions.TraceCalls.getBooleanValue()) {
                     TraceHandling.attachTraceHandler((FunctionUID) tagValue);
+                }
+                if (REntryCounters.Function.enabled()) {
+                    getInstrumenter().attach(probe, new REntryCounters.Function((FunctionUID) tagValue), "R function entry counter");
                 }
             } else if (tag == StandardSyntaxTag.STATEMENT) {
                 if (RNodeTimer.Statement.enabled()) {
@@ -261,10 +250,11 @@ public class RInstrument {
         return instrumentingEnabled;
     }
 
-    public static void checkDebugRequested(String name, RFunction func) {
+    public static void checkDebugRequested(RFunction func) {
         if (debugFunctionNames != null) {
+            FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
             for (String debugFunctionName : debugFunctionNames) {
-                if (debugFunctionName.equals(name)) {
+                if (debugFunctionName.equals(fdn.toString())) {
                     DebugHandling.enableDebug(func, "", RNull.instance, false);
                 }
             }

@@ -49,7 +49,7 @@ public class RASTDeparse {
      */
     public static void ensureSourceSection(RSyntaxNode node) {
         SourceSection ss = node.getSourceSection();
-        if (ss == null) {
+        if (ss == RSyntaxNode.EAGER_DEPARSE) {
             RDeparse.State state = RDeparse.State.createPrintableStateWithSource();
             node.deparseImpl(state);
             state.assignSourceSections();

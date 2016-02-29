@@ -117,21 +117,9 @@ public abstract class Substitute extends RBuiltinNode {
         // substitution is destructive so clone the tree
         RSyntaxNode rNode = (RSyntaxNode) NodeUtil.cloneNode(node);
         RSyntaxNode subRNode = rNode.substituteImpl(env);
-        // remove old source sections
-        unsetSourceSections(subRNode.asRNode());
         // create source for entire tree
         RASTDeparse.ensureSourceSection(subRNode);
         return RASTUtils.createLanguageElement(subRNode.asRNode());
-    }
-
-    private static void unsetSourceSections(Node node) {
-        node.accept(n -> {
-            if (n instanceof RSyntaxNode) {
-                RSyntaxNode sn = (RSyntaxNode) n;
-                sn.unsetSourceSection();
-            }
-            return true;
-        });
     }
 
 }

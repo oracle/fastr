@@ -19,7 +19,6 @@ import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
@@ -27,7 +26,6 @@ import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
-import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RGroupGenerics;
@@ -39,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
@@ -121,55 +118,10 @@ public final class GroupDispatchNode extends RSourceSectionNode implements RSynt
     }
 
     @Override
-    public void allNamesImpl(RAllNames.State state) {
-        if (state.includeFunctions()) {
-            state.addName(getGenericName());
-        }
-        for (RSyntaxNode argNode : callArgsNode.getSyntaxArguments()) {
-            argNode.allNamesImpl(state);
-        }
-    }
-
-    @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
         // TODO substitute aDispatchNode
         Arguments<RSyntaxNode> substituteArguments = RCallNode.substituteArguments(env, callArgsNode.getSyntaxArguments(), callArgsNode.signature);
         return RASTUtils.createCall(this, false, substituteArguments.getSignature(), substituteArguments.getArguments());
-    }
-
-    public int getRlengthImpl() {
-        return 1 + getArguments().getLength();
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        if (index == 0) {
-            if (RASTUtils.isNamedFunctionNode(this)) {
-                return RASTUtils.findFunctionName(this);
-            } else {
-                RNode functionNode = RASTUtils.getFunctionNode(this);
-                if (functionNode instanceof ConstantNode && ((ConstantNode) functionNode).getValue() instanceof RSymbol) {
-                    return ((ConstantNode) functionNode).getValue();
-                } else {
-                    return RDataFactory.createLanguage(functionNode);
-                }
-            }
-        } else {
-            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(this);
-            return RASTUtils.createLanguageElement(args, index - 1);
-        }
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        if (!(other instanceof GroupDispatchNode)) {
-            return false;
-        }
-        GroupDispatchNode otherGDN = (GroupDispatchNode) other;
-        if (!fixedGenericName.equals(otherGDN.fixedGenericName)) {
-            return false;
-        }
-        return RCallNode.getRequalsImplArgs(callArgsNode.getSyntaxArguments(), otherGDN.callArgsNode.getSyntaxArguments());
     }
 
     @Override

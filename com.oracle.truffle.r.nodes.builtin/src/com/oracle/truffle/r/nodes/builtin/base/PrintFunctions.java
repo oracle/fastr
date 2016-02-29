@@ -25,9 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
@@ -37,13 +34,8 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.printer.PrintContext;
-import com.oracle.truffle.r.nodes.builtin.base.printer.PrintParameters;
-import com.oracle.truffle.r.nodes.builtin.base.printer.RBufferedWriter;
-import com.oracle.truffle.r.nodes.builtin.base.printer.RWriter;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinters;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -54,6 +46,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public class PrintFunctions {
     public abstract static class PrintAdapter extends RInvisibleBuiltinNode {
@@ -86,7 +79,6 @@ public class PrintFunctions {
             casts.firstBoolean(8);
         }
 
-        @SuppressWarnings({"unchecked"})
         @Specialization(guards = "!isS4(o)")
         protected Object printDefault(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
             try {
@@ -106,7 +98,7 @@ public class PrintFunctions {
         }
 
         ReadVariableNode createShowFind() {
-            return ReadVariableNode.createFunctionLookup(null, "show");
+            return ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, "show");
         }
 
         RFunction createShowFunction(VirtualFrame frame, ReadVariableNode showFind) {

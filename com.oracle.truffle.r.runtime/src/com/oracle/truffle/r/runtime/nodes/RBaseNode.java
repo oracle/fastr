@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.nodes;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -140,37 +139,27 @@ public abstract class RBaseNode extends Node {
         syntaxNode.serializeImpl(state);
     }
 
-    public int getRLength() {
-        RSyntaxNode syntaxNode = getRSyntaxNode();
-        return syntaxNode.getRlengthImpl();
-    }
-
-    public Object getRelement(int index) {
-        RSyntaxNode syntaxNode = getRSyntaxNode();
-        return syntaxNode.getRelementImpl(index);
-    }
-
-    public boolean getRequals(RSyntaxNode other) {
-        RSyntaxNode syntaxNode = getRSyntaxNode();
-        return syntaxNode.getRequalsImpl(other);
-    }
-
-    public void allNames(RAllNames.State state) {
-        RSyntaxNode syntaxNode = getRSyntaxNode();
-        syntaxNode.allNamesImpl(state);
-    }
-
     @Override
     public SourceSection getSourceSection() {
-        throw RInternalError.shouldNotReachHere("getSourceSection in RBaseNode");
+        /*
+         * All the RSyntaxNode implementors (should) override this method, but it may be called on
+         * any Node by the Truffle instrumentation machinery, in which case we return null.
+         */
+        if (this instanceof RSyntaxNode) {
+            throw RInternalError.shouldNotReachHere("getSourceSection in RBaseNode");
+        } else {
+            return null;
+        }
     }
 
+    @SuppressWarnings("deprecation")
     @Deprecated
     @Override
     public void assignSourceSection(SourceSection section) {
         throw RInternalError.shouldNotReachHere("assignSourceSection in RBaseNode");
     }
 
+    @SuppressWarnings("deprecation")
     @Deprecated
     @Override
     public void clearSourceSection() {
@@ -179,9 +168,9 @@ public abstract class RBaseNode extends Node {
 
     @Override
     /**
-     * Returns the {@link SourceSection} for this node, by locating the associated {@link RSyntaxNode}.
-     * We do not want any code in FastR calling this method as it is subsumed by {@link #getRSyntaxNode}.
-     * However, tools code may call it, so we simply delegate the call.
+     * Returns the {@link SourceSection} for this node, by locating the associated
+     * {@link RSyntaxNode}. We do not want any code in FastR calling this method as it is subsumed
+     * by {@link #getRSyntaxNode}. However, tools code may call it, so we simply delegate the call.
      */
     public SourceSection getEncapsulatingSourceSection() {
         return getRSyntaxNode().getSourceSection();

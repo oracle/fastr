@@ -66,6 +66,10 @@ public abstract class FastR extends RBuiltinNode {
                 return FastRCallCountingFactory.CreateCallCounterNodeGen.create();
             case "getcc":
                 return FastRCallCountingFactory.GetCallCounterNodeGen.create();
+            case "createtimer":
+                return FastRFunctionTimerFactory.CreateFunctionTimerNodeGen.create();
+            case "gettimer":
+                return FastRFunctionTimerFactory.GetFunctionTimerNodeGen.create();
             case "compile":
                 return FastRCompileNodeGen.create();
             case "dumptrees":

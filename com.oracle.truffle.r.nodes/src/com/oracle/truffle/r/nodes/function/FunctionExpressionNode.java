@@ -34,11 +34,9 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
-import com.oracle.truffle.r.nodes.instrument.RInstrument;
+import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -97,9 +95,7 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
         }
         boolean containsDispatch = ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch();
         RFunction func = RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, matFrame, fastPath, containsDispatch);
-        if (RInstrument.instrumentingEnabled()) {
-            RInstrument.checkDebugRequested(callTarget.toString(), func);
-        }
+        RInstrumentFactory.getInstance().checkDebugRequested(func);
         return func;
     }
 
@@ -112,11 +108,6 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
         state.startNodeDeparse(this);
         ((FunctionDefinitionNode) callTarget.getRootNode()).deparseImpl(state);
         state.endNodeDeparse(this);
-    }
-
-    @Override
-    public void allNamesImpl(RAllNames.State state) {
-        ((FunctionDefinitionNode) callTarget.getRootNode()).allNamesImpl(state);
     }
 
     @Override
@@ -144,21 +135,7 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
     public RSyntaxNode substituteImpl(REnvironment env) {
         FunctionDefinitionNode thisFdn = (FunctionDefinitionNode) callTarget.getRootNode();
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) thisFdn.substituteImpl(env);
-        return new FunctionExpressionNode(null, Truffle.getRuntime().createCallTarget(fdn));
-    }
-
-    public int getRlengthImpl() {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+        return new FunctionExpressionNode(RSyntaxNode.EAGER_DEPARSE, Truffle.getRuntime().createCallTarget(fdn));
     }
 
     public RSyntaxElement[] getSyntaxArgumentDefaults() {

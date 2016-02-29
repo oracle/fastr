@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -24,8 +24,7 @@ public class TestBuiltin_printdefault extends TestBase {
 
     @Test
     public void testprintdefault2() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(' 1', 'NA', ' 1', '1.1', ' NA', '2.0', '1.1+0i', '    NA', '3.0+0i', 'NA', 'NA', 'NA', 'FALSE', '   NA', ' TRUE', 'abc', NA, 'def'), .Dim = c(3L, 6L), .Dimnames = list(c('1', '2', '3'), c('A', 'B', 'C', 'D', 'E', 'F'))), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c(' 1', 'NA', ' 1', '1.1', ' NA', '2.0', '1.1+0i', '    NA', '3.0+0i', 'NA', 'NA', 'NA', 'FALSE', '   NA', ' TRUE', 'abc', NA, 'def'), .Dim = c(3L, 6L), .Dimnames = list(c('1', '2', '3'), c('A', 'B', 'C', 'D', 'E', 'F'))), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -41,8 +40,7 @@ public class TestBuiltin_printdefault extends TestBase {
 
     @Test
     public void testprintdefault5() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(-1.05715, -0.48359, 0.0799, 0.44239, 1.2699), .Names = c('Min', '1Q', 'Median', '3Q', 'Max')), 4L, TRUE, NULL, NULL, FALSE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c(-1.05715, -0.48359, 0.0799, 0.44239, 1.2699), .Names = c('Min', '1Q', 'Median', '3Q', 'Max')), 4L, TRUE, NULL, NULL, FALSE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -78,8 +76,7 @@ public class TestBuiltin_printdefault extends TestBase {
 
     @Test
     public void testprintdefault12() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(' 79.53', '  6.00', ' 86.20', '  6.00', ' 69.77', '  5.00', ' 98.03', '  6.00', '108.03', '  6.00', ' 89.20', '  6.00', '114.20', '  6.00', '116.70', '  6.00', '110.37', '  6.00', '124.37', '  6.00', '126.37', '  6.00', '118.03', '  6.00'), .Dim = c(6L, 4L), .Dimnames = structure(list(V = c('Golden.rain', 'rep        ', 'Marvellous ', 'rep        ', 'Victory    ', 'rep        '), N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = c('V', 'N'))), NULL, FALSE, NULL, NULL, FALSE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c(' 79.53', '  6.00', ' 86.20', '  6.00', ' 69.77', '  5.00', ' 98.03', '  6.00', '108.03', '  6.00', ' 89.20', '  6.00', '114.20', '  6.00', '116.70', '  6.00', '110.37', '  6.00', '124.37', '  6.00', '126.37', '  6.00', '118.03', '  6.00'), .Dim = c(6L, 4L), .Dimnames = structure(list(V = c('Golden.rain', 'rep        ', 'Marvellous ', 'rep        ', 'Victory    ', 'rep        '), N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = c('V', 'N'))), NULL, FALSE, NULL, NULL, FALSE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -94,8 +91,7 @@ public class TestBuiltin_printdefault extends TestBase {
 
     @Test
     public void testprintdefault15() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c('1', '2', '1'), .Dim = 3L, .Dimnames = structure(list(c('1', '2', NA)), .Names = '')), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c('1', '2', '1'), .Dim = 3L, .Dimnames = structure(list(c('1', '2', NA)), .Names = '')), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -166,8 +162,7 @@ public class TestBuiltin_printdefault extends TestBase {
 
     @Test
     public void testprintdefault30() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(78.7365206866197, 17, 98.5088731171753, 18, 113.842206450509, 18, 123.008873117175, 18), .Dim = c(2L, 4L), .Dimnames = list(c('', 'rep'), c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt'))), 4L, TRUE, NULL, NULL, FALSE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c(78.7365206866197, 17, 98.5088731171753, 18, 113.842206450509, 18, 123.008873117175, 18), .Dim = c(2L, 4L), .Dimnames = list(c('', 'rep'), c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt'))), 4L, TRUE, NULL, NULL, FALSE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test

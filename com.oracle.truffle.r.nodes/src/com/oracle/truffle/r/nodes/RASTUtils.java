@@ -72,7 +72,7 @@ public class RASTUtils {
     public static RBaseNode unwrap(Object node) {
         if (node instanceof WrapArgumentBaseNode) {
             return unwrap(((WrapArgumentBaseNode) node).getOperand());
-        } else if (node instanceof RInstrumentableNode) {
+        } else if (node instanceof com.oracle.truffle.r.runtime.nodes.RInstrumentableNode) {
             return ((RInstrumentableNode) node).unwrap();
         } else {
             return (RBaseNode) node;
@@ -226,7 +226,7 @@ public class RASTUtils {
         if (fn instanceof ConstantNode) {
             fn = ((ConstantNode) fn).getValue();
         }
-        SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : null;
+        SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.EAGER_DEPARSE;
         if (fn instanceof String) {
             return RCallNode.createCall(sourceSection, RASTUtils.createReadVariableNode(((String) fn)), signature, arguments);
         } else if (fn instanceof ReadVariableNode) {
@@ -426,20 +426,6 @@ public class RASTUtils {
             throw RInternalError.unimplemented();
         }
 
-        public int getRlengthImpl() {
-            throw RInternalError.unimplemented();
-        }
-
-        @Override
-        public Object getRelementImpl(int index) {
-            throw RInternalError.unimplemented();
-        }
-
-        @Override
-        public boolean getRequalsImpl(RSyntaxNode other) {
-            throw RInternalError.unimplemented();
-        }
-
         public void setSourceSection(SourceSection sourceSection) {
             throw RInternalError.shouldNotReachHere();
         }
@@ -449,10 +435,6 @@ public class RASTUtils {
             throw RInternalError.shouldNotReachHere();
         }
 
-        @Override
-        public void unsetSourceSection() {
-            throw RInternalError.shouldNotReachHere();
-        }
     }
 
     /**

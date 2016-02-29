@@ -25,7 +25,6 @@ package com.oracle.truffle.r.library.methods;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
@@ -48,8 +47,6 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
             RLanguage lang = (RLanguage) object;
             RSyntaxNode snode = lang.getRep().asRSyntaxNode();
             RSyntaxNode subRNode = snode.substituteImpl(env);
-            // remove old source sections
-            unsetSourceSections(subRNode.asRNode());
             // create source for entire tree
             RASTDeparse.ensureSourceSection(subRNode);
             return RASTUtils.createLanguageElement(subRNode.asRNode());
@@ -78,16 +75,6 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
             list2EnvNode = insert(RList2EnvNodeGen.create());
         }
         return list2EnvNode.execute(list, env);
-    }
-
-    private static void unsetSourceSections(Node node) {
-        node.accept(n -> {
-            if (n instanceof RSyntaxNode) {
-                RSyntaxNode sn = (RSyntaxNode) n;
-                sn.unsetSourceSection();
-            }
-            return true;
-        });
     }
 
 }

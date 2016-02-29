@@ -409,8 +409,6 @@ public class RDeparse {
             for (Map.Entry<RSyntaxNode, NodeSourceInfo> entry : nodeMap.entrySet()) {
                 RSyntaxNode node = entry.getKey();
                 NodeSourceInfo nsi = entry.getValue();
-                // may have had one initially
-                node.unsetSourceSection();
                 node.setSourceSection(source.createSection("", nsi.startCharIndex, nsi.endCharIndex - nsi.startCharIndex));
             }
         }

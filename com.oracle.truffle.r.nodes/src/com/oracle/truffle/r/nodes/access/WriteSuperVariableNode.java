@@ -29,13 +29,12 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.instrument.wrappers.WriteSuperVariableNodeWrapper;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.NeedsWrapper;
+import com.oracle.truffle.r.runtime.nodes.instrument.NeedsWrapper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -104,26 +103,7 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
         serializeHelper(state, "<<-");
     }
 
-    @Override
-    public void allNamesImpl(RAllNames.State state) {
-        allNamesHelper(state, "<<-");
-    }
-
     public RSyntaxNode substituteImpl(REnvironment env) {
-        throw RInternalError.unimplemented();
-    }
-
-    public int getRlengthImpl() {
-        return 3;
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        return getRelementHelper("<<-", index);
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
         throw RInternalError.unimplemented();
     }
 

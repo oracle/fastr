@@ -23,12 +23,13 @@
 package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 /** Marker class for loops. */
 public abstract class AbstractLoopNode extends RSourceSectionNode {
     protected AbstractLoopNode(SourceSection sourceSection) {
-        super(sourceSection);
+        super(sourceSection.withTags(RSyntaxTags.LOOP));
     }
 
 }

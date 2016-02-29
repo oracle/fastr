@@ -30,13 +30,11 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.instrument.wrappers.WriteCurrentVariableNodeWrapper;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDeparse.State;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.NeedsWrapper;
+import com.oracle.truffle.r.runtime.nodes.instrument.NeedsWrapper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -100,11 +98,6 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
     }
 
     @Override
-    public void allNamesImpl(RAllNames.State state) {
-        allNamesHelper(state, "<-");
-    }
-
-    @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
         String name = getName().toString();
         RSyntaxNode nameSub = RASTUtils.substituteName(name, env);
@@ -115,21 +108,7 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
         if (getRhs() != null) {
             rhsSub = getRhs().substitute(env).asRNode();
         }
-        return create(null, name, rhsSub);
-    }
-
-    public int getRlengthImpl() {
-        return 3;
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        return getRelementHelper("<-", index);
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+        return create(RSyntaxNode.EAGER_DEPARSE, name, rhsSub);
     }
 
     @Override

@@ -32,19 +32,15 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTBuilder;
-import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -133,40 +129,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        return create(null, (WriteVariableNode) getCvar().substitute(env), getRange().substitute(env), getBody().substitute(env));
-    }
-
-    @Override
-    public void allNamesImpl(RAllNames.State state) {
-        state.addName("for");
-        getCvar().allNames(state);
-        getRange().allNames(state);
-        getBody().allNames(state);
-    }
-
-    public int getRlengthImpl() {
-        return 4;
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        switch (index) {
-            case 0:
-                return RDataFactory.createSymbol("for");
-            case 1:
-                return RASTUtils.createLanguageElement(getCvar());
-            case 2:
-                return RASTUtils.createLanguageElement(getRange());
-            case 3:
-                return RASTUtils.createLanguageElement(getBody());
-            default:
-                throw RInternalError.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+        return create(RSyntaxNode.EAGER_DEPARSE, (WriteVariableNode) getCvar().substitute(env), getRange().substitute(env), getBody().substitute(env));
     }
 
     private ForRepeatingNode getForRepeatingNode() {
@@ -205,10 +168,10 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
 
         private static RNode createIndexedLoad(String indexName, String rangeName) {
             RASTBuilder builder = new RASTBuilder();
-            RSyntaxNode receiver = builder.lookup(null, rangeName, false);
-            RSyntaxNode index = builder.lookup(null, indexName, false);
-            RSyntaxNode access = builder.lookup(null, "[[", true);
-            return builder.call(null, access, receiver, index).asRNode();
+            RSyntaxNode receiver = builder.lookup(RSyntaxNode.INTERNAL, rangeName, false);
+            RSyntaxNode index = builder.lookup(RSyntaxNode.INTERNAL, indexName, false);
+            RSyntaxNode access = builder.lookup(RSyntaxNode.INTERNAL, "[[", true);
+            return builder.call(RSyntaxNode.INTERNAL, access, receiver, index).asRNode();
         }
 
         public boolean executeRepeating(VirtualFrame frame) {

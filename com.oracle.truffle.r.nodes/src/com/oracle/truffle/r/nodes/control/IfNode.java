@@ -31,11 +31,9 @@ import com.oracle.truffle.r.nodes.unary.ConvertBooleanNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -157,45 +155,7 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        return create(null, condition.substitute(env), thenPart.substitute(env), elsePart == null ? null : elsePart.substitute(env));
-    }
-
-    @Override
-    public int getRlengthImpl() {
-        return 3 + (elsePart != null ? 1 : 0);
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        switch (index) {
-            case 0:
-                return RDataFactory.createSymbol("if");
-            case 1:
-                return RASTUtils.createLanguageElement(condition.getOperand());
-            case 2:
-                return RASTUtils.createLanguageElement(thenPart);
-            case 3:
-                return RASTUtils.createLanguageElement(elsePart);
-            default:
-                throw RInternalError.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        if (other instanceof IfNode) {
-            IfNode otherNode = (IfNode) other;
-            if (condition.getRSyntaxNode().getRequalsImpl(otherNode.condition.getRSyntaxNode())) {
-                if (thenPart.asRSyntaxNode().getRequalsImpl(otherNode.thenPart.asRSyntaxNode())) {
-                    if (elsePart == null && otherNode.elsePart == null) {
-                        return true;
-                    } else if (elsePart != null && otherNode.elsePart != null) {
-                        return elsePart.asRSyntaxNode().getRequalsImpl(otherNode.elsePart.asRSyntaxNode());
-                    }
-                }
-            }
-        }
-        return false;
+        return create(RSyntaxNode.EAGER_DEPARSE, condition.substitute(env), thenPart.substitute(env), elsePart == null ? null : elsePart.substitute(env));
     }
 
     public RSyntaxElement getSyntaxLHS() {

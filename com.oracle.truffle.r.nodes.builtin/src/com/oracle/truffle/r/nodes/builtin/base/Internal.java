@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 
 /**
  * The {@code .Internal} builtin. In {@code .Internal(func(args))} we have an AST where the
@@ -49,8 +50,8 @@ import com.oracle.truffle.r.runtime.nodes.*;
  *
  * A note on {@link RInstrumentableNode}. Since both the {@code .Internal} and the argument are
  * {@link RCallNode}s both may have been wrapped. The call to {@link RASTUtils#unwrap} will go
- * through any {@link RNodeWrapper} and the rewrite will remove one level of wrapping. However the
- * parent of the the {@code .Internal}, which will be an {@link RNodeWrapper}, will remain so any
+ * through any {@code RNodeWrapper} and the rewrite will remove one level of wrapping. However the
+ * parent of the the {@code .Internal}, which will be an {@code RNodeWrapper}, will remain so any
  * instrumentation at that level will remain in place.
  */
 @NodeInfo(cost = NodeCost.NONE)

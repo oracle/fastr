@@ -24,7 +24,6 @@ package com.oracle.truffle.r.library.fastr;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.instrument.QuitException;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.RError;
@@ -53,7 +52,6 @@ public class FastRThrowIt {
                 case "DBE":
                     throw new Utils.DebugExitException();
                 case "Q":
-                    throw new QuitException();
                 case "BRQ":
                     throw new BrowserQuitException();
                 default:

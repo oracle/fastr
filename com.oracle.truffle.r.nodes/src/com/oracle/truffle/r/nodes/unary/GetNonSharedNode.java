@@ -66,32 +66,13 @@ public abstract class GetNonSharedNode extends RNode implements RSyntaxNode {
         throw RInternalError.unimplemented("serializeImpl");
     }
 
-    public int getRlengthImpl() {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
-    }
-
     public void setSourceSection(SourceSection sourceSection) {
         throw RInternalError.shouldNotReachHere();
     }
 
     @Override
     public SourceSection getSourceSection() {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public void unsetSourceSection() {
-        throw RInternalError.shouldNotReachHere();
+        return RSyntaxNode.INTERNAL;
     }
 
 }

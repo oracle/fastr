@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,19 +27,30 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.model.*;
 
+/**
+ * Extracts the first boolean from the (single) operand. If {@link #invalidValueName} is provided,
+ * this node behaves differently: it will always generate "invalid value" errors and not produce a
+ * warning if more than one element is provided.
+ */
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class FirstBooleanNode extends CastNode {
 
     private final ConditionProfile lengthNotOneProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile warningProfile = BranchProfile.create();
+    private final String invalidValueName;
+
+    protected FirstBooleanNode(String invalidValueName) {
+        this.invalidValueName = invalidValueName;
+    }
 
     @Specialization
     protected boolean firstScalar(byte argument) {
         if (RRuntime.isNA(argument)) {
             CompilerDirectives.transferToInterpreter();
-            RError.error(this, RError.Message.NA_UNEXP);
+            RError.error(this, invalidValueName == null ? Message.NA_UNEXP : Message.INVALID_VALUE, invalidValueName);
         }
         return RRuntime.fromLogical(argument);
     }
@@ -48,10 +59,12 @@ public abstract class FirstBooleanNode extends CastNode {
         if (lengthNotOneProfile.profile(argument.getLength() != 1)) {
             if (argument.getLength() == 0) {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, RError.Message.LENGTH_ZERO);
+                throw RError.error(this, invalidValueName == null ? Message.LENGTH_ZERO : Message.INVALID_VALUE, invalidValueName);
             } else {
                 warningProfile.enter();
-                RError.warning(this, RError.Message.LENGTH_GT_1);
+                if (invalidValueName == null) {
+                    RError.warning(this, Message.LENGTH_GT_1);
+                }
             }
         }
     }
@@ -83,6 +96,6 @@ public abstract class FirstBooleanNode extends CastNode {
     @Fallback
     protected boolean fallback(@SuppressWarnings("unused") Object argument) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+        throw RError.error(this, invalidValueName == null ? Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL : Message.INVALID_VALUE, invalidValueName);
     }
 }

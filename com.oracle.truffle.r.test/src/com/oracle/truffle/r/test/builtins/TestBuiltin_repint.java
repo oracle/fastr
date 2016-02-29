@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -104,7 +104,7 @@ public class TestBuiltin_repint extends TestBase {
 
     @Test
     public void testrepint18() {
-        assertEval(Ignored.OutputFormatting, "argv <- list(c(-1.74520963996789, -1.58308930128988, NA), 100L); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c(-1.74520963996789, -1.58308930128988, NA), 100L); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -134,7 +134,7 @@ public class TestBuiltin_repint extends TestBase {
 
     @Test
     public void testrepint24() {
-        assertEval(Ignored.Unknown, "argv <- list(3.1e-06, 49); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(3.1e-06, 49); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test

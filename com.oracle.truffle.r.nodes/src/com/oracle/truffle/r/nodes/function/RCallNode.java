@@ -54,9 +54,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
-import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
@@ -72,7 +70,6 @@ import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RDeparse.Func;
-import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -87,7 +84,6 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -135,12 +131,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -153,11 +149,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -165,7 +161,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -177,7 +173,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    DGV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -499,17 +495,6 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     }
 
     @Override
-    public void allNamesImpl(RAllNames.State state) {
-        if (state.includeFunctions()) {
-            ((RBaseNode) functionNode).allNames(state);
-        }
-        for (int i = 0; i < arguments.v.length; i++) {
-            RSyntaxNode argument = arguments.v[i];
-            argument.allNamesImpl(state);
-        }
-    }
-
-    @Override
     public void serializeImpl(RSerialize.State state) {
         state.setAsLangType();
         state.serializeNodeSetCar(functionNode);
@@ -550,59 +535,6 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             state.linkPairList(arguments.length);
         }
         state.setCdr(state.closePairList());
-    }
-
-    public int getRlengthImpl() {
-        return 1 + getArgumentCount();
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        if (index == 0) {
-            if (RASTUtils.isNamedFunctionNode(this)) {
-                return RASTUtils.findFunctionName(this);
-            } else {
-                RNode newFunctionNode = functionNode;
-                if (newFunctionNode instanceof NamedRNode) {
-                    newFunctionNode = ((NamedRNode) newFunctionNode).original;
-                }
-                if (newFunctionNode instanceof ConstantNode) {
-                    Object funcNodeValue = ((ConstantNode) newFunctionNode).getValue();
-                    if (funcNodeValue instanceof RSymbol || funcNodeValue instanceof RAbstractVector || funcNodeValue instanceof Integer || funcNodeValue instanceof Double ||
-                                    funcNodeValue instanceof Byte || funcNodeValue instanceof String) {
-                        return ((ConstantNode) newFunctionNode).getValue();
-                    }
-                }
-                return RDataFactory.createLanguage(newFunctionNode);
-            }
-        } else {
-            Arguments<RSyntaxNode> args = getArguments();
-            return RASTUtils.createLanguageElement(args, index - 1);
-        }
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        if (!(other instanceof RCallNode)) {
-            return false;
-        }
-        RCallNode otherCN = (RCallNode) other;
-        if (!getFunctionNode().getRequals(otherCN.getFunctionNode().asRSyntaxNode())) {
-            return false;
-        }
-        return getRequalsImplArgs(arguments.v, otherCN.arguments.v);
-    }
-
-    public static boolean getRequalsImplArgs(RSyntaxNode[] arguments, RSyntaxNode[] otherArguments) {
-        if (arguments.length != otherArguments.length) {
-            return false;
-        }
-        for (int i = 0; i < arguments.length; i++) {
-            if (!arguments[i].getRequalsImpl(otherArguments[i])) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private static boolean isColon(RNode node) {
@@ -680,12 +612,11 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
 
     /**
      * The standard way to create a call to {@code function} with given arguments. If
-     * {@code src == null} we create one to meet the invariant that all {@link RSyntaxNode}s have a
-     * valid {@link SourceSection}.
+     * {@code src == RSyntaxNode.EAGER_DEPARSE} we force a deparse.
      */
     public static RCallNode createCall(SourceSection src, RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
         RCallNode call = new RCallNode(src, function, arguments, signature);
-        if (src == null) {
+        if (src == RSyntaxNode.EAGER_DEPARSE) {
             RASTDeparse.ensureSourceSection(call);
         }
         return call;

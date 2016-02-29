@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class ClassHierarchyNode extends UnaryNode {
 
@@ -160,7 +161,7 @@ abstract class S4Class extends RBaseNode {
 
     public abstract RStringVector executeRStringVector(String classAttr);
 
-    @Child private ReadVariableNode sExtendsForS3Find = ReadVariableNode.createFunctionLookup(null, ".extendsForS3");
+    @Child private ReadVariableNode sExtendsForS3Find = ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, ".extendsForS3");
     @Child private CastToVectorNode castToVector = CastToVectorNode.create();
 
     @TruffleBoundary

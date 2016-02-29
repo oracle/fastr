@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.instrument.Browser;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**

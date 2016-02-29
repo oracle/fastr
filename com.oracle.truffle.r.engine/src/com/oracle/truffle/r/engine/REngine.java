@@ -44,7 +44,6 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.impl.FindContextNode;
-import com.oracle.truffle.api.instrument.QuitException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.NodeUtil;
@@ -253,7 +252,7 @@ final class REngine implements Engine, Engine.Timings {
             return runCall(callTarget, frame, printResult, true);
         } catch (ReturnException ex) {
             return ex.getResult();
-        } catch (DebugExitException | QuitException | BrowserQuitException e) {
+        } catch (DebugExitException | BrowserQuitException e) {
             throw e;
         } catch (RError e) {
             // RError prints the correct result on the console during construction
@@ -357,7 +356,7 @@ final class REngine implements Engine, Engine.Timings {
                 return ((REngine) context.getThisEngine()).runCall(callTarget, context.stateREnvironment.getGlobalFrame(), true, true);
             } catch (ReturnException ex) {
                 return ex.getResult();
-            } catch (DebugExitException | QuitException | BrowserQuitException e) {
+            } catch (DebugExitException | BrowserQuitException e) {
                 throw e;
             } catch (RError e) {
                 // TODO normal error reporting is done by the runtime
@@ -473,7 +472,7 @@ final class REngine implements Engine, Engine.Timings {
     @TruffleBoundary
     private static RootCallTarget doMakeCallTarget(RNode body, String description) {
         BodyNode fbn;
-        SourceSection sourceSection = null;
+        SourceSection sourceSection = RSyntaxNode.WRAPPER;
         if (RBaseNode.isRSyntaxNode(body)) {
             RSyntaxNode synBody = (RSyntaxNode) body;
             RASTDeparse.ensureSourceSection(synBody);
@@ -528,7 +527,7 @@ final class REngine implements Engine, Engine.Timings {
                 // there can be an outer loop
                 throw cfe;
             }
-        } catch (DebugExitException | QuitException | BrowserQuitException e) {
+        } catch (DebugExitException | BrowserQuitException e) {
             throw e;
         } catch (Throwable e) {
             if (e instanceof Error) {

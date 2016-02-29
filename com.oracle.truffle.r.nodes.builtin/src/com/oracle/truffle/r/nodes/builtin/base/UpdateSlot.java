@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "@<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", "value"}, nonEvalArgs = 1)
 public abstract class UpdateSlot extends RBuiltinNode {
@@ -51,7 +52,7 @@ public abstract class UpdateSlot extends RBuiltinNode {
     @Child private ClassHierarchyNode objClassHierarchy;
     @Child private ClassHierarchyNode valClassHierarchy;
     @Child UpdateSlotNode updateSlotNode = com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen.create(null, null, null);
-    @Child ReadVariableNode checkAtAssignmentFind = ReadVariableNode.createFunctionLookup(null, "checkAtAssignment");
+    @Child ReadVariableNode checkAtAssignmentFind = ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, "checkAtAssignment");
     @Child DirectCallNode checkAtAssignmentCall;
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
     private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
@@ -115,7 +116,8 @@ public abstract class UpdateSlot extends RBuiltinNode {
      * interned string which allows us to avoid longer lookup
      */
     @Specialization(guards = "sameName(nameObj, nameObjCached)")
-    protected Object updateSlotCached(VirtualFrame frame, Object object, Object nameObj, Object value, @Cached("nameObj") Object nameObjCached, @Cached("getName(nameObjCached)") String name) {
+    protected Object updateSlotCached(VirtualFrame frame, Object object, @SuppressWarnings("unused") Object nameObj, Object value, @SuppressWarnings("unused") @Cached("nameObj") Object nameObjCached,
+                    @Cached("getName(nameObjCached)") String name) {
         checkSlotAssign(frame, object, name, value);
         return updateSlotNode.executeUpdate(object, name, value);
     }

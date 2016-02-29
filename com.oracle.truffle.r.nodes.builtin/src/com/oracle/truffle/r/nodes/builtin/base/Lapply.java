@@ -117,10 +117,10 @@ public abstract class Lapply extends RBuiltinNode {
 
         private static RNode createIndexedLoad() {
             RASTBuilder builder = new RASTBuilder();
-            RSyntaxNode receiver = builder.lookup(null, "X", false);
-            RSyntaxNode index = builder.lookup(null, INDEX_NAME, false);
-            RSyntaxNode access = builder.lookup(null, "[[", true);
-            return builder.call(null, access, receiver, index).asRNode();
+            RSyntaxNode receiver = builder.lookup(RSyntaxNode.INTERNAL, "X", false);
+            RSyntaxNode index = builder.lookup(RSyntaxNode.INTERNAL, INDEX_NAME, false);
+            RSyntaxNode access = builder.lookup(RSyntaxNode.INTERNAL, "[[", true);
+            return builder.call(RSyntaxNode.INTERNAL, access, receiver, index).asRNode();
         }
 
         /**

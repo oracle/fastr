@@ -81,6 +81,18 @@ public class TraceHandling {
         }
     }
 
+    public static void setTracingState(boolean state) {
+        Object[] listeners = RContext.getInstance().stateTraceHandling.getListeners();
+        for (int i = 0; i < listeners.length; i++) {
+            TraceFunctionEventReceiver tl = (TraceFunctionEventReceiver) listeners[i];
+            if (state) {
+                tl.enable();
+            } else {
+                tl.disable();
+            }
+        }
+    }
+
     @SuppressWarnings("unused")
     public static boolean enableStatementTrace(RFunction func, RSyntaxNode tracer) {
         return false;

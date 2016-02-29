@@ -30,17 +30,13 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.unary.ConvertBooleanNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -126,45 +122,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        return create(null, getCondition().substitute(env), getBody().substitute(env), isRepeat);
-    }
-
-    @Override
-    public void allNamesImpl(RAllNames.State state) {
-        if (isRepeat) {
-            state.addName("repeat ");
-        } else {
-            state.addName("while (");
-            getCondition().allNames(state);
-        }
-        getBody().allNames(state);
-    }
-
-    public int getRlengthImpl() {
-        return isRepeat ? 2 : 3;
-    }
-
-    @Override
-    public Object getRelementImpl(int indexArg) {
-        int index = indexArg;
-        if (isRepeat && index == 1) {
-            index = 2;
-        }
-        switch (index) {
-            case 0:
-                return RDataFactory.createSymbol(isRepeat ? "repeat" : "while");
-            case 1:
-                return RASTUtils.createLanguageElement(getCondition());
-            case 2:
-                return RASTUtils.createLanguageElement(getBody());
-            default:
-                throw RInternalError.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+        return create(RSyntaxNode.EAGER_DEPARSE, getCondition().substitute(env), getBody().substitute(env), isRepeat);
     }
 
     private static final class WhileRepeatingNode extends RBaseNode implements RepeatingNode {
