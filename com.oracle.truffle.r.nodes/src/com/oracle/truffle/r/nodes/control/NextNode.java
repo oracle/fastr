@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,17 +22,23 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class NextNode extends RNode implements RSyntaxNode, VisibilityController {
+public final class NextNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall, VisibilityController {
 
     public NextNode(SourceSection src) {
-        assignSourceSection(src);
+        super(src);
     }
 
     @Override
@@ -57,18 +63,15 @@ public final class NextNode extends RNode implements RSyntaxNode, VisibilityCont
         return this;
     }
 
-    public int getRlengthImpl() {
-        return 1;
+    public RSyntaxElement getSyntaxLHS() {
+        return RSyntaxLookup.createDummyLookup(getSourceSection(), "next", true);
     }
 
-    @Override
-    public Object getRelementImpl(int index) {
-        return RDataFactory.createSymbol("next");
+    public RSyntaxElement[] getSyntaxArguments() {
+        return new RSyntaxElement[0];
     }
 
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(0);
     }
-
 }

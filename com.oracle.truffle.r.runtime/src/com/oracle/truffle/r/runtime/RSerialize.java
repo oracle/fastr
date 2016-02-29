@@ -653,9 +653,7 @@ public class RSerialize {
                     int len = stream.readInt();
                     String s = stream.readString(len);
                     result = RContext.lookupBuiltin(s);
-                    if (result == null) {
-                        throw RInternalError.shouldNotReachHere("lookup failed in unserialize for builtin: " + s);
-                    }
+                    RInternalError.guarantee(result != null, "lookup failed in unserialize for builtin: " + s);
                     break;
                 }
 

@@ -29,7 +29,7 @@ public class TestBuiltin_abs extends TestBase {
 
     @Test
     public void testabs3() {
-        assertEval(Ignored.Unknown, "argv <- list(c(-0.510763209393394, Inf, 1, 1, Inf, 1, 0, -1.95785440613009, -48.49854545454, -Inf, 1, 1, 0.342969776609699, 0.00707175387211123));abs(argv[[1]]);");
+        assertEval("argv <- list(c(-0.510763209393394, Inf, 1, 1, Inf, 1, 0, -1.95785440613009, -48.49854545454, -Inf, 1, 1, 0.342969776609699, 0.00707175387211123));abs(argv[[1]]);");
     }
 
     @Test
@@ -50,8 +50,7 @@ public class TestBuiltin_abs extends TestBase {
 
     @Test
     public void testabs7() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(3.5527136788005e-15+2.4168586625265e-16i, 2.4980018054066e-16-2.28189378671807e-16i, 0-6.89814774385614e-17i, 0-1.77454768520688e-17i), .Dim = c(2L, 2L)));abs(argv[[1]]);");
+        assertEval("argv <- list(structure(c(3.5527136788005e-15+2.4168586625265e-16i, 2.4980018054066e-16-2.28189378671807e-16i, 0-6.89814774385614e-17i, 0-1.77454768520688e-17i), .Dim = c(2L, 2L)));abs(argv[[1]]);");
     }
 
     @Test
@@ -66,8 +65,7 @@ public class TestBuiltin_abs extends TestBase {
 
     @Test
     public void testabs10() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(-7.38958333333333, NA, 1.69041666666667, -16.5495833333333, 8.82041666666667, 8.84041666666667, -2.24958333333333, 9.15041666666667, 0.950416666666669, -12.5095833333333, NA, 8.86041666666667, 1.05041666666667, 3.80041666666667, 5.92041666666667, 16.1404166666667, 3.45041666666667, -32.1695833333333, 12.7504166666667, 1.18041666666667, -6.72958333333333, 14.4804166666667, 1.89041666666667, -37.9795833333333, -0.299583333333331, 2.49041666666667, 7.31041666666667, 0.66041666666667, 2.78041666666667, 3.89041666666667, 3.13041666666667, -6.08958333333333, -1.00958333333333, -1.07958333333333, 9.01041666666667, 7.84041666666667, 8.30041666666668, 9.36041666666667, -6.32958333333333, -47.3395833333333, 4.30041666666667, -2.11958333333333, -4.10958333333333, -2.29958333333333, 11.0004166666667, -1.96958333333333, 11.1804166666667, 2.55041666666667, -2.35958333333333, 7.80041666666667), .Names = c('Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming')));abs(argv[[1]]);");
+        assertEval("argv <- list(structure(c(-7.38958333333333, NA, 1.69041666666667, -16.5495833333333, 8.82041666666667, 8.84041666666667, -2.24958333333333, 9.15041666666667, 0.950416666666669, -12.5095833333333, NA, 8.86041666666667, 1.05041666666667, 3.80041666666667, 5.92041666666667, 16.1404166666667, 3.45041666666667, -32.1695833333333, 12.7504166666667, 1.18041666666667, -6.72958333333333, 14.4804166666667, 1.89041666666667, -37.9795833333333, -0.299583333333331, 2.49041666666667, 7.31041666666667, 0.66041666666667, 2.78041666666667, 3.89041666666667, 3.13041666666667, -6.08958333333333, -1.00958333333333, -1.07958333333333, 9.01041666666667, 7.84041666666667, 8.30041666666668, 9.36041666666667, -6.32958333333333, -47.3395833333333, 4.30041666666667, -2.11958333333333, -4.10958333333333, -2.29958333333333, 11.0004166666667, -1.96958333333333, 11.1804166666667, 2.55041666666667, -2.35958333333333, 7.80041666666667), .Names = c('Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming')));abs(argv[[1]]);");
     }
 
     @Test
@@ -98,7 +96,7 @@ public class TestBuiltin_abs extends TestBase {
 
     @Test
     public void testabs16() {
-        assertEval(Ignored.Unknown, "argv <- list(-3.31827701955945e-05);abs(argv[[1]]);");
+        assertEval("argv <- list(-3.31827701955945e-05);abs(argv[[1]]);");
     }
 
     @Test
@@ -123,8 +121,7 @@ public class TestBuiltin_abs extends TestBase {
 
     @Test
     public void testabs21() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(2671, 6.026e+77, 3.161e+152, 3.501e+299, 2.409e+227, 1.529e+302), .Names = c('Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.')));abs(argv[[1]]);");
+        assertEval("argv <- list(structure(c(2671, 6.026e+77, 3.161e+152, 3.501e+299, 2.409e+227, 1.529e+302), .Names = c('Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.')));abs(argv[[1]]);");
     }
 
     @Test

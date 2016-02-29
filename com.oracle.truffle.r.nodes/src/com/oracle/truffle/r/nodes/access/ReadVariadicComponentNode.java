@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,12 +39,14 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * An {@link RNode} that handles accesses to components of the variadic argument (..1, ..2, etc.).
  */
-public class ReadVariadicComponentNode extends RNode implements RSyntaxNode, VisibilityController {
+public class ReadVariadicComponentNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup, VisibilityController {
 
     @Child private ReadVariableNode lookup = ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any);
     @Child private PromiseHelperNode promiseHelper;
@@ -55,8 +57,8 @@ public class ReadVariadicComponentNode extends RNode implements RSyntaxNode, Vis
     private final BranchProfile promiseBranch = BranchProfile.create();
 
     public ReadVariadicComponentNode(SourceSection src, int index) {
+        super(src);
         this.index = index;
-        assignSourceSection(src);
     }
 
     @Override
@@ -111,17 +113,11 @@ public class ReadVariadicComponentNode extends RNode implements RSyntaxNode, Vis
         state.setCarAsSymbol(getPrintForm());
     }
 
-    public int getRlengthImpl() {
-        throw RInternalError.unimplemented();
+    public String getIdentifier() {
+        return getPrintForm();
     }
 
-    @Override
-    public Object getRelementImpl(@SuppressWarnings("hiding") int index) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+    public boolean isFunctionLookup() {
+        return false;
     }
 }

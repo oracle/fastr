@@ -1,6 +1,6 @@
 # FastR
 
-FastR is an implementation of the [R Language](http://www.r-project.org/) in Java atop [Truffle and Graal](http://openjdk.java.net/projects/graal/).
+FastR is an implementation of the [R Language](http://www.r-project.org/) in Java atop [Truffle and Graal](https://github.com/graalvm/).
 Truffle is a framework for building self-optimizing AST interpreters.
 Graal is a dynamic compiler that is used to generate efficient machine code from partially evaluated Truffle ASTs.
 

@@ -32,7 +32,6 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrument.QuitException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.NodeUtil.NodeCountFilter;
@@ -46,10 +45,9 @@ import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FunctionUID;
-import com.oracle.truffle.r.runtime.RAllNames.State;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
@@ -93,6 +91,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private String description;
     private FunctionUID uuid;
     private boolean instrumented = false;
+    private SourceSection sourceSectionR;
 
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode onExitExpressionCache;
@@ -138,42 +137,46 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     private final BranchProfile returnProfile = BranchProfile.create();
 
-    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, BodyNode body, FormalArguments formals, String description, boolean substituteFrame,
+    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame,
                     PostProcessArgumentsNode argPostProcess) {
         this(src, frameDesc, body, formals, description, substituteFrame, false, argPostProcess);
     }
 
     // TODO skipOnExit: Temporary solution to allow onExit to be switched of; used for
     // REngine.evalPromise
-    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, BodyNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit,
+    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit,
                     PostProcessArgumentsNode argPostProcess) {
-        super(src, formals, frameDesc);
+        this(src, frameDesc, body, formals, description, substituteFrame, skipExit, argPostProcess, FunctionUIDFactory.get().createUID());
+    }
+
+    private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit,
+                    PostProcessArgumentsNode argPostProcess, FunctionUID uuid) {
+        super(null, formals, frameDesc);
         assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
+        assert src != null;
+        this.sourceSectionR = src;
         this.body = body;
         this.uninitializedBody = body;
         this.description = description;
         this.substituteFrame = substituteFrame;
         this.onExitSlot = skipExit ? null : FrameSlotNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
-        this.uuid = FunctionUIDFactory.get().createUID();
+        this.uuid = uuid;
         this.needsSplitting = needsAnyBuiltinSplitting();
         this.containsDispatch = containsAnyDispatch(body);
         this.argPostProcess = argPostProcess;
+        RInstrumentFactory.getInstance().registerFunctionDefinitionNode(this);
     }
 
     @Override
     public RRootNode duplicateWithNewFrameDescriptor() {
         FrameDescriptor frameDesc = new FrameDescriptor();
-        FunctionUID thisUuid = uuid;
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(description != null && !description.isEmpty() ? description : "<function>", frameDesc);
-        FunctionDefinitionNode result = new FunctionDefinitionNode(getSourceSection(), frameDesc, (BodyNode) body.unwrap().deepCopy(), getFormalArguments(), description, substituteFrame,
-                        argPostProcess == null ? null
-                                        : argPostProcess.deepCopyUnconditional());
-        // Instrumentation depends on this copy having same uuid
-        result.uuid = thisUuid;
+        FunctionDefinitionNode result = new FunctionDefinitionNode(getSourceSection(), frameDesc, (RNode) body.deepCopy(), getFormalArguments(), description, substituteFrame,
+                        false, argPostProcess == null ? null : argPostProcess.deepCopyUnconditional(), uuid);
         return result;
     }
 
-    private static boolean containsAnyDispatch(BodyNode body) {
+    private static boolean containsAnyDispatch(RNode body) {
         NodeCountFilter dispatchingMethodsFilter = node -> {
             if (node instanceof ReadVariableNode) {
                 ReadVariableNode rvn = (ReadVariableNode) node;
@@ -293,7 +296,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         } catch (RError e) {
             CompilerDirectives.transferToInterpreter();
             throw e;
-        } catch (DebugExitException | QuitException | BrowserQuitException e) {
+        } catch (DebugExitException | BrowserQuitException e) {
             /*
              * These relate to the debugging support. exitHandlers must be suppressed and the
              * exceptions must pass through unchanged; they are not errors
@@ -446,7 +449,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         FrameDescriptor frameDesc = new FrameDescriptor();
 
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<substituted function>", frameDesc);
-        return new FunctionDefinitionNode(null, frameDesc, (BodyNode) body.substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
+        return new FunctionDefinitionNode(RSyntaxNode.EAGER_DEPARSE, frameDesc, body.substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
     }
 
     /**
@@ -481,53 +484,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         state.openPairList();
         body.serialize(state);
         state.setCdr(state.closePairList());
-    }
-
-    public int getRlengthImpl() {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        FunctionDefinitionNode otherFdn = (FunctionDefinitionNode) other;
-        if (!compareFormals(otherFdn)) {
-            return false;
-        }
-        RSyntaxNode syntaxBody = body.asRSyntaxNode();
-        return syntaxBody.getRequalsImpl(otherFdn.body.asRSyntaxNode());
-    }
-
-    private boolean compareFormals(FunctionDefinitionNode other) {
-        FormalArguments formals = getFormalArguments();
-        ArgumentsSignature signature = formals.getSignature();
-        int formalsLength = signature.getLength();
-        FormalArguments otherFormals = other.getFormalArguments();
-        ArgumentsSignature otherSignature = otherFormals.getSignature();
-        if (formalsLength != otherSignature.getLength()) {
-            return false;
-        }
-        for (int i = 0; i < formalsLength; i++) {
-            // The signature has the formal names
-            if (!signature.getName(i).equals(otherSignature.getName(i))) {
-                return false;
-            }
-            RNode defaultArg = formals.getDefaultArgument(i);
-            RNode otherDefaultArg = otherFormals.getDefaultArgument(i);
-            if (defaultArg == null && otherDefaultArg != null || defaultArg != null && otherDefaultArg == null) {
-                return false;
-            }
-            if (defaultArg != null) {
-                if (!defaultArg.asRSyntaxNode().getRequalsImpl(otherDefaultArg.asRSyntaxNode())) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     /**
@@ -627,9 +583,14 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return false;
     }
 
-    public void allNamesImpl(State state) {
-        state.addName("function");
-        body.allNames(state);
+    public void setSourceSection(SourceSection sourceSection) {
+        assert sourceSection != null;
+        this.sourceSectionR = sourceSection;
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        return sourceSectionR;
     }
 
 }

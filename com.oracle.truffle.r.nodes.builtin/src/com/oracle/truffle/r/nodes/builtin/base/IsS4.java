@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 @RBuiltin(name = "isS4", kind = PRIMITIVE, parameterNames = {"object"})
 public abstract class IsS4 extends RBuiltinNode {
+
+    public abstract byte execute(Object value);
 
     @Specialization
     protected byte isS4(RNull object) {

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -30,7 +30,7 @@ public class TestBuiltin_array extends TestBase {
 
     @Test
     public void testarray3() {
-        assertEval(Ignored.Unknown, "argv <- list(2.10239639473973e-05, c(1L, 1L), NULL); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(2.10239639473973e-05, c(1L, 1L), NULL); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -79,8 +79,7 @@ public class TestBuiltin_array extends TestBase {
 
     @Test
     public void testarray12() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(-Inf, -Inf, 0, 2, 4, 5, Inf, Inf, Inf, -Inf, -Inf, 0, 2, 4, 5, Inf, Inf, Inf, -Inf, -Inf, 0, 1, 3, 5, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1.5, 3.2, 4.9, Inf, Inf, Inf, -Inf, -Inf, 0.300000000000001, 2, 3.7, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.2, 2, 3.8, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.4, 2, 3.6, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.266666666666667, 2, 3.73333333333333, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.275, 2, 3.725, Inf, Inf, Inf, Inf), c(9L, 9L), list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL)); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(c(-Inf, -Inf, 0, 2, 4, 5, Inf, Inf, Inf, -Inf, -Inf, 0, 2, 4, 5, Inf, Inf, Inf, -Inf, -Inf, 0, 1, 3, 5, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1.5, 3.2, 4.9, Inf, Inf, Inf, -Inf, -Inf, 0.300000000000001, 2, 3.7, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.2, 2, 3.8, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.4, 2, 3.6, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.266666666666667, 2, 3.73333333333333, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.275, 2, 3.725, Inf, Inf, Inf, Inf), c(9L, 9L), list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL)); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -115,8 +114,7 @@ public class TestBuiltin_array extends TestBase {
 
     @Test
     public void testarray19() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(31.9166666666667, -5.77777777777778, -10.4101831674686, -2.63888888888889, NA), .Names = c('(Intercept)', 'woolB', 'tens.L', 'tensionM', 'tensionH')), c(5L, 1L), list(c('(Intercept)', 'woolB', 'tens.L', 'tensionM', 'tensionH'), NULL)); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(c(31.9166666666667, -5.77777777777778, -10.4101831674686, -2.63888888888889, NA), .Names = c('(Intercept)', 'woolB', 'tens.L', 'tensionM', 'tensionH')), c(5L, 1L), list(c('(Intercept)', 'woolB', 'tens.L', 'tensionM', 'tensionH'), NULL)); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -30,8 +30,7 @@ public class TestBuiltin_aperm extends TestBase {
 
     @Test
     public void testaperm3() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667), .Dim = c(1L, 9L)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(c(0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667, 0.666666666666667), .Dim = c(1L, 9L)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

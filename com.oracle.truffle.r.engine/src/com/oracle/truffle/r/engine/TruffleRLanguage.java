@@ -27,12 +27,13 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.instrument.Visualizer;
+import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
@@ -68,7 +69,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         }
     }
 
-    private Instrumenter instrumenter;
+    private com.oracle.truffle.api.instrument.Instrumenter instrumenter;
 
     public static final TruffleRLanguage INSTANCE = new TruffleRLanguage();
 
@@ -84,16 +85,12 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected RContext createContext(Env env) {
+        // Currently using env.instrumenter as "initialized" flag
         boolean initialized = instrumenter != null;
         if (!initialized) {
             instrumenter = env.instrumenter();
-            // RInstrument has not been initialized yet
             FastROptions.initialize();
-            RInstrument.initialize(instrumenter);
-            ASTProber prober = RInstrument.instrumentingEnabled() ? RASTProber.getRASTProber() : null;
-            if (prober != null) {
-                instrumenter.registerASTProber(prober);
-            }
+            RInstrumentFactory.initialize(env);
             initialize();
         }
         RContext result = RContext.create(env, !initialized);
@@ -147,9 +144,10 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         return createFindContextNode();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected Visualizer getVisualizer() {
-        return new TruffleRLanguageDebug.RVisualizer();
+        return null;
     }
 
     @Override

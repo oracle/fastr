@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
-import com.oracle.truffle.api.instrument.WrapperNode;
+import com.oracle.truffle.api.instrumentation.InstrumentableFactory;
 import com.oracle.truffle.api.nodes.*;
 
 /**
- * Some additional support for instrumentable node.
+ * Some additional support for instrumentable nodes.
  */
 public interface RInstrumentableNode {
 
@@ -36,8 +36,10 @@ public interface RInstrumentableNode {
      * of a node.
      */
     default RNode unwrap() {
-        if (this instanceof WrapperNode) {
-            return (RNode) ((WrapperNode) this).getChild();
+        if (this instanceof com.oracle.truffle.api.instrument.WrapperNode) {
+            return (RNode) ((com.oracle.truffle.api.instrument.WrapperNode) this).getChild();
+        } else if (this instanceof InstrumentableFactory.WrapperNode) {
+            return (RNode) ((InstrumentableFactory.WrapperNode) this).getDelegateNode();
         } else {
             return (RNode) this;
         }
@@ -45,7 +47,7 @@ public interface RInstrumentableNode {
 
     default Node unwrapParent() {
         Node p = ((Node) this).getParent();
-        if (p instanceof WrapperNode) {
+        if (p instanceof com.oracle.truffle.api.instrument.WrapperNode || p instanceof InstrumentableFactory.WrapperNode) {
             return p.getParent();
         } else {
             return p;

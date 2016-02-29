@@ -14,6 +14,7 @@ package com.oracle.truffle.r.runtime;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.*;
@@ -129,7 +130,12 @@ public final class RError extends RuntimeException {
         throw error0(findParentRBase(node), msg, (Object[]) null);
     }
 
-    private static RBaseNode findParentRBase(Node node) {
+    @TruffleBoundary
+    public static RError interopError(RBaseNode node, InteropException e) {
+        throw error0(node, RError.Message.GENERIC, "Foreign function failed: " + e.getMessage() != null ? e.getMessage() : e.toString());
+    }
+
+    public static RBaseNode findParentRBase(Node node) {
         Node current = node;
         while (current != null) {
             if (current instanceof RBaseNode) {
@@ -664,7 +670,10 @@ public final class RError extends RuntimeException {
         NO_GENERIC_FUN("no generic function definition found for '%s'"),
         NO_GENERIC_FUN_IN_ENV("no generic function definition found for '%s' in the supplied environment"),
         INVALID_PRIM_METHOD_CODE("invalid primitive methods code (\"%s\"): should be \"clear\", \"reset\", \"set\", or \"suppress\""),
-        PRIM_GENERIC_NOT_FUNCTION("the formal definition of a primitive generic must be a function object (got type '%s')");
+        PRIM_GENERIC_NOT_FUNCTION("the formal definition of a primitive generic must be a function object (got type '%s')"),
+        NON_INTEGER_VALUE("non-integer value %s qualified with L; using numeric value"),
+        INTEGER_VALUE_DECIAML("integer literal %s contains decimal; using numeric value"),
+        INTEGER_VALUE_UNNECESARY_DECIMAL("integer literal %s contains unnecessary decimal point");
 
         public final String message;
         final boolean hasArgs;

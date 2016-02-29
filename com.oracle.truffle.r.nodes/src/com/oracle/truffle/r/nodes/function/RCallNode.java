@@ -54,9 +54,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
-import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
@@ -72,7 +70,6 @@ import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RDeparse.Func;
-import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -87,12 +84,14 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -204,10 +203,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * with the same arguments, and there will very rarely be the case that the same arguments get
  * passed via "..." to the same functions.
  *
- * TODO Many of the classes here do not really need to implement {@link RSyntaxNode}.
  */
 @NodeInfo(cost = NodeCost.NONE)
-public final class RCallNode extends RNode implements RSyntaxNode {
+public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
     private static final int FUNCTION_INLINE_CACHE_SIZE = 4;
     private static final int VARARGS_INLINE_CACHE_SIZE = 4;
@@ -265,7 +263,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     @CompilationFinal private int foreignCallArgCount;
     @Child private CallArgumentsNode foreignCallArguments;
 
-    public RCallNode(RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
+    public RCallNode(SourceSection sourceSection, RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
+        super(sourceSection);
         this.functionNode = function;
         this.arguments = new SyntaxArguments(arguments);
         this.signature = signature;
@@ -314,7 +313,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 foreignCallArgCount = argumentsArray.length;
             }
             try {
-                return ForeignAccess.execute(foreignCall, frame, (TruffleObject) functionObject, argumentsArray);
+                return ForeignAccess.send(foreignCall, frame, (TruffleObject) functionObject, argumentsArray);
             } catch (Throwable e) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.GENERIC, "Foreign function failed: " + getMessage(e));
@@ -496,17 +495,6 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void allNamesImpl(RAllNames.State state) {
-        if (state.includeFunctions()) {
-            ((RBaseNode) functionNode).allNames(state);
-        }
-        for (int i = 0; i < arguments.v.length; i++) {
-            RSyntaxNode argument = arguments.v[i];
-            argument.allNamesImpl(state);
-        }
-    }
-
-    @Override
     public void serializeImpl(RSerialize.State state) {
         state.setAsLangType();
         state.serializeNodeSetCar(functionNode);
@@ -547,59 +535,6 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             state.linkPairList(arguments.length);
         }
         state.setCdr(state.closePairList());
-    }
-
-    public int getRlengthImpl() {
-        return 1 + getArgumentCount();
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        if (index == 0) {
-            if (RASTUtils.isNamedFunctionNode(this)) {
-                return RASTUtils.findFunctionName(this);
-            } else {
-                RNode newFunctionNode = functionNode;
-                if (newFunctionNode instanceof NamedRNode) {
-                    newFunctionNode = ((NamedRNode) newFunctionNode).original;
-                }
-                if (newFunctionNode instanceof ConstantNode) {
-                    Object funcNodeValue = ((ConstantNode) newFunctionNode).getValue();
-                    if (funcNodeValue instanceof RSymbol || funcNodeValue instanceof RAbstractVector || funcNodeValue instanceof Integer || funcNodeValue instanceof Double ||
-                                    funcNodeValue instanceof Byte || funcNodeValue instanceof String) {
-                        return ((ConstantNode) newFunctionNode).getValue();
-                    }
-                }
-                return RDataFactory.createLanguage(newFunctionNode);
-            }
-        } else {
-            Arguments<RSyntaxNode> args = getArguments();
-            return RASTUtils.createLanguageElement(args, index - 1);
-        }
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        if (!(other instanceof RCallNode)) {
-            return false;
-        }
-        RCallNode otherCN = (RCallNode) other;
-        if (!getFunctionNode().getRequals(otherCN.getFunctionNode().asRSyntaxNode())) {
-            return false;
-        }
-        return getRequalsImplArgs(arguments.v, otherCN.arguments.v);
-    }
-
-    public static boolean getRequalsImplArgs(RSyntaxNode[] arguments, RSyntaxNode[] otherArguments) {
-        if (arguments.length != otherArguments.length) {
-            return false;
-        }
-        for (int i = 0; i < arguments.length; i++) {
-            if (!arguments[i].getRequalsImpl(otherArguments[i])) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private static boolean isColon(RNode node) {
@@ -672,20 +607,17 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         for (int i = 0; i < args.length; i++) {
             args[i] = i < replacementArgs.length ? replacementArgs[i] : call.arguments.v[i];
         }
-        return new RCallNode(NodeUtil.cloneNode(call.functionNode), args, call.signature);
+        return new RCallNode(call.getSourceSection(), NodeUtil.cloneNode(call.functionNode), args, call.signature);
     }
 
     /**
      * The standard way to create a call to {@code function} with given arguments. If
-     * {@code src == null} we create one to meet the invariant that all {@link RSyntaxNode}s have a
-     * valid {@link SourceSection}.
+     * {@code src == RSyntaxNode.EAGER_DEPARSE} we force a deparse.
      */
     public static RCallNode createCall(SourceSection src, RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        RCallNode call = new RCallNode(function, arguments, signature);
-        if (src == null) {
+        RCallNode call = new RCallNode(src, function, arguments, signature);
+        if (src == RSyntaxNode.EAGER_DEPARSE) {
             RASTDeparse.ensureSourceSection(call);
-        } else {
-            call.assignSourceSection(src);
         }
         return call;
     }
@@ -696,7 +628,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      * {@code LApply}).
      */
     public static RCallNode createCallNotSyntax(RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        RCallNode call = new RCallNode(function, arguments, signature);
+        RCallNode call = new RCallNode(RSyntaxNode.SOURCE_UNAVAILABLE, function, arguments, signature);
         return call;
     }
 
@@ -1175,5 +1107,17 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             Object[] argsObject = RArguments.create(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
         }
+    }
+
+    public RSyntaxElement getSyntaxLHS() {
+        return functionNode.asRSyntaxNode();
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return signature;
+    }
+
+    public RSyntaxElement[] getSyntaxArguments() {
+        return arguments.v;
     }
 }

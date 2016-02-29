@@ -45,11 +45,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.List;
 
-import jline.console.ConsoleReader;
-import jline.console.UserInterruptException;
-
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.api.instrument.QuitException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
@@ -68,7 +63,11 @@ import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+
+import jline.console.ConsoleReader;
+import jline.console.UserInterruptException;
 
 /**
  * Emulates the (Gnu)R command as precisely as possible.
@@ -242,7 +241,7 @@ public class RCommand {
                             Throwable cause = e.getCause();
                             if (cause instanceof BrowserQuitException) {
                                 // drop through to continue REPL
-                            } else if (cause instanceof QuitException || cause instanceof DebugExitException) {
+                            } else if (cause instanceof DebugExitException) {
                                 throw (RuntimeException) cause;
                             } else if (cause instanceof RInternalError) {
                                 /*

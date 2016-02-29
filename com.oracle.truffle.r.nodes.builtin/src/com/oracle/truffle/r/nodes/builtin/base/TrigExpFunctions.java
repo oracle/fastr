@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNodeGen;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
@@ -53,6 +54,7 @@ public class TrigExpFunctions {
 
         private final BranchProfile notCompleteIntValueMet = BranchProfile.create();
         private final BranchProfile notCompleteDoubleValueMet = BranchProfile.create();
+        private final NACheck na = NACheck.create();
 
         @Child private UnaryCopyAttributesNode copyAttributes = UnaryCopyAttributesNodeGen.create(true);
 
@@ -69,7 +71,7 @@ public class TrigExpFunctions {
         }
 
         private double doFunInt(int value) {
-            if (RRuntime.isNA(value)) {
+            if (na.check(value)) {
                 notCompleteIntValueMet.enter();
                 return RRuntime.DOUBLE_NA;
             }
@@ -77,7 +79,7 @@ public class TrigExpFunctions {
         }
 
         private double doFunDouble(double value) {
-            if (RRuntime.isNA(value)) {
+            if (na.check(value)) {
                 notCompleteDoubleValueMet.enter();
                 return value;
             }
@@ -87,12 +89,14 @@ public class TrigExpFunctions {
         @Specialization
         protected double trigOp(int x) {
             controlVisibility();
+            na.enable(x);
             return doFunInt(x);
         }
 
         @Specialization
         protected double trigOp(double x) {
             controlVisibility();
+            na.enable(x);
             return doFunDouble(x);
         }
 
@@ -102,7 +106,9 @@ public class TrigExpFunctions {
             controlVisibility();
             int length = vector.getLength();
             double[] resultVector = new double[length];
+            reportWork(length);
             profile.profileCounted(length);
+            na.enable(vector);
             for (int i = 0; profile.inject(i < length); i++) {
                 resultVector[i] = doFunInt(vector.getDataAt(i));
             }
@@ -115,7 +121,9 @@ public class TrigExpFunctions {
             controlVisibility();
             int length = vector.getLength();
             double[] resultVector = new double[length];
+            reportWork(length);
             profile.profileCounted(length);
+            na.enable(vector);
             for (int i = 0; profile.inject(i < length); i++) {
                 resultVector[i] = doFunDouble(vector.getDataAt(i));
             }
@@ -158,6 +166,7 @@ public class TrigExpFunctions {
             controlVisibility();
             int length = powersVector.getLength();
             double[] result = new double[length * 2];
+            reportWork(length);
             profile.profileCounted(length);
             for (int i = 0; profile.inject(i < length); i++) {
                 RComplex rComplexResult = complexOp(powersVector.getDataAt(i));
@@ -357,9 +366,9 @@ public class TrigExpFunctions {
             casts.toDouble(0).toDouble(1);
         }
 
-        private static double doFunDouble(double y, double x) {
+        private double doFunDouble(double y, double x) {
             double result = x;
-            if (RRuntime.isComplete(y) && RRuntime.isComplete(x)) {
+            if (!yNACheck.check(y) && !xNACheck.check(x)) {
                 result = Math.atan2(y, x);
             }
             return result;
@@ -373,6 +382,7 @@ public class TrigExpFunctions {
         protected RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun, LoopConditionProfile profile) {
             controlVisibility();
             double[] resultVector = new double[length];
+            reportWork(length);
             profile.profileCounted(length);
             for (int i = 0; profile.inject(i < length); i++) {
                 double y = yFun.apply(i);
@@ -389,32 +399,34 @@ public class TrigExpFunctions {
         @Specialization
         protected double atan2(double y, double x) {
             controlVisibility();
+            xNACheck.enable(x);
+            yNACheck.enable(y);
             return doFunDouble(y, x);
         }
 
         @Specialization
         protected RDoubleVector atan2(double y, RAbstractDoubleVector x, //
                         @Cached("createCountingProfile()") LoopConditionProfile profile) {
-            yNACheck.enable(y);
             xNACheck.enable(x);
+            yNACheck.enable(y);
             return doFun(x.getLength(), i -> y, i -> x.getDataAt(i), profile);
         }
 
         @Specialization
         protected RDoubleVector atan2(RAbstractDoubleVector y, double x, //
                         @Cached("createCountingProfile()") LoopConditionProfile profile) {
-            yNACheck.enable(y);
             xNACheck.enable(x);
+            yNACheck.enable(y);
             return doFun(y.getLength(), i -> y.getDataAt(i), i -> x, profile);
         }
 
         @Specialization
         protected RDoubleVector atan2(RAbstractDoubleVector y, RAbstractDoubleVector x, //
                         @Cached("createCountingProfile()") LoopConditionProfile profile) {
-            int yLength = y.getLength();
             int xLength = x.getLength();
-            yNACheck.enable(y);
+            int yLength = y.getLength();
             xNACheck.enable(x);
+            yNACheck.enable(y);
             return doFun(Math.max(yLength, xLength), i -> y.getDataAt(i % yLength), i -> x.getDataAt(i % xLength), profile);
         }
 

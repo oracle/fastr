@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -49,7 +49,7 @@ public class TestBuiltin_mean extends TestBase {
 
     @Test
     public void testmean7() {
-        assertEval(Ignored.Unknown, "argv <- list(1.47130567537631e-314); .Internal(mean(argv[[1]]))");
+        assertEval("argv <- list(1.47130567537631e-314); .Internal(mean(argv[[1]]))");
     }
 
     @Test
@@ -99,8 +99,7 @@ public class TestBuiltin_mean extends TestBase {
 
     @Test
     public void testmean17() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(1.77635683940025e-15, 7.105427357601e-14, 4.54747350886464e-13, 4.54747350886464e-13, 1.81898940354586e-12, 7.27595761418343e-12, 7.27595761418343e-12, 1.45519152283669e-11, 2.91038304567337e-11, 5.82076609134674e-11)); .Internal(mean(argv[[1]]))");
+        assertEval("argv <- list(c(1.77635683940025e-15, 7.105427357601e-14, 4.54747350886464e-13, 4.54747350886464e-13, 1.81898940354586e-12, 7.27595761418343e-12, 7.27595761418343e-12, 1.45519152283669e-11, 2.91038304567337e-11, 5.82076609134674e-11)); .Internal(mean(argv[[1]]))");
     }
 
     @Test

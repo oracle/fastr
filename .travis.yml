@@ -1,0 +1,28 @@
+language: java
+jdk:
+  - oraclejdk8
+install:
+  - sudo sh -c "echo 'deb http://archives.ubuntu.com/ubuntu $(lsb_release -cs) main' >> /etc/apt/sources.list"
+  - sudo pip install astroid==1.1.0
+  - sudo pip install pylint==1.1.0
+  - sudo add-apt-repository -y ppa:mercurial-ppa/releases
+  - sudo apt-get update
+  - sudo apt-get install mercurial
+  - sudo apt-get install gfortran
+  - pylint --version
+  - hg --version
+  - git clone https://github.com/graalvm/mx
+  - wget http://ftp.halifax.rwth-aachen.de/eclipse//eclipse/downloads/drops4/R-4.5.1-201509040015/ecj-4.5.1.jar
+  - mv ecj-4.5.1.jar mx/ecj.jar
+  - export JDT=mx/ecj.jar
+  - wget https://lafo.ssw.uni-linz.ac.at/slavefiles/gate/eclipse-jdk8-linux-x86_64.tar.gz
+  - tar -xvzf eclipse-jdk8-linux-x86_64.tar.gz
+  - export ECLIPSE_EXE=eclipse/eclipse
+  - export DEFAULT_VM=server
+script:
+  - $TEST_COMMAND
+env:
+  - TEST_COMMAND='mx/mx --src-suitemodel nested gate'
+after_failure: 
+  - cat ./com.oracle.truffle.r.native/gnur/R-3.1.3/gnur_configure.log
+  - cat ./com.oracle.truffle.r.native/gnur/R-3.1.3/gnur_make.log

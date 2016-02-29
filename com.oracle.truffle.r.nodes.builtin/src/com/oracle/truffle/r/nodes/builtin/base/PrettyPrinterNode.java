@@ -1842,7 +1842,8 @@ public abstract class PrettyPrinterNode extends RNode {
                 for (int dimInd = 0; dimInd < dimSize; dimInd++) {
                     int newArrayBase = arrayBase + newAccDimensions * dimInd;
                     String dimId = getDimId(vector, currentDimLevel, dimInd, attrProfiles);
-                    String innerDims = printDimRecursive(vector, isListOrStringVector, isComplexOrRawVector, currentDimLevel - 1, newArrayBase, newAccDimensions, concat(dimId, ", ", header), isQuoted);
+                    String innerDims = printDimRecursive(vector, isListOrStringVector, isComplexOrRawVector, currentDimLevel - 1, newArrayBase, newAccDimensions, concat(dimId, ", ", header),
+                                    isQuoted);
                     if (innerDims == null) {
                         return null;
                     } else {

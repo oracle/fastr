@@ -22,13 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Denotes a function body, which consists of a {@link SaveArgumentsNode} and a
@@ -41,18 +43,18 @@ import com.oracle.truffle.r.runtime.nodes.*;
  */
 public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
 
+    @CompilationFinal private SourceSection sourceSectionR;
     @Child private RNode saveArgs;
 
     public FunctionBodyNode(SaveArgumentsNode saveArgs, FunctionStatementsNode statements) {
-        super(statements);
-        this.saveArgs = saveArgs;
-        assignSourceSection(statements.getSourceSection());
+        this(saveArgs, (RNode) statements);
     }
 
     private FunctionBodyNode(RNode saveArgs, RNode statements) {
         super(statements);
         this.saveArgs = saveArgs;
-        assignSourceSection(statements.getSourceSection());
+        // Same source section as statements but different tag
+        this.sourceSectionR = statements.getSourceSection().withTags(RSyntaxTags.ENTER_FUNCTION);
     }
 
     @Override
@@ -94,42 +96,14 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
         statements.serialize(state);
     }
 
-    @Override
-    public void allNamesImpl(RAllNames.State state) {
-        statements.allNames(state);
-    }
-
-    public int getRlengthImpl() {
-        boolean hasBrace = getFunctionDefinitionNode().hasBraces();
-        FunctionStatementsNode fsNode = getStatements();
-        int result = hasBrace ? 1 : 0;
-        for (RNode s : fsNode.getSequence()) {
-            if (s.unwrap() instanceof RSyntaxNode) {
-                result++;
-            }
-        }
-        return result;
+    public void setSourceSection(SourceSection sourceSection) {
+        assert sourceSection != null;
+        this.sourceSectionR = sourceSection;
     }
 
     @Override
-    public Object getRelementImpl(int index) {
-        boolean hasBrace = getFunctionDefinitionNode().hasBraces();
-        FunctionStatementsNode fsNode = getStatements();
-        int sIndex = hasBrace ? index - 1 : index;
-        if (hasBrace && index == 0) {
-            return RDataFactory.createSymbol("{");
-        } else {
-            return RASTUtils.createLanguageElement(fsNode.getSequence()[sIndex].unwrap());
-        }
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        if (other instanceof FunctionBodyNode) {
-            return getStatements().getRequalsImpl(((FunctionBodyNode) other).getStatements());
-        } else {
-            return false;
-        }
+    public SourceSection getSourceSection() {
+        return sourceSectionR;
     }
 
 }

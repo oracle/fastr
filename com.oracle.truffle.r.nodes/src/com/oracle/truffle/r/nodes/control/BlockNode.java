@@ -22,25 +22,48 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * A {@link BlockNode} represents a sequence of statements such as the body of a {@code while} loop.
  *
  */
-public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityController {
+public class BlockNode extends SequenceNode implements RSyntaxNode, RSyntaxCall, VisibilityController {
     public static final RNode[] EMPTY_BLOCK = new RNode[0];
+    private SourceSection sourceSectionR;
 
     public BlockNode(SourceSection src, RNode[] sequence) {
         super(sequence);
-        assignSourceSection(src);
+        assert src != null;
+        this.sourceSectionR = src;
+        // tag sequence members as statements
+        for (int i = 0; i < sequence.length; i++) {
+            RNode n = sequence[i];
+            if (n instanceof RSyntaxNode) {
+                RSyntaxNode sn = (RSyntaxNode) n;
+                SourceSection sns = sn.getSourceSection();
+                if (!sns.hasTag(RSyntaxTags.STATEMENT)) {
+                    sn.setSourceSection(RSyntaxTags.addTags(sns, RSyntaxTags.STATEMENT));
+                }
+            } else {
+                throw RInternalError.shouldNotReachHere();
+            }
+        }
     }
 
     /**
@@ -59,11 +82,11 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
     /**
      * Ensures that {@code node} is a {@link BlockNode}.
      */
-    public static RSyntaxNode ensureBlock(SourceSection src, RSyntaxNode node) {
+    public static RSyntaxNode ensureBlock(RSyntaxNode node) {
         if (node == null || node instanceof BlockNode) {
             return node;
         } else {
-            return new BlockNode(src, new RNode[]{node.asRNode()});
+            return new BlockNode(node.getSourceSection(), new RNode[]{node.asRNode()});
         }
     }
 
@@ -132,69 +155,28 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
         for (int i = 0; i < sequence.length; i++) {
             sequenceSubs[i] = sequence[i].substitute(env).asRNode();
         }
-        return new BlockNode(null, sequenceSubs);
+        return new BlockNode(RSyntaxNode.EAGER_DEPARSE, sequenceSubs);
+    }
+
+    public void setSourceSection(SourceSection sourceSection) {
+        assert sourceSection != null;
+        this.sourceSectionR = sourceSection;
     }
 
     @Override
-    public void allNamesImpl(RAllNames.State state) {
-        if (sequence.length != 1 || RASTUtils.hasBraces(this)) {
-            state.addName("{");
-        }
-        for (int i = 0; i < sequence.length; i++) {
-            sequence[i].allNames(state);
-        }
+    public SourceSection getSourceSection() {
+        return sourceSectionR;
     }
 
-    public int getRlengthImpl() {
-        /*
-         * We can't get this completely compatible with GnuR without knowing if the source had a "{"
-         * or not. However, semantically what really matters is that if the length is > 1, there
-         * *must* have been a "{", so we fabricate it. Furthermore, if length==1, then we must
-         * delegate to the underlying node
-         */
-        int len = getSequence().length;
-        if (len == 1) {
-            return getSequence()[0].asRSyntaxNode().getRlengthImpl();
-        } else {
-            return len + 1;
-        }
+    public RSyntaxElement getSyntaxLHS() {
+        return RSyntaxLookup.createDummyLookup(getSourceSection(), "{", true);
     }
 
-    @Override
-    public Object getRelementImpl(int index) {
-        /* See related comments in getRlengthImpl. */
-        RNode[] seq = getSequence();
-        if (seq.length > 1) {
-            switch (index) {
-                case 0:
-                    return RDataFactory.createSymbol("{");
-                default:
-                    return RASTUtils.createLanguageElement(seq[index - 1]);
-            }
-        } else {
-            return getSequence()[0].asRSyntaxNode().getRelementImpl(index);
-        }
+    public RSyntaxNode[] getSyntaxArguments() {
+        return RASTUtils.asSyntaxNodes(sequence);
     }
 
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        if (!(other instanceof BlockNode)) {
-            return false;
-        }
-        BlockNode otherBlock = (BlockNode) other;
-        if (getRlengthImpl() != otherBlock.getRlengthImpl()) {
-            return false;
-        }
-        RNode[] seq = getSequence();
-        RNode[] otherSeq = otherBlock.getSequence();
-        for (int i = 0; i < sequence.length; i++) {
-            RSyntaxNode e = seq[i].asRSyntaxNode();
-            RSyntaxNode eOther = otherSeq[i].asRSyntaxNode();
-            if (!e.getRequalsImpl(eOther)) {
-                return false;
-            }
-        }
-        return true;
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(sequence.length);
     }
-
 }

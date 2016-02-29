@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,9 +51,9 @@ public class TestSimpleSequences extends TestBase {
         assertEval("{ (0-5):(0-9) }");
         assertEval("{ 1.1:5.1 }");
 
-        assertEval(Output.ContainsWarning, "{ (1:3):3 }");
-        assertEval(Output.ContainsWarning, "{ 1:(1:3) }");
-        assertEval(Output.ContainsWarning, "{ (1:3):(1:3) }");
+        assertEval("{ (1:3):3 }");
+        assertEval("{ 1:(1:3) }");
+        assertEval("{ (1:3):(1:3) }");
     }
 
 }

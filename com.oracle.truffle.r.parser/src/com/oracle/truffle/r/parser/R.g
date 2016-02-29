@@ -10,6 +10,13 @@
  */
 grammar R;
 
+/*
+ * Parser for R source code
+ *
+ * Please note that you cannot use attributes like $start and $stop (or $var.stop, etc.),
+ * because this introduces static inner classes that cannot be generic for type T.
+ */
+
 options {
     language = Java;
 }
@@ -22,15 +29,18 @@ package com.oracle.truffle.r.parser;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.impl.*;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.parser.ast.*;
-import com.oracle.truffle.r.parser.ast.Call.*;
-import com.oracle.truffle.r.parser.ast.BinaryOperation.*;
-import com.oracle.truffle.r.parser.ast.Operation.*;
-import com.oracle.truffle.r.parser.ast.UnaryOperation.*;
+import com.oracle.truffle.r.parser.RCodeBuilder.Argument;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 }
 
 @lexer::header {
@@ -45,84 +55,52 @@ package com.oracle.truffle.r.parser;
 }
 
 @members {
-    Source source;
-
-    public void setSource(Source s) {
-        source = s;
+    private Source source;
+    private RCodeBuilder<T> builder;
+    
+    /**
+     * Always use this constructor to initialize the R specific fields.
+     */
+    public RParser(Source source, RCodeBuilder<T> builder) {
+        super(new CommonTokenStream(new RLexer(new ANTLRStringStream(source.getCode()))));
+        assert source != null && builder != null;
+        this.source = source;
+        this.builder = builder;
     }
-
-    private final boolean DUMP_SRC = false;
-
+    
+    /**
+     * Helper function that returns the last parsed token, usually used for building source sections.
+     */
+    private Token last() {
+        return input.LT(-1);
+    } 
+    
+    /**
+     * Helper function to create a function lookup for the symbol in a given token.
+     */
+    private T operator(Token op) {
+        return builder.lookup(src(op), op.getText(), true);
+    }
+    
+    /**
+     * Create a {@link SourceSection} from a single token.
+     */
+    private SourceSection src(Token t) {
+        CommonToken token = (CommonToken) t;
+        int startIndex = token.getStartIndex();
+        return source.createSection(null, token.getLine(), token.getCharPositionInLine() + 1, startIndex, token.getStopIndex() - startIndex + 1);
+    }
+    
     /**
      * Create a {@link SourceSection} from a start and end token.
      */
-    private SourceSection sourceSection(String id, Token start, Token stop) {
+    private SourceSection src(Token start, Token stop) {
         CommonToken cstart = (CommonToken) start;
         CommonToken cstop = stop == null ? (CommonToken) start : (CommonToken) stop;
         int startIndex = cstart.getStartIndex();
         int stopIndex = cstop.getStopIndex();
         int length = stopIndex - startIndex + (cstop.getType() == Token.EOF ? 0 : 1);
-        if (DUMP_SRC) {
-            System.out.print("<<" + id + "," + cstart.getLine() + "," + (cstart.getCharPositionInLine() + 1) + "," + startIndex + "," + length);
-        }
-        SourceSection src = source.createSection(id, cstart.getLine(), cstart.getCharPositionInLine() + 1, startIndex, length);
-        if (DUMP_SRC) {
-            System.out.println("=>" + src.getCode() + ">>");
-        }
-        return src;
-    }
-
-    /**
-     * Create a {@link SourceSection} from a single token, e.g., one returned from the lexer.
-     */
-    private SourceSection sourceSection(String id, Token tok) {
-        return sourceSection(id, tok, tok);
-    }
-
-    /**
-     * Create a {@link SourceSection} from two {@link ASTNode}s, spanning their source.
-     */
-    private SourceSection sourceSection(String id, ASTNode a, ASTNode b) {
-        SourceSection as = a.getSource();
-        int ai = as.getCharIndex();
-        if (DUMP_SRC) {
-            System.out.print("<<" + id + "," + as.getStartLine() + "," + as.getStartColumn() + "," + ai + "," + (b.getSource().getCharEndIndex() - ai));
-        }
-        SourceSection src = source.createSection(id, as.getStartLine(), as.getStartColumn(), ai, b.getSource().getCharEndIndex() - ai);
-        if (DUMP_SRC) {
-            System.out.println("=>" + src.getCode() + ">>");
-        }
-        return src;
-    }
-
-    /**
-     * Create a {@link SourceSection} from a token and an {@link ASTNode}, spanning their source.
-     */
-    private SourceSection sourceSection(String id, Token a, ASTNode b) {
-        CommonToken ta = (CommonToken) a;
-        int startIndex = ta.getStartIndex();
-        int length = b.getSource().getCharEndIndex() - startIndex;
-        if (DUMP_SRC) {
-            System.out.print("<<" + id + "," + ta.getLine() + "," + (ta.getCharPositionInLine() + 1) + "," + startIndex + "," + length);
-        }
-        SourceSection src = source.createSection(id, ta.getLine(), ta.getCharPositionInLine() + 1, startIndex, length);
-        if (DUMP_SRC) {
-            System.out.println("=>" + src.getCode() + ">>");
-        }
-        return src;
-    }
-
-    public void display_next_tokens(){
-        System.err.print("Expected tokens: ");
-        for(int next: next_tokens()) {
-            if(next > 3)
-                System.err.print(tokenNames[next] + " ");
-            }
-        System.err.println("");
-    }
-
-    public int[] next_tokens(){
-        return state.following[state._fsp].toArray();
+        return source.createSection(null, cstart.getLine(), cstart.getCharPositionInLine() + 1, startIndex, length);
     }
 
 	// without this override, the parser will not throw exceptions if it can recover    
@@ -131,27 +109,17 @@ package com.oracle.truffle.r.parser;
         throw new MismatchedTokenException(expected, input);
     }
 }
-
 @lexer::members {
-    public final int MAX_INCOMPLETE_SIZE = 1000;
-
-    int incomplete_stack[] = new int[MAX_INCOMPLETE_SIZE]; // TODO probably go for an ArrayList of int :S
-
-    int incomplete_depth;
-
-    public void resetIncomplete() {
-        incomplete_stack[incomplete_depth = 0] = 0;
-    }
-
-    @Override
-    public void reportError(RecognitionException e) {
-        throw new IllegalArgumentException(e);
-    }
+    /*
+     * The nesting level is maintained for "{", "(", "[" and "[[", so that
+     * LINE_BREAK can be ignored while the nesting is larger than zero.
+     */
+    private int incompleteNesting;
+    private final ArrayList<Integer> nestingStack = new ArrayList<>();
 }
 
 @lexer::init{
-    incomplete_depth = 0;
-    incomplete_stack[incomplete_depth] = 0;
+    incompleteNesting = 0;
 }
 
 /****************************************************
@@ -166,36 +134,33 @@ package com.oracle.truffle.r.parser;
 ** - Improve the stack of balanced structures
 *****************************************************/
 
-script returns [ASTNode v]
-    @init  { ArrayList<ASTNode> stmts = new ArrayList<ASTNode>(); }
+script returns [List<T> v]
+    @init  {
+        assert source != null && builder != null;
+        $v = new ArrayList<T>();
+    }
     @after {
         if (input.LT(1).getType() != EOF) {
         	throw new RecognitionException(input); 
         }
-        SourceSection src = sourceSection("script", $start, $stop);
-        $v = Sequence.create(src, stmts);
     }
-    : n_ ( s=statement { stmts.add(s); })*
+    : n_ ( s=statement { $v.add($s.v); })*
     ;
-
-interactive returns [ASTNode v]
-    @init  { ArrayList<ASTNode> stmts = new ArrayList<ASTNode>(); }
+    
+root_function [String name, MaterializedFrame enclosing] returns [RFunction v]
+    @init {
+        assert source != null && builder != null;
+        List<Argument<T>> params = new ArrayList<>();
+    }
     @after {
-        switch(stmts.size()) {
-        case 0:
-            $v = null;
-            break;
-        case 1:
-            $v = stmts.get(0);
-            break;
-        default:
-            $v = Sequence.create(sourceSection("interactive", $start, $stop), stmts);
+        if (input.LT(1).getType() != EOF) {
+        	throw RInternalError.shouldNotReachHere("not at EOF after parsing deserialized function"); 
         }
     }
-    : n_ (s=statement { stmts.add(s); })*
+    : n_ op=FUNCTION n_ LPAR  n_ (par_decl[params] (n_ COMMA n_ par_decl[params])* n_)? RPAR n_ body=expr_or_assign { $v = builder.rootFunction(src($op, last()), params, $body.v, name, enclosing); }
     ;
 
-statement returns [ASTNode v]
+statement returns [T v]
     : e=expr_or_assign n_one { $v = $e.v; }
     ;
 
@@ -203,401 +168,303 @@ n_ : (NEWLINE | COMMENT)*;
 n_one  : (NEWLINE | COMMENT)+ | EOF | SEMICOLON n_;
 n_multi  : (NEWLINE | COMMENT | SEMICOLON)+ | EOF;
 
-expr_or_assign returns [ASTNode v]
-    : a=alter_assign { $v = $a.v; }
+expr_wo_assign returns [T v]
+    : w=while_expr                                      { $v = $w.v; }
+    | i=if_expr                                         { $v = $i.v; }
+    | f=for_expr                                        { $v = $f.v; }
+    | r=repeat_expr                                     { $v = $r.v; }
+    | fun=function[null]                                { $v = $fun.v; }
+    // break/next can be accompanied by arguments, but those are simply ignored
+    | op=(NEXT|BREAK) ((LPAR)=>LPAR args[null] RPAR | ) { $v = builder.call(src($op), operator($op)); }
     ;
 
-expr returns [ASTNode v]
-    : a=assign { $v = $a.v; }
-    ;
-
-expr_wo_assign returns [ASTNode v]
-    : w=while_expr                          { $v = $w.v; }
-    | i=if_expr                             { $v = $i.v; }
-    | f=for_expr                            { $v = $f.v; }
-    | r=repeat_expr                         { $v = $r.v; }
-    | fun=function                          { $v = $fun.v; }
-    | t=NEXT  /* ((LPAR)=>LPAR n_ RPAR)? */ { $v = Next.create(sourceSection("expr_wo_assign/NEXT", t)); }
-    | t=BREAK /* ((LPAR)=>LPAR n_ RPAR)? */ { $v = Break.create(sourceSection("expr_wo_assign/BREAK", t)); }
-    ;
-
-sequence returns [ASTNode v]
-    @init  { ArrayList<ASTNode> stmts = new ArrayList<ASTNode>(); }
-    @after { $v = Sequence.create(sourceSection("sequence", $start, $stop), stmts); }
-    : LBRACE n_multi? (e=expr_or_assign { stmts.add($e.v); } (n_multi e=expr_or_assign { stmts.add($e.v); })* n_multi?)? RBRACE
-    ;
-
-assign returns [ASTNode v]
-    @init { ASTNode rr = null; }
-    @after {
-        if (rr != null) {
-            // assign source to span l..r
-            $v.setSource(sourceSection("assign", $l.v, rr));
-        }
-    }
-    : l=tilde_expr
-      ( op=ARROW n_ r=expr             { rr = $r.v; $v = AssignVariable.create(false, sourceSection("assign/ARROW", op), $l.v, $r.v); }
-      | op=SUPER_ARROW n_ r=expr       { rr = $r.v; $v = AssignVariable.create(true, sourceSection("assign/SUPER_ARROW", op), $l.v, $r.v); }
-      | op=RIGHT_ARROW n_ r=expr       { rr = $r.v; $v = AssignVariable.create(false, sourceSection("assign/RIGHT_ARROW", op), $r.v, $l.v); }
-      | op=SUPER_RIGHT_ARROW n_ r=expr { rr = $r.v; $v = AssignVariable.create(true, sourceSection("assign/SUPER_RIGHT_ARROW", op), $r.v, $l.v); }
-      | { $v = $l.v; }
-      )
-    ;
-
-alter_assign returns [ASTNode v]
-    @init { ASTNode rr = null; }
-    @after {
-        if (rr != null) {
-            // assign source to span l..r
-            $v.setSource(sourceSection("alter_assign", $l.v, rr));
-        }
-    }
-    : l=tilde_expr
-      ( (ARROW)=>op=ARROW n_ r=expr_or_assign                         { rr = $r.v; $v = AssignVariable.create(false, sourceSection("assign/ARROW", op), $l.v, $r.v); }
-      | (SUPER_ARROW)=>op=SUPER_ARROW n_ r=expr_or_assign             { rr = $r.v; $v = AssignVariable.create(true, sourceSection("assign/SUPER_ARROW", op), $l.v, $r.v); }
-      | (RIGHT_ARROW)=>op=RIGHT_ARROW n_ r=expr_or_assign             { rr = $r.v; $v = AssignVariable.create(false, sourceSection("assign/RIGHT_ARROW", op), $r.v, $l.v); }
-      | (SUPER_RIGHT_ARROW)=>op=SUPER_RIGHT_ARROW n_ r=expr_or_assign { rr = $r.v; $v = AssignVariable.create(true, sourceSection("assign/SUPER_RIGHT_ARROW", op), $r.v, $l.v); }
-      | (ASSIGN)=>op=ASSIGN n_ r=expr_or_assign                       { rr = $r.v; $v = AssignVariable.create(false, sourceSection("assign/ASSIGN", op), $l.v, $r.v); }
-      | { $v = $l.v; }
-      )
-    ;
-
-if_expr returns [ASTNode v]
-    @after { $v.setSource(sourceSection("if", $start, $stop)); }
-    : IF n_ LPAR n_ cond=expr_or_assign n_ RPAR n_ t=expr_or_assign
+sequence returns [T v]
+    @init  { ArrayList<Argument<T>> stmts = new ArrayList<>(); }
+    : op=LBRACE n_multi?
       (
-        (n_ ELSE)=>(options { greedy=false; backtrack = true; }: n_ ELSE n_ f=expr_or_assign { $v = If.create(null, $cond.v, $t.v, $f.v); })
-      | { $v = If.create(null, $cond.v, $t.v); }
+        e=expr_or_assign           { stmts.add(RCodeBuilder.argument($e.v)); }
+        ( n_multi e=expr_or_assign { stmts.add(RCodeBuilder.argument($e.v)); } )*
+        n_multi?
+      )?
+      RBRACE
+      { $v = builder.call(src($op, last()), operator($op), stmts); }
+    ;
+    
+expr returns [T v]
+    @init { Token start = input.LT(1); T rhs = null; }
+    : l=tilde_expr
+      ( op=(ARROW | SUPER_ARROW) n_ ( (FUNCTION) => r=function[$l.v] { rhs = $r.v; } | r=expr { rhs = $r.v; } )
+                                           { $v = builder.call(src(start, last()), operator($op), $l.v, rhs); }
+      | op=RIGHT_ARROW n_ r=expr           { $v = builder.call(src(start, last()), builder.lookup(src($op), "<-", true), $r.v, $l.v); }
+      | op=SUPER_RIGHT_ARROW n_ r=expr     { $v = builder.call(src(start, last()), builder.lookup(src($op), "<<-", true), $r.v, $l.v); }
+      | { $v = $l.v; }
       )
     ;
 
-while_expr returns [ASTNode v]
-    @init { boolean blockBody = false; }
-    @after {
-        SourceSection src;
-        if (blockBody) {
-            src = sourceSection("while_expr/BLOCK", $start, $body.start);
-        } else {
-            src = sourceSection("while_expr/EXPR", $start, $stop);
-        }
-        $v = Loop.create(src, $c.v, $body.v);
-    }
-    : WHILE n_ LPAR n_ c=expr_or_assign n_ RPAR n_
-      ( (LBRACE)=>body=expr_or_assign { blockBody = true; }
-      |           body=expr_or_assign
+expr_or_assign returns [T v]
+    @init { Token start = input.LT(1); T rhs = null; }
+    : l=tilde_expr
+      ( (ARROW|SUPER_ARROW|ASSIGN) => op=(ARROW | SUPER_ARROW | ASSIGN) n_  ( (FUNCTION) => r=function[$l.v] { rhs = $r.v; } | r=expr_or_assign { rhs = $r.v; } )
+                                                                      { $v = builder.call(src(start, last()), operator($op), $l.v, rhs); }
+      | (RIGHT_ARROW)=>op=RIGHT_ARROW n_ r=expr_or_assign             { $v = builder.call(src(start, last()), builder.lookup(src($op), "<-", true), $r.v, $l.v); }
+      | (SUPER_RIGHT_ARROW)=>op=SUPER_RIGHT_ARROW n_ r=expr_or_assign { $v = builder.call(src(start, last()), builder.lookup(src($op), "<<-", true), $r.v, $l.v); }
+      | { $v = $l.v; }
       )
     ;
 
-for_expr returns [ASTNode v]
-    @after { $v = Loop.create(sourceSection("for_expr", $start, $stop), $i.text, $in.v, $body.v); }
-    : FOR n_ LPAR n_ i=ID n_ IN n_ in=expr_or_assign n_ RPAR n_ body=expr_or_assign
+if_expr returns [T v]
+    : op=IF n_ LPAR n_ cond=expr_or_assign n_ RPAR n_ t=expr_or_assign
+      (
+        (n_ ELSE)=>(options { greedy=false; backtrack = true; }: n_ ELSE n_ f=expr_or_assign
+              { $v = builder.call(src($op, last()), operator($op), $cond.v, $t.v, $f.v); })
+      |       { $v = builder.call(src($op, last()), operator($op), $cond.v, $t.v); }
+      )
     ;
 
-repeat_expr returns [ASTNode v]
-    @after { $v = Loop.create(sourceSection("repeat_expr", $start, $stop), $body.v); }
-    : REPEAT n_ body=expr_or_assign
+while_expr returns [T v]
+    : op=WHILE n_ LPAR n_ c=expr_or_assign n_ RPAR n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), $c.v, $body.v); }
     ;
 
-function returns [ASTNode v]
-    @init {
-        List<ArgNode> l = new ArrayList<>();
-        ASTNode vv = null;
-    }
-    @after {
-        SourceSection srcs = sourceSection("function", $start, $stop);
-        vv = Function.create(srcs, l, $body.v);
-        $v = vv;
-    }
-    : FUNCTION n_ LPAR  n_ (par_decl[l] (n_ COMMA n_ par_decl[l])* n_)? RPAR n_ body=expr_or_assign
+for_expr returns [T v]
+    : op=FOR n_ LPAR n_ i=ID n_ IN n_ in=expr_or_assign n_ RPAR n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), builder.lookup(src($i), $i.text, false), $in.v, $body.v); }
     ;
 
-par_decl [List<ArgNode> l]
-    : i=ID                     { $l.add(ArgNode.create(sourceSection("par_decl/ID", i), $i.text, null)); }
-    | i=ID n_ ASSIGN n_ e=expr { $l.add(ArgNode.create(sourceSection("par_decl/ID_ASSIGN", i, e), $i.text, e)); }
-    | v=VARIADIC               { $l.add(ArgNode.create(sourceSection("par_decl/VARIADIC", v), $v.text, null)); }
+repeat_expr returns [T v]
+    : op=REPEAT n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), $body.v); } 
+    ;
+
+function [T assignedTo] returns [T v]
+    @init { List<Argument<T>> params = new ArrayList<>(); }
+    : op=FUNCTION n_ LPAR  n_ (par_decl[params] (n_ COMMA n_ par_decl[params])* n_)? RPAR n_ body=expr_or_assign { $v = builder.function(src($op, last()), params, $body.v, assignedTo); }
+    ;
+
+par_decl [List<Argument<T>> l]
+    : i=ID                     { $l.add(RCodeBuilder.argument(src($i), $i.text, null)); }
+    | i=ID n_ ASSIGN n_ e=expr { $l.add(RCodeBuilder.argument(src($i, last()), $i.text, $e.v)); }
+    | v=VARIADIC               { $l.add(RCodeBuilder.argument(src($v), $v.text, null)); }
     // The 3 following cases were not handled ... and everything was working fine.
     // They are added for completeness, however note that a function created
     // with such a signature will always fail if it tries to access them!
-    | VARIADIC n_ ASSIGN n_ expr
-    | DD
-    | DD n_ ASSIGN n_ expr
+    | VARIADIC n_ ASSIGN n_ expr { throw RInternalError.shouldNotReachHere("... = value parameter"); }
+    | DD                         { throw RInternalError.shouldNotReachHere("..X parameter"); }
+    | DD n_ ASSIGN n_ expr       { throw RInternalError.shouldNotReachHere("..X = value parameter"); }
     ;
 
-tilde_expr returns [ASTNode v]
-    @init { boolean hasTilde = false; }
-    @after {
-        if (hasTilde) {
-            // In other cases, source info is in l.
-            $v.setSource(sourceSection("tilde_expr", $start, $stop));
-        }
-    }
+tilde_expr returns [T v]
     : l=utilde_expr { $v = $l.v; }
-      ( ((TILDE) => t=TILDE n_ r=utilde_expr { hasTilde = true; $v = Formula.create(sourceSection("tilde_expr/tilde", $start, $r.stop), $tilde_expr.v, $r.v); }) )*
+      ( ((TILDE) => op=TILDE n_ r=utilde_expr { $v = builder.call(src($op, last()), operator($op), $v, $r.v); }) )*
     ;
 
-utilde_expr returns [ASTNode v]
-    : t=TILDE n_ l=or_expr { $v = Formula.create(sourceSection("utilde_expr", $t, $l.stop), null, $l.v); }
-    | l=or_expr            { $v = $l.v; }
+utilde_expr returns [T v]
+    : op=TILDE n_ l=or_expr { $v = builder.call(src($op, last()), operator($op), $l.v); }
+    | l=or_expr             { $v = $l.v; }
     ;
 
-or_expr returns [ASTNode v]
-    @init { boolean hasOr = false; }
-    @after {
-        if (hasOr) {
-            // In other cases, source info is in l.
-            $v.setSource(sourceSection("or_expr", $start, $stop));
-        }
-    }
+or_expr returns [T v]
+    @init { Token start = input.LT(1); }
     : l=and_expr { $v = $l.v; }
-      ( ((or_operator)=>op=or_operator n_ r=and_expr { hasOr = true; $v = BinaryOperation.create(sourceSection("or_expr/binop", $op.start, $r.stop), $op.v, $or_expr.v, $r.v); }) )*
+      ( ((or_operator)=>op=or_operator n_ r=and_expr { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
     ;
 
-and_expr returns [ASTNode v]
-    @init { boolean hasAnd = false; }
-    @after {
-        if (hasAnd) {
-            // In other cases, source info is in l.
-            $v.setSource(sourceSection("and_expr", $start, $stop));
-        }
-    }
+and_expr returns [T v]
+    @init { Token start = input.LT(1); }
     : l=not_expr { $v = $l.v; }
-      ( ((and_operator)=>op=and_operator n_ r=not_expr { hasAnd = true; $v = BinaryOperation.create(sourceSection("and_expr/binop", $op.start, $r.stop), $op.v, $and_expr.v, $r.v); }) )*
+      ( ((and_operator)=>op=and_operator n_ r=not_expr { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
     ;
 
-not_expr returns [ASTNode v]
-    : {true}? t=NOT n_ l=not_expr { $v = UnaryOperation.create(sourceSection("not_expr", $t, $l.stop), ArithmeticOperator.UNARY_NOT, $l.v); }
+not_expr returns [T v]
+    : {true}? op=NOT n_ l=not_expr { $v = builder.call(src($op, last()), operator($op), $l.v); }
     | b=comp_expr         { $v = $b.v; }
     ;
 
-comp_expr returns [ASTNode v]
-    @init { boolean hasComp = false; }
-    @after {
-        if (hasComp) {
-            // In other cases, source info is in l.
-            $v.setSource(sourceSection("comp_expr", $start, $stop));
-        }
-    }
+comp_expr returns [T v]
+    @init { Token start = input.LT(1); }
     : l=add_expr { $v = $l.v; }
-      ( ((comp_operator)=>op=comp_operator n_ r=add_expr { hasComp = true; $v = BinaryOperation.create(sourceSection("comp_expr/binop", $op.start, $r.stop), $op.v, $comp_expr.v, $r.v); }) )*
+      ( ((comp_operator)=>op=comp_operator n_ r=add_expr { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
     ;
 
-add_expr returns [ASTNode v]
-    @init { boolean hasAdd = false; }
-    @after {
-        if (hasAdd) {
-            // In other cases, source info is in l.
-            $v.setSource(sourceSection("add_expr", $start, $stop));
-        }
-    }
+add_expr returns [T v]
+    @init { Token start = input.LT(1); }
     : l=mult_expr { $v = $l.v; }
-      ( ((add_operator)=>op=add_operator n_ r=mult_expr { hasAdd = true; $v = BinaryOperation.create(sourceSection("add_expr/binop", $op.start, $r.stop), $op.v, $add_expr.v, $r.v); }) )*
+      ( ((add_operator)=>op=add_operator n_ r=mult_expr { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
     ;
 
-mult_expr returns [ASTNode v]
-    @init { boolean hasMult = false; }
-    @after {
-        if (hasMult) {
-            // In other cases, source info is in l.
-            $v.setSource(sourceSection("mult_expr", $start, $stop));
-        }
-    }
+mult_expr returns [T v]
+    @init { Token start = input.LT(1); }
     : l=operator_expr { $v = $l.v; }
-      ( ((mult_operator)=>op=mult_operator n_ r=operator_expr { hasMult = true; $v = BinaryOperation.create(sourceSection("mult_expr/binop", $op.start, $r.stop), $op.v, $mult_expr.v, $r.v); }) )*
+      ( ((mult_operator)=>op=mult_operator n_ r=operator_expr { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
     ;
 
-operator_expr returns [ASTNode v]
-    @init { boolean hasOp = false; }
-    @after {
-        if (hasOp) {
-            // In other cases, source information is in l.
-            $v.setSource(sourceSection("operator_expr", $start, $stop));
-        }
-    }
+operator_expr returns [T v]
+    @init { Token start = input.LT(1); }
     : l=colon_expr { $v = $l.v; }
-      ( (OP)=>opc=OP n_ r=colon_expr { hasOp = true; $v = BinaryOperation.create(sourceSection("operator_expr/binop", $opc, $r.stop), $opc.text, $operator_expr.v, $r.v); } )*
+      ( (OP)=>op=OP n_ r=colon_expr { $v = builder.call(src(start, last()), operator($op), $v, $r.v); } )*
     ;
 
-colon_expr returns [ASTNode v] // FIXME
-    @init { boolean hasColon = false; }
-    @after {
-        if (hasColon) {
-            // In other cases, source information is in l.
-            $v.setSource(sourceSection("colon_expr", $start, $stop));
-        }
-    }
+colon_expr returns [T v]
+    @init { Token start = input.LT(1); }
     : l=unary_expression { $v = $l.v; }
-      ( ((COLON)=>op=COLON n_ r=unary_expression { hasColon = true; $v = BinaryOperation.create(sourceSection("colon_expr/binop", $op, $r.stop), ArithmeticOperator.COLON, $colon_expr.v, $r.v); }) )*
+      ( ((COLON)=>op=COLON n_ r=unary_expression { $v = builder.call(src(start, last()), operator($op), $v, $r.v); }) )*
     ;
 
-unary_expression returns [ASTNode v]
-    @init { boolean plusOrMinus = false; }
-    @after {
-        if (plusOrMinus) {
-            // In other cases, source information is in b.
-            $v.setSource(sourceSection("unary_expression", $start, $stop));
-        }
-    }
-    : p=PLUS n_ { plusOrMinus = true; }
-      ( (number) => num=number { $v = num; }
-      | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/PLUS", $p, $l.stop), ArithmeticOperator.UNARY_PLUS, $l.v); }
-      )
-    | m=MINUS n_ { plusOrMinus = true; }
-      ( (number) => num=number { num = ((Constant) num).createNegated(); $v = num; }
-      | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/MINUS", $m, $l.stop), ArithmeticOperator.UNARY_MINUS, $l.v); }
-      )
-    | m=NOT n_ { plusOrMinus = true; }
-      ( l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/UNARY_NOT", $m, $l.stop), ArithmeticOperator.UNARY_NOT, $l.v); }
-      )
-    | b=power_expr             { $v = $b.v; }
+unary_expression returns [T v]
+    : op=(PLUS | MINUS | NOT) n_ l=unary_expression { $v = builder.call(src($op, last()), operator($op), $l.v); }
+    | b=power_expr                                  { $v = $b.v; }
     ;
 
-power_expr returns [ASTNode v]
-    @init { boolean hasPowerOp = false; }
-    @after {
-        if (hasPowerOp) {
-            // In other cases, v already has the source information from l.
-            $v.setSource(sourceSection("power_expr", $start, $stop));
-        }
-    }
+power_expr returns [T v]
+    @init { Token start = input.LT(1); }
     : l=basic_expr { $v = $l.v; }
       (
-        ((power_operator)=>op=power_operator n_ r=unary_expression { hasPowerOp = true; $v = BinaryOperation.create(sourceSection("power_expr/pow", $op.start, $r.stop), $op.v, $l.v, $r.v); } )
+        ((power_operator)=>op=power_operator n_ r=unary_expression { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); } )
       |
       )
     ;
 
-basic_expr returns [ASTNode v]
-    @init  {
-        // NOTE: Using vv is used to work around a bug in ANTLR that occurs when
-        // solely working with $v - ANTLR is unhappy about passing it to expr_subset.
-        ASTNode vv = null;
-        boolean hasSubset = false;
-    }
-    @after {
-        if (hasSubset) {
-            // In other cases, vv already has the source from lhs.
-            vv.setSource(sourceSection("basic_expr/WITH_SUBSET", $start, $stop));
-        }
-        $v = vv;
-    }
-    : lhs=simple_expr { vv = lhs; }
-      (
-        ((FIELD|AT|LBRAKET|LBB|LPAR)=>subset=expr_subset[vv] { vv = subset; hasSubset = true; })+
-      | (n_)=>
-      )
+basic_expr returns [T v]
+    @init { Token start = input.LT(1); }
+    :
+    (
+      // special case for simple function call to generate "function" mode lookups
+      ((ID|DD|VARIADIC|STRING) LPAR) => (lhsToken=(ID | DD | VARIADIC | STRING) op=LPAR a=args[null] y=RPAR
+                      { $v = builder.call(src(start, $y), operator($lhsToken), $a.v); } )
+    |
+      lhs=simple_expr { $v = $lhs.v; }
+    )
+    (
+      ((FIELD|AT|LBRAKET|LBB|LPAR) => (
+          (op=(FIELD|AT) n_ name=id                    { $v = builder.call(src(start, last()), operator($op), $v, builder.constant(src($name.v), $name.v.getText())); })
+        | (op=(FIELD|AT) n_ sname=conststring          { $v = builder.call(src(start, last()), operator($op), $v, $sname.v); })
+        | (op=LBRAKET subset=args[$v] y=RBRAKET        {
+                                                           if ($subset.v.size() == 1) {
+                                                               $subset.v.add(RCodeBuilder.argumentEmpty());
+                                                           }
+                                                           $v = builder.call(src(start, $y), operator($op), $subset.v); 
+                                                       })
+        // must use RBRAKET twice instead of RBB because this is possible: a[b[1]]
+        | (op=LBB subscript=args[$v] RBRAKET y=RBRAKET {
+                                                           if ($subscript.v.size() == 1) {
+                                                               $subscript.v.add(RCodeBuilder.argumentEmpty());
+                                                           }
+                                                           $v = builder.call(src(start, $y), operator($op), $subscript.v);
+                                                       })
+        | (op=LPAR a=args[null] y=RPAR                 { $v = builder.call(src(start, $y), $v, $a.v); })
+        )
+      )+
+    | (n_)=>
+    )
     ;
 
-expr_subset [ASTNode i] returns [ASTNode v]
-    : (t=FIELD n_ name=id                     { $v = Call.create(sourceSection("expr_subset/FIELDid", $t, $y), CallOperator.FIELD, i, Constant.createString(sourceSection("expr_subset/fieldname", name), name.getText())); })
-    | (t=FIELD n_ sname=conststring           { $v = Call.create(sourceSection("expr_subset/FIELDst", $t, $y), CallOperator.FIELD, i, sname); })
-    | (t=AT n_ name=id                        { $v = Call.create(sourceSection("expr_subset/AT", $t, $y), CallOperator.AT, i, Constant.createString(sourceSection("expr_subset/atname", name), name.getText())); })
-    | (t=LBRAKET subset=args y=RBRAKET        { $v = Call.create(sourceSection("expr_subset/LBRAKET", $t, $y), CallOperator.SUBSET, i, subset); })
-    // Must use RBRAKET twice instead of RBB because this is possible: a[b[1]]
-    | (t=LBB subscript=args RBRAKET y=RBRAKET { $v = Call.create(sourceSection("expr_subset/LBB", $t, $y), CallOperator.SUBSCRIPT, i, subscript); })
-    | (t=LPAR a=args y=RPAR                   { $v = Call.create(sourceSection("expr_subset/LPAR", $t, $y), i, a); })
-    //| { $v = i; }
-    ;
-
-simple_expr returns [ASTNode v]
-    : i=id                                      { $v = AccessVariable.create(sourceSection("simple_expr/id", i), i.getText()); }
-    | b=bool                                    { $v = b; }
-    | d=DD                                      { $v = AccessVariadicComponent.create(sourceSection("simple_expr/DD", d), d.getText()); }
-    | t=NULL                                    { $v = Constant.createNull(sourceSection("simple_expr/NULL", t)); }
-    | t=INF                                     { $v = Constant.createDouble(sourceSection("simple_expr/INF", t), "Inf"); }
-    | t=NAN                                     { $v = Constant.createDouble(sourceSection("simple_expr/NAN", t), "NaN"); }
-    | t=NAINT                                   { $v = Constant.createInt(sourceSection("simple_expr/NAINT", t), "NA_integer_"); }
-    | t=NAREAL                                  { $v = Constant.createDouble(sourceSection("simple_expr/NAREAL", t), "NA_real_"); }
-    | t=NACHAR                                  { $v = Constant.createStringNA(sourceSection("simple_expr/NACHAR", t)); }
-    | t=NACOMPL                                 { $v = Constant.createComplex(sourceSection("simple_expr/NACOMPL", t), "NA_complex_"); }
-    | num=number                                { $v = num; }
-    | cstr=conststring                          { $v = cstr; }
-    | pkg=id nsg=(NS_GET|NS_GET_INT) n_ comp=id {
-        List<ArgNode> args = new ArrayList<>();
-        ASTNode pkgNode = AccessVariable.create(sourceSection("simple_expr/NSG/pkg", pkg), pkg.getText());
-        ASTNode compNode = AccessVariable.create(sourceSection("simple_expr/NSG/comp", comp), comp.getText());
-        args.add(ArgNode.create(pkgNode.getSource(), "pkg", pkgNode));
-        args.add(ArgNode.create(compNode.getSource(), "name", compNode));
-        $v = Call.create(sourceSection("simple_expr/NSG", pkg, comp), nsg.getText(), args);
+simple_expr returns [T v]
+    @init { Token start = input.LT(1); }
+    : i=id                                      { $v = builder.lookup(src($i.v), $i.text, false); }
+    | b=bool                                    { $v = builder.constant(src(start, last()), $b.v); }
+    | d=DD                                      { $v = builder.lookup(src($d), $d.text, false); }
+    | t=NULL                                    { $v = builder.constant(src($t), RNull.instance); }
+    | t=INF                                     { $v = builder.constant(src($t), Double.POSITIVE_INFINITY); }
+    | t=NAN                                     { $v = builder.constant(src($t), Double.NaN); }
+    | t=NAINT                                   { $v = builder.constant(src($t), RRuntime.INT_NA); }
+    | t=NAREAL                                  { $v = builder.constant(src($t), RRuntime.DOUBLE_NA); }
+    | t=NACHAR                                  { $v = builder.constant(src($t), RRuntime.STRING_NA); }
+    | t=NACOMPL                                 { $v = builder.constant(src($t), RComplex.NA); }
+    | num=number                                { $v = $num.v; }
+    | cstr=conststring                          { $v = $cstr.v; }
+    | pkg=id op=(NS_GET|NS_GET_INT) n_ comp=id {
+        List<Argument<T>> args = new ArrayList<>();
+        SourceSection pkgSource = src($pkg.v);
+        SourceSection compSource = src($comp.v);
+        args.add(RCodeBuilder.argument(pkgSource, "pkg", builder.lookup(pkgSource, $pkg.text, false)));
+        args.add(RCodeBuilder.argument(compSource, "name", builder.lookup(compSource, $comp.text, false)));
+        $v = builder.call(src($pkg.v, $comp.v), operator($op), args);
     }
-    | LPAR n_ ea=expr_or_assign n_ RPAR         { $v = $ea.v; $v.setSource(sourceSection("simple_expr/OMIT_PAR", $ea.start, $ea.stop)); }
+    | op=LPAR n_ ea=expr_or_assign n_ y=RPAR    { $v = builder.call(src($op, $y), operator($op), $ea.v); }
     | s=sequence                                { $v = $s.v; }
-    | e=expr_wo_assign                          { $v = e; }
+    | e=expr_wo_assign                          { $v = $e.v; }
     ;
 
-number returns [ASTNode n]
-    : i=INTEGER { $n = Constant.createInt(sourceSection("number/INTEGER", i), $i.text); }
-    | d=DOUBLE  { $n = Constant.createDouble(sourceSection("number/DOUBLE", d), $d.text); }
-    | c=COMPLEX { $n = Constant.createComplex(sourceSection("number/COMPLEX", c), $c.text); }
+number returns [T v]
+    : i=INTEGER {
+        double value = RRuntime.string2doubleNoCheck($i.text);
+        if (value == (int) value) {
+            if ($i.text.indexOf('.') != -1) {
+                RError.warning(RError.NO_CALLER, RError.Message.INTEGER_VALUE_UNNECESARY_DECIMAL, $i.text + "L");
+            }
+            $v = builder.constant(src($i), (int) value);
+        } else {
+            if ($i.text.indexOf('.') != -1) {
+                RError.warning(RError.NO_CALLER, RError.Message.INTEGER_VALUE_DECIAML, $i.text + "L");
+            } else {
+                RError.warning(RError.NO_CALLER, RError.Message.NON_INTEGER_VALUE, $i.text + "L");
+            }
+            $v = builder.constant(src($i), value);
+        }
+      }
+    | d=DOUBLE  { $v = builder.constant(src($d), RRuntime.string2doubleNoCheck($d.text)); }
+    | c=COMPLEX { $v = builder.constant(src($c), RComplex.valueOf(0, RRuntime.string2doubleNoCheck($c.text))); }
     ;
 
-conststring returns [ASTNode n]
-    : s=STRING { $n = Constant.createString(sourceSection("conststring", s), $s.text); }
+conststring returns [T v]
+    : s=STRING { $v = builder.constant(src($s), $s.text); }
     ;
 
-id returns [Token t]
-    : i=ID       { $t = $i; }
-    | v=VARIADIC { $t = $v; }
+id returns [Token v]
+    : ident=ID     { $v = $ident; }
+    | var=VARIADIC { $v = $var; }
     ;
 
-bool returns [ASTNode v]
-    : t=TRUE  { $v = Constant.createBool(sourceSection("bool/TRUE", t), RRuntime.LOGICAL_TRUE); }
-    | t=FALSE { $v = Constant.createBool(sourceSection("bool/FALSE", t), RRuntime.LOGICAL_FALSE); }
-    | t=NA    { $v = Constant.createBool(sourceSection("bool/NA", t), RRuntime.LOGICAL_NA); }
+bool returns [byte v]
+    : t=TRUE  { $v = RRuntime.LOGICAL_TRUE; }
+    | t=FALSE { $v = RRuntime.LOGICAL_FALSE; }
+    | t=NA    { $v = RRuntime.LOGICAL_NA; }
     ;
 
-or_operator returns [ArithmeticOperator v]
-    : OR            { $v = ArithmeticOperator.OR; }
-    | ELEMENTWISEOR { $v = ArithmeticOperator.ELEMENTWISEOR; }
+or_operator returns [Token v]
+    : op=(OR | ELEMENTWISEOR) { $v = $op; }
     ;
 
-and_operator returns [ArithmeticOperator v]
-    : AND            { $v = ArithmeticOperator.AND; }
-    | ELEMENTWISEAND { $v = ArithmeticOperator.ELEMENTWISEAND; }
+and_operator returns [Token v]
+    : op=(AND | ELEMENTWISEAND) { $v = $op; }
     ;
 
-comp_operator returns [ArithmeticOperator v]
-    : GT { $v = ArithmeticOperator.GT; }
-    | GE { $v = ArithmeticOperator.GE; }
-    | LT { $v = ArithmeticOperator.LT; }
-    | LE { $v = ArithmeticOperator.LE; }
-    | EQ { $v = ArithmeticOperator.EQ; }
-    | NE { $v = ArithmeticOperator.NE; }
+comp_operator returns [Token v]
+    : op=(GT | GE | LT | LE | EQ | NE) { $v = $op; }
     ;
 
-add_operator returns [ArithmeticOperator v]
-    : PLUS  { $v = ArithmeticOperator.ADD; }
-    | MINUS { $v = ArithmeticOperator.SUB; }
+add_operator returns [Token v]
+    : op=(PLUS | MINUS) { $v = $op; }
     ;
 
-mult_operator returns [ArithmeticOperator v]
-    : MULT { $v = ArithmeticOperator.MULT; }
-    | DIV  { $v = ArithmeticOperator.DIV; }
-    | MOD  { $v = ArithmeticOperator.MOD; }
+mult_operator returns [Token v]
+    : op=(MULT | DIV | MOD ) { $v = $op; }
     ;
 
-power_operator returns [ArithmeticOperator v]
-    : CARET { $v = ArithmeticOperator.POW; }
+power_operator returns [Token v]
+    : op=CARET { $v = $op; }
     ;
 
-args returns [List<ArgNode> v]
-    @init { $v = new ArrayList<>(); }
-    : n_ (arg_expr[v] n_ (COMMA ({ $v.add(ArgNode.create(null, (String) null, (ASTNode) null)); } | n_ arg_expr[v]) n_)* )?
-    | n_ { $v.add(ArgNode.create(null, (String) null, (ASTNode) null)); } (COMMA ({ $v.add(ArgNode.create(null, (String) null, (ASTNode) null)); } | n_ arg_expr[v]) n_)+
+args [T firstArg] returns [List<Argument<T>> v]
+    @init {
+              $v = new ArrayList<>();
+              if (firstArg != null) {
+                  $v.add(RCodeBuilder.argument(firstArg));
+              }
+          }
+    : n_ (arg_expr[v] n_ (COMMA ({ $v.add(RCodeBuilder.argumentEmpty()); } | n_ arg_expr[v]) n_)* )?
+    | n_ { $v.add(RCodeBuilder.argumentEmpty()); } (COMMA ({ $v.add(RCodeBuilder.argumentEmpty()); } | n_ arg_expr[v]) n_)+
     ;
 
-arg_expr [List<ArgNode> l]
-    : e=expr                                   { $l.add(ArgNode.create(sourceSection("arg_expr/expr", e, e), (String) null, e)); }
-    | name=(id | STRING) n_ ASSIGN n_ val=expr { $l.add(ArgNode.create(sourceSection("arg_expr/name=expr", name, val), name.getText(), val)); }
-    | name=(id | STRING) n_ a=ASSIGN           { $l.add(ArgNode.create(sourceSection("arg_expr/name=", name, a), name.getText(), null)); }
-    | name=NULL n_ ASSIGN n_ val=expr          { $l.add(ArgNode.create(sourceSection("arg_expr/NULL=expr", name, val), name.getText(), val)); }
-    | name=NULL n_ a=ASSIGN                    { $l.add(ArgNode.create(sourceSection("arg_expr/NULL=", name, a), name.getText(), null)); }
+arg_expr [List<Argument<T>> l]
+    @init { Token start = input.LT(1); }
+    : e=expr                                                   { $l.add(RCodeBuilder.argument(src(start, last()), (String) null, $e.v)); }
+    | name=(ID | VARIADIC | NULL | STRING) n_ ASSIGN n_ e=expr { $l.add(RCodeBuilder.argument(src($name, last()), $name.text, $e.v)); }
+    | name=(ID | VARIADIC | NULL | STRING) n_ a=ASSIGN         { $l.add(RCodeBuilder.argument(src($name, $a), $name.text, null)); }
     ;
 
 ///
 /// Lexer
 ///
 
-COMMENT : '#' ~('\n'|'\r'|'\f')* (LINE_BREAK | EOF) { if(incomplete_stack[incomplete_depth] > 0) $channel=HIDDEN; } ;
+COMMENT : '#' ~('\n'|'\r'|'\f')* (LINE_BREAK | EOF) { if(incompleteNesting > 0) $channel=HIDDEN; } ;
 
 ARROW             : '<-' | ':=' ;
 SUPER_ARROW       : '<<-' ;
@@ -625,13 +492,13 @@ ELEMENTWISEAND : '&' ;
 OR             : '||' ;
 ELEMENTWISEOR  : '|' ;
 
-LBRACE  : '{'  { incomplete_stack[++incomplete_depth] = 0; } ; // TODO grow the stack
-RBRACE  : '}'  { incomplete_depth--; } ;
-LPAR    : '('  { incomplete_stack[incomplete_depth]++; } ;
-RPAR    : ')'  { incomplete_stack[incomplete_depth]--; } ;
-LBB     : '[[' { incomplete_stack[incomplete_depth] += 2; } ; // Must increase by two because of ']'']' used for closing
-LBRAKET : '['  { incomplete_stack[incomplete_depth]++; } ;
-RBRAKET : ']'  { incomplete_stack[incomplete_depth]--; } ;
+LBRACE  : '{' { nestingStack.add(incompleteNesting); incompleteNesting = 0; } ;
+RBRACE  : '}' { if (!nestingStack.isEmpty()) { incompleteNesting = nestingStack.remove(nestingStack.size() - 1); } } ;
+LPAR    : '(' { incompleteNesting++; } ;
+RPAR    : ')' { incompleteNesting--; } ;
+LBB     : '[[' { incompleteNesting+=2; } ;
+LBRAKET : '[' { incompleteNesting++; } ;
+RBRAKET : ']' { incompleteNesting--; } ;
 
 CARET : '^' | '**' ;
 TILDE : '~' ;
@@ -667,7 +534,7 @@ NEXT   : 'next' ;
 BREAK  : 'break' ;
 
 WS      : ('\u0009'|'\u0020'|'\u00A0') { $channel=HIDDEN; } ;
-NEWLINE : LINE_BREAK { if(incomplete_stack[incomplete_depth] > 0) $channel=HIDDEN; } ;
+NEWLINE : LINE_BREAK { if(incompleteNesting > 0) $channel=HIDDEN; } ;
 
 INTEGER
     : ('0'..'9')+ '.' ('0'..'9')* 'L' { setText(getText().substring(0, getText().length()-1)); }

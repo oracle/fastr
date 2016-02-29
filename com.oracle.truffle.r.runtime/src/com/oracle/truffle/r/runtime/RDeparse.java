@@ -409,9 +409,7 @@ public class RDeparse {
             for (Map.Entry<RSyntaxNode, NodeSourceInfo> entry : nodeMap.entrySet()) {
                 RSyntaxNode node = entry.getKey();
                 NodeSourceInfo nsi = entry.getValue();
-                // may have had one initially
-                node.asNode().clearSourceSection();
-                node.asNode().assignSourceSection(source.createSection("", nsi.startCharIndex, nsi.endCharIndex - nsi.startCharIndex));
+                node.setSourceSection(source.createSection("", nsi.startCharIndex, nsi.endCharIndex - nsi.startCharIndex));
             }
         }
     }
@@ -1406,7 +1404,7 @@ public class RDeparse {
         return false;
     }
 
-    private static boolean isValidName(String name) {
+    public static boolean isValidName(String name) {
         char ch = safeCharAt(name, 0);
         if (ch != '.' && !Character.isLetter(ch)) {
             return false;

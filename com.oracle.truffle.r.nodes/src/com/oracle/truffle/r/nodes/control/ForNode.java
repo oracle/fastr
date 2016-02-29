@@ -22,32 +22,44 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.LoopNode;
+import com.oracle.truffle.api.nodes.RepeatingNode;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.RASTBuilder;
+import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
-import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.Engine.ParseException;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.gnur.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class ForNode extends AbstractLoopNode implements VisibilityController, RSyntaxNode {
+public final class ForNode extends AbstractLoopNode implements VisibilityController, RSyntaxNode, RSyntaxCall {
 
     @Child private WriteVariableNode writeLengthNode;
     @Child private WriteVariableNode writeIndexNode;
     @Child private WriteVariableNode writeRangeNode;
     @Child private LoopNode loopNode;
 
-    protected ForNode(WriteVariableNode cvar, RNode range, RNode body) {
+    protected ForNode(SourceSection src, WriteVariableNode cvar, RNode range, RNode body) {
+        super(src);
         String indexName = AnonymousFrameVariable.create("FOR_INDEX");
         String rangeName = AnonymousFrameVariable.create("FOR_RANGE");
         String lengthName = AnonymousFrameVariable.create("FOR_LENGTH");
@@ -59,8 +71,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
     }
 
     public static ForNode create(SourceSection src, WriteVariableNode cvar, RSyntaxNode range, RSyntaxNode body) {
-        ForNode result = new ForNode(cvar, range.asRNode(), body.asRNode());
-        result.assignSourceSection(src);
+        ForNode result = new ForNode(src, cvar, range.asRNode(), body.asRNode());
         return result;
     }
 
@@ -118,40 +129,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        return create(null, (WriteVariableNode) getCvar().substitute(env), getRange().substitute(env), getBody().substitute(env));
-    }
-
-    @Override
-    public void allNamesImpl(RAllNames.State state) {
-        state.addName("for");
-        getCvar().allNames(state);
-        getRange().allNames(state);
-        getBody().allNames(state);
-    }
-
-    public int getRlengthImpl() {
-        return 4;
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        switch (index) {
-            case 0:
-                return RDataFactory.createSymbol("for");
-            case 1:
-                return RASTUtils.createLanguageElement(getCvar());
-            case 2:
-                return RASTUtils.createLanguageElement(getRange());
-            case 3:
-                return RASTUtils.createLanguageElement(getBody());
-            default:
-                throw RInternalError.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+        return create(RSyntaxNode.EAGER_DEPARSE, (WriteVariableNode) getCvar().substitute(env), getRange().substitute(env), getBody().substitute(env));
     }
 
     private ForRepeatingNode getForRepeatingNode() {
@@ -159,8 +137,6 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
     }
 
     private static final class ForRepeatingNode extends RBaseNode implements RepeatingNode {
-
-        private static final Source ACCESS_ARRAY_SOURCE = Source.fromText("x[[i]]", "<lfor_array_access>");
 
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
         private final BranchProfile breakBlock = BranchProfile.create();
@@ -191,16 +167,11 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         }
 
         private static RNode createIndexedLoad(String indexName, String rangeName) {
-            RCallNode indexNode;
-            try {
-                indexNode = (RCallNode) ((RLanguage) RContext.getEngine().parse(ACCESS_ARRAY_SOURCE).getDataAt(0)).getRep();
-            } catch (ParseException ex) {
-                throw RInternalError.shouldNotReachHere();
-            }
-            REnvironment env = RDataFactory.createInternalEnv();
-            env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.create(indexName)));
-            env.safePut("x", RDataFactory.createLanguage(ReadVariableNode.create(rangeName)));
-            return indexNode.substitute(env).asRNode();
+            RASTBuilder builder = new RASTBuilder();
+            RSyntaxNode receiver = builder.lookup(RSyntaxNode.INTERNAL, rangeName, false);
+            RSyntaxNode index = builder.lookup(RSyntaxNode.INTERNAL, indexName, false);
+            RSyntaxNode access = builder.lookup(RSyntaxNode.INTERNAL, "[[", true);
+            return builder.call(RSyntaxNode.INTERNAL, access, receiver, index).asRNode();
         }
 
         public boolean executeRepeating(VirtualFrame frame) {
@@ -250,5 +221,19 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
             }
             return String.format("for-<%s:%d>", function, startLine);
         }
+    }
+
+    public RSyntaxElement getSyntaxLHS() {
+        return RSyntaxLookup.createDummyLookup(getSourceSection(), "for", true);
+    }
+
+    public RSyntaxElement[] getSyntaxArguments() {
+        ForRepeatingNode repeatingNode = (ForRepeatingNode) loopNode.getRepeatingNode();
+        return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(null, (String) repeatingNode.writeElementNode.getName(), false), writeRangeNode.getRhs().asRSyntaxNode(),
+                        repeatingNode.body.asRSyntaxNode()};
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(3);
     }
 }

@@ -29,7 +29,7 @@ public class RRuntime {
     // Parts of the welcome message originate from GNU R.
     public static final String WELCOME_MESSAGE =
         "FastR version " + RVersionNumber.FULL + "\n" +
-        "Copyright (c) 2013-6, Oracle and/or its affiliates\n" +
+        "Copyright (c) 2013-16, Oracle and/or its affiliates\n" +
         "Copyright (c) 1995-2015, The R Core Team\n" +
         "Copyright (c) 2015 The R Foundation\n" +
         "Copyright (c) 2012-4 Purdue University\n" +
@@ -154,6 +154,10 @@ public class RRuntime {
     public static final String R_LOAD_METHOD_NAME = "loadMethod";
     public static final String R_DOT_METHODS = ".Methods";
     public static final String R_SOURCE = "source";
+    public static final String R_COMMENT = "comment";
+    public static final String R_SRCREF = "srcref";
+    public static final String R_WHOLE_SRCREF = "wholeSrcref";
+    public static final String R_SRCFILE = "srcfile";
 
     public static final String NULL = "NULL";
     public static final RSymbol PSEUDO_NULL = new RSymbol("\u0001NULL\u0001");

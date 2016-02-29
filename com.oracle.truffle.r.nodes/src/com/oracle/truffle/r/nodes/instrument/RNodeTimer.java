@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -179,24 +179,31 @@ public class RNodeTimer {
                     if (t.time > 0) {
                         if (t.time > threshold) {
                             FunctionIdentification fdi = RInstrument.getFunctionIdentification(t.functionUID);
-                            RPerfStats.out().println("==========");
-                            RPerfStats.out().printf("%d ms (%.2f%%): %s, %s%n", t.time, percent(t.time, totalTime), fdi.name, fdi.origin);
-                            if (stmts) {
-                                SourceSection ss = fdi.node.getSourceSection();
-                                if (ss == null) {
-                                    // wrapper
-                                    ss = fdi.node.getBody().getSourceSection();
+                            /*
+                             * Currently a problem with the way source sections are used in some
+                             * promises and eval wrappers, that cause ArrayIndexOutOfBounds
+                             * exceptions.
+                             */
+                            if (!(fdi.name.equals("<promise>") || fdi.name.equals("<eval wrapper>"))) {
+                                RPerfStats.out().println("==========");
+                                RPerfStats.out().printf("%d ms (%.2f%%): %s, %s%n", t.time, percent(t.time, totalTime), fdi.name, fdi.origin);
+                                if (stmts) {
+                                    SourceSection ss = fdi.node.getSourceSection();
                                     if (ss == null) {
-                                        RPerfStats.out().println("no source available");
-                                    }
-                                } else {
-                                    long[] time = createLineTimes(fdi);
-                                    int startLine = ss.getStartLine();
-                                    int lastLine = ss.getEndLine();
-                                    for (int i = startLine; i <= lastLine; i++) {
-                                        RPerfStats.out().printf("%8dms: %s%n", time[i], fdi.source.getCode(i));
-                                    }
+                                        // wrapper
+                                        ss = fdi.node.getBody().getSourceSection();
+                                        if (ss == null) {
+                                            RPerfStats.out().println("no source available");
+                                        }
+                                    } else {
+                                        long[] time = createLineTimes(fdi);
+                                        int startLine = ss.getStartLine();
+                                        int lastLine = ss.getEndLine();
+                                        for (int i = startLine; i <= lastLine; i++) {
+                                            RPerfStats.out().printf("%8dms: %s%n", time[i], fdi.source.getCode(i));
+                                        }
 
+                                    }
                                 }
                             }
                         }
@@ -250,7 +257,7 @@ public class RNodeTimer {
         }
 
         private static long millis(long nanos) {
-            return nanos / 1000;
+            return nanos / 1000000;
         }
 
         private static long[] createLineTimes(FunctionIdentification fdi) {
@@ -260,7 +267,7 @@ public class RNodeTimer {
              * source. Since there is never a line 0, we use that to compute the total.
              */
             final long[] times = new long[fdi.source.getLineCount() + 1];
-            RSyntaxNode.accept(fdi.node.getBody(), 0, new LineTimesNodeVisitor(fdi.node.getUID(), times));
+            RSyntaxNode.accept(fdi.node.getBody(), 0, new LineTimesNodeVisitor(fdi.node.getUID(), times), false);
             return times;
         }
 

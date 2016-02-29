@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -28,7 +28,7 @@ public abstract class Inherits extends RBuiltinNode {
 
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    protected abstract Object execute(Object x, Object what, Object which);
+    public abstract Object execute(Object x, Object what, Object which);
 
     @Child private InheritsNode inheritsNode;
     @Child private Inherits recursiveInherits;

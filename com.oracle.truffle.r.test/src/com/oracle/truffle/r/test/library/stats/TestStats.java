@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,6 +76,52 @@ public class TestStats extends TestBase {
         assertEval("{ x<-c(0.5); y<-c(s1=1); z<-c(s1=7); attr(z, \"foo\")<-\"foo\"; qgamma(x, shape=y, rate=z) }");
         assertEval("{ x<-c(0.5); y<-c(s1=1, s2=2); z<-c(s1=7, s2=8); qgamma(0.5, shape=y, rate=z) }");
         assertEval("{ x<-c(a=0.5); y<-c(s1=1); attr(y, \"bar\")<-\"bar\"; z<-c(7, s3=8); attr(z, \"foo\")<-\"foo\"; qgamma(x, shape=y, rate=z) }");
+    }
+
+    @Test
+    public void testQbinom() {
+        assertEval("qbinom(1:50/100,20,0.7)");
+        assertEval("qbinom(1:100/100,20,0.1)");
+        assertEval("qbinom(1:100/100,5,0.1)");
+        assertEval("qbinom(1:100/100,0,0.1)");
+        assertEval("qbinom(1,20,0.1)");
+        assertEval("qbinom(0.66,20,0.1)");
+        assertEval("qbinom(0,20,0.1)");
+        assertEval("qbinom(0,20,c(0.1,0.9))");
+        assertEval(Output.ContainsWarning, "qbinom(0,20,c(0.1,1.9))");
+        assertEval("qbinom(0,integer(),c(0.1,0.9))");
+    }
+
+    @Test
+    public void testRbinom() {
+        assertEval("set.seed(123); rbinom(10,20,c(0.3,0.2))");
+        assertEval("set.seed(123); rbinom(1,20,c(0.3,0.2))");
+        assertEval("set.seed(123); rbinom(c(1,2),20,c(0.3,0.2))");
+        assertEval("set.seed(123); rbinom(c(1,2),c(2,10),c(0.3,0.2))");
+        assertEval("set.seed(123); rbinom(c(12),c(2,10),c(0.3))");
+    }
+
+    @Test
+    public void testDbinom() {
+        assertEval("round(dbinom(81,c(10,12,14),c(0.3,0.4,0.3,0.1,0.33)),digits=9)");
+        assertEval("round(dbinom(c(81,2,4,9),c(10,12,14),c(0.3,0.4,0.3,0.1,0.33)),digits=9)");
+        assertEval(Output.ContainsWarning, "round(dbinom(0.9,c(10,12,14),c(0.3,0.4,0.3,0.1,0.33)),digits=9)");
+        assertEval("round(dbinom(2,14,0.33),digits=9)");
+    }
+
+    @Test
+    public void testPnorm() {
+        assertEval("pnorm(1:10/10,c(2,10.5),c(3,7))");
+        assertEval("pnorm(1:10/10,10L,c(3))");
+        assertEval("pnorm(1:10/10,c(2,10.5),c(3))");
+        assertEval("round(pnorm(1:10/10,c(2,NaN),c(3)),digits=7)");
+        assertEval("round(pnorm(1:10/10,c(2,NA),c(3)),digits=7)");
+    }
+
+    @Test
+    public void testQnorm() {
+        assertEval("qnorm(c(0.1,0.9,0.5,0.00001,0.99999), 100, c(20,1))");
+        assertEval(Output.ContainsWarning, "round(qnorm(c(0.1,0.9,0.5,1.00001,0.99999), 100, c(20,1)), digits=5)");
     }
 
     @Test

@@ -49,6 +49,7 @@ public abstract class AccessSlotNode extends RNode {
     @Child private ClassHierarchyNode classHierarchy;
     @Child private TypeofNode typeofNode;
     private final BranchProfile noSlot = BranchProfile.create();
+    private final BranchProfile symbolValue = BranchProfile.create();
 
     protected AttributeAccess createAttrAccess(String name) {
         return AttributeAccessNodeGen.create(name);
@@ -85,8 +86,11 @@ public abstract class AccessSlotNode extends RNode {
                 throw RError.error(this, RError.Message.SLOT_NONE, name, classAttr.getLength() == 0 ? RRuntime.STRING_NA : classAttr.getDataAt(0));
             }
         }
-        if (value instanceof RSymbol && ((RSymbol) value).getName() == RRuntime.PSEUDO_NULL.getName()) {
-            return RNull.instance;
+        if (value instanceof RSymbol) {
+            symbolValue.enter();
+            if (((RSymbol) value).getName() == RRuntime.PSEUDO_NULL.getName()) {
+                return RNull.instance;
+            }
         }
         return value;
     }

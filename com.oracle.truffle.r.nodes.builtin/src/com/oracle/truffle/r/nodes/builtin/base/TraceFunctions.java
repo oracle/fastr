@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
-import com.oracle.truffle.r.nodes.instrument.trace.TraceHandling;
+import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
@@ -44,7 +44,7 @@ public class TraceFunctions {
         protected RNull primTrace(RFunction func) {
             controlVisibility();
             if (!func.isBuiltin()) {
-                if (!TraceHandling.enableTrace(func)) {
+                if (!RInstrumentFactory.getInstance().enableTrace(func)) {
                     throw RError.error(this, RError.Message.GENERIC, "failed to attach trace handler (not instrumented?)");
                 }
             }
@@ -60,7 +60,7 @@ public class TraceFunctions {
         protected RNull primTrace(RFunction func) {
             controlVisibility();
             if (!func.isBuiltin()) {
-                if (!TraceHandling.disableTrace(func)) {
+                if (!RInstrumentFactory.getInstance().disableTrace(func)) {
                     throw RError.error(this, RError.Message.GENERIC, "failed to detach trace handler (not instrumented?)");
                 }
             }
@@ -73,9 +73,20 @@ public class TraceFunctions {
         @Specialization
         @TruffleBoundary
         protected byte traceOnOff(byte state) {
-            return RRuntime.asLogical(RContext.getInstance().stateTraceHandling.setTracingState(RRuntime.fromLogical(state)));
+            boolean prevState = RContext.getInstance().stateTraceHandling.getTracingState();
+            boolean newState = RRuntime.fromLogical(state);
+            if (newState != prevState) {
+                RContext.getInstance().stateTraceHandling.setTracingState(newState);
+                RInstrumentFactory.getInstance().setTracingState(newState);
+            }
+            return RRuntime.asLogical(prevState);
         }
 
+        @Specialization
+        @TruffleBoundary
+        protected byte traceOnOff(@SuppressWarnings("unused") RNull state) {
+            return RRuntime.asLogical(RContext.getInstance().stateTraceHandling.getTracingState());
+        }
     }
 
 }

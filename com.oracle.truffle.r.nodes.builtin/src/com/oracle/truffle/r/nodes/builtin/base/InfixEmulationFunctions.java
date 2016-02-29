@@ -37,6 +37,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -386,16 +387,6 @@ public class InfixEmulationFunctions {
             // TODO: the error message is not quite correct for all types;
             // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
             throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
-        }
-
-    }
-
-    @RBuiltin(name = ":", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"from", "to"})
-    public abstract static class ColonBuiltin extends ErrorAdapter {
-        @SuppressWarnings("unused")
-        @Specialization
-        protected Object doIt(Object from, Object to) {
-            throw nyi();
         }
     }
 

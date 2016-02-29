@@ -616,8 +616,21 @@ public class RErrorHandling {
             } else if (nWarnings <= 10) {
                 Utils.writeStderr("Warning messages:", true);
                 for (int i = 0; i < nWarnings; i++) {
-                    Utils.writeStderr((i + 1) + ":", true);
-                    Utils.writeStderr("  " + warnings.get(i).message, true);
+                    Object call = warnings.get(i).call;
+                    String message = warnings.get(i).message;
+                    if (call == RNull.instance || ((RLanguage) call).getRep().getSourceSection() == null) {
+                        Utils.writeStderr((i + 1) + ":", true);
+                        Utils.writeStderr("  " + warnings.get(i).message, true);
+                    } else {
+                        String callString = RContext.getRRuntimeASTAccess().getCallerSource((RLanguage) call);
+                        // this can be enabled when deparsing is completely stable:
+                        // callString = RDeparse.deparse1Line(call, false);
+                        Utils.writeStderr((i + 1) + ": In ", false);
+                        int firstLineLength = message.contains("\n") ? message.indexOf('\n') : message.length();
+                        boolean nl = callString.length() + firstLineLength > 65;
+                        Utils.writeStderr(callString + " :", nl);
+                        Utils.writeStderr((nl ? "  " : " ") + message, true);
+                    }
                 }
             } else {
                 if (nWarnings < errorHandlingState.maxWarnings) {

@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -53,6 +53,77 @@ RealFromInteger(int x, int *warn)
 	return NA_REAL;
     else
 	return x;
+}
+
+int
+IntegerFromLogical(int x, int *warn)
+{
+    return (x == NA_LOGICAL) ?
+	NA_INTEGER : x;
+}
+
+int
+IntegerFromReal(double x, int *warn)
+{
+    if (ISNAN(x))
+	return NA_INTEGER;
+    else if (x > INT_MAX || x <= INT_MIN ) {
+	*warn |= WARN_NA;
+	return NA_INTEGER;
+    }
+    return (int) x;
+}
+
+static SEXP coerceToInteger(SEXP v)
+{
+    SEXP ans;
+    int warn = 0;
+    R_xlen_t i, n;
+    PROTECT(ans = allocVector(INTSXP, n = XLENGTH(v)));
+#ifdef R_MEMORY_PROFILING
+    if (RTRACE(v)){
+       memtrace_report(v,ans);
+       SET_RTRACE(ans,1);
+    }
+#endif
+    DUPLICATE_ATTRIB(ans, v);
+    switch (TYPEOF(v)) {
+    case LGLSXP:
+	for (i = 0; i < n; i++) {
+//	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
+	    INTEGER(ans)[i] = IntegerFromLogical(LOGICAL(v)[i], &warn);
+	}
+	break;
+    case REALSXP:
+	for (i = 0; i < n; i++) {
+//	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
+	    INTEGER(ans)[i] = IntegerFromReal(REAL(v)[i], &warn);
+	}
+	break;
+    case CPLXSXP:
+	for (i = 0; i < n; i++) {
+//	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
+	    INTEGER(ans)[i] = IntegerFromComplex(COMPLEX(v)[i], &warn);
+	}
+	break;
+    case STRSXP:
+	for (i = 0; i < n; i++) {
+//	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
+	    INTEGER(ans)[i] = IntegerFromString(STRING_ELT(v, i), &warn);
+	}
+	break;
+    case RAWSXP:
+	for (i = 0; i < n; i++) {
+//	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
+	    INTEGER(ans)[i] = (int)RAW(v)[i];
+	}
+	break;
+    default:
+	UNIMPLEMENTED_TYPE("coerceToInteger", v);
+    }
+    if (warn) CoercionWarning(warn);
+    UNPROTECT(1);
+    return ans;
 }
 
 static SEXP coerceToReal(SEXP v)

@@ -19,6 +19,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
@@ -81,9 +82,11 @@ public abstract class DispatchGeneric extends RBaseNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "equalClasses(classes, cachedClasses)")
     protected Object dispatchCached(VirtualFrame frame, REnvironment mtable, RStringVector classes, RFunction fdef, String fname,
-                    @Cached("classes") RStringVector cachedClasses, @Cached("createDispatchString(cachedClasses)") String dispatchString,
-                    @Cached("createTableRead(dispatchString)") LocalReadVariableNode tableRead) {
-        RFunction method = (RFunction) tableRead.execute(null, mtable.getFrame());
+                    @Cached("classes") RStringVector cachedClasses, //
+                    @Cached("createDispatchString(cachedClasses)") String dispatchString, //
+                    @Cached("createTableRead(dispatchString)") LocalReadVariableNode tableRead, //
+                    @Cached("createClassProfile()") ValueProfile frameAccessProfile) {
+        RFunction method = (RFunction) tableRead.execute(frame, mtable.getFrame(frameAccessProfile));
         return dispatchInternal(frame, mtable, classes, fdef, fname, method);
     }
 

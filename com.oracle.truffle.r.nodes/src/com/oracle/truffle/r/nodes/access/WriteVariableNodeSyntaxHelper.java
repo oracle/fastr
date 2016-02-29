@@ -23,13 +23,24 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.gnur.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
+    @CompilationFinal private SourceSection sourceSectionR;
+
+    protected WriteVariableNodeSyntaxHelper(SourceSection sourceSection) {
+        assert sourceSection != null;
+        this.sourceSectionR = sourceSection;
+    }
+
     protected void deparseHelper(RDeparse.State state, String op) {
         state.append(getName().toString());
         RNode rhs = getRhs();
@@ -67,18 +78,18 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
             default:
                 throw RInternalError.shouldNotReachHere();
         }
-
     }
 
-    protected void allNamesHelper(RAllNames.State state, String op) {
-        RNode rhs = getRhs();
-        if (rhs != null) {
-            state.addName(op);
-        }
-        state.addName(getName().toString());
-        if (rhs != null) {
-            getRhs().allNames(state);
-        }
+    public void setSourceSection(SourceSection sourceSection) {
+        this.sourceSectionR = sourceSection;
+    }
 
+    @Override
+    public SourceSection getSourceSection() {
+        return sourceSectionR;
+    }
+
+    public void unsetSourceSection() {
+        sourceSectionR = null;
     }
 }

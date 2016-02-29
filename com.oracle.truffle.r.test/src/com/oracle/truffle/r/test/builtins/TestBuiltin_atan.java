@@ -44,7 +44,7 @@ public class TestBuiltin_atan extends TestBase {
 
     @Test
     public void testatan6() {
-        assertEval(Ignored.Unknown, "argv <- list(-1.46941282670977e-16);atan(argv[[1]]);");
+        assertEval("argv <- list(-1.46941282670977e-16);atan(argv[[1]]);");
     }
 
     @Test

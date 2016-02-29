@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
@@ -33,11 +32,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
+import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -45,10 +46,13 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public class PrintFunctions {
     public abstract static class PrintAdapter extends RInvisibleBuiltinNode {
         @Child protected PrettyPrinterNode prettyPrinter = PrettyPrinterNodeGen.create(null, null, null, null, false);
+        // The new pretty-printer
+        @Child protected ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create(null, null, null, null, null, null, null, null, null);
 
         @TruffleBoundary
         protected void printHelper(String string) {
@@ -66,23 +70,39 @@ public class PrintFunctions {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-        @SuppressWarnings("unused")
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            super.createCasts(casts);
+            casts.firstBoolean(2);
+            casts.firstBoolean(5);
+            casts.firstBoolean(7);
+            casts.firstBoolean(8);
+        }
+
         @Specialization(guards = "!isS4(o)")
-        protected Object printDefault(Object o, Object digits, byte quote, Object naPrint, Object printGap, byte right, Object max, Object useSource, Object noOpt) {
-            String s = (String) prettyPrinter.executeString(o, null, quote, right);
-            if (s != null && !s.isEmpty()) {
-                printHelper(s);
+        protected Object printDefault(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
+            try {
+                // Invoking the new pretty-printer. In contrast to the previous one, the new one
+                // does not return the output value and prints directly to the output.
+                valuePrinter.executeString(o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+            } catch (UnsupportedOperationException e) {
+                // The original pretty printing code
+                String s = (String) prettyPrinter.executeString(o, null, RRuntime.asLogical(quote), RRuntime.asLogical(right));
+                if (s != null && !s.isEmpty()) {
+                    printHelper(s);
+                }
             }
+
             controlVisibility();
             return o;
         }
 
         ReadVariableNode createShowFind() {
-            return ReadVariableNode.createFunctionLookup(null, "show");
+            return ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, "show");
         }
 
-        RFunction createShowFunction(ReadVariableNode showFind) {
-            return (RFunction) showFind.execute((VirtualFrame) Utils.getActualCurrentFrame());
+        RFunction createShowFunction(VirtualFrame frame, ReadVariableNode showFind) {
+            return (RFunction) showFind.execute(frame);
         }
 
         DirectCallNode createCallNode(RFunction f) {
@@ -90,16 +110,15 @@ public class PrintFunctions {
         }
 
         @SuppressWarnings("unused")
-        @TruffleBoundary
         @Specialization(guards = "isS4(o)")
-        protected Object printDefaultS4(RTypedValue o, Object digits, byte quote, Object naPrint, Object printGap, byte right, Object max, Object useSource, Object noOpt,
-                        @Cached("createShowFind()") ReadVariableNode showFind, @Cached("createShowFunction(showFind)") RFunction showFunction) {
+        protected Object printDefaultS4(VirtualFrame frame, RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt,
+                        @Cached("createShowFind()") ReadVariableNode showFind, @Cached("createShowFunction(frame, showFind)") RFunction showFunction) {
             RContext.getEngine().evalFunction(showFunction, null, o);
             return null;
         }
 
         protected boolean isS4(Object o) {
-            // chacking for class attribute is a bit of a hack but GNU R has a hack in place here as
+            // checking for class attribute is a bit of a hack but GNU R has a hack in place here as
             // well to avoid recursively calling show via print in showDefault (we just can't use
             // the same hack at this point - for details see definition of showDefault in show.R)
             return o instanceof RAttributable && ((RAttributable) o).isS4() && ((RAttributable) o).getClassAttr(attrProfiles) != null;

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -27,9 +27,8 @@ public class TestBuiltin_summary extends TestBase {
 
     @Test
     public void testsummary2() {
-        assertEval(Ignored.Unknown,
-                        "argv <- structure(list(object = c(5.1, 5, 5.4, 5.4, 5.8, 5.7,     5.4, 5.1, 5.7, 5.1, 5.1, 4.6, 5.2, 5.2, 5.5, 5.5, 4.9, 5,     5, 5.1, 5.1, 5.3)), .Names = 'object');"
-                                        + "do.call('summary', argv)");
+        assertEval("argv <- structure(list(object = c(5.1, 5, 5.4, 5.4, 5.8, 5.7,     5.4, 5.1, 5.7, 5.1, 5.1, 4.6, 5.2, 5.2, 5.5, 5.5, 4.9, 5,     5, 5.1, 5.1, 5.3)), .Names = 'object');"
+                        + "do.call('summary', argv)");
     }
 
     @Test

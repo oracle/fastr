@@ -22,38 +22,35 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.ColonNodeGen.ColonCastNodeGen;
-import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleSequence;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.gnur.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@NodeChildren({@NodeChild("left"), @NodeChild("right")})
-public abstract class ColonNode extends RNode implements RSyntaxNode, VisibilityController {
+@RBuiltin(name = ":", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
+public abstract class ColonNode extends RBuiltinNode {
 
     private final BranchProfile naCheckErrorProfile = BranchProfile.create();
+    private final NACheck leftNA = NACheck.create();
+    private final NACheck rightNA = NACheck.create();
 
-    public abstract ColonCastNode getLeft();
-
-    public abstract ColonCastNode getRight();
-
-    public Arguments<RSyntaxNode> getArguments() {
-        return new Arguments<>(new RSyntaxNode[]{getLeft().getOperand().asRSyntaxNode(), getRight().getOperand().asRSyntaxNode()}, ArgumentsSignature.empty(2));
-    }
-
-    @CreateCast({"left", "right"})
-    protected ColonCastNode createCast(RNode child) {
-        ColonCastNode ccn = ColonCastNodeGen.create(child);
-        ccn.assignSourceSection(child.asRSyntaxNode().getSourceSection());
-        return ccn;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.custom(0, ColonCastNodeGen.create()).custom(1, ColonCastNodeGen.create());
     }
 
     private void naCheck(boolean na) {
@@ -66,42 +63,50 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
     @Specialization(guards = "left <= right")
     protected RIntSequence colonAscending(int left, int right) {
         controlVisibility();
-        naCheck(RRuntime.isNA(left) || RRuntime.isNA(right));
+        leftNA.enable(left);
+        rightNA.enable(right);
+        naCheck(leftNA.check(left) || rightNA.check(right));
         return RDataFactory.createAscendingRange(left, right);
     }
 
     @Specialization(guards = "left > right")
     protected RIntSequence colonDescending(int left, int right) {
         controlVisibility();
-        naCheck(RRuntime.isNA(left) || RRuntime.isNA(right));
+        leftNA.enable(left);
+        rightNA.enable(right);
+        naCheck(leftNA.check(left) || rightNA.check(right));
         return RDataFactory.createDescendingRange(left, right);
     }
 
     @Specialization(guards = "asDouble(left) <= right")
     protected RIntSequence colonAscending(int left, double right) {
         controlVisibility();
-        naCheck(RRuntime.isNA(left) || RRuntime.isNAorNaN(right));
+        leftNA.enable(left);
+        naCheck(leftNA.check(left) || RRuntime.isNAorNaN(right));
         return RDataFactory.createAscendingRange(left, (int) right);
     }
 
     @Specialization(guards = "asDouble(left) > right")
     protected RIntSequence colonDescending(int left, double right) {
         controlVisibility();
-        naCheck(RRuntime.isNA(left) || RRuntime.isNAorNaN(right));
+        leftNA.enable(left);
+        naCheck(leftNA.check(left) || RRuntime.isNAorNaN(right));
         return RDataFactory.createDescendingRange(left, (int) right);
     }
 
     @Specialization(guards = "left <= asDouble(right)")
     protected RDoubleSequence colonAscending(double left, int right) {
         controlVisibility();
-        naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNA(right));
+        rightNA.enable(right);
+        naCheck(RRuntime.isNAorNaN(left) || rightNA.check(right));
         return RDataFactory.createAscendingRange(left, right);
     }
 
     @Specialization(guards = "left > asDouble(right)")
     protected RDoubleSequence colonDescending(double left, int right) {
         controlVisibility();
-        naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNA(right));
+        rightNA.enable(right);
+        naCheck(RRuntime.isNAorNaN(left) || rightNA.check(right));
         return RDataFactory.createDescendingRange(left, right);
     }
 
@@ -119,73 +124,13 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
         return RDataFactory.createDescendingRange(left, right);
     }
 
-    public static ColonNode create(SourceSection src, RNode left, RNode right) {
-        ColonNode cn = ColonNodeGen.create(left, right);
-        cn.assignSourceSection(src);
-        return cn;
-    }
-
-    @Override
-    public void deparseImpl(RDeparse.State state) {
-        RASTDeparse.deparseInfixOperator(state, this, RDeparse.getFunc(":"));
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setAsBuiltin(":");
-        state.openPairList(SEXPTYPE.LISTSXP);
-        state.serializeNodeSetCar(getLeft());
-        state.openPairList(SEXPTYPE.LISTSXP);
-        state.serializeNodeSetCar(getRight());
-        state.linkPairList(2);
-        state.setCdr(state.closePairList());
-    }
-
-    @Override
-    public void allNamesImpl(RAllNames.State state) {
-        state.addName(":");
-        getLeft().allNames(state);
-        getRight().allNames(state);
-    }
-
-    @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        return create(null, getLeft().substitute(env).asRNode(), getRight().substitute(env).asRNode());
-    }
-
-    public int getRlengthImpl() {
-        return 3;
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        switch (index) {
-            case 0:
-                return RDataFactory.createSymbol(":");
-            case 1:
-                return RASTUtils.createLanguageElement(getLeft());
-            case 2:
-                return RASTUtils.createLanguageElement(getRight());
-            default:
-                throw RInternalError.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
-    }
-
     protected static double asDouble(int intValue) {
         return intValue;
     }
 
-    @NodeChild("operand")
-    public abstract static class ColonCastNode extends RNode implements RSyntaxNode {
+    public abstract static class ColonCastNode extends CastNode {
 
         private final ConditionProfile lengthGreaterOne = ConditionProfile.createBinaryProfile();
-
-        public abstract RNode getOperand();
 
         @Specialization(guards = "isIntValue(operand)")
         protected int doDoubleToInt(double operand) {
@@ -263,40 +208,6 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
 
         protected static boolean isFirstIntValue(RDoubleVector d) {
             return (((int) d.getDataAt(0))) == d.getDataAt(0);
-        }
-
-        @Override
-        public void deparseImpl(State state) {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public void serializeImpl(RSerialize.State state) {
-            getOperand().serialize(state);
-        }
-
-        @Override
-        public void allNamesImpl(RAllNames.State state) {
-            getOperand().allNames(state);
-        }
-
-        @Override
-        public RSyntaxNode substituteImpl(REnvironment env) {
-            return getOperand().substitute(env);
-        }
-
-        public int getRlengthImpl() {
-            return getOperand().getRLength();
-        }
-
-        @Override
-        public Object getRelementImpl(int index) {
-            return getOperand().getRelement(index);
-        }
-
-        @Override
-        public boolean getRequalsImpl(RSyntaxNode other) {
-            return getOperand().getRequals(other);
         }
     }
 }

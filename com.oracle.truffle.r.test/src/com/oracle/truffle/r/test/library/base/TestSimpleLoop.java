@@ -53,6 +53,10 @@ public class TestSimpleLoop extends TestBase {
 
         assertEval("{ break; }");
         assertEval("{ next; }");
+        assertEval("{ break(); }");
+        assertEval("{ next(); }");
+        assertEval("{ break(1,2,3); }");
+        assertEval("{ next(1,2,$$); }");
     }
 
     @Test

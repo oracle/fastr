@@ -21,15 +21,15 @@
 # questions.
 #
 suite = {
-  "mxversion" : "5.6.1",
+  "mxversion" : "5.8.1",
   "name" : "fastr",
   "imports" : {
     "suites" : [
             {
-               "name" : "graal",
-               "version" : "f6b021195f0811495a1763d6259612d69db3d78f",
+               "name" : "graal-core",
+               "version" : "a0e54263b5001f68e25e329f9ebc9f3444a880c7",
                "urls" : [
-                    {"url" : "http://lafo.ssw.uni-linz.ac.at/hg/graal-compiler", "kind" : "hg"},
+                    {"url" : "https://github.com/graalvm/graal-core", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
                 ]
             }

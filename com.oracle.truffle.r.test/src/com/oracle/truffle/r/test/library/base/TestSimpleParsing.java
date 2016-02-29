@@ -70,4 +70,24 @@ public class TestSimpleParsing extends TestBase {
         assertEval(";1");
         assertEval(";1;;");
     }
+
+    @Test
+    public void testNumbers() {
+        assertEval("1234L");
+        assertEval("1234.0L");
+        assertEval("1234.1L > 0");
+        assertEval("-1234.1L > 0");
+        assertEval("12340000000000L > 0");
+        assertEval("12340000000000.0L > 0");
+        assertEval("12340000000000.1L > 0");
+        assertEval("-12340000000000.1L > 0");
+    }
+
+    @Test
+    public void testFieldsAndSlots() {
+        assertEval("a <- list(a=3, b=9); list(a$a, a$b)");
+        assertEval("a <- list(a=3, b=9); list(a$'a', a$\"b\")");
+        assertEval("setClass('Foo', representation(x='numeric')); a <- new('Foo'); a@x");
+        assertEval("setClass('Foo', representation(x='numeric')); a <- new('Foo'); a@'x'");
+    }
 }

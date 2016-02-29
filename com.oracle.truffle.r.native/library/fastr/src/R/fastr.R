@@ -31,11 +31,17 @@ fastr.createcc <- function(func) invisible(.FastR(.NAME="createcc", func))
 
 fastr.getcc <- function(func) .FastR(.NAME="getcc", func)
 
+fastr.createtimer <- function(func) invisible(.FastR(.NAME="createtimer", func))
+
+fastr.gettimer <- function(func, scale=c("nanos", "micros", "millis", "secs")) {
+	.FastR(.NAME="gettimer", func, match.arg(scale))
+}
+
 fastr.compile <- function(func, background=TRUE) .FastR(.NAME="compile", func, background)
 
 fastr.dumptrees <- function(func, igvDump=FALSE, verbose=FALSE) .FastR(.NAME="dumptrees", func, igvDump, verbose)
 
-fastr.syntaxtree <- function(func, source=FALSE, visitAll=FALSE) invisible(.FastR(.NAME="syntaxtree", func, source, visitAll))
+fastr.syntaxtree <- function(func, printSource=FALSE, visitAll=FALSE, printTags=FALSE) invisible(.FastR(.NAME="syntaxtree", func, printSource, visitAll, printTags))
 
 fastr.tree <- function(func, verbose=FALSE) invisible(.FastR(.NAME="tree", func, verbose))
 

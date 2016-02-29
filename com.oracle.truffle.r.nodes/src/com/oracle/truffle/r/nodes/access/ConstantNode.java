@@ -32,7 +32,11 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
-public abstract class ConstantNode extends RNode implements RSyntaxNode, VisibilityController {
+public abstract class ConstantNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxConstant, VisibilityController {
+
+    protected ConstantNode(SourceSection sourceSection) {
+        super(sourceSection);
+    }
 
     public static boolean isFunction(RNode node) {
         return node instanceof ConstantObjectNode && ((ConstantObjectNode) node).value instanceof RFunction;
@@ -72,31 +76,8 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
     }
 
     @Override
-    public void allNamesImpl(RAllNames.State state) {
-        // No name
-    }
-
-    @Override
     public void serializeImpl(RSerialize.State state) {
         state.setCar(getValue());
-    }
-
-    public int getRlengthImpl() {
-        return 1;
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        return getValue();
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        if (other.getClass() == getClass()) {
-            return getValue().equals(((ConstantNode) other).getValue());
-        } else {
-            return false;
-        }
     }
 
     public static Object getConstant(RNode node) {
@@ -107,30 +88,28 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
     }
 
     public static ConstantNode create(Object value) {
-        CompilerAsserts.neverPartOfCompilation();
-        if (value instanceof Integer) {
-            return new ConstantIntegerScalarNode((Integer) value);
-        } else if (value instanceof Double) {
-            return new ConstantDoubleScalarNode((Double) value);
-        } else if (value instanceof Byte) {
-            return new ConstantLogicalScalarNode((Byte) value);
-        } else if (value instanceof String) {
-            return new ConstantObjectNode(value);
-        } else if (value instanceof RSymbol) {
-            return new ConstantObjectNode(value);
-        } else if (value instanceof RArgsValuesAndNames) {
-            // this can be created during argument matching and "call"
-            return new ConstantObjectNode(value);
-        } else {
-            assert value instanceof RTypedValue && !(value instanceof RPromise) : value;
-            return new ConstantObjectNode(value);
-        }
+        return create(RSyntaxNode.SOURCE_UNAVAILABLE, value);
     }
 
-    public static ConstantNode create(SourceSection src, Object value) {
-        ConstantNode cn = create(value);
-        cn.assignSourceSection(src);
-        return cn;
+    public static ConstantNode create(SourceSection sourceSection, Object value) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (value instanceof Integer) {
+            return new ConstantIntegerScalarNode(sourceSection, (Integer) value);
+        } else if (value instanceof Double) {
+            return new ConstantDoubleScalarNode(sourceSection, (Double) value);
+        } else if (value instanceof Byte) {
+            return new ConstantLogicalScalarNode(sourceSection, (Byte) value);
+        } else if (value instanceof String) {
+            return new ConstantObjectNode(sourceSection, value);
+        } else if (value instanceof RSymbol) {
+            return new ConstantObjectNode(sourceSection, value);
+        } else if (value instanceof RArgsValuesAndNames) {
+            // this can be created during argument matching and "call"
+            return new ConstantObjectNode(sourceSection, value);
+        } else {
+            assert value instanceof RTypedValue && !(value instanceof RPromise) : value;
+            return new ConstantObjectNode(sourceSection, value);
+        }
     }
 
     private static final class ConstantDoubleScalarNode extends ConstantNode {
@@ -138,7 +117,8 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         private final Double objectValue;
         private final double doubleValue;
 
-        ConstantDoubleScalarNode(double value) {
+        ConstantDoubleScalarNode(SourceSection sourceSection, double value) {
+            super(sourceSection);
             this.objectValue = value;
             this.doubleValue = value;
         }
@@ -160,7 +140,8 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         private final byte logicalValue;
         private final Byte objectValue;
 
-        ConstantLogicalScalarNode(byte value) {
+        ConstantLogicalScalarNode(SourceSection sourceSection, byte value) {
+            super(sourceSection);
             this.logicalValue = value;
             this.objectValue = value;
         }
@@ -182,7 +163,8 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         private final Integer objectValue;
         private final int intValue;
 
-        ConstantIntegerScalarNode(int value) {
+        ConstantIntegerScalarNode(SourceSection sourceSection, int value) {
+            super(sourceSection);
             this.objectValue = value;
             this.intValue = value;
         }
@@ -204,7 +186,8 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
 
         private final Object value;
 
-        ConstantObjectNode(Object value) {
+        ConstantObjectNode(SourceSection sourceSection, Object value) {
+            super(sourceSection);
             this.value = value;
         }
 

@@ -19,7 +19,6 @@ import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
@@ -27,7 +26,6 @@ import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
-import com.oracle.truffle.r.runtime.RAllNames;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RGroupGenerics;
@@ -39,12 +37,15 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class GroupDispatchNode extends RNode implements RSyntaxNode {
+public final class GroupDispatchNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
     @Child private CallArgumentsNode callArgsNode;
     @Child private S3FunctionLookupNode functionLookupL;
@@ -63,23 +64,22 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     @CompilationFinal private boolean dynamicLookup;
     private final ConditionProfile exactEqualsProfile = ConditionProfile.createBinaryProfile();
 
-    private GroupDispatchNode(String genericName, CallArgumentsNode callArgNode, RFunction builtinFunction) {
+    private GroupDispatchNode(SourceSection sourceSection, String genericName, CallArgumentsNode callArgNode, RFunction builtinFunction) {
+        super(sourceSection);
         this.fixedGenericName = genericName.intern();
         this.fixedGroup = RGroupGenerics.getGroup(genericName);
         this.callArgsNode = callArgNode;
         this.fixedBuiltinFunction = builtinFunction;
     }
 
-    public static GroupDispatchNode create(String genericName, SourceSection callSrc, ArgumentsSignature signature, RSyntaxNode... arguments) {
+    public static GroupDispatchNode create(String genericName, SourceSection sourceSection, ArgumentsSignature signature, RSyntaxNode... arguments) {
         CallArgumentsNode callArgNode = CallArgumentsNode.create(false, true, Arrays.copyOf(arguments, arguments.length, RNode[].class), signature);
-        GroupDispatchNode gdcn = new GroupDispatchNode(genericName, callArgNode, RContext.lookupBuiltin(genericName));
-        gdcn.assignSourceSection(callSrc);
+        GroupDispatchNode gdcn = new GroupDispatchNode(sourceSection, genericName, callArgNode, RContext.lookupBuiltin(genericName));
         return gdcn;
     }
 
-    public static GroupDispatchNode create(String genericName, CallArgumentsNode callArgNode, RFunction builtinFunction, SourceSection callSrc) {
-        GroupDispatchNode gdcn = new GroupDispatchNode(genericName, callArgNode, builtinFunction);
-        gdcn.assignSourceSection(callSrc);
+    public static GroupDispatchNode create(String genericName, CallArgumentsNode callArgNode, RFunction builtinFunction, SourceSection sourceSection) {
+        GroupDispatchNode gdcn = new GroupDispatchNode(sourceSection, genericName, callArgNode, builtinFunction);
         return gdcn;
     }
 
@@ -118,55 +118,10 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void allNamesImpl(RAllNames.State state) {
-        if (state.includeFunctions()) {
-            state.addName(getGenericName());
-        }
-        for (RSyntaxNode argNode : callArgsNode.getSyntaxArguments()) {
-            argNode.allNamesImpl(state);
-        }
-    }
-
-    @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
         // TODO substitute aDispatchNode
         Arguments<RSyntaxNode> substituteArguments = RCallNode.substituteArguments(env, callArgsNode.getSyntaxArguments(), callArgsNode.signature);
         return RASTUtils.createCall(this, false, substituteArguments.getSignature(), substituteArguments.getArguments());
-    }
-
-    public int getRlengthImpl() {
-        return 1 + getArguments().getLength();
-    }
-
-    @Override
-    public Object getRelementImpl(int index) {
-        if (index == 0) {
-            if (RASTUtils.isNamedFunctionNode(this)) {
-                return RASTUtils.findFunctionName(this);
-            } else {
-                RNode functionNode = RASTUtils.getFunctionNode(this);
-                if (functionNode instanceof ConstantNode && ((ConstantNode) functionNode).getValue() instanceof RSymbol) {
-                    return ((ConstantNode) functionNode).getValue();
-                } else {
-                    return RDataFactory.createLanguage(functionNode);
-                }
-            }
-        } else {
-            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(this);
-            return RASTUtils.createLanguageElement(args, index - 1);
-        }
-    }
-
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        if (!(other instanceof GroupDispatchNode)) {
-            return false;
-        }
-        GroupDispatchNode otherGDN = (GroupDispatchNode) other;
-        if (!fixedGenericName.equals(otherGDN.fixedGenericName)) {
-            return false;
-        }
-        return RCallNode.getRequalsImplArgs(callArgsNode.getSyntaxArguments(), otherGDN.callArgsNode.getSyntaxArguments());
     }
 
     @Override
@@ -279,5 +234,17 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
             throw RError.nyi(this, "missing builtin function '" + genericName + "'");
         }
         return callMatcher.execute(frame, signature, evaluatedArgs, function, s3Args);
+    }
+
+    public RSyntaxElement getSyntaxLHS() {
+        return RSyntaxLookup.createDummyLookup(null, fixedGenericName, true);
+    }
+
+    public RSyntaxElement[] getSyntaxArguments() {
+        return callArgsNode.getSyntaxArguments();
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return callArgsNode.getSignature();
     }
 }

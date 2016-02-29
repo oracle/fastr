@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,13 +23,8 @@
 package com.oracle.truffle.r.library.fastr;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.instrument.Probe;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.instrument.REntryCounters;
-import com.oracle.truffle.r.nodes.instrument.RInstrument;
-import com.oracle.truffle.r.nodes.instrument.RSyntaxTag;
-import com.oracle.truffle.r.runtime.FunctionUID;
+import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -40,16 +35,8 @@ public class FastRCallCounting {
         @Specialization
         protected RNull createCallCounter(RFunction function) {
             if (!function.isBuiltin()) {
-                FunctionDefinitionNode fdn = (FunctionDefinitionNode) function.getRootNode();
-                FunctionUID uuid = fdn.getUID();
-                if (REntryCounters.findCounter(uuid) == null) {
-                    Probe probe = RInstrument.findSingleProbe(uuid, RSyntaxTag.FUNCTION_BODY);
-                    if (probe == null) {
-                        throw RError.error(this, RError.Message.GENERIC, "failed to apply counter, instrumention disabled?");
-                    } else {
-                        REntryCounters.Function counter = new REntryCounters.Function(uuid);
-                        RInstrument.getInstrumenter().attach(probe, counter, REntryCounters.Function.INFO);
-                    }
+                if (!RInstrumentFactory.getInstance().installCounter(function)) {
+                    throw RError.error(this, RError.Message.GENERIC, "failed to apply counter, instrumention disabled?");
                 }
             }
             return RNull.instance;
@@ -66,12 +53,12 @@ public class FastRCallCounting {
         @Specialization
         protected Object getCallCount(RFunction function) {
             if (!function.isBuiltin()) {
-                FunctionDefinitionNode fdn = (FunctionDefinitionNode) function.getRootNode();
-                REntryCounters.Function counter = (REntryCounters.Function) REntryCounters.findCounter(fdn.getUID());
-                if (counter == null) {
+                int entryCount = RInstrumentFactory.getInstance().getCounter(function);
+                if (entryCount < 0) {
                     throw RError.error(this, RError.Message.GENERIC, "no associated counter");
+                } else {
+                    return entryCount;
                 }
-                return counter.getEnterCount();
             }
             return RNull.instance;
         }

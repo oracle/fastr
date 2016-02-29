@@ -165,7 +165,14 @@ public class TestOutputManager {
             }
             return line;
         }
+    }
 
+    private static String escapeTestInput(String input) {
+        return input.replace("\n", "<<<NEWLINE>>>");
+    }
+
+    private static String unescapeTestInput(String input) {
+        return input.replace("<<<NEWLINE>>>", "\n");
     }
 
     public String readTestOutputFile() throws IOException {
@@ -190,7 +197,7 @@ public class TestOutputManager {
                 if (!line.startsWith("#")) {
                     throw new IOException("expected line to start with #");
                 }
-                String input = line.substring(1);
+                String input = unescapeTestInput(line.substring(1));
                 StringBuilder output = new StringBuilder();
                 while (true) {
                     line = in.readLine();
@@ -225,7 +232,7 @@ public class TestOutputManager {
                 TestInfo testInfo = entrySet.getValue();
                 if (testInfo.inCode) {
                     prSwr.printf("##%s%n", testInfo.elementName);
-                    prSwr.printf("#%s%n", entrySet.getKey());
+                    prSwr.printf("#%s%n", escapeTestInput(entrySet.getKey()));
                     prSwr.println(testInfo.output);
                 }
             }
@@ -262,7 +269,7 @@ public class TestOutputManager {
                 }
                 matches = false;
                 prSwr.printf("##%s%n", aTestInfo.elementName);
-                prSwr.printf("#%s%n", entrySet.getKey());
+                prSwr.printf("#%s%n", escapeTestInput(entrySet.getKey()));
                 prSwr.printf("#%s%n", a.rSessionName);
                 prSwr.println(aTestInfo.output);
                 prSwr.printf("#%s%n", b.rSessionName);

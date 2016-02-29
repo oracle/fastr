@@ -137,7 +137,7 @@ public abstract class GammaFunctions {
                     0.005554733551962801371038690 /* 15.0 */
     };
 
-    private static double stirlerr(double n) {
+    static double stirlerr(double n) {
 
         double nn;
 
@@ -1281,7 +1281,7 @@ public abstract class GammaFunctions {
     // bd0
     //
 
-    private static double bd0(double x, double np) {
+    static double bd0(double x, double np) {
         double ej;
         double s;
         double s1;

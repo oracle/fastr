@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -362,5 +362,7 @@ public class TestBuiltin_unlist extends TestBase {
         assertEval("{ x <- list(a=list(\"1\",FALSE,b=list(2:4))) ; unlist(x) }");
 
         assertEval("{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }");
+
+        assertEval("{ x<-quote(f(1,2)); y<-function(z) 42; l<-list(x, y, NULL); y<-unlist(l); c(length(y), typeof(y)) }");
     }
 }

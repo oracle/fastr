@@ -4,16 +4,11 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.parser;
-
-import org.antlr.runtime.*;
-
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.parser.ast.*;
 
 public class ParseUtil {
 
@@ -33,14 +28,4 @@ public class ParseUtil {
         value &= 0xff; // octal escape sequences are clamped the 0-255 range
         return new String(new int[]{value}, 0, 1);
     }
-
-    public static ASTNode parseAST(ANTLRStringStream stream, Source source) throws RecognitionException {
-        CommonTokenStream tokens = new CommonTokenStream();
-        RLexer lexer = new RLexer(stream);
-        tokens.setTokenSource(lexer);
-        RParser parser = new RParser(tokens);
-        parser.setSource(source);
-        return parser.script().v;
-    }
-
 }

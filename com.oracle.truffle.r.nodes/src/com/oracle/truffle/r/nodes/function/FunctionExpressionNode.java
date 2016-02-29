@@ -29,13 +29,14 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.RASTBuilder;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
-import com.oracle.truffle.r.nodes.instrument.RInstrument;
-import com.oracle.truffle.r.runtime.RAllNames;
+import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -43,24 +44,25 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
+public final class FunctionExpressionNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxFunction {
 
-    public static FunctionExpressionNode create(SourceSection src, RootCallTarget callTarget, FastPathFactory fastPath) {
-        return new FunctionExpressionNode(src, callTarget, fastPath);
+    public static FunctionExpressionNode create(SourceSection src, RootCallTarget callTarget) {
+        return new FunctionExpressionNode(src, callTarget);
     }
 
     @CompilationFinal private RootCallTarget callTarget;
     private final PromiseDeoptimizeFrameNode deoptFrameNode;
-    private final FastPathFactory fastPath;
+    @CompilationFinal private FastPathFactory fastPath;
 
     @CompilationFinal private boolean initialized = false;
 
-    private FunctionExpressionNode(SourceSection src, RootCallTarget callTarget, FastPathFactory fastPath) {
-        this.fastPath = fastPath;
-        assignSourceSection(src);
+    private FunctionExpressionNode(SourceSection src, RootCallTarget callTarget) {
+        super(src);
         this.callTarget = callTarget;
         this.deoptFrameNode = EagerEvalHelper.optExprs() || EagerEvalHelper.optVars() || EagerEvalHelper.optDefault() ? new PromiseDeoptimizeFrameNode() : null;
     }
@@ -79,20 +81,21 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
         }
         if (!initialized) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (!FrameSlotChangeMonitor.hasEnclosingFrameDescriptor(callTarget.getRootNode().getFrameDescriptor(), frame)) {
-                RRootNode root = (RRootNode) callTarget.getRootNode();
-                root = root.duplicateWithNewFrameDescriptor();
-                RootCallTarget newTarget = Truffle.getRuntime().createCallTarget(root);
-                callTarget = newTarget;
+            if (!FrameSlotChangeMonitor.isEnclosingFrameDescriptor(callTarget.getRootNode().getFrameDescriptor(), frame)) {
+                if (!FrameSlotChangeMonitor.isEnclosingFrameDescriptor(callTarget.getRootNode().getFrameDescriptor(), null)) {
+                    RRootNode root = (RRootNode) callTarget.getRootNode();
+                    root = root.duplicateWithNewFrameDescriptor();
+                    RootCallTarget newTarget = Truffle.getRuntime().createCallTarget(root);
+                    callTarget = newTarget;
+                }
+                FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), frame);
             }
-            FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), frame);
+            fastPath = RASTBuilder.createFunctionFastPath(callTarget);
             initialized = true;
         }
         boolean containsDispatch = ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch();
         RFunction func = RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, matFrame, fastPath, containsDispatch);
-        if (RInstrument.instrumentingEnabled()) {
-            RInstrument.checkDebugRequested(callTarget.toString(), func);
-        }
+        RInstrumentFactory.getInstance().checkDebugRequested(func);
         return func;
     }
 
@@ -105,11 +108,6 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
         state.startNodeDeparse(this);
         ((FunctionDefinitionNode) callTarget.getRootNode()).deparseImpl(state);
         state.endNodeDeparse(this);
-    }
-
-    @Override
-    public void allNamesImpl(RAllNames.State state) {
-        ((FunctionDefinitionNode) callTarget.getRootNode()).allNamesImpl(state);
     }
 
     @Override
@@ -137,20 +135,18 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
     public RSyntaxNode substituteImpl(REnvironment env) {
         FunctionDefinitionNode thisFdn = (FunctionDefinitionNode) callTarget.getRootNode();
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) thisFdn.substituteImpl(env);
-        return new FunctionExpressionNode(null, Truffle.getRuntime().createCallTarget(fdn), fastPath);
+        return new FunctionExpressionNode(RSyntaxNode.EAGER_DEPARSE, Truffle.getRuntime().createCallTarget(fdn));
     }
 
-    public int getRlengthImpl() {
-        throw RInternalError.unimplemented();
+    public RSyntaxElement[] getSyntaxArgumentDefaults() {
+        return RASTUtils.asSyntaxNodes(((FunctionDefinitionNode) callTarget.getRootNode()).getFormalArguments().getArguments());
     }
 
-    @Override
-    public Object getRelementImpl(int index) {
-        throw RInternalError.unimplemented();
+    public RSyntaxElement getSyntaxBody() {
+        return ((FunctionDefinitionNode) callTarget.getRootNode()).getUninitializedBody().getStatements();
     }
 
-    @Override
-    public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+    public ArgumentsSignature getSyntaxSignature() {
+        return ((FunctionDefinitionNode) callTarget.getRootNode()).getFormalArguments().getSignature();
     }
 }

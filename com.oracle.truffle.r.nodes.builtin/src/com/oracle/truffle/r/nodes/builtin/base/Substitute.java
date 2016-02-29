@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -117,18 +117,9 @@ public abstract class Substitute extends RBuiltinNode {
         // substitution is destructive so clone the tree
         RSyntaxNode rNode = (RSyntaxNode) NodeUtil.cloneNode(node);
         RSyntaxNode subRNode = rNode.substituteImpl(env);
-        // remove old source sections
-        clearSourceSection(subRNode.asRNode());
         // create source for entire tree
         RASTDeparse.ensureSourceSection(subRNode);
         return RASTUtils.createLanguageElement(subRNode.asRNode());
-    }
-
-    private static void clearSourceSection(Node node) {
-        node.accept(n -> {
-            n.clearSourceSection();
-            return true;
-        });
     }
 
 }

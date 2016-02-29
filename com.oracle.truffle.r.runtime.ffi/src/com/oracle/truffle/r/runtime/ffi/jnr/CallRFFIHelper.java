@@ -34,8 +34,8 @@ import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
- * This class provides methods that match the functionality of the macro/function definitions in
- * thye R header files, e.g. {@code Rinternals.h} that are used by C/C++ code. For ease of
+ * This class provides methods that match the functionality of the macro/function definitions in the
+ * R header files, e.g. {@code Rinternals.h} that are used by C/C++ code. For ease of
  * identification, we use method names that, as far as possible, match the names in the header
  * files. These methods should never be called from normal FastR code.
  */
@@ -102,6 +102,8 @@ public class CallRFFIHelper {
             return ((Integer) x).intValue();
         } else if (x instanceof Double) {
             return RRuntime.double2int((Double) x);
+        } else if (x instanceof Byte) {
+            return RRuntime.logical2int((Byte) x);
         } else {
             guaranteeInstanceOf(x, RIntVector.class);
             return ((RIntVector) x).getDataAt(0);
