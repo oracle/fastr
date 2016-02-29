@@ -39,11 +39,15 @@ VM is supported by dynamically checking if the jvmci suite is available
 '''
 
 _fastr_suite = mx.suite('fastr')
+'''
+If this is None, then we run under the standard VM in interpreted mode only.
+Even if this is not None the global mx option --vm original forces interpreted mode
+'''
 _mx_jvmci = mx.suite("jvmci", fatalIfMissing=False)
 
 class FakeJVMCI:
     def get_vm(self):
-        # should only happen of jvmci vm selected
+        # should only happen if jvmci vm selected
         mx.abort('FakeJVMCI.get_vm called')
 
     def get_jvmci_jdk(self):
@@ -85,9 +89,8 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True):
         jdk = get_default_jdk()
 
     vmArgs = ['-cp', mx.classpath(_r_command_project)]
-    # jvmci specific
-    if _mx_jvmci:
-        vmArgs += ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
+
+    vmArgs += _graal_options()
 
     if extraVmArgs is None or not '-da' in extraVmArgs:
         # unless explicitly disabled we enable assertion checking
@@ -122,6 +125,15 @@ def _sanitize_vmArgs(jdk, vmArgs):
         xargs.append(vmArg)
         i = i + 1
     return xargs
+
+def _graal_options(nocompile=False):
+    if _mx_jvmci:
+        result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
+        if nocompile:
+            result += ['-Dgraal.TruffleCompilationThreshold=100000']
+        return result
+    else:
+        return []
 
 def _get_ldpaths(lib_env_name):
     ldpaths = os.path.join(os.environ['R_HOME'], 'etc', 'ldpaths')
@@ -347,16 +359,17 @@ def _junit_r_harness(args, vmArgs, junitArgs):
 
     junitArgs += ['--runlistener', runlistener]
 
-    # suppress Truffle compilation by using a high threshold
-    vmArgs += ['-Dgraal.TruffleCompilationThreshold=100000']
     # on some systems a large Java stack seems necessary
     vmArgs += ['-Xss12m']
 
-    if _mx_jvmci:
-        vmArgs += ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx5G']
+    vmArgs += _graal_options(nocompile=True)
 
     setREnvironment()
-    jdk = get_default_jdk()
+    jdk = args.jdk
+    if not jdk:
+        jdk = get_default_jdk()
+    vmArgs = _sanitize_vmArgs(jdk, vmArgs)
+
     return mx.run_java(vmArgs + junitArgs, nonZeroIsFatal=False, jdk=jdk)
 
 def junit(args):
@@ -368,6 +381,7 @@ def junit(args):
     parser.add_argument('--check-expected-output', action='store_true', help='check but do not update expected test output file')
     parser.add_argument('--gen-fastr-output', action='store', metavar='<path>', help='generate FastR test output file')
     parser.add_argument('--gen-diff-output', action='store', metavar='<path>', help='generate difference test output file ')
+    parser.add_argument('--jdk', action='store', help='jdk to use')
     # parser.add_argument('--test-methods', action='store', help='pattern to match test methods in test classes')
 
     if os.environ.has_key('R_PROFILE_USER'):
