@@ -46,8 +46,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.impl.FindContextNode;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactory;
@@ -63,14 +63,9 @@ import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.control.SequenceNode;
-import com.oracle.truffle.r.nodes.function.BodyNode;
-import com.oracle.truffle.r.nodes.function.FormalArguments;
-import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
-import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
+import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
 import com.oracle.truffle.r.parser.RParser;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
@@ -103,8 +98,6 @@ import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -446,16 +439,6 @@ final class REngine implements Engine, Engine.Timings {
         return runCall(closure.getCallTarget(), frame, false, false);
     }
 
-    public Object evalGeneric(RFunction func, MaterializedFrame frame) {
-        FrameDescriptor descriptor = frame.getFrameDescriptor();
-        FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-        FormalArguments formals = ((RRootNode) func.getRootNode()).getFormalArguments();
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(fdn.getSourceSection(), descriptor, NodeUtil.cloneNode(fdn.getBody()), formals, "GENERIC EVAL", true, true, null);
-        RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
-        MaterializedFrame vFrame = VirtualEvalFrame.create(frame, func, RArguments.getCall(frame), RArguments.getDepth(frame));
-        return runCall(callTarget, vFrame, false, false);
-    }
-
     @Override
     public RootCallTarget makePromiseCallTarget(Object bodyArg, String funName) {
         RNode body = (RNode) bodyArg;
@@ -463,34 +446,50 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     /**
-     * Creates an anonymous function, with no arguments to evaluate {@code body}. If {@body}
-     * is a not a syntax node, uses a simple {@link BodyNode} with no source information. Otherwise
-     * creates a {@link FunctionStatementsNode} using {@code body}. and ensures that the
-     * {@link FunctionBodyNode} has a {@link SourceSection}, for instrumentation, although the
-     * anonymous {@link FunctionDefinitionNode} itself does not need one.
+     * Creates an anonymous function, with no arguments to evaluate {@code body}.
      */
     @TruffleBoundary
     private static RootCallTarget doMakeCallTarget(RNode body, String description) {
-        BodyNode fbn;
-        SourceSection sourceSection = RSyntaxNode.WRAPPER;
-        if (RBaseNode.isRSyntaxNode(body)) {
-            RSyntaxNode synBody = (RSyntaxNode) body;
-            RASTDeparse.ensureSourceSection(synBody);
-            fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(synBody.getSourceSection(), synBody));
-            // SourceSection might be "unavailable", which has no code
-            sourceSection = synBody.getSourceSection();
-            if (sourceSection.getSource() != null) {
-                String funPlusBody = "function() " + sourceSection.getCode();
-                sourceSection = Source.fromText(funPlusBody, description).createSection("", 0, funPlusBody.length());
-            }
-        } else {
-            fbn = new BodyNode(body);
+        return Truffle.getRuntime().createCallTarget(new AnonymousRootNode(body, description));
+    }
+
+    /**
+     * An instance of this node is called with the intention to have its execution leave a footprint
+     * behind in a specific frame/environment, e.g., during library loading, commands from the
+     * shell, or R's {@code eval} and its friends. The call target must be invoked with one
+     * argument, namely the {@link Frame} to be side-effected. Execution will then proceed in the
+     * context of that frame. Note that passing only this one frame argument, strictly spoken,
+     * violates the frame layout as set forth in {@link RArguments}. This is for internal use only.
+     */
+    private static final class AnonymousRootNode extends RootNode {
+
+        private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
+
+        private final String description;
+
+        @Child private RNode body;
+
+        protected AnonymousRootNode(RNode body, String description) {
+            super(TruffleRLanguage.class, null, new FrameDescriptor());
+            this.body = body;
+            this.description = description;
         }
-        FrameDescriptor descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<eval>", descriptor);
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(sourceSection, descriptor, fbn, FormalArguments.NO_ARGS, description, true, true, null);
-        RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
-        return callTarget;
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            SubstituteVirtualFrame vf = new SubstituteVirtualFrame((MaterializedFrame) frameTypeProfile.profile(frame.getArguments()[0]));
+            return body.execute(vf);
+        }
+
+        @Override
+        public String toString() {
+            return description;
+        }
+
+        @Override
+        public boolean isCloningAllowed() {
+            return false;
+        }
     }
 
     /**

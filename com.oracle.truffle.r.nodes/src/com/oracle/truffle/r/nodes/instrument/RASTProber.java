@@ -57,8 +57,8 @@ public final class RASTProber implements ASTProber {
     public void probeAST(Instrumenter instrumenter, RootNode rootNode) {
         if (rootNode instanceof FunctionDefinitionNode) {
             FunctionDefinitionNode fdn = (FunctionDefinitionNode) rootNode;
-            BodyNode body = fdn.getBody();
-            if (body instanceof FunctionBodyNode && !fdn.getInstrumented()) {
+            if (!fdn.getInstrumented()) {
+                RSyntaxNode body = fdn.getBody();
                 if (body.getSourceSection() == null || body.getSourceSection() == RSyntaxNode.SOURCE_UNAVAILABLE) {
                     // Can't instrument AST (bodies) without a SourceSection
                     if (FastROptions.debugMatches("RASTProberNoSource")) {
@@ -72,13 +72,12 @@ public final class RASTProber implements ASTProber {
                 }
                 RInstrument.registerFunctionDefinition(fdn);
                 FunctionUID uid = fdn.getUID();
-                FunctionBodyNode fBody = (FunctionBodyNode) body;
-                instrumenter.probe(fBody.getStatements()).tagAs(START_METHOD, uid);
+                instrumenter.probe(body.asNode()).tagAs(START_METHOD, uid);
                 TaggingNodeVisitor visitor = new TaggingNodeVisitor(uid, instrumenter);
                 if (FastROptions.debugMatches("RASTProberTag")) {
                     System.out.printf("Tagging function uid %s%n", uid);
                 }
-                RSyntaxNode.accept(body, 0, visitor, false);
+                RSyntaxNode.accept(body.asNode(), 0, visitor, false);
                 fdn.setInstrumented();
             }
         }

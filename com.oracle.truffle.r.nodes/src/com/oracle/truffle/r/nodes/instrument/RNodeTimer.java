@@ -267,7 +267,7 @@ public class RNodeTimer {
              * source. Since there is never a line 0, we use that to compute the total.
              */
             final long[] times = new long[fdi.source.getLineCount() + 1];
-            RSyntaxNode.accept(fdi.node.getBody(), 0, new LineTimesNodeVisitor(fdi.node.getUID(), times), false);
+            RSyntaxNode.accept(fdi.node.getBody().asNode(), 0, new LineTimesNodeVisitor(fdi.node.getUID(), times), false);
             return times;
         }
 

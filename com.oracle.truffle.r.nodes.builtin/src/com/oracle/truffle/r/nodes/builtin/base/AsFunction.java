@@ -35,11 +35,8 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.BodyNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
-import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -132,7 +129,6 @@ public abstract class AsFunction extends RBuiltinNode {
         }
         RSyntaxNode synBody = (RSyntaxNode) body;
         RASTDeparse.ensureSourceSection(synBody);
-        BodyNode fbn = new FunctionBodyNode(saveArguments, new FunctionStatementsNode(synBody.getSourceSection(), synBody));
         // TODO: fix source section creation (does not include arguments at this point)
         SourceSection sourceSection = synBody.getSourceSection();
         if (sourceSection.getSource() != null) {
@@ -143,7 +139,7 @@ public abstract class AsFunction extends RBuiltinNode {
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<as.function.default>", descriptor);
         FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, envir.getFrame());
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(sourceSection, descriptor, fbn, formals, "from AsFunction", false, null);
+        FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(sourceSection, descriptor, saveArguments, synBody, formals, "from AsFunction", null);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         boolean containsDispatch = ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch();
         return RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, envir.getFrame(), null, containsDispatch);

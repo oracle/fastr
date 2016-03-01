@@ -178,11 +178,6 @@ public interface Engine {
     Object evalPromise(RPromise.Closure closure, MaterializedFrame frame);
 
     /**
-     * Evaluates a function during S4 generic dispatch in {@code frame}.
-     */
-    Object evalGeneric(RFunction func, MaterializedFrame frame);
-
-    /**
      * Checks for the existence of (startup/shutdown) function {@code name} and, if present, invokes
      * the function with the given {@code args}.
      */

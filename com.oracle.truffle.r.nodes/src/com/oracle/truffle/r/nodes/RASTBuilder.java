@@ -44,10 +44,8 @@ import com.oracle.truffle.r.nodes.control.NextNode;
 import com.oracle.truffle.r.nodes.control.ReplacementNode;
 import com.oracle.truffle.r.nodes.control.WhileNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
-import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PostProcessArgumentsNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
@@ -354,9 +352,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     }
 
     private static RootCallTarget createFunctionCallTarget(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, String description) {
-        // Parse function statements
-        FunctionStatementsNode statements = new FunctionStatementsNode(body.getSourceSection(), body);
-
         // Parse argument list
         RNode[] defaultValues = new RNode[params.size()];
         SaveArgumentsNode saveArguments;
@@ -400,15 +395,13 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(description != null && !description.isEmpty() ? description : "<function>", descriptor);
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(source, descriptor, new FunctionBodyNode(saveArguments, statements), formals, description, false, argPostProcess);
-        RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
-        return callTarget;
+        FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(source, descriptor, saveArguments, body, formals, description, argPostProcess);
+        return Truffle.getRuntime().createCallTarget(rootNode);
     }
 
     public static FastPathFactory createFunctionFastPath(RootCallTarget callTarget) {
         FunctionDefinitionNode def = (FunctionDefinitionNode) callTarget.getRootNode();
-        FunctionStatementsNode body = ((FunctionBodyNode) def.getBody()).getStatements();
-        return EvaluatedArgumentsVisitor.process(body, def.getSignature());
+        return EvaluatedArgumentsVisitor.process(def.getBody(), def.getSignature());
     }
 
     @Override
