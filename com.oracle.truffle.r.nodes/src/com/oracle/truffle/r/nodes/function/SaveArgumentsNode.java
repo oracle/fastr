@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.r.nodes.control.SequenceNode;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Encapsulates the nodes that save the incoming function arguments into the frame. Functionally a
@@ -34,12 +37,23 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * However, it is likely that without it, substitute on an entire function will not execute
  * correctly.
  */
-public class SaveArgumentsNode extends SequenceNode {
+@NodeInfo(cost = NodeCost.NONE)
+public class SaveArgumentsNode extends RNode {
 
     public static final SaveArgumentsNode NO_ARGS = new SaveArgumentsNode(RNode.EMTPY_RNODE_ARRAY);
 
+    @Children private final RNode[] sequence;
+
     public SaveArgumentsNode(RNode[] sequence) {
-        super(sequence);
+        this.sequence = sequence;
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        for (RNode node : sequence) {
+            node.execute(frame);
+        }
+        return RNull.instance;
     }
 
 }
