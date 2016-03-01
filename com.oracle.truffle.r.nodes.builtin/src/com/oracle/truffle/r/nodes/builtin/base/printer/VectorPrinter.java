@@ -25,6 +25,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
+import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.*;
+
 //Transcribed from GnuR, src/main/print.c, src/main/printarray.c, src/main/printvector.c
 
 public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePrinter<T> {
@@ -527,18 +529,21 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
             RAbstractStringVector dn;
             RAbstractStringVector dnn = mdn.axisNames;
 
-            /* nb := #{entries} in a slice such as x[1,1,..] or equivalently,
-             *       the number of matrix slices   x[ , , *, ..]  which
-             *       are printed as matrices -- if options("max.print") allows */
+            /*
+             * nb := #{entries} in a slice such as x[1,1,..] or equivalently, the number of matrix
+             * slices x[ , , *, ..] which are printed as matrices -- if options("max.print") allows
+             */
             for (i = 2, nb = 1; i < ndim; i++) {
                 nb *= dims.getDataAt(i);
             }
             maxreached = (b > 0 && pp.getMax() / b < nb);
-            if (maxreached) { /* i.e., also  b > 0, nr > 0, nc > 0, nb > 0 */
+            if (maxreached) { /* i.e., also b > 0, nr > 0, nc > 0, nb > 0 */
                 /* nb_pr := the number of matrix slices to be printed */
                 nbpr = (int) Math.ceil((double) pp.getMax() / b);
-                /* for the last, (nb_pr)th matrix slice, use only nr_last rows;
-                 *  using floor(), not ceil(), since 'nc' could be huge: */
+                /*
+                 * for the last, (nb_pr)th matrix slice, use only nr_last rows; using floor(), not
+                 * ceil(), since 'nc' could be huge:
+                 */
                 nrlast = (pp.getMax() - b * (nbpr - 1)) / nc;
                 if (nrlast == 0) {
                     nbpr--;
@@ -559,11 +564,11 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                     for (j = 2; j < ndim; j++) {
                         int l = (i / k) % dims.getDataAt(j) + 1;
                         if (mdn.hasDimNames &&
-                        ((dn = mdn.getDimNamesAt(j)) != null)) {
+                                        ((dn = mdn.getDimNamesAt(j)) != null)) {
                             if (hasdnn) {
                                 out.printf(", %s = %s",
-                                    dnn.getDataAt(j),
-                                    dn.getDataAt(l - 1));
+                                                dnn.getDataAt(j),
+                                                dn.getDataAt(l - 1));
                             } else {
                                 out.printf(", %s", dn.getDataAt(l - 1));
                             }
@@ -591,6 +596,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
 
         /**
          * See TypeTable in util.c.
+         *
          * @return the R-name of the element type
          */
         protected abstract String elementTypeName();
@@ -656,10 +662,6 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
         out.printf(fmt, "", i);
     }
 
-    public static int indexWidth(int n) {
-        return (int) (Math.log10(n + 0.5) + 1);
-    }
-
     private static final class MatrixDimNames {
         final RList dimnames;
         final RAbstractStringVector rl;
@@ -701,11 +703,4 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
 
     }
 
-
-    private static RAbstractStringVector toStringVector(Object o) {
-        if (o instanceof String) {
-            return RString.valueOf((String) o);
-        }
-        return Utils.<RAbstractStringVector> castTo(o);
-    }
 }

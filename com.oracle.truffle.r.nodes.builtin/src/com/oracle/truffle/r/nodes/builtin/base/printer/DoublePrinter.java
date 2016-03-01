@@ -174,6 +174,10 @@ public final class DoublePrinter extends AbstractValuePrinter<Double> {
         return new ScientificDouble(sgn, kpower, nsig, roundingwidens);
     }
 
+    public static String encodeReal(double x, DoubleVectorMetrics dm, PrintParameters pp) {
+        return encodeReal(x, dm.maxWidth, dm.d, dm.e, '.', pp);
+    }
+
     public static String encodeReal(double x, int w, int d, int e, char cdec, PrintParameters pp) {
         final String buff;
         String fmt;
