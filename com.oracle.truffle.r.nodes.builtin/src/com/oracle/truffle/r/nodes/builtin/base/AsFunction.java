@@ -28,18 +28,13 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.BodyNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
-import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -96,10 +91,10 @@ public abstract class AsFunction extends RBuiltinNode {
                 } else if (arg instanceof RLanguage) {
                     defaultValue = (RNode) ((RLanguage) arg).getRep();
                 } else if (arg instanceof RSymbol) {
-                    if (arg == RSymbol.MISSING) {
+                    RSymbol symbol = (RSymbol) arg;
+                    if (symbol.isMissing()) {
                         defaultValue = null;
                     } else {
-                        RSymbol symbol = (RSymbol) arg;
                         defaultValue = ReadVariableNode.create(symbol.getName());
                     }
                 } else if (RRuntime.asAbstractVector(arg) instanceof RAbstractVector) {
@@ -130,20 +125,11 @@ public abstract class AsFunction extends RBuiltinNode {
         if (!RBaseNode.isRSyntaxNode(body)) {
             throw RInternalError.unimplemented();
         }
-        RSyntaxNode synBody = (RSyntaxNode) body;
-        RASTDeparse.ensureSourceSection(synBody);
-        BodyNode fbn = new FunctionBodyNode(saveArguments, new FunctionStatementsNode(synBody.getSourceSection(), synBody));
-        // TODO: fix source section creation (does not include arguments at this point)
-        SourceSection sourceSection = synBody.getSourceSection();
-        if (sourceSection.getSource() != null) {
-            String funPlusBody = "function() " + sourceSection.getCode();
-            sourceSection = Source.fromText(funPlusBody, "from AsFunction").createSection("", 0, funPlusBody.length());
-        }
-
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<as.function.default>", descriptor);
         FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, envir.getFrame());
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(sourceSection, descriptor, fbn, formals, "from AsFunction", false, null);
+        FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(RSyntaxNode.EAGER_DEPARSE, descriptor, saveArguments, (RSyntaxNode) body, formals, "from AsFunction", null);
+        RASTDeparse.ensureSourceSection(rootNode);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         boolean containsDispatch = ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch();
         return RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, envir.getFrame(), null, containsDispatch);

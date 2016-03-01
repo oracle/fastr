@@ -666,11 +666,6 @@ public class RRuntime {
         return String.valueOf(object);
     }
 
-    @TruffleBoundary
-    public static String toString(StringBuilder sb) {
-        return sb.toString();
-    }
-
     @SuppressFBWarnings(value = "ES_COMPARING_PARAMETER_STRING_WITH_EQ", justification = "string NA is intended to be treated as an identity")
     public static boolean isNA(String value) {
         return value == STRING_NA;

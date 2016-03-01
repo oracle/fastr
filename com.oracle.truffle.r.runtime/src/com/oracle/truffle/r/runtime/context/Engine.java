@@ -33,6 +33,7 @@ import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public interface Engine {
 
@@ -138,12 +139,6 @@ public interface Engine {
     Object parseAndEval(Source sourceDesc, MaterializedFrame frame, boolean printResult) throws ParseException;
 
     /**
-     * Variant of {@link #parseAndEval(Source, MaterializedFrame, boolean)} for evaluation in the
-     * global frame.
-     */
-    Object parseAndEval(Source sourceDesc, boolean printResult) throws ParseException;
-
-    /**
      * Support for the {@code eval} {@code .Internal}.
      */
     Object eval(RExpression expr, REnvironment envir, int depth);
@@ -178,11 +173,6 @@ public interface Engine {
     Object evalPromise(RPromise.Closure closure, MaterializedFrame frame);
 
     /**
-     * Evaluates a function during S4 generic dispatch in {@code frame}.
-     */
-    Object evalGeneric(RFunction func, MaterializedFrame frame);
-
-    /**
      * Checks for the existence of (startup/shutdown) function {@code name} and, if present, invokes
      * the function with the given {@code args}.
      */
@@ -198,7 +188,7 @@ public interface Engine {
      *
      * @param body The AST for the body of the wrapper, i.e., the expression being evaluated.
      */
-    RootCallTarget makePromiseCallTarget(Object body, String funName);
+    RootCallTarget makePromiseCallTarget(RNode body, String funName);
 
     /**
      * Used by Truffle debugger; invokes the internal "print" support in R for {@code value}.

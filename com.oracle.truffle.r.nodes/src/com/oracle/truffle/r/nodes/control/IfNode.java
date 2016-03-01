@@ -118,16 +118,18 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
             thenPart.deparse(state);
             if (elsePart != null) {
                 state.writeline();
+                state.append("else ");
+                elsePart.deparse(state);
             }
         } else {
             state.writeline();
             state.incIndent();
             thenPart.deparse(state);
             state.decIndent();
-        }
-        if (elsePart != null) {
-            state.append("else ");
-            elsePart.deparse(state);
+            if (elsePart != null) {
+                state.append(" else ");
+                elsePart.deparse(state);
+            }
         }
         state.endNodeDeparse(this);
     }

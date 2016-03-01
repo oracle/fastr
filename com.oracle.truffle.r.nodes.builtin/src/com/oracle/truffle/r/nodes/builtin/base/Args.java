@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  */
 @RBuiltin(name = "args", kind = RBuiltinKind.INTERNAL, parameterNames = {"name"})
 public abstract class Args extends RBuiltinNode {
-    private static final FunctionStatementsNode nullBody = new FunctionStatementsNode(RSyntaxNode.INTERNAL, ConstantNode.create(RNull.instance));
+
     @Child private GetFunctions.Get getNode;
     @Child private FrameFunctions.ParentFrame parentFrameNode;
 
@@ -68,9 +68,9 @@ public abstract class Args extends RBuiltinNode {
         controlVisibility();
         RRootNode rootNode = (RRootNode) fun.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
-        FunctionBodyNode newBody = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, nullBody);
         String newDesc = "args(" + rootNode.getDescription() + ")";
-        FunctionDefinitionNode newNode = new FunctionDefinitionNode(RSyntaxNode.INTERNAL, rootNode.getFrameDescriptor(), newBody, formals, newDesc, false, null);
+        FunctionDefinitionNode newNode = FunctionDefinitionNode.create(RSyntaxNode.INTERNAL, rootNode.getFrameDescriptor(), SaveArgumentsNode.NO_ARGS,
+                        ConstantNode.create(RSyntaxNode.INTERNAL, RNull.instance), formals, newDesc, null);
         return RDataFactory.createFunction(newDesc, Truffle.getRuntime().createCallTarget(newNode), null, REnvironment.globalEnv().getFrame(), null, false);
     }
 

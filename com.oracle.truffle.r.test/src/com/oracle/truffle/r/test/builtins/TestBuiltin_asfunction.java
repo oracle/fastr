@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,30 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.function;
+package com.oracle.truffle.r.test.builtins;
 
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import org.junit.*;
 
-/**
- * Base class for child of {@link FunctionBodyNode} that is used to evaluate promises and other
- * non-syntax bodies.
- */
-public class BodyNode extends RNode {
-    @Child protected RNode statements;
+import com.oracle.truffle.r.test.*;
 
-    public BodyNode(RNode statements) {
-        this.statements = statements;
+public class TestBuiltin_asfunction extends TestBase {
+
+    @Test
+    public void testasfunction() {
+        assertEval("as.function(c(alist(a=1+14, b=foo(x),c=), quote(a+foo(c)*b)))");
+        assertEval("f <- function() a+foo(c)*b; as.function(c(alist(a=1+14, b=foo(x),c=), body(f)))");
+        assertEval("foo <- function(x) x*2; as.function(c(alist(a=1+14, b=foo(x),c=), quote(a+foo(c)*b)))(c=3,b=1)");
+        assertEval("foo <- function(x) x*2; f <- function() a+foo(c)*b; as.function(c(alist(a=1+14, b=foo(x),c=), body(f)))(c=3,b=1)");
     }
-
-    @Override
-    public Object execute(VirtualFrame frame) {
-        return statements.execute(frame);
-    }
-
-    @Override
-    public boolean isRInstrumentable() {
-        return false;
-    }
-
 }

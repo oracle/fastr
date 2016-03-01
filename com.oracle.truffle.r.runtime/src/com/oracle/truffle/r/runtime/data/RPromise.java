@@ -457,13 +457,13 @@ public class RPromise implements RTypedValue {
         public RootCallTarget getCallTarget() {
             if (callTarget == null) {
                 // Create lazily, as it is not needed at all for INLINED promises!
-                callTarget = generateCallTarget(expr);
+                callTarget = generateCallTarget((RNode) expr);
             }
             return callTarget;
         }
 
         @TruffleBoundary
-        private static RootCallTarget generateCallTarget(Object expr) {
+        private static RootCallTarget generateCallTarget(RNode expr) {
             return RContext.getEngine().makePromiseCallTarget(expr, CLOSURE_WRAPPER_NAME);
         }
 

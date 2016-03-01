@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.parser;
+package com.oracle.truffle.r.runtime.nodes;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -96,6 +96,12 @@ public interface RCodeBuilder<T> {
      * Creates a new RFunction object from a given function expression literal.
      */
     RFunction rootFunction(SourceSection source, List<Argument<T>> arguments, T body, String name, MaterializedFrame enclosing);
+
+    /**
+     * This method returns a newly created AST fragment for the given original element. This
+     * functionality can be used to quickly create new AST snippets for existing code.
+     */
+    T process(RSyntaxElement original);
 
     /**
      * Helper function: create a call with no arguments.
