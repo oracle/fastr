@@ -41,18 +41,15 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * The {@link SourceSection} is that of the {@link FunctionStatementsNode} as the
  * {@link SaveArgumentsNode} is not part of the syntax.
  */
-public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
+public final class FunctionBodyNode extends RNode implements RSyntaxNode {
 
     @CompilationFinal private SourceSection sourceSectionR;
     @Child private RNode saveArgs;
+    @Child private RNode statements;
 
-    public FunctionBodyNode(SaveArgumentsNode saveArgs, FunctionStatementsNode statements) {
-        this(saveArgs, (RNode) statements);
-    }
-
-    private FunctionBodyNode(RNode saveArgs, RNode statements) {
-        super(statements);
+    public FunctionBodyNode(RNode saveArgs, RNode statements) {
         this.saveArgs = saveArgs;
+        this.statements = statements;
         // Same source section as statements but different tag
         this.sourceSectionR = statements.getSourceSection().withTags(RSyntaxTags.ENTER_FUNCTION);
     }
@@ -63,12 +60,21 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
         return statements.execute(frame);
     }
 
+    @Override
+    protected RSyntaxNode getRSyntaxNode() {
+        return statements.asRSyntaxNode();
+    }
+
     public FunctionStatementsNode getStatements() {
         return (FunctionStatementsNode) statements.unwrap(); // statements may be wrapped
     }
 
     public FunctionDefinitionNode getFunctionDefinitionNode() {
         return (FunctionDefinitionNode) unwrapParent();
+    }
+
+    public boolean isSyntax() {
+        return false;
     }
 
     @Override
@@ -105,5 +111,4 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
     public SourceSection getSourceSection() {
         return sourceSectionR;
     }
-
 }

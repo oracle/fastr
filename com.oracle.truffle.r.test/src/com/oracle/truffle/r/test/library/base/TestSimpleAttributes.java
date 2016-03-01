@@ -165,4 +165,9 @@ public class TestSimpleAttributes extends TestBase {
 
         assertEval("{ gen<-function(object) 0; setGeneric(\"gen\"); x<-gen; attr(x, \"valueClass\")<-character(); res<-print(isS4(x)); removeGeneric(\"gen\"); res }");
     }
+
+    @Test
+    public void testLanguage() {
+        assertEval("e <- quote(x(y)); e[[1]]; typeof(e[[1]])");
+    }
 }

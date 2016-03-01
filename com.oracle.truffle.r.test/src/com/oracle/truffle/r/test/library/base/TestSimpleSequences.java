@@ -56,4 +56,9 @@ public class TestSimpleSequences extends TestBase {
         assertEval("{ (1:3):(1:3) }");
     }
 
+    @Test
+    public void testInteractiveSequences() {
+        assertEval("1;2;3");
+        assertEval("1;invisible(2);3");
+    }
 }

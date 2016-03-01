@@ -200,6 +200,8 @@ public class TestBuiltin_names extends TestBase {
 
     @Test
     public void testNames() {
+        assertEval("v <- parse(text=\"useDynLib(digest, digest_impl=digest)\"); names(v[[1]][3])");
+        assertEval("v <- parse(text=\"useDynLib(digest, digest_impl=digest)\"); names(v[[1]][[3]])");
         assertEval("{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }");
         assertEval("{ symNames <- c(\"foobar\", \"bar\"); names(symNames) = symNames; names(names(symNames)); }");
     }

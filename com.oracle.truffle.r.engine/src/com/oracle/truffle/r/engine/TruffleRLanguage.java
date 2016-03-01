@@ -32,6 +32,7 @@ import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.*;
@@ -61,7 +62,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             RAccuracyInfo.initialize();
             RVersionInfo.initialize();
             TempPathName.initialize();
-            RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance());
+            RContext.initialize(new RASTBuilder(), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance());
         } catch (Throwable t) {
             System.out.println("error during engine initialization:");
             t.printStackTrace();

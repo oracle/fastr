@@ -182,7 +182,7 @@ public class DebugHandling {
     }
 
     private static void attachToStatementNodes(FunctionStatementsEventReceiver functionStatementsEventReceiver, Instrumenter instrumenter) {
-        functionStatementsEventReceiver.getFunctionDefinitionNode().getBody().accept(new NodeVisitor() {
+        functionStatementsEventReceiver.getFunctionDefinitionNode().getBody().asNode().accept(new NodeVisitor() {
             public boolean visit(Node node) {
                 if (node instanceof WrapperNode) {
                     WrapperNode wrapper = (WrapperNode) node;
