@@ -43,8 +43,7 @@ public class NewInstrumentFactory extends RInstrumentFactory {
 
     @Override
     public void checkDebugRequested(RFunction func) {
-        // TODO Auto-generated method stub
-
+        RInstrumentation.checkDebugRequested(func);
     }
 
     @Override
