@@ -126,7 +126,6 @@ public abstract class RBaseNode extends Node {
     public void deparse(State state) {
         RSyntaxNode syntaxNode = getRSyntaxNode();
         syntaxNode.deparseImpl(state);
-
     }
 
     public RSyntaxNode substitute(REnvironment env) {
