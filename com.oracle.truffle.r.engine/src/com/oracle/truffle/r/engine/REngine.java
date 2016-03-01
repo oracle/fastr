@@ -317,20 +317,20 @@ final class REngine implements Engine, Engine.Timings {
     @Override
     public CallTarget parseToCallTarget(Source source) throws ParseException {
         List<RSyntaxNode> list = parseImplDirect(source);
-        SequenceNode sequence = new SequenceNode(list.toArray(new RNode[list.size()]));
+        RNode[] statements = list.toArray(new RNode[list.size()]);
 
-        return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(sequence));
+        return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements));
     }
 
     private static class PolyglotEngineRootNode extends RootNode {
 
-        private final SequenceNode sequence;
+        @Children private final RNode[] statements;
 
         @SuppressWarnings("unchecked") @Child private FindContextNode<RContext> findContext = (FindContextNode<RContext>) TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
-        PolyglotEngineRootNode(SequenceNode sequence) {
+        PolyglotEngineRootNode(RNode[] statements) {
             super(TruffleRLanguage.class, SourceSection.createUnavailable("repl", "<repl wrapper>"), new FrameDescriptor());
-            this.sequence = sequence;
+            this.statements = statements;
         }
 
         /**
@@ -340,13 +340,16 @@ final class REngine implements Engine, Engine.Timings {
          */
         @Override
         public Object execute(VirtualFrame frame) {
-            RootCallTarget callTarget = doMakeCallTarget(sequence, "<repl wrapper>");
-
             RContext oldContext = RContext.threadLocalContext.get();
             RContext context = findContext.executeFindContext();
             RContext.threadLocalContext.set(context);
             try {
-                return ((REngine) context.getThisEngine()).runCall(callTarget, context.stateREnvironment.getGlobalFrame(), true, true);
+                Object lastValue = RNull.instance;
+                for (RNode node : statements) {
+                    RootCallTarget callTarget = doMakeCallTarget(node, "<repl wrapper>");
+                    lastValue = ((REngine) context.getThisEngine()).runCall(callTarget, context.stateREnvironment.getGlobalFrame(), true, true);
+                }
+                return lastValue;
             } catch (ReturnException ex) {
                 return ex.getResult();
             } catch (DebugExitException | BrowserQuitException e) {
