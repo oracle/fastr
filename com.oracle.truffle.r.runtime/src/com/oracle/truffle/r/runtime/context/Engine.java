@@ -139,12 +139,6 @@ public interface Engine {
     Object parseAndEval(Source sourceDesc, MaterializedFrame frame, boolean printResult) throws ParseException;
 
     /**
-     * Variant of {@link #parseAndEval(Source, MaterializedFrame, boolean)} for evaluation in the
-     * global frame.
-     */
-    Object parseAndEval(Source sourceDesc, boolean printResult) throws ParseException;
-
-    /**
      * Support for the {@code eval} {@code .Internal}.
      */
     Object eval(RExpression expr, REnvironment envir, int depth);

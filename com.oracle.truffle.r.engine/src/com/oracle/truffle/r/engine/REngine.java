@@ -62,7 +62,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
-import com.oracle.truffle.r.nodes.control.SequenceNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
@@ -238,11 +237,14 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public Object parseAndEval(Source source, MaterializedFrame frame, boolean printResult) throws ParseException {
-        List<RSyntaxNode> list = parseImplDirect(source);
-        SequenceNode sequence = new SequenceNode(list.toArray(new RNode[list.size()]));
-        RootCallTarget callTarget = doMakeCallTarget(sequence, "<repl wrapper>");
+        List<RSyntaxNode> list = parseImpl(source);
         try {
-            return runCall(callTarget, frame, printResult, true);
+            Object lastValue = RNull.instance;
+            for (RSyntaxNode node : list) {
+                RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>");
+                lastValue = runCall(callTarget, frame, printResult, true);
+            }
+            return lastValue;
         } catch (ReturnException ex) {
             return ex.getResult();
         } catch (DebugExitException | BrowserQuitException e) {
@@ -264,12 +266,7 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
-    @Override
-    public Object parseAndEval(Source source, boolean printResult) throws ParseException {
-        return parseAndEval(source, globalFrame, printResult);
-    }
-
-    private static List<RSyntaxNode> parseImplDirect(Source source) throws ParseException {
+    private static List<RSyntaxNode> parseImpl(Source source) throws ParseException {
         try {
             try {
                 RParser<RSyntaxNode> parser = new RParser<>(source, new RASTBuilder());
@@ -300,7 +297,7 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     public RExpression parse(Source source) throws ParseException {
-        List<RSyntaxNode> list = parseImplDirect(source);
+        List<RSyntaxNode> list = parseImpl(source);
         Object[] data = list.stream().map(node -> RDataFactory.createLanguage(node.asRNode())).toArray();
         return RDataFactory.createExpression(RDataFactory.createList(data));
     }
@@ -316,19 +313,17 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public CallTarget parseToCallTarget(Source source) throws ParseException {
-        List<RSyntaxNode> list = parseImplDirect(source);
-        RNode[] statements = list.toArray(new RNode[list.size()]);
-
+        List<RSyntaxNode> statements = parseImpl(source);
         return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements));
     }
 
     private static class PolyglotEngineRootNode extends RootNode {
 
-        @Children private final RNode[] statements;
+        private final List<RSyntaxNode> statements;
 
         @SuppressWarnings("unchecked") @Child private FindContextNode<RContext> findContext = (FindContextNode<RContext>) TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
-        PolyglotEngineRootNode(RNode[] statements) {
+        PolyglotEngineRootNode(List<RSyntaxNode> statements) {
             super(TruffleRLanguage.class, SourceSection.createUnavailable("repl", "<repl wrapper>"), new FrameDescriptor());
             this.statements = statements;
         }
@@ -345,8 +340,8 @@ final class REngine implements Engine, Engine.Timings {
             RContext.threadLocalContext.set(context);
             try {
                 Object lastValue = RNull.instance;
-                for (RNode node : statements) {
-                    RootCallTarget callTarget = doMakeCallTarget(node, "<repl wrapper>");
+                for (RSyntaxNode node : statements) {
+                    RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>");
                     lastValue = ((REngine) context.getThisEngine()).runCall(callTarget, context.stateREnvironment.getGlobalFrame(), true, true);
                 }
                 return lastValue;
