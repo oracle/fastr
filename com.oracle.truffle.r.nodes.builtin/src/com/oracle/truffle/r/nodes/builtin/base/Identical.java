@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -452,6 +453,12 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
+    @Specialization(guards = "argConnections(x, y)")
+    protected byte doInternalIdenticalConnections(Object x, Object y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
+        return RRuntime.asLogical(((RConnection) x).getDescriptor() == ((RConnection) y).getDescriptor());
+    }
+
+    @SuppressWarnings("unused")
     @Fallback
     protected byte doInternalIdenticalWrongTypes(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         if (!recursive) {
@@ -466,6 +473,10 @@ public abstract class Identical extends RBuiltinNode {
 
     protected boolean vectorsLists(RAbstractVector x, RAbstractVector y) {
         return x instanceof RList && y instanceof RList;
+    }
+
+    protected boolean argConnections(Object x, Object y) {
+        return x instanceof RConnection && y instanceof RConnection;
     }
 
     protected boolean checkExtraArg(byte value, String name) {
