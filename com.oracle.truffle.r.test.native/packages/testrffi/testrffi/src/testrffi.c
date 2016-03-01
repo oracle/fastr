@@ -114,3 +114,7 @@ SEXP dot_external_access_args(SEXP args) {
     }
     return R_NilValue;
 }
+
+SEXP invoke_isString(SEXP s) {
+  return ScalarLogical(isString(s));
+}

@@ -66,8 +66,7 @@ public class TestRFFIPackage extends TestRPackages {
                         new String[]{packagePaths.rpackagesLibs.toString()}));
         assertEval(TestBase.template(
                         "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.addInt(2L, 3L); r2 <- rffi.addDouble(2, 3); v <- rffi.populateIntVector(5); v2 <- rffi.dotCModifiedArguments(c(0,1,2,3)); "
-                                        +
-                                        "detach(\"package:testrffi\"); list(r1, r2, v, v2) }",
+                                        + "v3<-rffi.isRString(character(0)); detach(\"package:testrffi\"); list(r1, r2, v, v2, v3) }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
@@ -84,4 +83,5 @@ public class TestRFFIPackage extends TestRPackages {
                         "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.dotExternalAccessArgs(x=1L, 3, c(1,2,3), y=c('a', 'b'), 'b', TRUE, as.raw(12)); detach(\"package:testrffi\"); list(r1) }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
     }
+
 }
