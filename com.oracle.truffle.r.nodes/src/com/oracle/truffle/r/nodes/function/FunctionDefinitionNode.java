@@ -73,7 +73,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode {
 
     @Child private RNode body; // typed as RNode to avoid custom instrument wrapper
-    private final RNode uninitializedBody; // copy for "body" builtin
     /**
      * This exists for debugging purposes. It is set initially when the function is defined to
      * either:
@@ -137,7 +136,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         assert src != null;
         this.sourceSectionR = src;
         this.body = body;
-        this.uninitializedBody = body;
         this.description = description;
         this.onExitSlot = FrameSlotNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
         this.uuid = uuid;
@@ -233,7 +231,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     public FunctionBodyNode getUninitializedBody() {
-        return (FunctionBodyNode) uninitializedBody;
+        return (FunctionBodyNode) body;
     }
 
     public PostProcessArgumentsNode getArgPostProcess() {
