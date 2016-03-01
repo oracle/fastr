@@ -77,6 +77,8 @@ public abstract class All extends RBuiltinNode {
             byte result;
             if (argValue instanceof RVector || argValue instanceof RSequence) {
                 result = accumulate((RLogicalVector) castLogicalNode.execute(argValue));
+            } else if (argValue == RNull.instance) {
+                result = RRuntime.LOGICAL_TRUE;
             } else {
                 result = (byte) castLogicalNode.execute(argValue);
             }
