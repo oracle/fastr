@@ -230,10 +230,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return body.asRSyntaxNode();
     }
 
-    public FunctionBodyNode getUninitializedBody() {
-        return (FunctionBodyNode) body;
-    }
-
     public PostProcessArgumentsNode getArgPostProcess() {
         return argPostProcess;
     }

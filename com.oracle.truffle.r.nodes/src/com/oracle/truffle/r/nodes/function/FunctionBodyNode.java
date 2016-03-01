@@ -45,13 +45,9 @@ public final class FunctionBodyNode extends RNode implements RSyntaxNode {
 
     @CompilationFinal private SourceSection sourceSectionR;
     @Child private RNode saveArgs;
-    @Child protected RNode statements;
+    @Child private RNode statements;
 
-    public FunctionBodyNode(SaveArgumentsNode saveArgs, FunctionStatementsNode statements) {
-        this(saveArgs, (RNode) statements);
-    }
-
-    private FunctionBodyNode(RNode saveArgs, RNode statements) {
+    public FunctionBodyNode(RNode saveArgs, RNode statements) {
         this.saveArgs = saveArgs;
         this.statements = statements;
         // Same source section as statements but different tag

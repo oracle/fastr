@@ -143,7 +143,7 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
     }
 
     public RSyntaxElement getSyntaxBody() {
-        return ((FunctionDefinitionNode) callTarget.getRootNode()).getUninitializedBody().getStatements();
+        return ((FunctionDefinitionNode) callTarget.getRootNode()).getBody();
     }
 
     public ArgumentsSignature getSyntaxSignature() {
