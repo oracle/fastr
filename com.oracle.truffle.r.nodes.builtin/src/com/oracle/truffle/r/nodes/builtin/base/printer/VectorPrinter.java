@@ -12,6 +12,8 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.asBlankArg;
+import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.indexWidth;
+import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toStringVector;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -20,12 +22,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.*;
 
 //Transcribed from GnuR, src/main/print.c, src/main/printarray.c, src/main/printvector.c
 

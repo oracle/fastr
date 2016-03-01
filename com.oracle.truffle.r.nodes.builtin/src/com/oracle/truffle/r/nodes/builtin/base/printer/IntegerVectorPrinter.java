@@ -11,12 +11,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
+import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.indexWidth;
+
 import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.*;
 
 //Transcribed from GnuR, src/main/printutils.c
 
