@@ -40,10 +40,10 @@ public final class RBuiltinRootNode extends RRootNode {
     }
 
     @Override
-    public RRootNode duplicateWithNewFrameDescriptor() {
+    public RootCallTarget duplicateWithNewFrameDescriptor() {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getBuiltin().getName(), frameDescriptor);
-        return new RBuiltinRootNode((RBuiltinNode) builtin.deepCopy(), getFormalArguments(), frameDescriptor);
+        return Truffle.getRuntime().createCallTarget(new RBuiltinRootNode((RBuiltinNode) builtin.deepCopy(), getFormalArguments(), frameDescriptor));
     }
 
     @Override
