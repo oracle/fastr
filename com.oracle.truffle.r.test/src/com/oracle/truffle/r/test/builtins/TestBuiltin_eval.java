@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -42,7 +42,7 @@ public class TestBuiltin_eval extends TestBase {
         assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
 
         // should print two values, xx^2 and xx
-        assertEval(Ignored.Unknown, "eval({ xx <- pi; xx^2}) ; xx");
+        assertEval("eval({ xx <- pi; xx^2}) ; xx");
 
         // lists
         assertEval("{ l <- list(a=1, b=2); eval(quote(a), l)}");

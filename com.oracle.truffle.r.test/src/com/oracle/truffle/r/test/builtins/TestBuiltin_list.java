@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -241,8 +241,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist41() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(properties = structure(list(.Data = 'numeric', comment = 'character'), .Names = c('.Data', 'comment')), prototype = structure(3.14159265358979, comment = 'Start with pi'));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(properties = structure(list(.Data = 'numeric', comment = 'character'), .Names = c('.Data', 'comment')), prototype = structure(3.14159265358979, comment = 'Start with pi'));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -307,8 +306,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist54() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(values = c(0.266917355843816, 0.00557315714782281, 0.00229578896250102, 0.000615239459643172, 8.19421206363694e-05), vectors = structure(c(-0.452472222108953, -0.386550651250976, -0.453293999783174, -0.439775552409852, -0.496960255453506, -0.157430201026812, 0.910628681750865, -0.204120426456847, -0.072367418669335, -0.314752194584169, 0.437863914035591, 0.0975567326834968, -0.370843683888789, -0.67178336056532, 0.458192050652246, 0.752103796361061, -0.0893037594956476, 0.0198033027727173, 0.0214021063919376, -0.652314722415877, 0.114453887261006, -0.0619800003080987, -0.784182499538679, 0.591277842073673, 0.136040832629847), .Dim = c(5L, 5L)));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(values = c(0.266917355843816, 0.00557315714782281, 0.00229578896250102, 0.000615239459643172, 8.19421206363694e-05), vectors = structure(c(-0.452472222108953, -0.386550651250976, -0.453293999783174, -0.439775552409852, -0.496960255453506, -0.157430201026812, 0.910628681750865, -0.204120426456847, -0.072367418669335, -0.314752194584169, 0.437863914035591, 0.0975567326834968, -0.370843683888789, -0.67178336056532, 0.458192050652246, 0.752103796361061, -0.0893037594956476, 0.0198033027727173, 0.0214021063919376, -0.652314722415877, 0.114453887261006, -0.0619800003080987, -0.784182499538679, 0.591277842073673, 0.136040832629847), .Dim = c(5L, 5L)));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -363,8 +361,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist64() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(fit = structure(numeric(0), .Dim = c(10L, 0L), constant = 0), se.fit = structure(numeric(0), .Dim = c(10L, 0L)), df = 10L, residual.scale = 0.523484262069588);list(argv[[1]],argv[[2]],argv[[3]],argv[[4]]);");
+        assertEval("argv <- list(fit = structure(numeric(0), .Dim = c(10L, 0L), constant = 0), se.fit = structure(numeric(0), .Dim = c(10L, 0L)), df = 10L, residual.scale = 0.523484262069588);list(argv[[1]],argv[[2]],argv[[3]],argv[[4]]);");
     }
 
     @Test

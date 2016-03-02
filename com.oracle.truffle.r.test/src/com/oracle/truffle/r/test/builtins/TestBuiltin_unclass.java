@@ -41,8 +41,7 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testunclass5() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(Df = c(1, 1, 1, NA, 1), `Sum of Sq` = c(0.109090049888117, 0.246974722154086, 2.97247824113524, NA, 25.9509113775335), RSS = c(47.9727294003871, 48.1106140726531, 50.8361175916342, 47.863639350499, 73.8145507280325), AIC = c(24.9738836085411, 25.0111950072736, 25.7275503692601, 26.9442879283302, 30.5758847476115)), .Names = c('Df', 'Sum of Sq', 'RSS', 'AIC'), row.names = c('- x3', '- x4', '- x2', '<none>', '- x1')));unclass(argv[[1]]);");
+        assertEval("argv <- list(structure(list(Df = c(1, 1, 1, NA, 1), `Sum of Sq` = c(0.109090049888117, 0.246974722154086, 2.97247824113524, NA, 25.9509113775335), RSS = c(47.9727294003871, 48.1106140726531, 50.8361175916342, 47.863639350499, 73.8145507280325), AIC = c(24.9738836085411, 25.0111950072736, 25.7275503692601, 26.9442879283302, 30.5758847476115)), .Names = c('Df', 'Sum of Sq', 'RSS', 'AIC'), row.names = c('- x3', '- x4', '- x2', '<none>', '- x1')));unclass(argv[[1]]);");
     }
 
     @Test
@@ -185,7 +184,7 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testunclass33() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(1L, 2L, 1L), .Dim = 3L, .Dimnames = structure(list(c('1', '2', NA)), .Names = '')));unclass(argv[[1]]);");
+        assertEval("argv <- list(structure(c(1L, 2L, 1L), .Dim = 3L, .Dimnames = structure(list(c('1', '2', NA)), .Names = '')));unclass(argv[[1]]);");
     }
 
     @Test
