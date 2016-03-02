@@ -218,14 +218,16 @@ public class RNodeTimer {
                 for (Map.Entry<SourceSection, TimeInfo> entry : StatementListener.singleton.getTimeInfoMap().entrySet()) {
                     TimeInfo timeInfo = entry.getValue();
                     Node node = (Node) timeInfo.getIdent();
-                    FunctionDefinitionNode fdn = (FunctionDefinitionNode) node.getRootNode();
-                    FunctionUID uid = fdn.getUID();
-                    TimingData timingData = functionMap.get(uid);
-                    if (timingData == null) {
-                        timingData = new TimingData(uid);
-                        functionMap.put(uid, timingData);
+                    if (node.getRootNode() instanceof FunctionDefinitionNode) {
+                        FunctionDefinitionNode fdn = (FunctionDefinitionNode) node.getRootNode();
+                        FunctionUID uid = fdn.getUID();
+                        TimingData timingData = functionMap.get(uid);
+                        if (timingData == null) {
+                            timingData = new TimingData(uid);
+                            functionMap.put(uid, timingData);
+                        }
+                        timingData.addTime(millis(entry.getValue().cumulativeTime));
                     }
-                    timingData.addTime(millis(entry.getValue().cumulativeTime));
                 }
 
                 Collection<TimingData> values = functionMap.values();
@@ -242,31 +244,24 @@ public class RNodeTimer {
                     if (t.time > 0) {
                         if (t.time > threshold) {
                             FunctionIdentification fdi = RInstrumentation.getFunctionIdentification(t.functionUID);
-                            /*
-                             * Currently a problem with the way source sections are used in some
-                             * promises and eval wrappers, that cause ArrayIndexOutOfBounds
-                             * exceptions.
-                             */
-                            if (!(fdi.name.equals("<promise>") || fdi.name.equals("<eval wrapper>"))) {
-                                RPerfStats.out().println("==========");
-                                RPerfStats.out().printf("%d ms (%.2f%%): %s, %s%n", t.time, percent(t.time, totalTime), fdi.name, fdi.origin);
-                                if (stmts) {
-                                    SourceSection ss = fdi.node.getSourceSection();
+                            RPerfStats.out().println("==========");
+                            RPerfStats.out().printf("%d ms (%.2f%%): %s, %s%n", t.time, percent(t.time, totalTime), fdi.name, fdi.origin);
+                            if (stmts) {
+                                SourceSection ss = fdi.node.getSourceSection();
+                                if (ss == null) {
+                                    // wrapper
+                                    ss = fdi.node.getBody().getSourceSection();
                                     if (ss == null) {
-                                        // wrapper
-                                        ss = fdi.node.getBody().getSourceSection();
-                                        if (ss == null) {
-                                            RPerfStats.out().println("no source available");
-                                        }
-                                    } else {
-                                        long[] time = createLineTimes(fdi);
-                                        int startLine = ss.getStartLine();
-                                        int lastLine = ss.getEndLine();
-                                        for (int i = startLine; i <= lastLine; i++) {
-                                            RPerfStats.out().printf("%8dms: %s%n", time[i], fdi.source.getCode(i));
-                                        }
-
+                                        RPerfStats.out().println("no source available");
                                     }
+                                } else {
+                                    long[] time = createLineTimes(fdi);
+                                    int startLine = ss.getStartLine();
+                                    int lastLine = ss.getEndLine();
+                                    for (int i = startLine; i <= lastLine; i++) {
+                                        RPerfStats.out().printf("%8dms: %s%n", time[i], fdi.source.getCode(i));
+                                    }
+
                                 }
                             }
                         }

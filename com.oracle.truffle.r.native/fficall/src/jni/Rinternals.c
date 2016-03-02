@@ -574,17 +574,6 @@ const char *Rf_translateCharUTF8(SEXP x) {
 	return NULL;
 }
 
-const char *Rf_type2char(SEXPTYPE x) {
-	unimplemented("Rf_type2char");
-	return NULL;
-}
-
-SEXP Rf_type2str(SEXPTYPE x) {
-	unimplemented("Rf_type2str");
-	return R_NilValue;
-	return NULL;
-}
-
 SEXP R_FindNamespace(SEXP info) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_FindNamespaceMethodID, info);

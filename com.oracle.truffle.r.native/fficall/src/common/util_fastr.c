@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -17,6 +17,69 @@
 #define _(Source) (Source)
 
 // selected functions from util.c:
+
+const static struct {
+    const char * const str;
+    const int type;
+}
+TypeTable[] = {
+    { "NULL",		NILSXP	   },  /* real types */
+    { "symbol",		SYMSXP	   },
+    { "pairlist",	LISTSXP	   },
+    { "closure",	CLOSXP	   },
+    { "environment",	ENVSXP	   },
+    { "promise",	PROMSXP	   },
+    { "language",	LANGSXP	   },
+    { "special",	SPECIALSXP },
+    { "builtin",	BUILTINSXP },
+    { "char",		CHARSXP	   },
+    { "logical",	LGLSXP	   },
+    { "integer",	INTSXP	   },
+    { "double",		REALSXP	   }, /*-  "real", for R <= 0.61.x */
+    { "complex",	CPLXSXP	   },
+    { "character",	STRSXP	   },
+    { "...",		DOTSXP	   },
+    { "any",		ANYSXP	   },
+    { "expression",	EXPRSXP	   },
+    { "list",		VECSXP	   },
+    { "externalptr",	EXTPTRSXP  },
+    { "bytecode",	BCODESXP   },
+    { "weakref",	WEAKREFSXP },
+    { "raw",		RAWSXP },
+    { "S4",		S4SXP },
+    /* aliases : */
+    { "numeric",	REALSXP	   },
+    { "name",		SYMSXP	   },
+
+    { (char *)NULL,	-1	   }
+};
+
+const char *Rf_type2char(SEXPTYPE t) {
+    int i;
+
+    for (i = 0; TypeTable[i].str; i++) {
+	if (TypeTable[i].type == t)
+	    return TypeTable[i].str;
+    }
+    warning(_("type %d is unimplemented in '%s'"), t, "type2char");
+    static char buf[50];
+    snprintf(buf, 50, "unknown type #%d", t);
+    return buf;
+}
+
+SEXP Rf_type2str(SEXPTYPE t) {
+    // implementation copied (almost) verbatim from util.c
+    int i;
+
+    for (i = 0; TypeTable[i].str; i++) {
+	if (TypeTable[i].type == t)
+	    return mkChar(TypeTable[i].str);
+    }
+    warning(_("type %d is unimplemented in '%s'"), t, "type2str");
+    char buf[50];
+    snprintf(buf, 50, "unknown type #%d", t);
+    return Rf_mkChar(buf);
+}
 
 void init_util() {
 
