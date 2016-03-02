@@ -29,6 +29,7 @@ public class UtilsTest {
 
     @Test
     public void testIsValidName() {
+
         assertFalse(Utils.isValidName(""));
         assertFalse(Utils.isValidName("7"));
         assertTrue(Utils.isValidName(".7"));
