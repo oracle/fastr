@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -19,7 +19,7 @@ public class TestBuiltin_setS4Object extends TestBase {
 
     @Test
     public void testsetS4Object1() {
-        assertEval(Ignored.Unknown,
+        assertEval(Ignored.Unstable,
                         "argv <- list(structure('ObjectsWithPackage', class = structure('signature', package = 'methods'), .Names = '.Object', package = 'methods'), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 

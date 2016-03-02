@@ -33,3 +33,7 @@ rffi.error <- function() {
 rffi.dotExternalAccessArgs <- function(...) {
 	.External("dot_external_access_args", ..., PACKAGE = "testrffi")
 }
+
+rffi.isRString <- function(s) {
+	.Call("invoke_isString", s, PACKAGE = "testrffi")
+}

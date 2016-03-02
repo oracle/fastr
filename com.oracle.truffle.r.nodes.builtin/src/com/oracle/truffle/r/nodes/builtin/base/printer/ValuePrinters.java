@@ -26,9 +26,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public final class ValuePrinters implements ValuePrinter<Object> {
@@ -40,6 +40,7 @@ public final class ValuePrinters implements ValuePrinter<Object> {
     private ValuePrinters() {
         printers.put(String.class, StringPrinter.INSTANCE);
         printers.put(Double.class, DoublePrinter.INSTANCE);
+        printers.put(Integer.class, IntegerPrinter.INSTANCE);
     }
 
     public static void printValue(Object x, PrintContext printCtx) throws IOException {
@@ -58,6 +59,10 @@ public final class ValuePrinters implements ValuePrinter<Object> {
                     printer = StringVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractDoubleVector) {
                     printer = DoubleVectorPrinter.INSTANCE;
+                } else if (x instanceof RAbstractIntVector) {
+                    printer = IntegerVectorPrinter.INSTANCE;
+                } else if (x instanceof RAbstractListVector) {
+                    printer = ListPrinter.INSTANCE;
                 } else {
                     throw new UnsupportedOperationException("TODO");
                 }

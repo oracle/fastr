@@ -11,9 +11,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import java.io.IOException;
-
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.asBlankArg;
+
+import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -29,7 +29,7 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
         return new StringVectorPrintJob(vector, indx, quote, printCtx);
     }
 
-    private class StringVectorPrintJob extends VectorPrintJob {
+    private final class StringVectorPrintJob extends VectorPrintJob {
 
         protected StringVectorPrintJob(RAbstractStringVector vector, int indx, boolean quote, PrintContext printCtx) {
             super(vector, indx, quote, printCtx);
@@ -82,6 +82,11 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
         @Override
         protected int matrixColumnWidthCorrection2() {
             return printCtx.parameters().getGap();
+        }
+
+        @Override
+        protected String elementTypeName() {
+            return "character";
         }
 
     }

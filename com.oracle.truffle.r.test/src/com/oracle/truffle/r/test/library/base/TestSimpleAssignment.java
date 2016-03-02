@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.library.base;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 public class TestSimpleAssignment extends TestBase {
 
@@ -29,16 +29,14 @@ public class TestSimpleAssignment extends TestBase {
 
     @Test
     public void testAssignShadowBuiltin1() {
-        // FIXME print regression
-        assertEval(Ignored.Unknown, "f <- function(b) { c <- function(x,y) 42; c(1,1); }; f(0); f(1)");
-        assertEval(Ignored.Unknown, "f <- function(b) { if (b) c <- function(x,y) 42; c(1,1); }; f(0); f(1)");
+        assertEval("f <- function(b) { c <- function(x,y) 42; c(1,1); }; f(0); f(1)");
+        assertEval("f <- function(b) { if (b) c <- function(x,y) 42; c(1,1); }; f(0); f(1)");
     }
 
     @Test
     public void testAssignFunctionLookup1() {
-        // FIXME print regression
-        assertEval(Ignored.Unknown, "f <- function(b) { c <- 42; c(1,1); }; f(0); f(1)");
-        assertEval(Ignored.Unknown, "f <- function(b) { if (b) c <- 42; c(1,1); }; f(0); f(1)");
+        assertEval("f <- function(b) { c <- 42; c(1,1); }; f(0); f(1)");
+        assertEval("f <- function(b) { if (b) c <- 42; c(1,1); }; f(0); f(1)");
     }
 
     @Test
@@ -48,7 +46,6 @@ public class TestSimpleAssignment extends TestBase {
 
     @Test
     public void testAssign() {
-        // FIXME print regression
         assertEval("{ a<-1 }");
         assertEval("{ a<-FALSE ; b<-a }");
         assertEval("{ x = if (FALSE) 1 }");

@@ -19,8 +19,7 @@ public class TestBuiltin_array extends TestBase {
 
     @Test
     public void testarray1() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L), 59L, structure(list(dr = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59.5')), .Names = 'dr')); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L), 59L, structure(list(dr = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59.5')), .Names = 'dr')); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -51,8 +50,7 @@ public class TestBuiltin_array extends TestBase {
 
     @Test
     public void testarray7() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(10L, 10L, 11L, 10L, 12L, 11L, 13L, 12L, 14L, 13L, 15L, 14L, 16L, 15L, 17L, 16L, 18L, 17L, 19L, 18L, 20L, 19L, 21L, 20L, 22L, 21L, 23L, 22L, 24L, 23L, 25L, 24L, 26L, 25L, 27L, 26L, 28L, 27L, 29L, 28L, 30L, 29L, 31L, 30L, 32L, 31L, 33L, 32L, 34L, 33L, 35L, 34L, 36L, 35L, 37L, 36L, 38L, 36L, 39L, 38L, 40L, 39L), c(2L, 31L), list(c('target', 'actual'), NULL)); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(c(10L, 10L, 11L, 10L, 12L, 11L, 13L, 12L, 14L, 13L, 15L, 14L, 16L, 15L, 17L, 16L, 18L, 17L, 19L, 18L, 20L, 19L, 21L, 20L, 22L, 21L, 23L, 22L, 24L, 23L, 25L, 24L, 26L, 25L, 27L, 26L, 28L, 27L, 29L, 28L, 30L, 29L, 31L, 30L, 32L, 31L, 33L, 32L, 34L, 33L, 35L, 34L, 36L, 35L, 37L, 36L, 38L, 36L, 39L, 38L, 40L, 39L), c(2L, 31L), list(c('target', 'actual'), NULL)); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -62,7 +60,7 @@ public class TestBuiltin_array extends TestBase {
 
     @Test
     public void testarray9() {
-        assertEval(Ignored.Unknown, "argv <- list(integer(0), c(1L, 0L), structure(list('1', NULL), .Names = c('', ''))); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(integer(0), c(1L, 0L), structure(list('1', NULL), .Names = c('', ''))); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -99,7 +97,7 @@ public class TestBuiltin_array extends TestBase {
 
     @Test
     public void testarray16() {
-        assertEval(Ignored.Unknown, "argv <- list(c(1L, 0L), 2L, structure(list(object = c('FALSE', NA)), .Names = 'object')); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(c(1L, 0L), 2L, structure(list(object = c('FALSE', NA)), .Names = 'object')); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -135,7 +133,7 @@ public class TestBuiltin_array extends TestBase {
 
     @Test
     public void testarray23() {
-        assertEval(Ignored.Unknown, "argv <- list(c(1L, 2L, 1L), 3L, structure(list(c('1', '2', NA)), .Names = '')); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(c(1L, 2L, 1L), 3L, structure(list(c('1', '2', NA)), .Names = '')); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

@@ -32,6 +32,8 @@ import com.oracle.truffle.r.runtime.context.RContext;
 @RBuiltin(name = ".isMethodsDispatchOn", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
 public abstract class IsMethodsDispatchOn extends RBuiltinNode {
 
+    public abstract byte execute();
+
     @Specialization
     protected byte doIsMethodsDispatchOn() {
         controlVisibility();

@@ -123,5 +123,10 @@ public class TestBuiltin_all extends TestBase {
         assertEval(Ignored.Unknown, "{ all(0) }");
         assertEval(Ignored.Unknown, "{ all(TRUE,c(TRUE,TRUE),1) }");
         assertEval(Ignored.Unknown, "{ all(TRUE,c(TRUE,TRUE),1,0) }");
+
+        assertEval("{ all(NULL) }");
+        assertEval("{ all(NULL, NULL) }");
+        assertEval("{ all(NULL, c(TRUE)) }");
+        assertEval("{ all(NULL, c(FALSE)) }");
     }
 }

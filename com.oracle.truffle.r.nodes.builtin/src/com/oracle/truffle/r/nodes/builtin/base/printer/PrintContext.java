@@ -23,11 +23,14 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PrintContext {
     private final ValuePrinterNode pn;
     private final PrintParameters params;
     private final PrintWriter out;
+    private final Map<String, Object> attrs = new HashMap<>();
 
     public PrintContext(ValuePrinterNode printerNode, PrintParameters parameters, PrintWriter output) {
         this.pn = printerNode;
@@ -47,8 +50,18 @@ public class PrintContext {
         return out;
     }
 
+    public Object getAttribute(String attrName) {
+        return attrs.get(attrName);
+    }
+
+    public void setAttribute(String attrName, Object attrValue) {
+        attrs.put(attrName, attrValue);
+    }
+
     public PrintContext cloneContext() {
-        return new PrintContext(pn, params.cloneParameters(), out);
+        PrintContext cloned = new PrintContext(pn, params.cloneParameters(), out);
+        cloned.attrs.putAll(attrs);
+        return cloned;
     }
 
 }

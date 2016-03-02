@@ -28,7 +28,6 @@ import java.util.List;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -55,15 +54,15 @@ import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
 import com.oracle.truffle.r.parser.tools.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RGroupGenerics;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
-import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -298,7 +297,9 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         List<RSyntaxCall> calls = new ArrayList<>();
         RSyntaxElement current = lhs;
         while (!(current instanceof RSyntaxLookup)) {
-            assert current instanceof RSyntaxCall;
+            if (!(current instanceof RSyntaxCall)) {
+                throw RError.error(RError.NO_CALLER, RError.Message.NON_LANG_ASSIGNMENT_TARGET);
+            }
             RSyntaxCall call = (RSyntaxCall) current;
             calls.add(call);
 
@@ -351,11 +352,25 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
     }
 
-    private static RootCallTarget createFunctionCallTarget(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, String description) {
+    public static FastPathFactory createFunctionFastPath(RootCallTarget callTarget) {
+        FunctionDefinitionNode def = (FunctionDefinitionNode) callTarget.getRootNode();
+        return EvaluatedArgumentsVisitor.process(def.getBody(), def.getSignature());
+    }
+
+    @Override
+    public RSyntaxNode function(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, RSyntaxNode assignedTo) {
+        String description = getFunctionDescription(source, assignedTo);
+        RootCallTarget callTarget = rootFunction(source, params, body, description);
+        return FunctionExpressionNode.create(source, callTarget);
+    }
+
+    @Override
+    public RootCallTarget rootFunction(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, String name) {
         // Parse argument list
         RNode[] defaultValues = new RNode[params.size()];
         SaveArgumentsNode saveArguments;
         AccessArgumentNode[] argAccessNodes = new AccessArgumentNode[params.size()];
+        SourceSection[] argSourceSections = new SourceSection[params.size()];
         PostProcessArgumentsNode argPostProcess;
         RNode[] init = new RNode[params.size()];
         for (int i = 0; i < params.size(); i++) {
@@ -378,6 +393,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
             // Store formal arguments
             defaultValues[i] = defaultValue;
+
+            argSourceSections[i] = arg.source;
         }
 
         saveArguments = new SaveArgumentsNode(init);
@@ -394,35 +411,15 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
 
         FrameDescriptor descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(description != null && !description.isEmpty() ? description : "<function>", descriptor);
-        FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(source, descriptor, saveArguments, body, formals, description, argPostProcess);
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(name != null && !name.isEmpty() ? name : "<function>", descriptor);
+        FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(source, descriptor, argSourceSections, saveArguments, body, formals, name, argPostProcess);
         return Truffle.getRuntime().createCallTarget(rootNode);
-    }
-
-    public static FastPathFactory createFunctionFastPath(RootCallTarget callTarget) {
-        FunctionDefinitionNode def = (FunctionDefinitionNode) callTarget.getRootNode();
-        return EvaluatedArgumentsVisitor.process(def.getBody(), def.getSignature());
-    }
-
-    @Override
-    public RSyntaxNode function(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, RSyntaxNode assignedTo) {
-        String description = getFunctionDescription(source, assignedTo);
-        RootCallTarget callTarget = createFunctionCallTarget(source, params, body, description);
-        return FunctionExpressionNode.create(source, callTarget);
-    }
-
-    @Override
-    public RFunction rootFunction(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, String name, MaterializedFrame enclosing) {
-        RootCallTarget callTarget = createFunctionCallTarget(source, params, body, name);
-        FastPathFactory fastPath = createFunctionFastPath(callTarget);
-        FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosing);
-        return RDataFactory.createFunction(name, callTarget, null, enclosing, fastPath, ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch());
     }
 
     @Override
     public RSyntaxNode constant(SourceSection source, Object value) {
         assert value instanceof Byte || value instanceof Integer || value instanceof Double || value instanceof RComplex || value instanceof String || value instanceof RNull ||
-                        value instanceof REmpty : value.getClass();
+                        value instanceof REmpty || value instanceof RAbstractVector : value.getClass();
         if (value instanceof String && !RRuntime.isNA((String) value)) {
             return ConstantNode.create(source, ((String) value).intern());
         } else {

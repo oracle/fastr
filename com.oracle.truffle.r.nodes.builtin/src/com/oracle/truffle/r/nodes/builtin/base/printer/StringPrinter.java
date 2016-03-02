@@ -12,12 +12,10 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.conn.RConnection;
 
 //Transcribed from GnuR, src/main/printutils.c
 

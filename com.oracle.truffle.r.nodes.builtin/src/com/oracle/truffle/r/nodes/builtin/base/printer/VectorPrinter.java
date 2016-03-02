@@ -12,6 +12,8 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.asBlankArg;
+import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.indexWidth;
+import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toStringVector;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -20,7 +22,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -108,11 +109,12 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                         jobMode = vector.getLength() == 0 ? JobMode.empty : JobMode.nonEmpty;
                     }
                 } else if (dims.getLength() == 2) {
-                    mdn = getMatrixDimnames(vector);
+                    mdn = new MatrixDimNames(vector);
                     title = null;
                     names = null;
                     jobMode = JobMode.matrix;
                 } else {
+                    mdn = new MatrixDimNames(vector);
                     title = null;
                     names = null;
                     jobMode = JobMode.array;
@@ -169,7 +171,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                     printMatrix();
                     break;
                 case array:
-                    throw new UnsupportedOperationException("TODO");
+                    printArray();
             }
         }
 
@@ -258,10 +260,10 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
         }
 
         private void printMatrix() throws IOException {
-            printMatrix(0);
+            printMatrix(0, true);
         }
 
-        private void printMatrix(int offset) throws IOException {
+        private void printMatrix(int offset, boolean printij) throws IOException {
             PrintParameters pp = printCtx.parameters();
 
             RAbstractStringVector rl = matrixDimNames.rl;
@@ -289,7 +291,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                 rpr = pp.getMax() / c;
             }
 
-            printMatrix(offset, rpr, r, c, rl, cl, rn, cn, true);
+            printMatrix(offset, rpr, r, c, rl, cl, rn, cn, printij);
 
             if (rpr < r) {
                 out.printf(" [ reached getOption(\"max.print\") -- omitted %d rows ]\n", r - rpr);
@@ -386,7 +388,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                         matrixRowLabel(rl, i, rlabw, lbloff); /* starting with an "\n" */
                         if (printij) {
                             for (j = jmin; j < jmax; j++) {
-                                printCell(i + j * r, w[j]);
+                                printCell(offset + i + j * r, w[j]);
                             }
                         }
                     }
@@ -506,6 +508,98 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
             }
         }
 
+        private void printArray() throws IOException {
+            PrintParameters pp = printCtx.parameters();
+
+            MatrixDimNames mdn = this.matrixDimNames;
+            int ndim = dims.getLength();
+
+            int i;
+            int j;
+            int nb;
+            int nbpr;
+            int nrlast;
+            int nr = dims.getDataAt(0);
+            int nc = dims.getDataAt(1);
+            int b = nr * nc;
+            boolean maxreached;
+            boolean hasdnn = mdn.axisNames != null;
+
+            RAbstractStringVector dn;
+            RAbstractStringVector dnn = mdn.axisNames;
+
+            /*
+             * nb := #{entries} in a slice such as x[1,1,..] or equivalently, the number of matrix
+             * slices x[ , , *, ..] which are printed as matrices -- if options("max.print") allows
+             */
+            for (i = 2, nb = 1; i < ndim; i++) {
+                nb *= dims.getDataAt(i);
+            }
+            maxreached = (b > 0 && pp.getMax() / b < nb);
+            if (maxreached) { /* i.e., also b > 0, nr > 0, nc > 0, nb > 0 */
+                /* nb_pr := the number of matrix slices to be printed */
+                nbpr = (int) Math.ceil((double) pp.getMax() / b);
+                /*
+                 * for the last, (nb_pr)th matrix slice, use only nr_last rows; using floor(), not
+                 * ceil(), since 'nc' could be huge:
+                 */
+                nrlast = (pp.getMax() - b * (nbpr - 1)) / nc;
+                if (nrlast == 0) {
+                    nbpr--;
+                    nrlast = nr;
+                }
+            } else {
+                nbpr = (nb > 0) ? nb : 1; // do print *something* when dim = c(a,b,0)
+                nrlast = nr;
+            }
+
+            for (i = 0; i < nbpr; i++) {
+                boolean doij = nb > 0;
+                boolean ilast = (i == nbpr - 1); /* for the last slice */
+                int usenr = ilast ? nrlast : nr;
+                if (doij) {
+                    int k = 1;
+                    out.print(", ");
+                    for (j = 2; j < ndim; j++) {
+                        int l = (i / k) % dims.getDataAt(j) + 1;
+                        if (mdn.hasDimNames &&
+                                        ((dn = mdn.getDimNamesAt(j)) != null)) {
+                            if (hasdnn) {
+                                out.printf(", %s = %s",
+                                                dnn.getDataAt(j),
+                                                dn.getDataAt(l - 1));
+                            } else {
+                                out.printf(", %s", dn.getDataAt(l - 1));
+                            }
+                        } else {
+                            out.printf(", %d", l);
+                        }
+                        k *= dims.getDataAt(j);
+                    }
+                    out.print("\n\n");
+                } else { // nb == 0 -- e.g. <2 x 3 x 0 array of logical>
+                    for (i = 0; i < ndim; i++) {
+                        out.printf("%s%d", (i == 0) ? "<" : " x ", dims.getDataAt(i));
+                    }
+                    out.printf(" array of %s>\n", elementTypeName());
+                }
+
+                // int offset, int rpr, int r, int c,
+                // RAbstractStringVector rl, RAbstractStringVector cl, String rn, String cn,
+                // boolean printij
+                printMatrix(i * b, usenr, nr, nc, mdn.rl, mdn.cl, mdn.rn, mdn.cn, doij);
+
+                out.println();
+            }
+        }
+
+        /**
+         * See TypeTable in util.c.
+         *
+         * @return the R-name of the element type
+         */
+        protected abstract String elementTypeName();
+
         /**
          * @param offs the beginning offset in the internal store
          * @param len the number of elements to involve in formatting
@@ -567,64 +661,45 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
         out.printf(fmt, "", i);
     }
 
-    private static int indexWidth(int n) {
-        return (int) (Math.log10(n + 0.5) + 1);
-    }
-
     private static final class MatrixDimNames {
+        final RList dimnames;
         final RAbstractStringVector rl;
         final RAbstractStringVector cl;
         final String rn;
         final String cn;
+        final boolean hasDimNames;
+        final RAbstractStringVector axisNames;
 
-        private MatrixDimNames(RAbstractStringVector rl, RAbstractStringVector cl, String rn, String cn) {
-            super();
-            this.rl = rl;
-            this.cl = cl;
-            this.rn = rn;
-            this.cn = cn;
-        }
+        MatrixDimNames(RAbstractVector x) {
+            dimnames = Utils.<RList> castTo(x.getAttr(dummyAttrProfiles, RRuntime.DIMNAMES_ATTR_KEY));
 
-    }
-
-    private static MatrixDimNames getMatrixDimnames(RAbstractVector x) {
-        // output parameters
-        RAbstractStringVector rl;
-        RAbstractStringVector cl;
-        String rn;
-        String cn;
-
-        RList dimnames = Utils.<RList> castTo(x.getAttr(dummyAttrProfiles, RRuntime.DIMNAMES_ATTR_KEY));
-
-        if (dimnames == null) {
-            rl = null;
-            cl = null;
-            rn = null;
-            cn = null;
-        } else {
-            rl = getDimNamesAt(dimnames, 0);
-            cl = getDimNamesAt(dimnames, 1);
-            RAbstractStringVector nn = Utils.<RAbstractStringVector> castTo(dimnames.getAttr(dummyAttrProfiles, RRuntime.NAMES_ATTR_KEY));
-            if (nn == null) {
+            if (dimnames == null) {
+                rl = null;
+                cl = null;
                 rn = null;
                 cn = null;
+                hasDimNames = false;
+                axisNames = null;
             } else {
-                rn = nn.getDataAt(0);
-                cn = nn.getDataAt(1);
+                rl = getDimNamesAt(0);
+                cl = getDimNamesAt(1);
+                axisNames = Utils.<RAbstractStringVector> castTo(dimnames.getAttr(dummyAttrProfiles, RRuntime.NAMES_ATTR_KEY));
+                if (axisNames == null) {
+                    rn = null;
+                    cn = null;
+                } else {
+                    rn = axisNames.getDataAt(0);
+                    cn = axisNames.getDataAt(1);
+                }
+                hasDimNames = true;
             }
+
         }
 
-        return new MatrixDimNames(rl, cl, rn, cn);
-    }
-
-    private static RAbstractStringVector getDimNamesAt(RList dimNames, int dimLevel) {
-        return toStringVector(dimNames.getDataAt(dimLevel));
-    }
-
-    private static RAbstractStringVector toStringVector(Object o) {
-        if (o instanceof String) {
-            return RString.valueOf((String) o);
+        RAbstractStringVector getDimNamesAt(int dimLevel) {
+            return dimLevel < dimnames.getLength() ? toStringVector(dimnames.getDataAt(dimLevel)) : null;
         }
-        return Utils.<RAbstractStringVector> castTo(o);
+
     }
+
 }

@@ -251,7 +251,7 @@ public class CallRFFIHelper {
     }
 
     public static int Rf_isString(Object x) {
-        return RRuntime.asString(x) == null ? 0 : 1;
+        return RRuntime.checkType(x, RType.Character) ? 1 : 0;
     }
 
     public static int Rf_isNull(Object x) {

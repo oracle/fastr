@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,6 +77,8 @@ public abstract class All extends RBuiltinNode {
             byte result;
             if (argValue instanceof RVector || argValue instanceof RSequence) {
                 result = accumulate((RLogicalVector) castLogicalNode.execute(argValue));
+            } else if (argValue == RNull.instance) {
+                result = RRuntime.LOGICAL_TRUE;
             } else {
                 result = (byte) castLogicalNode.execute(argValue);
             }

@@ -15,6 +15,8 @@ import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.DoubleVectorMetrics;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -172,6 +174,10 @@ public final class DoublePrinter extends AbstractValuePrinter<Double> {
         return new ScientificDouble(sgn, kpower, nsig, roundingwidens);
     }
 
+    public static String encodeReal(double x, DoubleVectorMetrics dm, PrintParameters pp) {
+        return encodeReal(x, dm.maxWidth, dm.d, dm.e, '.', pp);
+    }
+
     public static String encodeReal(double x, int w, int d, int e, char cdec, PrintParameters pp) {
         final String buff;
         String fmt;
@@ -201,8 +207,16 @@ public final class DoublePrinter extends AbstractValuePrinter<Double> {
                 buff = snprintf(NB, fmt, x);
             }
         } else { /* e = 0 */
-            fmt = String.format("%%%d.%df", Math.min(w, (NB - 1)), d);
-            buff = snprintf(NB, fmt, x);
+            StringBuilder sb = new StringBuilder("#.#");
+            DecimalFormat df = new DecimalFormat(sb.toString());
+            df.setRoundingMode(RoundingMode.HALF_EVEN);
+            df.setDecimalSeparatorAlwaysShown(false);
+            df.setMinimumFractionDigits(d);
+            df.setMaximumFractionDigits(d);
+            String ds = df.format(x);
+            int blanks = w - ds.length();
+            fmt = "%" + Utils.asBlankArg(blanks) + "s%s";
+            buff = String.format(fmt, "", ds);
         }
 
         if (cdec != '.') {

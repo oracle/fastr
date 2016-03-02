@@ -31,6 +31,8 @@ import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.base.Inherits;
 import com.oracle.truffle.r.nodes.builtin.base.InheritsNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.IsMethodsDispatchOn;
+import com.oracle.truffle.r.nodes.builtin.base.IsMethodsDispatchOnNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.IsS4;
 import com.oracle.truffle.r.nodes.builtin.base.IsS4NodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.IsTypeFunctions.IsArray;
@@ -56,6 +58,7 @@ public abstract class ValuePrinterNode extends RNode {
     @Child Inherits inheritsBuiltIn = InheritsNodeGen.create(null, null, null);
     @Child IsS4 isS4BuiltIn = IsS4NodeGen.create(null, null, null);
     @Child IsObject isObjectBuiltIn = IsObjectNodeGen.create(null, null, null);
+    @Child IsMethodsDispatchOn isMethodDispatchOnBuiltIn = IsMethodsDispatchOnNodeGen.create(null, null, null);
 
     public boolean isArray(Object o) {
         return RRuntime.fromLogical(isArrayBuiltIn.execute(o));
@@ -75,6 +78,10 @@ public abstract class ValuePrinterNode extends RNode {
 
     public boolean isObject(Object o) {
         return RRuntime.fromLogical(isObjectBuiltIn.execute(o));
+    }
+
+    public boolean isMethodDispatchOn() {
+        return RRuntime.fromLogical(isMethodDispatchOnBuiltIn.execute());
     }
 
     public abstract Object executeString(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt);

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.test.rpackages;
 
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -36,28 +35,14 @@ public class TestRFFIPackage extends TestRPackages {
 
     private static final String[] TEST_PACKAGES = new String[]{"testrffi"};
 
-    @Override
-    public void beforeTest() {
-        // TODO Auto-generated method stub
-        super.beforeTest();
-        setupInstallTestPackages(TEST_PACKAGES);
-    }
-
-    @Override
-    public void afterTest() {
-        // TODO Auto-generated method stub
-        super.afterTest();
-        tearDownUninstallTestPackages(TEST_PACKAGES);
-    }
-
     @BeforeClass
     public static void setupInstallMyTestPackages() {
-        // setupInstallTestPackages(TEST_PACKAGES);
+        setupInstallTestPackages(TEST_PACKAGES);
     }
 
     @AfterClass
     public static void tearDownUninstallMyTestPackages() {
-        // tearDownUninstallTestPackages(TEST_PACKAGES);
+        tearDownUninstallTestPackages(TEST_PACKAGES);
     }
 
     @Test
@@ -66,8 +51,7 @@ public class TestRFFIPackage extends TestRPackages {
                         new String[]{packagePaths.rpackagesLibs.toString()}));
         assertEval(TestBase.template(
                         "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.addInt(2L, 3L); r2 <- rffi.addDouble(2, 3); v <- rffi.populateIntVector(5); v2 <- rffi.dotCModifiedArguments(c(0,1,2,3)); "
-                                        +
-                                        "detach(\"package:testrffi\"); list(r1, r2, v, v2) }",
+                                        + "v3<-rffi.isRString(character(0)); detach(\"package:testrffi\"); list(r1, r2, v, v2, v3) }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
@@ -84,4 +68,5 @@ public class TestRFFIPackage extends TestRPackages {
                         "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.dotExternalAccessArgs(x=1L, 3, c(1,2,3), y=c('a', 'b'), 'b', TRUE, as.raw(12)); detach(\"package:testrffi\"); list(r1) }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
     }
+
 }

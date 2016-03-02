@@ -484,6 +484,10 @@ public abstract class Sprintf extends RBuiltinNode {
             }
         }
         fi.conversion = c;
+        if (c == 'i') {
+            // they seem to be equivalent but 'i' is not handled correctly by the java formatter
+            fi.conversion = 'd';
+        }
         fi.nextChar = j + 1;
         if (fi.numArg == 0 && c != '%') {
             // no arg explicitly given, use args array
