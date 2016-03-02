@@ -55,6 +55,7 @@ import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
 import com.oracle.truffle.r.parser.tools.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RGroupGenerics;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -298,7 +299,9 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         List<RSyntaxCall> calls = new ArrayList<>();
         RSyntaxElement current = lhs;
         while (!(current instanceof RSyntaxLookup)) {
-            assert current instanceof RSyntaxCall;
+            if (!(current instanceof RSyntaxCall)) {
+                throw RError.error(RError.NO_CALLER, RError.Message.NON_LANG_ASSIGNMENT_TARGET);
+            }
             RSyntaxCall call = (RSyntaxCall) current;
             calls.add(call);
 
