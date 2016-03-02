@@ -165,9 +165,10 @@ public final class FrameSlotChangeMonitor {
         /**
          * A set of all lookups that started in this frame descriptor.
          */
-        private final WeakHashMap<Object, LookupResult> lookupResults = new WeakHashMap<>();
+        private final WeakHashMap<Object, WeakReference<LookupResult>> lookupResults = new WeakHashMap<>();
 
-        private StableValue<FrameDescriptor> enclosingFrameDescriptor = new StableValue<>(null, "initial (empty) enclosing frame");
+        private WeakReference<FrameDescriptor> enclosingFrameDescriptor = new WeakReference<>(null);
+        private Assumption enclosingFrameDescriptorAssumption = Truffle.getRuntime().createAssumption("enclosing frame descriptor");
 
         private FrameDescriptorMetaData(String name, MaterializedFrame singletonFrame) {
             this.name = name;
@@ -175,8 +176,22 @@ public final class FrameSlotChangeMonitor {
         }
 
         public void updateEnclosingFrameDescriptor(FrameDescriptor newEnclosingDescriptor) {
-            enclosingFrameDescriptor.getAssumption().invalidate();
-            enclosingFrameDescriptor = new StableValue<>(newEnclosingDescriptor, "enclosing frame");
+            CompilerAsserts.neverPartOfCompilation();
+            if (enclosingFrameDescriptorAssumption != null) {
+                enclosingFrameDescriptorAssumption.invalidate();
+            }
+            enclosingFrameDescriptor = new WeakReference<>(newEnclosingDescriptor);
+            enclosingFrameDescriptorAssumption = Truffle.getRuntime().createAssumption("enclosing frame descriptor");
+        }
+
+        public FrameDescriptor getEnclosingFrameDescriptor() {
+            CompilerAsserts.neverPartOfCompilation();
+            assert enclosingFrameDescriptorAssumption.isValid();
+            return enclosingFrameDescriptor.get();
+        }
+
+        public Assumption getEnclosingFrameDescriptorAssumption() {
+            return enclosingFrameDescriptorAssumption;
         }
     }
 
@@ -188,8 +203,10 @@ public final class FrameSlotChangeMonitor {
      * {@code null} in case this was not possible.
      */
     public static synchronized LookupResult lookup(Frame frame, Object identifier) {
+        CompilerAsserts.neverPartOfCompilation();
         FrameDescriptorMetaData metaData = getMetaData(frame);
-        LookupResult result = metaData.lookupResults.get(identifier);
+        WeakReference<LookupResult> weakResult = metaData.lookupResults.get(identifier);
+        LookupResult result = weakResult == null ? null : weakResult.get();
         if (result != null && result.isValid()) {
             return result;
         }
@@ -211,7 +228,7 @@ public final class FrameSlotChangeMonitor {
                     }
                 }
                 addPreviousLookups(frame, current, identifier);
-                metaData.lookupResults.put(identifier, lookupResult);
+                metaData.lookupResults.put(identifier, new WeakReference<>(lookupResult));
                 return lookupResult;
             }
             Frame next = RArguments.getEnclosingFrame(current);
@@ -226,7 +243,7 @@ public final class FrameSlotChangeMonitor {
         // not frame slot found: missing value
         addPreviousLookups(frame, current, identifier);
         LookupResult lookupResult = new MissingLookupResult(identifier.toString());
-        metaData.lookupResults.put(identifier, lookupResult);
+        metaData.lookupResults.put(identifier, new WeakReference<>(lookupResult));
         return lookupResult;
     }
 
@@ -246,15 +263,18 @@ public final class FrameSlotChangeMonitor {
         assert current != null;
         FrameDescriptorMetaData metaData = getMetaData(current);
         FrameDescriptor nextDesc = next == null ? null : handleBaseNamespaceEnv(next);
-        return metaData.enclosingFrameDescriptor.getValue() == nextDesc;
+        return metaData.getEnclosingFrameDescriptor() == nextDesc;
     }
 
     private static synchronized void invalidateNames(FrameDescriptorMetaData metaData, Collection<Object> identifiers) {
         if (metaData.previousLookups.removeAll(identifiers)) {
             for (Object identifier : identifiers) {
-                LookupResult result = metaData.lookupResults.remove(identifier);
+                WeakReference<LookupResult> result = metaData.lookupResults.remove(identifier);
                 if (result != null) {
-                    result.invalidate();
+                    LookupResult lookup = result.get();
+                    if (lookup != null) {
+                        lookup.invalidate();
+                    }
                 }
             }
             for (FrameDescriptor descriptor : metaData.subDescriptors) {
@@ -292,7 +312,7 @@ public final class FrameSlotChangeMonitor {
         CompilerAsserts.neverPartOfCompilation();
         FrameDescriptorMetaData target = getDescriptorMetaData(descriptor);
         FrameDescriptor newEnclosingDescriptor = handleBaseNamespaceEnv(newEnclosingFrame);
-        return target.enclosingFrameDescriptor.getValue() == newEnclosingDescriptor;
+        return target.getEnclosingFrameDescriptor() == newEnclosingDescriptor;
     }
 
     public static synchronized void initializeEnclosingFrame(FrameDescriptor descriptor, Frame newEnclosingFrame) {
@@ -302,9 +322,8 @@ public final class FrameSlotChangeMonitor {
         FrameDescriptor newEnclosingDescriptor = handleBaseNamespaceEnv(newEnclosingFrame);
 
         // this function can be called multiple times with the same enclosing descriptor
-        assert target.enclosingFrameDescriptor.getAssumption().isValid();
-        if (target.enclosingFrameDescriptor.getValue() != newEnclosingDescriptor) {
-            assert target.enclosingFrameDescriptor.getValue() == null : "existing enclosing descriptor while initializing " + target.name;
+        if (target.getEnclosingFrameDescriptor() != newEnclosingDescriptor) {
+            assert target.getEnclosingFrameDescriptor() == null : "existing enclosing descriptor while initializing " + target.name;
             assert target.lookupResults.isEmpty() : "existing lookup results while initializing " + target.name;
 
             target.updateEnclosingFrameDescriptor(newEnclosingDescriptor);
@@ -327,7 +346,7 @@ public final class FrameSlotChangeMonitor {
         // invalidate existing lookups
         invalidateAllNames(target);
 
-        FrameDescriptor oldEnclosingDescriptor = target.enclosingFrameDescriptor.getValue();
+        FrameDescriptor oldEnclosingDescriptor = target.getEnclosingFrameDescriptor();
         assert (oldEnclosingDescriptor == null) == (oldEnclosingFrame == null) : "mismatch " + oldEnclosingDescriptor + " / " + oldEnclosingFrame;
 
         if (oldEnclosingDescriptor != null) {
@@ -350,8 +369,11 @@ public final class FrameSlotChangeMonitor {
     }
 
     private static void invalidateAllNames(FrameDescriptorMetaData target) {
-        for (Map.Entry<Object, LookupResult> entry : target.lookupResults.entrySet()) {
-            entry.getValue().invalidate();
+        for (Map.Entry<Object, WeakReference<LookupResult>> entry : target.lookupResults.entrySet()) {
+            LookupResult lookup = entry.getValue().get();
+            if (lookup != null) {
+                lookup.invalidate();
+            }
         }
         target.lookupResults.clear();
         target.previousLookups.clear();
@@ -363,12 +385,10 @@ public final class FrameSlotChangeMonitor {
     public static synchronized void detach(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         FrameDescriptorMetaData position = getMetaData(frame);
-        FrameDescriptor oldEnclosingDescriptor = position.enclosingFrameDescriptor.getValue();
+        FrameDescriptor oldEnclosingDescriptor = position.getEnclosingFrameDescriptor();
         FrameDescriptorMetaData oldEnclosing = getMetaData(oldEnclosingDescriptor);
-        FrameDescriptor newEnclosingDescriptor = oldEnclosing.enclosingFrameDescriptor.getValue();
+        FrameDescriptor newEnclosingDescriptor = oldEnclosing.getEnclosingFrameDescriptor();
         FrameDescriptorMetaData newEnclosing = getMetaData(newEnclosingDescriptor);
-
-        assert position.enclosingFrameDescriptor.getAssumption().isValid() && oldEnclosing.enclosingFrameDescriptor.getAssumption().isValid();
 
         invalidateNames(oldEnclosing, oldEnclosingDescriptor.getIdentifiers());
 
@@ -383,8 +403,7 @@ public final class FrameSlotChangeMonitor {
         CompilerAsserts.neverPartOfCompilation();
         FrameDescriptorMetaData position = getMetaData(frame);
         FrameDescriptorMetaData newEnclosing = getMetaData(newEnclosingFrame);
-        assert position.enclosingFrameDescriptor.getAssumption().isValid();
-        FrameDescriptor oldEnclosingDescriptor = position.enclosingFrameDescriptor.getValue();
+        FrameDescriptor oldEnclosingDescriptor = position.getEnclosingFrameDescriptor();
         FrameDescriptorMetaData oldEnclosing = getMetaData(oldEnclosingDescriptor);
 
         invalidateAllNames(newEnclosing);
@@ -393,10 +412,8 @@ public final class FrameSlotChangeMonitor {
         newEnclosing.previousLookups.clear();
         newEnclosing.previousLookups.addAll(oldEnclosing.previousLookups);
 
-        position.enclosingFrameDescriptor.getAssumption().invalidate();
-        position.enclosingFrameDescriptor = new StableValue<>(newEnclosingFrame.getFrameDescriptor(), "enclosing frame");
-        newEnclosing.enclosingFrameDescriptor.getAssumption().invalidate();
-        newEnclosing.enclosingFrameDescriptor = new StableValue<>(oldEnclosingDescriptor, "enclosing frame");
+        position.updateEnclosingFrameDescriptor(newEnclosingFrame.getFrameDescriptor());
+        newEnclosing.updateEnclosingFrameDescriptor(oldEnclosingDescriptor);
         assert frame.getFrameDescriptor() == handleBaseNamespaceEnv(frame);
         assert !newEnclosing.name.equals("global") || !position.name.equals("base");
         newEnclosing.subDescriptors.add(frame.getFrameDescriptor());
@@ -555,8 +572,9 @@ public final class FrameSlotChangeMonitor {
         frameDescriptors.put(frameDescriptor, new FrameDescriptorMetaData(name, null));
     }
 
-    public static synchronized StableValue<FrameDescriptor> getEnclosingFrameDescriptorAssumption(FrameDescriptor descriptor) {
-        return frameDescriptors.get(descriptor).enclosingFrameDescriptor;
+    public static synchronized Assumption getEnclosingFrameDescriptorAssumption(FrameDescriptor descriptor) {
+        CompilerAsserts.neverPartOfCompilation();
+        return frameDescriptors.get(descriptor).getEnclosingFrameDescriptorAssumption();
     }
 
     public static synchronized StableValue<Object> getStableValueAssumption(FrameDescriptor descriptor, FrameSlot frameSlot, Object value) {

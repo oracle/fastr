@@ -631,9 +631,9 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
             }
         }
 
-        StableValue<FrameDescriptor> enclosingDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(currentDescriptor);
+        Assumption enclosingDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(currentDescriptor);
         if (lastLevel instanceof DescriptorLevel && enclosingDescriptorAssumption != null) {
-            assumptions.add(enclosingDescriptorAssumption.getAssumption());
+            assumptions.add(enclosingDescriptorAssumption);
         } else {
             lastLevel = new NextFrameLevel(lastLevel, next == null ? null : next.getFrameDescriptor());
         }
