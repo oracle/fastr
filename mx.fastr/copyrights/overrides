@@ -688,3 +688,4 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/p
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/IntegerPrinter.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/IntegerVectorPrinter.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/ListPrinter.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/ComplexVectorPrinter.java,gnu_r_gentleman_ihaka2.copyright

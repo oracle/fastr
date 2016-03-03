@@ -48,7 +48,8 @@ public final class DoublePrinter extends AbstractValuePrinter<Double> {
     };
     private static final int KP_MAX = 22;
     private static final int R_dec_min_exponent = -308;
-    private static final int NB = 1000;
+
+    public static final int NB = 1000;
 
     public static class ScientificDouble {
         public final int sgn;
@@ -188,7 +189,7 @@ public final class DoublePrinter extends AbstractValuePrinter<Double> {
         }
         if (!RRuntime.isFinite(x)) {
             int numBlanks = Math.min(w, (NB - 1));
-            String naFmt = "%" + numBlanks + "s";
+            String naFmt = "%" + Utils.asBlankArg(numBlanks) + "s";
             if (RRuntime.isNA(x)) {
                 buff = snprintf(NB, naFmt, pp.getNaString());
             } else if (RRuntime.isNAorNaN(x)) {

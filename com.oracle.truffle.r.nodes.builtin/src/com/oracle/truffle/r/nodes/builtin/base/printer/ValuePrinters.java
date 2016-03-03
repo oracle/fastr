@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -61,6 +62,8 @@ public final class ValuePrinters implements ValuePrinter<Object> {
                     printer = DoubleVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractIntVector) {
                     printer = IntegerVectorPrinter.INSTANCE;
+                } else if (x instanceof RAbstractComplexVector) {
+                    printer = ComplexVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractListVector) {
                     printer = ListPrinter.INSTANCE;
                 } else {
