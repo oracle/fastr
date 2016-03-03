@@ -29,79 +29,121 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.*;
 
+/**
+ * Prints the "syntax" tree to the standard output connection. Three "modes" are implemented:
+ * <ol>
+ * <li><b>node</b>: Use the Truffle {@link NodeVisitor}, which will visit every node in the tree.
+ * Only nodes that return {@code true} to {@link RSyntaxNode#isSyntax()} are processed. N.B. This
+ * will reach nodes that implement {@link RSyntaxNode} but are used in {@link RSyntaxNode#INTERNAL}
+ * mode</li>
+ * <li><b>syntaxnode</b>: Use the {@link RSyntaxNodeVisitor}. The main difference from mode
+ * {@code node} is that the children of non-syntax nodes are not visited at all.</li>
+ * <li><b<syntaxelement</b>: Use the {@link RSyntaxVisitor} to visit the "logical" syntax tree.</li>
+ * </ol>
+ *
+ */
 public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
     @Specialization
     @TruffleBoundary
-    protected RNull printTree(RFunction function, byte printSourceLogical, byte visitAll, byte printTagsLogical) {
+    protected RNull printTree(RFunction function, byte printSourceLogical, RAbstractStringVector visitMode, byte printTagsLogical) {
         boolean printSource = RRuntime.fromLogical(printSourceLogical);
         boolean printTags = RRuntime.fromLogical(printTagsLogical);
-        Node root = function.getTarget().getRootNode();
-        if (RRuntime.fromLogical(visitAll)) {
-            root.accept(new NodeVisitor() {
+        FunctionDefinitionNode root = (FunctionDefinitionNode) function.getTarget().getRootNode();
+        switch (visitMode.getDataAt(0)) {
+            case "node":
+                root.accept(new NodeVisitor() {
 
-                public boolean visit(Node node) {
-                    if (RBaseNode.isRSyntaxNode(node)) {
-                        SourceSection ss = node.getSourceSection();
-                        // All syntax nodes should have source sections
-                        if (ss == null) {
-                            String msg = String.format("*** %s has null source section", node.getClass().getSimpleName());
-                            writeString(msg, true);
+                    public boolean visit(Node node) {
+                        if (RBaseNode.isRSyntaxNode(node)) {
+                            writeString(node.getClass().getSimpleName(), false);
+                            SourceSection ss = node.getSourceSection();
+                            processSourceSection(ss, printSource, printTags);
+                            printnl();
                         }
+                        return true;
                     }
-                    return true;
-                }
 
-            });
-        } else {
-            RSyntaxNode.accept(root, 0, new RSyntaxNodeVisitor() {
+                });
+                break;
 
-                public boolean visit(RSyntaxNode node, int depth) {
-                    for (int i = 0; i < depth; i++) {
-                        writeString("  ", false);
+            case "syntaxnode":
+                RSyntaxNode.accept(root, 0, new RSyntaxNodeVisitor() {
+
+                    public boolean visit(RSyntaxNode node, int depth) {
+                        printIndent(depth);
+                        writeString(node.getClass().getSimpleName(), false);
+                        SourceSection ss = ((Node) node).getSourceSection();
+                        processSourceSection(ss, printSource, printTags);
+                        printnl();
+                        return true;
                     }
-                    writeString(node.getClass().getSimpleName(), false);
-                    SourceSection ss = ((Node) node).getSourceSection();
-                    // All syntax nodes should have source sections
-                    if (ss == null) {
-                        writeString(" *** null source section", false);
-                    } else {
-                        if (printSource) {
-                            printSourceCode(ss);
+                }, true);
+                break;
+
+            case "syntaxelement":
+                RSyntaxVisitor<Void> visitor = new RSyntaxVisitor<Void>() {
+                    private int depth;
+
+                    @Override
+                    protected Void visit(RSyntaxCall element) {
+                        printIndent(depth);
+                        writeString(element.getClass().getSimpleName(), false);
+                        processSourceSection(element.getSourceSection(), printSource, printTags);
+                        printnl();
+                        RSyntaxElement lhs = element.getSyntaxLHS();
+                        RSyntaxElement[] arguments = element.getSyntaxArguments();
+                        accept(lhs);
+                        for (RSyntaxElement arg : arguments) {
+                            depth++;
+                            accept(arg);
+                            depth--;
                         }
-                        if (printTags) {
-                            writeString(": tags [ ", false);
-                            for (int i = 0; i < RSyntaxTags.ALL_TAGS.length; i++) {
-                                String tag = RSyntaxTags.ALL_TAGS[i];
-                                if (ss.hasTag(tag)) {
-                                    writeString(tag, false);
-                                    writeString(" ", false);
-                                }
-                            }
-                            writeString("]", false);
-                        }
+                        return null;
                     }
-                    writeString("", true);
-                    return true;
-                }
-            }, true);
+
+                    @Override
+                    protected Void visit(RSyntaxConstant element) {
+                        printIndent(depth);
+                        writeString(element.getClass().getSimpleName(), false);
+                        processSourceSection(element.getSourceSection(), printSource, printTags);
+                        printnl();
+                        return null;
+                    }
+
+                    @Override
+                    protected Void visit(RSyntaxLookup element) {
+                        printIndent(depth);
+                        writeString("RSyntaxLookup # ", false);
+                        writeString(element.getIdentifier(), true);
+                        return null;
+                    }
+
+                    @Override
+                    protected Void visit(RSyntaxFunction element) {
+                        printIndent(depth);
+                        writeString(element.getClass().getSimpleName(), false);
+                        processSourceSection(element.getSourceSection(), printSource, printTags);
+                        printnl();
+                        depth++;
+                        accept(element.getSyntaxBody());
+                        depth--;
+                        return null;
+                    }
+
+                };
+                visitor.accept(root.getBody());
+                break;
+
         }
         return RNull.instance;
-    }
-
-    private void printSourceCode(SourceSection ss) {
-        String code = ss.getCode();
-        if (code.length() > 20) {
-            code = code.substring(0, 20) + " ....";
-        }
-        code = code.replace("\n", "\\n ");
-        writeString(" : ", false);
-        writeString(code.length() == 0 ? "<EMPTY>" : code, false);
     }
 
     @SuppressWarnings("unused")
@@ -110,11 +152,58 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
         throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
-    private void writeString(String msg, boolean nl) {
+    private static void printIndent(int depth) {
+        for (int i = 0; i < depth; i++) {
+            writeString("  ", false);
+        }
+    }
+
+    private static void processSourceSection(SourceSection ss, boolean printSource, boolean printTags) {
+        // All syntax nodes should have source sections
+        if (ss == null) {
+            writeString(" *** null source section", false);
+        } else {
+            if (printSource) {
+                printSourceCode(ss);
+            }
+            if (printTags) {
+                printTags(ss);
+            }
+        }
+
+    }
+
+    private static void printSourceCode(SourceSection ss) {
+        String code = ss.getCode();
+        if (code.length() > 40) {
+            code = code.substring(0, 40) + " ....";
+        }
+        code = code.replace("\n", "\\n ");
+        writeString(" # ", false);
+        writeString(code.length() == 0 ? "<EMPTY>" : code, false);
+    }
+
+    private static void printTags(SourceSection ss) {
+        writeString(" # tags [ ", false);
+        for (int i = 0; i < RSyntaxTags.ALL_TAGS.length; i++) {
+            String tag = RSyntaxTags.ALL_TAGS[i];
+            if (ss.hasTag(tag)) {
+                writeString(tag, false);
+                writeString(" ", false);
+            }
+        }
+        writeString("]", false);
+    }
+
+    private static void printnl() {
+        writeString("", true);
+    }
+
+    private static void writeString(String msg, boolean nl) {
         try {
             StdConnections.getStdout().writeString(msg, nl);
         } catch (IOException ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage() == null ? ex : ex.getMessage());
+            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, ex.getMessage() == null ? ex : ex.getMessage());
         }
     }
 
