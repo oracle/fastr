@@ -55,6 +55,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     @Child private PositionsCheckNode positionsCheckNode;
     @Child private SetNamesNode setNamesNode;
     @Children private final CachedExtractVectorNode[] extractNames;
+    @Children private final CachedExtractVectorNode[] extractNamesAlternative;
 
     @Child private ExtractDimNamesNode extractDimNames;
 
@@ -73,6 +74,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         this.dropDimensionsClass = dropDimensions.getClass();
         Object[] convertedPositions = filterPositions(positions);
         this.extractNames = new CachedExtractVectorNode[convertedPositions.length];
+        this.extractNamesAlternative = new CachedExtractVectorNode[convertedPositions.length];
         this.exact = logicalAsBoolean(exact, DEFAULT_EXACT);
         this.dropDimensions = logicalAsBoolean(dropDimensions, DEFAULT_DROP_DIMENSION);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, this.exact, false, recursive);
@@ -371,9 +373,17 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             extractNames[dimension] = insert(new CachedExtractVectorNode(mode, originalNames, positions, (RTypedValue) originalExact, (RTypedValue) originalDropDimensions, recursive));
         }
 
-        assert extractNames[dimension].isSupported(originalNames, positions, originalExact, originalDropDimensions);
-        Object newNames = extractNames[dimension].apply(originalNames, positions, profiles, originalExact, originalDropDimensions);
-        return newNames;
+        if (extractNames[dimension].isSupported(originalNames, positions, originalExact, originalDropDimensions)) {
+            return extractNames[dimension].apply(originalNames, positions, profiles, originalExact, originalDropDimensions);
+        } else {
+            // necessary because the positions might change to logical in case of negative indices
+            if (extractNamesAlternative[dimension] == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                extractNamesAlternative[dimension] = insert(new CachedExtractVectorNode(mode, originalNames, positions, (RTypedValue) originalExact, (RTypedValue) originalDropDimensions, recursive));
+            }
+            assert extractNamesAlternative[dimension].isSupported(originalNames, positions, originalExact, originalDropDimensions);
+            return extractNamesAlternative[dimension].apply(originalNames, positions, profiles, originalExact, originalDropDimensions);
+        }
     }
 
     private void setNames(RVector vector, Object newNames) {
