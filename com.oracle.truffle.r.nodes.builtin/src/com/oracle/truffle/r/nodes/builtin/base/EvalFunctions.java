@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,18 +22,36 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.EvalFunctionsFactory.EvalEnvCastNodeGen;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDataFrame;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * The {@code eval} {@code .Internal} and the {@code withVisible} {@code .Primitive}.
@@ -55,46 +73,61 @@ public class EvalFunctions {
         }
     }
 
-    @RBuiltin(name = "eval", kind = INTERNAL, parameterNames = {"expr", "envir", "enclos"})
-    public abstract static class Eval extends EvalAdapter {
+    public abstract static class EvalEnvCast extends RBaseNode {
 
-        public abstract Object execute(VirtualFrame frame, Object expr, REnvironment envir, REnvironment enclos);
+        public abstract REnvironment execute(Object env, REnvironment enclos);
 
         private final RAttributeProfiles attributeProfiles = RAttributeProfiles.create();
 
         @Specialization
-        protected Object doEval(VirtualFrame frame, Object expr, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) {
-            controlVisibility();
-            return doEvalBody(RArguments.getDepth(frame) + 1, expr, envir);
+        protected REnvironment cast(REnvironment env, @SuppressWarnings("unused") REnvironment enclos) {
+            return env;
         }
 
         @Specialization
-        protected Object doEval(VirtualFrame frame, Object expr, @SuppressWarnings("unused") RNull envir, REnvironment enclos) {
-            controlVisibility();
-            return doEvalBody(RArguments.getDepth(frame) + 1, expr, enclos);
+        protected REnvironment cast(@SuppressWarnings("unused") RNull env, REnvironment enclos) {
+            return enclos;
         }
 
         @Specialization
-        protected Object doEval(VirtualFrame frame, Object expr, RList list, REnvironment enclos) {
-            controlVisibility();
-            return doEvalBody(RArguments.getDepth(frame) + 1, expr, REnvironment.createFromList(attributeProfiles, list, enclos));
+        protected REnvironment cast(RList list, REnvironment enclos) {
+            return REnvironment.createFromList(attributeProfiles, list, enclos);
         }
 
         @Specialization
-        protected Object doEval(VirtualFrame frame, Object expr, RPairList list, REnvironment enclos) {
-            controlVisibility();
-            return doEvalBody(RArguments.getDepth(frame) + 1, expr, REnvironment.createFromList(attributeProfiles, list.toRList(), enclos));
+        protected REnvironment cast(RPairList list, REnvironment enclos) {
+            return REnvironment.createFromList(attributeProfiles, list.toRList(), enclos);
         }
 
         @Specialization
-        protected Object doEval(VirtualFrame frame, Object expr, RDataFrame dataFrame, REnvironment enclos) {
-            controlVisibility();
+        protected REnvironment cast(RDataFrame dataFrame, REnvironment enclos) {
             RVector vector = dataFrame.getVector();
             if (vector instanceof RList) {
-                return doEvalBody(RArguments.getDepth(frame) + 1, expr, REnvironment.createFromList(attributeProfiles, (RList) vector, enclos));
+                return REnvironment.createFromList(attributeProfiles, (RList) vector, enclos);
             } else {
                 throw RError.nyi(this, "eval on non-list dataframe");
             }
+        }
+
+        @Fallback
+        @TruffleBoundary
+        protected REnvironment doEval(@SuppressWarnings("unused") Object env, @SuppressWarnings("unused") REnvironment enclos) {
+            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        }
+    }
+
+    @RBuiltin(name = "eval", kind = INTERNAL, parameterNames = {"expr", "envir", "enclos"})
+    public abstract static class Eval extends EvalAdapter {
+
+        @Specialization
+        protected Object doEval(VirtualFrame frame, Object expr, Object envir, REnvironment enclos, //
+                        @Cached("createCast()") EvalEnvCast envCast) {
+            controlVisibility();
+            return doEvalBody(RArguments.getDepth(frame) + 1, expr, envCast.execute(envir, enclos));
+        }
+
+        protected EvalEnvCast createCast() {
+            return EvalEnvCastNodeGen.create();
         }
 
         @SuppressWarnings("unused")
