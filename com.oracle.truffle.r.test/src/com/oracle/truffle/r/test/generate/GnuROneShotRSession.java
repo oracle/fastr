@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,16 +23,30 @@
 package com.oracle.truffle.r.test.generate;
 
 import java.io.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 
+import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.RVersionNumber;
 import com.oracle.truffle.r.test.TestBase;
 
 /**
  * A non-interactive one-shot invocation of GnuR that is robust, if slow, in the face of
  * multiple-line output.
+ *
+ * Ideally we would use the version of GnuR internal to FastR to ensure consistency, but there are
+ * currently some differences in behavior (TBD). Which R is used is controlled by the environment
+ * variable {@code FASTR_TESTGEN_GNUR}. If unset, we take the default, which is currently the system
+ * installed version (more precisely whatever "R" resolves to on the PATH). If
+ * {@code FASTR_TESTGEN_GNUR} is set to {@code internal}, we use the internally built GnuR. Any
+ * other value behaves as if it was unset. {@code PATH}.
  */
 public class GnuROneShotRSession implements RSession {
 
-    protected static final String[] GNUR_COMMANDLINE = new String[]{"R", "--vanilla", "--slave", "--silent"};
+    private static final String[] GNUR_COMMANDLINE = new String[]{"R", "--vanilla", "--slave", "--silent"};
+    private static final String SYSTEM_GNUR_ENV = "FASTR_TESTGEN_GNUR";
+    private static final String NATIVE_PROJECT = "com.oracle.truffle.r.native";
+
     //@formatter:off
     protected static final String GNUR_OPTIONS =
                     "options(echo=FALSE)\n" +
@@ -47,6 +61,11 @@ public class GnuROneShotRSession implements RSession {
     protected static byte[] QUIT = "q()\n".getBytes();
 
     protected Process createGnuR() throws IOException {
+        String testGenGnuR = System.getenv(SYSTEM_GNUR_ENV);
+        if (testGenGnuR != null && testGenGnuR.equals("internal")) {
+            Path gnuRPath = FileSystems.getDefault().getPath(REnvVars.rHome(), NATIVE_PROJECT, "gnur", "R-" + RVersionNumber.FULL, "bin", "R");
+            GNUR_COMMANDLINE[0] = gnuRPath.toString();
+        }
         ProcessBuilder pb = new ProcessBuilder(GNUR_COMMANDLINE);
         // fix time zone to "CET" (to create consistent expected output)
         pb.environment().put("TZ", "CET");
