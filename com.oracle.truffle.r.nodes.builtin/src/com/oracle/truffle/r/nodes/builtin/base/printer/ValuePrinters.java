@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public final class ValuePrinters implements ValuePrinter<Object> {
@@ -42,6 +43,7 @@ public final class ValuePrinters implements ValuePrinter<Object> {
         printers.put(String.class, StringPrinter.INSTANCE);
         printers.put(Double.class, DoublePrinter.INSTANCE);
         printers.put(Integer.class, IntegerPrinter.INSTANCE);
+        printers.put(Byte.class, LogicalPrinter.INSTANCE);
     }
 
     public static void printValue(Object x, PrintContext printCtx) throws IOException {
@@ -62,6 +64,8 @@ public final class ValuePrinters implements ValuePrinter<Object> {
                     printer = DoubleVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractIntVector) {
                     printer = IntegerVectorPrinter.INSTANCE;
+                } else if (x instanceof RAbstractLogicalVector) {
+                    printer = LogicalVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractComplexVector) {
                     printer = ComplexVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractListVector) {
