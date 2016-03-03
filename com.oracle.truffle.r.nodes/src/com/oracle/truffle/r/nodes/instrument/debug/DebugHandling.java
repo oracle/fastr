@@ -345,6 +345,10 @@ public class DebugHandling {
         @Override
         void enable() {
             super.enable();
+            enableChildren();
+        }
+
+        void enableChildren() {
             statementReceiver.enable();
             for (LoopStatementEventReceiver lser : loopStatementReceivers) {
                 lser.enable();
@@ -373,10 +377,7 @@ public class DebugHandling {
         }
 
         void endFinishing() {
-            for (LoopStatementEventReceiver lser : loopStatementReceivers) {
-                lser.enable();
-            }
-            statementReceiver.enable();
+            enableChildren();
         }
 
         @Override
@@ -385,6 +386,12 @@ public class DebugHandling {
                 print("debugging in: ", false);
                 printCall(frame);
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) RArguments.getFunction(frame).getRootNode();
+                /*
+                 * If this is a recursive call, then returnCleanup will not have happened, so we
+                 * enable our child listeners unconditionally. TODO It is possible that the enabled
+                 * state should be stacked to match the call stack in the recursive case.
+                 */
+                enableChildren();
                 boolean brace = fdn.hasBraces();
                 if (brace) {
                     printNode(node, brace);
