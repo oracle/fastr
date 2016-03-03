@@ -557,5 +557,14 @@ public class BasePackage extends RBuiltinPackage {
         addFastPath(baseFrame, "pmin", FastPathFactory.EVALUATE_ARGS);
         addFastPath(baseFrame, "cbind", FastPathFactory.FORCED_EAGER_ARGS);
         addFastPath(baseFrame, "rbind", FastPathFactory.FORCED_EAGER_ARGS);
+
+        setContainsDispatch(baseFrame, "sys.function", "parent.frame", "match.arg", "eval", "[.data.frame", "[[.data.frame", "[<-.data.frame", "[[<-.data.frame");
+    }
+
+    private static void setContainsDispatch(MaterializedFrame baseFrame, String... functions) {
+        for (String name : functions) {
+            RFunction function = ReadVariableNode.lookupFunction(name, baseFrame, false);
+            function.setContainsDispatch(true);
+        }
     }
 }

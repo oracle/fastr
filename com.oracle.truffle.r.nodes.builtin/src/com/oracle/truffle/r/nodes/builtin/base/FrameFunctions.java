@@ -60,6 +60,8 @@ public class FrameFunctions {
     public abstract static class FrameHelper extends RBuiltinNode {
 
         private final ConditionProfile currentFrameProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile caller1Profile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile caller2Profile = ConditionProfile.createBinaryProfile();
         protected final BranchProfile errorProfile = BranchProfile.create();
 
         /**
@@ -84,15 +86,32 @@ public class FrameFunctions {
             } else {
                 actualFrame = depth + n - 1;
             }
+            Frame result = getNumberedFrame(frame, actualFrame);
+            if (result == null) {
+                errorProfile.enter();
+                throw RError.error(this, RError.Message.NOT_THAT_MANY_FRAMES);
+            }
+            return result;
+        }
+
+        protected Frame getNumberedFrame(VirtualFrame frame, int actualFrame) {
+            int depth = RArguments.getDepth(frame);
             if (currentFrameProfile.profile(actualFrame == depth)) {
                 return frame;
             } else {
-                Frame callerFrame = Utils.getStackFrame(frameAccess(), actualFrame);
-                if (callerFrame == null) {
-                    errorProfile.enter();
-                    throw RError.error(this, RError.Message.NOT_THAT_MANY_FRAMES);
+                MaterializedFrame caller1 = RArguments.getCallerFrame(frame);
+                if (caller1Profile.profile(caller1 != null)) {
+                    if (RArguments.getDepth(caller1) == actualFrame) {
+                        return caller1;
+                    }
+                    MaterializedFrame caller2 = RArguments.getCallerFrame(caller1);
+                    if (caller2Profile.profile(caller2 != null)) {
+                        if (RArguments.getDepth(caller2) == actualFrame) {
+                            return caller2;
+                        }
+                    }
                 }
-                return callerFrame;
+                return Utils.getStackFrame(frameAccess(), actualFrame);
             }
         }
     }
@@ -399,7 +418,7 @@ public class FrameFunctions {
 
     }
 
-    @RBuiltin(name = "sys.function", kind = INTERNAL, parameterNames = {"which"})
+    @RBuiltin(name = "sys.function", kind = INTERNAL, parameterNames = {"which"}, splitCaller = true, alwaysSplit = true)
     public abstract static class SysFunction extends FrameHelper {
 
         public abstract Object executeObject(VirtualFrame frame, int which);
@@ -488,7 +507,7 @@ public class FrameFunctions {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, RRuntime.intToString(n));
             }
             int p = RArguments.getDepth(frame) - n - 1;
-            Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, p);
+            Frame callerFrame = getNumberedFrame(frame, p);
             if (nullProfile.profile(callerFrame == null)) {
                 return REnvironment.globalEnv();
             } else {

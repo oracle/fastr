@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -52,7 +53,7 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
     private String name;
     private final RootCallTarget target;
     private final RBuiltinDescriptor builtin;
-    private final boolean containsDispatch;
+    @CompilationFinal private boolean containsDispatch;
 
     private FastPathFactory fastPath;
 
@@ -126,6 +127,10 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
 
     public void setFastPath(FastPathFactory fastPath) {
         this.fastPath = fastPath;
+    }
+
+    public void setContainsDispatch(boolean containsDispatch) {
+        this.containsDispatch = containsDispatch;
     }
 
     @Override
