@@ -56,6 +56,11 @@
 #   internal: direct call to tools::install.packages
 #   context: run in separate FastR context
 
+# By default dependents are installed implicitly by the utils::install.packages function.
+# However, if --install.dependents is set, the dependents of a package P are installed explicitly
+# in (transitive) dependency order and, if any install fails, the install for P (and any remaining
+# dependents) is aborted.
+
 # test output goes to a directory derived from the '--testdir dir' option (default 'test'). Each package's test output is
 # stored in a subdirectory named after the package.
 
@@ -66,6 +71,7 @@ usage <- function() {
                       "[--no-install | -n] [--create-blacklist] [--blacklist-file file] [--ignore-blacklist]",
 					  "[--initial-blacklist-file file]",
 					  "[--testcount count]", "[--ok-pkg-filelist file]",
+					  "[--install.dependents]",
 					  "[--run-mode mode]",
 					  "[--pkg-filelist file]",
 					  "[--run-tests]",
@@ -77,35 +83,77 @@ usage <- function() {
 	quit(status=1)
 }
 
-# blacklist is a vector of package (names) that are known to be bad, i.e. uninstallable.
+trim <- function (x) gsub("^\\s+|\\s+$", "", x)
+
+strip.version <- function(x) gsub("\\s*\\(.*\\)$", "", x)
+
+default.packages <- c("R", "base", "grid", "splines", "utils",
+		"compiler", "grDevices", "methods", "stats", "stats4",
+		"datasets", "graphics", "parallel", "tools", "tcltk")
+
+# returns a vector of package names that are the direct dependents of pkg
+direct.depends <- function(pkg) {
+	pkgName <- pkg["Package"]
+	all.deps <- character()
+	for (dep in c("Depends", "Imports", "LinkingTo")) {
+		deps <- pkg[dep]
+		if (!is.na(deps)) {
+			if (very.verbose) {
+				cat(dep, " deps for: ", pkgName, " ", deps, "\n")
+			}
+			deplist <- strip.version(trim(unlist(strsplit(deps, fixed=T, ","))))
+			# strip out R and the default packages
+			deplist <- deplist[!(deplist %in% default.packages)]
+			all.deps <- append(all.deps, deplist)
+		}
+	}
+	unname(all.deps)
+}
+
+# returns the transitive set of dependencies in install order
+install.order <- function(pkgs, pkg, depth=0L) {
+
+	ndup.append <- function(v, name) {
+		if (!name %in% v) {
+			v <- append(v, name)
+		}
+		v
+	}
+
+	pkgName <- pkg["Package"]
+	result <- character()
+	directs <- direct.depends(pkg)
+	for (direct in directs) {
+		# check it is in avail.pkgs (cran)
+		if (direct %in% avail.pkgs.rownames) {
+			direct.result <- install.order(pkgs, pkgs[direct, ], depth=depth + 1)
+			for (dr in direct.result) {
+				result <- ndup.append(result, dr)
+		    }
+	    }
+    }
+	if (depth > 0L) {
+	    result <- append(result, pkgName)
+    }
+	unname(result)
+}
+
+# blacklist is a vector of package (names) that are known to be uninstallable.
 # the result is a vector of new packages that depend/import/linkto any package on blacklist
 create.blacklist.with <- function(blacklist, iter) {
 	this.blacklist <- vector()
 
-	trim <- function (x) gsub("^\\s+|\\s+$", "", x)
-
-	strip.version <- function(x) gsub("\\s*\\(.*\\)$", "", x)
-
 	if (very.verbose) {
 		cat("Iteration: ", iter, "\n\n")
 	}
-	for (i in (1:length(rownames(avail.pkgs)))) {
+	for (i in (1:length(avail.pkgs.rownames))) {
 		pkg <- avail.pkgs[i, ]
 		pkgName <- pkg["Package"]
 		if (!(pkgName %in% blacklist)) {
 			if (very.verbose) {
 				cat("Processing: ", pkgName, "\n")
 			}
-			all.deps <- vector()
-			for (dep in c("Depends", "Imports", "LinkingTo")) {
-				deps <- pkg[dep]
-				if (!is.na(dep)) {
-					if (very.verbose) {
-						cat(dep, " deps for: ", pkgName, " ", deps, "\n")
-					}
-					all.deps <-  append(all.deps, strip.version(trim(unlist(strsplit(deps, fixed=T, ",")))))
-				}
-			}
+			all.deps = direct.depends(pkg)
 			if (very.verbose) {
 				cat("all.deps for: ", pkgName," ", all.deps, "\n")
 			}
@@ -217,6 +265,9 @@ get.installed.pkgs <- function() {
 }
 
 installed.ok <- function(pkgname) {
+	# try to determine if the install was successful
+	# 1. There must be a directory lib.install/pkgname
+	# 2. There must not be a directory lib.install/00LOCK-pkgname
 	if (!file.exists(file.path(lib.install, pkgname))) {
 		return(FALSE)
 	}
@@ -227,9 +278,11 @@ installed.ok <- function(pkgname) {
 }
 
 # find the available packages from contriburl and match those against pkg.pattern
-# sets global variables avail.pkgs and toinstall.pkgs
+# sets global variables avail.pkgs and toinstall.pkgs, the latter being
+# of the same type as avail.pkgs but containing only those packages to install
 get.pkgs <- function() {
 	avail.pkgs <<- available.packages(contriburl=contriburl, type="source")
+	avail.pkgs.rownames <<- rownames(avail.pkgs)
 	if (pkg.list.installed) {
 		pkg.filelist <- get.installed.pkgs()
 		if (length(pkg.filelist) == 0) {
@@ -262,7 +315,11 @@ do.it <- function() {
 		}
 	}
 
-	install.pkgs <- function(pkgnames) {
+	# Serially install the packages in pkgnames.
+	# Return TRUE if the entire install succeeded, FALSE otherwise
+	# If are.dependents=T, this is a nested install of the dependents
+	# of one of the initial list.
+	install.pkgs <- function(pkgnames, are.dependents=F) {
 		if (verbose && !dry.run) {
 			cat("packages to install (+dependents):\n")
 			for (pkgname in pkgnames) {
@@ -271,20 +328,41 @@ do.it <- function() {
 		}
 		install.count = 1
 		install.total = length(pkgnames)
+		result <- TRUE
 		for (pkgname in pkgnames) {
+			dependent.install.ok <- T
 			if (pkgname %in% blacklist) {
 				cat("not installing:", pkgname, " - blacklisted\n")
 			} else {
+				if (!are.dependents && install.dependents) {
+					dependents <- install.order(avail.pkgs, avail.pkgs[pkgname, ])
+					dependent.install.ok = install.pkgs(dependents, are.dependents=T)
+				}
 				if (dry.run) {
 					cat("would install:", pkgname, "\n")
 				} else {
-					cat("installing:", pkgname, "(", install.count, "of", install.total, ")", "\n")
-					install.package(pkgname)
+					if (dependent.install.ok) {
+						if (pkgname %in% names(install.status)) {
+							# already attempted
+							if (!install.status[pkgname]) {
+								# abort this (nested) install
+								return(FALSE)
+							}
+						} else {
+							cat("installing:", pkgname, "(", install.count, "of", install.total, ")", "\n")
+							this.result <- install.package(pkgname)
+							result <- result && this.result
+							if (are.dependents && !this.result) {
+								cat("aborting dependents install\n")
+								return(FALSE)
+							}
+						}
+					}
 				}
 			}
 			install.count = install.count + 1
 		}
-
+		return(result)
 	}
 
 	if (list.versions) {
@@ -356,6 +434,10 @@ install.package <- function(pkgname) {
 	} else if (run.mode == "context") {
 		stop("context run-mode not implemented\n")
 	}
+	rc <- installed.ok(pkgname)
+	names(rc) <- pkgname
+	install.status <- append(install.status, rc)
+	return(rc)
 }
 
 system.install <- function(pkgname) {
@@ -474,6 +556,8 @@ parse.args <- function() {
 			print.ok.installs <<- T
 		} else if (a == "--list-versions") {
 			list.versions <<- TRUE
+		} else if (a == "--install-dependents") {
+			install.dependents <<- TRUE
 		} else {
 			if (grepl("^-.*", a)) {
 				usage()
@@ -494,6 +578,7 @@ cat.args <- function() {
 		cat("blacklist.file:", blacklist.file, "\n")
 		cat("lib.install:", lib.install, "\n")
 		cat("install:", install, "\n")
+		cat("install.dependents:", install.dependents, "\n")
 		cat("dry.run:", dry.run, "\n")
 		cat("create.blacklist.file:", create.blacklist.file, "\n")
 		cat("ignore.blacklist:", ignore.blacklist, "\n")
@@ -575,8 +660,11 @@ print.ok.installs <- F
 verbose <- F
 very.verbose <- F
 install <- T
+install.dependents <- F
+install.status <- logical()
 dry.run <- F
 avail.pkgs <- NULL
+avail.pkgs.rownames <- NULL
 toinstall.pkgs <- NULL
 create.blacklist.file <- F
 ignore.blacklist <- F

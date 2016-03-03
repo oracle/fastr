@@ -21,7 +21,7 @@
 # questions.
 #
 
-# A script to do a single package installtion (+dependents), called from install.cran.packages.R.
+# A script to do a single package installation (+dependents), called from install.cran.packages.R.
 # It exists as a separate script only to avoid internal FastR errors from killing the
 # entire installation process for multiple package installation tests.
 
