@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,6 +76,8 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
 
     private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("deparse.level", "...");
 
+    private static final RStringVector DATA_FRAME_CLASS = RDataFactory.createStringVectorFromScalar("data.frame");
+
     @Specialization(guards = {"args.getLength() > 1", "isDataFrame(args)"})
     protected Object allDataFrame(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
         if (dcn == null) {
@@ -83,7 +85,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
             dcn = insert(new UseMethodInternalNode(getBindType(), SIGNATURE, false));
         }
         try {
-            return dcn.execute(frame, (RDataFrame) args.getArgument(0), new Object[]{deparseLevel, args});
+            return dcn.execute(frame, DATA_FRAME_CLASS, new Object[]{deparseLevel, args});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             throw RInternalError.shouldNotReachHere();
         }
@@ -364,7 +366,12 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     }
 
     protected boolean isDataFrame(RArgsValuesAndNames args) {
-        return args.getArgument(0) instanceof RDataFrame;
+        for (int i = 0; i < args.getLength(); i++) {
+            if (args.getArgument(i) instanceof RDataFrame) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @RBuiltin(name = "cbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."})
