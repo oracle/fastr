@@ -29,6 +29,7 @@ package com.oracle.truffle.r.parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -148,7 +149,7 @@ script returns [List<T> v]
     : n_ ( s=statement { $v.add($s.v); })*
     ;
     
-root_function [String name, MaterializedFrame enclosing] returns [RFunction v]
+root_function [String name] returns [RootCallTarget v]
     @init {
         assert source != null && builder != null;
         List<Argument<T>> params = new ArrayList<>();
@@ -158,7 +159,7 @@ root_function [String name, MaterializedFrame enclosing] returns [RFunction v]
         	throw RInternalError.shouldNotReachHere("not at EOF after parsing deserialized function"); 
         }
     }
-    : n_ op=FUNCTION n_ LPAR  n_ (par_decl[params] (n_ COMMA n_ par_decl[params])* n_)? RPAR n_ body=expr_or_assign { $v = builder.rootFunction(src($op, last()), params, $body.v, name, enclosing); }
+    : n_ op=FUNCTION n_ LPAR  n_ (par_decl[params] (n_ COMMA n_ par_decl[params])* n_)? RPAR n_ body=expr_or_assign { $v = builder.rootFunction(src($op, last()), params, $body.v, name); }
     ;
 
 statement returns [T v]

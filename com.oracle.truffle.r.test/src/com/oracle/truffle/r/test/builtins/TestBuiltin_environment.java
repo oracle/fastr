@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -35,5 +35,16 @@ public class TestBuiltin_environment extends TestBase {
     @Test
     public void testenvironment4() {
         assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0'))); .Internal(environment(argv[[1]]))");
+    }
+
+    @Test
+    public void testEnvironment() {
+        assertEval("environment()");
+        assertEval("environment(`+`)");
+        assertEval("environment(print)");
+        assertEval("environment(FALSE)");
+        assertEval("environment(a~b)");
+        assertEval("environment(function(x) 1)");
+        assertEval("environment(NULL)");
     }
 }

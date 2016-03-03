@@ -29,7 +29,7 @@ import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -49,6 +49,7 @@ import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
+import com.oracle.truffle.r.nodes.function.signature.GetCallerFrameNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
@@ -260,15 +261,12 @@ public class EnvFunctions {
     @RBuiltin(name = "environment", kind = INTERNAL, parameterNames = {"fun"})
     public abstract static class Environment extends RBuiltinNode {
 
-        private final ConditionProfile createEnvironmentProfile = ConditionProfile.createBinaryProfile();
-        private final PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
         @Specialization
-        protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull fun) {
+        protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull fun, //
+                        @Cached("new()") GetCallerFrameNode callerFrame, //
+                        @Cached("new()") PromiseDeoptimizeFrameNode deoptFrameNode) {
             controlVisibility();
-            Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
-            MaterializedFrame matFrame = callerFrame.materialize();
+            MaterializedFrame matFrame = callerFrame.execute(frame);
             deoptFrameNode.deoptimizeFrame(matFrame);
             return REnvironment.frameToEnvironment(matFrame);
         }
@@ -277,19 +275,24 @@ public class EnvFunctions {
          * Returns the environment that {@code func} was created in.
          */
         @Specialization
-        protected Object environment(RFunction fun) {
+        protected Object environment(RFunction fun, //
+                        @Cached("createBinaryProfile()") ConditionProfile noEnvProfile, //
+                        @Cached("createBinaryProfile()") ConditionProfile createProfile) {
             controlVisibility();
             Frame enclosing = fun.getEnclosingFrame();
-            REnvironment env = RArguments.getEnvironment(enclosing);
-            if (createEnvironmentProfile.profile(env == null)) {
-                return REnvironment.createEnclosingEnvironments(enclosing.materialize());
-            } else {
-                return env;
+            if (noEnvProfile.profile(enclosing == null)) {
+                return RNull.instance;
             }
+            REnvironment env = RArguments.getEnvironment(enclosing);
+            if (createProfile.profile(env == null)) {
+                return REnvironment.createEnclosingEnvironments(enclosing.materialize());
+            }
+            return env;
         }
 
         @Specialization(guards = "isRFormula(formula)")
-        protected Object environment(RLanguage formula) {
+        protected Object environment(RLanguage formula, //
+                        @Cached("create()") RAttributeProfiles attrProfiles) {
             controlVisibility();
             return formula.getAttr(attrProfiles, RRuntime.DOT_ENVIRONMENT);
         }
@@ -314,8 +317,7 @@ public class EnvFunctions {
             assert !(enclosingFrame instanceof VirtualEvalFrame);
 
             RRootNode root = (RRootNode) fun.getTarget().getRootNode();
-            root = root.duplicateWithNewFrameDescriptor();
-            RootCallTarget target = Truffle.getRuntime().createCallTarget(root);
+            RootCallTarget target = root.duplicateWithNewFrameDescriptor();
             FrameSlotChangeMonitor.initializeEnclosingFrame(target.getRootNode().getFrameDescriptor(), enclosingFrame);
             return RDataFactory.createFunction(fun.getName(), target, null, enclosingFrame, fun.getFastPath(), ((FunctionDefinitionNode) target.getRootNode()).containsDispatch());
         }

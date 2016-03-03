@@ -29,7 +29,7 @@ public class TestBuiltin_body extends TestBase {
 
     @Test
     public void testbody3() {
-        assertEval(Ignored.Unknown, "argv <- list(function (from, strict = TRUE) from); .Internal(body(argv[[1]]))");
+        assertEval("argv <- list(function (from, strict = TRUE) from); .Internal(body(argv[[1]]))");
     }
 
     @Test

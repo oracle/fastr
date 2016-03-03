@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.library.base;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 public class TestSimpleVectors extends TestBase {
 
@@ -612,8 +612,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-list(ab=1, ac=2); x[[\"a\", exact=FALSE]] }");
 
         assertEval(Output.ContainsWarning, "{ x<-matrix(1:4, ncol=2, dimnames=list(c(m=\"a\", \"b\"), c(\"c\", \"d\"))); dimnames(x)[[1]]$m<-\"z\"; x }");
-        // this works but matrix printing is off
-        assertEval(Ignored.MissingWarning, "{ x<-matrix(1:4, ncol=2, dimnames=list(m=c(\"a\", \"b\"), n=c(\"c\", \"d\"))); dimnames(x)$m[1]<-\"z\"; x }");
+
+        assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(m=c(\"a\", \"b\"), n=c(\"c\", \"d\"))); dimnames(x)$m[1]<-\"z\"; x }");
 
         assertEval(Output.ContainsError, "{ x<-c(aa=1, b=2); dim(x)<-c(1,2); x[\"a\", exact=FALSE]<-7; x }");
 
@@ -1816,7 +1816,6 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x <- c(); f <- function(i, v) { x[i] <- v ; x } ; f(1:2,3:4); f(c(1,2),c(TRUE,FALSE)) }");
         assertEval("{ x <- c(); f <- function(i, v) { x[i] <- v ; x } ; f(1:2,3:4); f(c(\"a\",\"b\"),c(TRUE,FALSE)) }");
 
-        // FIXME print format
         assertEval("{ a <- c(2.1,2.2,2.3); b <- a; a[[2]] <- TRUE; a }");
         assertEval("{ a <- c(2.1,2.2,2.3); b <- a; a[[3]] <- TRUE; a }");
         assertEval("{ buf <- character() ; buf[[1]] <- \"hello\" ; buf[[3]] <- \"world\" ; buf }");
@@ -2302,10 +2301,9 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ mp<-getOption(\"max.print\"); options(max.print=3); x<-c(1,2,3,4,5); print(x); options(max.print=mp) }");
         assertEval("{ mp<-getOption(\"max.print\"); options(max.print=3); x<-c(1,2,3,4,5); attr(x, \"foo\")<-\"foo\"; print(x); options(max.print=mp) }");
 
-        // GnuR 3.1.3 is outputting, e.g. "<1 x 0 x 2 x 0 x 2 array of integer>"
-        assertEval(Ignored.Unknown, "{ x<-integer(0); dim(x)<-c(1, 0, 0); x }");
-        assertEval(Ignored.Unknown, "{ x<-integer(0); dim(x)<-c(1, 0, 0, 2); x }");
-        assertEval(Ignored.Unknown, "{ x<-integer(0); dim(x)<-c(1, 0, 2, 0, 2); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 0); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 0, 2); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 2, 0, 2); x }");
     }
 
     @Test

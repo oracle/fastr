@@ -284,8 +284,8 @@ public class TestBuiltin_deparse extends TestBase {
         assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, list(42)); f(l) }");
         assertEval("{ deparse(expression(a+b, c+d)) }");
 
-        assertEval(Ignored.Unknown, "{ f <- function() 23 ; deparse(f) }");
-        assertEval(Ignored.Unknown, "{ deparse(nrow) }");
+        assertEval("{ f <- function() 23 ; deparse(f) }");
+        assertEval("{ deparse(nrow) }");
         // should deparse as structure(...
         assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
     }

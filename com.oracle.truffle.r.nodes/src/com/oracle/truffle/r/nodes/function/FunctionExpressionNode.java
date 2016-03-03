@@ -84,9 +84,7 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
             if (!FrameSlotChangeMonitor.isEnclosingFrameDescriptor(callTarget.getRootNode().getFrameDescriptor(), frame)) {
                 if (!FrameSlotChangeMonitor.isEnclosingFrameDescriptor(callTarget.getRootNode().getFrameDescriptor(), null)) {
                     RRootNode root = (RRootNode) callTarget.getRootNode();
-                    root = root.duplicateWithNewFrameDescriptor();
-                    RootCallTarget newTarget = Truffle.getRuntime().createCallTarget(root);
-                    callTarget = newTarget;
+                    callTarget = root.duplicateWithNewFrameDescriptor();
                 }
                 FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), frame);
             }
