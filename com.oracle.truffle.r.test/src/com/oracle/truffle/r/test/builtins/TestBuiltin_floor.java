@@ -59,7 +59,7 @@ public class TestBuiltin_floor extends TestBase {
 
     @Test
     public void testfloor9() {
-        assertEval(Ignored.Unknown, "argv <- list(logical(0));floor(argv[[1]]);");
+        assertEval("argv <- list(logical(0));floor(argv[[1]]);");
     }
 
     @Test
