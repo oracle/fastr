@@ -29,6 +29,7 @@ import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -40,6 +41,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *
  * The {@link SourceSection} is that of the {@link FunctionStatementsNode} as the
  * {@link SaveArgumentsNode} is not part of the syntax.
+ *
+ * TODO Resolve the tautology that while implementing {@link RSyntaxNode} it returns {@code false}
+ * to {@link RSyntaxNode#isSyntax()} and overrides {@link RBaseNode#getRSyntaxNode} to return
+ * {@code statements}. It is really a {@link RSyntaxNode#isBackbone()} node. It exists primarily to
+ * carry the {@link RSyntaxTags#ENTER_FUNCTION} tag so that the debugger can distinguish that start
+ * of the function from the first statement of the function.
  */
 public final class FunctionBodyNode extends RNode implements RSyntaxNode {
 
@@ -75,6 +82,11 @@ public final class FunctionBodyNode extends RNode implements RSyntaxNode {
 
     public boolean isSyntax() {
         return false;
+    }
+
+    @Override
+    public boolean isBackbone() {
+        return true;
     }
 
     @Override
