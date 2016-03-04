@@ -24,12 +24,12 @@ public class TestBuiltin_args extends TestBase {
 
     @Test
     public void testargs2() {
-        assertEval(Ignored.Unknown, "argv <- list(character(0)); .Internal(args(argv[[1]]))");
+        assertEval("argv <- list(character(0)); .Internal(args(argv[[1]]))");
     }
 
     @Test
     public void testargs3() {
-        assertEval(Ignored.Unknown, "argv <- list(.Primitive(':')); .Internal(args(argv[[1]]))");
+        assertEval("argv <- list(.Primitive(':')); .Internal(args(argv[[1]]))");
     }
 
     @Test
@@ -44,9 +44,9 @@ public class TestBuiltin_args extends TestBase {
 
     @Test
     public void testArgs() {
-        // Printing doesn't match GnuR, so make the call (should return NULL)
-        assertEval("{ f <- function(a) {}; fa <- args(f); fa() }");
-        assertEval("{ f <- function(a, b) {}; fa <- args(f); fa() }");
-        assertEval("{ sa <- args(sum); fa() }");
+        assertEval("{ f <- function(a) {}; fa <- args(f); }");
+        assertEval("{ f <- function(a, b) {}; fa <- args(f); }");
+        assertEval("{ sa <- args(sum); }");
+        assertEval("{  f <- function(x=1, y) x + y; args(f); }");
     }
 }
