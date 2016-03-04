@@ -233,8 +233,4 @@ public final class FastRSession implements RSession {
     public String name() {
         return "FastR";
     }
-
-    public void quit() {
-    }
-
 }
