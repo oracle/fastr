@@ -114,13 +114,4 @@ public class GnuROneShotRSession implements RSession {
     public String name() {
         return "GnuR one-shot";
     }
-
-    public static void main(String[] args) {
-        String result = new GnuROneShotRSession().eval(args[0]);
-        System.out.println(result);
-    }
-
-    public void quit() {
-    }
-
 }

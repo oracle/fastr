@@ -20,35 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.instrument.factory;
+package com.oracle.truffle.r.runtime.context;
 
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.instrument.OldInstrumentFactory;
-import com.oracle.truffle.r.nodes.instrumentation.NewInstrumentFactory;
-import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.WithFunctionUID;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
 public abstract class RInstrumentFactory {
-    private static RInstrumentFactory instance;
 
-    /**
-     * Depending on the value of {@link FastROptions#UseOldInstrument} we pick the factory that
-     * allows most of the system to be indepent of the choice.
-     */
-    public static void initialize(TruffleLanguage.Env env) {
-        if (FastROptions.UseOldInstrument.getBooleanValue()) {
-            instance = new OldInstrumentFactory(env);
-        } else {
-            instance = new NewInstrumentFactory(env);
-        }
-    }
-
-    public static RInstrumentFactory getInstance() {
-        return instance;
-    }
-
-    public abstract void registerFunctionDefinitionNode(FunctionDefinitionNode fdn);
+    public abstract void registerFunctionDefinitionNode(WithFunctionUID fdn);
 
     public abstract Object findSingleProbe(RFunction func, Object tag);
 

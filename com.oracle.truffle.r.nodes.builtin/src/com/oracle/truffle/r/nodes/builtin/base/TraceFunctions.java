@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
-import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
@@ -44,7 +43,7 @@ public class TraceFunctions {
         protected RNull primTrace(RFunction func) {
             controlVisibility();
             if (!func.isBuiltin()) {
-                if (!RInstrumentFactory.getInstance().enableTrace(func)) {
+                if (!RContext.getInstance().getInstrumentFactory().enableTrace(func)) {
                     throw RError.error(this, RError.Message.GENERIC, "failed to attach trace handler (not instrumented?)");
                 }
             }
@@ -60,7 +59,7 @@ public class TraceFunctions {
         protected RNull primTrace(RFunction func) {
             controlVisibility();
             if (!func.isBuiltin()) {
-                if (!RInstrumentFactory.getInstance().disableTrace(func)) {
+                if (!RContext.getInstance().getInstrumentFactory().disableTrace(func)) {
                     throw RError.error(this, RError.Message.GENERIC, "failed to detach trace handler (not instrumented?)");
                 }
             }
@@ -77,7 +76,7 @@ public class TraceFunctions {
             boolean newState = RRuntime.fromLogical(state);
             if (newState != prevState) {
                 RContext.getInstance().stateTraceHandling.setTracingState(newState);
-                RInstrumentFactory.getInstance().setTracingState(newState);
+                RContext.getInstance().getInstrumentFactory().setTracingState(newState);
             }
             return RRuntime.asLogical(prevState);
         }
@@ -88,5 +87,4 @@ public class TraceFunctions {
             return RRuntime.asLogical(RContext.getInstance().stateTraceHandling.getTracingState());
         }
     }
-
 }

@@ -27,10 +27,11 @@ import com.oracle.truffle.api.instrument.Probe;
 import com.oracle.truffle.api.instrument.StandardSyntaxTag;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrument.debug.DebugHandling;
-import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.nodes.instrument.trace.TraceHandling;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.WithFunctionUID;
+import com.oracle.truffle.r.runtime.context.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
 public class OldInstrumentFactory extends RInstrumentFactory {
@@ -49,8 +50,8 @@ public class OldInstrumentFactory extends RInstrumentFactory {
     }
 
     @Override
-    public void registerFunctionDefinitionNode(FunctionDefinitionNode fdn) {
-        RInstrument.registerFunctionDefinition(fdn);
+    public void registerFunctionDefinitionNode(WithFunctionUID fdn) {
+        RInstrument.registerFunctionDefinition((FunctionDefinitionNode) fdn);
     }
 
     @Override

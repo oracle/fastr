@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.test.library.utils;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import org.junit.*;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ops.*;
+import com.oracle.truffle.r.test.*;
 
-@RBuiltin(name = "ceiling", kind = PRIMITIVE, parameterNames = {"x"})
-public abstract class Ceiling extends RBuiltinNode {
-
-    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode ceiling = UnaryArithmeticNodeGen.create(UnaryArithmetic.CEILING, RError.Message.NON_NUMERIC_MATH, RType.Double);
-
-    @Specialization
-    protected Object ceiling(Object value) {
-        return ceiling.execute(boxPrimitive.execute(value));
+public class TestInteractiveDebug extends TestBase {
+    @Test
+    public void simple() {
+        assertEval("f <- function(x) {\n  t <- x + 1\n  print(t)\n  t}\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn");
     }
 }

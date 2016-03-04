@@ -424,13 +424,20 @@ public class DebugHandling {
     private static void printNode(Node node, boolean curly) {
         ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         RDeparse.State state = RDeparse.State.createPrintableState();
-        ((RBaseNode) node).deparse(state);
-        consoleHandler.print("debug: ");
-        if (curly) {
+        RBaseNode rNode = (RBaseNode) node;
+        rNode.deparse(state);
+        SourceSection source = rNode.asRSyntaxNode().getSourceSection();
+        if (source == null) {
+            consoleHandler.print("debug: ");
+        } else {
+            consoleHandler.print("debug at #" + source.getStartLine() + ": ");
+        }
+        boolean printCurly = curly && !state.toString().startsWith("{");
+        if (printCurly) {
             consoleHandler.println("{");
         }
         consoleHandler.print(state.toString());
-        if (curly) {
+        if (printCurly) {
             consoleHandler.print("}");
         }
         consoleHandler.print("\n");

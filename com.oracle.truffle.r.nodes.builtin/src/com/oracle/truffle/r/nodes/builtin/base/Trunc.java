@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.ops.*;
 public abstract class Trunc extends RBuiltinNode {
 
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode trunc = UnaryArithmeticNodeGen.create(UnaryArithmetic.TRUNC, RError.Message.NON_NUMERIC_MATH);
+    @Child private UnaryArithmeticNode trunc = UnaryArithmeticNodeGen.create(UnaryArithmetic.TRUNC, RError.Message.NON_NUMERIC_MATH, RType.Double);
 
     @Specialization
     protected Object trunc(Object value) {

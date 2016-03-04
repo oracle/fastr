@@ -46,7 +46,6 @@ import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
-import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -62,6 +61,7 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
+import com.oracle.truffle.r.runtime.WithFunctionUID;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -73,7 +73,7 @@ import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode {
+public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, WithFunctionUID {
 
     @Child private RNode body; // typed as RNode to avoid custom instrument wrapper
     /**
@@ -148,7 +148,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.needsSplitting = needsAnyBuiltinSplitting();
         this.containsDispatch = containsAnyDispatch(body);
         this.argPostProcess = argPostProcess;
-        RInstrumentFactory.getInstance().registerFunctionDefinitionNode(this);
+        RContext.getInstance().getInstrumentFactory().registerFunctionDefinitionNode(this);
     }
 
     @Override

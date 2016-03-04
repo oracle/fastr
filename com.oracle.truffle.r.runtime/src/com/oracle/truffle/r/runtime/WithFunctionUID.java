@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.runtime;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+public interface WithFunctionUID {
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ops.*;
-
-@RBuiltin(name = "ceiling", kind = PRIMITIVE, parameterNames = {"x"})
-public abstract class Ceiling extends RBuiltinNode {
-
-    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode ceiling = UnaryArithmeticNodeGen.create(UnaryArithmetic.CEILING, RError.Message.NON_NUMERIC_MATH, RType.Double);
-
-    @Specialization
-    protected Object ceiling(Object value) {
-        return ceiling.execute(boxPrimitive.execute(value));
-    }
+    FunctionUID getUID();
 }
