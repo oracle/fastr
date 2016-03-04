@@ -26,8 +26,9 @@ import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.debug.DebugHandling;
 import com.oracle.truffle.r.nodes.instrumentation.trace.TraceHandling;
-import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.WithFunctionUID;
+import com.oracle.truffle.r.runtime.context.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
 public class NewInstrumentFactory extends RInstrumentFactory {
@@ -37,8 +38,8 @@ public class NewInstrumentFactory extends RInstrumentFactory {
     }
 
     @Override
-    public void registerFunctionDefinitionNode(FunctionDefinitionNode fdn) {
-        RInstrumentation.registerFunctionDefinition(fdn);
+    public void registerFunctionDefinitionNode(WithFunctionUID fdn) {
+        RInstrumentation.registerFunctionDefinition((FunctionDefinitionNode) fdn);
     }
 
     @Override

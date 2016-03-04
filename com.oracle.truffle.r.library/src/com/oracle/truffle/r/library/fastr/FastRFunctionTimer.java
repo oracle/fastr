@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.library.fastr;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -35,9 +36,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public class FastRFunctionTimer {
     public abstract static class CreateFunctionTimer extends RExternalBuiltinNode.Arg1 {
         @Specialization
+        @TruffleBoundary
         protected RNull createFunctionTimer(RFunction function) {
             if (!function.isBuiltin()) {
-                if (!RInstrumentFactory.getInstance().installFunctionTimer(function)) {
+                if (!RContext.getInstance().getInstrumentFactory().installFunctionTimer(function)) {
                     throw RError.error(this, RError.Message.GENERIC, "failed to apply timer, instrumention disabled?");
                 }
             }
@@ -53,9 +55,10 @@ public class FastRFunctionTimer {
 
     public abstract static class GetFunctionTimer extends RExternalBuiltinNode.Arg2 {
         @Specialization
+        @TruffleBoundary
         protected Object getFunctionTimer(RFunction function, RAbstractStringVector scale) {
             if (!function.isBuiltin()) {
-                long timeInfo = RInstrumentFactory.getInstance().getFunctionTime(function);
+                long timeInfo = RContext.getInstance().getInstrumentFactory().getFunctionTime(function);
                 if (timeInfo < 0) {
                     throw RError.error(this, RError.Message.GENERIC, "no associated timer");
                 } else {
@@ -85,5 +88,4 @@ public class FastRFunctionTimer {
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "func");
         }
     }
-
 }
