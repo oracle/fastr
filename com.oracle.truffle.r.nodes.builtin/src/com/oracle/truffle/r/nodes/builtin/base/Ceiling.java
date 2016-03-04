@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.ops.*;
 public abstract class Ceiling extends RBuiltinNode {
 
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode ceiling = UnaryArithmeticNodeGen.create(UnaryArithmetic.CEILING, RError.Message.NON_NUMERIC_MATH);
+    @Child private UnaryArithmeticNode ceiling = UnaryArithmeticNodeGen.create(UnaryArithmetic.CEILING, RError.Message.NON_NUMERIC_MATH, RType.Double);
 
     @Specialization
     protected Object ceiling(Object value) {

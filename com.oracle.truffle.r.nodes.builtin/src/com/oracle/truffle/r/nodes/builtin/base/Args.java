@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.FrameFunctionsFactory.ParentFrameNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -53,6 +54,9 @@ public abstract class Args extends RBuiltinNode {
 
     @Specialization
     protected Object args(VirtualFrame frame, RAbstractStringVector funName) {
+        if (funName.getLength() == 0) {
+            return RNull.instance;
+        }
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             getNode = insert(GetNodeGen.create(new RNode[4], null, null));
@@ -64,13 +68,17 @@ public abstract class Args extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected RFunction args(RFunction fun) {
+    protected Object args(RFunction fun) {
         controlVisibility();
+        if (fun.isBuiltin()) {
+            return RNull.instance;
+        }
         RRootNode rootNode = (RRootNode) fun.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
         String newDesc = "args(" + rootNode.getDescription() + ")";
-        FunctionDefinitionNode newNode = FunctionDefinitionNode.create(RSyntaxNode.INTERNAL, rootNode.getFrameDescriptor(), null, SaveArgumentsNode.NO_ARGS,
-                        ConstantNode.create(RSyntaxNode.INTERNAL, RNull.instance), formals, newDesc, null);
+        FunctionDefinitionNode newNode = FunctionDefinitionNode.create(RSyntaxNode.EAGER_DEPARSE, rootNode.getFrameDescriptor(), null, SaveArgumentsNode.NO_ARGS,
+                        ConstantNode.create(RSyntaxNode.EAGER_DEPARSE, RNull.instance), formals, newDesc, null);
+        RASTDeparse.ensureSourceSection(newNode);
         return RDataFactory.createFunction(newDesc, Truffle.getRuntime().createCallTarget(newNode), null, REnvironment.globalEnv().getFrame(), null, false);
     }
 

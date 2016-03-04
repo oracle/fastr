@@ -57,6 +57,13 @@ public abstract class Round extends RBuiltinNode {
         return check.check(x) ? RRuntime.DOUBLE_NA : x;
     }
 
+    @Specialization
+    protected double round(byte x, @SuppressWarnings("unused") int digits) {
+        controlVisibility();
+        check.enable(x);
+        return check.check(x) ? RRuntime.DOUBLE_NA : x;
+    }
+
     @Specialization(guards = "digits == 0")
     protected double round(double x, @SuppressWarnings("unused") int digits) {
         controlVisibility();

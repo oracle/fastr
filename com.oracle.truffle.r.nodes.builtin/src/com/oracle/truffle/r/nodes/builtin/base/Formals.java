@@ -32,10 +32,24 @@ import com.oracle.truffle.r.runtime.nodes.*;
 
 @RBuiltin(name = "formals", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
 public abstract class Formals extends RBuiltinNode {
-    @Specialization
-    @TruffleBoundary
+
+    @SuppressWarnings("unused")
+    @Specialization(limit = "3", guards = "fun == cachedFunction")
+    protected Object formalsCached(RFunction fun, //
+                    @Cached("fun") RFunction cachedFunction, //
+                    @Cached("createFormals(fun)") Object formals) {
+        controlVisibility();
+        return formals;
+    }
+
+    @Specialization(contains = "formalsCached")
     protected Object formals(RFunction fun) {
         controlVisibility();
+        return createFormals(fun);
+    }
+
+    @TruffleBoundary
+    protected Object createFormals(RFunction fun) {
         if (fun.isBuiltin()) {
             return RNull.instance;
         }
@@ -48,8 +62,7 @@ public abstract class Formals extends RBuiltinNode {
         for (int i = formalArgs.getSignature().getLength() - 1; i >= 0; i--) {
             RNode def = formalArgs.getDefaultArgument(i);
             Object defValue = def == null ? RSymbol.MISSING : RDataFactory.createLanguage(def);
-            RPairList pl = RDataFactory.createPairList(defValue, succ, RDataFactory.createSymbol(formalArgs.getSignature().getName(i)));
-            succ = pl;
+            succ = RDataFactory.createPairList(defValue, succ, RDataFactory.createSymbol(formalArgs.getSignature().getName(i)));
         }
         return succ;
     }

@@ -168,7 +168,7 @@ public class RErrorHandling {
         errorHandlingState.restartStack = savedRestartStack;
     }
 
-    public static Object createHandlers(RStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
+    public static Object createHandlers(RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
         Object oldStack = getRestartStack();
         Object newStack = oldStack;
         RList result = RDataFactory.createList(new Object[]{RNull.instance, RNull.instance, RNull.instance});

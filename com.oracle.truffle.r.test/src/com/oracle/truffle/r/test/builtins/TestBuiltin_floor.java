@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -59,11 +59,13 @@ public class TestBuiltin_floor extends TestBase {
 
     @Test
     public void testfloor9() {
-        assertEval(Ignored.Unknown, "argv <- list(logical(0));floor(argv[[1]]);");
+        assertEval("argv <- list(logical(0));floor(argv[[1]]);");
     }
 
     @Test
     public void testFloor() {
         assertEval("{ floor(c(0.2,-3.4,NA,0/0,1/0)) }");
+        assertEval("{ typeof(floor(42L)); }");
+        assertEval("{ typeof(floor(TRUE)); }");
     }
 }

@@ -18,7 +18,7 @@ import java.io.IOException;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-//Transcribed from GnuR, src/main/printutils.c
+//Transcribed from GnuR, src/main/printutils.c, src/main/format.c
 
 public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector> {
 

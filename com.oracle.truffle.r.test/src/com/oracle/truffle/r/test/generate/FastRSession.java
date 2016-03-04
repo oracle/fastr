@@ -23,17 +23,27 @@
 package com.oracle.truffle.r.test.generate;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.TimeZone;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.*;
-import com.oracle.truffle.r.engine.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
-import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
 public final class FastRSession implements RSession {
@@ -46,6 +56,12 @@ public final class FastRSession implements RSession {
      */
     public static class TestConsoleHandler implements ConsoleHandler {
         private final StringBuilder buffer = new StringBuilder();
+        private final Deque<String> input = new ArrayDeque<>();
+
+        public void setInput(String[] lines) {
+            input.clear();
+            input.addAll(Arrays.asList(lines));
+        }
 
         @TruffleBoundary
         public void println(String s) {
@@ -59,7 +75,7 @@ public final class FastRSession implements RSession {
         }
 
         public String readLine() {
-            return null;
+            return input.pollFirst();
         }
 
         public boolean isInteractive() {
@@ -203,9 +219,22 @@ public final class FastRSession implements RSession {
                 }
                 try {
                     PolyglotEngine vm = createTestContext();
+                    consoleHandler.setInput(expression.split("\n"));
                     try {
-                        Source source = Source.fromText(expression, "<eval>").withMimeType(TruffleRLanguage.MIME);
-                        vm.eval(source);
+                        String input = consoleHandler.readLine();
+                        while (input != null) {
+                            Source source = Source.fromText(input, "<eval>").withMimeType(TruffleRLanguage.MIME);
+                            try {
+                                vm.eval(source);
+                                input = consoleHandler.readLine();
+                            } catch (IncompleteSourceException | com.oracle.truffle.api.vm.IncompleteSourceException e) {
+                                String additionalInput = consoleHandler.readLine();
+                                if (additionalInput == null) {
+                                    throw e;
+                                }
+                                input += "\n" + additionalInput;
+                            }
+                        }
                     } finally {
                         vm.dispose();
                     }
@@ -233,8 +262,4 @@ public final class FastRSession implements RSession {
     public String name() {
         return "FastR";
     }
-
-    public void quit() {
-    }
-
 }

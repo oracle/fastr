@@ -5,24 +5,31 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RErrorHandling.*;
+import static com.oracle.truffle.r.runtime.RErrorHandling.getHandlerStack;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RErrorHandling;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Condition handling. Derived from GnUR src/main/errors.c
@@ -47,20 +54,24 @@ public class ConditionFunctions {
 
     @RBuiltin(name = ".addCondHands", kind = RBuiltinKind.INTERNAL, parameterNames = {"classes", "handlers", "parentenv", "target", "calling"})
     public abstract static class AddCondHands extends Adapter {
-        private final ConditionProfile nullArgs = ConditionProfile.createBinaryProfile();
 
-        @Specialization
-        protected Object addCondHands(Object classesObj, Object handlersObj, REnvironment parentEnv, Object target, byte calling) {
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isRNull(classes) || isRNull(handlers)")
+        protected Object addCondHands(Object classes, Object handlers, Object parentEnv, Object target, byte calling) {
             forceVisibility(false);
-            if (nullArgs.profile(classesObj == RNull.instance || handlersObj == RNull.instance)) {
-                return getHandlerStack();
-            }
-            if (!(classesObj instanceof RStringVector && handlersObj instanceof RList && ((RStringVector) classesObj).getLength() == ((RList) handlersObj).getLength())) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.BAD_HANDLER_DATA);
-            } else {
-                return RErrorHandling.createHandlers((RStringVector) classesObj, (RList) handlersObj, parentEnv, target, calling);
-            }
+            return getHandlerStack();
+        }
+
+        @Specialization(guards = "classes.getLength() == handlers.getLength()")
+        protected Object addCondHands(RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
+            forceVisibility(false);
+            return RErrorHandling.createHandlers(classes, handlers, parentEnv, target, calling);
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object fallback(Object classesObj, Object handlersObj, Object parentEnv, Object target, byte calling) {
+            throw RError.error(this, RError.Message.BAD_HANDLER_DATA);
         }
     }
 

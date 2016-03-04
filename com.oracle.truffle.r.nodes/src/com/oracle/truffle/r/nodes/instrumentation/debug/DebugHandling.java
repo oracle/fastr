@@ -332,6 +332,10 @@ public class DebugHandling {
         @Override
         void enable() {
             super.enable();
+            enableChildren();
+        }
+
+        void enableChildren() {
             statementListener.enable();
             for (LoopStatementEventListener lser : loopStatementListeners) {
                 lser.enable();
@@ -359,10 +363,7 @@ public class DebugHandling {
         }
 
         void endFinishing() {
-            for (LoopStatementEventListener lser : loopStatementListeners) {
-                lser.enable();
-            }
-            statementListener.enable();
+            enableChildren();
         }
 
         @Override
@@ -371,6 +372,12 @@ public class DebugHandling {
                 print("debugging in: ", false);
                 printCall(frame);
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) RArguments.getFunction(frame).getRootNode();
+                /*
+                 * If this is a recursive call, then returnCleanup will not have happened, so we
+                 * enable our child listeners unconditionally. TODO It is possible that the enabled
+                 * state should be stacked to match the call stack in the recursive case.
+                 */
+                enableChildren();
                 boolean brace = fdn.hasBraces();
                 if (brace) {
                     printNode(context.getInstrumentedNode(), brace);
@@ -417,13 +424,20 @@ public class DebugHandling {
     private static void printNode(Node node, boolean curly) {
         ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         RDeparse.State state = RDeparse.State.createPrintableState();
-        ((RBaseNode) node).deparse(state);
-        consoleHandler.print("debug: ");
-        if (curly) {
+        RBaseNode rNode = (RBaseNode) node;
+        rNode.deparse(state);
+        SourceSection source = rNode.asRSyntaxNode().getSourceSection();
+        if (source == null) {
+            consoleHandler.print("debug: ");
+        } else {
+            consoleHandler.print("debug at #" + source.getStartLine() + ": ");
+        }
+        boolean printCurly = curly && !state.toString().startsWith("{");
+        if (printCurly) {
             consoleHandler.println("{");
         }
         consoleHandler.print(state.toString());
-        if (curly) {
+        if (printCurly) {
             consoleHandler.print("}");
         }
         consoleHandler.print("\n");

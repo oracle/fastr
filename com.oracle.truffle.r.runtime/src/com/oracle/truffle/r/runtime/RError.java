@@ -284,12 +284,6 @@ public final class RError extends RuntimeException {
         NON_CONFORMABLE_ARGS("non-conformable arguments"),
         DATA_VECTOR("'data' must be of a vector type"),
         NON_NUMERIC_MATRIX_EXTENT("non-numeric matrix extent"),
-        // below: also can mean empty
-        INVALID_NCOL("invalid 'ncol' value (too large or NA)"),
-        // below: also can mean empty
-        INVALID_NROW("invalid 'nrow' value (too large or NA)"),
-        NEGATIVE_NCOL("invalid 'ncol' value (< 0)"),
-        NEGATIVE_NROW("invalid 'nrow' value (< 0)"),
         NON_CONFORMABLE_ARRAYS("non-conformable arrays"),
         UNKNOWN_UNNAMED_OBJECT("object not found"),
         ONLY_MATRIX_DIAGONALS("only matrix diagonals can be replaced"),
@@ -674,7 +668,10 @@ public final class RError extends RuntimeException {
         NON_INTEGER_VALUE("non-integer value %s qualified with L; using numeric value"),
         INTEGER_VALUE_DECIAML("integer literal %s contains decimal; using numeric value"),
         INTEGER_VALUE_UNNECESARY_DECIMAL("integer literal %s contains unnecessary decimal point"),
-        NON_LANG_ASSIGNMENT_TARGET("target of assignment expands to non-language object");
+        NON_LANG_ASSIGNMENT_TARGET("target of assignment expands to non-language object"),
+        INVALID_LARGE_NA_VALUE("invalid '%s' value (too large or NA)"),
+        INVALID_NEGATIVE_VALUE("invalid '%s' value (< 0)"),
+        POSITIVE_LENGTH("'%s' must have positive length");
 
         public final String message;
         final boolean hasArgs;

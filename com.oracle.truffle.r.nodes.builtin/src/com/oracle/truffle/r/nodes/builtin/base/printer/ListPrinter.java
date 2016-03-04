@@ -56,10 +56,10 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
         class TagBuf {
             final int tagStartMark = buffer().length();
 
-            private StringBuffer buffer() {
-                StringBuffer buf = (StringBuffer) printCtx.getAttribute(ListPrinter.class.getName());
+            private StringBuilder buffer() {
+                StringBuilder buf = (StringBuilder) printCtx.getAttribute(ListPrinter.class.getName());
                 if (buf == null) {
-                    buf = new StringBuffer();
+                    buf = new StringBuilder();
                     printCtx.setAttribute(ListPrinter.class.getName(), buf);
                 }
                 return buf;

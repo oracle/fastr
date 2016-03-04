@@ -124,6 +124,7 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/C
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Date.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/DatePOSIXFunctions.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Deparse.java,gnu_r.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Diag.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/DuplicatedFunctions.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/EncodeString.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/FileFunctions.java,gnu_r.copyright
@@ -688,3 +689,6 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/p
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/IntegerPrinter.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/IntegerVectorPrinter.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/ListPrinter.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/ComplexVectorPrinter.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/LogicalPrinter.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/LogicalVectorPrinter.java,gnu_r_gentleman_ihaka2.copyright

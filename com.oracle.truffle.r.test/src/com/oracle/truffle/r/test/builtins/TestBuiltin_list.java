@@ -48,8 +48,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist6() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(deviance.resid = structure(c(0.979005810350303, 0.190415231217834, -0.262041786489909, -1.18856115310823, -0.0713326116251696, 0.258231444611709, 0.637403312181204, -1.72855514890285, -0.632723785156881, -0.819071604478243, 2.23780874325045, -0.472376375886729), .Names = c('1', '3', '5', '7', '9', '11', '13', '15', '17', '19', '21', '23')), coefficients = structure(c(0.291009862544455, -0.575062166945441, 0.0881289026086606, 0.127412648101879, 3.30209334202984, -4.5133836829576, 0.00095966129066828, 6.38014475989249e-06), .Dim = c(2L, 4L), .Dimnames = list(c('(Intercept)', 'M.userY'), c('Estimate', 'Std. Error', 'z value', 'Pr(>|z|)'))), aliased = structure(c(FALSE, FALSE), .Names = c('(Intercept)', 'M.userY')), dispersion = 1, df = c(2L, 10L, 2L), cov.unscaled = structure(c(0.00776670347500679, -0.00776670347500679, -0.00776670347500679, 0.0162339828963334), .Dim = c(2L, 2L), .Dimnames = list(c('(Intercept)', 'M.userY'), c('(Intercept)', 'M.userY'))), cov.scaled = structure(c(0.00776670347500679, -0.00776670347500679, -0.00776670347500679, 0.0162339828963334), .Dim = c(2L, 2L), .Dimnames = list(c('(Intercept)', 'M.userY'), c('(Intercept)', 'M.userY'))));list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]]);");
+        assertEval("argv <- list(deviance.resid = structure(c(0.979005810350303, 0.190415231217834, -0.262041786489909, -1.18856115310823, -0.0713326116251696, 0.258231444611709, 0.637403312181204, -1.72855514890285, -0.632723785156881, -0.819071604478243, 2.23780874325045, -0.472376375886729), .Names = c('1', '3', '5', '7', '9', '11', '13', '15', '17', '19', '21', '23')), coefficients = structure(c(0.291009862544455, -0.575062166945441, 0.0881289026086606, 0.127412648101879, 3.30209334202984, -4.5133836829576, 0.00095966129066828, 6.38014475989249e-06), .Dim = c(2L, 4L), .Dimnames = list(c('(Intercept)', 'M.userY'), c('Estimate', 'Std. Error', 'z value', 'Pr(>|z|)'))), aliased = structure(c(FALSE, FALSE), .Names = c('(Intercept)', 'M.userY')), dispersion = 1, df = c(2L, 10L, 2L), cov.unscaled = structure(c(0.00776670347500679, -0.00776670347500679, -0.00776670347500679, 0.0162339828963334), .Dim = c(2L, 2L), .Dimnames = list(c('(Intercept)', 'M.userY'), c('(Intercept)', 'M.userY'))), cov.scaled = structure(c(0.00776670347500679, -0.00776670347500679, -0.00776670347500679, 0.0162339828963334), .Dim = c(2L, 2L), .Dimnames = list(c('(Intercept)', 'M.userY'), c('(Intercept)', 'M.userY'))));list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]]);");
     }
 
     @Test
@@ -344,8 +343,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist61() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = c(12L, 1L), .Dimnames = structure(list(`  p L s` = c('. . .', '| . .', '. | .', '| | .', '. . |', '| . |', '. | |', '| | |', '. . ?', '| . ?', '. | ?', '| | ?'), NULL), .Names = c('  p L s', ''))));list(argv[[1]]);");
+        assertEval("argv <- list(structure(c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = c(12L, 1L), .Dimnames = structure(list(`  p L s` = c('. . .', '| . .', '. | .', '| | .', '. . |', '| . |', '. | |', '| | |', '. . ?', '| . ?', '. | ?', '| | ?'), NULL), .Names = c('  p L s', ''))));list(argv[[1]]);");
     }
 
     @Test

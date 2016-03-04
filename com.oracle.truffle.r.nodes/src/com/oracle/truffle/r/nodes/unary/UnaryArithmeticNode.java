@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,10 +35,16 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     protected final UnaryArithmeticFactory unary;
     private final Message error;
+    protected final RType minPrecedence;
 
-    public UnaryArithmeticNode(UnaryArithmeticFactory factory, Message error) {
+    public UnaryArithmeticNode(UnaryArithmeticFactory factory, Message error, RType minPrecedence) {
         this.unary = factory;
         this.error = error;
+        this.minPrecedence = minPrecedence;
+    }
+
+    public UnaryArithmeticNode(UnaryArithmeticFactory factory, Message error) {
+        this(factory, error, RType.Integer);
     }
 
     @Specialization(guards = {"cachedNode != null", "cachedNode.isSupported(operand)"})
@@ -48,17 +54,17 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     protected UnaryMapNode createCachedFast(Object operand) {
         if (isNumericVector(operand)) {
-            return createCached(unary.create(), operand);
+            return createCached(unary.create(), operand, minPrecedence);
         }
         return null;
     }
 
-    protected static UnaryMapNode createCached(UnaryArithmetic arithmetic, Object operand) {
+    protected static UnaryMapNode createCached(UnaryArithmetic arithmetic, Object operand, RType minPrecedence) {
         if (operand instanceof RAbstractVector) {
             RAbstractVector castOperand = (RAbstractVector) operand;
             RType operandType = castOperand.getRType();
             if (operandType.isNumeric()) {
-                RType type = RType.maxPrecedence(operandType, RType.Integer);
+                RType type = RType.maxPrecedence(operandType, minPrecedence);
                 return UnaryMapNode.create(new ScalarUnaryArithmeticNode(arithmetic), castOperand, type, type);
             }
         }
@@ -73,7 +79,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     @TruffleBoundary
     protected Object doGeneric(Object operand, //
                     @Cached("unary.create()") UnaryArithmetic arithmetic, //
-                    @Cached("new(createCached(arithmetic, operand))") GenericNumericVectorNode generic) {
+                    @Cached("new(createCached(arithmetic, operand, minPrecedence), minPrecedence)") GenericNumericVectorNode generic) {
         RAbstractVector operandVector = (RAbstractVector) operand;
         return generic.get(arithmetic, operandVector).apply(operandVector);
     }
@@ -87,16 +93,19 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
         @Child private UnaryMapNode cached;
 
+        private final RType minPrecedence;
+
+        public GenericNumericVectorNode(UnaryMapNode cachedOperation, RType minPrecedence) {
+            this.cached = cachedOperation;
+            this.minPrecedence = minPrecedence;
+        }
+
         public UnaryMapNode get(UnaryArithmetic arithmetic, RAbstractVector operand) {
             UnaryMapNode next = cached;
             if (!next.isSupported(operand)) {
-                next = cached.replace(createCached(arithmetic, operand));
+                next = cached.replace(createCached(arithmetic, operand, minPrecedence));
             }
             return next;
-        }
-
-        public GenericNumericVectorNode(UnaryMapNode cachedOperation) {
-            this.cached = cachedOperation;
         }
 
     }

@@ -38,7 +38,7 @@ public final class IntegerPrinter extends AbstractValuePrinter<Integer> {
     /*
      * There is no documented (or enforced) limit on 'w' here, so use snprintf
      */
-    private static int NB = 1000;
+    public static int NB = 1000;
 
     public static String encodeInteger(int x, int w, PrintParameters pp) {
         if (x == RRuntime.INT_NA) {
