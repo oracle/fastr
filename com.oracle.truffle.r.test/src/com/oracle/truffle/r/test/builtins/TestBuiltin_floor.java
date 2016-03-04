@@ -65,5 +65,7 @@ public class TestBuiltin_floor extends TestBase {
     @Test
     public void testFloor() {
         assertEval("{ floor(c(0.2,-3.4,NA,0/0,1/0)) }");
+        assertEval("{ typeof(floor(42L)); }");
+        assertEval("{ typeof(floor(TRUE)); }");
     }
 }

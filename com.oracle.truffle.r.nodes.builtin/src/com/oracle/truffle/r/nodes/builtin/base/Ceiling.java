@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.ops.*;
 public abstract class Ceiling extends RBuiltinNode {
 
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode ceiling = UnaryArithmeticNodeGen.create(UnaryArithmetic.CEILING, RError.Message.NON_NUMERIC_MATH);
+    @Child private UnaryArithmeticNode ceiling = UnaryArithmeticNodeGen.create(UnaryArithmetic.CEILING, RError.Message.NON_NUMERIC_MATH, RType.Double);
 
     @Specialization
     protected Object ceiling(Object value) {

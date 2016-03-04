@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.ops.*;
 public abstract class Floor extends RBuiltinNode {
 
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode floor = UnaryArithmeticNodeGen.create(UnaryArithmetic.FLOOR, RError.Message.NON_NUMERIC_MATH);
+    @Child private UnaryArithmeticNode floor = UnaryArithmeticNodeGen.create(UnaryArithmetic.FLOOR, RError.Message.NON_NUMERIC_MATH, RType.Double);
 
     @Specialization
     protected Object floor(Object value) {

@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.ops.*;
 public abstract class Trunc extends RBuiltinNode {
 
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode trunc = UnaryArithmeticNodeGen.create(UnaryArithmetic.TRUNC, RError.Message.NON_NUMERIC_MATH);
+    @Child private UnaryArithmeticNode trunc = UnaryArithmeticNodeGen.create(UnaryArithmetic.TRUNC, RError.Message.NON_NUMERIC_MATH, RType.Double);
 
     @Specialization
     protected Object trunc(Object value) {

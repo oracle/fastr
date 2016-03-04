@@ -36,4 +36,10 @@ public class TestBuiltin_trunc extends TestBase {
     public void testtrunc4() {
         assertEval("argv <- list(c(-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4));trunc(argv[[1]]);");
     }
+
+    @Test
+    public void testTrunc() {
+        assertEval("{ typeof(trunc(42L)); }");
+        assertEval("{ typeof(trunc(TRUE)); }");
+    }
 }

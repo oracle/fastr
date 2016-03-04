@@ -60,6 +60,8 @@ public class TestBuiltin_ceiling extends TestBase {
     @Test
     public void testCeiling() {
         assertEval("{ ceiling(c(0.2,-3.4,NA,0/0,1/0)) }");
+        assertEval("{ typeof(ceiling(42L)); }");
+        assertEval("{ typeof(ceiling(TRUE)); }");
     }
 
 }

@@ -49,5 +49,8 @@ public class TestBuiltin_round extends TestBase {
         assertEval("{ round(as.complex(c(0,0.2,NaN,0.6,NA,1))) }");
 
         assertEval(Ignored.Unknown, "{ round(1.123456,digit=2.8) }");
+
+        assertEval("{ typeof(round(42L)); }");
+        assertEval("{ typeof(round(TRUE)); }");
     }
 }
