@@ -49,7 +49,7 @@ GNUR_F_FILES = bsplvd.f bvalue.f bvalus.f eureka.f hclust.f kmns.f lminfl.f loes
 
 GNUR_F_OBJECTS = $(addprefix $(OBJ)/, $(GNUR_F_FILES:.f=.o))
 
-GNUR_C_FILES = isoreg.c kmeans.c loessc.c monoSpl.c sbart.c
+GNUR_C_FILES = init.c isoreg.c kmeans.c loessc.c monoSpl.c sbart.c
 
 GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_C_FILES:.c=.o)) $(FFT_OBJECT)
 
