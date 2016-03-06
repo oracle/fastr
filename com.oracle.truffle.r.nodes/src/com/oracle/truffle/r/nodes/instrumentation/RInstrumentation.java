@@ -230,7 +230,7 @@ public class RInstrumentation {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
         SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
         builder.tagIs(RSyntaxTags.START_FUNCTION);
-        FunctionStatementsNode fsn = ((FunctionBodyNode) fdn.getBody()).getStatements();
+        FunctionStatementsNode fsn = (FunctionStatementsNode) fdn.getBody();
         builder.sourceSectionEquals(fsn.getSourceSection());
         return builder;
     }

@@ -26,7 +26,6 @@ import java.util.ArrayList;
 
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.control.BlockNode;
-import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
 import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.runtime.FunctionUID;
 
@@ -40,15 +39,11 @@ public class RSyntaxTags {
      */
     public static final String START_FUNCTION = "r-start_function";
     /**
-     * Applied to {@link FunctionBodyNode} and used in single step.
-     */
-    public static final String ENTER_FUNCTION = "r-enter-function";
-    /**
      * Applied to all loop nodes.
      */
     public static final String LOOP = "r-loop";
 
-    public static final String[] ALL_TAGS = new String[]{STATEMENT, START_FUNCTION, ENTER_FUNCTION, LOOP};
+    public static final String[] ALL_TAGS = new String[]{STATEMENT, START_FUNCTION, LOOP};
 
     /**
      * Temp hack to identify the function.

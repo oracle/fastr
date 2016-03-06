@@ -44,11 +44,9 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
-import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
-import com.oracle.truffle.r.nodes.instrument.RSyntaxTag;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -266,7 +264,8 @@ public class DebugHandling {
                     break;
                 case STEP:
                     if (this instanceof StatementEventReceiver) {
-                        stepIntoInstrument = RInstrument.getInstrumenter().attach(RSyntaxTag.FUNCTION_BODY, new StepIntoInstrumentListener(this), "step");
+                        stepIntoInstrument = RInstrument.getInstrumenter().attach(StandardSyntaxTag.START_METHOD, new StepIntoInstrumentListener(receiverMap.get(functionDefinitionNode.getUID())),
+                                        "step");
                     }
                     break;
                 case CONTINUE:
@@ -550,20 +549,20 @@ public class DebugHandling {
      * Listener for (transient) step into.
      */
     private static class StepIntoInstrumentListener implements StandardBeforeInstrumentListener {
-        private DebugEventReceiver debugEventReceiver;
+        private FunctionStatementsEventReceiver functionStatementsEventReceiver;
 
-        StepIntoInstrumentListener(DebugEventReceiver debugEventReceiver) {
-            this.debugEventReceiver = debugEventReceiver;
+        StepIntoInstrumentListener(FunctionStatementsEventReceiver functionStatementsEventReceiver) {
+            this.functionStatementsEventReceiver = functionStatementsEventReceiver;
         }
 
         @Override
         public void onEnter(Probe probe, Node node, VirtualFrame frame) {
             if (!globalDisable) {
-                FunctionBodyNode functionBodyNode = (FunctionBodyNode) node;
-                FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionBodyNode.getRootNode();
+                FunctionStatementsNode functionStatementsNode = (FunctionStatementsNode) node;
+                FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionStatementsNode.getRootNode();
                 ensureSingleStep(fdn);
-                debugEventReceiver.clearTrap();
-                // next stop will be the START_METHOD node
+                functionStatementsEventReceiver.clearTrap();
+                functionStatementsEventReceiver.onEnter(probe, functionStatementsNode, frame);
             }
         }
 

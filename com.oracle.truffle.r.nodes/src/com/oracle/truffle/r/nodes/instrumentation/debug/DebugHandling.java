@@ -65,7 +65,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * mode and reset it's state on return. This is handled as follows:
  * <ol>
  * <li>On a step-into, attach a {@link StepIntoInstrumentListener} with a filter that matches all
- * functions and the {@link RSyntaxTags#ENTER_FUNCTION} tag</li>
+ * functions and the {@link RSyntaxTags#START_FUNCTION} tag</li>
  * <li>On entry to that listener instrument/enable the function we have entered (if necessary) for
  * one-time (unless already)</li>
  * <li>Dispose the {@link StepIntoInstrumentListener} and continue, which will then stop at the
@@ -242,8 +242,8 @@ public class DebugHandling {
                          * so hopefully only the one function will actually get instrumented - but
                          * will everything get invalidated?
                          */
-                        stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(RSyntaxTags.ENTER_FUNCTION).build(),
-                                        new StepIntoInstrumentListener(this));
+                        stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(RSyntaxTags.START_FUNCTION).build(),
+                                        new StepIntoInstrumentListener(listenerMap.get(functionDefinitionNode.getUID())));
                     }
                     break;
                 case CONTINUE:
@@ -534,20 +534,20 @@ public class DebugHandling {
      * Listener for (transient) step into.
      */
     private static class StepIntoInstrumentListener implements ExecutionEventListener {
-        private DebugEventListener debugEventReceiver;
+        private FunctionStatementsEventListener functionStatementsEventListener;
 
-        StepIntoInstrumentListener(DebugEventListener debugEventReceiver) {
-            this.debugEventReceiver = debugEventReceiver;
+        StepIntoInstrumentListener(FunctionStatementsEventListener debugEventReceiver) {
+            this.functionStatementsEventListener = debugEventReceiver;
         }
 
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!globalDisable) {
-                FunctionBodyNode functionBodyNode = (FunctionBodyNode) context.getInstrumentedNode();
-                FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionBodyNode.getRootNode();
+                FunctionStatementsNode functionStatementsNode = (FunctionStatementsNode) context.getInstrumentedNode();
+                FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionStatementsNode.getRootNode();
                 ensureSingleStep(fdn);
-                debugEventReceiver.clearStepInstrument();
-                // next stop will be the FunctionStatementsNode
+                functionStatementsEventListener.clearStepInstrument();
+                functionStatementsEventListener.onEnter(context, frame);
             }
         }
 

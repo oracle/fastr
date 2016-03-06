@@ -32,7 +32,6 @@ import com.oracle.truffle.api.instrumentation.EventContext;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation.FunctionIdentification;
@@ -133,7 +132,7 @@ public class REntryCounters {
 
         public static Counter findCounter(RFunction func) {
             FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-            FunctionStatementsNode fsn = ((FunctionBodyNode) fdn.getBody()).getStatements();
+            FunctionStatementsNode fsn = ((FunctionStatementsNode) fdn.getBody());
             return singleton.getCounter(fsn.getSourceSection());
         }
 
