@@ -83,6 +83,7 @@ public class TraceHandling {
             builder.tagIs(RSyntaxTags.START_FUNCTION);
             SourceSectionFilter filter = builder.build();
             RInstrumentation.getInstrumenter().attachListener(filter, fser);
+            setOutputHandler();
         }
     }
 

@@ -35,7 +35,6 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.SequenceNode;
-import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
@@ -233,14 +232,6 @@ public abstract class Identical extends RBuiltinNode {
         }
         RSyntaxNode xNode = x.getRep().asRSyntaxNode();
         RSyntaxNode yNode = y.getRep().asRSyntaxNode();
-        // the following is (at least) needed by setGeneric function which expects a call node
-        // and function body node containing a single (same) call node to be identical
-        if (xNode instanceof FunctionBodyNode) {
-            xNode = ((FunctionBodyNode) xNode).getStatements();
-        }
-        if (yNode instanceof FunctionBodyNode) {
-            yNode = ((FunctionBodyNode) yNode).getStatements();
-        }
         if (xNode instanceof SequenceNode && ((SequenceNode) xNode).getSequence().length == 1) {
             xNode = ((SequenceNode) xNode).getSequence()[0].asRSyntaxNode();
         }
