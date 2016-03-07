@@ -159,7 +159,7 @@ public final class AccessArgumentNode extends RNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             // TODO: all tests pass without it but perhaps we should "re-wrap" promises here?
             if (isOptimizableDefault(arg)) {
-                optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) NodeUtil.cloneNode(arg), ArgumentStatePush.INVALID_INDEX);
+                optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) RASTUtils.cloneNode(arg), ArgumentStatePush.INVALID_INDEX);
             } else {
                 Object optimizableConstant = getOptimizableConstant(arg);
                 if (optimizableConstant != null) {

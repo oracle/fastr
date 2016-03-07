@@ -88,7 +88,7 @@ public abstract class PromiseNode extends RNode {
 
     public static RNode createInlined(RNode expression, Object defaultValue, boolean unwrap) {
         CompilerAsserts.neverPartOfCompilation();
-        RNode clonedExpression = NodeUtil.cloneNode(expression);
+        RNode clonedExpression = RASTUtils.cloneNode(expression);
         RNode pn = clonedExpression instanceof ConstantNode ? clonedExpression : new InlinedSuppliedArgumentNode(clonedExpression, defaultValue, unwrap);
         return pn;
     }

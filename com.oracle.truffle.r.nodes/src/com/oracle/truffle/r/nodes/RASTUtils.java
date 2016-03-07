@@ -66,6 +66,15 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public class RASTUtils {
 
     /**
+     * Central location for all node cloning operations, in preference to {@link NodeUtil#cloneNode}
+     * .
+     */
+    public static RNode cloneNode(Node node) {
+        RNode result = (RNode) NodeUtil.cloneNode(node);
+        return result;
+    }
+
+    /**
      * Removes any {@link WrapArgumentNode} or {@link WrapperNode}.
      */
     @TruffleBoundary
@@ -177,7 +186,7 @@ public class RASTUtils {
             return RASTUtils.createReadVariableNode(((RSymbol) value).getName());
         } else if (value instanceof RLanguage) {
             RLanguage l = (RLanguage) value;
-            return (RNode) NodeUtil.cloneNode((Node) l.getRep());
+            return RASTUtils.cloneNode(l.getRep());
         } else if (value instanceof RPromise) {
             RPromise promise = (RPromise) value;
             RNode promiseRep = (RNode) unwrap(((RPromise) value).getRep());
@@ -195,7 +204,7 @@ public class RASTUtils {
                     return null;
                 }
             }
-            return NodeUtil.cloneNode(promiseRep);
+            return RASTUtils.cloneNode(promiseRep);
         } else {
             return ConstantNode.create(value);
         }
@@ -340,9 +349,9 @@ public class RASTUtils {
             // strange special case, mimics GnuR behavior
             return RASTUtils.createReadVariableNode("");
         } else if (val instanceof RPromise) {
-            return (RSyntaxNode) NodeUtil.cloneNode(RASTUtils.unwrap(((RPromise) val).getRep()));
+            return (RSyntaxNode) RASTUtils.cloneNode(RASTUtils.unwrap(((RPromise) val).getRep()));
         } else if (val instanceof RLanguage) {
-            return (RSyntaxNode) NodeUtil.cloneNode((RNode) ((RLanguage) val).getRep());
+            return (RSyntaxNode) RASTUtils.cloneNode(((RLanguage) val).getRep());
         } else if (val instanceof RArgsValuesAndNames) {
             // this is '...'
             RArgsValuesAndNames rva = (RArgsValuesAndNames) val;
@@ -369,7 +378,7 @@ public class RASTUtils {
                 }
                 if (argval instanceof RPromise) {
                     RPromise promise = (RPromise) argval;
-                    expandedNodes[i] = (RSyntaxNode) NodeUtil.cloneNode(RASTUtils.unwrap(promise.getRep()));
+                    expandedNodes[i] = (RSyntaxNode) RASTUtils.cloneNode(RASTUtils.unwrap(promise.getRep()));
                 } else {
                     expandedNodes[i] = ConstantNode.create(argval);
                 }
