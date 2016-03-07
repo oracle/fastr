@@ -19,25 +19,23 @@
 
 #include <Rinternals.h>
 
-static void unimplemented_tools() {
-	error("unimplemented tools .External");
-}
+#define UNIMPLEMENTED { error("unimplemented function at %s:%d", __FILE__, __LINE__); return NULL; }
 
-SEXP delim_match(SEXP x, SEXP delims) { unimplemented_tools(); return NULL; }
-SEXP dirchmod(SEXP dr) { unimplemented_tools(); return NULL; }
-SEXP Rmd5(SEXP files) { unimplemented_tools(); return NULL; }
-SEXP check_nonASCII(SEXP text, SEXP ignore_quotes) { unimplemented_tools(); return NULL; }
-SEXP check_nonASCII2(SEXP text) { unimplemented_tools(); return NULL; }
-SEXP doTabExpand(SEXP strings, SEXP starts) { unimplemented_tools(); return NULL; }
-SEXP ps_kill(SEXP pid, SEXP signal) { unimplemented_tools(); return NULL; }
-SEXP ps_sigs(SEXP pid) { unimplemented_tools(); return NULL; }
-SEXP ps_priority(SEXP pid, SEXP value) { unimplemented_tools(); return NULL; }
-SEXP codeFilesAppend(SEXP f1, SEXP f2) { unimplemented_tools(); return NULL; }
-SEXP getfmts(SEXP format) { unimplemented_tools(); return NULL; }
-SEXP startHTTPD(SEXP sIP, SEXP sPort) { unimplemented_tools(); return NULL; }
-SEXP stopHTTPD(void) { unimplemented_tools(); return NULL; }
+SEXP delim_match(SEXP x, SEXP delims) UNIMPLEMENTED
+SEXP dirchmod(SEXP dr) UNIMPLEMENTED
+SEXP Rmd5(SEXP files) UNIMPLEMENTED
+SEXP check_nonASCII(SEXP text, SEXP ignore_quotes) UNIMPLEMENTED
+SEXP check_nonASCII2(SEXP text) UNIMPLEMENTED
+SEXP doTabExpand(SEXP strings, SEXP starts) UNIMPLEMENTED
+SEXP ps_kill(SEXP pid, SEXP signal) UNIMPLEMENTED
+SEXP ps_sigs(SEXP pid) UNIMPLEMENTED
+SEXP ps_priority(SEXP pid, SEXP value) UNIMPLEMENTED
+SEXP codeFilesAppend(SEXP f1, SEXP f2) UNIMPLEMENTED
+SEXP getfmts(SEXP format) UNIMPLEMENTED
+SEXP startHTTPD(SEXP sIP, SEXP sPort) UNIMPLEMENTED
+SEXP stopHTTPD(void) UNIMPLEMENTED
 
-SEXP C_parseLatex(SEXP call, SEXP op, SEXP args, SEXP env) { unimplemented_tools(); return NULL; }
+SEXP C_parseLatex(SEXP call, SEXP op, SEXP args, SEXP env) UNIMPLEMENTED
 //SEXP C_parseRd(SEXP call, SEXP op, SEXP args, SEXP env);
 SEXP C_parseRd(SEXP con, SEXP source, SEXP verbose, SEXP fragment, SEXP basename, SEXP warningcalls);
-SEXP C_deparseRd(SEXP e, SEXP state) { unimplemented_tools(); return NULL; }
+SEXP C_deparseRd(SEXP e, SEXP state) UNIMPLEMENTED

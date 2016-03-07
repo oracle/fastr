@@ -21,4 +21,17 @@
 # questions.
 #
 
+OBJ = lib
+
+GNUR_C_FILES = init.c
+
+GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_C_FILES:.c=.o))
+
+PKG_INCLUDES = -I $(GNUR_SRC)
+
 include ../lib.mk
+
+$(C_OBJECTS): | $(OBJ)
+
+$(OBJ)/%.o: $(GNUR_SRC)/%.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@

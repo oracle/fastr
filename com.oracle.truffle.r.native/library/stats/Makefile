@@ -41,6 +41,7 @@ include $(TOPDIR)/platform.mk
 endif
 
 PKG_LIBS := $(LAPACK_LIBS) $(BLAS_LIBS) -L$(FASTR_LIB_DIR) $(FLIBS)
+PKG_INCLUDES = -I $(GNUR_SRC)
 
 OBJ = lib
 
