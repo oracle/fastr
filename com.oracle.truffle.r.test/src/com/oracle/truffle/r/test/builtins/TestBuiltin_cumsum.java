@@ -104,6 +104,7 @@ public class TestBuiltin_cumsum extends TestBase {
         assertEval("{ cumsum(c(1+1i,2-3i,4+5i)) }");
         assertEval("{ cumsum(c(1+1i, NA, 2+3i)) }");
         assertEval("{ cumsum(as.logical(-2:2)) }");
+        assertEval("{ cumsum((1:6)*(1+1i)) }");
 
         assertEval(Ignored.Unknown, "{ cumsum(c(1,2,3,0/0,5)) }");
         assertEval(Ignored.Unknown, "{ cumsum(c(1,0/0,5+1i)) }");
@@ -116,7 +117,5 @@ public class TestBuiltin_cumsum extends TestBase {
         assertEval(Ignored.Unknown, "{ cumsum(c(2000000000L, 2000000000L)) }");
         // FIXME missing warning
         assertEval(Ignored.Unknown, "{ cumsum(c(-2147483647L, -1L)) }");
-        // FIXME print formatting
-        assertEval(Ignored.Unknown, "{ cumsum((1:6)*(1+1i)) }");
     }
 }

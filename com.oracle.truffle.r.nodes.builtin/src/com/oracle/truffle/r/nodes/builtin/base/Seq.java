@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "seq", aliases = {"seq.int"}, kind = SUBSTITUTE, parameterNames = {"from", "to", "by", "length.out", "along.with"})
+@RBuiltin(name = "seq.int", kind = SUBSTITUTE, parameterNames = {"from", "to", "by", "length.out", "along.with"})
 // Implement in R, but seq.int is PRIMITIVE (and may have to contain most, if not all, of the code
 // below)
 @SuppressWarnings("unused")

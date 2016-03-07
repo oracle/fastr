@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.library.fastr;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -33,9 +35,10 @@ public class FastRCallCounting {
 
     public abstract static class CreateCallCounter extends RExternalBuiltinNode.Arg1 {
         @Specialization
+        @TruffleBoundary
         protected RNull createCallCounter(RFunction function) {
             if (!function.isBuiltin()) {
-                if (!RInstrumentFactory.getInstance().installCounter(function)) {
+                if (!RContext.getInstance().getInstrumentFactory().installCounter(function)) {
                     throw RError.error(this, RError.Message.GENERIC, "failed to apply counter, instrumention disabled?");
                 }
             }
@@ -51,9 +54,10 @@ public class FastRCallCounting {
 
     public abstract static class GetCallCounter extends RExternalBuiltinNode.Arg1 {
         @Specialization
+        @TruffleBoundary
         protected Object getCallCount(RFunction function) {
             if (!function.isBuiltin()) {
-                int entryCount = RInstrumentFactory.getInstance().getCounter(function);
+                int entryCount = RContext.getInstance().getInstrumentFactory().getCounter(function);
                 if (entryCount < 0) {
                     throw RError.error(this, RError.Message.GENERIC, "no associated counter");
                 } else {
@@ -69,5 +73,4 @@ public class FastRCallCounting {
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "func");
         }
     }
-
 }

@@ -41,7 +41,9 @@ fastr.compile <- function(func, background=TRUE) .FastR(.NAME="compile", func, b
 
 fastr.dumptrees <- function(func, igvDump=FALSE, verbose=FALSE) .FastR(.NAME="dumptrees", func, igvDump, verbose)
 
-fastr.syntaxtree <- function(func, printSource=FALSE, visitAll=FALSE, printTags=FALSE) invisible(.FastR(.NAME="syntaxtree", func, printSource, visitAll, printTags))
+fastr.syntaxtree <- function(func, printSource=FALSE, visitMode=c("node", "syntaxnode", "syntaxelement"), printTags=FALSE) {
+	invisible(.FastR(.NAME="syntaxtree", func, printSource, match.arg(visitMode), printTags))
+}
 
 fastr.tree <- function(func, verbose=FALSE) invisible(.FastR(.NAME="tree", func, verbose))
 

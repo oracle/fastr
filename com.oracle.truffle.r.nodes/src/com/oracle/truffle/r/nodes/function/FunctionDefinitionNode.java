@@ -46,7 +46,6 @@ import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
-import com.oracle.truffle.r.nodes.instrument.factory.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -62,6 +61,7 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
+import com.oracle.truffle.r.runtime.WithFunctionUID;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -73,7 +73,7 @@ import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode {
+public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, WithFunctionUID {
 
     @Child private RNode body; // typed as RNode to avoid custom instrument wrapper
     /**
@@ -94,6 +94,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private SourceSection sourceSectionR;
     private final SourceSection[] argSourceSections;
 
+    @Child private RNode saveArguments;
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode onExitExpressionCache;
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
@@ -130,17 +131,18 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     public static FunctionDefinitionNode create(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments, RSyntaxNode synBody,
                     FormalArguments formals, String description,
                     PostProcessArgumentsNode argPostProcess) {
-        FunctionBodyNode body = new FunctionBodyNode(saveArguments, new FunctionStatementsNode(synBody.getSourceSection(), synBody));
-        return new FunctionDefinitionNode(src, frameDesc, argSourceSections, body, formals, description, argPostProcess, FunctionUIDFactory.get().createUID());
+        FunctionStatementsNode body = new FunctionStatementsNode(synBody.getSourceSection(), synBody);
+        return new FunctionDefinitionNode(src, frameDesc, argSourceSections, saveArguments, body, formals, description, argPostProcess, FunctionUIDFactory.get().createUID());
     }
 
-    private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode body, FormalArguments formals, String description,
-                    PostProcessArgumentsNode argPostProcess, FunctionUID uuid) {
+    private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RNode body, FormalArguments formals,
+                    String description, PostProcessArgumentsNode argPostProcess, FunctionUID uuid) {
         super(null, formals, frameDesc);
         this.argSourceSections = argSourceSections;
         assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
         assert src != null;
         this.sourceSectionR = src;
+        this.saveArguments = saveArguments;
         this.body = body;
         this.description = description;
         this.onExitSlot = FrameSlotNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
@@ -148,7 +150,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.needsSplitting = needsAnyBuiltinSplitting();
         this.containsDispatch = containsAnyDispatch(body);
         this.argPostProcess = argPostProcess;
-        RInstrumentFactory.getInstance().registerFunctionDefinitionNode(this);
+        RContext.getInstance().getInstrumentFactory().registerFunctionDefinitionNode(this);
     }
 
     @Override
@@ -252,6 +254,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         try {
             verifyEnclosingAssumptions(frame);
             setupDispatchSlots(frame);
+            saveArguments.execute(frame);
             Object result = body.execute(frame);
             normalExit.enter();
             return result;
@@ -420,8 +423,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         FrameDescriptor frameDesc = new FrameDescriptor();
 
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<substituted function>", frameDesc);
-        return new FunctionDefinitionNode(RSyntaxNode.EAGER_DEPARSE, frameDesc, null, body.substitute(env).asRNode(), getFormalArguments(), null, argPostProcess,
-                        FunctionUIDFactory.get().createUID());
+        return new FunctionDefinitionNode(RSyntaxNode.EAGER_DEPARSE, frameDesc, null, saveArguments, body.substitute(env).asRNode(), getFormalArguments(), null,
+                        argPostProcess, FunctionUIDFactory.get().createUID());
     }
 
     /**

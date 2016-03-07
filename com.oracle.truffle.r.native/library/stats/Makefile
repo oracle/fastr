@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ GNUR_F_FILES = bsplvd.f bvalue.f bvalus.f eureka.f hclust.f kmns.f lminfl.f loes
 
 GNUR_F_OBJECTS = $(addprefix $(OBJ)/, $(GNUR_F_FILES:.f=.o))
 
-GNUR_C_FILES = isoreg.c kmeans.c loessc.c monoSpl.c sbart.c
+GNUR_C_FILES = init.c isoreg.c kmeans.c loessc.c monoSpl.c sbart.c
 
 GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_C_FILES:.c=.o)) $(FFT_OBJECT)
 

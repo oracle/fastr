@@ -41,13 +41,12 @@ import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
-import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
-import com.oracle.truffle.r.nodes.instrument.RSyntaxTag;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -265,7 +264,8 @@ public class DebugHandling {
                     break;
                 case STEP:
                     if (this instanceof StatementEventReceiver) {
-                        stepIntoInstrument = RInstrument.getInstrumenter().attach(RSyntaxTag.FUNCTION_BODY, new StepIntoInstrumentListener(this), "step");
+                        stepIntoInstrument = RInstrument.getInstrumenter().attach(StandardSyntaxTag.START_METHOD, new StepIntoInstrumentListener(receiverMap.get(functionDefinitionNode.getUID())),
+                                        "step");
                     }
                     break;
                 case CONTINUE:
@@ -345,6 +345,10 @@ public class DebugHandling {
         @Override
         void enable() {
             super.enable();
+            enableChildren();
+        }
+
+        void enableChildren() {
             statementReceiver.enable();
             for (LoopStatementEventReceiver lser : loopStatementReceivers) {
                 lser.enable();
@@ -373,10 +377,7 @@ public class DebugHandling {
         }
 
         void endFinishing() {
-            for (LoopStatementEventReceiver lser : loopStatementReceivers) {
-                lser.enable();
-            }
-            statementReceiver.enable();
+            enableChildren();
         }
 
         @Override
@@ -385,6 +386,12 @@ public class DebugHandling {
                 print("debugging in: ", false);
                 printCall(frame);
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) RArguments.getFunction(frame).getRootNode();
+                /*
+                 * If this is a recursive call, then returnCleanup will not have happened, so we
+                 * enable our child listeners unconditionally. TODO It is possible that the enabled
+                 * state should be stacked to match the call stack in the recursive case.
+                 */
+                enableChildren();
                 boolean brace = fdn.hasBraces();
                 if (brace) {
                     printNode(node, brace);
@@ -432,13 +439,20 @@ public class DebugHandling {
     private static void printNode(Node node, boolean curly) {
         ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         RDeparse.State state = RDeparse.State.createPrintableState();
-        ((RBaseNode) node).deparse(state);
-        consoleHandler.print("debug: ");
-        if (curly) {
+        RBaseNode rNode = (RBaseNode) node;
+        rNode.deparse(state);
+        SourceSection source = rNode.asRSyntaxNode().getSourceSection();
+        if (source == null) {
+            consoleHandler.print("debug: ");
+        } else {
+            consoleHandler.print("debug at #" + source.getStartLine() + ": ");
+        }
+        boolean printCurly = curly && !state.toString().startsWith("{");
+        if (printCurly) {
             consoleHandler.println("{");
         }
         consoleHandler.print(state.toString());
-        if (curly) {
+        if (printCurly) {
             consoleHandler.print("}");
         }
         consoleHandler.print("\n");
@@ -535,20 +549,20 @@ public class DebugHandling {
      * Listener for (transient) step into.
      */
     private static class StepIntoInstrumentListener implements StandardBeforeInstrumentListener {
-        private DebugEventReceiver debugEventReceiver;
+        private FunctionStatementsEventReceiver functionStatementsEventReceiver;
 
-        StepIntoInstrumentListener(DebugEventReceiver debugEventReceiver) {
-            this.debugEventReceiver = debugEventReceiver;
+        StepIntoInstrumentListener(FunctionStatementsEventReceiver functionStatementsEventReceiver) {
+            this.functionStatementsEventReceiver = functionStatementsEventReceiver;
         }
 
         @Override
         public void onEnter(Probe probe, Node node, VirtualFrame frame) {
             if (!globalDisable) {
-                FunctionBodyNode functionBodyNode = (FunctionBodyNode) node;
-                FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionBodyNode.getRootNode();
+                FunctionStatementsNode functionStatementsNode = (FunctionStatementsNode) node;
+                FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionStatementsNode.getRootNode();
                 ensureSingleStep(fdn);
-                debugEventReceiver.clearTrap();
-                // next stop will be the START_METHOD node
+                functionStatementsEventReceiver.clearTrap();
+                functionStatementsEventReceiver.onEnter(probe, functionStatementsNode, frame);
             }
         }
 

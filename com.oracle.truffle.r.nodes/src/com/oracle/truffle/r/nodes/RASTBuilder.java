@@ -441,7 +441,11 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     @Override
     public RSyntaxNode lookup(SourceSection sourceIn, String symbol, boolean functionLookup) {
-        SourceSection source = sourceIn == null ? RSyntaxNode.SOURCE_UNAVAILABLE : sourceIn;
+        /*
+         * TODO Ideally, sourceIn != null always, however ReplacementNodes can cause this on the
+         * rewrite nodes.
+         */
+        SourceSection source = sourceIn == null ? RSyntaxNode.INTERNAL : sourceIn;
         if (!functionLookup && getVariadicComponentIndex(symbol) != -1) {
             int ind = getVariadicComponentIndex(symbol);
             return new ReadVariadicComponentNode(source, ind > 0 ? ind - 1 : ind);

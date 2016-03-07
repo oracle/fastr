@@ -30,9 +30,7 @@ import com.oracle.truffle.r.runtime.context.*;
  * An interface that identifies an AST node as being part of the syntactic structure of the
  * (original) AST. Essentially a syntax node is defined as one produced by the parser and before any
  * evaluation takes place. I.e. a visit to every node in such a tree should have
- * {@code node instanceof RSyntaxNode == true}. A syntax node (necessarily) includes <i>backbone</i>
- * nodes that, while carrying no actual syntactic information, are used to connect one syntax node
- * to another. It is possible to detect backbone nodes using the {@link #isBackbone} method.
+ * {@code node instanceof RSyntaxNode == true}.
  *
  * Currently FastR deviates from this ideal in that the parsing process or, more accurately, the
  * conversion of the AST produced by the parser into a Truffle AST effects some transformations that
@@ -75,14 +73,6 @@ public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
      */
     default Node asNode() {
         return (Node) this;
-    }
-
-    /**
-     * Denotes that this node is part of the "backbone" of the AST, but carries no useful syntactic
-     * information.
-     */
-    default boolean isBackbone() {
-        return false;
     }
 
     /**
@@ -138,8 +128,7 @@ public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
      * {@code Node#accept}. Note that AST transformations can change the shape of the tree in
      * drastic ways; in particular one cannot truncate the walk on encountering a non-syntax node,
      * as the related {@link RSyntaxNode} may be have been transformed into a child of a non-syntax
-     * node. We visit but do not call the {@code nodeVisitor} on {@link RSyntaxNode}s that return
-     * {@code true} to {@link #isBackbone()}.
+     * node.
      *
      * N.B. A {@code ReplacementNode} is a very special case as we don't want to visit the
      * transformation denoted by the child nodes (which include syntax nodes), so we use the special
@@ -151,9 +140,7 @@ public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
         int incDepth = 0;
         if (RBaseNode.isRSyntaxNode(node)) {
             RSyntaxNode syntaxNode = (RSyntaxNode) node;
-            if (!syntaxNode.isBackbone()) {
-                visitChildren = nodeVisitor.visit(syntaxNode, depth);
-            }
+            visitChildren = nodeVisitor.visit(syntaxNode, depth);
             incDepth = 1;
         }
         if (visitChildren) {

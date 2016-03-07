@@ -39,8 +39,7 @@ public class TestBuiltin_diag extends TestBase {
 
     @Test
     public void testdiag5() {
-        assertEval(Ignored.OutputFormatting,
-                        "argv <- list(c(-2.80063713410797-0i, 2.40432724210166-0i, -1.40502612938985+0i, 1.39344241164891+0i, 0.785422253492721+0i), 5L, 5L); .Internal(diag(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(c(-2.80063713410797-0i, 2.40432724210166-0i, -1.40502612938985+0i, 1.39344241164891+0i, 0.785422253492721+0i), 5L, 5L); .Internal(diag(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
