@@ -31,8 +31,10 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -62,6 +64,8 @@ public final class ValuePrinters implements ValuePrinter<Object> {
         printers.put(RExternalPtr.class, ExternalPtrPrinter.INSTANCE);
         printers.put(RPromise.class, PromisePrinter.INSTANCE);
         printers.put(RMissing.class, MissingPrinter.INSTANCE);
+        printers.put(RS4Object.class, S4ObjectPrinter.INSTANCE);
+        printers.put(RPairList.class, PairListPrinter.INSTANCE);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
