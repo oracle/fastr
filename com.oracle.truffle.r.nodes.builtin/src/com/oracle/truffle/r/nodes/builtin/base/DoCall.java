@@ -106,7 +106,7 @@ public abstract class DoCall extends RBuiltinNode {
                 containsRLanguageProfile.enter();
                 callerFrame = getCallerFrame(frame, callerFrame);
                 RLanguage lang = (RLanguage) arg;
-                argValues[i] = createArgPromise(callerFrame, NodeUtil.cloneNode(((RNode) lang.getRep())));
+                argValues[i] = createArgPromise(callerFrame, RASTUtils.cloneNode((lang.getRep())));
             } else if (arg instanceof RSymbol) {
                 containsRSymbolProfile.enter();
                 RSymbol symbol = (RSymbol) arg;

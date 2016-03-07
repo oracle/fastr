@@ -237,7 +237,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             SyntaxArguments sa = new SyntaxArguments(new RSyntaxNode[v.length]);
             for (int i = 0; i < v.length; i++) {
                 if (v[i] != null) {
-                    RSyntaxNode viClone = (RSyntaxNode) NodeUtil.cloneNode(v[i].asRNode());
+                    RSyntaxNode viClone = (RSyntaxNode) RASTUtils.cloneNode(v[i].asRNode());
                     sa.v[i] = viClone;
                 }
             }
@@ -330,7 +330,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     dispatchTempSlot = insert(FrameSlotNode.createInitialized(frame.getFrameDescriptor(), defaultTempIdentifiers[0], true));
                     internalDispatchCall = insert(new UninitializedCallNode(this, defaultTempIdentifiers[0]));
-                    dispatchArgument = insert(NodeUtil.cloneNode(arguments.v[0].asRNode()));
+                    dispatchArgument = insert(RASTUtils.cloneNode(arguments.v[0].asRNode()));
                     dispatchLookup = insert(S3FunctionLookupNode.create(true, false));
                     classHierarchyNode = insert(ClassHierarchyNodeGen.create(false, true));
                 }
@@ -413,7 +413,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             if (i == 0 && dispatchTempIdentifier != null) {
                 args[0] = new GetTempNode(dispatchTempIdentifier, arguments.v[0]);
             } else {
-                args[i] = arguments.v[i] == null ? null : NodeUtil.cloneNode(arguments.v[i].asRNode());
+                args[i] = arguments.v[i] == null ? null : RASTUtils.cloneNode(arguments.v[i].asRNode());
             }
         }
         return CallArgumentsNode.create(modeChange, modeChangeAppliesToAll, args, signature);
@@ -607,7 +607,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         for (int i = 0; i < args.length; i++) {
             args[i] = i < replacementArgs.length ? replacementArgs[i] : call.arguments.v[i];
         }
-        return new RCallNode(call.getSourceSection(), NodeUtil.cloneNode(call.functionNode), args, call.signature);
+        return new RCallNode(call.getSourceSection(), RASTUtils.cloneNode(call.functionNode), args, call.signature);
     }
 
     /**
@@ -984,7 +984,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
 
             // Extend cache
             this.depth += 1;
-            CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
+            CallArgumentsNode clonedArgs = (CallArgumentsNode) RASTUtils.cloneNode(args);
             VarArgsCacheCallNode next = createNextNode(function);
             DispatchedVarArgsCallNode newCallNode = DispatchedVarArgsCallNode.create(frame, clonedArgs, next, this, function, varArgsSignature);
             return replace(newCallNode).execute(frame, function, varArgsSignature, s3Args);
@@ -994,7 +994,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             if (depth < VARARGS_INLINE_CACHE_SIZE) {
                 return this;
             } else {
-                CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
+                CallArgumentsNode clonedArgs = (CallArgumentsNode) RASTUtils.cloneNode(args);
                 return new DispatchedGenericVarArgsCallNode(function, clonedArgs, originalCall);
             }
         }

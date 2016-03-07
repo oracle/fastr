@@ -115,7 +115,7 @@ public abstract class Substitute extends RBuiltinNode {
         // so get the actual expression (AST) from that
         Node node = RASTUtils.unwrap(expr.getRep());
         // substitution is destructive so clone the tree
-        RSyntaxNode rNode = (RSyntaxNode) NodeUtil.cloneNode(node);
+        RSyntaxNode rNode = (RSyntaxNode) RASTUtils.cloneNode(node);
         RSyntaxNode subRNode = rNode.substituteImpl(env);
         // create source for entire tree
         RASTDeparse.ensureSourceSection(subRNode);

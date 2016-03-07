@@ -69,7 +69,7 @@ public abstract class InlineCacheNode extends RBaseNode {
     }
 
     protected RNode cache(Object value) {
-        return NodeUtil.cloneNode(reify.apply(value));
+        return RASTUtils.cloneNode(reify.apply(value));
     }
 
     @Specialization(contains = "doCached")
