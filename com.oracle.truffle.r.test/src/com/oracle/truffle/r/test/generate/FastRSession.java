@@ -145,7 +145,7 @@ public final class FastRSession implements RSession {
     private FastRSession() {
         consoleHandler = new TestConsoleHandler();
         try {
-            RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
+            RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[]{"--no-restore"});
             ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
             main = info.apply(PolyglotEngine.newBuilder()).build();
             try {
