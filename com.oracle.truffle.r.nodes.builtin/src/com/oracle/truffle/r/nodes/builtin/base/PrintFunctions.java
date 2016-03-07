@@ -82,11 +82,11 @@ public class PrintFunctions {
         }
 
         @Specialization(guards = "!isS4(o)")
-        protected Object printDefault(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
+        protected Object printDefault(VirtualFrame frame, Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
             try {
                 // Invoking the new pretty-printer. In contrast to the previous one, the new one
                 // does not return the output value and prints directly to the output.
-                valuePrinter.executeString(o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+                valuePrinter.executeString(frame, o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             } catch (UnsupportedOperationException e) {
                 // The original pretty printing code
                 String s = (String) prettyPrinter.executeString(o, null, RRuntime.asLogical(quote), RRuntime.asLogical(right));
@@ -134,7 +134,7 @@ public class PrintFunctions {
         @Specialization
         protected RFunction printFunction(VirtualFrame frame, RFunction x, byte useSource, RArgsValuesAndNames extra) {
             try {
-                valuePrinter.executeString(x, PrintParameters.DEFAULT_DIGITS, true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDeafultMaxPrint(),
+                valuePrinter.executeString(frame, x, PrintParameters.DEFAULT_DIGITS, true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDeafultMaxPrint(),
                                 true, false);
             } catch (UnsupportedOperationException e) {
                 // The original pretty printing code

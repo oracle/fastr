@@ -86,20 +86,13 @@ public class AttributesPrinter implements ValuePrinter<RAttributable> {
             }
             out.println(tag);
 
-            if (RRuntime.ROWNAMES_ATTR_KEY.equals(a.getName())) {
-                /* need special handling AND protection */
-                Object val = a.getValue();
-                ValuePrinters.INSTANCE.print(val, printCtx);
-                continue;
-            }
-            if (RContext.getInstance().isMethodTableDispatchOn() && utils.isS4(value)) {
+            if (RContext.getInstance().isMethodTableDispatchOn() && utils.isS4(a.getValue())) {
+                // S4ObjectPrinter.printS4(printCtx, a.getValue());
                 throw new UnsupportedOperationException("TODO");
-            }
-            if (utils.isObject(value)) {
-                throw new UnsupportedOperationException("TODO");
+            } else {
+                ValuePrinters.INSTANCE.print(a.getValue(), printCtx);
             }
 
-            ValuePrinters.INSTANCE.print(a.getValue(), printCtx);
         }
     }
 

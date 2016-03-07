@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -112,6 +113,14 @@ public class Utils {
             return RDouble.valueOf((Double) o);
         }
         return Utils.<RAbstractDoubleVector> castTo(o);
+    }
+
+    public static boolean canBeComplexVector(Object o) {
+        return o instanceof RAbstractComplexVector;
+    }
+
+    public static RAbstractComplexVector toComplexVector(Object o) {
+        return Utils.<RAbstractComplexVector> castTo(o);
     }
 
     public static <T> T getDataAt(RAbstractVector v, int index) {
