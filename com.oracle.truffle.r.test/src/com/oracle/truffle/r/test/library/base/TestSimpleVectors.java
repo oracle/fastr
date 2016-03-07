@@ -1054,7 +1054,6 @@ public class TestSimpleVectors extends TestBase {
                         fastREval("{ x <- c(a=as.raw(10),b=as.raw(11),c=as.raw(12),d=as.raw(13)) ; f <- function(s) { x[c(s,s)] } ; f(TRUE) ; f(1L) ; f(as.character(NA)) }"));
     }
 
-
     @Test
     public void testScalarIndex() {
         assertEval("{ x <- c(a=1, b=2, c=3) ; x[[2]] }");
