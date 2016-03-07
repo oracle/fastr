@@ -19,7 +19,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 
 //Transcribed from GnuR, src/main/printutils.c
 
-public final class StringPrinter extends AbstractValuePrinter<String> {
+public final class StringPrinter extends AbstractScalarValuePrinter<String> {
 
     public static final StringPrinter INSTANCE = new StringPrinter();
 
@@ -88,11 +88,8 @@ public final class StringPrinter extends AbstractValuePrinter<String> {
     }
 
     @Override
-    protected void printValue(String value, PrintContext printCtx) throws IOException {
-        PrintWriter out = printCtx.output();
-        out.print("[1] ");
+    protected void printScalarValue(String value, PrintContext printCtx) throws IOException {
         printString(value, value.length(), printCtx);
-        out.println();
     }
 
 }

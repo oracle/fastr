@@ -701,7 +701,8 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ x<-1:4; names(x)<-101:104; y<-21:28; names(y)<-121:128; x | y }");
         assertEval("{ x<-1:4; names(x)<-101:104; attr(x, \"foo\")<-\"foo\"; attributes(x | TRUE) }");
         assertEval("{ x<-1:4; names(x)<-101:104; attr(x, \"foo\")<-\"foo\"; y<-21:24; names(y)<-121:124; attributes(x | y) }");
-        assertEval("{ x<-as.raw(1:4); names(x)<-101:104; y<-as.raw(21:24); names(y)<-121:124; x | y }");
+        // A misalignment error similar to those in TestSimpleVector (testIgnored1-3)
+        assertEval(Ignored.ReferenceError, "{ x<-as.raw(1:4); names(x)<-101:104; y<-as.raw(21:24); names(y)<-121:124; x | y }");
         assertEval("{ x<-1:4; y<-21:24; names(y)<-121:124; attributes(x | y) }");
         assertEval("{ x<-1:4; names(x)<-101:104; y<-21:28; names(y)<-121:128;  attributes(y | x) }");
         assertEval("{ x<-1:4; names(x)<-101:104; y<-21:28; attributes(x | y) }");

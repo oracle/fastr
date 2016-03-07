@@ -20,19 +20,17 @@ import com.oracle.truffle.r.runtime.data.RInteger;
 
 //Transcribed from GnuR, src/main/printutils.c
 
-public final class IntegerPrinter extends AbstractValuePrinter<Integer> {
+public final class IntegerPrinter extends AbstractScalarValuePrinter<Integer> {
 
     public static final IntegerPrinter INSTANCE = new IntegerPrinter();
 
     @Override
-    protected void printValue(Integer value, PrintContext printCtx) throws IOException {
+    protected void printScalarValue(Integer value, PrintContext printCtx) throws IOException {
         FormatMetrics fm = IntegerVectorPrinter.formatIntVector(RInteger.valueOf(value),
                         0, 1, printCtx.parameters().getNaWidth());
         String s = encodeInteger(value, fm.maxWidth, printCtx.parameters());
-
         PrintWriter out = printCtx.output();
-        out.print("[1] ");
-        out.println(s);
+        out.print(s);
     }
 
     /*

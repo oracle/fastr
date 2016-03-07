@@ -63,7 +63,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
 
         @Override
         protected void printEmptyVector() throws IOException {
-            out.println("complex(0)");
+            out.print("complex(0)");
         }
 
     }

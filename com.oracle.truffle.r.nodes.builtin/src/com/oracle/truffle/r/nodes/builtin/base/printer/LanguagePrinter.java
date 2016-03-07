@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,13 +23,31 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
-public interface ValuePrinter<T> {
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 
-    void print(T value, PrintContext printCtx) throws IOException;
+public final class LanguagePrinter extends AbstractValuePrinter<RLanguage> {
 
-    default void println(T value, PrintContext printCtx) throws IOException {
-        print(value, printCtx);
-        printCtx.output().println();
+    public static final LanguagePrinter INSTANCE = new LanguagePrinter();
+
+    @Override
+    protected void printValue(RLanguage language, PrintContext printCtx) throws IOException {
+        final PrintWriter out = printCtx.output();
+
+        String[] lines = RDeparse.deparse(language, 60, false, 0, -1);
+        if (lines.length == 1) {
+            out.print(lines[0]);
+        } else {
+            for (int i = 0; i < lines.length; i++) {
+                out.print(lines[i]);
+                if (i == lines.length - 1) {
+                    continue;
+                }
+                out.println();
+            }
+        }
     }
+
 }

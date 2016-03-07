@@ -214,15 +214,14 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
                     if (printCtx.printerNode().isObject(si)) {
                         throw new UnsupportedOperationException("TODO");
                     } else {
-                        ValuePrinters.printValue(si, printCtx);
+                        ValuePrinters.INSTANCE.println(si, printCtx);
                     }
 
                     tagbuf.removeTag();
                 }
 
-                out.println();
                 if (npr < ns) {
-                    out.printf(" [ reached getOption(\"max.print\") -- omitted %d entries ]\n",
+                    out.printf("\n [ reached getOption(\"max.print\") -- omitted %d entries ]",
                                     ns - npr);
                 }
 
@@ -236,12 +235,12 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
                     throw new UnsupportedOperationException("TODO");
                 }
                 if (className != null) {
-                    out.printf("An object of class \"%s\"\n", className);
+                    out.printf("An object of class \"%s\"", className);
                 } else {
                     if (names != null) {
                         out.print("named ");
                     }
-                    out.println("list()");
+                    out.print("list()");
                 }
 
             }

@@ -76,6 +76,8 @@ public class AttributesPrinter implements ValuePrinter<RAttributable> {
             }
 
             final PrintWriter out = printCtx.output();
+            out.println();
+
             final String tag;
             if (useSlots) {
                 tag = String.format("Slot \"%s\":", a.getName());
@@ -87,7 +89,7 @@ public class AttributesPrinter implements ValuePrinter<RAttributable> {
             if (RRuntime.ROWNAMES_ATTR_KEY.equals(a.getName())) {
                 /* need special handling AND protection */
                 Object val = a.getValue();
-                ValuePrinters.printValue(val, printCtx);
+                ValuePrinters.INSTANCE.print(val, printCtx);
                 continue;
             }
             if (RContext.getInstance().isMethodTableDispatchOn() && utils.isS4(value)) {
@@ -97,7 +99,7 @@ public class AttributesPrinter implements ValuePrinter<RAttributable> {
                 throw new UnsupportedOperationException("TODO");
             }
 
-            ValuePrinters.printValue(a.getValue(), printCtx);
+            ValuePrinters.INSTANCE.print(a.getValue(), printCtx);
         }
     }
 

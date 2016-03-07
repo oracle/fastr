@@ -29,7 +29,7 @@ public final class NullPrinter implements ValuePrinter<Object> {
     public static NullPrinter INSTANCE = new NullPrinter();
 
     public void print(Object value, PrintContext printCtx) {
-        printCtx.output().println(RRuntime.NULL);
+        printCtx.output().print(RRuntime.NULL);
     }
 
 }

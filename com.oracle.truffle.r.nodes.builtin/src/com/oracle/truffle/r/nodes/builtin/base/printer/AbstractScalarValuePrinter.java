@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,13 +23,19 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
-public interface ValuePrinter<T> {
+public abstract class AbstractScalarValuePrinter<T> extends AbstractValuePrinter<T> {
 
-    void print(T value, PrintContext printCtx) throws IOException;
-
-    default void println(T value, PrintContext printCtx) throws IOException {
-        print(value, printCtx);
-        printCtx.output().println();
+    @Override
+    protected final void printValue(T value, PrintContext printCtx) throws IOException {
+        PrintWriter out = printCtx.output();
+        if (!printCtx.parameters().getSuppressIndexLabels()) {
+            out.print("[1] ");
+        }
+        printScalarValue(value, printCtx);
     }
+
+    protected abstract void printScalarValue(T value, PrintContext printCtx) throws IOException;
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,12 +24,18 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
 
-public interface ValuePrinter<T> {
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 
-    void print(T value, PrintContext printCtx) throws IOException;
+public final class SymbolPrinter extends AbstractValuePrinter<RSymbol> {
 
-    default void println(T value, PrintContext printCtx) throws IOException {
-        print(value, printCtx);
-        printCtx.output().println();
+    public static final SymbolPrinter INSTANCE = new SymbolPrinter();
+
+    @Override
+    protected void printValue(RSymbol value, PrintContext printCtx) throws IOException {
+        String[] dp = RDeparse.deparse(value, RDeparse.DEFAULT_Cutoff, false,
+                        RDeparse.SIMPLEDEPARSE, -1);
+        printCtx.output().print(dp[0]);
     }
+
 }

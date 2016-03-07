@@ -20,6 +20,8 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RString;
 
 public class PrintParameters {
+    public static final int DEFAULT_DIGITS = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("digits"));
+
     private int width;
     private int naWidth;
     private int naWidthNoquote;
@@ -33,6 +35,11 @@ public class PrintParameters {
     private String naStringNoquote;
     private boolean useSource;
     private int cutoff; // for deparsed language objects
+    /**
+     * If set to true the vector printer does not print the index labels ([i]). This parameter is
+     * not subject to cloning so that it does not propagate to nested printers.
+     */
+    private boolean suppressIndexLabels;
 
     public PrintParameters() {
     }
@@ -104,7 +111,20 @@ public class PrintParameters {
         cloned.width = this.width;
         cloned.useSource = this.useSource;
         cloned.cutoff = this.cutoff;
+        // the suppression of index labels flag is not inherited
+        cloned.suppressIndexLabels = false;
         return cloned;
+    }
+
+    public static int getDeafultMaxPrint() {
+        RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("max.print"));
+        int max = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("max.print"));
+        if (max == RRuntime.INT_NA || max < 0) {
+            max = 99999;
+        } else if (max == RRuntime.INT_NA) {
+            max--; // so we can add
+        }
+        return max;
     }
 
     private void setDefaults() {
@@ -114,21 +134,17 @@ public class PrintParameters {
         this.naWidthNoquote = this.naStringNoquote.length();
         this.quote = true;
         this.right = false;
-        this.digits = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("digits"));
+        this.digits = DEFAULT_DIGITS;
         this.scipen = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("scipen"));
         if (this.scipen == RRuntime.INT_NA) {
             this.scipen = 0;
         }
-        this.max = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("max.print"));
-        if (this.max == RRuntime.INT_NA || this.max < 0) {
-            this.max = 99999;
-        } else if (this.max == RRuntime.INT_NA) {
-            this.max--; // so we can add
-        }
+        this.max = getDeafultMaxPrint();
         this.gap = 1;
         this.width = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("width"));
         this.useSource = true;
         this.cutoff = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("deparse.cutoff"));
+        this.suppressIndexLabels = false;
     }
 
     public int getWidth() {
@@ -233,6 +249,14 @@ public class PrintParameters {
 
     public void setCutoff(int cutoff) {
         this.cutoff = cutoff;
+    }
+
+    public boolean getSuppressIndexLabels() {
+        return suppressIndexLabels;
+    }
+
+    public void setSuppressIndexLabels(boolean suppressIndexLabels) {
+        this.suppressIndexLabels = suppressIndexLabels;
     }
 
 }

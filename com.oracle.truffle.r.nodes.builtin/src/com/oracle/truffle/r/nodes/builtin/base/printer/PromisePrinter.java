@@ -23,13 +23,35 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
-public interface ValuePrinter<T> {
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
-    void print(T value, PrintContext printCtx) throws IOException;
+public final class PromisePrinter extends AbstractValuePrinter<RPromise> {
 
-    default void println(T value, PrintContext printCtx) throws IOException {
-        print(value, printCtx);
-        printCtx.output().println();
+    public static final PromisePrinter INSTANCE = new PromisePrinter();
+
+    @Override
+    protected void printValue(RPromise promise, PrintContext printCtx) throws IOException {
+        if (promise.isEvaluated()) {
+            ValuePrinters.INSTANCE.print(promise.getValue(), printCtx);
+        } else {
+            printPromise(promise, printCtx);
+        }
     }
+
+    private static void printPromise(RPromise promise, PrintContext printCtx) {
+        final PrintWriter out = printCtx.output();
+
+        RNode node = (RNode) promise.getRep();
+        SourceSection ss = node.asRSyntaxNode().getSourceSection();
+        if (ss == null) {
+            out.print("<no source available>");
+        } else {
+            out.print(ss.getCode());
+        }
+    }
+
 }

@@ -200,9 +200,8 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                 printElement(i, fm);
                 width += w + gap;
             }
-            out.println();
             if (nPr < n) {
-                out.printf(" [ reached getOption(\"max.print\") -- omitted %d entries ]\n", n - nPr);
+                out.printf("\n [ reached getOption(\"max.print\") -- omitted %d entries ]", n - nPr);
             }
         }
 
@@ -256,7 +255,6 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                     out.printf("%" + asBlankArg(gap) + "s", "");
                 }
             }
-            out.println();
         }
 
         private void printMatrix() throws IOException {
@@ -282,7 +280,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                 throw RError.error(printCtx.printerNode(), RError.Message.GENERIC, "too few column labels");
             }
             if (r == 0 && c == 0) { // FIXME? names(dimnames(.)) :
-                out.println("<0 x 0 matrix>");
+                out.print("<0 x 0 matrix>");
                 return;
             }
             rpr = r;
@@ -294,7 +292,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
             printMatrix(offset, rpr, r, c, rl, cl, rn, cn, printij);
 
             if (rpr < r) {
-                out.printf(" [ reached getOption(\"max.print\") -- omitted %d rows ]\n", r - rpr);
+                out.printf("\n [ reached getOption(\"max.print\") -- omitted %d rows ]", r - rpr);
             }
 
         }
@@ -368,7 +366,6 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                 for (i = 0; i < r; i++) {
                     matrixRowLabel(rl, i, rlabw, lbloff);
                 }
-                out.println();
             } else {
                 while (jmin < c) {
                     /* print columns jmin:(jmax-1) where jmax has to be determined first */
@@ -392,8 +389,11 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                             }
                         }
                     }
-                    out.println();
                     jmin = jmax;
+
+                    if (jmin < c) {
+                        out.println();
+                    }
                 }
             }
         }
@@ -588,8 +588,11 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                 // RAbstractStringVector rl, RAbstractStringVector cl, String rn, String cn,
                 // boolean printij
                 printMatrix(i * b, usenr, nr, nc, mdn.rl, mdn.cl, mdn.rn, mdn.cn, doij);
-
                 out.println();
+
+                if (i + 1 < nbpr) {
+                    out.println();
+                }
             }
         }
 
@@ -641,7 +644,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
         }
 
         private int doLab(int i) {
-            if (indx > 0) {
+            if (indx > 0 && !printCtx.parameters().getSuppressIndexLabels()) {
                 printVectorIndex(i + 1, labwidth, out);
                 return labwidth;
             } else {

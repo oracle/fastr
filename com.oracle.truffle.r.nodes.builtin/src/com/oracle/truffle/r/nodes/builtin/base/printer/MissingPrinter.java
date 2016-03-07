@@ -24,12 +24,15 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
 
-public interface ValuePrinter<T> {
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
 
-    void print(T value, PrintContext printCtx) throws IOException;
+public final class MissingPrinter extends AbstractValuePrinter<RExternalPtr> {
 
-    default void println(T value, PrintContext printCtx) throws IOException {
-        print(value, printCtx);
-        printCtx.output().println();
+    public static final MissingPrinter INSTANCE = new MissingPrinter();
+
+    @Override
+    protected void printValue(RExternalPtr value, PrintContext printCtx) throws IOException {
+        printCtx.output().print(String.format("<pointer: %#x>", value.getAddr()));
     }
+
 }

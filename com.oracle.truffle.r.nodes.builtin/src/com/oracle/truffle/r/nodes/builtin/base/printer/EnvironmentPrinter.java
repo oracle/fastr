@@ -24,12 +24,15 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
 
-public interface ValuePrinter<T> {
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
-    void print(T value, PrintContext printCtx) throws IOException;
+public final class EnvironmentPrinter extends AbstractValuePrinter<REnvironment> {
 
-    default void println(T value, PrintContext printCtx) throws IOException {
-        print(value, printCtx);
-        printCtx.output().println();
+    public static final EnvironmentPrinter INSTANCE = new EnvironmentPrinter();
+
+    @Override
+    protected void printValue(REnvironment value, PrintContext printCtx) throws IOException {
+        printCtx.output().print(value.toString());
     }
+
 }
