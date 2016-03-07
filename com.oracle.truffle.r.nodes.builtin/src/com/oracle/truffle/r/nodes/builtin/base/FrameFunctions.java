@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -41,6 +42,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFr
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -495,6 +497,11 @@ public class FrameFunctions {
         public abstract Object execute(VirtualFrame frame, int n);
 
         @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.firstIntegerWithError(0, Message.INVALID_VALUE, "n");
+        }
+
+        @Override
         protected final FrameAccess frameAccess() {
             return FrameAccess.MATERIALIZE;
         }
@@ -506,8 +513,23 @@ public class FrameFunctions {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, RRuntime.intToString(n));
             }
-            int p = RArguments.getDepth(frame) - n - 1;
-            Frame callerFrame = getNumberedFrame(frame, p);
+            Frame callerFrame = Utils.iterateRFrames(frameAccess(), new Function<Frame, Frame>() {
+                int parentDepth = RArguments.getDepth(frame) - n - 1;
+
+                public Frame apply(Frame f) {
+                    if (RArguments.getDepth(f) == parentDepth) {
+                        return f;
+                    }
+                    if (RArguments.getDispatchArgs(f) != null) {
+                        /*
+                         * Skip the next frame if this frame has dispatch args, and therefore was
+                         * called by UseMethod or NextMethod.
+                         */
+                        parentDepth--;
+                    }
+                    return null;
+                }
+            });
             if (nullProfile.profile(callerFrame == null)) {
                 return REnvironment.globalEnv();
             } else {

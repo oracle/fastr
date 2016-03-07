@@ -58,7 +58,7 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
 
         @Override
         protected void printEmptyVector() throws IOException {
-            out.println("character(0)");
+            out.print("character(0)");
         }
 
         @Override

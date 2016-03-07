@@ -34,6 +34,7 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.printer.PrintParameters;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -45,6 +46,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -131,10 +133,17 @@ public class PrintFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RFunction printFunction(VirtualFrame frame, RFunction x, byte useSource, RArgsValuesAndNames extra) {
-            String s = prettyPrinter.prettyPrintFunction(x, null, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useSource == RRuntime.LOGICAL_TRUE);
-            if (s != null && !s.isEmpty()) {
-                printHelper(s);
+            try {
+                valuePrinter.executeString(x, PrintParameters.DEFAULT_DIGITS, true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDeafultMaxPrint(),
+                                true, false);
+            } catch (UnsupportedOperationException e) {
+                // The original pretty printing code
+                String s = prettyPrinter.prettyPrintFunction(x, null, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useSource == RRuntime.LOGICAL_TRUE);
+                if (s != null && !s.isEmpty()) {
+                    printHelper(s);
+                }
             }
+
             controlVisibility();
             return x;
         }

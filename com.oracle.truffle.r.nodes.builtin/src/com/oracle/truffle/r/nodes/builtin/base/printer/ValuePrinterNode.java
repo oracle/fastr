@@ -99,7 +99,7 @@ public abstract class ValuePrinterNode extends RNode {
             // try (RWriter rw = new RWriter(); PrintWriter pw = new PrintWriter(rw)) {
             PrintContext printCtx = new PrintContext(this, new PrintParameters(digits, quote, naPrint, printGap,
                             right, max, useSource, noOpt), pw);
-            ValuePrinters.printValue(o, printCtx);
+            ValuePrinters.INSTANCE.println(o, printCtx);
             pw.flush();
             rw.commit();
             return null;

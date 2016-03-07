@@ -58,7 +58,7 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
 
         @Override
         protected void printEmptyVector() throws IOException {
-            out.println("integer(0)");
+            out.print("integer(0)");
         }
 
     }

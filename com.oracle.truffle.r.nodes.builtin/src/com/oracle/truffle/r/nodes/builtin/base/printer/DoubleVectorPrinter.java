@@ -53,7 +53,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
 
         @Override
         protected void printEmptyVector() throws IOException {
-            out.println("numeric(0)");
+            out.print("numeric(0)");
         }
 
         @Override

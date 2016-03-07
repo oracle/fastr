@@ -27,4 +27,9 @@ import java.io.IOException;
 public interface ValuePrinter<T> {
 
     void print(T value, PrintContext printCtx) throws IOException;
+
+    default void println(T value, PrintContext printCtx) throws IOException {
+        print(value, printCtx);
+        printCtx.output().println();
+    }
 }

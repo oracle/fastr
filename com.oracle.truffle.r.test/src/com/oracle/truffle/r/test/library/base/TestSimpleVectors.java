@@ -10,6 +10,7 @@
  */
 package com.oracle.truffle.r.test.library.base;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -1031,6 +1032,28 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-1:3; x[TRUE] }");
     }
 
+    private static final String TEST_IGNORED1_EXPECTED_VAL = "<NA>\n  00\n";
+    private static final String TEST_IGNORED2_EXPECTED_VAL = "<NA>\n  00\n";
+    private static final String TEST_IGNORED3_EXPECTED_VAL = "<NA> <NA>\n  00   00\n";
+
+    @Test
+    public void testIgnored1() {
+        Assert.assertEquals(TEST_IGNORED1_EXPECTED_VAL,
+                        fastREval("{ x <- c(a=as.raw(10), b=as.raw(11), c=as.raw(12)) ; x[10] }"));
+    }
+
+    @Test
+    public void testIgnored2() {
+        Assert.assertEquals(TEST_IGNORED2_EXPECTED_VAL,
+                        fastREval("{ x <- c(a=as.raw(10),b=as.raw(11),c=as.raw(12),d=as.raw(13)) ; f <- function(s) { x[s] } ; f(TRUE) ; f(1L) ; f(as.character(NA)) }"));
+    }
+
+    @Test
+    public void testIgnored3() {
+        Assert.assertEquals(TEST_IGNORED3_EXPECTED_VAL,
+                        fastREval("{ x <- c(a=as.raw(10),b=as.raw(11),c=as.raw(12),d=as.raw(13)) ; f <- function(s) { x[c(s,s)] } ; f(TRUE) ; f(1L) ; f(as.character(NA)) }"));
+    }
+
     @Test
     public void testScalarIndex() {
         assertEval("{ x <- c(a=1, b=2, c=3) ; x[[2]] }");
@@ -1069,7 +1092,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x <- c(a=\"A\", b=\"B\", c=\"C\") ; x[0] }");
         assertEval("{ x <- c(a=1+1i, b=2+2i, c=3+3i) ; x[10] }");
         assertEval("{ x <- c(a=1+1i, b=2+2i, c=3+3i) ; x[0] }");
-        assertEval("{ x <- c(a=as.raw(10), b=as.raw(11), c=as.raw(12)) ; x[10] }");
+        // See testIgnored1
+        assertEval(Ignored.ReferenceError, "{ x <- c(a=as.raw(10), b=as.raw(11), c=as.raw(12)) ; x[10] }");
         assertEval("{ x <- c(a=as.raw(10), b=as.raw(11), c=as.raw(12)) ; x[0] }");
         assertEval("{ x <- c(a=1, b=2, c=3) ; x[10] }");
         assertEval("{ x <- c(a=1, b=2, c=3) ; x[0] }");
@@ -1243,9 +1267,11 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ x <- c(a=1,b=2,c=3,d=4) ; x[character()] }");
         assertEval("{ x <- c(a=1,b=2,c=3,d=4) ; x[c(\"b\",\"b\",\"d\",\"a\",\"a\")] }");
-        assertEval("{ x <- c(a=as.raw(10),b=as.raw(11),c=as.raw(12),d=as.raw(13)) ; f <- function(s) { x[s] } ; f(TRUE) ; f(1L) ; f(as.character(NA)) }");
+        // See testIgnored2
+        assertEval(Ignored.ReferenceError, "{ x <- c(a=as.raw(10),b=as.raw(11),c=as.raw(12),d=as.raw(13)) ; f <- function(s) { x[s] } ; f(TRUE) ; f(1L) ; f(as.character(NA)) }");
         assertEval("{ x <- c(a=1,b=2,c=3,d=4) ; f <- function(s) { x[s] } ; f(TRUE) ; f(1L) ; f(\"b\") }");
-        assertEval("{ x <- c(a=as.raw(10),b=as.raw(11),c=as.raw(12),d=as.raw(13)) ; f <- function(s) { x[c(s,s)] } ; f(TRUE) ; f(1L) ; f(as.character(NA)) }");
+        // See testIgnored3
+        assertEval(Ignored.ReferenceError, "{ x <- c(a=as.raw(10),b=as.raw(11),c=as.raw(12),d=as.raw(13)) ; f <- function(s) { x[c(s,s)] } ; f(TRUE) ; f(1L) ; f(as.character(NA)) }");
         assertEval("{ x <- c(a=1,b=2,c=3,d=4) ; f <- function(s) { x[c(s,s)] } ; f(TRUE) ; f(1L) ; f(\"b\") }");
 
         assertEval("{ x <- TRUE;  y<-c(1,1) ; x[y] }");

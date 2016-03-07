@@ -56,7 +56,7 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
 
         @Override
         protected void printEmptyVector() throws IOException {
-            out.println("logical(0)");
+            out.print("logical(0)");
         }
     }
 

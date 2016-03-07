@@ -26,28 +26,42 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public final class ValuePrinters implements ValuePrinter<Object> {
 
     private final Map<Class<?>, ValuePrinter<?>> printers = new HashMap<>();
 
-    private static final ValuePrinters INSTANCE = new ValuePrinters();
+    public static final ValuePrinters INSTANCE = new ValuePrinters();
 
     private ValuePrinters() {
         printers.put(String.class, StringPrinter.INSTANCE);
         printers.put(Double.class, DoublePrinter.INSTANCE);
         printers.put(Integer.class, IntegerPrinter.INSTANCE);
         printers.put(Byte.class, LogicalPrinter.INSTANCE);
-    }
-
-    public static void printValue(Object x, PrintContext printCtx) throws IOException {
-        INSTANCE.print(x, printCtx);
+        printers.put(RSymbol.class, SymbolPrinter.INSTANCE);
+        printers.put(RFunction.class, FunctionPrinter.INSTANCE);
+        printers.put(RExpression.class, ExpressionPrinter.INSTANCE);
+        printers.put(RLanguage.class, LanguagePrinter.INSTANCE);
+        printers.put(REnvironment.class, EnvironmentPrinter.INSTANCE);
+        printers.put(RExternalPtr.class, ExternalPtrPrinter.INSTANCE);
+        printers.put(RPromise.class, PromisePrinter.INSTANCE);
+        printers.put(RMissing.class, MissingPrinter.INSTANCE);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -68,6 +82,8 @@ public final class ValuePrinters implements ValuePrinter<Object> {
                     printer = LogicalVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractComplexVector) {
                     printer = ComplexVectorPrinter.INSTANCE;
+                } else if (x instanceof RAbstractRawVector) {
+                    printer = RawVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractListVector) {
                     printer = ListPrinter.INSTANCE;
                 } else {

@@ -23,19 +23,17 @@ import com.oracle.truffle.r.runtime.data.RLogical;
 
 //Transcribed from GnuR, src/main/printutils.c
 
-public final class LogicalPrinter extends AbstractValuePrinter<Byte> {
+public final class LogicalPrinter extends AbstractScalarValuePrinter<Byte> {
 
     public static final LogicalPrinter INSTANCE = new LogicalPrinter();
 
     @Override
-    protected void printValue(Byte value, PrintContext printCtx) throws IOException {
+    protected void printScalarValue(Byte value, PrintContext printCtx) throws IOException {
         FormatMetrics fm = LogicalVectorPrinter.formatLogicalVector(RLogical.valueOf(value),
                         0, 1, printCtx.parameters().getNaWidth());
         String s = encodeLogical(value, fm.maxWidth, printCtx.parameters());
-
         PrintWriter out = printCtx.output();
-        out.print("[1] ");
-        out.println(s);
+        out.print(s);
     }
 
     public static String encodeLogical(byte x, int w, PrintParameters pp) {

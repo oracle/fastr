@@ -24,18 +24,17 @@ import com.oracle.truffle.r.runtime.data.RDouble;
 
 //Transcribed from GnuR, src/main/printutils.c
 
-public final class DoublePrinter extends AbstractValuePrinter<Double> {
+public final class DoublePrinter extends AbstractScalarValuePrinter<Double> {
 
     public static final DoublePrinter INSTANCE = new DoublePrinter();
 
     @Override
-    protected void printValue(Double value, PrintContext printCtx) throws IOException {
+    protected void printScalarValue(Double value, PrintContext printCtx) throws IOException {
         double x = value;
 
         PrintWriter out = printCtx.output();
-        out.print("[1] ");
         DoubleVectorMetrics dm = DoubleVectorPrinter.formatDoubleVector(RDouble.valueOf(x), 0, 1, 0, printCtx.parameters());
-        out.println(encodeReal(x, dm.maxWidth, dm.d, dm.e, '.', printCtx.parameters()));
+        out.print(encodeReal(x, dm.maxWidth, dm.d, dm.e, '.', printCtx.parameters()));
     }
 
     private static final int DBL_DIG = 15;

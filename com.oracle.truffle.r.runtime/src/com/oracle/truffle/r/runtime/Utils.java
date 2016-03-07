@@ -28,6 +28,7 @@ import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.nio.file.attribute.*;
 import java.util.*;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -292,6 +293,33 @@ public final class Utils {
                     Frame f = RArguments.unwrap(frameInstance.getFrame(fa, false));
                     if (RArguments.isRFrame(f)) {
                         return RArguments.getDepth(f) == depth ? f : null;
+                    } else {
+                        return null;
+                    }
+                }
+                first = false;
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Iterate over all R stack frames (skipping the first, current one) until the given function
+     * returns a non-null value.
+     * 
+     * @return the non-null value returned by the given function, or null if it never returned a
+     *         non-null value.
+     */
+    @TruffleBoundary
+    public static <T> T iterateRFrames(FrameAccess fa, Function<Frame, T> func) {
+        return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<T>() {
+            boolean first = true;
+
+            public T visitFrame(FrameInstance frameInstance) {
+                if (!first) {
+                    Frame f = RArguments.unwrap(frameInstance.getFrame(fa, false));
+                    if (RArguments.isRFrame(f)) {
+                        return func.apply(f);
                     } else {
                         return null;
                     }
