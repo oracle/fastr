@@ -83,7 +83,7 @@ public class TestSimpleMatrix extends TestBase {
         assertEval(template("{ x<-%0; dim(x)<-c(2,2); x[c(1, NA), ] }", TESTED_4L_VECTORS));
         assertEval(template("{ x<-%0; dim(x)<-c(2,2); x[c(TRUE, NA), ] }", TESTED_4L_VECTORS));
         assertEval(template("{ x<-%0; x<-1:4; dim(x)<-c(2,2); x[NA, ] }", TESTED_4L_VECTORS));
-       // A misalignment error similar to those in TestSimpleVector (testIgnored1-3)
+        // A misalignment error similar to those in TestSimpleVector (testIgnored1-3)
         assertEval(Ignored.ReferenceError, template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[c(1,NA), 1] }", TESTED_4L_VECTORS));
         assertEval(Ignored.ReferenceError, template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[1, c(1,NA)] }", TESTED_4L_VECTORS));
         assertEval(template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[c(1, NA), c(1,NA)] }", TESTED_4L_VECTORS));
