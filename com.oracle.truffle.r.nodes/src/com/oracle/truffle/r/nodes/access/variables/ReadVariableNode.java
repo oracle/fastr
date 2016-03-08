@@ -687,6 +687,33 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     @TruffleBoundary
+    public static Object lookupAny(String identifier, Frame variableFrame, boolean localOnly) {
+        Frame current = variableFrame;
+        do {
+            // see if the current frame has a value of the given name
+            FrameSlot frameSlot = current.getFrameDescriptor().findFrameSlot(identifier);
+            if (frameSlot != null) {
+                Object value = current.getValue(frameSlot);
+
+                if (value != null) {
+                    if (value == RMissing.instance) {
+                        throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, identifier);
+                    }
+                    if (value instanceof RPromise) {
+                        return PromiseHelperNode.evaluateSlowPath(null, (RPromise) value);
+                    }
+                    return value;
+                }
+            }
+            if (localOnly) {
+                return null;
+            }
+            current = RArguments.getEnclosingFrame(current);
+        } while (current != null);
+        return null;
+    }
+
+    @TruffleBoundary
     public static RArgsValuesAndNames lookupVarArgs(Frame variableFrame) {
         Frame current = variableFrame;
         do {
@@ -751,7 +778,8 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
      * <ul>
      * <li>throw an {@link RError}: if 'objArg' is a missing argument and this is not allowed</li>
      * <li>return {@code true}: if the type of 'objArg' matches the description in 'type'</li>
-     * <li>return {@code false}: if the type of 'objArg' does not match the description in 'type'</li>
+     * <li>return {@code false}: if the type of 'objArg' does not match the description in 'type'
+     * </li>
      * </ul>
      * However, there is the special case of 'objArg' being a {@link RPromise}: Normally, it is
      * expected to match type and simply returns {@code true}. But in case of 'forcePromise' ==

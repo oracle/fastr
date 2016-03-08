@@ -57,6 +57,10 @@ public final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
 
     public static void printS4(PrintContext printCtx, Object o) {
         RContext.getEngine().evalFunction(createShowFunction(printCtx.frame(), createShowFind()), null, o);
+        // The show function prints an additional new line character. The following attribute
+        // instructs the ValuePrinter.println method not to print the new line since it was
+        // already printed.
+        printCtx.setAttribute(DONT_PRINT_NL_ATTR, true);
     }
 
     private static ReadVariableNode createShowFind() {

@@ -87,8 +87,8 @@ public class AttributesPrinter implements ValuePrinter<RAttributable> {
             out.println(tag);
 
             if (RContext.getInstance().isMethodTableDispatchOn() && utils.isS4(a.getValue())) {
-                // S4ObjectPrinter.printS4(printCtx, a.getValue());
-                throw new UnsupportedOperationException("TODO");
+                S4ObjectPrinter.printS4(printCtx, a.getValue());
+                // throw new UnsupportedOperationException("TODO");
             } else {
                 ValuePrinters.INSTANCE.print(a.getValue(), printCtx);
             }

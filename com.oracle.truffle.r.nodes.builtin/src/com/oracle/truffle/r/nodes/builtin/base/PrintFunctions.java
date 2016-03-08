@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
@@ -88,15 +89,21 @@ public class PrintFunctions {
                 // does not return the output value and prints directly to the output.
                 valuePrinter.executeString(frame, o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             } catch (UnsupportedOperationException e) {
-                // The original pretty printing code
-                String s = (String) prettyPrinter.executeString(o, null, RRuntime.asLogical(quote), RRuntime.asLogical(right));
-                if (s != null && !s.isEmpty()) {
-                    printHelper(s);
-                }
+                throw RError.error(this, RError.Message.GENERIC, e.getMessage());
             }
 
             controlVisibility();
             return o;
+        }
+
+        @SuppressWarnings("unused")
+        private void originalPrettyPrint(Object o, boolean quote, boolean right) {
+            // The original pretty printing code
+            String s = (String) prettyPrinter.executeString(o, null, RRuntime.asLogical(quote),
+                            RRuntime.asLogical(right));
+            if (s != null && !s.isEmpty()) {
+                printHelper(s);
+            }
         }
 
         ReadVariableNode createShowFind() {

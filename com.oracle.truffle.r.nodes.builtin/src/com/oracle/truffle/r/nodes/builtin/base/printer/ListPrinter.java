@@ -20,15 +20,16 @@ import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.canBeStringV
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.indexWidth;
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.isValidName;
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toDoubleVector;
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toComplexVector;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toLogicalVector;
+import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toDoubleVector;
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toIntVector;
+import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toLogicalVector;
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toStringVector;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter.ComplexVectorMetrics;
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.DoubleVectorMetrics;
 import com.oracle.truffle.r.nodes.builtin.base.printer.VectorPrinter.FormatMetrics;
@@ -266,9 +267,15 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
 
             /* Formal classes are represented as empty lists */
             String className = null;
-            RAbstractStringVector klass;
             if (printCtx.printerNode().isObject(s) && printCtx.printerNode().isMethodDispatchOn()) {
-                throw new UnsupportedOperationException("TODO");
+                RAbstractStringVector klass = toStringVector(s.getAttr(dummyAttrProfiles, RRuntime.CLASS_ATTR_KEY));
+                if (klass != null && klass.getLength() == 1) {
+                    String ss = klass.getDataAt(0);
+                    String str = snprintf(200, ".__C__%s", ss);
+                    if (ReadVariableNode.lookupAny(str, printCtx.frame(), false) != null) {
+                        className = ss;
+                    }
+                }
             }
             if (className != null) {
                 out.printf("An object of class \"%s\"", className);

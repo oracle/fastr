@@ -28,12 +28,13 @@ import java.util.Map;
 
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -52,6 +53,7 @@ public final class ValuePrinters implements ValuePrinter<Object> {
     public static final ValuePrinters INSTANCE = new ValuePrinters();
 
     private ValuePrinters() {
+        printers.put(RNull.class, NullPrinter.INSTANCE);
         printers.put(String.class, StringPrinter.INSTANCE);
         printers.put(Double.class, DoublePrinter.INSTANCE);
         printers.put(Integer.class, IntegerPrinter.INSTANCE);
@@ -60,12 +62,12 @@ public final class ValuePrinters implements ValuePrinter<Object> {
         printers.put(RFunction.class, FunctionPrinter.INSTANCE);
         printers.put(RExpression.class, ExpressionPrinter.INSTANCE);
         printers.put(RLanguage.class, LanguagePrinter.INSTANCE);
-        printers.put(REnvironment.class, EnvironmentPrinter.INSTANCE);
         printers.put(RExternalPtr.class, ExternalPtrPrinter.INSTANCE);
         printers.put(RPromise.class, PromisePrinter.INSTANCE);
         printers.put(RMissing.class, MissingPrinter.INSTANCE);
         printers.put(RS4Object.class, S4ObjectPrinter.INSTANCE);
         printers.put(RPairList.class, PairListPrinter.INSTANCE);
+        printers.put(RFactor.class, FactorPrinter.INSTANCE);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -90,8 +92,10 @@ public final class ValuePrinters implements ValuePrinter<Object> {
                     printer = RawVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractListVector) {
                     printer = ListPrinter.INSTANCE;
+                } else if (x instanceof REnvironment) {
+                    printer = EnvironmentPrinter.INSTANCE;
                 } else {
-                    throw new UnsupportedOperationException("TODO");
+                    throw new UnsupportedOperationException("TODO:" + x.getClass());
                 }
             }
             printer.print(x, printCtx);

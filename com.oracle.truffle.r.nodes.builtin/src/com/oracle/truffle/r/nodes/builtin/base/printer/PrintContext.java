@@ -102,7 +102,7 @@ public final class PrintContext {
             throw new IllegalStateException("Pretty-printer context stack is empty");
         }
 
-        PrintContext ctx = ctxStack.pop();
+        ctxStack.pop();
 
         if (ctxStack.isEmpty()) {
             printCtxTL.remove();
