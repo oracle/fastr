@@ -29,7 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -106,7 +105,7 @@ public abstract class DoCall extends RBuiltinNode {
                 containsRLanguageProfile.enter();
                 callerFrame = getCallerFrame(frame, callerFrame);
                 RLanguage lang = (RLanguage) arg;
-                argValues[i] = createArgPromise(callerFrame, NodeUtil.cloneNode(((RNode) lang.getRep())));
+                argValues[i] = createArgPromise(callerFrame, RASTUtils.cloneNode((lang.getRep())));
             } else if (arg instanceof RSymbol) {
                 containsRSymbolProfile.enter();
                 RSymbol symbol = (RSymbol) arg;

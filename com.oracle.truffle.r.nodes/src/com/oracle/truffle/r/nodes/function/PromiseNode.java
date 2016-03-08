@@ -32,7 +32,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -88,7 +87,7 @@ public abstract class PromiseNode extends RNode {
 
     public static RNode createInlined(RNode expression, Object defaultValue, boolean unwrap) {
         CompilerAsserts.neverPartOfCompilation();
-        RNode clonedExpression = NodeUtil.cloneNode(expression);
+        RNode clonedExpression = RASTUtils.cloneNode(expression);
         RNode pn = clonedExpression instanceof ConstantNode ? clonedExpression : new InlinedSuppliedArgumentNode(clonedExpression, defaultValue, unwrap);
         return pn;
     }

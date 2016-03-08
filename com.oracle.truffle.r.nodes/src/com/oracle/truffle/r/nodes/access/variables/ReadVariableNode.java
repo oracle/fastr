@@ -41,7 +41,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
-import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.SlowPathException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -184,7 +183,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     public RSyntaxNode substituteImpl(REnvironment env) {
         RSyntaxNode result = RASTUtils.substituteName(identifierAsString, env);
         if (result == null) {
-            result = NodeUtil.cloneNode(this);
+            result = (RSyntaxNode) RASTUtils.cloneNode(this);
         }
         return result;
     }

@@ -24,7 +24,7 @@
 #include "nls.h"
 #include "port.h"
 #include "stats.h"
-#include "statsR.h"
+#include <statsR.h>
 #include "ts.h"
 #include <R_ext/Rdynload.h>
 #include <R_ext/Visibility.h>
