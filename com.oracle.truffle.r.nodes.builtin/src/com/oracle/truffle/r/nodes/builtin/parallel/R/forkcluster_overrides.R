@@ -27,6 +27,16 @@ recvData.SHAREDnode <- function(node) {
     fastr:::fastr.channel.receive(node$channel)
 }
 
+recvOneData.SHAREDcluster <- function(cl) {
+	channel_ids = lapply(cl, function(l) l[["channel"]])
+    res <- fastr:::fastr.channel.select(channel_ids)
+	selected_id = res[[1]]
+	# TODO: I am sure there is a better way...
+	indexes = lapply(cl, function(l, id) if (identical(l[["channel"]], id)) id else as.integer(NA), id=selected_id)
+	node_ind = which(as.double(indexes)==as.double(selected_id))
+	list(node = node_ind, value = res[[2]])
+}
+
 fastr.newSHAREDnode <- function(rank, options = defaultClusterOptions)
 {
 	# Add the "debug" option defaulted to FALSE, if the user didn't specify

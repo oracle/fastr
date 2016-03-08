@@ -257,4 +257,42 @@ public class FastRContext {
             return wrongChannelArg(this, id, "id");
         }
     }
+
+    public abstract static class ChannelPoll extends RExternalBuiltinNode.Arg1 {
+        @Specialization(guards = "id.getLength() == 1")
+        @TruffleBoundary
+        protected Object poll(RAbstractIntVector id) {
+            return RChannel.poll(id.getDataAt(0));
+        }
+
+        @Fallback
+        protected int error(Object id) {
+            return wrongChannelArg(this, id, "id");
+        }
+    }
+
+    public abstract static class ChannelSelect extends RExternalBuiltinNode.Arg1 {
+        @Specialization
+        @TruffleBoundary
+        protected RList select(RList nodes) {
+            int ind = 0;
+            int length = nodes.getLength();
+            while (true) {
+                Object o = nodes.getDataAt(ind);
+                ind = (ind + 1) % length;
+                int id;
+                if (o instanceof Integer) {
+                    id = (int) o;
+                }
+                else {
+                    id = ((RIntVector) o).getDataAt(0);
+                }
+                Object res = RChannel.poll(id);
+                if (res != null) {
+                    return RDataFactory.createList(new Object[]{id, res});
+                }
+            }
+        }
+    }
+
 }
