@@ -15,15 +15,16 @@
 
 ## Derived from snow and parallel packages
 
+eval(expression(
 mc.set.children.streams <- function(cl)
 {
 	if (RNGkind()[1L] == "L'Ecuyer-CMRG") {
 		clusterExport(cl, "LEcuyer.seed", envir = RNGenv)
 		clusterCall(cl, mc.set.stream)
 	}
-}
+}), asNamespace("parallel"))
 
-eval(expression(
+mclapplyExpr <- expression({
 mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
                      mc.silent = FALSE, mc.cores = getOption("mc.cores", 2L),
                      mc.cleanup = TRUE, mc.allow.recursive = TRUE)
@@ -89,4 +90,6 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
         res[sindex[[i]]] <- job.res[seq((i-1)*len+1, i*len)]
     }
 	res	
-}), asNamespace("parallel"))
+}; environment(mclapply)<-asNamespace("parallel")})
+eval(mclapplyExpr, asNamespace("parallel"))
+eval(mclapplyExpr, as.environment("package:parallel"))

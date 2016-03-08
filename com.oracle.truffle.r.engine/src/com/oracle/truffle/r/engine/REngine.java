@@ -414,7 +414,9 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     private Object evalNode(RNode exprRep, REnvironment envir, int depth) {
-        RNode n = exprRep;
+        // we need to copy the node, otherwise it (and its children) will specialized to a specific
+        // frame descriptor and will fail on subsequent re-executions
+        RNode n = (RNode) exprRep.deepCopy();
         RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME);
         RCaller call = RArguments.getCall(envir.getFrame());
         return evalTarget(callTarget, call, envir, depth);
