@@ -422,7 +422,7 @@ public class ForeignFunctions {
                     return InitGridNodeGen.create();
 
                     // parallel
-                case "C_mc_is_child":
+                case "mc_is_child":
                     return MCIsChildNodeGen.create();
                 default:
                     return null;

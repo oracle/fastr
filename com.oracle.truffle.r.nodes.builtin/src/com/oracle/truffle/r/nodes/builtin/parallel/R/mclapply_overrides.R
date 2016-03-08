@@ -33,8 +33,8 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
     if(is.na(cores) || cores < 1L) stop("'mc.cores' must be >= 1")
     .check_ncores(cores)
 
-#    if (parallel:::isChild() && !isTRUE(mc.allow.recursive))
-#        return(lapply(X = X, FUN = FUN, ...))
+    if (parallel:::isChild() && !isTRUE(mc.allow.recursive))
+        return(lapply(X = X, FUN = FUN, ...))
 
     if (mc.set.seed) mc.reset.stream()
 
