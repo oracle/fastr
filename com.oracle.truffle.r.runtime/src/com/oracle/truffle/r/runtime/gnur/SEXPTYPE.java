@@ -11,33 +11,75 @@
  */
 package com.oracle.truffle.r.runtime.gnur;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.conn.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFrame;
+import com.oracle.truffle.r.runtime.data.RDoubleSequence;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RFactor;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RUnboundValue;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 // Transcribed from GnuR src/include/Rinternals.h and src/main/serialize.c
 
 public enum SEXPTYPE {
+
+    /*
+     * FastR scalar variants of GnuR vector types (other than String) These could be removed in a
+     * similar way to String, but there is no pressing need.
+     */
+    FASTR_DOUBLE(300, Double.class),
+    FASTR_INT(301, Integer.class),
+    FASTR_BYTE(302, Byte.class),
+    FASTR_COMPLEX(303, RComplex.class),
+    // FastR special "vector" types
+    FASTR_DATAFRAME(304, RDataFrame.class),
+    FASTR_FACTOR(305, RFactor.class),
+    // very special case
+    FASTR_SOURCESECTION(306, SourceSection.class),
+    FASTR_CONNECTION(307, RConnection.class),
+
     NILSXP(0, RNull.class), /* nil ()NULL */
     SYMSXP(1, RSymbol.class), /* symbols */
     LISTSXP(2, RPairList.class), /* lists of dotted pairs */
     CLOSXP(3, RPairList.class), /* closures */
     ENVSXP(4, REnvironment.class), /* environments */
-    PROMSXP(5, RPromise.class), /* promises: [un]evaluated closure arguments */
+    PROMSXP(5, RPromise.class, EagerPromise.class), /* promises: [un]evaluated closure arguments */
     LANGSXP(6, RLanguage.class), /* language constructs (special lists) */
     SPECIALSXP(7), /* special forms */
     BUILTINSXP(8), /* builtin non-special forms */
     CHARSXP(9), /* "scalar" string type (GnuR internal only) */
     LGLSXP(10, RLogicalVector.class), /* logical vectors */
-    INTSXP(13, new Class<?>[]{RIntVector.class, RIntSequence.class}), /* integer vectors */
-    REALSXP(14, new Class<?>[]{RDoubleVector.class, RDoubleSequence.class}), /* real variables */
+    INTSXP(13, RIntVector.class, RIntSequence.class), /* integer vectors */
+    REALSXP(14, RDoubleVector.class, RDoubleSequence.class), /* real variables */
     CPLXSXP(15, RComplexVector.class), /* complex variables */
-    STRSXP(16, new Class<?>[]{RStringVector.class, String.class}), /* string vectors */
+    STRSXP(16, RStringVector.class, String.class), /* string vectors */
     DOTSXP(17, RArgsValuesAndNames.class), /* dot-dot-dot object */
     ANYSXP(18), /* make "any" args work */
     VECSXP(19, RList.class), /* generic vectors */
@@ -45,7 +87,7 @@ public enum SEXPTYPE {
     BCODESXP(21), /* byte code */
     EXTPTRSXP(22, RExternalPtr.class), /* external pointer */
     WEAKREFSXP(23), /* weak reference */
-    RAWSXP(24, new Class<?>[]{RRawVector.class, RRaw.class}), /* raw bytes */
+    RAWSXP(24, RRawVector.class, RRaw.class), /* raw bytes */
     S4SXP(25, RS4Object.class), /* S4 non-vector */
 
     NEWSXP(30), /* fresh node created in new page */
@@ -70,44 +112,23 @@ public enum SEXPTYPE {
     ATTRLANGSXP(240),
     ATTRLISTSXP(239),
 
-    /*
-     * FastR scalar variants of GnuR vector types (other than String) These could be removed in a
-     * similar way to String, but there is no pressing need.
-     */
-    FASTR_DOUBLE(300, Double.class),
-    FASTR_INT(301, Integer.class),
-    FASTR_BYTE(302, Byte.class),
-    FASTR_COMPLEX(303, RComplex.class),
-    // FastR special "vector" types
-    FASTR_DATAFRAME(304, RDataFrame.class),
-    FASTR_FACTOR(305, RFactor.class),
-    // very special case
-    FASTR_SOURCESECTION(306, SourceSection.class),
-    FASTR_CONNECTION(307, RConnection.class),
-
     EMPTYARG_SXP(500, REmpty.class);
 
     public final int code;
     public final Class<?>[] fastRClasses;
 
-    @CompilationFinal private static final SEXPTYPE[] NON_NULL_VALUES;
-
-    SEXPTYPE(int code) {
-        this.code = code;
-        this.fastRClasses = null;
-    }
-
-    SEXPTYPE(int code, Class<?>[] fastRClasses) {
+    SEXPTYPE(int code, Class<?>... fastRClasses) {
         this.code = code;
         this.fastRClasses = fastRClasses;
-
-    }
-
-    SEXPTYPE(int code, Class<?> fastRClass) {
-        this(code, new Class<?>[]{fastRClass});
     }
 
     private static final Map<Integer, SEXPTYPE> codeMap = new HashMap<>();
+
+    static {
+        for (SEXPTYPE type : SEXPTYPE.values()) {
+            SEXPTYPE.codeMap.put(type.code, type);
+        }
+    }
 
     public static SEXPTYPE mapInt(int type) {
         return codeMap.get(type);
@@ -119,13 +140,9 @@ public enum SEXPTYPE {
      * {@code type} field on the {@link RPairList} has to be consulted.
      */
     public static SEXPTYPE typeForClass(Class<?> fastRClass) {
-        for (SEXPTYPE type : NON_NULL_VALUES) {
-            if (type.fastRClasses.length == 1) {
-                if (fastRClass == type.fastRClasses[0]) {
-                    return type;
-                }
-            } else {
-                if (fastRClass == type.fastRClasses[0] || fastRClass == type.fastRClasses[1]) {
+        for (SEXPTYPE type : values()) {
+            for (Class<?> clazz : type.fastRClasses) {
+                if (fastRClass == clazz) {
                     return type;
                 }
             }
@@ -204,22 +221,4 @@ public enum SEXPTYPE {
                 return null;
         }
     }
-
-    static {
-        int nonNullCount = 0;
-        for (SEXPTYPE type : SEXPTYPE.values()) {
-            SEXPTYPE.codeMap.put(type.code, type);
-            if (type.fastRClasses != null) {
-                nonNullCount++;
-            }
-        }
-        NON_NULL_VALUES = new SEXPTYPE[nonNullCount];
-        nonNullCount = 0;
-        for (SEXPTYPE type : SEXPTYPE.values()) {
-            if (type.fastRClasses != null) {
-                NON_NULL_VALUES[nonNullCount++] = type;
-            }
-        }
-    }
-
 }

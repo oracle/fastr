@@ -342,7 +342,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             return state.closePairList();
         } else if (obj instanceof RLanguage) {
             RLanguage lang = (RLanguage) obj;
-            RSyntaxNode node = (RSyntaxNode) lang.getRep();
+            RSyntaxNode node = lang.getRep().asRSyntaxNode();
             state.openPairList(SEXPTYPE.LANGSXP);
             node.serializeImpl(state);
             return state.closePairList();

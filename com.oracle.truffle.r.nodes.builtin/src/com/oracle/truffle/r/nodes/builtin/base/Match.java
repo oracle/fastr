@@ -58,12 +58,12 @@ public abstract class Match extends RBuiltinNode {
         casts.toInteger(2);
     }
 
-    private String castString(Object operand) {
+    private RAbstractStringVector castString(RAbstractVector operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castString = insert(CastStringNodeGen.create(false, false, false, false));
         }
-        return (String) castString.execute(operand);
+        return (RAbstractStringVector) castString.execute(operand);
     }
 
     private Object matchRecursive(Object x, Object table, RAbstractIntVector noMatch, Object incomparables) {
@@ -427,9 +427,10 @@ public abstract class Match extends RBuiltinNode {
         int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
+        RAbstractStringVector stringTable = castString(table);
         NonRecursiveHashMapCharacter hashTable = new NonRecursiveHashMapCharacter(table.getLength());
         for (int i = table.getLength() - 1; i >= 0; i--) {
-            hashTable.put(castString(table.getDataAtAsObject(i)), i);
+            hashTable.put(stringTable.getDataAt(i), i);
         }
         for (int i = 0; i < result.length; i++) {
             String xx = x.getDataAt(i);
