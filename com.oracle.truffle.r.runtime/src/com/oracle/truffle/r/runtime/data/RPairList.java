@@ -93,7 +93,7 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
         boolean named = false;
         RPairList plt = this;
         while (true) {
-            named = named | !isNullTag();
+            named = named || !plt.isNullTag();
             if (isNull(plt.cdr)) {
                 break;
             }

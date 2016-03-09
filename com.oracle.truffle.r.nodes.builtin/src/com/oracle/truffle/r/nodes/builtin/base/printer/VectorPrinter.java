@@ -34,14 +34,14 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
 
     @Override
     protected void printValue(T vector, PrintContext printCtx) throws IOException {
-        printVector(vector, 1, printCtx.parameters().getQuote(), printCtx);
+        printVector(vector, 1, printCtx);
     }
 
-    public void printVector(T vector, int indx, boolean quote, PrintContext printCtx) throws IOException {
-        createJob(vector, indx, quote, printCtx).print();
+    public void printVector(T vector, int indx, PrintContext printCtx) throws IOException {
+        createJob(vector, indx, printCtx).print();
     }
 
-    protected abstract VectorPrintJob createJob(T vector, int indx, boolean quote, PrintContext printCtx);
+    protected abstract VectorPrintJob createJob(T vector, int indx, PrintContext printCtx);
 
     protected enum JobMode {
         nonEmpty,
@@ -79,11 +79,12 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
         protected final String title;
         protected final MatrixDimNames matrixDimNames;
         protected final RAbstractIntVector dims;
+        protected final boolean supressIndexLabels;
 
-        protected VectorPrintJob(T vector, int indx, boolean quote, PrintContext printCtx) {
+        protected VectorPrintJob(T vector, int indx, PrintContext printCtx) {
             this.vector = vector;
             this.indx = indx;
-            this.quote = quote;
+            this.quote = printCtx.parameters().getQuote();
 
             MatrixDimNames mdn = null;
 
@@ -141,7 +142,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
             }
 
             this.printCtx = printCtx.cloneContext();
-            this.printCtx.parameters().setQuote(quote);
+            this.supressIndexLabels = printCtx.parameters().getSuppressIndexLabels();
             if (jobMode == JobMode.named) {
                 this.printCtx.parameters().setRight(true);
             }
@@ -181,7 +182,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
         }
 
         private void printNonEmptyVector() throws IOException {
-            final int gap = printCtx.parameters().getGap();
+            final int gap = supressIndexLabels ? 0 : printCtx.parameters().getGap();
             final int totalWidth = printCtx.parameters().getWidth();
 
             int width = 0;
@@ -246,7 +247,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                     out.println();
                 }
                 for (j = 0; j < nperline && (k = i * nperline + j) < n; j++) {
-                    StringPrinter.printString(names.getDataAt(k), w, namesPrintCtx);
+                    StringVectorPrinter.printString(names.getDataAt(k), w, namesPrintCtx);
                     out.printf("%" + asBlankArg(gap) + "s", "");
                 }
                 out.println();
@@ -432,7 +433,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                 PrintParameters pp2 = printCtx.parameters().cloneParameters();
                 pp2.setQuote(false);
                 pp2.setRight(false);
-                out.printf(fmt, "", StringPrinter.encode(tmp, l, pp2));
+                out.printf(fmt, "", StringVectorPrinter.encode(tmp, l, pp2));
             } else {
                 int gap = w - indexWidth(j + 1) - 3;
                 String fmt = "%" + asBlankArg(gap) + "s[,%d]";
@@ -456,7 +457,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                 PrintParameters pp2 = printCtx.parameters().cloneParameters();
                 pp2.setQuote(false);
                 pp2.setRight(true);
-                out.printf(fmt, "", StringPrinter.encode(tmp, l, pp2));
+                out.printf(fmt, "", StringVectorPrinter.encode(tmp, l, pp2));
             } else {
                 String g1 = asBlankArg(pp.getGap());
                 String g2 = asBlankArg(w - indexWidth(j + 1) - 3);
@@ -478,7 +479,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                 PrintParameters pp2 = printCtx.parameters().cloneParameters();
                 pp2.setQuote(false);
                 pp2.setRight(false);
-                out.printf(fmt, "", StringPrinter.encode(tmp, l, pp2), "");
+                out.printf(fmt, "", StringVectorPrinter.encode(tmp, l, pp2), "");
             } else {
                 String g1 = asBlankArg(pp.getGap());
                 String g2 = asBlankArg(w - indexWidth(j + 1) - 3);
@@ -499,7 +500,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                 PrintParameters pp2 = printCtx.parameters().cloneParameters();
                 pp2.setQuote(false);
                 pp2.setRight(false);
-                String s = StringPrinter.encode(tmp, l, pp2);
+                String s = StringVectorPrinter.encode(tmp, l, pp2);
                 out.printf(fmt, "", s, "");
             } else {
                 String gap = asBlankArg(rlabw - 3 - indexWidth(i + 1));
@@ -644,7 +645,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
         }
 
         private int doLab(int i) {
-            if (indx > 0 && !printCtx.parameters().getSuppressIndexLabels()) {
+            if (indx > 0 && !supressIndexLabels) {
                 printVectorIndex(i + 1, labwidth, out);
                 return labwidth;
             } else {

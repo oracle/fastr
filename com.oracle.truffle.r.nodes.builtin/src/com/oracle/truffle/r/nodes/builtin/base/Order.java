@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -14,11 +14,14 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.text.Collator;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.OrderVector1NodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -31,14 +34,21 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     public abstract RIntVector executeRIntVector(byte naLast, byte dec, RArgsValuesAndNames args);
 
+    @Child OrderVector1Node orderVector1Node;
     @Child private CastToVectorNode castVector;
     @Child private CastToVectorNode castVector2;
     @Child private CmpNode cmpNode;
 
     private final BranchProfile error = BranchProfile.create();
-    private final ConditionProfile decProfile = ConditionProfile.createBinaryProfile();
 
     private static final int[] SINCS = {1073790977, 268460033, 67121153, 16783361, 4197377, 1050113, 262913, 65921, 16577, 4193, 1073, 281, 77, 23, 8, 1, 0};
+
+    private OrderVector1Node initOrderVector1() {
+        if (orderVector1Node == null) {
+            orderVector1Node = insert(OrderVector1NodeGen.create(null, null, null, null));
+        }
+        return orderVector1Node;
+    }
 
     private RAbstractVector castVector(Object value) {
         if (castVector == null) {
@@ -76,21 +86,22 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         RAbstractIntVector v = (RAbstractIntVector) castVector(vectors[0]);
         int n = v.getLength();
 
-        boolean naLast = true;
-        boolean dec = true;
+        byte naLastL = RRuntime.LOGICAL_TRUE;
+        byte decL = RRuntime.LOGICAL_TRUE;
 
         if (naLastVec.getLength() == 0 || naLastVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            naLast = false;
+            naLastL = RRuntime.LOGICAL_FALSE;
         }
         if (decVec.getLength() == 0 || decVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            dec = false;
+            decL = RRuntime.LOGICAL_FALSE;
         }
 
         int[] indx = new int[n];
         for (int i = 0; i < indx.length; i++) {
             indx[i] = i;
         }
-        orderVector1(indx, v, naLast, dec);
+        RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
+        initOrderVector1().execute(indxVec, v, naLastL, decL);
         for (int i = 0; i < indx.length; i++) {
             indx[i] = indx[i] + 1;
         }
@@ -104,21 +115,22 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         RAbstractDoubleVector v = (RAbstractDoubleVector) castVector(vectors[0]);
         int n = v.getLength();
 
-        boolean naLast = true;
-        boolean dec = true;
+        byte naLastL = RRuntime.LOGICAL_TRUE;
+        byte decL = RRuntime.LOGICAL_TRUE;
 
         if (naLastVec.getLength() == 0 || naLastVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            naLast = false;
+            naLastL = RRuntime.LOGICAL_FALSE;
         }
         if (decVec.getLength() == 0 || decVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            dec = false;
+            decL = RRuntime.LOGICAL_FALSE;
         }
 
         int[] indx = new int[n];
         for (int i = 0; i < indx.length; i++) {
             indx[i] = i;
         }
-        orderVector1(indx, v, naLast, dec);
+        RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
+        initOrderVector1().execute(indxVec, v, naLastL, decL);
         for (int i = 0; i < indx.length; i++) {
             indx[i] = indx[i] + 1;
         }
@@ -139,21 +151,22 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         RAbstractStringVector v = (RAbstractStringVector) castVector(vectors[0]);
         int n = v.getLength();
 
-        boolean naLast = true;
-        boolean dec = true;
+        byte naLastL = RRuntime.LOGICAL_TRUE;
+        byte decL = RRuntime.LOGICAL_TRUE;
 
         if (naLastVec.getLength() == 0 || naLastVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            naLast = false;
+            naLastL = RRuntime.LOGICAL_FALSE;
         }
         if (decVec.getLength() == 0 || decVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            dec = false;
+            decL = RRuntime.LOGICAL_FALSE;
         }
 
         int[] indx = new int[n];
         for (int i = 0; i < indx.length; i++) {
             indx[i] = i;
         }
-        orderVector1(indx, v, naLast, dec);
+        RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
+        initOrderVector1().execute(indxVec, v, naLastL, decL);
         for (int i = 0; i < indx.length; i++) {
             indx[i] = indx[i] + 1;
         }
@@ -167,21 +180,22 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         RAbstractComplexVector v = (RAbstractComplexVector) castVector(vectors[0]);
         int n = v.getLength();
 
-        boolean naLast = true;
-        boolean dec = true;
+        byte naLastL = RRuntime.LOGICAL_TRUE;
+        byte decL = RRuntime.LOGICAL_TRUE;
 
         if (naLastVec.getLength() == 0 || naLastVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            naLast = false;
+            naLastL = RRuntime.LOGICAL_FALSE;
         }
         if (decVec.getLength() == 0 || decVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            dec = false;
+            decL = RRuntime.LOGICAL_FALSE;
         }
 
         int[] indx = new int[n];
         for (int i = 0; i < indx.length; i++) {
             indx[i] = i;
         }
-        orderVector1(indx, v, naLast, dec);
+        RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
+        initOrderVector1().execute(indxVec, v, naLastL, decL);
         for (int i = 0; i < indx.length; i++) {
             indx[i] = indx[i] + 1;
         }
@@ -271,126 +285,293 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
     }
 
-    private void orderVector1(int[] indx, RAbstractIntVector dv, boolean naLast, boolean dec) {
-        int lo = 0;
-        int hi = indx.length - 1;
-        int numNa = 0;
-        if (!dv.isComplete()) {
-            boolean[] isNa = new boolean[indx.length];
-            for (int i = 0; i < isNa.length; i++) {
-                if (RRuntime.isNA(dv.getDataAt(i))) {
-                    isNa[i] = true;
-                    numNa++;
-                }
-            }
+    /**
+     * Also used by {@link Rank}.
+     */
+    @NodeChildren({@NodeChild("indx"), @NodeChild("dv"), @NodeChild("naLast"), @NodeChild("dec")})
+    abstract static class OrderVector1Node extends RNode {
+        private final ConditionProfile decProfile = ConditionProfile.createBinaryProfile();
 
-            if (numNa > 0) {
-                if (!naLast) {
-                    for (int i = 0; i < isNa.length; i++) {
-                        isNa[i] = !isNa[i];
-                    }
-                }
-                sortNA(indx, isNa, lo, hi);
-                if (naLast) {
-                    hi -= numNa;
-                } else {
-                    lo += numNa;
-                }
-            }
-        }
+        public abstract Object execute(Object v, Object dv, byte naLast, byte dec);
 
-        sort(indx, dv, lo, hi, dec);
-    }
-
-    private void orderVector1(int[] indx, RAbstractDoubleVector dv, boolean naLast, boolean dec) {
-        int lo = 0;
-        int hi = indx.length - 1;
-        int numNa = 0;
-        boolean[] isNa = new boolean[indx.length];
-        for (int i = 0; i < isNa.length; i++) {
-            if (RRuntime.isNAorNaN(dv.getDataAt(i))) {
-                isNa[i] = true;
-                numNa++;
-            }
-        }
-
-        if (numNa > 0) {
-            if (!naLast) {
+        @Specialization
+        protected Object orderVector1(RIntVector indxVec, RAbstractIntVector dv, byte naLastL, byte decL) {
+            int[] indx = indxVec.getDataWithoutCopying();
+            boolean naLast = RRuntime.fromLogical(naLastL);
+            boolean dec = RRuntime.fromLogical(decL);
+            int lo = 0;
+            int hi = indx.length - 1;
+            int numNa = 0;
+            if (!dv.isComplete()) {
+                boolean[] isNa = new boolean[indx.length];
                 for (int i = 0; i < isNa.length; i++) {
-                    isNa[i] = !isNa[i];
+                    if (RRuntime.isNA(dv.getDataAt(i))) {
+                        isNa[i] = true;
+                        numNa++;
+                    }
+                }
+
+                if (numNa > 0) {
+                    if (!naLast) {
+                        for (int i = 0; i < isNa.length; i++) {
+                            isNa[i] = !isNa[i];
+                        }
+                    }
+                    sortNA(indx, isNa, lo, hi);
+                    if (naLast) {
+                        hi -= numNa;
+                    } else {
+                        lo += numNa;
+                    }
                 }
             }
-            sortNA(indx, isNa, lo, hi);
-            if (naLast) {
-                hi -= numNa;
+
+            sort(indx, dv, lo, hi, dec);
+            return indxVec;
+        }
+
+        @Specialization
+        protected Object orderVector1(RIntVector indxVec, RAbstractDoubleVector dv, byte naLastL, byte decL) {
+            int[] indx = indxVec.getDataWithoutCopying();
+            boolean naLast = RRuntime.fromLogical(naLastL);
+            boolean dec = RRuntime.fromLogical(decL);
+            int lo = 0;
+            int hi = indx.length - 1;
+            int numNa = 0;
+            boolean[] isNa = new boolean[indx.length];
+            for (int i = 0; i < isNa.length; i++) {
+                if (RRuntime.isNAorNaN(dv.getDataAt(i))) {
+                    isNa[i] = true;
+                    numNa++;
+                }
+            }
+
+            if (numNa > 0) {
+                if (!naLast) {
+                    for (int i = 0; i < isNa.length; i++) {
+                        isNa[i] = !isNa[i];
+                    }
+                }
+                sortNA(indx, isNa, lo, hi);
+                if (naLast) {
+                    hi -= numNa;
+                } else {
+                    lo += numNa;
+                }
+            }
+
+            sort(indx, dv, lo, hi, dec);
+            return indxVec;
+        }
+
+        @Specialization
+        protected Object orderVector1(RIntVector indxVec, RAbstractStringVector dv, byte naLastL, byte decL) {
+            int[] indx = indxVec.getDataWithoutCopying();
+            boolean naLast = RRuntime.fromLogical(naLastL);
+            boolean dec = RRuntime.fromLogical(decL);
+            int lo = 0;
+            int hi = indx.length - 1;
+            int numNa = 0;
+            if (!dv.isComplete()) {
+                boolean[] isNa = new boolean[indx.length];
+                for (int i = 0; i < isNa.length; i++) {
+                    if (RRuntime.isNA(dv.getDataAt(i))) {
+                        isNa[i] = true;
+                        numNa++;
+                    }
+                }
+
+                if (numNa > 0) {
+                    if (!naLast) {
+                        for (int i = 0; i < isNa.length; i++) {
+                            isNa[i] = !isNa[i];
+                        }
+                    }
+                    sortNA(indx, isNa, lo, hi);
+                    if (naLast) {
+                        hi -= numNa;
+                    } else {
+                        lo += numNa;
+                    }
+                }
+            }
+
+            sort(indx, dv, lo, hi, dec);
+            return indxVec;
+        }
+
+        @Specialization
+        protected Object orderVector1(RIntVector indxVec, RAbstractComplexVector dv, byte naLastL, byte decL) {
+            int[] indx = indxVec.getDataWithoutCopying();
+            boolean naLast = RRuntime.fromLogical(naLastL);
+            boolean dec = RRuntime.fromLogical(decL);
+            int lo = 0;
+            int hi = indx.length - 1;
+            int numNa = 0;
+            if (!dv.isComplete()) {
+                boolean[] isNa = new boolean[indx.length];
+                for (int i = 0; i < isNa.length; i++) {
+                    if (RRuntime.isNA(dv.getDataAt(i))) {
+                        isNa[i] = true;
+                        numNa++;
+                    }
+                }
+
+                if (numNa > 0) {
+                    if (!naLast) {
+                        for (int i = 0; i < isNa.length; i++) {
+                            isNa[i] = !isNa[i];
+                        }
+                    }
+                    sortNA(indx, isNa, lo, hi);
+                    if (naLast) {
+                        hi -= numNa;
+                    } else {
+                        lo += numNa;
+                    }
+                }
+            }
+
+            sort(indx, dv, lo, hi, dec);
+            return indxVec;
+        }
+
+        private void sort(int[] indx, RAbstractDoubleVector dv, int lo, int hi, boolean dec) {
+            int t = 0;
+            for (; SINCS[t] > hi - lo + 1; t++) {
+            }
+            for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
+                for (int i = lo + h; i <= hi; i++) {
+                    int itmp = indx[i];
+                    int j = i;
+                    while (j >= lo + h) {
+                        int a = indx[j - h];
+                        int b = itmp;
+                        if (decProfile.profile(dec)) {
+                            if (!((dv.getDataAt(a)) < dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
+                                break;
+                            }
+                        } else {
+                            if (!((dv.getDataAt(a)) > dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
+                                break;
+                            }
+
+                        }
+                        indx[j] = indx[j - h];
+                        j -= h;
+                    }
+                    indx[j] = itmp;
+                }
+            }
+        }
+
+        private void sort(int[] indx, RAbstractIntVector dv, int lo, int hi, boolean dec) {
+            int t = 0;
+            for (; SINCS[t] > hi - lo + 1; t++) {
+            }
+            for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
+                for (int i = lo + h; i <= hi; i++) {
+                    int itmp = indx[i];
+                    int j = i;
+                    while (j >= lo + h) {
+                        int a = indx[j - h];
+                        int b = itmp;
+                        if (decProfile.profile(dec)) {
+                            if (!((dv.getDataAt(a)) < dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
+                                break;
+                            }
+                        } else {
+                            if (!((dv.getDataAt(a)) > dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
+                                break;
+                            }
+
+                        }
+                        indx[j] = indx[j - h];
+                        j -= h;
+                    }
+                    indx[j] = itmp;
+                }
+            }
+        }
+
+        private void sort(int[] indx, RAbstractStringVector dv, int lo, int hi, boolean dec) {
+            Collator collator = Collator.getInstance();
+            int t = 0;
+            for (; SINCS[t] > hi - lo + 1; t++) {
+            }
+            for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
+                for (int i = lo + h; i <= hi; i++) {
+                    int itmp = indx[i];
+                    int j = i;
+                    while (j >= lo + h) {
+                        int a = indx[j - h];
+                        int b = itmp;
+                        int c = collator.compare(dv.getDataAt(a), dv.getDataAt(b));
+                        if (decProfile.profile(dec)) {
+                            if (!(c < 0 || (c == 0 && a > b))) {
+                                break;
+                            }
+                        } else {
+                            if (!(c > 0 || (c == 0 && a > b))) {
+                                break;
+                            }
+                        }
+                        indx[j] = indx[j - h];
+                        j -= h;
+                    }
+                    indx[j] = itmp;
+                }
+            }
+        }
+
+        private static boolean lt(RComplex a, RComplex b) {
+            if (a.getRealPart() == b.getRealPart()) {
+                return a.getImaginaryPart() < b.getImaginaryPart();
             } else {
-                lo += numNa;
+                return a.getRealPart() < b.getRealPart();
             }
         }
 
-        sort(indx, dv, lo, hi, dec);
-    }
-
-    private void orderVector1(int[] indx, RAbstractStringVector dv, boolean naLast, boolean dec) {
-        int lo = 0;
-        int hi = indx.length - 1;
-        int numNa = 0;
-        if (!dv.isComplete()) {
-            boolean[] isNa = new boolean[indx.length];
-            for (int i = 0; i < isNa.length; i++) {
-                if (RRuntime.isNA(dv.getDataAt(i))) {
-                    isNa[i] = true;
-                    numNa++;
-                }
+        private static boolean gt(RComplex a, RComplex b) {
+            if (a.getRealPart() == b.getRealPart()) {
+                return a.getImaginaryPart() > b.getImaginaryPart();
+            } else {
+                return a.getRealPart() > b.getRealPart();
             }
+        }
 
-            if (numNa > 0) {
-                if (!naLast) {
-                    for (int i = 0; i < isNa.length; i++) {
-                        isNa[i] = !isNa[i];
+        private static boolean eq(RComplex a, RComplex b) {
+            return a.getRealPart() == b.getRealPart() && a.getImaginaryPart() == b.getImaginaryPart();
+        }
+
+        private void sort(int[] indx, RAbstractComplexVector dv, int lo, int hi, boolean dec) {
+            int t = 0;
+            for (; SINCS[t] > hi - lo + 1; t++) {
+            }
+            for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
+                for (int i = lo + h; i <= hi; i++) {
+                    int itmp = indx[i];
+                    int j = i;
+                    while (j >= lo + h) {
+                        int a = indx[j - h];
+                        int b = itmp;
+                        if (decProfile.profile(dec)) {
+                            if (!(lt(dv.getDataAt(a), dv.getDataAt(b)) || (eq(dv.getDataAt(a), dv.getDataAt(b)) && a > b))) {
+                                break;
+                            }
+                        } else {
+                            if (!(gt(dv.getDataAt(a), dv.getDataAt(b)) || (eq(dv.getDataAt(a), dv.getDataAt(b)) && a > b))) {
+                                break;
+                            }
+
+                        }
+                        indx[j] = indx[j - h];
+                        j -= h;
                     }
-                }
-                sortNA(indx, isNa, lo, hi);
-                if (naLast) {
-                    hi -= numNa;
-                } else {
-                    lo += numNa;
+                    indx[j] = itmp;
                 }
             }
         }
-
-        sort(indx, dv, lo, hi, dec);
-    }
-
-    private void orderVector1(int[] indx, RAbstractComplexVector dv, boolean naLast, boolean dec) {
-        int lo = 0;
-        int hi = indx.length - 1;
-        int numNa = 0;
-        if (!dv.isComplete()) {
-            boolean[] isNa = new boolean[indx.length];
-            for (int i = 0; i < isNa.length; i++) {
-                if (RRuntime.isNA(dv.getDataAt(i))) {
-                    isNa[i] = true;
-                    numNa++;
-                }
-            }
-
-            if (numNa > 0) {
-                if (!naLast) {
-                    for (int i = 0; i < isNa.length; i++) {
-                        isNa[i] = !isNa[i];
-                    }
-                }
-                sortNA(indx, isNa, lo, hi);
-                if (naLast) {
-                    hi -= numNa;
-                } else {
-                    lo += numNa;
-                }
-            }
-        }
-
-        sort(indx, dv, lo, hi, dec);
     }
 
     private static void sortNA(int[] indx, boolean[] isNa, int lo, int hi) {
@@ -414,141 +595,6 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             }
         }
 
-    }
-
-    private void sort(int[] indx, RAbstractDoubleVector dv, int lo, int hi, boolean dec) {
-        int t = 0;
-        for (; SINCS[t] > hi - lo + 1; t++) {
-        }
-        for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
-            for (int i = lo + h; i <= hi; i++) {
-                int itmp = indx[i];
-                int j = i;
-                while (j >= lo + h) {
-                    int a = indx[j - h];
-                    int b = itmp;
-                    if (decProfile.profile(dec)) {
-                        if (!((dv.getDataAt(a)) < dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
-                            break;
-                        }
-                    } else {
-                        if (!((dv.getDataAt(a)) > dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
-                            break;
-                        }
-
-                    }
-                    indx[j] = indx[j - h];
-                    j -= h;
-                }
-                indx[j] = itmp;
-            }
-        }
-    }
-
-    private void sort(int[] indx, RAbstractIntVector dv, int lo, int hi, boolean dec) {
-        int t = 0;
-        for (; SINCS[t] > hi - lo + 1; t++) {
-        }
-        for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
-            for (int i = lo + h; i <= hi; i++) {
-                int itmp = indx[i];
-                int j = i;
-                while (j >= lo + h) {
-                    int a = indx[j - h];
-                    int b = itmp;
-                    if (decProfile.profile(dec)) {
-                        if (!((dv.getDataAt(a)) < dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
-                            break;
-                        }
-                    } else {
-                        if (!((dv.getDataAt(a)) > dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
-                            break;
-                        }
-
-                    }
-                    indx[j] = indx[j - h];
-                    j -= h;
-                }
-                indx[j] = itmp;
-            }
-        }
-    }
-
-    private void sort(int[] indx, RAbstractStringVector dv, int lo, int hi, boolean dec) {
-        int t = 0;
-        for (; SINCS[t] > hi - lo + 1; t++) {
-        }
-        for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
-            for (int i = lo + h; i <= hi; i++) {
-                int itmp = indx[i];
-                int j = i;
-                while (j >= lo + h) {
-                    int a = indx[j - h];
-                    int b = itmp;
-                    if (decProfile.profile(dec)) {
-                        if (!(dv.getDataAt(a).compareTo(dv.getDataAt(b)) < 0 || (dv.getDataAt(a).compareTo(dv.getDataAt(b)) == 0 && a > b))) {
-                            break;
-                        }
-                    } else {
-                        if (!(dv.getDataAt(a).compareTo(dv.getDataAt(b)) > 0 || (dv.getDataAt(a).compareTo(dv.getDataAt(b)) == 0 && a > b))) {
-                            break;
-                        }
-                    }
-                    indx[j] = indx[j - h];
-                    j -= h;
-                }
-                indx[j] = itmp;
-            }
-        }
-    }
-
-    private static boolean lt(RComplex a, RComplex b) {
-        if (a.getRealPart() == b.getRealPart()) {
-            return a.getImaginaryPart() < b.getImaginaryPart();
-        } else {
-            return a.getRealPart() < b.getRealPart();
-        }
-    }
-
-    private static boolean gt(RComplex a, RComplex b) {
-        if (a.getRealPart() == b.getRealPart()) {
-            return a.getImaginaryPart() > b.getImaginaryPart();
-        } else {
-            return a.getRealPart() > b.getRealPart();
-        }
-    }
-
-    private static boolean eq(RComplex a, RComplex b) {
-        return a.getRealPart() == b.getRealPart() && a.getImaginaryPart() == b.getImaginaryPart();
-    }
-
-    private void sort(int[] indx, RAbstractComplexVector dv, int lo, int hi, boolean dec) {
-        int t = 0;
-        for (; SINCS[t] > hi - lo + 1; t++) {
-        }
-        for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
-            for (int i = lo + h; i <= hi; i++) {
-                int itmp = indx[i];
-                int j = i;
-                while (j >= lo + h) {
-                    int a = indx[j - h];
-                    int b = itmp;
-                    if (decProfile.profile(dec)) {
-                        if (!(lt(dv.getDataAt(a), dv.getDataAt(b)) || (eq(dv.getDataAt(a), dv.getDataAt(b)) && a > b))) {
-                            break;
-                        }
-                    } else {
-                        if (!(gt(dv.getDataAt(a), dv.getDataAt(b)) || (eq(dv.getDataAt(a), dv.getDataAt(b)) && a > b))) {
-                            break;
-                        }
-
-                    }
-                    indx[j] = indx[j - h];
-                    j -= h;
-                }
-                indx[j] = itmp;
-            }
-        }
     }
 
     protected boolean isFirstIntegerPrecedence(RArgsValuesAndNames args) {
@@ -579,8 +625,11 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return args.getLength() == 1;
     }
 
+    /**
+     * Also used by {@link Rank}. *
+     */
     @NodeChildren({@NodeChild("v"), @NodeChild("i"), @NodeChild("j"), @NodeChild("naLast")})
-    protected abstract static class CmpNode extends RNode {
+    abstract static class CmpNode extends RNode {
 
         public abstract int executeInt(Object v, int i, int j, byte naLast);
 
@@ -725,4 +774,5 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
     }
+
 }

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,4 +21,17 @@
 # questions.
 #
 
+OBJ = lib
+
+GNUR_C_FILES = init.c
+
+GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_C_FILES:.c=.o))
+
+PKG_INCLUDES = -I $(GNUR_SRC)
+
 include ../lib.mk
+
+$(C_OBJECTS): | $(OBJ)
+
+$(OBJ)/%.o: $(GNUR_SRC)/%.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@

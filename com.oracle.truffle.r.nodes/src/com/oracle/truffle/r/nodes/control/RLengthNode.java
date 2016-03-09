@@ -79,6 +79,12 @@ public abstract class RLengthNode extends RNode {
         return 1;
     }
 
+    @Specialization
+    @SuppressWarnings("unused")
+    protected int doSymbol(RSymbol operand) {
+        return 1;
+    }
+
     @Specialization(guards = {"cachedClass != null", "cachedClass == operand.getClass()"})
     protected int doCachedContainer(Object operand, //
                     @Cached("getContainerClass(operand)") Class<? extends RAbstractContainer> cachedClass, //

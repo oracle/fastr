@@ -41,7 +41,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
-import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.SlowPathException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -676,6 +675,33 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
                     if (RRuntime.checkType(value, RType.Function)) {
                         return (RFunction) value;
                     }
+                }
+            }
+            if (localOnly) {
+                return null;
+            }
+            current = RArguments.getEnclosingFrame(current);
+        } while (current != null);
+        return null;
+    }
+
+    @TruffleBoundary
+    public static Object lookupAny(String identifier, Frame variableFrame, boolean localOnly) {
+        Frame current = variableFrame;
+        do {
+            // see if the current frame has a value of the given name
+            FrameSlot frameSlot = current.getFrameDescriptor().findFrameSlot(identifier);
+            if (frameSlot != null) {
+                Object value = current.getValue(frameSlot);
+
+                if (value != null) {
+                    if (value == RMissing.instance) {
+                        throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, identifier);
+                    }
+                    if (value instanceof RPromise) {
+                        return PromiseHelperNode.evaluateSlowPath(null, (RPromise) value);
+                    }
+                    return value;
                 }
             }
             if (localOnly) {

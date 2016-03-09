@@ -19,35 +19,33 @@
 
 #include <Rinternals.h>
 
-static void unimplemented_methods() {
-	error("unimplemented methods .External");
-}
+#define UNIMPLEMENTED { error("unimplemented function at %s:%d", __FILE__, __LINE__); return NULL; }
 
 
 SEXP R_M_setPrimitiveMethods(SEXP fname, SEXP op, SEXP code_vec,
-			     SEXP fundef, SEXP mlist){ unimplemented_methods(); return NULL; }
-SEXP R_clear_method_selection(){ unimplemented_methods(); return NULL; }
-SEXP R_dummy_extern_place(){ unimplemented_methods(); return NULL; }
-SEXP R_el_named(SEXP object, SEXP what){ unimplemented_methods(); return NULL; }
-SEXP R_externalptr_prototype_object(){ unimplemented_methods(); return NULL; }
-SEXP R_getGeneric(SEXP name, SEXP mustFind, SEXP env, SEXP package){ unimplemented_methods(); return NULL; }
-SEXP R_get_slot(SEXP obj, SEXP name){ unimplemented_methods(); return NULL; }
-SEXP R_getClassFromCache(SEXP class, SEXP table){ unimplemented_methods(); return NULL; }
-SEXP R_hasSlot(SEXP obj, SEXP name){ unimplemented_methods(); return NULL; }
-SEXP R_identC(SEXP e1, SEXP e2){ unimplemented_methods(); return NULL; }
-SEXP R_initMethodDispatch(SEXP envir){ unimplemented_methods(); return NULL; }
-SEXP R_methodsPackageMetaName(SEXP prefix, SEXP name, SEXP pkg){ unimplemented_methods(); return NULL; }
-SEXP R_methods_test_MAKE_CLASS(SEXP className){ unimplemented_methods(); return NULL; }
-SEXP R_methods_test_NEW(SEXP className){ unimplemented_methods(); return NULL; }
-SEXP R_missingArg(SEXP symbol, SEXP ev){ unimplemented_methods(); return NULL; }
-SEXP R_nextMethodCall(SEXP matched_call, SEXP ev){ unimplemented_methods(); return NULL; }
-SEXP R_quick_method_check(SEXP args, SEXP mlist, SEXP fdef){ unimplemented_methods(); return NULL; }
-SEXP R_selectMethod(SEXP fname, SEXP ev, SEXP mlist, SEXP evalArgs){ unimplemented_methods(); return NULL; }
-SEXP R_set_el_named(SEXP object, SEXP what, SEXP value){ unimplemented_methods(); return NULL; }
-SEXP R_set_slot(SEXP obj, SEXP name, SEXP value){ unimplemented_methods(); return NULL; }
-SEXP R_standardGeneric(SEXP fname, SEXP ev, SEXP fdef){ unimplemented_methods(); return NULL; }
-SEXP do_substitute_direct(SEXP f, SEXP env){ unimplemented_methods(); return NULL; }
-SEXP Rf_allocS4Object(){ unimplemented_methods(); return NULL; }
-SEXP R_set_method_dispatch(SEXP onOff){ unimplemented_methods(); return NULL; }
-SEXP R_get_primname(SEXP object){ unimplemented_methods(); return NULL; }
-SEXP new_object(SEXP class_def){ unimplemented_methods(); return NULL; }
+			     SEXP fundef, SEXP mlist) UNIMPLEMENTED
+SEXP R_clear_method_selection() UNIMPLEMENTED
+SEXP R_dummy_extern_place() UNIMPLEMENTED
+SEXP R_el_named(SEXP object, SEXP what) UNIMPLEMENTED
+SEXP R_externalptr_prototype_object() UNIMPLEMENTED
+SEXP R_getGeneric(SEXP name, SEXP mustFind, SEXP env, SEXP package) UNIMPLEMENTED
+SEXP R_get_slot(SEXP obj, SEXP name) UNIMPLEMENTED
+SEXP R_getClassFromCache(SEXP class, SEXP table) UNIMPLEMENTED
+SEXP R_hasSlot(SEXP obj, SEXP name) UNIMPLEMENTED
+SEXP R_identC(SEXP e1, SEXP e2) UNIMPLEMENTED
+SEXP R_initMethodDispatch(SEXP envir) UNIMPLEMENTED
+SEXP R_methodsPackageMetaName(SEXP prefix, SEXP name, SEXP pkg) UNIMPLEMENTED
+SEXP R_methods_test_MAKE_CLASS(SEXP className) UNIMPLEMENTED
+SEXP R_methods_test_NEW(SEXP className) UNIMPLEMENTED
+SEXP R_missingArg(SEXP symbol, SEXP ev) UNIMPLEMENTED
+SEXP R_nextMethodCall(SEXP matched_call, SEXP ev) UNIMPLEMENTED
+SEXP R_quick_method_check(SEXP args, SEXP mlist, SEXP fdef) UNIMPLEMENTED
+SEXP R_selectMethod(SEXP fname, SEXP ev, SEXP mlist, SEXP evalArgs) UNIMPLEMENTED
+SEXP R_set_el_named(SEXP object, SEXP what, SEXP value) UNIMPLEMENTED
+SEXP R_set_slot(SEXP obj, SEXP name, SEXP value) UNIMPLEMENTED
+SEXP R_standardGeneric(SEXP fname, SEXP ev, SEXP fdef) UNIMPLEMENTED
+SEXP do_substitute_direct(SEXP f, SEXP env) UNIMPLEMENTED
+SEXP Rf_allocS4Object() UNIMPLEMENTED
+SEXP R_set_method_dispatch(SEXP onOff) UNIMPLEMENTED
+SEXP R_get_primname(SEXP object) UNIMPLEMENTED
+SEXP new_object(SEXP class_def) UNIMPLEMENTED

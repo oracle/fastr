@@ -33,6 +33,7 @@ import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.Token;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
@@ -243,8 +244,8 @@ final class REngine implements Engine, Engine.Timings {
         try {
             Object lastValue = RNull.instance;
             for (RSyntaxNode node : list) {
-                RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>");
-                lastValue = runCall(callTarget, frame, printResult, true);
+                RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>", printResult, true);
+                lastValue = callTarget.call(frame);
             }
             return lastValue;
         } catch (ReturnException ex) {
@@ -322,7 +323,7 @@ final class REngine implements Engine, Engine.Timings {
         return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements));
     }
 
-    private static class PolyglotEngineRootNode extends RootNode {
+    private final class PolyglotEngineRootNode extends RootNode {
 
         private final List<RSyntaxNode> statements;
 
@@ -341,13 +342,13 @@ final class REngine implements Engine, Engine.Timings {
         @Override
         public Object execute(VirtualFrame frame) {
             RContext oldContext = RContext.threadLocalContext.get();
-            RContext context = findContext.executeFindContext();
-            RContext.threadLocalContext.set(context);
+            RContext newContext = findContext.executeFindContext();
+            RContext.threadLocalContext.set(newContext);
             try {
                 Object lastValue = RNull.instance;
                 for (RSyntaxNode node : statements) {
-                    RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>");
-                    lastValue = ((REngine) context.getThisEngine()).runCall(callTarget, context.stateREnvironment.getGlobalFrame(), true, true);
+                    RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>", true, true);
+                    lastValue = callTarget.call(newContext.stateREnvironment.getGlobalFrame());
                 }
                 return lastValue;
             } catch (ReturnException ex) {
@@ -401,8 +402,8 @@ final class REngine implements Engine, Engine.Timings {
         if (n instanceof ConstantNode) {
             return ((ConstantNode) n).getValue();
         }
-        RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME);
-        return runCall(callTarget, frame, false, false);
+        RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME, false, false);
+        return callTarget.call(frame);
     }
 
     public Object evalFunction(RFunction func, MaterializedFrame frame, Object... args) {
@@ -414,8 +415,10 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     private Object evalNode(RNode exprRep, REnvironment envir, int depth) {
-        RNode n = exprRep;
-        RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME);
+        // we need to copy the node, otherwise it (and its children) will specialized to a specific
+        // frame descriptor and will fail on subsequent re-executions
+        RNode n = (RNode) exprRep.deepCopy();
+        RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME, false, false);
         RCaller call = RArguments.getCall(envir.getFrame());
         return evalTarget(callTarget, call, envir, depth);
     }
@@ -430,29 +433,30 @@ final class REngine implements Engine, Engine.Timings {
      * inefficient. In particular, in the case where a {@link VirtualFrame} is available, then the
      * {@code eval} methods that take such a {@link VirtualFrame} should be used in preference.
      */
-    private Object evalTarget(RootCallTarget callTarget, RCaller call, REnvironment envir, int depth) {
-        MaterializedFrame envFrame = envir.getFrame();
+    private static Object evalTarget(RootCallTarget callTarget, RCaller call, REnvironment envir, int depth) {
         // Here we create fake frame that wraps the original frame's context and has an only
         // slightly changed arguments array (function and callSrc).
-        MaterializedFrame vFrame = VirtualEvalFrame.create(envFrame, (RFunction) null, call, depth);
-        return runCall(callTarget, vFrame, false, false);
+        MaterializedFrame vFrame = VirtualEvalFrame.create(envir.getFrame(), (RFunction) null, call, depth);
+        return callTarget.call(vFrame);
     }
 
     public Object evalPromise(Closure closure, MaterializedFrame frame) {
-        return runCall(closure.getCallTarget(), frame, false, false);
+        return closure.getCallTarget().call(frame);
     }
 
     @Override
     public RootCallTarget makePromiseCallTarget(RNode body, String funName) {
-        return doMakeCallTarget(body, funName);
+        return doMakeCallTarget(body, funName, false, false);
     }
 
     /**
-     * Creates an anonymous function, with no arguments to evaluate {@code body}.
+     * Creates an anonymous function, with no arguments to evaluate {@code body}, optionally
+     * printing any result. The {@code callTarget} expects exactly one argument: the {@code frame}
+     * that the body should be executed in.
      */
     @TruffleBoundary
-    private static RootCallTarget doMakeCallTarget(RNode body, String description) {
-        return Truffle.getRuntime().createCallTarget(new AnonymousRootNode(body, description));
+    private RootCallTarget doMakeCallTarget(RNode body, String description, boolean printResult, boolean topLevel) {
+        return Truffle.getRuntime().createCallTarget(new AnonymousRootNode(body, description, printResult, topLevel));
     }
 
     /**
@@ -463,24 +467,70 @@ final class REngine implements Engine, Engine.Timings {
      * context of that frame. Note that passing only this one frame argument, strictly spoken,
      * violates the frame layout as set forth in {@link RArguments}. This is for internal use only.
      */
-    private static final class AnonymousRootNode extends RootNode {
+    private final class AnonymousRootNode extends RootNode {
 
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
 
         private final String description;
+        private final boolean printResult;
+        private final boolean topLevel;
 
         @Child private RNode body;
 
-        protected AnonymousRootNode(RNode body, String description) {
+        protected AnonymousRootNode(RNode body, String description, boolean printResult, boolean topLevel) {
             super(TruffleRLanguage.class, null, new FrameDescriptor());
             this.body = body;
             this.description = description;
+            this.printResult = printResult;
+            this.topLevel = topLevel;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
+            assert frame.getArguments().length == 1;
             SubstituteVirtualFrame vf = new SubstituteVirtualFrame((MaterializedFrame) frameTypeProfile.profile(frame.getArguments()[0]));
-            return body.execute(vf);
+            Object result = null;
+            try {
+                result = body.execute(vf);
+                assert checkResult(result);
+                if (printResult && result != null) {
+                    assert topLevel;
+                    if (context.isVisible()) {
+                        printResult(result);
+                    }
+                }
+                if (topLevel) {
+                    RErrorHandling.printWarnings(suppressWarnings);
+                }
+            } catch (RError e) {
+                CompilerDirectives.transferToInterpreter();
+                throw e;
+            } catch (ReturnException ex) {
+                CompilerDirectives.transferToInterpreter();
+                // condition handling can cause a "return" that needs to skip over this call
+                throw ex;
+            } catch (BreakException | NextException cfe) {
+                if (topLevel) {
+                    CompilerDirectives.transferToInterpreter();
+                    throw RError.error(RError.SHOW_CALLER2, RError.Message.NO_LOOP_FOR_BREAK_NEXT);
+                } else {
+                    // there can be an outer loop
+                    throw cfe;
+                }
+            } catch (DebugExitException | BrowserQuitException e) {
+                CompilerDirectives.transferToInterpreter();
+                throw e;
+            } catch (Throwable e) {
+                CompilerDirectives.transferToInterpreter();
+                if (e instanceof Error) {
+                    throw (Error) e;
+                } else if (e instanceof RuntimeException) {
+                    throw (RuntimeException) e;
+                } else {
+                    assert false : "unexpected exception: " + e;
+                }
+            }
+            return result;
         }
 
         @Override
@@ -492,55 +542,6 @@ final class REngine implements Engine, Engine.Timings {
         public boolean isCloningAllowed() {
             return false;
         }
-    }
-
-    /**
-     * Execute {@code callTarget} in {@code frame}, optionally printing any result. N.B.
-     * {@code callTarget.call} will create a new {@link VirtualFrame} called, say, {@code newFrame},
-     * in which to execute the (anonymous) {@link FunctionDefinitionNode} associated with
-     * {@code callTarget}. When execution reaches {@link FunctionDefinitionNode#execute},
-     * {@code frame} will be accessible via {@code newFrame.getArguments()[0]}, and the execution
-     * will continue using {@code frame}.
-     */
-    private Object runCall(RootCallTarget callTarget, MaterializedFrame frame, boolean printResult, boolean topLevel) {
-        Object result = null;
-        try {
-            result = callTarget.call(frame);
-            assert checkResult(result);
-            if (printResult && result != null) {
-                assert topLevel;
-                if (context.isVisible()) {
-                    printResult(result);
-                }
-            }
-            if (topLevel) {
-                RErrorHandling.printWarnings(suppressWarnings);
-            }
-        } catch (RError e) {
-            throw e;
-        } catch (ReturnException ex) {
-            // condition handling can cause a "return" that needs to skip over this call
-            throw ex;
-        } catch (BreakException | NextException cfe) {
-            if (topLevel) {
-                throw RError.error(RError.SHOW_CALLER2, RError.Message.NO_LOOP_FOR_BREAK_NEXT);
-            } else {
-                // there can be an outer loop
-                throw cfe;
-            }
-        } catch (DebugExitException | BrowserQuitException e) {
-            throw e;
-        } catch (Throwable e) {
-            if (e instanceof Error) {
-                throw (Error) e;
-            } else if (e instanceof RuntimeException) {
-                throw (RuntimeException) e;
-            } else {
-                /* This should never happen given the logic in FunctionDefinitionNode.execute */
-                assert false;
-            }
-        }
-        return result;
     }
 
     @TruffleBoundary

@@ -301,6 +301,10 @@ public class RChannel {
             msg = RSerialize.serialize(msg, false, true, RSerialize.DEFAULT_VERSION, null);
         }
         try {
+            int i = 0;
+            if (msg == null) {
+                i++;
+            }
             (id > 0 ? channel.masterToClient : channel.clientToMaster).put(msg);
         } catch (InterruptedException x) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error sending through the channel");
@@ -348,10 +352,8 @@ public class RChannel {
         }
     }
 
-    public static Object receive(int id) {
-        RChannel channel = getChannelFromId(id);
+    public static Object processedReceivedMessage(Object msg) {
         try {
-            Object msg = (id < 0 ? channel.masterToClient : channel.clientToMaster).take();
             if (msg instanceof SerializedList) {
                 RList list = ((SerializedList) msg).getList();
                 // list and attributes are already private (shallow copies - do the appropriate
@@ -369,10 +371,28 @@ public class RChannel {
                 }
                 return msg;
             }
-        } catch (InterruptedException x) {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error receiving from the channel");
         } catch (IOException x) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error unserializing msg from the channel");
         }
     }
+
+    public static Object receive(int id) {
+        RChannel channel = getChannelFromId(id);
+        try {
+            Object msg = (id < 0 ? channel.masterToClient : channel.clientToMaster).take();
+            return processedReceivedMessage(msg);
+        } catch (InterruptedException x) {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error receiving from the channel");
+        }
+    }
+
+    public static Object poll(int id) {
+        RChannel channel = getChannelFromId(id);
+        Object msg = (id < 0 ? channel.masterToClient : channel.clientToMaster).poll();
+        if (msg != null) {
+            return processedReceivedMessage(msg);
+        }
+        return null;
+    }
+
 }

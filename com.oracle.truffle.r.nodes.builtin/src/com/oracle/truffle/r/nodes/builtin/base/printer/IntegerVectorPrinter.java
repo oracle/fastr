@@ -25,14 +25,14 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
     public static final IntegerVectorPrinter INSTANCE = new IntegerVectorPrinter();
 
     @Override
-    protected IntegerVectorPrintJob createJob(RAbstractIntVector vector, int indx, boolean quote, PrintContext printCtx) {
-        return new IntegerVectorPrintJob(vector, indx, quote, printCtx);
+    protected IntegerVectorPrintJob createJob(RAbstractIntVector vector, int indx, PrintContext printCtx) {
+        return new IntegerVectorPrintJob(vector, indx, printCtx);
     }
 
     private final class IntegerVectorPrintJob extends VectorPrintJob {
 
-        protected IntegerVectorPrintJob(RAbstractIntVector vector, int indx, boolean quote, PrintContext printCtx) {
-            super(vector, indx, quote, printCtx);
+        protected IntegerVectorPrintJob(RAbstractIntVector vector, int indx, PrintContext printCtx) {
+            super(vector, indx, printCtx);
         }
 
         @Override
@@ -47,7 +47,7 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
 
         @Override
         protected void printElement(int i, FormatMetrics fm) throws IOException {
-            String v = IntegerPrinter.encodeInteger(vector.getDataAt(i), fm.maxWidth, printCtx.parameters());
+            String v = encodeInteger(vector.getDataAt(i), fm.maxWidth, printCtx.parameters());
             out.print(v);
         }
 
@@ -104,6 +104,19 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
         }
 
         return new FormatMetrics(fieldwidth);
+    }
+
+    /*
+     * There is no documented (or enforced) limit on 'w' here, so use snprintf
+     */
+    public static int NB = 1000;
+
+    public static String encodeInteger(int x, int w, PrintParameters pp) {
+        if (x == RRuntime.INT_NA) {
+            return Utils.snprintf(NB, "%" + Utils.asBlankArg(Math.min(w, (NB - 1))) + "s", pp.getNaString());
+        } else {
+            return Utils.snprintf(NB, "%" + Utils.asBlankArg(Math.min(w, (NB - 1))) + "d", x);
+        }
     }
 
 }

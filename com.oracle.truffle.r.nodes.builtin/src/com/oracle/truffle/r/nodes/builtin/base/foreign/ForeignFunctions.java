@@ -33,6 +33,7 @@ import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_set_met
 import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SubstituteDirectNodeGen;
+import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildNodeGen;
 import com.oracle.truffle.r.library.stats.*;
 import com.oracle.truffle.r.library.stats.GammaFunctionsFactory.QgammaNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
@@ -419,6 +420,10 @@ public class ForeignFunctions {
                     // grid
                 case "L_initGrid":
                     return InitGridNodeGen.create();
+
+                    // parallel
+                case "mc_is_child":
+                    return MCIsChildNodeGen.create();
                 default:
                     return null;
             }

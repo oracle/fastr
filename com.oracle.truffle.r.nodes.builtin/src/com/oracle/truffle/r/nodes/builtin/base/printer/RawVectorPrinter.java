@@ -31,14 +31,14 @@ public final class RawVectorPrinter extends VectorPrinter<RAbstractRawVector> {
     public static final RawVectorPrinter INSTANCE = new RawVectorPrinter();
 
     @Override
-    protected RawVectorPrintJob createJob(RAbstractRawVector vector, int indx, boolean quote, PrintContext printCtx) {
-        return new RawVectorPrintJob(vector, indx, quote, printCtx);
+    protected RawVectorPrintJob createJob(RAbstractRawVector vector, int indx, PrintContext printCtx) {
+        return new RawVectorPrintJob(vector, indx, printCtx);
     }
 
     private final class RawVectorPrintJob extends VectorPrintJob {
 
-        protected RawVectorPrintJob(RAbstractRawVector vector, int indx, boolean quote, PrintContext printCtx) {
-            super(vector, indx, quote, printCtx);
+        protected RawVectorPrintJob(RAbstractRawVector vector, int indx, PrintContext printCtx) {
+            super(vector, indx, printCtx);
         }
 
         @Override

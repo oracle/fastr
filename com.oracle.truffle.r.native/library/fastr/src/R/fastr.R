@@ -146,6 +146,14 @@ fastr.channel.receive <- function(id) {
 	.FastR(.NAME="fastr.channel.receive", id)
 }
 
+fastr.channel.poll <- function(id) {
+	.FastR(.NAME="fastr.channel.poll", id)
+}
+
+fastr.channel.select <- function(ids) {
+	.FastR(.NAME="fastr.channel.select", ids)
+}
+
 fastr.throw <- function(name) {
 	.FastR(.NAME="fastr.throw", name)
 }

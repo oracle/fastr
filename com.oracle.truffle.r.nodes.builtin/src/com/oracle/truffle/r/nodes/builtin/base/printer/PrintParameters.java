@@ -19,7 +19,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RString;
 
-public class PrintParameters {
+public final class PrintParameters {
     public static final int DEFAULT_DIGITS = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("digits"));
 
     private int width;

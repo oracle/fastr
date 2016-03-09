@@ -11,6 +11,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
+import static com.oracle.truffle.r.nodes.builtin.base.printer.IntegerVectorPrinter.NB;
+import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
+
 import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -23,14 +26,14 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
     public static final LogicalVectorPrinter INSTANCE = new LogicalVectorPrinter();
 
     @Override
-    protected VectorPrinter<RAbstractLogicalVector>.VectorPrintJob createJob(RAbstractLogicalVector vector, int indx, boolean quote, PrintContext printCtx) {
-        return new LogicalVectorPrintJob(vector, indx, quote, printCtx);
+    protected VectorPrinter<RAbstractLogicalVector>.VectorPrintJob createJob(RAbstractLogicalVector vector, int indx, PrintContext printCtx) {
+        return new LogicalVectorPrintJob(vector, indx, printCtx);
     }
 
     private final class LogicalVectorPrintJob extends VectorPrintJob {
 
-        protected LogicalVectorPrintJob(RAbstractLogicalVector vector, int indx, boolean quote, PrintContext printCtx) {
-            super(vector, indx, quote, printCtx);
+        protected LogicalVectorPrintJob(RAbstractLogicalVector vector, int indx, PrintContext printCtx) {
+            super(vector, indx, printCtx);
         }
 
         @Override
@@ -45,7 +48,7 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
 
         @Override
         protected void printElement(int i, FormatMetrics fm) throws IOException {
-            String v = LogicalPrinter.encodeLogical(vector.getDataAt(i), fm.maxWidth, printCtx.parameters());
+            String v = encodeLogical(vector.getDataAt(i), fm.maxWidth, printCtx.parameters());
             out.print(v);
         }
 
@@ -78,4 +81,16 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
         }
         return new FormatMetrics(fieldwidth);
     }
+
+    public static String encodeLogical(byte x, int w, PrintParameters pp) {
+        final String fmt = "%" + Utils.asBlankArg(Math.min(w, (NB - 1))) + "s";
+        if (x == RRuntime.LOGICAL_NA) {
+            return snprintf(NB, fmt, pp.getNaString());
+        } else if (x != 0) {
+            return snprintf(NB, fmt, "TRUE");
+        } else {
+            return snprintf(NB, fmt, "FALSE");
+        }
+    }
+
 }

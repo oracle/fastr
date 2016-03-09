@@ -32,7 +32,7 @@ public final class EnvironmentPrinter extends AbstractValuePrinter<REnvironment>
 
     @Override
     protected void printValue(REnvironment value, PrintContext printCtx) throws IOException {
-        printCtx.output().print(value.toString());
+        printCtx.output().print(value.getPrintName());
     }
 
 }

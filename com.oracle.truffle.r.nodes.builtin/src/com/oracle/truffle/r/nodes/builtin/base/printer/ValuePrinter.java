@@ -26,10 +26,23 @@ import java.io.IOException;
 
 public interface ValuePrinter<T> {
 
+    /**
+     * This attribute instructs the <code>println</code> method not to print the new line character
+     * since it has already been printed by an external printing routine, such as the
+     * <code>show</code> R-function.
+     */
+    String DONT_PRINT_NL_ATTR = "no_nl";
+
     void print(T value, PrintContext printCtx) throws IOException;
 
     default void println(T value, PrintContext printCtx) throws IOException {
         print(value, printCtx);
-        printCtx.output().println();
+        //
+        if (!Boolean.TRUE.equals(printCtx.getAttribute(DONT_PRINT_NL_ATTR))) {
+            printCtx.output().println();
+        } else {
+            // Clear the instruction attribute
+            printCtx.setAttribute(DONT_PRINT_NL_ATTR, false);
+        }
     }
 }

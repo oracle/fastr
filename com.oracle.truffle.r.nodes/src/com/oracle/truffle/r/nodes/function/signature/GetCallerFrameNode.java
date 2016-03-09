@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,9 +48,11 @@ public final class GetCallerFrameNode extends RBaseNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 slowPathSeen = true;
             }
-            funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE).materialize();
             RError.performanceWarning("slow caller frame access in UseMethod dispatch");
-            if (funFrame == null) {
+            Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
+            if (callerFrame != null) {
+                return callerFrame.materialize();
+            } else {
                 topLevelProfile.enter();
                 // S3 method can be dispatched from top-level where there is no caller frame
                 return frame.materialize();

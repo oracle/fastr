@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -61,5 +61,11 @@ public class TestBuiltin_lengthassign extends TestBase {
         assertEval("{ x<-data.frame(a=1,b=2); length(x)<-4; attributes(x) }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); length(x)<-1; x }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); length(x)<-4; x }");
+        assertEval("{ x <- 1:4 ; length(x) <- 2 ; x }");
+        assertEval("{ x <- 1:2 ; length(x) <- 4 ; x }");
+        assertEval("{ x <- 1 ; f <- function() { length(x) <<- 2 } ; f() ; x }");
+        assertEval("{ x <- 1:2 ; z <- (length(x) <- 4) ; z }");
+        assertEval("{ x<-c(a=7, b=42); length(x)<-4; x }");
+        assertEval("{ x<-c(a=7, b=42); length(x)<-1; x }");
     }
 }

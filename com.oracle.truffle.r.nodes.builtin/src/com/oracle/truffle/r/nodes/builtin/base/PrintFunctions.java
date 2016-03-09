@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
@@ -52,8 +53,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public class PrintFunctions {
     public abstract static class PrintAdapter extends RInvisibleBuiltinNode {
-        @Child protected PrettyPrinterNode prettyPrinter = PrettyPrinterNodeGen.create(null, null, null, null, false);
-        // The new pretty-printer
         @Child protected ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create(null, null, null, null, null, null, null, null, null);
 
         @TruffleBoundary
@@ -82,19 +81,8 @@ public class PrintFunctions {
         }
 
         @Specialization(guards = "!isS4(o)")
-        protected Object printDefault(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
-            try {
-                // Invoking the new pretty-printer. In contrast to the previous one, the new one
-                // does not return the output value and prints directly to the output.
-                valuePrinter.executeString(o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
-            } catch (UnsupportedOperationException e) {
-                // The original pretty printing code
-                String s = (String) prettyPrinter.executeString(o, null, RRuntime.asLogical(quote), RRuntime.asLogical(right));
-                if (s != null && !s.isEmpty()) {
-                    printHelper(s);
-                }
-            }
-
+        protected Object printDefault(VirtualFrame frame, Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
+            valuePrinter.executeString(frame, o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             controlVisibility();
             return o;
         }
@@ -133,17 +121,8 @@ public class PrintFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RFunction printFunction(VirtualFrame frame, RFunction x, byte useSource, RArgsValuesAndNames extra) {
-            try {
-                valuePrinter.executeString(x, PrintParameters.DEFAULT_DIGITS, true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDeafultMaxPrint(),
-                                true, false);
-            } catch (UnsupportedOperationException e) {
-                // The original pretty printing code
-                String s = prettyPrinter.prettyPrintFunction(x, null, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useSource == RRuntime.LOGICAL_TRUE);
-                if (s != null && !s.isEmpty()) {
-                    printHelper(s);
-                }
-            }
-
+            valuePrinter.executeString(frame, x, PrintParameters.DEFAULT_DIGITS, true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDeafultMaxPrint(),
+                            true, false);
             controlVisibility();
             return x;
         }

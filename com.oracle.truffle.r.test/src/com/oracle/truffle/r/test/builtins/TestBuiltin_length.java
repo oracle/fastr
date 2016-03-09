@@ -204,10 +204,7 @@ public class TestBuiltin_length extends TestBase {
 
     @Test
     public void testLength() {
-        assertEval("{ x <- 1:4 ; length(x) <- 2 ; x }");
-        assertEval("{ x <- 1:2 ; length(x) <- 4 ; x }");
         assertEval("{ length(c(z=1:4)) }");
-        assertEval("{ x <- 1 ; f <- function() { length(x) <<- 2 } ; f() ; x }");
         assertEval("{ length(1) }");
         assertEval("{ length(NULL) }");
         assertEval("{ length(NA) }");
@@ -216,8 +213,7 @@ public class TestBuiltin_length extends TestBase {
         assertEval("{ length(1+1i) }");
         assertEval("{ length(d<-dim(1:3)) }");
         assertEval("{ length(1:3) }");
-        assertEval("{ x <- 1:2 ; z <- (length(x) <- 4) ; z }");
-        assertEval("{ x<-c(a=7, b=42); length(x)<-4; x }");
-        assertEval("{ x<-c(a=7, b=42); length(x)<-1; x }");
+        assertEval("length(quote(x))");
+        assertEval("length(as.symbol('x'))");
     }
 }

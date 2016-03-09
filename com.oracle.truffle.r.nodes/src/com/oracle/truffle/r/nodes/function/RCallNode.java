@@ -287,6 +287,14 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     }
 
     @Override
+    public Node deepCopy() {
+        RCallNode copy = (RCallNode) super.deepCopy();
+        // execution (frame) specific due to temp identifiers, so reset
+        copy.internalDispatchCall = null;
+        return copy;
+    }
+
+    @Override
     public Object execute(VirtualFrame frame) {
         return execute(frame, executeFunctionNode(frame));
     }
