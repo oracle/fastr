@@ -32,6 +32,7 @@ import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node.Child;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.base.Inherits;
 import com.oracle.truffle.r.nodes.builtin.base.InheritsNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.IsMethodsDispatchOn;
@@ -65,6 +66,7 @@ public abstract class ValuePrinterNode extends RNode {
     @Child IsObject isObjectBuiltIn = IsObjectNodeGen.create(null, null, null);
     @Child IsMethodsDispatchOn isMethodDispatchOnBuiltIn = IsMethodsDispatchOnNodeGen.create(null, null, null);
     @Child CastStringNode castStringNode = CastStringNode.createNonPreserving();
+    @Child BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNode.create();
 
     public boolean isArray(Object o) {
         return RRuntime.fromLogical(isArrayBuiltIn.execute(o));
@@ -92,6 +94,10 @@ public abstract class ValuePrinterNode extends RNode {
 
     public String castString(Object o) {
         return (String) castStringNode.executeString(o);
+    }
+
+    public Object boxPrimitive(Object o) {
+        return boxPrimitiveNode.execute(o);
     }
 
     public abstract Object executeString(VirtualFrame frame, Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt);

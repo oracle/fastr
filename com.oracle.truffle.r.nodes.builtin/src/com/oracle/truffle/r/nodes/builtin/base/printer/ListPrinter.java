@@ -86,7 +86,7 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
                 if (lv.getLength() == 1) {
                     FormatMetrics fm = LogicalVectorPrinter.formatLogicalVector(lv, 0, 1, pp.getNaWidth());
                     pbuf = snprintf(115, "%s",
-                                    LogicalPrinter.encodeLogical(lv.getDataAt(0), fm.maxWidth, pp));
+                                    LogicalVectorPrinter.encodeLogical(lv.getDataAt(0), fm.maxWidth, pp));
                 } else {
                     pbuf = snprintf(115, "Logical,%d", lv.getLength());
                 }
@@ -99,7 +99,7 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
                     if (iv.getLength() == 1) {
                         FormatMetrics fm = IntegerVectorPrinter.formatIntVector(iv, 0, 1, pp.getNaWidth());
                         pbuf = snprintf(115, "%s",
-                                        IntegerPrinter.encodeInteger(iv.getDataAt(0), fm.maxWidth, pp));
+                                        IntegerVectorPrinter.encodeInteger(iv.getDataAt(0), fm.maxWidth, pp));
                     } else {
                         pbuf = snprintf(115, "Integer,%d", iv.getLength());
                     }
@@ -109,7 +109,7 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
                 if (dv.getLength() == 1) {
                     DoubleVectorMetrics fm = DoubleVectorPrinter.formatDoubleVector(dv, 0, 1, 0, pp);
                     pbuf = snprintf(115, "%s",
-                                    DoublePrinter.encodeReal(dv.getDataAt(0), fm, pp));
+                                    DoubleVectorPrinter.encodeReal(dv.getDataAt(0), fm, pp));
                 } else {
                     pbuf = snprintf(115, "Numeric,%d", dv.getLength());
                 }
@@ -120,7 +120,7 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
                     if (RRuntime.isNA(x.getRealPart()) || RRuntime.isNA(x.getImaginaryPart())) {
                         /* formatReal(NA) --> w=R_print.na_width, d=0, e=0 */
                         pbuf = snprintf(115, "%s",
-                                        DoublePrinter.encodeReal(RRuntime.DOUBLE_NA, pp.getNaWidth(), 0, 0, '.', pp));
+                                        DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, pp.getNaWidth(), 0, 0, '.', pp));
                     } else {
                         ComplexVectorMetrics cvm = ComplexVectorPrinter.formatComplexVector(x, 0, 1, 0, pp);
                         pbuf = snprintf(115, "%s", ComplexVectorPrinter.encodeComplex(x, cvm, pp));

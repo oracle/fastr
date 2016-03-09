@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.asBlankArg;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -25,14 +26,14 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
     public static final StringVectorPrinter INSTANCE = new StringVectorPrinter();
 
     @Override
-    protected VectorPrinter<RAbstractStringVector>.VectorPrintJob createJob(RAbstractStringVector vector, int indx, boolean quote, PrintContext printCtx) {
-        return new StringVectorPrintJob(vector, indx, quote, printCtx);
+    protected VectorPrinter<RAbstractStringVector>.VectorPrintJob createJob(RAbstractStringVector vector, int indx, PrintContext printCtx) {
+        return new StringVectorPrintJob(vector, indx, printCtx);
     }
 
     private final class StringVectorPrintJob extends VectorPrintJob {
 
-        protected StringVectorPrintJob(RAbstractStringVector vector, int indx, boolean quote, PrintContext printCtx) {
-            super(vector, indx, quote, printCtx);
+        protected StringVectorPrintJob(RAbstractStringVector vector, int indx, PrintContext printCtx) {
+            super(vector, indx, printCtx);
         }
 
         @Override
@@ -44,13 +45,13 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
         @Override
         protected void printElement(int i, FormatMetrics fm) throws IOException {
             String s = vector.getDataAt(i);
-            StringPrinter.printString(s, fm.maxWidth, printCtx);
+            StringVectorPrinter.printString(s, fm.maxWidth, printCtx);
         }
 
         @Override
         protected void printCell(int i, FormatMetrics fm) throws IOException {
             String s = vector.getDataAt(i);
-            String outS = StringPrinter.encode(s, fm.maxWidth, printCtx.parameters());
+            String outS = StringVectorPrinter.encode(s, fm.maxWidth, printCtx.parameters());
             int g = printCtx.parameters().getGap();
             String fmt = "%" + asBlankArg(g) + "s%s";
             printCtx.output().printf(fmt, "", outS);
@@ -115,6 +116,70 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
         fieldwidth = xmax;
 
         return fieldwidth;
+    }
+
+    public static void printString(String s, int w, PrintContext printCtx) {
+        String outS = encode(s, w, printCtx.parameters());
+        printCtx.output().print(outS);
+    }
+
+    public static String encode(String s, int w, PrintJustification justify) {
+        // justification
+        final int b = w - s.length(); // total amount of blanks
+        int bl = 0; // left blanks
+        int br = 0; // right blanks
+
+        switch (justify) {
+            case left:
+                br = b;
+                break;
+            case center:
+                bl = b / 2;
+                br = b - bl;
+                break;
+            case right:
+                bl = b;
+                break;
+            case none:
+                break;
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        if (bl > 0) {
+            char[] sp = new char[bl];
+            Arrays.fill(sp, ' ');
+            sb.append(sp);
+        }
+
+        sb.append(s);
+
+        if (br > 0) {
+            char[] sp = new char[br];
+            Arrays.fill(sp, ' ');
+            sb.append(sp);
+        }
+
+        return sb.toString();
+    }
+
+    public static String encode(String value, int w, PrintParameters pp) {
+        final boolean quote = pp.getQuote();
+        final String s;
+        if (quote) {
+            if (RRuntime.isNA(value)) {
+                s = pp.getNaString();
+            } else {
+                s = RRuntime.quoteString(value);
+            }
+        } else {
+            if (RRuntime.isNA(value)) {
+                s = pp.getNaStringNoquote();
+            } else {
+                s = value;
+            }
+        }
+        return StringVectorPrinter.encode(s, w, pp.getRight() ? PrintJustification.right : PrintJustification.left);
     }
 
 }

@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFactor;
@@ -54,17 +56,11 @@ public final class ValuePrinters implements ValuePrinter<Object> {
 
     private ValuePrinters() {
         printers.put(RNull.class, NullPrinter.INSTANCE);
-        printers.put(String.class, StringPrinter.INSTANCE);
-        printers.put(Double.class, DoublePrinter.INSTANCE);
-        printers.put(Integer.class, IntegerPrinter.INSTANCE);
-        printers.put(Byte.class, LogicalPrinter.INSTANCE);
         printers.put(RSymbol.class, SymbolPrinter.INSTANCE);
         printers.put(RFunction.class, FunctionPrinter.INSTANCE);
         printers.put(RExpression.class, ExpressionPrinter.INSTANCE);
         printers.put(RLanguage.class, LanguagePrinter.INSTANCE);
         printers.put(RExternalPtr.class, ExternalPtrPrinter.INSTANCE);
-        printers.put(RPromise.class, PromisePrinter.INSTANCE);
-        printers.put(RMissing.class, MissingPrinter.INSTANCE);
         printers.put(RS4Object.class, S4ObjectPrinter.INSTANCE);
         printers.put(RPairList.class, PairListPrinter.INSTANCE);
         printers.put(RFactor.class, FactorPrinter.INSTANCE);
@@ -72,10 +68,14 @@ public final class ValuePrinters implements ValuePrinter<Object> {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
-    public void print(Object x, PrintContext printCtx) throws IOException {
-        if (x == null) {
+    public void print(Object v, PrintContext printCtx) throws IOException {
+        RInternalError.guarantee(v != null, "Unexpected null value");
+
+        if (v == RNull.instance) {
             NullPrinter.INSTANCE.print(null, printCtx);
         } else {
+            // Try to box a scalar primitive value to the respective vector
+            Object x = printCtx.printerNode().boxPrimitive(v);
             ValuePrinter printer = printers.get(x.getClass());
             if (printer == null) {
                 if (x instanceof RAbstractStringVector) {
@@ -95,7 +95,7 @@ public final class ValuePrinters implements ValuePrinter<Object> {
                 } else if (x instanceof REnvironment) {
                     printer = EnvironmentPrinter.INSTANCE;
                 } else {
-                    throw new UnsupportedOperationException("TODO:" + x.getClass());
+                    RInternalError.shouldNotReachHere();
                 }
             }
             printer.print(x, printCtx);

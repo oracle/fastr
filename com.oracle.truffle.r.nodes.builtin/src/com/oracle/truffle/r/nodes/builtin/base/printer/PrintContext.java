@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.runtime.RInternalError;
 
 public final class PrintContext {
     private final ValuePrinterNode pn;
@@ -94,13 +95,9 @@ public final class PrintContext {
 
     public static void leave() {
         ArrayDeque<PrintContext> ctxStack = printCtxTL.get();
-        if (ctxStack == null) {
-            throw new IllegalStateException("No pretty-printer context stack");
-        }
 
-        if (ctxStack.isEmpty()) {
-            throw new IllegalStateException("Pretty-printer context stack is empty");
-        }
+        RInternalError.guarantee(ctxStack != null, "No pretty-printer context stack");
+        RInternalError.guarantee(!ctxStack.isEmpty(), "Pretty-printer context stack is empty");
 
         ctxStack.pop();
 

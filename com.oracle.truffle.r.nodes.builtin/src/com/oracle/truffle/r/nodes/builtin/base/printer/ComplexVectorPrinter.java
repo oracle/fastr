@@ -11,12 +11,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import static com.oracle.truffle.r.nodes.builtin.base.printer.DoublePrinter.NB;
+import static com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.NB;
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
 
 import java.io.IOException;
 
-import com.oracle.truffle.r.nodes.builtin.base.printer.DoublePrinter.ScientificDouble;
+import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.ScientificDouble;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -29,14 +29,14 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
     public static final ComplexVectorPrinter INSTANCE = new ComplexVectorPrinter();
 
     @Override
-    protected VectorPrinter<RAbstractComplexVector>.VectorPrintJob createJob(RAbstractComplexVector vector, int indx, boolean quote, PrintContext printCtx) {
-        return new ComplexVectorPrintJob(vector, indx, quote, printCtx);
+    protected VectorPrinter<RAbstractComplexVector>.VectorPrintJob createJob(RAbstractComplexVector vector, int indx, PrintContext printCtx) {
+        return new ComplexVectorPrintJob(vector, indx, printCtx);
     }
 
     private final class ComplexVectorPrintJob extends VectorPrintJob {
 
-        protected ComplexVectorPrintJob(RAbstractComplexVector vector, int indx, boolean quote, PrintContext printCtx) {
-            super(vector, indx, quote, printCtx);
+        protected ComplexVectorPrintJob(RAbstractComplexVector vector, int indx, PrintContext printCtx) {
+            super(vector, indx, printCtx);
         }
 
         @Override
@@ -158,7 +158,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
                     if (xi.getRealPart() != 0) {
                         allReZero = false;
                     }
-                    ScientificDouble sd = DoublePrinter.scientific(tmp.getRealPart(), pp);
+                    ScientificDouble sd = DoubleVectorPrinter.scientific(tmp.getRealPart(), pp);
 
                     left = sd.kpower + 1;
                     if (sd.roundingwidens) {
@@ -202,7 +202,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
                     if (xi.getImaginaryPart() != 0) {
                         allImZero = false;
                     }
-                    ScientificDouble sd = DoublePrinter.scientific(tmp.getImaginaryPart(), pp);
+                    ScientificDouble sd = DoubleVectorPrinter.scientific(tmp.getImaginaryPart(), pp);
 
                     left = sd.kpower + 1;
                     if (sd.roundingwidens) {
@@ -365,7 +365,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
 
     public static String encodeComplex(RComplex x, ComplexVectorMetrics cvm, PrintParameters pp) {
         if (RRuntime.isNA(x.getRealPart()) || RRuntime.isNA(x.getImaginaryPart())) {
-            return DoublePrinter.encodeReal(RRuntime.DOUBLE_NA, cvm.maxWidth, 0, 0, '.', pp);
+            return DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, cvm.maxWidth, 0, 0, '.', pp);
         } else {
             String s = encodeComplex(x, cvm.wr, cvm.dr, cvm.er, cvm.wi, cvm.di, cvm.ei, '.', pp);
             int g = cvm.maxWidth - cvm.wr - cvm.wi - 2;
@@ -411,18 +411,18 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
              */
             y = zprecr(x, pp.getDigits());
             if (y.getRealPart() == 0.) {
-                re = DoublePrinter.encodeReal(y.getRealPart(), wr, dr, er, cdec, pp);
+                re = DoubleVectorPrinter.encodeReal(y.getRealPart(), wr, dr, er, cdec, pp);
             } else {
-                re = DoublePrinter.encodeReal(xr, wr, dr, er, cdec, pp);
+                re = DoubleVectorPrinter.encodeReal(xr, wr, dr, er, cdec, pp);
             }
             flagNegIm = xi < 0;
             if (flagNegIm) {
                 xi = -xi;
             }
             if (y.getImaginaryPart() == 0.) {
-                im = DoublePrinter.encodeReal(y.getImaginaryPart(), wi, di, ei, cdec, pp);
+                im = DoubleVectorPrinter.encodeReal(y.getImaginaryPart(), wi, di, ei, cdec, pp);
             } else {
-                im = DoublePrinter.encodeReal(xi, wi, di, ei, cdec, pp);
+                im = DoubleVectorPrinter.encodeReal(xi, wi, di, ei, cdec, pp);
             }
             buff = snprintf(NB, "%s%s%si", re, flagNegIm ? "-" : "+", im);
         }
