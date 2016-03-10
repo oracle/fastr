@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,16 +35,18 @@ import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Construct a call object ({@link RLanguage}) from a name and optional arguments.
+ *
+ * Does not perform argument matching for first parameter "name".
  */
-@RBuiltin(name = "call", kind = PRIMITIVE, parameterNames = {"name", "..."})
+@RBuiltin(name = "call", kind = PRIMITIVE, parameterNames = {"", "..."})
 public abstract class Call extends RBuiltinNode {
 
-    @Specialization(guards = "!isEmptyName(name)")
-    protected RLanguage call(RAbstractStringVector name, @SuppressWarnings("unused") RMissing args) {
-        return makeCall(name.getDataAt(0), null);
+    @Override
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY};
     }
 
-    @Specialization(guards = "!isEmptyName(name)")
+    @Specialization(guards = "name.getLength() != 0")
     protected RLanguage call(RAbstractStringVector name, RArgsValuesAndNames args) {
         return makeCall(name.getDataAt(0), args);
     }
@@ -53,10 +55,6 @@ public abstract class Call extends RBuiltinNode {
     @SuppressWarnings("unused")
     protected RLanguage call(Object name, Object args) {
         throw RError.error(this, RError.Message.FIRST_ARG_MUST_BE_STRING);
-    }
-
-    protected boolean isEmptyName(RAbstractStringVector name) {
-        return name.getLength() == 0;
     }
 
     @TruffleBoundary
