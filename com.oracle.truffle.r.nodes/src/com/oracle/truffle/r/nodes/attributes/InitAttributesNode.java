@@ -36,11 +36,11 @@ public final class InitAttributesNode extends RBaseNode {
         return new InitAttributesNode();
     }
 
-    public RAttributes execute(RVector vector) {
-        RAttributes attributes = vector.getAttributes();
+    public RAttributes execute(RAttributable attributable) {
+        RAttributes attributes = attributable.getAttributes();
         if (hasAttributes.profile(attributes == null)) {
             attributes = RAttributes.create();
-            vector.initAttributes(attributes);
+            attributable.initAttributes(attributes);
         }
         return attributes;
     }
