@@ -46,6 +46,7 @@ import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -128,14 +129,13 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     private final BranchProfile returnProfile = BranchProfile.create();
 
-    public static FunctionDefinitionNode create(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments, RSyntaxNode synBody,
+    public static FunctionDefinitionNode create(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments, RSyntaxNode body,
                     FormalArguments formals, String description,
                     PostProcessArgumentsNode argPostProcess) {
-        FunctionStatementsNode body = new FunctionStatementsNode(synBody.getSourceSection(), synBody);
         return new FunctionDefinitionNode(src, frameDesc, argSourceSections, saveArguments, body, formals, description, argPostProcess, FunctionUIDFactory.get().createUID());
     }
 
-    private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RNode body, FormalArguments formals,
+    private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RSyntaxNode body, FormalArguments formals,
                     String description, PostProcessArgumentsNode argPostProcess, FunctionUID uuid) {
         super(null, formals, frameDesc);
         this.argSourceSections = argSourceSections;
@@ -143,7 +143,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         assert src != null;
         this.sourceSectionR = src;
         this.saveArguments = saveArguments;
-        this.body = body;
+        this.body = body.asRNode();
+        SourceSection sns = body.getSourceSection();
+        if (!sns.hasTag(RSyntaxTags.START_FUNCTION)) {
+            body.setSourceSection(RSyntaxTags.addTags(sns, RSyntaxTags.START_FUNCTION));
+        }
         this.description = description;
         this.onExitSlot = FrameSlotNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
         this.uuid = uuid;
@@ -168,18 +172,17 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return callTarget;
     }
 
-    private static boolean containsAnyDispatch(RNode body) {
+    private static boolean containsAnyDispatch(RSyntaxNode body) {
         NodeCountFilter dispatchingMethodsFilter = node -> {
             if (node instanceof ReadVariableNode) {
                 ReadVariableNode rvn = (ReadVariableNode) node;
                 String identifier = rvn.getIdentifier();
                 // TODO: can we also do this for S4 new?
                 return rvn.getMode() == RType.Function && ("UseMethod".equals(identifier) || "standardGeneric".equals(identifier));
-                /* || "NextMethod".equals(identifier) */
             }
             return false;
         };
-        return NodeUtil.countNodes(body, dispatchingMethodsFilter) > 0;
+        return NodeUtil.countNodes(body.asRNode(), dispatchingMethodsFilter) > 0;
     }
 
     public boolean containsDispatch() {
@@ -425,7 +428,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         FrameDescriptor frameDesc = new FrameDescriptor();
 
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<substituted function>", frameDesc);
-        return new FunctionDefinitionNode(RSyntaxNode.EAGER_DEPARSE, frameDesc, null, saveArguments, body.substitute(env).asRNode(), getFormalArguments(), null,
+        return new FunctionDefinitionNode(RSyntaxNode.EAGER_DEPARSE, frameDesc, null, saveArguments, body.substitute(env), getFormalArguments(), null,
                         argPostProcess, FunctionUIDFactory.get().createUID());
     }
 

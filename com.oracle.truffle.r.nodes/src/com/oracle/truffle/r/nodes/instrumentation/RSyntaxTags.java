@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import com.oracle.truffle.api.debug.Debugger;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.control.BlockNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 
 public class RSyntaxTags {
@@ -36,7 +35,7 @@ public class RSyntaxTags {
      */
     public static final String STATEMENT = "r-statement";
     /**
-     * Applied to {@link FunctionStatementsNode}.
+     * Applied to function bodies.
      */
     public static final String START_FUNCTION = "r-start_function";
     /**

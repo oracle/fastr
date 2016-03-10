@@ -32,7 +32,6 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.instrumentation.debug.DebugHandling;
 import com.oracle.truffle.r.nodes.instrumentation.trace.TraceHandling;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -243,8 +242,7 @@ public class RInstrumentation {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
         SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
         builder.tagIs(RSyntaxTags.START_FUNCTION);
-        FunctionStatementsNode fsn = (FunctionStatementsNode) fdn.getBody();
-        builder.sourceSectionEquals(fsn.getSourceSection());
+        builder.sourceSectionEquals(fdn.getBody().getSourceSection());
         return builder;
     }
 
