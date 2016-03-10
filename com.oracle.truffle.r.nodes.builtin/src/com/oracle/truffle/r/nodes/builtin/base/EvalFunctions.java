@@ -137,20 +137,4 @@ public class EvalFunctions {
             throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
-
-    @RBuiltin(name = "withVisible", kind = RBuiltinKind.PRIMITIVE, parameterNames = "x", nonEvalArgs = 0)
-    public abstract static class WithVisible extends EvalAdapter {
-        private static final RStringVector LISTNAMES = RDataFactory.createStringVector(new String[]{"value", "visible"}, RDataFactory.COMPLETE_VECTOR);
-
-        @Specialization
-        protected RList withVisible(VirtualFrame frame, RPromise expr) {
-            controlVisibility();
-            Object result = doEvalBody(RArguments.getDepth(frame) + 1, RDataFactory.createLanguage((RNode) expr.getRep()), REnvironment.frameToEnvironment(frame.materialize()));
-            Object[] data = new Object[]{result, RRuntime.asLogical(RContext.getInstance().isVisible())};
-            // Visibility is changed by the evaluation (else this code would not work),
-            // so we have to force it back on.
-            RContext.getInstance().setVisible(true);
-            return RDataFactory.createList(data, LISTNAMES);
-        }
-    }
 }
