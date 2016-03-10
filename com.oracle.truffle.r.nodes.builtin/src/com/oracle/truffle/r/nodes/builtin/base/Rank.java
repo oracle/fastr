@@ -25,6 +25,8 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -95,6 +97,10 @@ public abstract class Rank extends RBuiltinNode {
             indx[i] = i;
         }
         RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
+        if (x instanceof RAbstractLogicalVector) {
+            // Checkstyle: stop parameter assignment check
+            x = RClosures.createLogicalToIntVector((RAbstractLogicalVector) x);
+        }
         initOrderVector1().execute(indxVec, x, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE);
         initOrderCmp();
         int j;
