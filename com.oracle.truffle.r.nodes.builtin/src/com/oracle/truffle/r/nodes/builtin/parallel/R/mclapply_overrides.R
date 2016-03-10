@@ -1,17 +1,13 @@
-#  Copyright (C) 1995-2014 The R Core Team
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
+# This material is distributed under the GNU General Public License
+# Version 2. You may review the terms of this license at
+# http://www.gnu.org/licenses/gpl-2.0.html
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# Copyright (c) 1995-2014, The R Core Team
+# Copyright (c) 2016, Oracle and/or its affiliates
 #
-#  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+# All rights reserved.
+#
 
 ## Derived from snow and parallel packages
 
