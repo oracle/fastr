@@ -121,7 +121,7 @@ public abstract class Round extends RBuiltinNode {
     }
 
     @Specialization(guards = "digits == 0")
-    protected RComplexVector round(RComplexVector x, int digits) {
+    protected RComplexVector round(RAbstractComplexVector x, int digits) {
         controlVisibility();
         double[] result = new double[x.getLength() << 1];
         check.enable(x);
@@ -138,7 +138,7 @@ public abstract class Round extends RBuiltinNode {
     }
 
     @Specialization(guards = "digits != 0")
-    protected RComplexVector roundDigits(RComplexVector x, int digits) {
+    protected RComplexVector roundDigits(RAbstractComplexVector x, int digits) {
         controlVisibility();
         double[] result = new double[x.getLength() << 1];
         check.enable(x);
@@ -153,5 +153,4 @@ public abstract class Round extends RBuiltinNode {
         ret.copyAttributesFrom(attrProfiles, x);
         return ret;
     }
-
 }
