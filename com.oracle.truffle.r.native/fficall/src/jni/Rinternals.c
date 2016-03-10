@@ -59,6 +59,7 @@ static jmethodID TAG_MethodID;
 static jmethodID PRINTNAME_MethodID;
 static jmethodID CAR_MethodID;
 static jmethodID CDR_MethodID;
+static jmethodID SET_TAG_MethodID;
 static jmethodID SETCAR_MethodID;
 static jmethodID SETCDR_MethodID;
 static jmethodID SET_STRING_ELT_MethodID;
@@ -124,6 +125,7 @@ void init_internals(JNIEnv *env) {
     PRINTNAME_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "PRINTNAME", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
     CAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CAR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
     CDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    SET_TAG_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_TAG", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
     SETCAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCAR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
     SETCDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCDR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	SET_STRING_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_STRING_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
@@ -725,7 +727,8 @@ void SET_MISSING(SEXP x, int v) {
 }
 
 void SET_TAG(SEXP x, SEXP y) {
-    unimplemented("SET_TAG");
+    JNIEnv *thisenv = getEnv();
+    (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SET_TAG_MethodID, x, y);
 }
 
 SEXP SETCAR(SEXP x, SEXP y) {
