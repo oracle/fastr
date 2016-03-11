@@ -130,7 +130,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
             }
             RStringVector classHierarchy = (RStringVector) access.execute(attributes);
             if (nullAttributeProfile.profile(classHierarchy != null)) {
-                if (isS4Profile.profile(withS4 && profiledArg.isS4() && classHierarchy.getLength() > 0)) {
+                if (profiledArg.isS4() && isS4Profile.profile(withS4 && classHierarchy.getLength() > 0)) {
                     if (s4Class == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         s4Class = insert(S4ClassNodeGen.create());

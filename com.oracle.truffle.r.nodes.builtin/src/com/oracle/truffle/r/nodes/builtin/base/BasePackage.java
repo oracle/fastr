@@ -222,7 +222,7 @@ public class BasePackage extends RBuiltinPackage {
         add(EnvFunctions.SetParentEnv.class, EnvFunctionsFactory.SetParentEnvNodeGen::create);
         add(EnvFunctions.UnlockBinding.class, EnvFunctionsFactory.UnlockBindingNodeGen::create);
         add(EvalFunctions.Eval.class, EvalFunctionsFactory.EvalNodeGen::create);
-        add(EvalFunctions.WithVisible.class, EvalFunctionsFactory.WithVisibleNodeGen::create);
+        add(WithVisible.class, WithVisibleNodeGen::create);
         add(Exists.class, ExistsNodeGen::create);
         add(Expression.class, ExpressionNodeGen::create);
         add(FastR.class, FastRNodeGen::create);
