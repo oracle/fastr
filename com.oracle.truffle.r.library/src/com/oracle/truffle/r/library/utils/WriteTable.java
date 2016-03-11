@@ -55,8 +55,8 @@ public final class WriteTable extends RExternalBuiltinNode {
                 // if (i % 1000 == 999)
                 // R_CheckUserInterrupt();
                 if (!(rnames instanceof RNull)) {
-                    os.write(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec).getBytes());
-                    os.write(csep.getBytes());
+                    tmp = new StringBuffer(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec)).append(csep).toString();
+                    os.write(tmp.getBytes());
                 }
                 for (int j = 0; j < nc; j++) {
                     Object xjObj = x.getDataAtAsObject(j);
@@ -99,8 +99,7 @@ public final class WriteTable extends RExternalBuiltinNode {
                     // R_CheckUserInterrupt();
                 }
                 if (!(rnames instanceof RNull)) {
-                    os.write(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec).getBytes());
-                    os.write(csep.getBytes());
+                    os.write(new StringBuffer(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec)).append(csep).toString().getBytes());
                 }
                 for (int j = 0; j < nc; j++) {
                     if (j > 0) {
