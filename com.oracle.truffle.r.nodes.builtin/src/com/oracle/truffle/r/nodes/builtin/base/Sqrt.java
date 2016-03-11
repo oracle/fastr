@@ -22,86 +22,58 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 @RBuiltin(name = "sqrt", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Sqrt extends RBuiltinNode {
-    private final NACheck na = NACheck.create();
-    private final ConditionProfile naConditionProfile = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-    private final NullProfile dimensionsProfile = NullProfile.create();
+
+    public static final UnaryArithmeticFactory SQRT = SqrtArithmetic::new;
+
+    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+    @Child private UnaryArithmeticNode sqrtNode = UnaryArithmeticNodeGen.create(SQRT, RError.Message.NON_NUMERIC_MATH, RType.Double);
 
     @Specialization
-    public double sqrt(double x) {
-        controlVisibility();
-        na.enable(x);
-        if (naConditionProfile.profile(na.check(x))) {
-            return RRuntime.DOUBLE_NA;
-        } else {
-            return Math.sqrt(x);
-        }
+    protected Object sqrt(Object value) {
+        return sqrtNode.execute(boxPrimitive.execute(value));
     }
 
-    @Specialization
-    protected double sqrt(int x) {
-        controlVisibility();
-        na.enable(x);
-        if (naConditionProfile.profile(na.check(x))) {
-            return RRuntime.DOUBLE_NA;
-        } else {
-            return Math.sqrt(x);
-        }
-    }
+    public static class SqrtArithmetic extends UnaryArithmetic {
 
-    @Specialization
-    protected double sqrt(byte x) {
-        controlVisibility();
-        // sqrt for logical values: TRUE -> 1, FALSE -> 0, NA -> NA
-        na.enable(x);
-        if (naConditionProfile.profile(na.check(x))) {
-            return RRuntime.DOUBLE_NA;
-        } else {
-            return x;
+        @Override
+        public int op(byte op) {
+            return op;
         }
-    }
 
-    @Specialization
-    protected RDoubleVector sqrt(RIntSequence xs) {
-        controlVisibility();
-        double[] res = new double[xs.getLength()];
-        int current = xs.getStart();
-        for (int i = 0; i < xs.getLength(); i++) {
-            double sqrt = Math.sqrt(current);
-            res[i] = sqrt;
-            current += xs.getStride();
+        @Override
+        public int op(int op) {
+            return (int) Math.sqrt(op);
         }
-        RDoubleVector result = RDataFactory.createDoubleVector(res, na.neverSeenNA(), dimensionsProfile.profile(xs.getDimensions()), xs.getNames(attrProfiles));
-        result.copyRegAttributesFrom(xs);
-        return result;
-    }
 
-    @Specialization
-    protected RDoubleVector sqrt(RDoubleVector xs) {
-        controlVisibility();
-        double[] res = new double[xs.getLength()];
-        na.enable(xs);
-        for (int i = 0; i < xs.getLength(); i++) {
-            if (naConditionProfile.profile(na.check(xs.getDataAt(i)))) {
-                res[i] = RRuntime.DOUBLE_NA;
-            } else {
-                res[i] = Math.sqrt(xs.getDataAt(i));
-            }
+        @Override
+        public double op(double op) {
+            return Math.sqrt(op);
         }
-        RDoubleVector result = RDataFactory.createDoubleVector(res, na.neverSeenNA(), dimensionsProfile.profile(xs.getDimensions()), xs.getNames(attrProfiles));
-        result.copyRegAttributesFrom(xs);
-        return result;
+
+        @Override
+        public RComplex op(double re, double im) {
+            double r = Math.sqrt(Math.sqrt(re * re + im * im));
+            double theta = Math.atan2(im, re) / 2;
+            return RComplex.valueOf(r * Math.cos(theta), r * Math.sin(theta));
+        }
+
     }
 
 }

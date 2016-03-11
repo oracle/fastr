@@ -29,7 +29,7 @@ public class TestBuiltin_sqrt extends TestBase {
 
     @Test
     public void testsqrt3() {
-        assertEval(Ignored.Unknown, "argv <- list(-17+0i);sqrt(argv[[1]]);");
+        assertEval("argv <- list(-17+0i);sqrt(argv[[1]]);");
     }
 
     @Test
@@ -54,13 +54,12 @@ public class TestBuiltin_sqrt extends TestBase {
 
     @Test
     public void testsqrt8() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(660, 543, 711, 500, 410, 309, 546, 351, 269, 203, 370, 193, 181, 117, 243, 136, 117, 87, 154, 84), .Dim = 4:5, .Dimnames = list(c('Rural Male', 'Rural Female', 'Urban Male', 'Urban Female'), c('70-74', '65-69', '60-64', '55-59', '50-54'))));sqrt(argv[[1]]);");
+        assertEval("argv <- list(structure(c(660, 543, 711, 500, 410, 309, 546, 351, 269, 203, 370, 193, 181, 117, 243, 136, 117, 87, 154, 84), .Dim = 4:5, .Dimnames = list(c('Rural Male', 'Rural Female', 'Urban Male', 'Urban Female'), c('70-74', '65-69', '60-64', '55-59', '50-54'))));sqrt(argv[[1]]);");
     }
 
     @Test
     public void testsqrt9() {
-        assertEval(Ignored.Unknown, "argv <- list(c(6L, 5L, 4L, 3L, 2L, 1L, 0L, NA, NA, NA, NA));sqrt(argv[[1]]);");
+        assertEval("argv <- list(c(6L, 5L, 4L, 3L, 2L, 1L, 0L, NA, NA, NA, NA));sqrt(argv[[1]]);");
     }
 
     @Test
@@ -70,7 +69,12 @@ public class TestBuiltin_sqrt extends TestBase {
 
     @Test
     public void testsqrt11() {
-        assertEval(Ignored.Unknown, "argv <- list(0+1i);sqrt(argv[[1]]);");
+        assertEval("argv <- list(0+1i);sqrt(argv[[1]]);");
+    }
+
+    @Test
+    public void testsqrt12() {
+        assertEval("argv <- list(c(TRUE, FALSE));sqrt(argv[[1]]);");
     }
 
     @Test
