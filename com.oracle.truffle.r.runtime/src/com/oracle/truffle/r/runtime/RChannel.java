@@ -229,7 +229,7 @@ public class RChannel {
                 return o;
             }
         } else {
-            return RSerialize.serialize(o, false, true, RSerialize.DEFAULT_VERSION, null);
+            return RSerialize.serialize(o, RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
         }
     }
 
@@ -298,7 +298,7 @@ public class RChannel {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating channel message");
             }
         } else {
-            msg = RSerialize.serialize(msg, false, true, RSerialize.DEFAULT_VERSION, null);
+            msg = RSerialize.serialize(msg, RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
         }
         try {
             int i = 0;

@@ -128,6 +128,10 @@ public abstract class Mapply extends RBuiltinNode {
                         // TODO scalar types are a nuisance!
                         if (listElem instanceof String) {
                             vec = RDataFactory.createStringVectorFromScalar((String) listElem);
+                        } else if (listElem instanceof Integer) {
+                            vec = RDataFactory.createIntVectorFromScalar((int) listElem);
+                        } else if (listElem instanceof Double) {
+                            vec = RDataFactory.createDoubleVectorFromScalar((double) listElem);
                         } else {
                             throw RInternalError.unimplemented();
                         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,9 @@ public class GetFunctions {
         protected final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
         protected final BranchProfile inheritsProfile = BranchProfile.create();
         @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
+        @Child protected TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
+
+        public abstract Object execute(VirtualFrame frame, Object name, REnvironment envir, String mode, byte inherits);
 
         protected void unknownObject(String x, RType modeType, String modeString) throws RError {
             unknownObjectErrorProfile.enter();
@@ -67,29 +70,24 @@ public class GetFunctions {
             }
         }
 
-    }
-
-    @RBuiltin(name = "get", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"})
-    public abstract static class Get extends Adapter {
-
-        @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
-
-        public abstract Object execute(VirtualFrame frame, Object name, REnvironment envir, String mode, byte inherits);
-
         public static boolean isInherits(byte inherits) {
             return inherits == RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = "!isInherits(inherits)")
-        protected Object getNonInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
-            controlVisibility();
-            RType modeType = typeFromMode.execute(mode);
-            return getAndCheck(frame, xv, envir, modeType, true);
+        protected Object getAndCheck(VirtualFrame frame, RAbstractStringVector xv, REnvironment env, RType modeType, boolean fail) throws RError {
+            String x = xv.getDataAt(0);
+            Object obj = checkPromise(frame, env.get(x));
+            if (obj != null && RRuntime.checkType(obj, modeType)) {
+                return obj;
+            } else {
+                if (fail) {
+                    unknownObject(x, modeType, modeType.getName());
+                }
+                return null;
+            }
         }
 
-        @Specialization(guards = "isInherits(inherits)")
-        protected Object getInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
-            controlVisibility();
+        protected Object getInherits(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, boolean fail) {
             RType modeType = typeFromMode.execute(mode);
             Object r = getAndCheck(frame, xv, envir, modeType, false);
             if (r == null) {
@@ -105,24 +103,54 @@ public class GetFunctions {
                         }
                     }
                 }
-                if (r == null) {
+                if (r == null && fail) {
                     unknownObject(x, modeType, mode);
                 }
             }
             return r;
         }
+    }
 
-        protected Object getAndCheck(VirtualFrame frame, RAbstractStringVector xv, REnvironment env, RType modeType, boolean fail) throws RError {
-            String x = xv.getDataAt(0);
-            Object obj = checkPromise(frame, env.get(x));
-            if (obj != null && RRuntime.checkType(obj, modeType)) {
-                return obj;
-            } else {
-                if (fail) {
-                    unknownObject(x, modeType, modeType.getName());
-                }
-                return null;
+    @RBuiltin(name = "get", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"})
+    public abstract static class Get extends Adapter {
+
+        @Specialization(guards = "!isInherits(inherits)")
+        protected Object getNonInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
+            controlVisibility();
+            RType modeType = typeFromMode.execute(mode);
+            return getAndCheck(frame, xv, envir, modeType, true);
+        }
+
+        @Specialization(guards = "isInherits(inherits)")
+        protected Object getInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
+            controlVisibility();
+            Object result = getInherits(frame, xv, envir, mode, true);
+            return result;
+        }
+
+    }
+
+    @RBuiltin(name = "get0", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits", "ifnotfound"})
+    public abstract static class Get0 extends Adapter {
+        @Specialization(guards = "!isInherits(inherits)")
+        protected Object get0NonInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits, Object ifnotfound) {
+            controlVisibility();
+            RType modeType = typeFromMode.execute(mode);
+            Object result = getAndCheck(frame, xv, envir, modeType, false);
+            if (result == null) {
+                result = ifnotfound;
             }
+            return result;
+        }
+
+        @Specialization(guards = "isInherits(inherits)")
+        protected Object get0Inherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits, Object ifnotfound) {
+            controlVisibility();
+            Object result = getInherits(frame, xv, envir, mode, false);
+            if (result == null) {
+                result = ifnotfound;
+            }
+            return result;
         }
     }
 
@@ -151,7 +179,7 @@ public class GetFunctions {
             final String[] names;
             boolean complete = RDataFactory.COMPLETE_VECTOR;
 
-            State(RStringVector xv, RAbstractStringVector mode, RList ifNotFound) {
+            State(RAbstractStringVector xv, RAbstractStringVector mode, RList ifNotFound) {
                 this.svLength = xv.getLength();
                 this.modeLength = mode.getLength();
                 this.ifNotFoundLength = ifNotFound.getLength();
@@ -176,7 +204,7 @@ public class GetFunctions {
             }
         }
 
-        private State checkArgs(RStringVector xv, RAbstractStringVector mode, RList ifNotFound) {
+        private State checkArgs(RAbstractStringVector xv, RAbstractStringVector mode, RList ifNotFound) {
             State state = new State(xv, mode, ifNotFound);
             if (!(state.modeLength == 1 || state.modeLength == state.svLength)) {
                 wrongLengthErrorProfile.enter();
@@ -191,7 +219,7 @@ public class GetFunctions {
         }
 
         @Specialization(guards = "!isInherits(inherits)")
-        protected RList mgetNonInherit(VirtualFrame frame, RStringVector xv, REnvironment env, RAbstractStringVector mode, RList ifNotFound, @SuppressWarnings("unused") byte inherits) {
+        protected RList mgetNonInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment env, RAbstractStringVector mode, RList ifNotFound, @SuppressWarnings("unused") byte inherits) {
             controlVisibility();
             State state = checkArgs(xv, mode, ifNotFound);
             for (int i = 0; i < state.svLength; i++) {
@@ -209,7 +237,7 @@ public class GetFunctions {
         }
 
         @Specialization(guards = "isInherits(inherits)")
-        protected RList mgetInherit(VirtualFrame frame, RStringVector xv, REnvironment envir, RAbstractStringVector mode, RList ifNotFound, @SuppressWarnings("unused") byte inherits) {
+        protected RList mgetInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, RAbstractStringVector mode, RList ifNotFound, @SuppressWarnings("unused") byte inherits) {
             controlVisibility();
             State state = checkArgs(xv, mode, ifNotFound);
             for (int i = 0; i < state.svLength; i++) {

@@ -31,15 +31,14 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-@RBuiltin(name = "ls", aliases = {"objects"}, kind = INTERNAL, parameterNames = {"envir", "all.names"})
+@RBuiltin(name = "ls", aliases = {"objects"}, kind = INTERNAL, parameterNames = {"envir", "all.names", "sorted"})
 public abstract class Ls extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector ls(REnvironment envir, byte allNames) {
+    protected RStringVector ls(REnvironment envir, byte allNames, byte sorted) {
         controlVisibility();
-        // ls always sorts the result
-        return envir.ls(RRuntime.fromLogical(allNames), null, true);
+        return envir.ls(RRuntime.fromLogical(allNames), null, RRuntime.fromLogical(sorted));
     }
 
 }

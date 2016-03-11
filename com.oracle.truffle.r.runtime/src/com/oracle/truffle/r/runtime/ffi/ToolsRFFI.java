@@ -33,10 +33,11 @@ public interface ToolsRFFI {
     /**
      * This invokes the Rd parser, written in C, and part of GnuR, that does its work using the R
      * FFI interface. The R code initially invokes this via {@code .External2(C_parseRd, ...)},
-     * which has a custom specialization in the implementation of the {@code .External2} buitin.
+     * which has a custom specialization in the implementation of the {@code .External2} builtin.
      * That does some work in Java, and then calls this method to invoke the actual C code. We can't
      * go straight to the GnuR C entry point as that makes GnuR-specific assumptions about, for
      * example, how connections are implemented.
      */
-    Object parseRd(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls);
+    Object parseRd(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
+                    RLogicalVector warndups);
 }

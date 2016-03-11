@@ -177,9 +177,24 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"(isRNull(left) || isEmpty(left)) || (isRNull(right) || isEmpty(right))"})
+    @Specialization(guards = {"isRNullOrEmptyAndNotMissing(left, right)"})
     protected static Object doEmptyOrNull(Object left, Object right) {
         return RType.Logical.getEmpty();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"(isRMissing(left) || isRMissing(right))"})
+    protected Object doOneArg(Object left, Object right) {
+        RBuiltinFactory builtin = getBuiltin();
+        throw RError.error(this, RError.Message.IS_OF_WRONG_ARITY, 1, builtin.getName(), 2);
+    }
+
+    protected static boolean isRNullOrEmptyAndNotMissing(Object left, Object right) {
+        return (isRNullOrEmpty(left) || isRNullOrEmpty(right)) && !(isRMissing(left) || isRMissing(right));
+    }
+
+    protected static boolean isRNullOrEmpty(Object value) {
+        return isRNull(value) || isEmpty(value);
     }
 
     protected static boolean isEmpty(Object value) {

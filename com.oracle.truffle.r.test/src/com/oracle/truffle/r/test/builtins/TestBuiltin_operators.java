@@ -473,7 +473,9 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators91() {
-        assertEval("argv <- list(structure(list(c(3L, 0L, 1L)), class = c('R_system_version', 'package_version', 'numeric_version')), structure('3.1', .Names = 'gridSVG2'));`<`(argv[[1]],argv[[2]]);");
+        // GnuR outputs "TRUE" not "[1] TRUE"
+        assertEval(Ignored.OutputFormatting,
+                        "argv <- list(structure(list(c(3L, 0L, 1L)), class = c('R_system_version', 'package_version', 'numeric_version')), structure('3.1', .Names = 'gridSVG2'));`<`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -731,7 +733,9 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators142() {
-        assertEval("argv <- list(structure(list(c(3L, 0L, 1L)), class = c('R_system_version', 'package_version', 'numeric_version')), structure('2.13.2', .Names = 'SweaveListingUtils'));`>`(argv[[1]],argv[[2]]);");
+        // GnuR outputs "TRUE" not "[1] TRUE"
+        assertEval(Ignored.OutputFormatting,
+                        "argv <- list(structure(list(c(3L, 0L, 1L)), class = c('R_system_version', 'package_version', 'numeric_version')), structure('2.13.2', .Names = 'SweaveListingUtils'));`>`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1551,7 +1555,8 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators308() {
-        assertEval("argv <- list(list());`|`(argv[[1]]);");
+        assertEval(Ignored.WrongCaller, "argv <- list(list());`|`(argv[[1]]);"); // GnuR formats as
+// !argv[[1]] not as a call
     }
 
     @Test
@@ -1741,7 +1746,8 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators344() {
-        assertEval("argv <- list(list());`&`(argv[[1]]);");
+        // GnuR formats as &argv[[1]] not as a call
+        assertEval(Ignored.WrongCaller, "argv <- list(list());`&`(argv[[1]]);");
     }
 
     @Test

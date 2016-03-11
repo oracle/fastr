@@ -200,7 +200,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.info", kind = INTERNAL, parameterNames = {"fn"})
+    @RBuiltin(name = "file.info", kind = INTERNAL, parameterNames = {"fn", "extra_cols"})
     public abstract static class FileInfo extends RBuiltinNode {
         // @formatter:off
         private  enum Column {
@@ -213,9 +213,14 @@ public class FileFunctions {
         private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
         private static final RStringVector OCTMODE = RDataFactory.createStringVectorFromScalar("octmode");
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toLogical(1);
+        }
+
         @Specialization
         @TruffleBoundary
-        protected RList doFileInfo(RAbstractStringVector vec) {
+        protected RList doFileInfo(RAbstractStringVector vec, byte extraCols) {
             /*
              * Create a list, the elements of which are vectors of length vec.getLength() containing
              * the information. The R closure that called the .Internal turns the result into a
@@ -225,8 +230,13 @@ public class FileFunctions {
              * We try to use the JDK classes, even though they provide a more abstract interface
              * than R. In particular there seems to be no way to get the uid/gid values. We might be
              * better off justing using a native call.
+             * 
+             * TODO implement extras_cols=FALSE
              */
             controlVisibility();
+            if (RRuntime.isNA(extraCols)) {
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "extra_cols");
+            }
             int vecLength = vec.getLength();
             Object[] data = new Object[NAMES.length];
             boolean[] complete = new boolean[NAMES.length];
@@ -1115,5 +1125,26 @@ public class FileFunctions {
                 return false;
             }
         }
+    }
+
+    @RBuiltin(name = "dir.exists", kind = INTERNAL, parameterNames = "paths")
+    public abstract static class DirExists extends RBuiltinNode {
+        @Specialization
+        @TruffleBoundary
+        protected RLogicalVector dirExists(RAbstractStringVector pathVec) {
+            byte[] data = new byte[pathVec.getLength()];
+            for (int i = 0; i < data.length; i++) {
+                String pathString = Utils.tildeExpand(pathVec.getDataAt(i));
+                Path path = FileSystems.getDefault().getPath(pathString);
+                data[i] = RRuntime.asLogical(Files.exists(path) && Files.isDirectory(path));
+            }
+            return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        @Fallback
+        protected RLogicalVector dirExists(@SuppressWarnings("unused") Object pathVec) {
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "filename");
+        }
+
     }
 }

@@ -347,16 +347,16 @@ public class HiddenInternalFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toInteger(3);
+            casts.toInteger(2).toInteger(3);
         }
 
         @Specialization
-        protected RIntVector lazyLoadDBinsertValue(VirtualFrame frame, Object value, RAbstractStringVector file, byte asciiL, int compression, RFunction hook) {
+        protected RIntVector lazyLoadDBinsertValue(VirtualFrame frame, Object value, RAbstractStringVector file, int asciiL, int compression, RFunction hook) {
             return lazyLoadDBinsertValueInternal(frame.materialize(), value, file, asciiL, compression, hook);
         }
 
         @TruffleBoundary
-        private RIntVector lazyLoadDBinsertValueInternal(MaterializedFrame frame, Object value, RAbstractStringVector file, byte asciiL, int compression, RFunction hook) {
+        private RIntVector lazyLoadDBinsertValueInternal(MaterializedFrame frame, Object value, RAbstractStringVector file, int type, int compression, RFunction hook) {
             if (!(compression == 1 || compression == 3)) {
                 throw RError.error(this, Message.GENERIC, "unsupported compression");
             }
@@ -369,27 +369,27 @@ public class HiddenInternalFunctions {
             };
 
             try {
-                byte[] data = RSerialize.serialize(value, RRuntime.fromLogical(asciiL), false, RSerialize.DEFAULT_VERSION, callHook);
+                byte[] data = RSerialize.serialize(value, type, RSerialize.DEFAULT_VERSION, callHook);
                 // See comment in LazyLoadDBFetch for format
                 int outLen;
                 int offset;
-                RCompression.Type type;
+                RCompression.Type ctype;
                 byte[] cdata;
                 if (compression == 1) {
-                    type = RCompression.Type.GZIP;
+                    ctype = RCompression.Type.GZIP;
                     offset = 4;
                     outLen = (int) (1.001 * data.length) + 20;
                     cdata = new byte[outLen];
-                    boolean rc = RCompression.compress(type, data, cdata);
+                    boolean rc = RCompression.compress(ctype, data, cdata);
                     if (!rc) {
                         throw RError.error(this, Message.GENERIC, "zlib compress error");
                     }
                 } else if (compression == 3) {
-                    type = RCompression.Type.LZMA;
+                    ctype = RCompression.Type.LZMA;
                     offset = 5;
                     outLen = data.length;
                     cdata = new byte[outLen];
-                    boolean rc = RCompression.compress(type, data, cdata);
+                    boolean rc = RCompression.compress(ctype, data, cdata);
                     if (!rc) {
                         throw RError.error(this, Message.GENERIC, "lzma compress error");
                     }
@@ -398,7 +398,7 @@ public class HiddenInternalFunctions {
                 }
                 int[] intData = new int[2];
                 intData[1] = outLen + offset; // include length + type (compression == 3)
-                intData[0] = appendFile(file.getDataAt(0), cdata, data.length, type);
+                intData[0] = appendFile(file.getDataAt(0), cdata, data.length, ctype);
                 return RDataFactory.createIntVector(intData, RDataFactory.COMPLETE_VECTOR);
             } catch (Throwable ex) {
                 // Exceptions have been observed that were masked and very hard to find

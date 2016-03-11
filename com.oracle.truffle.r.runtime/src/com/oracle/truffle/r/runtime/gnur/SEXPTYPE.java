@@ -147,11 +147,13 @@ public enum SEXPTYPE {
                 }
             }
         }
-        // (only) environments and connections have subtypes
+        // (only) promises, environments and connections have subtypes
         if (REnvironment.class.isAssignableFrom(fastRClass)) {
             return ENVSXP;
         } else if (RConnection.class.isAssignableFrom(fastRClass)) {
             return FASTR_CONNECTION;
+        } else if (RPromise.class.isAssignableFrom(fastRClass)) {
+            return PROMSXP;
         }
         throw RInternalError.shouldNotReachHere(fastRClass.getName());
     }

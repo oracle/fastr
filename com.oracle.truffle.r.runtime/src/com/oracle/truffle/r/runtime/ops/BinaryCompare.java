@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
+import java.text.Collator;
+
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -251,7 +253,8 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public boolean op(String left, String right) {
-            return left.compareTo(right) < 0;
+            // Assume this is already cached by JDK
+            return Collator.getInstance().compare(left, right) < 0;
         }
 
         @Override

@@ -201,7 +201,7 @@ public class LoadSaveFunctions {
                     throw RError.error(this, RError.Message.CONN_XDR);
                 }
                 openConn.writeChar(ascii ? ASCII_HEADER : XDR_HEADER, 0, "", false);
-                RSerialize.serialize(openConn, toSave, ascii, false, RSerialize.DEFAULT_VERSION, null);
+                RSerialize.serialize(openConn, toSave, ascii ? RSerialize.ASCII : RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }

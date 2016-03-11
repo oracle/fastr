@@ -165,7 +165,7 @@ public class FrameFunctions {
      * In summary, although the simple cases are indeed simple, there are many possible variants
      * using "..." that make the code a lot more complex that it seems it ought to be.
      */
-    @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots"})
+    @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots", "envir"})
     public abstract static class MatchCall extends FrameHelper {
 
         @Override
@@ -174,12 +174,7 @@ public class FrameFunctions {
         }
 
         @Specialization
-        protected RLanguage matchCall(VirtualFrame frame, @SuppressWarnings("unused") RNull definition, Object callObj, byte expandDots) {
-            return matchCall(frame, (RFunction) null, callObj, expandDots);
-        }
-
-        @Specialization
-        protected RLanguage matchCall(VirtualFrame frame, RFunction definitionArg, Object callObj, byte expandDotsL) {
+        protected RLanguage matchCall(RFunction definition, Object callObj, byte expandDotsL, REnvironment env) {
             /*
              * definition==null in the standard (default) case, in which case we get the RFunction
              * from the calling frame
@@ -191,20 +186,11 @@ public class FrameFunctions {
             }
             boolean expandDots = RRuntime.fromLogical(expandDotsL);
 
-            Frame cframe = Utils.getStackFrame(FrameAccess.READ_ONLY, RArguments.getDepth(frame) - 2);
-            RFunction definition = definitionArg;
-            if (definition == null) {
-                Frame defFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, RArguments.getDepth(frame) - 1);
-                definition = RArguments.getFunction(defFrame);
-                if (definition == null) {
-                    throw RError.error(this, RError.Message.MATCH_CALL_CALLED_OUTSIDE_FUNCTION);
-                }
-            }
-            return doMatchCall(cframe, definition, call, expandDots);
+            return doMatchCall(env.getFrame(), definition, call, expandDots);
         }
 
         @TruffleBoundary
-        private static RLanguage doMatchCall(Frame cframe, RFunction definition, RLanguage call, boolean expandDots) {
+        private static RLanguage doMatchCall(MaterializedFrame cframe, RFunction definition, RLanguage call, boolean expandDots) {
             /*
              * We have to ensure that all parameters are named, in the correct order, and deal with
              * "...". This process has a lot in common with MatchArguments, which we use as a
@@ -339,7 +325,7 @@ public class FrameFunctions {
 
         @Specialization
         @SuppressWarnings("unused")
-        protected RLanguage matchCall(Object definition, Object call, Object expandDots) {
+        protected RLanguage matchCall(Object definition, Object call, Object expandDots, Object envir) {
             controlVisibility();
             throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }

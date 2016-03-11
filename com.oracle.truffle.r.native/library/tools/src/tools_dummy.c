@@ -34,6 +34,7 @@ SEXP codeFilesAppend(SEXP f1, SEXP f2) UNIMPLEMENTED
 SEXP getfmts(SEXP format) UNIMPLEMENTED
 SEXP startHTTPD(SEXP sIP, SEXP sPort) UNIMPLEMENTED
 SEXP stopHTTPD(void) UNIMPLEMENTED
+SEXP splitString(SEXP string, SEXP delims) UNIMPLEMENTED
 
 SEXP C_parseLatex(SEXP call, SEXP op, SEXP args, SEXP env) UNIMPLEMENTED
 //SEXP C_parseRd(SEXP call, SEXP op, SEXP args, SEXP env);

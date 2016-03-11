@@ -345,7 +345,13 @@ Rboolean Rf_isObject(SEXP s) {
 SEXP Rf_install(const char *name) {
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, name);
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, createSymbolMethodID, string);
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createSymbolMethodID, string);
+	return checkRef(thisenv, result);
+}
+
+SEXP Rf_installChar(SEXP name) {
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createSymbolMethodID, name);
 	return checkRef(thisenv, result);
 }
 

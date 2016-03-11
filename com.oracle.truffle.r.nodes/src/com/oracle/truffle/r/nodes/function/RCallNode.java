@@ -287,14 +287,6 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     }
 
     @Override
-    public Node deepCopy() {
-        RCallNode copy = (RCallNode) super.deepCopy();
-        // execution (frame) specific due to temp identifiers, so reset
-        copy.internalDispatchCall = null;
-        return copy;
-    }
-
-    @Override
     public Object execute(VirtualFrame frame) {
         return execute(frame, executeFunctionNode(frame));
     }
@@ -302,6 +294,14 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     @TruffleBoundary
     private static String getMessage(Throwable e) {
         return e.getMessage() != null ? e.getMessage() : e.toString();
+    }
+
+    @Override
+    public Node deepCopy() {
+        RCallNode copy = (RCallNode) super.deepCopy();
+        // execution (frame) specific due to temp identifiers, so reset
+        copy.internalDispatchCall = null;
+        return copy;
     }
 
     public Object execute(VirtualFrame frame, Object functionObject) {

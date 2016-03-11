@@ -144,7 +144,7 @@ public abstract class FrameSlotNode extends RBaseNode {
         }
     }
 
-    private static final class PresentFrameSlotNode extends FrameSlotNode {
+    public static final class PresentFrameSlotNode extends FrameSlotNode {
 
         private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
@@ -154,6 +154,10 @@ public abstract class FrameSlotNode extends RBaseNode {
 
         PresentFrameSlotNode(FrameSlot frameSlot) {
             this.frameSlot = frameSlot;
+        }
+
+        public FrameSlot getFrameSlot() {
+            return frameSlot;
         }
 
         @Override

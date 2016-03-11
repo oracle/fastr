@@ -48,7 +48,7 @@ SUPPORT_SCRIPTS := $(addprefix $(GNUR_HOME)/bin/,BATCH COMPILE INSTALL SHLIB Rcm
 # Not all of these work unchanged
 ETC_FILES := $(addprefix $(GNUR_HOME)/etc/,javaconf ldpaths Renviron repositories)
 
-SHARE_FILES := $(addprefix $(GNUR_HOME)/share/,R make java)
+SHARE_FILES := $(addprefix $(GNUR_HOME)/share/,R Rd make java encodings)
 
 all: rundirs rcmds includedir
 

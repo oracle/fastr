@@ -3,8 +3,9 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
- * Copyright (c) 1997-2013,  The R Core Team
+ * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
+ * Copyright (c) 1995-2014, The R Core Team
+ * Copyright (c) 2002-2008, The R Foundation
  * Copyright (c) 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
@@ -24,6 +25,8 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -31,6 +34,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class Rank extends RBuiltinNode {
     @Child Order.OrderVector1Node orderVector1Node;
     @Child Order.CmpNode orderCmpNode;
+
+    private static final Object rho = new Object();
 
     private enum TiesKind {
         AVERAGE,
@@ -45,7 +50,7 @@ public abstract class Rank extends RBuiltinNode {
 
     Order.OrderVector1Node initOrderVector1() {
         if (orderVector1Node == null) {
-            orderVector1Node = insert(OrderVector1NodeGen.create(null, null, null, null));
+            orderVector1Node = insert(OrderVector1NodeGen.create(null, null, null, null, null));
         }
         return orderVector1Node;
     }
@@ -58,11 +63,11 @@ public abstract class Rank extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object rank(RAbstractVector x, int n, RAbstractStringVector tiesMethod) {
+    protected Object rank(RAbstractVector xa, int n, RAbstractStringVector tiesMethod) {
         if (n < 0 || RRuntime.isNA(n)) {
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "length(xx)");
         }
-        if (x instanceof RRawVector) {
+        if (xa instanceof RRawVector) {
             throw RError.error(this, RError.Message.RAW_SORT);
         }
         TiesKind tiesKind;
@@ -94,7 +99,8 @@ public abstract class Rank extends RBuiltinNode {
             indx[i] = i;
         }
         RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
-        initOrderVector1().execute(indxVec, x, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE);
+        RAbstractVector x = xa instanceof RAbstractLogicalVector ? RClosures.createLogicalToIntVector((RAbstractLogicalVector) xa) : xa;
+        initOrderVector1().execute(indxVec, x, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, rho);
         initOrderCmp();
         int j;
         for (int i = 0; i < n; i = j + 1) {

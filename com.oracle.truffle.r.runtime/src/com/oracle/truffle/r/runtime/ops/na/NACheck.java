@@ -322,7 +322,7 @@ public final class NACheck {
         int result = (int) value;
         if (result == Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
             conversionOverflowReached.enter();
-            RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION_INT);
             check(RRuntime.INT_NA); // na encountered
             return RRuntime.INT_NA;
         }

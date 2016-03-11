@@ -167,7 +167,7 @@ public final class RError extends RuntimeException {
         assert node != null;
         // thrown from a builtin specified by "node"
         RErrorHandling.signalError(node, msg, args);
-        return RErrorHandling.errorcallDflt(true, node, msg, args);
+        return RErrorHandling.errorcallDflt(node != NO_CALLER, node, msg, args);
     }
 
     /**
@@ -289,8 +289,10 @@ public final class RError extends RuntimeException {
         ONLY_MATRIX_DIAGONALS("only matrix diagonals can be replaced"),
         REPLACEMENT_DIAGONAL_LENGTH("replacement diagonal has wrong length"),
         NA_INTRODUCED_COERCION("NAs introduced by coercion"),
+        NA_INTRODUCED_COERCION_INT("NAs introduced by coercion to integer range"),
         ARGUMENT_WHICH_NOT_LOGICAL("argument to 'which' is not logical"),
         X_NUMERIC("'x' must be numeric"),
+        X_LIST_ATOMIC("'x' must be list or atomic vector"),
         X_ARRAY_TWO("'x' must be an array of at least two dimensions"),
         ACCURACY_MODULUS("probable complete loss of accuracy in modulus"),
         INVALID_SEPARATOR("invalid separator"),
@@ -431,7 +433,7 @@ public final class RError extends RuntimeException {
         ARGUMENT_MUST_BE_RAW_VECTOR("argument '%s' must be a raw vector"),
         MUST_BE_NONNULL_STRING("'%s' must be non-null character string"),
         IS_OF_WRONG_LENGTH("'%s' is of wrong length %d (!= %d)"),
-        IS_OF_WRONG_ARITY("'%d' argument passed to '%s' which requires '%d'"),
+        IS_OF_WRONG_ARITY("%d argument passed to '%s' which requires %d"),
         OBJECT_NOT_SUBSETTABLE("object of type '%s' is not subsettable"),
         WRONG_ARGS_SUBSET_ENV("wrong arguments for subsetting an environment"),
         DIMS_DONT_MATCH_LENGTH("dims [product %d] do not match the length of object [%d]"),

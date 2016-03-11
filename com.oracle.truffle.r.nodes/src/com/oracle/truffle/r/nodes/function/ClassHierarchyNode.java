@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.unary.UnaryNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributes;
@@ -149,6 +150,11 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     @Specialization(guards = "!isRTypedValue(object)")
     protected RStringVector getClassHrTruffleObject(@SuppressWarnings("unused") TruffleObject object) {
         return truffleObjectClassHeader;
+    }
+
+    @Specialization
+    protected RStringVector getClassHrVarArgs(RArgsValuesAndNames args) {
+        return RDataFactory.createEmptyStringVector();
     }
 
     @Fallback

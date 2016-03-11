@@ -218,6 +218,54 @@ public class EnvFunctions {
         }
     }
 
+    @RBuiltin(name = "topenv", kind = INTERNAL, parameterNames = {"envir", "matchThisEnv"})
+    public abstract static class TopEnv extends Adapter {
+
+        @Child private FrameFunctions.ParentFrame parentFrameNode;
+
+        @Specialization
+        protected REnvironment topEnv(REnvironment env, REnvironment matchThisEnv) {
+            return doTopEnv(matchThisEnv, env);
+        }
+
+        @Specialization
+        protected REnvironment topEnv(REnvironment envir, @SuppressWarnings("unused") RNull matchThisEnv) {
+            return doTopEnv(null, envir);
+        }
+
+        @Fallback
+        protected REnvironment topEnv(VirtualFrame frame, Object envir, Object matchThisEnv) {
+            REnvironment env;
+            REnvironment target;
+            if (!(envir instanceof REnvironment)) {
+                if (parentFrameNode == null) {
+                    parentFrameNode = insert(FrameFunctionsFactory.ParentFrameNodeGen.create(new RNode[1], null, null));
+                }
+                env = (REnvironment) parentFrameNode.execute(frame, 2);
+            } else {
+                env = (REnvironment) envir;
+            }
+            if (!(matchThisEnv instanceof REnvironment)) {
+                target = null;
+            } else {
+                target = (REnvironment) matchThisEnv;
+            }
+            return doTopEnv(target, env);
+        }
+
+        private static REnvironment doTopEnv(REnvironment target, final REnvironment envArg) {
+            REnvironment env = envArg;
+            while (env != REnvironment.emptyEnv()) {
+                if (env == target || env == REnvironment.globalEnv() || env == REnvironment.baseEnv() || env == REnvironment.baseNamespaceEnv() || env.isPackageEnv() != null || env.isNamespaceEnv() ||
+                                env.get(".packageName") != null) {
+                    return env;
+                }
+                env = env.getParent();
+            }
+            return REnvironment.globalEnv();
+        }
+    }
+
     @RBuiltin(name = "parent.env", kind = INTERNAL, parameterNames = {"env"})
     public abstract static class ParentEnv extends Adapter {
 
@@ -490,7 +538,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "env2list", kind = INTERNAL, parameterNames = {"x", "all.names"})
+    @RBuiltin(name = "env2list", kind = INTERNAL, parameterNames = {"x", "all.names", "sorted"})
     public abstract static class EnvToList extends RBuiltinNode {
 
         @Child private CopyNode copy;
@@ -504,12 +552,13 @@ public class EnvFunctions {
         }
 
         @Specialization
-        protected RList envToListAllNames(VirtualFrame frame, REnvironment env, RAbstractLogicalVector allNamesVec) {
+        protected RList envToListAllNames(VirtualFrame frame, REnvironment env, RAbstractLogicalVector allNamesVec, RAbstractLogicalVector sortedVec) {
             // according to the docs it is expected to be slow as it creates a copy of environment
             // objects
             controlVisibility();
             boolean allNames = allNamesVec.getLength() == 0 || allNamesVec.getDataAt(0) == RRuntime.LOGICAL_FALSE ? false : true;
-            RStringVector keys = envls(env, allNames);
+            boolean sorted = sortedVec.getLength() == 0 || sortedVec.getDataAt(0) == RRuntime.LOGICAL_FALSE ? false : true;
+            RStringVector keys = envls(env, allNames, sorted);
             Object[] data = new Object[keys.getLength()];
             for (int i = 0; i < data.length; i++) {
                 // TODO: not all types are handled (e.g. copying environments)
@@ -521,9 +570,8 @@ public class EnvFunctions {
         }
 
         @TruffleBoundary
-        private static RStringVector envls(REnvironment env, boolean allNames) {
-            // Unlike ls(), not sorted
-            return env.ls(allNames, null, false);
+        private static RStringVector envls(REnvironment env, boolean allNames, boolean sorted) {
+            return env.ls(allNames, null, sorted);
         }
 
     }
@@ -581,6 +629,11 @@ public class EnvFunctions {
                 promiseHelper = insert(new PromiseHelperNode());
             }
             return recursiveCopy(frame, promiseHelper.evaluate(frame, promise));
+        }
+
+        @Specialization
+        Object copy(REnvironment env) {
+            return env;
         }
 
         @Fallback

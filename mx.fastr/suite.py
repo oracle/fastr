@@ -41,9 +41,9 @@ suite = {
   # relative to the suite root and not the mx cache
   "libraries" : {
     "GNUR" : {
-        "path" : "libdownloads/R-3.1.3.tar.gz",
-        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.1.3.tar.gz"],
-        "sha1" : "2c9165060b91e45ac73d8cb7507ee9e52816f8b3",
+        "path" : "libdownloads/R-3.2.4.tar.gz",
+        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.2.4.tar.gz"],
+        "sha1" : "632664b3caa8d39f5fe6ac2ee9611b0f89ad6ed9",
         "resource" : "true"
     },
 

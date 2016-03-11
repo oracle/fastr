@@ -570,7 +570,7 @@ public class RDeparse {
                 break;
 
             case LISTSXP: {
-                state.append("list(");
+                state.append("pairlist(");
                 RPairList s = (RPairList) obj;
                 RPairList t = s;
                 while (t != null && t.cdr() != RNull.instance) {
