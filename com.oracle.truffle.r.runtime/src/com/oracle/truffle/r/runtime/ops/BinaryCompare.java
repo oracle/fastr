@@ -253,8 +253,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public boolean op(String left, String right) {
-            // Assume this is already cached by JDK
-            return Collator.getInstance().compare(left, right) < 0;
+            return left.compareTo(right) < 0;
         }
 
         @Override
