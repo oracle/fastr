@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -122,5 +122,7 @@ public class TestBuiltin_any extends TestBase {
         assertEval(Ignored.Unknown, Output.ContainsWarning, "{ any(1) }");
         // FIXME coercion warning missing
         assertEval(Ignored.Unknown, Output.ContainsWarning, "{ any(0) }");
+
+        assertEval("{ d<-data.frame(c(1L,2L), c(10L, 20L)); any(d) }");
     }
 }

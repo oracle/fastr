@@ -386,6 +386,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Matrix.class, MatrixNodeGen::create);
         add(Max.class, MaxNodeGen::create);
         add(Mean.class, MeanNodeGen::create);
+        add(Merge.class, MergeNodeGen::create);
         add(Min.class, MinNodeGen::create);
         add(Missing.class, MissingNodeGen::create);
         add(Mod.class, ModNodeGen::create);
