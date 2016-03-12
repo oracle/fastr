@@ -301,10 +301,6 @@ public class RChannel {
             msg = RSerialize.serialize(msg, false, true, RSerialize.DEFAULT_VERSION, null);
         }
         try {
-            int i = 0;
-            if (msg == null) {
-                i++;
-            }
             (id > 0 ? channel.masterToClient : channel.clientToMaster).put(msg);
         } catch (InterruptedException x) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error sending through the channel");

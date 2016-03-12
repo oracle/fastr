@@ -16,13 +16,12 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.PutAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.PutAttributeNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -30,8 +29,6 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @NodeChildren({@NodeChild(value = "object", type = RNode.class), @NodeChild(value = "name", type = RNode.class), @NodeChild(value = "value", type = RNode.class)})
 public abstract class UpdateSlotNode extends RNode {
-
-    private final BranchProfile noAttributes = BranchProfile.create();
 
     public abstract Object executeUpdate(Object object, String name, Object value);
 
@@ -47,13 +44,9 @@ public abstract class UpdateSlotNode extends RNode {
     @Specialization(guards = {"!isData(name)", "name == cachedName"})
     protected Object updateSlotS4Cached(RAttributable object, String name, Object value, //
                     @Cached("name") String cachedName, //
-                    @Cached("createAttrUpdate(cachedName)") PutAttributeNode attributeUpdate) {
-        RAttributes attributes = object.getAttributes();
-        if (attributes == null) {
-            noAttributes.enter();
-            attributes = object.initAttributes();
-        }
-        attributeUpdate.execute(attributes, prepareValue(value));
+                    @Cached("createAttrUpdate(cachedName)") PutAttributeNode attributeUpdate, //
+                    @Cached("create()") InitAttributesNode initAttributes) {
+        attributeUpdate.execute(initAttributes.execute(object), prepareValue(value));
         return object;
     }
 

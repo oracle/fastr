@@ -221,7 +221,7 @@ public class BasePackage extends RBuiltinPackage {
         add(EnvFunctions.SetParentEnv.class, EnvFunctionsFactory.SetParentEnvNodeGen::create);
         add(EnvFunctions.UnlockBinding.class, EnvFunctionsFactory.UnlockBindingNodeGen::create);
         add(EvalFunctions.Eval.class, EvalFunctionsFactory.EvalNodeGen::create);
-        add(EvalFunctions.WithVisible.class, EvalFunctionsFactory.WithVisibleNodeGen::create);
+        add(WithVisible.class, WithVisibleNodeGen::create);
         add(Exists.class, ExistsNodeGen::create);
         add(Expression.class, ExpressionNodeGen::create);
         add(FastR.class, FastRNodeGen::create);
@@ -380,6 +380,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Matrix.class, MatrixNodeGen::create);
         add(Max.class, MaxNodeGen::create);
         add(Mean.class, MeanNodeGen::create);
+        add(Merge.class, MergeNodeGen::create);
         add(Min.class, MinNodeGen::create);
         add(Missing.class, MissingNodeGen::create);
         add(Mod.class, ModNodeGen::create);
