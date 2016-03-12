@@ -75,7 +75,7 @@ public class TestFunctions extends TestBase {
         assertEval("{ f <- function(...) { args <- list(...) ; args$name } ; f(name = 42) }");
 
         assertEval(Output.ContainsError, "{ matrix(x=1) }");
-        assertEval(Ignored.Unknown, "{ round( rnorm(1,), digits = 5 ) }");
+        assertEval("{ set.seed(4357); round( rnorm(1,), digits = 5 ) }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ max(1,2,) }");
     }
 
