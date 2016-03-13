@@ -59,6 +59,7 @@ com.oracle.truffle.r.native/fficall/src/common/print_fastr.c,gnu_r_gentleman_iha
 com.oracle.truffle.r.native/fficall/src/common/printutils_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/sys_fastr.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/common/util_fastr.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/src/common/X11_fastr.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/common/unimplemented.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/include/Defn.h,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/include/Graphics.h,gnu_r_gentleman_ihaka.copyright
