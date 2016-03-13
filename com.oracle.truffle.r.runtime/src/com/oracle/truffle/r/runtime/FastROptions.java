@@ -55,7 +55,6 @@ public enum FastROptions {
     NewStateTransition("Experimental state transition implementation", true),
     RefCountIncrementOnly("Disable reference count decrements for experimental state transition implementation", false),
     UseInternalGraphics("Whether the internal (Java) graphics subsystem should be used", false),
-    UseOldInstrument("Use old instrumentation framework", false),
 
     // Promises optimizations
     EagerEval("If enabled, overrides all other EagerEval switches (see EagerEvalHelper)", false),

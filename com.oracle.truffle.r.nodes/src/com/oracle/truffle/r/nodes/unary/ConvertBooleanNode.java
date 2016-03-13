@@ -24,17 +24,13 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.instrument.wrappers.*;
-import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.nodes.instrument.NeedsWrapper;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@NeedsWrapper
 @NodeChildren({@NodeChild("operand")})
 public abstract class ConvertBooleanNode extends RNode {
 
@@ -172,8 +168,4 @@ public abstract class ConvertBooleanNode extends RNode {
         return getOperand().asRSyntaxNode();
     }
 
-    @Override
-    public WrapperNode createRWrapperNode() {
-        return new ConvertBooleanNodeWrapper(this);
-    }
 }

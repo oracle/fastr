@@ -24,10 +24,11 @@ package com.oracle.truffle.r.nodes.instrumentation;
 
 import java.util.ArrayList;
 
+import com.oracle.truffle.api.debug.Debugger;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.control.BlockNode;
 import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
-import com.oracle.truffle.r.runtime.FunctionUID;
+import com.oracle.truffle.r.nodes.function.RCallNode;
 
 public class RSyntaxTags {
     /**
@@ -39,21 +40,21 @@ public class RSyntaxTags {
      */
     public static final String START_FUNCTION = "r-start_function";
     /**
+     * All {@link RCallNode}s.
+     */
+    public static final String CALL = "r-call";
+    /**
      * Applied to all loop nodes.
      */
     public static final String LOOP = "r-loop";
 
-    public static final String[] ALL_TAGS = new String[]{STATEMENT, START_FUNCTION, LOOP};
-
-    /**
-     * Temp hack to identify the function.
+    /*
+     * Hopefully Temporary if can agree on lang-call syntax.
      */
-    private static final String UID_PREFIX = "r-uid-";
+    public static final String DEBUG_CALL = Debugger.CALL_TAG;
+    public static final String DEBUG_HALT = Debugger.HALT_TAG;
 
-    public static String createUidTag(FunctionUID uid) {
-        String s = UID_PREFIX + uid.toString();
-        return s.intern();
-    }
+    public static final String[] ALL_TAGS = new String[]{CALL, STATEMENT, START_FUNCTION, LOOP, DEBUG_CALL, DEBUG_HALT};
 
     /**
      * Returns the existing set of tags or {@code null} if none.

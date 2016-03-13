@@ -41,7 +41,7 @@ import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.instrument.debug.DebugHandling;
+import com.oracle.truffle.r.nodes.instrumentation.debug.DebugHandling;
 import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;

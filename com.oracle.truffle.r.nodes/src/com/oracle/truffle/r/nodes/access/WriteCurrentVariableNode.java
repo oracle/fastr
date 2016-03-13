@@ -23,18 +23,15 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.instrument.wrappers.WriteCurrentVariableNodeWrapper;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.instrument.NeedsWrapper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -45,7 +42,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * The "syntax" variant corresponding to {@code x <- y} in the source.
  */
 @NodeInfo(cost = NodeCost.NONE)
-@NeedsWrapper
 public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, RSyntaxCall, VisibilityController {
     @Child WriteLocalFrameVariableNode writeLocalFrameVariableNode;
 
@@ -60,19 +56,16 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
     }
 
     @Override
-    @NeedsWrapper
     public Object getName() {
         return writeLocalFrameVariableNode.getName();
     }
 
     @Override
-    @NeedsWrapper
     public RNode getRhs() {
         return writeLocalFrameVariableNode.getRhs();
     }
 
     @Override
-    @NeedsWrapper
     public Object execute(VirtualFrame frame) {
         Object result = writeLocalFrameVariableNode.execute(frame);
         forceVisibility(false);
@@ -80,7 +73,6 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
     }
 
     @Override
-    @NeedsWrapper
     public void execute(VirtualFrame frame, Object value) {
         writeLocalFrameVariableNode.execute(frame, value);
     }
@@ -109,11 +101,6 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
             rhsSub = getRhs().substitute(env).asRNode();
         }
         return create(RSyntaxNode.EAGER_DEPARSE, name, rhsSub);
-    }
-
-    @Override
-    public WrapperNode createRWrapperNode() {
-        return new WriteCurrentVariableNodeWrapper(this);
     }
 
     public RSyntaxElement getSyntaxLHS() {

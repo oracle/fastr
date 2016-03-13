@@ -148,16 +148,11 @@ public class RInstrumentation {
     }
 
     /**
-     * (Temporarily) tag with the function uid, and also with support for the repl debugger.
-     *
-     * TODO Remove hack to tag with {@code uidTag} once {@link SourceSectionFilter} provides a
-     * builtin way.
+     * (Temporary) support for the repl debugger.
      *
      * @param fdn
      */
     private static void fixupTags(FunctionDefinitionNode fdn) {
-        FunctionUID uid = fdn.getUID();
-        String uidTag = RSyntaxTags.createUidTag(uid);
         RSyntaxNode.accept(fdn, 0, new RSyntaxNodeVisitor() {
 
             public boolean visit(RSyntaxNode node, int depth) {
@@ -165,24 +160,33 @@ public class RInstrumentation {
                 assert ss != null;
                 String[] tags = RSyntaxTags.getTags(ss);
                 if (tags != null) {
-                    if (RSyntaxTags.containsTag(tags, RSyntaxTags.STATEMENT)) {
-                        String[] updatedTags = new String[tags.length + 1];
-                        System.arraycopy(tags, 0, updatedTags, 0, tags.length);
-                        updatedTags[tags.length] = "debug-HALT";
-                        node.setSourceSection(ss.withTags(updatedTags));
-                        tags = updatedTags;
-                    }
-                    // tag with function uid (will go away)
-                    String[] updatedTags = new String[tags.length + 1];
-                    System.arraycopy(tags, 0, updatedTags, 0, tags.length);
-                    updatedTags[tags.length] = uidTag;
-                    node.setSourceSection(ss.withTags(updatedTags));
+                    finesseDebuggerTags(node, tags);
                 }
                 return true;
             }
 
         }, false);
 
+    }
+
+    private static void finesseDebuggerTags(RSyntaxNode node, String[] tags) {
+        boolean isStatement = RSyntaxTags.containsTag(tags, RSyntaxTags.STATEMENT);
+        // TODO this causes Truffle debugger to fail on next command
+        boolean isCall = RSyntaxTags.containsTag(tags, RSyntaxTags.CALL);
+        // boolean isCall = false;
+        if (!(isStatement || isCall)) {
+            return;
+        }
+        String[] updatedTags = new String[tags.length + (isStatement && isCall ? 2 : 1)];
+        System.arraycopy(tags, 0, updatedTags, 0, tags.length);
+        int ix = tags.length;
+        if (isStatement) {
+            updatedTags[ix++] = RSyntaxTags.DEBUG_HALT;
+        }
+        if (isCall) {
+            updatedTags[ix++] = RSyntaxTags.DEBUG_CALL;
+        }
+        node.setSourceSection(node.getSourceSection().withTags(updatedTags));
     }
 
     public static FunctionIdentification getFunctionIdentification(FunctionUID uid) {
@@ -217,8 +221,7 @@ public class RInstrumentation {
         SourceSection fdns = fdn.getSourceSection();
         builder.indexIn(fdns.getCharIndex(), fdns.getCharLength());
         builder.sourceIs(fdns.getSource());
-        // TODO remove when UID tag redundant
-        builder.tagIs(RSyntaxTags.createUidTag(fdn.getUID()));
+        builder.rootSourceSectionEquals(fdns);
         return builder;
 
     }

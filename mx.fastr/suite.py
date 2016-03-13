@@ -26,13 +26,22 @@ suite = {
   "imports" : {
     "suites" : [
             {
+               "name" : "truffle",
+               "version" : "946de8ed59266b2c5cf7ab101c62a5d8c22853d7",
+               "urls" : [
+                    {"url" : "https://github.com/graalvm/truffle.git", "kind" : "git"},
+                    {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
+                ]
+            },
+            {
                "name" : "graal-core",
                "version" : "a0e54263b5001f68e25e329f9ebc9f3444a880c7",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal-core", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
                 ]
-            }
+            },
+
         ],
    },
 
@@ -219,6 +228,7 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.parser",
+        "truffle:TRUFFLE_DEBUG",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",

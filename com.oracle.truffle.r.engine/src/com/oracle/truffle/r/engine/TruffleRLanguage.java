@@ -35,11 +35,11 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
-import com.oracle.truffle.r.nodes.instrument.OldInstrumentFactory;
 import com.oracle.truffle.r.nodes.instrumentation.NewInstrumentFactory;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVersionInfo;
@@ -47,10 +47,8 @@ import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RInstrumentFactory;
 import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
@@ -94,18 +92,6 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         return false;
     }
 
-    /**
-     * Depending on the value of {@link FastROptions#UseOldInstrument} we pick the factory that
-     * allows most of the system to be independent of the choice.
-     */
-    public static RInstrumentFactory initializeInstrument(Env env) {
-        if (FastROptions.UseOldInstrument.getBooleanValue()) {
-            return new OldInstrumentFactory(env);
-        } else {
-            return new NewInstrumentFactory(env);
-        }
-    }
-
     @Override
     protected RContext createContext(Env env) {
         // Currently using env.instrumenter as "initialized" flag
@@ -115,7 +101,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             initialize();
             initialized = true;
         }
-        RContext result = RContext.create(env, initializeInstrument(env), initialContext);
+        RContext result = RContext.create(env, new NewInstrumentFactory(env), initialContext);
         return result;
     }
 
@@ -174,14 +160,12 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected boolean isInstrumentable(Node node) {
-        RNode rNode = (RNode) node;
-        return rNode.isRInstrumentable();
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Override
     protected WrapperNode createWrapperNode(Node node) {
-        RNode rNode = (RNode) node;
-        return rNode.createRWrapperNode();
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Override

@@ -23,13 +23,9 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.nodes.instrument.NeedsWrapper;
 
-@NeedsWrapper
 public class ReadArgumentNode extends RNode {
 
     private final int index;
@@ -54,8 +50,4 @@ public class ReadArgumentNode extends RNode {
         return index;
     }
 
-    @Override
-    public WrapperNode createRWrapperNode() {
-        return new ReadArgumentNodeWrapper(this);
-    }
 }
