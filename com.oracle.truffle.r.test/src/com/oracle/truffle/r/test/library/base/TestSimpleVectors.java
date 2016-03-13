@@ -355,7 +355,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-list(42,2,3); x[[c(2, 1, 3)]] }");
         assertEval("{ x<-c(a=1, b=2); x[1] }");
         assertEval("{ x<-c(a=1, b=2); x[[1]] }");
-        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[[-3, 1, 1]] }");
+        // GnuR says "attempt to select less than one element", FastR says "... more ..."
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); x[[-3, 1, 1]] }");
 
         assertEval("{ x<-list(1); x[\"y\"] }");
         assertEval("{ x<-list(1); x[[\"y\"]] }");
@@ -632,7 +633,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-list(data=list(matrix(1:4, ncol=2))); x$data[[1]][2,2]<-42; x }");
 
         assertEval(Output.ContainsAmbiguousError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-NULL }");
-        assertEval(Output.ContainsError, "{ x<-1:4; x[[1]]<-NULL; x }");
+        assertEval(Ignored.Unstable, Output.ContainsError, "{ x<-1:4; x[[1]]<-NULL; x }");
 
         assertEval("{ f<-function(x,y) sys.call(); x<-f(7, 42); x[c(1,2)] }");
         assertEval("{ f<-function(x,y) sys.call(); x<-f(7, 42); typeof(x[c(1,2)]) }");
@@ -1489,7 +1490,7 @@ public class TestSimpleVectors extends TestBase {
 
         // weird problems with fluctuating error messages in GNU R
         assertEval("{ f <- function(b,v) { b[[2]] <- v ; b } ; f(c(\"a\",\"b\"),\"d\") ; f(c(\"a\",\"b\"),NULL) }");
-        assertEval("{ x <- 4:10 ; x[[\"z\"]] <- NULL ; x }");
+        assertEval(Ignored.Unstable, Output.ContainsError, "{ x <- 4:10 ; x[[\"z\"]] <- NULL ; x }");
     }
 
     @Test

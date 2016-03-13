@@ -366,6 +366,14 @@ public class TestOutputManager {
         return testMap;
     }
 
+    public SortedMap<String, SortedMap<String, TestInfo>> getTestMaps() {
+        return testMaps;
+    }
+
+    public Map<String, String> getRuntimeMap() {
+        return runtimeTestMap;
+    }
+
     /**
      * Join {@code arrays} removing duplicates.
      */
