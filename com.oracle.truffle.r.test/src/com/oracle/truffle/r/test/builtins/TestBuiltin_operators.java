@@ -1555,8 +1555,8 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators308() {
-        assertEval(Ignored.WrongCaller, "argv <- list(list());`|`(argv[[1]]);"); // GnuR formats as
-// !argv[[1]] not as a call
+        // GnuR formats !argv[[1]] not as a call
+        assertEval(Ignored.WrongCaller, "argv <- list(list());`|`(argv[[1]]);");
     }
 
     @Test
