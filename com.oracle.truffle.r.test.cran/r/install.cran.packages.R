@@ -330,8 +330,10 @@ install.pkgs <- function(pkgnames, blacklist, dependents.install=F) {
 		} else {
 			if (!dependents.install && install.dependents) {
 				dependents <- install.order(avail.pkgs, avail.pkgs[pkgname, ])
-				cat("installing dependents of:", pkgname, "\n")
-				dependent.install.ok = install.pkgs(dependents, dependents.install=T, blacklist)
+				if (length(dependents) > 0) {
+				    cat("installing dependents of:", pkgname, "\n")
+				    dependent.install.ok = install.pkgs(dependents, dependents.install=T, blacklist)
+			    }
 			}
 			if (dry.run) {
 				cat("would install:", pkgname, "\n")
