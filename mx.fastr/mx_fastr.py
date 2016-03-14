@@ -399,7 +399,7 @@ def junit_default(args):
     return mx.command_function('junit')(['--tests', _all_unit_tests()] + args)
 
 def junit_gate(args):
-    return mx.command_function('junit')(['--tests', _gate_unit_tests()] + args)
+    return mx.command_function('junit')(['--tests', _gate_noapps_unit_tests()] + args)
 
 def _test_package():
     return 'com.oracle.truffle.r.test'
