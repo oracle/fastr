@@ -261,12 +261,12 @@ def _fastr_gate_runner(args, tasks):
 
     with mx_gate.Task('UnitTests: +EST', tasks) as t:
         if t:
-            if junit(['--J', '@-DR:+NewStateTransition', '--tests', _gate_unit_tests()]) != 0:
+            if junit(['--J', '@-DR:+NewStateTransition', '--tests', _gate_noapps_unit_tests()]) != 0:
                 t.abort('unit tests failed')
 
     with mx_gate.Task('UnitTests: -EST', tasks) as t:
         if t:
-            if junit(['--J', '@-DR:-NewStateTransition', '--tests', _gate_unit_tests()]) != 0:
+            if junit(['--J', '@-DR:-NewStateTransition', '--tests', _gate_noapps_unit_tests()]) != 0:
                 t.abort('unit tests failed')
 
 mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
@@ -399,7 +399,7 @@ def junit_default(args):
     return mx.command_function('junit')(['--tests', _all_unit_tests()] + args)
 
 def junit_gate(args):
-    return mx.command_function('junit')(['--tests', _gate_noapps_unit_tests()] + args)
+    return mx.command_function('junit')(['--tests', _gate_unit_tests()] + args)
 
 def _test_package():
     return 'com.oracle.truffle.r.test'
