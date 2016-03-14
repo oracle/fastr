@@ -256,7 +256,7 @@ def _fastr_gate_runner(args, tasks):
     # check that the expected test output file is up to date
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks) as t:
         if t:
-            if junit(['--tests', _all_unit_tests(), '--check-expected-output']) != 0:
+            if junit(['--tests', _gate_noapps_unit_tests(), '--check-expected-output']) != 0:
                 t.abort('unit tests expected output check failed')
 
     with mx_gate.Task('UnitTests: +EST', tasks) as t:
