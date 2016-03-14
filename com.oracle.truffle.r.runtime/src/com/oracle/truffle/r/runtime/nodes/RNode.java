@@ -211,18 +211,12 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
         reportWork(this, amount);
     }
 
-    @SuppressWarnings("unused")
     public static void reportWork(Node base, long amount) {
         if (CompilerDirectives.inInterpreter()) {
             if (amount >= WORK_SCALE_FACTOR) {
                 int scaledAmount = (int) (amount / WORK_SCALE_FACTOR);
                 if (amount > 0) {
-                    RootNode root = base.getRootNode();
-                    /*
-                     * TODO Is there a replacement for this now deprecated interface?? if (root !=
-                     * null && root.getCallTarget() instanceof LoopCountReceiver) {
-                     * ((LoopCountReceiver) root.getCallTarget()).reportLoopCount(scaledAmount); }
-                     */
+                    LoopNode.reportLoopCount(base, scaledAmount);
                 }
             }
         }

@@ -20,6 +20,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -184,11 +185,7 @@ public class HiddenInternalFunctions {
         @TruffleBoundary
         public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
             if (CompilerDirectives.inInterpreter()) {
-                // TODO why is rootNode sometimes null
-                RootNode rootNode = getRootNode();
-                if (rootNode != null) {
-                    rootNode.reportLoopCount(-5);
-                }
+                LoopNode.reportLoopCount(this, -5);
             }
             String dbPath = datafile.getDataAt(0);
             String packageName = new File(dbPath).getName();
@@ -347,16 +344,16 @@ public class HiddenInternalFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toInteger(2).toInteger(3);
+            casts.toInteger(3);
         }
 
         @Specialization
-        protected RIntVector lazyLoadDBinsertValue(VirtualFrame frame, Object value, RAbstractStringVector file, int asciiL, int compression, RFunction hook) {
+        protected RIntVector lazyLoadDBinsertValue(VirtualFrame frame, Object value, RAbstractStringVector file, byte asciiL, int compression, RFunction hook) {
             return lazyLoadDBinsertValueInternal(frame.materialize(), value, file, asciiL, compression, hook);
         }
 
         @TruffleBoundary
-        private RIntVector lazyLoadDBinsertValueInternal(MaterializedFrame frame, Object value, RAbstractStringVector file, int type, int compression, RFunction hook) {
+        private RIntVector lazyLoadDBinsertValueInternal(MaterializedFrame frame, Object value, RAbstractStringVector file, byte asciiL, int compression, RFunction hook) {
             if (!(compression == 1 || compression == 3)) {
                 throw RError.error(this, Message.GENERIC, "unsupported compression");
             }
@@ -369,27 +366,27 @@ public class HiddenInternalFunctions {
             };
 
             try {
-                byte[] data = RSerialize.serialize(value, type, RSerialize.DEFAULT_VERSION, callHook);
+                byte[] data = RSerialize.serialize(value, RRuntime.fromLogical(asciiL), false, RSerialize.DEFAULT_VERSION, callHook);
                 // See comment in LazyLoadDBFetch for format
                 int outLen;
                 int offset;
-                RCompression.Type ctype;
+                RCompression.Type type;
                 byte[] cdata;
                 if (compression == 1) {
-                    ctype = RCompression.Type.GZIP;
+                    type = RCompression.Type.GZIP;
                     offset = 4;
                     outLen = (int) (1.001 * data.length) + 20;
                     cdata = new byte[outLen];
-                    boolean rc = RCompression.compress(ctype, data, cdata);
+                    boolean rc = RCompression.compress(type, data, cdata);
                     if (!rc) {
                         throw RError.error(this, Message.GENERIC, "zlib compress error");
                     }
                 } else if (compression == 3) {
-                    ctype = RCompression.Type.LZMA;
+                    type = RCompression.Type.LZMA;
                     offset = 5;
                     outLen = data.length;
                     cdata = new byte[outLen];
-                    boolean rc = RCompression.compress(ctype, data, cdata);
+                    boolean rc = RCompression.compress(type, data, cdata);
                     if (!rc) {
                         throw RError.error(this, Message.GENERIC, "lzma compress error");
                     }
@@ -398,7 +395,7 @@ public class HiddenInternalFunctions {
                 }
                 int[] intData = new int[2];
                 intData[1] = outLen + offset; // include length + type (compression == 3)
-                intData[0] = appendFile(file.getDataAt(0), cdata, data.length, ctype);
+                intData[0] = appendFile(file.getDataAt(0), cdata, data.length, type);
                 return RDataFactory.createIntVector(intData, RDataFactory.COMPLETE_VECTOR);
             } catch (Throwable ex) {
                 // Exceptions have been observed that were masked and very hard to find
