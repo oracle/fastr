@@ -489,7 +489,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             RSyntaxNode argument = arguments[i];
             String name = signature.getName(i);
             if (name != null) {
-                state.append(name);
+                state.append(RDeparse.quotify(name, state));
                 state.append(" = ");
             }
             if (argument != null) {
