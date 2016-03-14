@@ -220,7 +220,7 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RList doFileInfo(RAbstractStringVector vec, @SuppressWarnings("unused") byte extraCols) {
+        protected RList doFileInfo(RAbstractStringVector vec, @SuppressWarnings("unused") Boolean extraCols) {
             /*
              * Create a list, the elements of which are vectors of length vec.getLength() containing
              * the information. The R closure that called the .Internal turns the result into a
