@@ -215,12 +215,12 @@ public class FileFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toLogical(1);
+            casts.firstBoolean(1, "extra_cols");
         }
 
         @Specialization
         @TruffleBoundary
-        protected RList doFileInfo(RAbstractStringVector vec, byte extraCols) {
+        protected RList doFileInfo(RAbstractStringVector vec, @SuppressWarnings("unused") byte extraCols) {
             /*
              * Create a list, the elements of which are vectors of length vec.getLength() containing
              * the information. The R closure that called the .Internal turns the result into a
@@ -234,9 +234,6 @@ public class FileFunctions {
              * TODO implement extras_cols=FALSE
              */
             controlVisibility();
-            if (RRuntime.isNA(extraCols)) {
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "extra_cols");
-            }
             int vecLength = vec.getLength();
             Object[] data = new Object[NAMES.length];
             boolean[] complete = new boolean[NAMES.length];
