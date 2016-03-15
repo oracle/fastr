@@ -46,7 +46,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     private OrderVector1Node initOrderVector1() {
         if (orderVector1Node == null) {
-            orderVector1Node = insert(OrderVector1NodeGen.create(null, null, null, null, null));
+            orderVector1Node = insert(OrderVector1NodeGen.create());
         }
         return orderVector1Node;
     }
@@ -75,7 +75,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     private int cmp(Object v, int i, int j, boolean naLast) {
         if (cmpNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            cmpNode = insert(CmpNodeGen.create(null, null, null, null));
+            cmpNode = insert(CmpNodeGen.create());
         }
         return cmpNode.executeInt(v, i, j, naLast);
     }
@@ -264,8 +264,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
      * Also used by {@link Rank}, where the "rho" parameter is not null. TODO handle S4 objects
      * (which involves rho)
      */
-    @NodeChildren({@NodeChild("indx"), @NodeChild("dv"), @NodeChild("naLast"), @NodeChild("decreasing"), @NodeChild("rho")})
-    abstract static class OrderVector1Node extends RNode {
+    abstract static class OrderVector1Node extends RBaseNode {
         private final ConditionProfile decProfile = ConditionProfile.createBinaryProfile();
 
         public abstract Object execute(Object v, Object dv, boolean naLast, boolean dec, Object rho);
@@ -637,8 +636,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     /**
      * Also used by {@link Rank}. *
      */
-    @NodeChildren({@NodeChild("v"), @NodeChild("i"), @NodeChild("j"), @NodeChild("naLast")})
-    abstract static class CmpNode extends RNode {
+    abstract static class CmpNode extends RBaseNode {
 
         public abstract int executeInt(Object v, int i, int j, boolean naLast);
 

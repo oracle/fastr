@@ -50,14 +50,14 @@ public abstract class Rank extends RBuiltinNode {
 
     Order.OrderVector1Node initOrderVector1() {
         if (orderVector1Node == null) {
-            orderVector1Node = insert(OrderVector1NodeGen.create(null, null, null, null, null));
+            orderVector1Node = insert(OrderVector1NodeGen.create());
         }
         return orderVector1Node;
     }
 
     Order.CmpNode initOrderCmp() {
         if (orderCmpNode == null) {
-            orderCmpNode = insert(CmpNodeGen.create(null, null, null, null));
+            orderCmpNode = insert(CmpNodeGen.create());
         }
         return orderCmpNode;
     }
