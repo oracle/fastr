@@ -164,7 +164,7 @@ public class OptionsFunctions {
         }
 
         @Fallback
-        Object getOption(@SuppressWarnings("unused") Object x) {
+        protected Object getOption(@SuppressWarnings("unused") Object x) {
             throw RError.error(this, RError.Message.MUST_BE_STRING);
         }
     }

@@ -100,12 +100,12 @@ public abstract class Rank extends RBuiltinNode {
         }
         RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
         RAbstractVector x = xa instanceof RAbstractLogicalVector ? RClosures.createLogicalToIntVector((RAbstractLogicalVector) xa) : xa;
-        initOrderVector1().execute(indxVec, x, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, rho);
+        initOrderVector1().execute(indxVec, x, true, false, rho);
         initOrderCmp();
         int j;
         for (int i = 0; i < n; i = j + 1) {
             j = i;
-            while ((j < n - 1) && orderCmpNode.executeInt(x, indx[j], indx[j + 1], RRuntime.LOGICAL_FALSE) == 0) {
+            while ((j < n - 1) && orderCmpNode.executeInt(x, indx[j], indx[j + 1], false) == 0) {
                 j++;
             }
             switch (tiesKind) {
