@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -42,7 +43,7 @@ public class RFactorToIntVectorClosure extends RToIntVectorClosure implements RA
     }
 
     @Override
-    public final RAbstractVector castSafe(RType type) {
+    public final RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         switch (type) {
             case Integer:
                 return this;

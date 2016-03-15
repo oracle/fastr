@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ public interface RAbstractComplexVector extends RAbstractVector {
     }
 
     default void setNA(Object store, int index) {
-        setDataAt(store, index, RComplex.NA);
+        setDataAt(store, index, RComplex.createNA());
     }
 
     default boolean checkCompleteness() {
@@ -65,5 +65,4 @@ public interface RAbstractComplexVector extends RAbstractVector {
     default Class<?> getElementClass() {
         return RComplex.class;
     }
-
 }

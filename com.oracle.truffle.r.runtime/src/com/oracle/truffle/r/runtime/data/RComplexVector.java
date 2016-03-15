@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -61,7 +62,8 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return data.length >> 1;
     }
 
-    public RAbstractVector castSafe(RType type) {
+    @Override
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         switch (type) {
             case Complex:
                 return this;

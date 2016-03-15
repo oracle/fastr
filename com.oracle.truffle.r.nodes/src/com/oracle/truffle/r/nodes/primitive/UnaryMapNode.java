@@ -40,6 +40,7 @@ public final class UnaryMapNode extends RBaseNode {
     // profiles
     private final Class<? extends RAbstractVector> operandClass;
     private final VectorLengthProfile operandLengthProfile = VectorLengthProfile.create();
+    private final ConditionProfile operandIsNAProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile hasAttributesProfile;
     private final RAttributeProfiles attrProfiles;
     private final ConditionProfile shareOperand;
@@ -90,7 +91,7 @@ public final class UnaryMapNode extends RBaseNode {
         assert isSupported(originalOperand);
         RAbstractVector operand = operandClass.cast(originalOperand);
 
-        RAbstractVector operandCast = operand.castSafe(getArgumentType());
+        RAbstractVector operandCast = operand.castSafe(getArgumentType(), operandIsNAProfile);
 
         scalarNode.enable(operandCast);
         if (scalarType) {

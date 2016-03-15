@@ -123,14 +123,14 @@ public abstract class Round extends RBuiltinNode {
     protected RComplex round(RComplex x, @SuppressWarnings("unused") int digits) {
         controlVisibility();
         check.enable(x);
-        return check.check(x) ? RComplex.NA : roundOp.op(x.getRealPart(), x.getImaginaryPart());
+        return check.check(x) ? RComplex.createNA() : roundOp.op(x.getRealPart(), x.getImaginaryPart());
     }
 
     @Specialization(guards = "digits != 0")
     protected RComplex roundDigits(RComplex x, int digits) {
         controlVisibility();
         check.enable(x);
-        return check.check(x) ? RComplex.NA : roundOp.opd(x.getRealPart(), x.getImaginaryPart(), digits);
+        return check.check(x) ? RComplex.createNA() : roundOp.opd(x.getRealPart(), x.getImaginaryPart(), digits);
     }
 
     @Specialization(guards = "digits == 0")
@@ -140,7 +140,7 @@ public abstract class Round extends RBuiltinNode {
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
             RComplex z = x.getDataAt(i);
-            RComplex r = check.check(z) ? RComplex.NA : round(z, digits);
+            RComplex r = check.check(z) ? RComplex.createNA() : round(z, digits);
             result[2 * i] = r.getRealPart();
             result[2 * i + 1] = r.getImaginaryPart();
             check.check(r);
@@ -157,7 +157,7 @@ public abstract class Round extends RBuiltinNode {
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
             RComplex z = x.getDataAt(i);
-            RComplex r = check.check(z) ? RComplex.NA : roundDigits(z, digits);
+            RComplex r = check.check(z) ? RComplex.createNA() : roundDigits(z, digits);
             result[2 * i] = r.getRealPart();
             result[2 * i + 1] = r.getImaginaryPart();
             check.check(r);

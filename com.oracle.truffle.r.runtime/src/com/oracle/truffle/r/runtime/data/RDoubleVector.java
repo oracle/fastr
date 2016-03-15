@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -45,7 +46,8 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         this(data, complete, dims, null);
     }
 
-    public RAbstractVector castSafe(RType type) {
+    @Override
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         switch (type) {
             case Double:
             case Numeric:

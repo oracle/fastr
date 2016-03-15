@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,8 +52,8 @@ public class BinaryVectorTest extends TestBase {
     @DataPoint public static final RAbstractVector FOUR_COMPLEX = createComplexVector(new double[]{1, 1, 2, 2, 3, 3, 4, 4}, true);
 
     @DataPoint public static final RAbstractVector NOT_COMPLETE_LOGICAL = createLogicalVector(new byte[]{1, 0, RRuntime.LOGICAL_NA, 1}, false);
-    @DataPoint public static final RAbstractVector NOT_COMPLETE_INT = createIntVector(new int[]{1, 2, RInteger.NA.getValue(), 4}, false);
-    @DataPoint public static final RAbstractVector NOT_COMPLETE_DOUBLE = createDoubleVector(new double[]{1, 2, RDouble.NA.getValue(), 4}, false);
+    @DataPoint public static final RAbstractVector NOT_COMPLETE_INT = createIntVector(new int[]{1, 2, RRuntime.INT_NA, 4}, false);
+    @DataPoint public static final RAbstractVector NOT_COMPLETE_DOUBLE = createDoubleVector(new double[]{1, 2, RRuntime.DOUBLE_NA, 4}, false);
     @DataPoint public static final RAbstractVector NOT_COMPLETE_COMPLEX = createComplexVector(new double[]{1.0d, 0.0d, RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, false);
 
     @DataPoint public static final RAbstractVector ONE = createIntVector(new int[]{1}, true);

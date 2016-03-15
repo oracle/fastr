@@ -78,6 +78,7 @@ public class ParserGeneration {
         "maintain proper operator source sections",
         "remove special handling for formulas",
         "remove source section identifiers",
-        "transform parser to a generic class via the annotation processor"
+        "transform parser to a generic class via the annotation processor",
+        "use RComplex.createNA()"
     };
 }

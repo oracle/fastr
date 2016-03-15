@@ -368,7 +368,7 @@ simple_expr returns [T v]
     | t=NAINT                                   { $v = builder.constant(src($t), RRuntime.INT_NA); }
     | t=NAREAL                                  { $v = builder.constant(src($t), RRuntime.DOUBLE_NA); }
     | t=NACHAR                                  { $v = builder.constant(src($t), RRuntime.STRING_NA); }
-    | t=NACOMPL                                 { $v = builder.constant(src($t), RComplex.NA); }
+    | t=NACOMPL                                 { $v = builder.constant(src($t), RComplex.createNA()); }
     | num=number                                { $v = $num.v; }
     | cstr=conststring                          { $v = $cstr.v; }
     | pkg=id op=(NS_GET|NS_GET_INT) n_ comp=id {

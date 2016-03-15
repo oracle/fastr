@@ -55,6 +55,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final RAttributeProfiles vectorNamesProfile = RAttributeProfiles.create();
     private final RAttributeProfiles positionNamesProfile = RAttributeProfiles.create();
     private final ConditionProfile rightIsShared = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile valueIsNA = ConditionProfile.createBinaryProfile();
     private final BranchProfile rightIsNonTemp = BranchProfile.create();
     private final BranchProfile rightIsTemp = BranchProfile.create();
     private final BranchProfile resizeProfile = BranchProfile.create();
@@ -214,7 +215,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 value = copyValueOnAssignment(value);
             }
         } else if (value instanceof RAbstractVector) {
-            value = ((RAbstractVector) value).castSafe(castType);
+            value = ((RAbstractVector) value).castSafe(castType, valueIsNA);
         }
 
         vector = share(vector);

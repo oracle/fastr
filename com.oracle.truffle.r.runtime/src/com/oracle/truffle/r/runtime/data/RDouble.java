@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -31,24 +32,26 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @ValueType
 public final class RDouble extends RScalarVector implements RAbstractDoubleVector {
 
-    public static final RDouble NA = new RDouble(RRuntime.DOUBLE_NA);
-    public static final RDouble DEFAULT = new RDouble(0.0);
-
     private final double value;
 
     private RDouble(double value) {
         this.value = value;
     }
 
-    public double getValue() {
-        return value;
+    public static RDouble createNA() {
+        return new RDouble(RRuntime.DOUBLE_NA);
     }
 
     public static RDouble valueOf(double value) {
         return new RDouble(value);
     }
 
-    public RAbstractVector castSafe(RType type) {
+    public double getValue() {
+        return value;
+    }
+
+    @Override
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         switch (type) {
             case Integer:
                 return this;
@@ -56,11 +59,7 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
             case Double:
                 return this;
             case Complex:
-                if (Double.isNaN(value)) {
-                    return RComplex.NA;
-                } else {
-                    return RComplex.valueOf(value, 0.0);
-                }
+                return isNAProfile.profile(Double.isNaN(value)) ? RComplex.createNA() : RComplex.valueOf(value, 0.0);
             case Character:
                 return RClosures.createDoubleToStringVector(this);
             case List:
