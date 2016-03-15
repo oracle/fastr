@@ -17,6 +17,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.text.Collator;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -489,7 +490,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         private void sort(int[] indx, RAbstractStringVector dv, int lo, int hi, boolean dec) {
-            Collator collator = Collator.getInstance();
+            Collator collator = createCollator();
             int t = 0;
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
@@ -500,7 +501,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                     while (j >= lo + h) {
                         int a = indx[j - h];
                         int b = itmp;
-                        int c = collator.compare(dv.getDataAt(a), dv.getDataAt(b));
+                        int c = compare(collator, dv.getDataAt(a), dv.getDataAt(b));
                         if (decProfile.profile(dec)) {
                             if (!(c < 0 || (c == 0 && a > b))) {
                                 break;
@@ -516,6 +517,16 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                     indx[j] = itmp;
                 }
             }
+        }
+
+        @TruffleBoundary
+        private static int compare(Collator collator, String dataAt, String dataAt2) {
+            return collator.compare(dataAt, dataAt2);
+        }
+
+        @TruffleBoundary
+        private static Collator createCollator() {
+            return Collator.getInstance();
         }
 
         private static boolean lt(RComplex a, RComplex b) {
