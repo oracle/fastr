@@ -96,6 +96,7 @@ iconv_build: $(ICONV)/lib/libcharset.so
 $(ICONV)/lib/libcharset.so:
 	(cd $(ICONV); $(MAKE) MAKE=$(MAKE) && $(MAKE) MAKE=$(MAKE) install > iconv_make.log 2>&1)
 else
+    GNUR_CONFIG_FLAGS := CFLAGS=-DLIBICONV_PLUG CPPFLAGS=-DLIBICONV_PLUG CXXFLAGS=-DLIBICONV_PLUG
 iconv:
 endif
 # end SunOS
