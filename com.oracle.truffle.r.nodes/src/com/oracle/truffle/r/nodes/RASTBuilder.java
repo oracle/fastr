@@ -62,6 +62,7 @@ import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -419,7 +420,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     @Override
     public RSyntaxNode constant(SourceSection source, Object value) {
         assert value instanceof Byte || value instanceof Integer || value instanceof Double || value instanceof RComplex || value instanceof String || value instanceof RNull ||
-                        value instanceof REmpty || value instanceof RAbstractVector : value.getClass();
+                        value instanceof REmpty || value instanceof RSymbol || value instanceof RAbstractVector : value.getClass();
         if (value instanceof String && !RRuntime.isNA((String) value)) {
             return ConstantNode.create(source, ((String) value).intern());
         } else {
