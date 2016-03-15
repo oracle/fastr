@@ -22,32 +22,68 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.ops.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 
 @RBuiltin(name = "Mod", kind = PRIMITIVE, parameterNames = {"z"})
 public abstract class Mod extends RBuiltinNode {
 
-    @Child private BinaryMapArithmeticFunctionNode pow = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.POW.create());
-    @Child private BinaryMapArithmeticFunctionNode add = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.ADD.create());
-    @Child private Sqrt sqrt = SqrtNodeGen.create(new RNode[1], null, null);
+    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+    @Child private UnaryArithmeticNode modNode = UnaryArithmeticNodeGen.create(ModArithmetic::new, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
 
     @Specialization
-    protected RDoubleVector mod(RAbstractComplexVector vec) {
-        controlVisibility();
-        double[] data = new double[vec.getLength()];
-        for (int i = 0; i < vec.getLength(); i++) {
-            RComplex x = vec.getDataAt(i);
-            data[i] = sqrt.sqrt(add.applyDouble(pow.applyDouble(x.getRealPart(), 2), pow.applyDouble(x.getImaginaryPart(), 2)));
-        }
-        return RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
+    protected Object mod(Object value) {
+        return modNode.execute(boxPrimitive.execute(value));
     }
+
+    public static class ModArithmetic extends UnaryArithmetic {
+
+        @Override
+        public RType calculateResultType(RType argumentType) {
+            switch (argumentType) {
+                case Complex:
+                    return RType.Double;
+                default:
+                    return super.calculateResultType(argumentType);
+            }
+        }
+
+        @Override
+        public int op(byte op) {
+            return op;
+        }
+
+        @Override
+        public int op(int op) {
+            return op;
+        }
+
+        @Override
+        public double op(double op) {
+            return op;
+        }
+
+        @Override
+        public RComplex op(double re, double im) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public double opd(double re, double im) {
+            return RComplex.abs(re, im);
+        }
+
+    }
+
 }

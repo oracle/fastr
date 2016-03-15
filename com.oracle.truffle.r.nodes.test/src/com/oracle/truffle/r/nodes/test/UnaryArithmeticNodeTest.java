@@ -35,6 +35,9 @@ import org.junit.*;
 import org.junit.experimental.theories.*;
 import org.junit.runner.*;
 
+import com.oracle.truffle.r.nodes.builtin.base.Ceiling;
+import com.oracle.truffle.r.nodes.builtin.base.Floor;
+import com.oracle.truffle.r.nodes.builtin.base.Round;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -49,6 +52,8 @@ import com.oracle.truffle.r.runtime.ops.*;
  */
 @RunWith(Theories.class)
 public class UnaryArithmeticNodeTest extends BinaryVectorTest {
+
+    public static final UnaryArithmeticFactory[] ALL = new UnaryArithmeticFactory[]{NEGATE, Round.ROUND, Floor.FLOOR, Ceiling.CEILING, PLUS};
 
     @DataPoints public static final UnaryArithmeticFactory[] UNARY = ALL;
 
@@ -147,8 +152,8 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
     public void testSequenceFolding() {
         assertFold(true, createIntSequence(1, 3, 10), NEGATE);
         assertFold(true, createDoubleSequence(1, 3, 10), NEGATE);
-        assertFold(false, createIntSequence(1, 3, 10), ROUND, FLOOR, CEILING);
-        assertFold(false, createDoubleSequence(1, 3, 10), ROUND, FLOOR, CEILING);
+        assertFold(false, createIntSequence(1, 3, 10), Round.ROUND, Floor.FLOOR, Ceiling.CEILING);
+        assertFold(false, createDoubleSequence(1, 3, 10), Round.ROUND, Floor.FLOOR, Ceiling.CEILING);
     }
 
     @Theory

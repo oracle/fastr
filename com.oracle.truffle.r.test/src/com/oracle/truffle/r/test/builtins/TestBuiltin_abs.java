@@ -60,7 +60,7 @@ public class TestBuiltin_abs extends TestBase {
 
     @Test
     public void testabs9() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(56.8666666666667, 52.8833333333333), .Dim = 2L, .Dimnames = structure(list(K = c('0', '1')), .Names = 'K')));abs(argv[[1]]);");
+        assertEval("argv <- list(structure(c(56.8666666666667, 52.8833333333333), .Dim = 2L, .Dimnames = structure(list(K = c('0', '1')), .Names = 'K')));abs(argv[[1]]);");
     }
 
     @Test
@@ -75,8 +75,7 @@ public class TestBuiltin_abs extends TestBase {
 
     @Test
     public void testabs12() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(1.47191076131574, 0.586694550701453, NA, 0.258706725324317, 0.948371836939988, 0.396080061109718, NA, 0.350912037541581), .Dim = c(4L, 2L), .Dimnames = list(c('(Intercept)', 'x1', 'x2', 'x3'), c('Estimate', 'Std. Error'))));abs(argv[[1]]);");
+        assertEval("argv <- list(structure(c(1.47191076131574, 0.586694550701453, NA, 0.258706725324317, 0.948371836939988, 0.396080061109718, NA, 0.350912037541581), .Dim = c(4L, 2L), .Dimnames = list(c('(Intercept)', 'x1', 'x2', 'x3'), c('Estimate', 'Std. Error'))));abs(argv[[1]]);");
     }
 
     @Test
@@ -91,7 +90,7 @@ public class TestBuiltin_abs extends TestBase {
 
     @Test
     public void testabs15() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(NA, NA), .Dim = 1:2, .Dimnames = list('x', c('Estimate', 'Std. Error'))));abs(argv[[1]]);");
+        assertEval("argv <- list(structure(c(NA, NA), .Dim = 1:2, .Dimnames = list('x', c('Estimate', 'Std. Error'))));abs(argv[[1]]);");
     }
 
     @Test
@@ -152,5 +151,7 @@ public class TestBuiltin_abs extends TestBase {
         assertEval(Ignored.Unknown, "{ abs(c(0/0,1i)) }");
         assertEval("{ abs(1:3) }");
         assertEval("{ abs(-1:-3) }");
+
+        assertEval("{ is.integer(abs(FALSE) }");
     }
 }

@@ -24,7 +24,7 @@ public class TestBuiltin_log2 extends TestBase {
 
     @Test
     public void testlog22() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE);log2(argv[[1]]);");
+        assertEval("argv <- list(FALSE);log2(argv[[1]]);");
     }
 
     @Test
@@ -46,5 +46,7 @@ public class TestBuiltin_log2 extends TestBase {
         assertEval("{ log2(2) } ");
         assertEval("{ log2(4) } ");
         assertEval("{ as.integer(log2(6)*1000000) } ");
+
+        assertEval("{ log10(c(1+1i, -1-1i)) }");
     }
 }

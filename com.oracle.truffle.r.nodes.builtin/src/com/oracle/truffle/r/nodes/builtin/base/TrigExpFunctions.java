@@ -31,15 +31,19 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNodeGen;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -47,6 +51,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class TrigExpFunctions {
@@ -137,62 +142,90 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "exp", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Exp extends AdapterCall1 {
+    public abstract static class Exp extends RBuiltinNode {
 
         @Child private BinaryArithmetic calculatePowNode;
-
-        public RComplex complexOp(RComplex rComplex) {
-            if (calculatePowNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                calculatePowNode = insert(BinaryArithmetic.POW.create());
-            }
-            return calculatePowNode.op(Math.E, 0, rComplex.getRealPart(), rComplex.getImaginaryPart());
-        }
-
-        @Override
-        protected double op(double x) {
-            return Math.exp(x);
-        }
+        @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+        @Child private UnaryArithmeticNode expNode = UnaryArithmeticNodeGen.create(ExpArithmetic::new, RType.Double,
+                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
 
         @Specialization
-        protected RComplex exp(RComplex power) {
-            controlVisibility();
-            return complexOp(power);
+        protected Object exp(Object value) {
+            return expNode.execute(boxPrimitive.execute(value));
         }
 
-        @Specialization
-        protected RComplexVector exp(RComplexVector powersVector, //
-                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
-            controlVisibility();
-            int length = powersVector.getLength();
-            double[] result = new double[length * 2];
-            reportWork(length);
-            profile.profileCounted(length);
-            for (int i = 0; profile.inject(i < length); i++) {
-                RComplex rComplexResult = complexOp(powersVector.getDataAt(i));
-                result[2 * i] = rComplexResult.getRealPart();
-                result[2 * i + 1] = rComplexResult.getImaginaryPart();
+        public class ExpArithmetic extends UnaryArithmetic {
+
+            @Override
+            public int op(byte op) {
+                throw new UnsupportedOperationException();
             }
-            return RDataFactory.createComplexVector(result, true);
+
+            @Override
+            public int op(int op) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public double op(double op) {
+                return Math.exp(op);
+            }
+
+            @Override
+            public RComplex op(double re, double im) {
+                if (calculatePowNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    calculatePowNode = insert(BinaryArithmetic.POW.create());
+                }
+                return calculatePowNode.op(Math.E, 0, re, im);
+            }
+
         }
 
     }
 
     @RBuiltin(name = "expm1", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class ExpM1 extends Exp {
+    public abstract static class ExpM1 extends RBuiltinNode {
 
         @Child private BinaryArithmetic calculatePowNode;
+        @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+        @Child private UnaryArithmeticNode expm1Node = UnaryArithmeticNodeGen.create(ExpM1Arithmetic::new, RType.Double,
+                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
 
-        @Override
-        public RComplex complexOp(RComplex rComplex) {
-            RComplex intermediate = super.complexOp(rComplex);
-            return RDataFactory.createComplex(intermediate.getRealPart() - 1d, intermediate.getImaginaryPart());
+        @Specialization
+        protected Object exp(Object value) {
+            return expm1Node.execute(boxPrimitive.execute(value));
         }
 
-        @Override
-        protected double op(double x) {
-            return Math.expm1(x);
+        public class ExpM1Arithmetic extends UnaryArithmetic {
+
+            @Override
+            public int op(byte op) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int op(int op) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public double op(double op) {
+                return Math.expm1(op);
+            }
+
+            @Override
+            public RComplex op(double re, double im) {
+                if (calculatePowNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    calculatePowNode = insert(BinaryArithmetic.POW.create());
+                }
+                RComplex x = calculatePowNode.op(Math.E, 0, re, im);
+                return RDataFactory.createComplex(x.getRealPart() - 1d, x.getImaginaryPart());
+            }
+
         }
+
     }
 
     @RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})

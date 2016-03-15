@@ -22,47 +22,71 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.ReNodeGen.ReInternalNodeGen;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 @RBuiltin(name = "Re", kind = PRIMITIVE, parameterNames = {"z"})
 public abstract class Re extends RBuiltinNode {
 
-    @Child private ReInternalNode re = ReInternalNodeGen.create();
+    public static final UnaryArithmeticFactory RE = ReArithmetic::new;
+
+    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+    @Child private UnaryArithmeticNode reNode = UnaryArithmeticNodeGen.create(RE, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
 
     @Specialization
     protected Object re(Object value) {
-        return re.execute(value);
+        return reNode.execute(boxPrimitive.execute(value));
     }
 
-    public abstract static class ReInternalNode extends UnaryNode {
+    public static class ReArithmetic extends UnaryArithmetic {
 
-        public abstract RDoubleVector executeRDoubleVector(Object value);
-
-        private NACheck check = NACheck.create();
-
-        @Specialization
-        protected RDoubleVector re(RAbstractComplexVector vector) {
-            double[] result = new double[vector.getLength()];
-            check.enable(vector);
-            for (int i = 0; i < vector.getLength(); i++) {
-                result[i] = vector.getDataAt(i).getRealPart();
-                check.check(result[i]);
+        @Override
+        public RType calculateResultType(RType argumentType) {
+            switch (argumentType) {
+                case Complex:
+                    return RType.Double;
+                default:
+                    return super.calculateResultType(argumentType);
             }
-            return RDataFactory.createDoubleVector(result, check.neverSeenNA());
         }
 
-        @Specialization
-        protected RDoubleVector re(RAbstractDoubleVector vector) {
-            return (RDoubleVector) vector.copy();
+        @Override
+        public int op(byte op) {
+            return op;
         }
+
+        @Override
+        public int op(int op) {
+            return op;
+        }
+
+        @Override
+        public double op(double op) {
+            return op;
+        }
+
+        @Override
+        public RComplex op(double re, double im) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public double opd(double re, double im) {
+            return re;
+        }
+
     }
+
 }

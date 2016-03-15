@@ -34,11 +34,22 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "floor", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Floor extends RBuiltinNode {
 
+    public static final UnaryArithmeticFactory FLOOR = FloorArithmetic::new;
+
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode floor = UnaryArithmeticNodeGen.create(UnaryArithmetic.FLOOR, RError.Message.NON_NUMERIC_MATH, RType.Double);
+    @Child private UnaryArithmeticNode floor = UnaryArithmeticNodeGen.create(FLOOR, RError.Message.NON_NUMERIC_MATH, RType.Double);
 
     @Specialization
     protected Object floor(Object value) {
         return floor.execute(boxPrimitive.execute(value));
     }
+
+    public static class FloorArithmetic extends Round.RoundArithmetic {
+
+        @Override
+        public double op(double op) {
+            return Math.floor(op);
+        }
+    }
+
 }

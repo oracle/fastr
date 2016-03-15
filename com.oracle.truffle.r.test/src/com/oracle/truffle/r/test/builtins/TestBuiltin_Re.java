@@ -24,8 +24,7 @@ public class TestBuiltin_Re extends TestBase {
 
     @Test
     public void testRe2() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(3+2i, 3+2i, NA, 3+2i, 3+2i, 3+2i, 3+2i, 3+2i, 4-5i, 3-5i, NA, NA, 2-5i, 3-5i, 4-5i, 5-5i), .Dim = c(8L, 2L), .Dimnames = list(NULL, c('x1', 'x2'))));Re(argv[[1]]);");
+        assertEval("argv <- list(structure(c(3+2i, 3+2i, NA, 3+2i, 3+2i, 3+2i, 3+2i, 3+2i, 4-5i, 3-5i, NA, NA, 2-5i, 3-5i, 4-5i, 5-5i), .Dim = c(8L, 2L), .Dimnames = list(NULL, c('x1', 'x2'))));Re(argv[[1]]);");
     }
 
     @Test
@@ -40,12 +39,12 @@ public class TestBuiltin_Re extends TestBase {
 
     @Test
     public void testRe5() {
-        assertEval(Ignored.Unknown, "argv <- list(logical(0));Re(argv[[1]]);");
+        assertEval("argv <- list(logical(0));Re(argv[[1]]);");
     }
 
     @Test
     public void testRe6() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE);Re(argv[[1]]);");
+        assertEval("argv <- list(FALSE);Re(argv[[1]]);");
     }
 
     @Test
@@ -65,5 +64,7 @@ public class TestBuiltin_Re extends TestBase {
 
         assertEval(Ignored.Unknown, "{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Re(x) }");
         assertEval(Ignored.Unknown, "{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Re(x) }");
+
+        assertEval("{ Re(as.raw(12)) }");
     }
 }

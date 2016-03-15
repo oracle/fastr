@@ -32,11 +32,26 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "trunc", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
 public abstract class Trunc extends RBuiltinNode {
 
+    public static final UnaryArithmeticFactory TRUNC = TruncArithmetic::new;
+
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode trunc = UnaryArithmeticNodeGen.create(UnaryArithmetic.TRUNC, RError.Message.NON_NUMERIC_MATH, RType.Double);
+    @Child private UnaryArithmeticNode trunc = UnaryArithmeticNodeGen.create(TRUNC, RError.Message.NON_NUMERIC_MATH, RType.Double);
 
     @Specialization
     protected Object trunc(Object value) {
         return trunc.execute(boxPrimitive.execute(value));
     }
+
+    public static class TruncArithmetic extends Round.RoundArithmetic {
+
+        @Override
+        public double op(double op) {
+            if (op > 0) {
+                return Math.floor(op);
+            } else {
+                return Math.ceil(op);
+            }
+        }
+    }
+
 }

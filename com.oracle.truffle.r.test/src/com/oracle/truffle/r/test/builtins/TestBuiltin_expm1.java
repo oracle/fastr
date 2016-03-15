@@ -34,7 +34,7 @@ public class TestBuiltin_expm1 extends TestBase {
 
     @Test
     public void testexpm14() {
-        assertEval(Ignored.Unknown, "argv <- list(logical(0));expm1(argv[[1]]);");
+        assertEval("argv <- list(logical(0));expm1(argv[[1]]);");
     }
 
     @Test

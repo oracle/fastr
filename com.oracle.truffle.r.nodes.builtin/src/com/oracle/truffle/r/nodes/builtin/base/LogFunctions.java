@@ -22,12 +22,26 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 
 public class LogFunctions {
     @RBuiltin(name = "log", kind = PRIMITIVE, parameterNames = {"x", "base"})
@@ -96,128 +110,132 @@ public class LogFunctions {
         protected static double logb(double x, double base) {
             return Math.log(x) / Math.log(base);
         }
+
     }
 
     @RBuiltin(name = "log10", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class Log10 extends RBuiltinNode {
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+        @Child private UnaryArithmeticNode log10Node = UnaryArithmeticNodeGen.create(Log10Arithmetic::new,
+                        RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected RNull log(RNull x) {
-            controlVisibility();
-            throw RError.error(this, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+        protected Object log10(Object value) {
+            return log10Node.execute(boxPrimitive.execute(value));
         }
 
-        @Specialization
-        protected double log(int value) {
-            controlVisibility();
-            return Math.log10(value);
-        }
+        public static class Log10Arithmetic extends UnaryArithmetic {
 
-        @Specialization
-        protected double log(double value) {
-            controlVisibility();
-            return Math.log10(value);
-        }
+            private static final double LOG_10 = Math.log(10);
 
-        @Specialization
-        protected RDoubleVector log(RIntVector vector) {
-            controlVisibility();
-            double[] resultVector = new double[vector.getLength()];
-            for (int i = 0; i < vector.getLength(); i++) {
-                int inputValue = vector.getDataAt(i);
-                double result = RRuntime.DOUBLE_NA;
-                if (RRuntime.isComplete(inputValue)) {
-                    result = Math.log10(inputValue);
-                }
-                resultVector[i] = result;
+            @Override
+            public int op(byte op) {
+                throw new UnsupportedOperationException();
             }
-            RDoubleVector res = RDataFactory.createDoubleVector(resultVector, vector.isComplete(), vector.getNames(attrProfiles));
-            res.copyRegAttributesFrom(vector);
-            return res;
-        }
 
-        @Specialization
-        protected RDoubleVector log(RDoubleVector vector) {
-            controlVisibility();
-            double[] doubleVector = new double[vector.getLength()];
-            for (int i = 0; i < vector.getLength(); i++) {
-                double value = vector.getDataAt(i);
-                if (RRuntime.isComplete(value)) {
-                    value = Math.log10(value);
-                }
-                doubleVector[i] = value;
+            @Override
+            public int op(int op) {
+                throw new UnsupportedOperationException();
             }
-            RDoubleVector res = RDataFactory.createDoubleVector(doubleVector, vector.isComplete(), vector.getNames(attrProfiles));
-            res.copyRegAttributesFrom(vector);
-            return res;
+
+            @Override
+            public double op(double op) {
+                return Math.log10(op);
+            }
+
+            @Override
+            public RComplex op(double re, double im) {
+                double arg = Math.atan2(im, re);
+                double mod = RComplex.abs(re, im);
+                return RComplex.valueOf(Math.log10(mod), arg / LOG_10);
+            }
+
         }
     }
 
     @RBuiltin(name = "log2", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class Log2 extends RBuiltinNode {
 
-        private static final double log2value = Math.log(2);
+        @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+        @Child private UnaryArithmeticNode log2Node = UnaryArithmeticNodeGen.create(Log2Arithmetic::new,
+                        RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected RNull log(RNull x) {
-            controlVisibility();
-            throw RError.error(this, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+        protected Object log2(Object value) {
+            return log2Node.execute(boxPrimitive.execute(value));
         }
 
-        @Specialization
-        protected double log2(int value) {
-            controlVisibility();
-            return log2((double) value);
-        }
+        public static class Log2Arithmetic extends UnaryArithmetic {
 
-        @Specialization
-        protected double log2(double value) {
-            controlVisibility();
-            return Math.log(value) / log2value;
-        }
+            private static final double LOG_2 = Math.log(2);
 
-        @Specialization
-        protected RDoubleVector log2(RIntVector vector) {
-            controlVisibility();
-            double[] resultVector = new double[vector.getLength()];
-            for (int i = 0; i < vector.getLength(); i++) {
-                int inputValue = vector.getDataAt(i);
-                double result = RRuntime.DOUBLE_NA;
-                if (RRuntime.isComplete(inputValue)) {
-                    result = log2(inputValue);
-                }
-                resultVector[i] = result;
+            @Override
+            public int op(byte op) {
+                throw new UnsupportedOperationException();
             }
-            return RDataFactory.createDoubleVector(resultVector, vector.isComplete());
+
+            @Override
+            public int op(int op) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public double op(double op) {
+                return Math.log(op) / LOG_2;
+            }
+
+            @Override
+            public RComplex op(double re, double im) {
+                double arg = Math.atan2(im, re);
+                double mod = RComplex.abs(re, im);
+                return RComplex.valueOf(Math.log(mod) / LOG_2, arg / LOG_2);
+            }
+
         }
 
-        @Specialization
-        protected RDoubleVector log2(RDoubleVector vector) {
-            controlVisibility();
-            double[] doubleVector = new double[vector.getLength()];
-            for (int i = 0; i < vector.getLength(); i++) {
-                double value = vector.getDataAt(i);
-                if (RRuntime.isComplete(value)) {
-                    value = log2(value);
-                }
-                doubleVector[i] = value;
-            }
-            return RDataFactory.createDoubleVector(doubleVector, vector.isComplete());
-        }
     }
 
     @RBuiltin(name = "log1p", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class Log1p extends RBuiltinNode {
 
-        @SuppressWarnings("unused")
+        @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+        @Child private UnaryArithmeticNode log1pNode = UnaryArithmeticNodeGen.create(Log1pArithmetic::new,
+                        RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
+
         @Specialization
-        protected Object log1p(Object x) {
-            throw RError.nyi(this, "log1p");
+        protected Object log1p(Object value) {
+            return log1pNode.execute(boxPrimitive.execute(value));
         }
+
+        public static class Log1pArithmetic extends UnaryArithmetic {
+
+            @Override
+            public int op(byte op) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int op(int op) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public double op(double op) {
+                return Math.log(1 + op);
+            }
+
+            @Override
+            public RComplex op(double r, double i) {
+                double re = r + 1;
+                double im = i;
+                double arg = Math.atan2(im, re);
+                double mod = RComplex.abs(re, im);
+                return RComplex.valueOf(Math.log(mod), arg);
+            }
+
+        }
+
     }
 
 }

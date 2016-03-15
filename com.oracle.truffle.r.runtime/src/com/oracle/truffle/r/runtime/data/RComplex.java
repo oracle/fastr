@@ -123,16 +123,21 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
     }
 
     public double abs() {
-        if (!RRuntime.isFinite(realPart) || !RRuntime.isFinite(imaginaryPart)) {
-            if (Double.isInfinite(realPart) || Double.isInfinite(imaginaryPart)) {
+        return abs(realPart, imaginaryPart);
+    }
+
+    public static double abs(double re, double im) {
+        if (!RRuntime.isFinite(re) || !RRuntime.isFinite(im)) {
+            if (Double.isInfinite(re) || Double.isInfinite(im)) {
                 return Double.POSITIVE_INFINITY;
-            } else if (Double.isNaN(imaginaryPart)) {
-                return imaginaryPart;
+            } else if (Double.isNaN(im)) {
+                return im;
             } else {
-                return realPart;
+                return re;
             }
         } else {
-            return Math.sqrt(realPart * realPart + imaginaryPart * imaginaryPart);
+            return Math.sqrt(re * re + im * im);
         }
     }
+
 }

@@ -31,15 +31,11 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.base.Im.ImInternalNode;
-import com.oracle.truffle.r.nodes.builtin.base.ImNodeGen.ImInternalNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrettyPrinterSingleListElementNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrettyPrinterSingleVectorElementNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintDimNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintVector2DimNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintVectorMultiDimNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.Re.ReInternalNode;
-import com.oracle.truffle.r.nodes.builtin.base.ReNodeGen.ReInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -76,8 +72,8 @@ public abstract class PrettyPrinterNode extends RNode {
     @Child private PrettyPrinterSingleVectorElementNode singleVectorElementPrettyPrinter;
     @Child private PrintVectorMultiDimNode multiDimPrinter;
 
-    @Child private ReInternalNode re;
-    @Child private ImInternalNode im;
+    @Child private UnaryArithmeticNode re;
+    @Child private UnaryArithmeticNode im;
 
     @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 
@@ -901,12 +897,12 @@ public abstract class PrettyPrinterNode extends RNode {
         if (re == null) {
             // the two are allocated side by side; checking for re is sufficient
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            re = insert(ReInternalNodeGen.create());
-            im = insert(ImInternalNodeGen.create());
+            re = insert(UnaryArithmeticNodeGen.create(Re.RE, RError.Message.NON_NUMERIC_MATH, RType.Double));
+            im = insert(UnaryArithmeticNodeGen.create(Im.IM, RError.Message.NON_NUMERIC_MATH, RType.Double));
         }
 
-        RDoubleVector realParts = re.executeRDoubleVector(operand);
-        RDoubleVector imaginaryParts = im.executeRDoubleVector(operand);
+        RAbstractDoubleVector realParts = (RAbstractDoubleVector) re.execute(operand);
+        RAbstractDoubleVector imaginaryParts = (RAbstractDoubleVector) im.execute(operand);
 
         int length = operand.getLength();
         String[] realValues = new String[length];

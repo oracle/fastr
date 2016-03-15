@@ -35,12 +35,21 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     protected final UnaryArithmeticFactory unary;
     private final Message error;
+    private final Object errorArgs;
     protected final RType minPrecedence;
+
+    public UnaryArithmeticNode(UnaryArithmeticFactory factory, RType minPrecedence, Message error, Object... errorArgs) {
+        this.unary = factory;
+        this.error = error;
+        this.errorArgs = errorArgs;
+        this.minPrecedence = minPrecedence;
+    }
 
     public UnaryArithmeticNode(UnaryArithmeticFactory factory, Message error, RType minPrecedence) {
         this.unary = factory;
         this.error = error;
         this.minPrecedence = minPrecedence;
+        this.errorArgs = null;
     }
 
     public UnaryArithmeticNode(UnaryArithmeticFactory factory, Message error) {
@@ -65,7 +74,8 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
             RType operandType = castOperand.getRType();
             if (operandType.isNumeric()) {
                 RType type = RType.maxPrecedence(operandType, minPrecedence);
-                return UnaryMapNode.create(new ScalarUnaryArithmeticNode(arithmetic), castOperand, type, type);
+                RType resultType = arithmetic.calculateResultType(type);
+                return UnaryMapNode.create(new ScalarUnaryArithmeticNode(arithmetic), castOperand, type, resultType);
             }
         }
         return null;
@@ -86,7 +96,11 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     @Fallback
     protected Object invalidArgType(@SuppressWarnings("unused") Object operand) {
-        throw RError.error(this, error);
+        if (errorArgs == null) {
+            throw RError.error(this, error);
+        } else {
+            throw RError.error(this, error, (Object[]) errorArgs);
+        }
     }
 
     protected static final class GenericNumericVectorNode extends TruffleBoundaryNode {

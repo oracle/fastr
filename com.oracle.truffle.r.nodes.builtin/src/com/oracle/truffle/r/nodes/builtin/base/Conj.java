@@ -22,22 +22,34 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 
 @RBuiltin(name = "Conj", kind = PRIMITIVE, parameterNames = {"z"})
 public abstract class Conj extends RBuiltinNode {
 
-    private NACheck naCheck = NACheck.create();
+    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+    @Child private UnaryArithmeticNode conjNode = UnaryArithmeticNodeGen.create(ConjArithmetic::new,
+                    RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
+
+    @Specialization
+    protected Object conj(Object value) {
+        return conjNode.execute(boxPrimitive.execute(value));
+    }
 
     @Child private CastDoubleNode castDouble;
 
@@ -49,36 +61,28 @@ public abstract class Conj extends RBuiltinNode {
         return castDouble.executeDouble(value);
     }
 
-    @Specialization
-    protected RComplexVector conj(RAbstractComplexVector vector) {
-        RComplexVector result = (RComplexVector) vector.copy();
-        naCheck.enable(vector);
-        for (int i = 0; i < vector.getLength(); i++) {
-            RComplex el = vector.getDataAt(i);
-            if (!naCheck.check(el)) {
-                result.updateDataAt(i, RDataFactory.createComplex(el.getRealPart(), -el.getImaginaryPart()), naCheck);
-            }
+    public static class ConjArithmetic extends UnaryArithmetic {
+
+        @Override
+        public int op(byte op) {
+            return op;
         }
-        return result;
+
+        @Override
+        public int op(int op) {
+            return op;
+        }
+
+        @Override
+        public double op(double op) {
+            return op;
+        }
+
+        @Override
+        public RComplex op(double re, double im) {
+            return RComplex.valueOf(re, -im);
+        }
+
     }
 
-    @Specialization
-    protected RDoubleVector conj(RAbstractDoubleVector vector) {
-        return (RDoubleVector) vector.copy();
-    }
-
-    @Specialization
-    protected Object conj(RAbstractIntVector vector) {
-        return castDouble(vector);
-    }
-
-    @Specialization
-    protected Object conj(RAbstractLogicalVector vector) {
-        return castDouble(vector);
-    }
-
-    @Fallback
-    protected Object conj(@SuppressWarnings("unused") Object o) {
-        throw RError.error(this, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
-    }
 }

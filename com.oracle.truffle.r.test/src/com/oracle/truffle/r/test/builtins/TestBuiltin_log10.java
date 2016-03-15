@@ -49,8 +49,7 @@ public class TestBuiltin_log10 extends TestBase {
 
     @Test
     public void testlog107() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(numeric(0), .Dim = c(20L, 0L), .Dimnames = list(c('ant', 'bee', 'cat', 'cpl', 'chi', 'cow', 'duc', 'eag', 'ele', 'fly', 'fro', 'her', 'lio', 'liz', 'lob', 'man', 'rab', 'sal', 'spi', 'wha'), NULL)));log10(argv[[1]]);");
+        assertEval("argv <- list(structure(numeric(0), .Dim = c(20L, 0L), .Dimnames = list(c('ant', 'bee', 'cat', 'cpl', 'chi', 'cow', 'duc', 'eag', 'ele', 'fly', 'fro', 'her', 'lio', 'liz', 'lob', 'man', 'rab', 'sal', 'spi', 'wha'), NULL)));log10(argv[[1]]);");
     }
 
     @Test
@@ -63,7 +62,9 @@ public class TestBuiltin_log10 extends TestBase {
         assertEval("{ log10(100) } ");
         assertEval("{ as.integer(log10(200)*100000) } ");
 
-        assertEval(Ignored.Unknown, "{ m <- matrix(1:4, nrow=2) ; round( log10(m), digits=5 )  }");
+        assertEval("{ m <- matrix(1:4, nrow=2) ; round( log10(m), digits=5 )  }");
         assertEval(Ignored.Unknown, "{ x <- c(a=1, b=10) ; round( c(log(x), log10(x), log2(x)), digits=5 ) }");
+
+        assertEval("{ log10(c(1+1i, -1-1i)) }");
     }
 }

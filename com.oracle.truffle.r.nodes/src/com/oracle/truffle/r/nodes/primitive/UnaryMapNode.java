@@ -111,7 +111,14 @@ public final class UnaryMapNode extends RBaseNode {
             case Double:
                 return scalarNode.applyDouble(((RAbstractDoubleVector) operand).getDataAt(0));
             case Complex:
-                return scalarNode.applyComplex(((RAbstractComplexVector) operand).getDataAt(0));
+                switch (getResultType()) {
+                    case Double:
+                        return scalarNode.applyDouble(((RAbstractComplexVector) operand).getDataAt(0));
+                    case Complex:
+                        return scalarNode.applyComplex(((RAbstractComplexVector) operand).getDataAt(0));
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
             default:
                 throw RInternalError.shouldNotReachHere();
         }
@@ -188,6 +195,12 @@ public final class UnaryMapNode extends RBaseNode {
             result[resultIndex << 1] = value.getRealPart();
             result[(resultIndex << 1) + 1] = value.getImaginaryPart();
         };
+
+        private static final MapIndexedAction<double[], RAbstractComplexVector> DOUBLE_COMPLEX = //
+        (arithmetic, result, resultIndex, left, leftIndex) -> {
+            result[resultIndex] = arithmetic.applyDouble(left.getDataAt(leftIndex));
+        };
+
         private static final MapIndexedAction<String[], RAbstractStringVector> CHARACTER = //
         (arithmetic, result, resultIndex, left, leftIndex) -> {
             result[resultIndex] = arithmetic.applyCharacter(left.getDataAt(leftIndex));
@@ -232,7 +245,14 @@ public final class UnaryMapNode extends RBaseNode {
                 case Double:
                     return DOUBLE;
                 case Complex:
-                    return COMPLEX;
+                    switch (resultType) {
+                        case Double:
+                            return DOUBLE_COMPLEX;
+                        case Complex:
+                            return COMPLEX;
+                        default:
+                            throw RInternalError.shouldNotReachHere();
+                    }
                 case Character:
                     return CHARACTER;
                 default:

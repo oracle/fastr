@@ -34,11 +34,22 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "ceiling", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Ceiling extends RBuiltinNode {
 
+    public static final UnaryArithmeticFactory CEILING = CeilingArithmetic::new;
+
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode ceiling = UnaryArithmeticNodeGen.create(UnaryArithmetic.CEILING, RError.Message.NON_NUMERIC_MATH, RType.Double);
+    @Child private UnaryArithmeticNode ceiling = UnaryArithmeticNodeGen.create(CEILING, RError.Message.NON_NUMERIC_MATH, RType.Double);
 
     @Specialization
     protected Object ceiling(Object value) {
         return ceiling.execute(boxPrimitive.execute(value));
     }
+
+    public static class CeilingArithmetic extends Round.RoundArithmetic {
+
+        @Override
+        public double op(double op) {
+            return Math.ceil(op);
+        }
+    }
+
 }

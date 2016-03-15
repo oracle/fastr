@@ -49,7 +49,7 @@ public class TestBuiltin_exp extends TestBase {
 
     @Test
     public void testexp8() {
-        assertEval(Ignored.Unknown, "argv <- list(logical(0));exp(argv[[1]]);");
+        assertEval("argv <- list(logical(0));exp(argv[[1]]);");
     }
 
     @Test

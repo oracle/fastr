@@ -16,6 +16,8 @@ import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
 
 import java.io.IOException;
 
+import com.oracle.truffle.r.nodes.builtin.base.Round;
+import com.oracle.truffle.r.nodes.builtin.base.Round.RoundArithmetic;
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.ScientificDouble;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -357,7 +359,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         return new ComplexVectorMetrics(wr, dr, er, wi, di, ei);
     }
 
-    private static UnaryArithmetic round = UnaryArithmetic.ROUND.create();
+    private static RoundArithmetic round = new Round.RoundArithmetic();
 
     private static RComplex zprecr(RComplex x, int digits) {
         return round.opd(x.getRealPart(), x.getImaginaryPart(), digits);

@@ -63,6 +63,10 @@ public abstract class UnaryMapFunctionNode extends RBaseNode {
         throw RInternalError.shouldNotReachHere();
     }
 
+    public double applyDouble(RComplex operand) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
     public String applyCharacter(String operand) {
         throw RInternalError.shouldNotReachHere();
     }
