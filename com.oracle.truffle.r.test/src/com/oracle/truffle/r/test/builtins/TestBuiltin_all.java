@@ -117,7 +117,7 @@ public class TestBuiltin_all extends TestBase {
         assertEval("{ all(TRUE, FALSE, NA,  na.rm=TRUE) }");
         assertEval("{ all(TRUE, TRUE, NA,  na.rm=FALSE) }");
 
-        assertEval(Ignored.Unknown, "{ all(TRUE, TRUE, NA,  na.rm=TRUE) }");
+        assertEval("{ all(TRUE, TRUE, NA,  na.rm=TRUE) }");
         // FIXME coercion warning missing
         assertEval(Ignored.Unknown, "{ all(1) }");
         assertEval(Ignored.Unknown, "{ all(0) }");

@@ -31,10 +31,19 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
+/**
+ * TODO: Added primitive {@code na.rm} support, but this code needs rewriting in the same manner as
+ * {@link Any} and there is opportunity to share code.
+ */
 @RBuiltin(name = "all", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
 public abstract class All extends RBuiltinNode {
 
     @Child private CastLogicalNode castLogicalNode;
+
+    @Override
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
+    }
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -42,31 +51,31 @@ public abstract class All extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte all(byte value) {
+    protected byte all(byte value, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    protected byte all(RLogicalVector vector) {
+    protected byte all(RLogicalVector vector, byte naRm) {
         controlVisibility();
-        return accumulate(vector);
+        return accumulate(vector, naRm);
     }
 
     @Specialization
-    protected byte all(@SuppressWarnings("unused") RNull vector) {
-        controlVisibility();
-        return RRuntime.LOGICAL_TRUE;
-    }
-
-    @Specialization
-    protected byte all(@SuppressWarnings("unused") RMissing vector) {
+    protected byte all(@SuppressWarnings("unused") RNull vector, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
-    protected byte all(RArgsValuesAndNames args) {
+    protected byte all(@SuppressWarnings("unused") RMissing vector, @SuppressWarnings("unused") byte naRm) {
+        controlVisibility();
+        return RRuntime.LOGICAL_TRUE;
+    }
+
+    @Specialization
+    protected byte all(RArgsValuesAndNames args, byte naRm) {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogicalNode = insert(CastLogicalNodeGen.create(true, false, false));
@@ -76,11 +85,14 @@ public abstract class All extends RBuiltinNode {
         for (Object argValue : argValues) {
             byte result;
             if (argValue instanceof RVector || argValue instanceof RSequence) {
-                result = accumulate((RLogicalVector) castLogicalNode.execute(argValue));
+                result = accumulate((RLogicalVector) castLogicalNode.execute(argValue), naRm);
             } else if (argValue == RNull.instance) {
                 result = RRuntime.LOGICAL_TRUE;
             } else {
                 result = (byte) castLogicalNode.execute(argValue);
+                if (result == RRuntime.LOGICAL_NA && naRm != RRuntime.LOGICAL_FALSE) {
+                    continue;
+                }
             }
             if (result != RRuntime.LOGICAL_TRUE) {
                 return result;
@@ -89,9 +101,12 @@ public abstract class All extends RBuiltinNode {
         return RRuntime.LOGICAL_TRUE;
     }
 
-    private static byte accumulate(RLogicalVector vector) {
+    private static byte accumulate(RLogicalVector vector, byte naRm) {
         for (int i = 0; i < vector.getLength(); i++) {
             byte b = vector.getDataAt(i);
+            if (b == RRuntime.LOGICAL_NA && naRm != RRuntime.LOGICAL_FALSE) {
+                continue;
+            }
             if (b != RRuntime.LOGICAL_TRUE) {
                 return b;
             }

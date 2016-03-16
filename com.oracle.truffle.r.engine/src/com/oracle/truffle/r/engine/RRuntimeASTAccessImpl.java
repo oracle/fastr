@@ -112,6 +112,18 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
+    private static Object getIntrinsicValue(Object result) {
+        if (result instanceof RSyntaxConstant) {
+            return ((RSyntaxConstant) result).getValue();
+        } else if (result instanceof RSyntaxLookup) {
+            return RDataFactory.createSymbolInterned(((RSyntaxLookup) result).getIdentifier());
+        } else {
+            assert result instanceof RSyntaxCall || result instanceof RSyntaxFunction : result.getClass();
+            return RDataFactory.createLanguage(((RSyntaxNode) result).asRNode());
+        }
+
+    }
+
     @TruffleBoundary
     @Override
     public int getLength(RLanguage rl) {
@@ -152,7 +164,15 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     result = RSyntaxLookup.createDummyLookup(null, "function", true);
                     break;
                 case 1:
-                    throw RInternalError.unimplemented("arguments of 'function'");
+                    ArgumentsSignature sig = ((RSyntaxFunction) s).getSyntaxSignature();
+                    RSyntaxElement[] defaults = ((RSyntaxFunction) s).getSyntaxArgumentDefaults();
+
+                    Object list = RNull.instance;
+                    for (int i = sig.getLength() - 1; i >= 0; i--) {
+                        list = RDataFactory.createPairList(defaults[i] == null ? RDataFactory.createSymbolInterned("") : getIntrinsicValue(defaults[i]), list,
+                                        RDataFactory.createSymbolInterned(sig.getName(i)));
+                    }
+                    return list;
                 case 2:
                     result = ((RSyntaxFunction) s).getSyntaxBody();
                     break;
@@ -173,14 +193,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         /*
          * Constants and lookups are converted to their intrinsic value:
          */
-        if (result instanceof RSyntaxConstant) {
-            return ((RSyntaxConstant) result).getValue();
-        } else if (result instanceof RSyntaxLookup) {
-            return RDataFactory.createSymbolInterned(((RSyntaxLookup) result).getIdentifier());
-        } else {
-            assert result instanceof RSyntaxCall || result instanceof RSyntaxFunction : result.getClass();
-            return RDataFactory.createLanguage(((RSyntaxNode) result).asRNode());
-        }
+        return getIntrinsicValue(result);
     }
 
     @TruffleBoundary

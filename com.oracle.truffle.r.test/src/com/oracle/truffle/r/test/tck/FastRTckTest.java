@@ -275,6 +275,16 @@ public class FastRTckTest extends TruffleTCK {
     }
 
     @Override
+    public void testPlusWithBytes() throws Exception {
+        // no bytes in FastR
+    }
+
+    @Override
+    public void testPlusWithOneNegativeByte() throws Exception {
+        // no bytes in FastR
+    }
+
+    @Override
     public void testPlusWithShort() throws Exception {
         // no shorts in FastR
     }

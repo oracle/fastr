@@ -331,8 +331,25 @@ install.pkgs <- function(pkgnames, blacklist, dependents.install=F) {
 			if (!dependents.install && install.dependents) {
 				dependents <- install.order(avail.pkgs, avail.pkgs[pkgname, ])
 				if (length(dependents) > 0) {
-				    cat("installing dependents of:", pkgname, "\n")
-				    dependent.install.ok = install.pkgs(dependents, dependents.install=T, blacklist)
+					# not a leaf package
+					dep.status <- install.status[dependents]
+					# three cases:
+					# 1. all TRUE: nothing to do all already installed ok
+					# 2. any FALSE: abort as install must fail
+					# 3. a mixture of TRUE and NA: ok, but some more to install (the NAs)
+					if (any(!dep.status, na.rm=T)) {
+						# case 2
+						cat("not installing dependents of:", pkgname, ", one or more previously failed", "\n")
+						dependent.install.ok <- F
+					} else {
+						if (anyNA(dep.status)) {
+							# case 3
+				            cat("installing dependents of:", pkgname, "\n")
+				            dependent.install.ok <- install.pkgs(dependents, dependents.install=T, blacklist)
+					    } else {
+							# case 1
+						}
+					}
 			    }
 			}
 			if (dry.run) {

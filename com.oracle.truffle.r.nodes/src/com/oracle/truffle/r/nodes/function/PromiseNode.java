@@ -342,7 +342,11 @@ public abstract class PromiseNode extends RNode {
 
         @Override
         public SourceSection getSourceSection() {
-            return null;
+            /*
+             * These nodes can (currently) be visited by RSyntaxNode.accept in an already evaluated
+             * tree, so must not return null
+             */
+            return RSyntaxNode.INTERNAL;
         }
 
     }

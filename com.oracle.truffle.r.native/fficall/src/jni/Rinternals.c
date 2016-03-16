@@ -708,6 +708,11 @@ SEXP CDDR(SEXP e) {
     return NULL;
 }
 
+SEXP CDDDR(SEXP e) {
+    unimplemented("CDDDR");
+    return NULL;
+}
+
 SEXP CADDR(SEXP e) {
     unimplemented("CADDR");
     return NULL;
@@ -1239,6 +1244,10 @@ SEXP R_ClosureExpr(SEXP x) {
 	return unimplemented("R_ClosureExpr");
 }
 
+SEXP R_forceAndCall(SEXP e, int n, SEXP rho) {
+	return unimplemented("R_forceAndCall");
+}
+
 SEXP R_MakeExternalPtr(void *p, SEXP tag, SEXP prot) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result =  (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createExternalPtrMethodID, (jlong) p, tag, prot);
@@ -1301,4 +1310,35 @@ void R_RunPendingFinalizers(void) {
 	// TODO implement, but not fail for now
 }
 
+SEXP R_do_slot(SEXP obj, SEXP name) {
+	return unimplemented("R_do_slot");
+}
+
+SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
+	return unimplemented("R_do_slot_assign");
+}
+
+int R_has_slot(SEXP obj, SEXP name) {
+	return (int) unimplemented("R_has_slot");
+}
+
+SEXP R_do_MAKE_CLASS(const char *what) {
+	return unimplemented("R_do_MAKE_CLASS");
+}
+
+SEXP R_getClassDef (const char *what) {
+	return unimplemented("R_getClassDef");
+}
+
+SEXP R_do_new_object(SEXP class_def) {
+	return unimplemented("R_do_new_object");
+}
+
+int R_check_class_and_super(SEXP x, const char **valid, SEXP rho) {
+	return (int) unimplemented("R_check_class_and_super");
+}
+
+int R_check_class_etc (SEXP x, const char **valid) {
+	return (int) unimplemented("R_check_class_etc");
+}
 
