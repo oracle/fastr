@@ -24,17 +24,17 @@ public class TestBuiltin_xtfrm extends TestBase {
 
     @Test
     public void testxtfrm2() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c('Tukey', 'Venables', 'Tierney', 'Ripley', 'Ripley', 'McNeil', 'R Core'), class = 'AsIs'));xtfrm(argv[[1]]);");
+        assertEval("argv <- list(structure(c('Tukey', 'Venables', 'Tierney', 'Ripley', 'Ripley', 'McNeil', 'R Core'), class = 'AsIs'));xtfrm(argv[[1]]);");
     }
 
     @Test
     public void testxtfrm3() {
-        assertEval(Ignored.Unknown, "argv <- list(c('9', '9', '8', '7', '6', '5', '4', '3', '2', '1'));xtfrm(argv[[1]]);");
+        assertEval("argv <- list(c('9', '9', '8', '7', '6', '5', '4', '3', '2', '1'));xtfrm(argv[[1]]);");
     }
 
     @Test
     public void testxtfrm4() {
-        assertEval(Ignored.Unknown, "argv <- list(list());xtfrm(argv[[1]]);");
+        assertEval("argv <- list(list());xtfrm(argv[[1]]);");
     }
 
     @Test

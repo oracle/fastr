@@ -633,7 +633,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-list(data=list(matrix(1:4, ncol=2))); x$data[[1]][2,2]<-42; x }");
 
         assertEval(Output.ContainsAmbiguousError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-NULL }");
-        assertEval(Ignored.Unstable, Output.ContainsError, "{ x<-1:4; x[[1]]<-NULL; x }");
+        assertEval(Output.ContainsAmbiguousError, "{ x<-1:4; x[[1]]<-NULL; x }");
 
         assertEval("{ f<-function(x,y) sys.call(); x<-f(7, 42); x[c(1,2)] }");
         assertEval("{ f<-function(x,y) sys.call(); x<-f(7, 42); typeof(x[c(1,2)]) }");
@@ -648,20 +648,20 @@ public class TestSimpleVectors extends TestBase {
          * or some type-error, e.g. "incompatible types (from NULL to double) in [[ assignment". We
          * could address this with a whitelist.
          */
-        assertEval(Ignored.Unstable, Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1,1]]<-NULL; x }");
-        assertEval(Ignored.Unstable, Output.ContainsError, "{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[[c(1,2)]] <- NULL ; b }");
-        assertEval(Ignored.Unstable, Output.ContainsError, "{ x<-c(1,2,3); x[[-4]]<-NULL }");
+        assertEval(Output.ContainsAmbiguousError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1,1]]<-NULL; x }");
+        assertEval(Output.ContainsAmbiguousError, "{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[[c(1,2)]] <- NULL ; b }");
+        assertEval(Output.ContainsAmbiguousError, "{ x<-c(1,2,3); x[[-4]]<-NULL }");
         // this came from testRawIndex
 
         // weird problems with fluctuating error messages in GNU R
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-1:4; x[[0]]<-NULL; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ b<-3:5; dim(b) <- c(1,3) ; b[[c(1)]] <- NULL ; b }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ b<-3:5; dim(b) <- c(1,3) ; b[[0]] <- NULL ; b }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- integer() ; x[[NA]] <- NULL ; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- c(1) ; x[[NA]] <- NULL ; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- c(1,2) ; x[[NA]] <- NULL ; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- c(1,2,3) ; x[[NA]] <- NULL ; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1]]<-NULL; x }");
+        assertEval(Output.ContainsAmbiguousError, "{ x<-1:4; x[[0]]<-NULL; x }");
+        assertEval(Output.ContainsAmbiguousError, "{ b<-3:5; dim(b) <- c(1,3) ; b[[c(1)]] <- NULL ; b }");
+        assertEval(Output.ContainsAmbiguousError, "{ b<-3:5; dim(b) <- c(1,3) ; b[[0]] <- NULL ; b }");
+        assertEval(Output.ContainsAmbiguousError, "{ x <- integer() ; x[[NA]] <- NULL ; x }");
+        assertEval(Output.ContainsAmbiguousError, "{ x <- c(1) ; x[[NA]] <- NULL ; x }");
+        assertEval(Output.ContainsAmbiguousError, "{ x <- c(1,2) ; x[[NA]] <- NULL ; x }");
+        assertEval(Output.ContainsAmbiguousError, "{ x <- c(1,2,3) ; x[[NA]] <- NULL ; x }");
+        assertEval(Output.ContainsAmbiguousError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1]]<-NULL; x }");
 
         // inconsistent error messages in expected output and shell
         assertEval(Output.ContainsAmbiguousError, "{ x <- c(1); x[[-4]] <- NULL }");
