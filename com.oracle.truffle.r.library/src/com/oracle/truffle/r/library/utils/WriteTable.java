@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -55,8 +55,8 @@ public final class WriteTable extends RExternalBuiltinNode {
                 // if (i % 1000 == 999)
                 // R_CheckUserInterrupt();
                 if (!(rnames instanceof RNull)) {
-                    os.write(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec).getBytes());
-                    os.write(csep.getBytes());
+                    tmp = new StringBuffer(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec)).append(csep).toString();
+                    os.write(tmp.getBytes());
                 }
                 for (int j = 0; j < nc; j++) {
                     Object xjObj = x.getDataAtAsObject(j);
@@ -99,8 +99,7 @@ public final class WriteTable extends RExternalBuiltinNode {
                     // R_CheckUserInterrupt();
                 }
                 if (!(rnames instanceof RNull)) {
-                    os.write(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec).getBytes());
-                    os.write(csep.getBytes());
+                    os.write(new StringBuffer(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec)).append(csep).toString().getBytes());
                 }
                 for (int j = 0; j < nc; j++) {
                     if (j > 0) {

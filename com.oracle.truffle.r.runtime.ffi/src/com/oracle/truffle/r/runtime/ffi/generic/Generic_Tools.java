@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,12 +63,13 @@ public class Generic_Tools implements ToolsRFFI {
 
     private static final Semaphore parseRdCritical = new Semaphore(1, false);
 
-    public Object parseRd(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls) {
+    public Object parseRd(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
+                    RLogicalVector warndups) {
         // The C code is not thread safe.
         try {
             parseRdCritical.acquire();
             SymbolInfo parseRd = ToolsProvider.toolsProvider().getParseRd();
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(parseRd.address, parseRd.symbol, new Object[]{con, srcfile, verbose, fragment, basename, warningCalls});
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(parseRd.address, parseRd.symbol, new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
         } catch (Throwable ex) {
             throw RInternalError.shouldNotReachHere();
         } finally {

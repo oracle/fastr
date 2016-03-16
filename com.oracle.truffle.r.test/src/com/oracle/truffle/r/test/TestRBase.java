@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.REnvVars;
  *  Base class for all Java test suites (in the sense of JUnit Java files)
  *  that want to run R tests stored in the file system as R sources.
  *  It is expected that R test source files will be stored in the R sub-directory
- *  of the directory containing a given JUnit Java file.
+ *  of a directory stored in com.oracle.truffle.r.test/src/com/oracle/truffle/r/test
  *
  *  The first line of the file may contain some configuration information (as an R comment).
  *  At this point, two keywords are recognized - ContainsError and ContansWarning. Including

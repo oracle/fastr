@@ -504,6 +504,9 @@ public class TestBase {
         boolean ok;
         String result = originalResult;
         String expected = originalExpected;
+        if (input.equals("c(1i,1i,1i)/(-(1/0))")) {
+            System.console();
+        }
         if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError)) {
             ok = true;
             if (containsError && !ambiguousError) {
@@ -541,11 +544,13 @@ public class TestBase {
         for (WhiteList list : whiteLists) {
             WhiteList.Results wlr = list.get(input);
             if (wlr != null) {
+                // Sanity check that "expected" matches the entry in the WhiteList
                 CheckResult checkedResult = checkResult(null, input, wlr.expected, expected, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError);
                 if (!checkedResult.ok) {
                     System.out.println("expected output does not match: " + wlr.expected + " vs. " + expected);
                     return false;
                 }
+                // Substitute the FastR output and try to match that
                 CheckResult fastRResult = checkResult(null, input, wlr.fastR, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError);
                 if (fastRResult.ok) {
                     list.markUsed(input);

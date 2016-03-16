@@ -61,6 +61,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -264,7 +265,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     @Child private CallArgumentsNode foreignCallArguments;
 
     public RCallNode(SourceSection sourceSection, RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
-        super(sourceSection);
+        super(sourceSection.withTags(RSyntaxTags.CALL));
         this.functionNode = function;
         this.arguments = new SyntaxArguments(arguments);
         this.signature = signature;
@@ -287,14 +288,6 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     }
 
     @Override
-    public Node deepCopy() {
-        RCallNode copy = (RCallNode) super.deepCopy();
-        // execution (frame) specific due to temp identifiers, so reset
-        copy.internalDispatchCall = null;
-        return copy;
-    }
-
-    @Override
     public Object execute(VirtualFrame frame) {
         return execute(frame, executeFunctionNode(frame));
     }
@@ -302,6 +295,14 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     @TruffleBoundary
     private static String getMessage(Throwable e) {
         return e.getMessage() != null ? e.getMessage() : e.toString();
+    }
+
+    @Override
+    public Node deepCopy() {
+        RCallNode copy = (RCallNode) super.deepCopy();
+        // execution (frame) specific due to temp identifiers, so reset
+        copy.internalDispatchCall = null;
+        return copy;
     }
 
     public Object execute(VirtualFrame frame, Object functionObject) {
@@ -488,7 +489,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             RSyntaxNode argument = arguments[i];
             String name = signature.getName(i);
             if (name != null) {
-                state.append(name);
+                state.append(RDeparse.quotify(name, state));
                 state.append(" = ");
             }
             if (argument != null) {

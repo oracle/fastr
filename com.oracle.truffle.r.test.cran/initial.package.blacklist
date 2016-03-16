@@ -454,9 +454,6 @@ Reason: corebug
 Package: lpSolve
 Reason: corebug
 
-Package: jsonlite
-Reason: corebug
-
 Package: XML
 Reason: corebug
 

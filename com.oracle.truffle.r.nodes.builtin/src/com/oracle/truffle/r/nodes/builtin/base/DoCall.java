@@ -147,7 +147,8 @@ public abstract class DoCall extends RBuiltinNode {
         if (func.isBuiltin() && builtin.getGroup() != null) {
             if (groupDispatch == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                groupDispatch = insert(GroupDispatchNode.create(builtin.getName(), null, func, getOriginalCall().getSourceSection()));
+                /* This child is not being used in a syntax context so remove tags */
+                groupDispatch = insert(GroupDispatchNode.create(builtin.getName(), null, func, getOriginalCall().getSourceSection().withTags()));
             }
             for (int i = 0; i < argValues.length; i++) {
                 Object arg = argValues[i];

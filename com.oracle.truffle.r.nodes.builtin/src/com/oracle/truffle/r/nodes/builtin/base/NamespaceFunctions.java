@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,9 +36,9 @@ public class NamespaceFunctions {
     @RBuiltin(name = "getRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"})
     public abstract static class GetRegisteredNamespace extends RBuiltinNode {
         @Specialization
-        protected Object doGetRegisteredNamespace(String name) {
+        protected Object doGetRegisteredNamespace(RAbstractStringVector name) {
             controlVisibility();
-            Object result = REnvironment.getRegisteredNamespace(name);
+            Object result = REnvironment.getRegisteredNamespace(name.getDataAt(0));
             if (result == null) {
                 return RNull.instance;
             } else {
@@ -49,7 +49,37 @@ public class NamespaceFunctions {
         @Specialization
         protected Object doGetRegisteredNamespace(RSymbol name) {
             controlVisibility();
-            return doGetRegisteredNamespace(name.getName());
+            Object result = REnvironment.getRegisteredNamespace(name.getName());
+            if (result == null) {
+                return RNull.instance;
+            } else {
+                return result;
+            }
+        }
+    }
+
+    @RBuiltin(name = "isRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"})
+    public abstract static class IsRegisteredNamespace extends RBuiltinNode {
+        @Specialization
+        protected byte doIsRegisteredNamespace(RAbstractStringVector name) {
+            controlVisibility();
+            Object result = REnvironment.getRegisteredNamespace(name.getDataAt(0));
+            if (result == null) {
+                return RRuntime.LOGICAL_FALSE;
+            } else {
+                return RRuntime.LOGICAL_TRUE;
+            }
+        }
+
+        @Specialization
+        protected Object doIsRegisteredNamespace(RSymbol name) {
+            controlVisibility();
+            Object result = REnvironment.getRegisteredNamespace(name.getName());
+            if (result == null) {
+                return RRuntime.LOGICAL_FALSE;
+            } else {
+                return RRuntime.LOGICAL_TRUE;
+            }
         }
     }
 

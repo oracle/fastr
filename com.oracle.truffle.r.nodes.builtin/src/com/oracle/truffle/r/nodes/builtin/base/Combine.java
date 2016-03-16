@@ -58,6 +58,7 @@ import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -73,7 +74,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"..."})
+@RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"..."}, dispatch = RDispatch.INTERNAL_GENERIC)
 public abstract class Combine extends RCastingBuiltinNode {
 
     public static Combine create() {

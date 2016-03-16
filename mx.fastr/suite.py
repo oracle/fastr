@@ -23,16 +23,18 @@
 suite = {
   "mxversion" : "5.8.1",
   "name" : "fastr",
+  "versionConflictResolution" : "latest",
   "imports" : {
     "suites" : [
             {
                "name" : "graal-core",
-               "version" : "a0e54263b5001f68e25e329f9ebc9f3444a880c7",
+               "version" : "0a3eb8f750758773e8b75230afd48e4350dac15",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal-core", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
                 ]
-            }
+            },
+
         ],
    },
 
@@ -41,9 +43,9 @@ suite = {
   # relative to the suite root and not the mx cache
   "libraries" : {
     "GNUR" : {
-        "path" : "libdownloads/R-3.1.3.tar.gz",
-        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.1.3.tar.gz"],
-        "sha1" : "2c9165060b91e45ac73d8cb7507ee9e52816f8b3",
+        "path" : "libdownloads/R-3.2.4.tar.gz",
+        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.2.4.tar.gz"],
+        "sha1" : "632664b3caa8d39f5fe6ac2ee9611b0f89ad6ed9",
         "resource" : "true"
     },
 
@@ -219,6 +221,7 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.parser",
+        "truffle:TRUFFLE_DEBUG",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",

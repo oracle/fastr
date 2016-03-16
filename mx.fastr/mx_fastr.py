@@ -256,17 +256,17 @@ def _fastr_gate_runner(args, tasks):
     # check that the expected test output file is up to date
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks) as t:
         if t:
-            if junit(['--tests', _all_unit_tests(), '--check-expected-output']) != 0:
+            if junit(['--tests', _gate_noapps_unit_tests(), '--check-expected-output']) != 0:
                 t.abort('unit tests expected output check failed')
 
     with mx_gate.Task('UnitTests: +EST', tasks) as t:
         if t:
-            if junit(['--J', '@-DR:+NewStateTransition', '--tests', _gate_unit_tests()]) != 0:
+            if junit(['--J', '@-DR:+NewStateTransition', '--tests', _gate_noapps_unit_tests()]) != 0:
                 t.abort('unit tests failed')
 
     with mx_gate.Task('UnitTests: -EST', tasks) as t:
         if t:
-            if junit(['--J', '@-DR:-NewStateTransition', '--tests', _gate_unit_tests()]) != 0:
+            if junit(['--J', '@-DR:-NewStateTransition', '--tests', _gate_noapps_unit_tests()]) != 0:
                 t.abort('unit tests failed')
 
 mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
@@ -565,7 +565,7 @@ def load_optional_suite(name, rev):
         mx.build_suite(opt_suite)
     return opt_suite
 
-_r_apptests_rev = '804b75871abe803f46af6b2a075cc3f6acfdd6e9'
+_r_apptests_rev = '2f363c204f713520ea1d881af71bac8962a82c72'
 _r_benchmarks_rev = '0b4f36819086323aebce7a2d7bc62949ff90950b'
 
 def mx_post_parse_cmd_line(opts):

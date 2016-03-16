@@ -217,4 +217,15 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
             return execute(castArg(args, 0), castArg(args, 1), castArg(args, 2), castArg(args, 3), castArg(args, 4), castArg(args, 5), castArg(args, 6), castArg(args, 7));
         }
     }
+
+    public abstract static class Arg9 extends RExternalBuiltinNode {
+
+        public abstract Object execute(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7, Object arg8, Object arg9);
+
+        @Override
+        public final Object call(RArgsValuesAndNames args) {
+            checkLength(args, 9);
+            return execute(castArg(args, 0), castArg(args, 1), castArg(args, 2), castArg(args, 3), castArg(args, 4), castArg(args, 5), castArg(args, 6), castArg(args, 7), castArg(args, 8));
+        }
+    }
 }

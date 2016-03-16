@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,7 @@ SUPPORT_SCRIPTS := $(addprefix $(GNUR_HOME)/bin/,BATCH COMPILE INSTALL SHLIB Rcm
 # Not all of these work unchanged
 ETC_FILES := $(addprefix $(GNUR_HOME)/etc/,javaconf ldpaths Renviron repositories)
 
-SHARE_FILES := $(addprefix $(GNUR_HOME)/share/,R make java)
+SHARE_FILES := $(addprefix $(GNUR_HOME)/share/,R Rd make java encodings)
 
 all: rundirs rcmds includedir
 

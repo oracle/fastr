@@ -85,11 +85,6 @@ public class WriteSuperVariableNodeFactory implements InstrumentableFactory<Writ
         }
 
         @Override
-        public boolean isRInstrumentable() {
-            return false;
-        }
-
-        @Override
         public com.oracle.truffle.r.runtime.nodes.RNode getRhs() {
             return delegate.getRhs();
         }

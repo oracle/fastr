@@ -28,6 +28,7 @@ import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastLogicalScalarNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
@@ -137,5 +138,9 @@ public final class CastBuilder {
 
     public CastBuilder firstBoolean(int index, String invalidValueName) {
         return insert(index, FirstBooleanNodeGen.create(invalidValueName));
+    }
+
+    public CastBuilder firstLogical(int index) {
+        return insert(index, CastLogicalScalarNodeGen.create());
     }
 }

@@ -467,8 +467,13 @@ public class CallRFFIHelper {
     }
 
     public static Object TAG(Object e) {
-        guaranteeInstanceOf(e, RPairList.class);
-        return ((RPairList) e).getTag();
+        if (e instanceof RPairList) {
+            return ((RPairList) e).getTag();
+        } else {
+            guaranteeInstanceOf(e, RExternalPtr.class);
+            // at the moment, this can only be used to null out the pointer
+            return ((RExternalPtr) e).getTag();
+        }
     }
 
     public static Object CAR(Object e) {
@@ -487,6 +492,17 @@ public class CallRFFIHelper {
         guaranteeInstanceOf(e, RPairList.class);
         Object cadr = ((RPairList) e).cadr();
         return cadr;
+    }
+
+    public static Object SET_TAG(Object x, Object y) {
+        if (x instanceof RPairList) {
+            ((RPairList) x).setTag(y);
+        } else {
+            guaranteeInstanceOf(x, RExternalPtr.class);
+            // at the moment, this can only be used to null out the pointer
+            ((RExternalPtr) x).setTag(y);
+        }
+        return x; // TODO check or y?
     }
 
     public static Object SETCAR(Object x, Object y) {

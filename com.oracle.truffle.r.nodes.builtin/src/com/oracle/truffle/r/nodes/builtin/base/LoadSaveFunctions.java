@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -201,7 +201,7 @@ public class LoadSaveFunctions {
                     throw RError.error(this, RError.Message.CONN_XDR);
                 }
                 openConn.writeChar(ascii ? ASCII_HEADER : XDR_HEADER, 0, "", false);
-                RSerialize.serialize(openConn, toSave, ascii, false, RSerialize.DEFAULT_VERSION, null);
+                RSerialize.serialize(openConn, toSave, ascii ? RSerialize.ASCII : RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }

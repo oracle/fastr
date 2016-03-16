@@ -188,6 +188,7 @@ public class TestSimpleComparison extends TestBase {
 
         assertEval("{ x<-c(FALSE,TRUE);y<-c(TRUE,FALSE); x<y }");
         assertEval("{ x<-c(FALSE,TRUE, FALSE, FALSE);y<-c(TRUE,FALSE); x<y }");
+        // N.B. On GnuR the comparison of "-1", "1" depends on the ICU collate setting
         assertEval("{ x<-c(\"0\",\"1\");y<-c(\"a\",\"-1\"); x<y }");
         assertEval("{ x<-c(\"0\",\"1\",\"-1\", \"2\");y<-c(\"a\",\"-1\", \"0\", \"2\"); x<y }");
         assertEval("{ x<-c(10,3);y<-c(10,2); x<=y }");

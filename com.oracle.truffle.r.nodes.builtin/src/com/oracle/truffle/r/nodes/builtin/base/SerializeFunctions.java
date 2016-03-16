@@ -52,18 +52,17 @@ public class SerializeFunctions {
         }
 
         @TruffleBoundary
-        protected Object doSerializeToConnBase(Object object, RConnection conn, byte asciiLogical, byte xdrLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook) {
+        protected Object doSerializeToConnBase(Object object, RConnection conn, int type, byte xdrLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook) {
             controlVisibility();
-            boolean ascii = RRuntime.fromLogical(asciiLogical);
             // xdr is only relevant if ascii is false
-            try (RConnection openConn = conn.forceOpen(ascii ? "wt" : "wb")) {
+            try (RConnection openConn = conn.forceOpen(type != RSerialize.XDR ? "wt" : "wb")) {
                 if (!openConn.canWrite()) {
                     throw RError.error(this, RError.Message.CONNECTION_NOT_OPEN_WRITE);
                 }
-                if (!ascii && openConn.isTextMode()) {
+                if (type == RSerialize.XDR && openConn.isTextMode()) {
                     throw RError.error(this, RError.Message.BINARY_CONNECTION_REQUIRED);
                 }
-                RSerialize.serialize(openConn, object, ascii, RRuntime.fromLogical(xdrLogical), RSerialize.DEFAULT_VERSION, null);
+                RSerialize.serialize(openConn, object, type, RSerialize.DEFAULT_VERSION, null);
                 return RNull.instance;
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
@@ -89,7 +88,15 @@ public class SerializeFunctions {
     public abstract static class SerializeToConn extends Adapter {
         @Specialization
         protected Object doSerializeToConn(Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
-            return doSerializeToConnBase(object, conn, asciiLogical, RRuntime.LOGICAL_NA, version, refhook);
+            int type;
+            if (asciiLogical == RRuntime.LOGICAL_NA) {
+                type = RSerialize.ASCII_HEX;
+            } else if (asciiLogical == RRuntime.LOGICAL_TRUE) {
+                type = RSerialize.ASCII;
+            } else {
+                type = RSerialize.XDR;
+            }
+            return doSerializeToConnBase(object, conn, type, RRuntime.LOGICAL_NA, version, refhook);
         }
 
     }
@@ -103,17 +110,17 @@ public class SerializeFunctions {
         }
     }
 
-    @RBuiltin(name = "serialize", kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
+    @RBuiltin(name = "serialize", kind = INTERNAL, parameterNames = {"object", "conn", "type", "version", "refhook"})
     public abstract static class Serialize extends Adapter {
         @Specialization
-        protected Object serialize(Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
-            return doSerializeToConnBase(object, conn, asciiLogical, RRuntime.LOGICAL_NA, version, refhook);
+        protected Object serialize(Object object, RConnection conn, int type, RNull version, RNull refhook) {
+            return doSerializeToConnBase(object, conn, type, RRuntime.LOGICAL_NA, version, refhook);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object serialize(Object object, RNull conn, byte asciiLogical, RNull version, RNull refhook) {
-            byte[] data = RSerialize.serialize(object, RRuntime.fromLogical(asciiLogical), false, RSerialize.DEFAULT_VERSION, null);
+        protected Object serialize(Object object, RNull conn, int type, RNull version, RNull refhook) {
+            byte[] data = RSerialize.serialize(object, type, RSerialize.DEFAULT_VERSION, null);
             return RDataFactory.createRawVector(data);
         }
 

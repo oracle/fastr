@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,10 +33,22 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
-public abstract class C_ParseRd extends RExternalBuiltinNode.Arg7 {
+public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
 
     @Specialization
-    protected Object parseRd(RConnection con, REnvironment srcfile, @SuppressWarnings("unused") String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL) {
+    protected Object parseRd(RConnection con, REnvironment srcfile, String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL,
+                    byte macrosL, byte warndupsL) {
+        return doParseRd(con, srcfile, encoding, verboseL, basename, fragmentL, warningCallsL, RDataFactory.createLogicalVectorFromScalar(macrosL), warndupsL);
+    }
+
+    @Specialization
+    protected Object parseRd(RConnection con, REnvironment srcfile, String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL,
+                    REnvironment macros, byte warndupsL) {
+        return doParseRd(con, srcfile, encoding, verboseL, basename, fragmentL, warningCallsL, macros, warndupsL);
+    }
+
+    private Object doParseRd(RConnection con, REnvironment srcfile, @SuppressWarnings("unused") String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL,
+                    Object macros, byte warndupsL) {
         if (RRuntime.isNA(warningCallsL)) {
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "warningCalls");
         }
@@ -47,18 +59,22 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg7 {
                             RDataFactory.createLogicalVectorFromScalar(verboseL),
                             RDataFactory.createLogicalVectorFromScalar(fragmentL),
                             RDataFactory.createStringVectorFromScalar(basename.getDataAt(0)),
-                            RDataFactory.createLogicalVectorFromScalar(warningCallsL));
+                            RDataFactory.createLogicalVectorFromScalar(warningCallsL),
+                            macros,
+                            RDataFactory.createLogicalVectorFromScalar(warndupsL));
             // @formatter:on
         } catch (IOException ex) {
             throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         } catch (Throwable ex) {
             throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
+
     }
 
     @SuppressWarnings("unused")
     @Fallback
-    public Object parseRd(Object con, Object srcfile, Object encoding, Object verbose, Object basename, Object fragment, Object warningCalls) {
+    public Object parseRd(Object con, Object srcfile, Object encoding, Object verbose, Object basename, Object fragment, Object warningCalls,
+                    Object macros, Object warndupsL) {
         throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 

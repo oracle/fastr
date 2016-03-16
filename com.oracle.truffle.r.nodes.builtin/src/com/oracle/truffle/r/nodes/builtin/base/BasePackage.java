@@ -217,16 +217,18 @@ public class BasePackage extends RBuiltinPackage {
         add(EnvFunctions.MakeActiveBinding.class, EnvFunctionsFactory.MakeActiveBindingNodeGen::create);
         add(EnvFunctions.NewEnv.class, EnvFunctionsFactory.NewEnvNodeGen::create);
         add(EnvFunctions.ParentEnv.class, EnvFunctionsFactory.ParentEnvNodeGen::create);
+        add(EnvFunctions.TopEnv.class, EnvFunctionsFactory.TopEnvNodeGen::create);
         add(EnvFunctions.Search.class, EnvFunctionsFactory.SearchNodeGen::create);
         add(EnvFunctions.SetParentEnv.class, EnvFunctionsFactory.SetParentEnvNodeGen::create);
         add(EnvFunctions.UnlockBinding.class, EnvFunctionsFactory.UnlockBindingNodeGen::create);
         add(EvalFunctions.Eval.class, EvalFunctionsFactory.EvalNodeGen::create);
-        add(EvalFunctions.WithVisible.class, EvalFunctionsFactory.WithVisibleNodeGen::create);
+        add(WithVisible.class, WithVisibleNodeGen::create);
         add(Exists.class, ExistsNodeGen::create);
         add(Expression.class, ExpressionNodeGen::create);
         add(FastR.class, FastRNodeGen::create);
         add(FileFunctions.BaseName.class, FileFunctionsFactory.BaseNameNodeGen::create);
         add(FileFunctions.DirCreate.class, FileFunctionsFactory.DirCreateNodeGen::create);
+        add(FileFunctions.DirExists.class, FileFunctionsFactory.DirExistsNodeGen::create);
         add(FileFunctions.DirName.class, FileFunctionsFactory.DirNameNodeGen::create);
         add(FileFunctions.FileAccess.class, FileFunctionsFactory.FileAccessNodeGen::create);
         add(FileFunctions.FileAppend.class, FileFunctionsFactory.FileAppendNodeGen::create);
@@ -244,6 +246,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FileFunctions.Unlink.class, FileFunctionsFactory.UnlinkNodeGen::create);
         add(Floor.class, FloorNodeGen::create);
         add(DotC.class, DotCNodeGen::create);
+        add(ForceAndCall.class, ForceAndCallNodeGen::create);
         add(ForeignFunctions.DotCall.class, ForeignFunctionsFactory.DotCallNodeGen::create);
         add(ForeignFunctions.DotCallGraphics.class, ForeignFunctionsFactory.DotCallGraphicsNodeGen::create);
         add(ForeignFunctions.DotExternal.class, ForeignFunctionsFactory.DotExternalNodeGen::create);
@@ -265,8 +268,10 @@ public class BasePackage extends RBuiltinPackage {
         add(Gc.class, GcNodeGen::create);
         add(GetClass.class, GetClassNodeGen::create);
         add(GetFunctions.Get.class, GetFunctionsFactory.GetNodeGen::create);
+        add(GetFunctions.Get0.class, GetFunctionsFactory.Get0NodeGen::create);
         add(GetFunctions.MGet.class, GetFunctionsFactory.MGetNodeGen::create);
         add(GetOldClass.class, GetOldClassNodeGen::create);
+        add(OptionsFunctions.GetOption.class, OptionsFunctionsFactory.GetOptionNodeGen::create);
         add(GetText.class, GetTextNodeGen::create);
         add(Getwd.class, GetwdNodeGen::create);
         add(GrepFunctions.AGrep.class, GrepFunctionsFactory.AGrepNodeGen::create);
@@ -353,6 +358,7 @@ public class BasePackage extends RBuiltinPackage {
         add(LaFunctions.LaSolve.class, LaFunctionsFactory.LaSolveNodeGen::create);
         add(Lapply.class, LapplyNodeGen::create);
         add(Length.class, LengthNodeGen::create);
+        add(Lengths.class, LengthsNodeGen::create);
         add(License.class, LicenseNodeGen::create);
         add(ListBuiltin.class, ListBuiltinNodeGen::create);
         add(List2Env.class, List2EnvNodeGen::create);
@@ -380,6 +386,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Matrix.class, MatrixNodeGen::create);
         add(Max.class, MaxNodeGen::create);
         add(Mean.class, MeanNodeGen::create);
+        add(Merge.class, MergeNodeGen::create);
         add(Min.class, MinNodeGen::create);
         add(Missing.class, MissingNodeGen::create);
         add(Mod.class, ModNodeGen::create);
@@ -391,11 +398,12 @@ public class BasePackage extends RBuiltinPackage {
         add(NamespaceFunctions.GetNamespaceRegistry.class, NamespaceFunctionsFactory.GetNamespaceRegistryNodeGen::create);
         add(NamespaceFunctions.GetRegisteredNamespace.class, NamespaceFunctionsFactory.GetRegisteredNamespaceNodeGen::create);
         add(NamespaceFunctions.IsNamespaceEnv.class, NamespaceFunctionsFactory.IsNamespaceEnvNodeGen::create);
+        add(NamespaceFunctions.IsRegisteredNamespace.class, NamespaceFunctionsFactory.IsRegisteredNamespaceNodeGen::create);
         add(NamespaceFunctions.RegisterNamespace.class, NamespaceFunctionsFactory.RegisterNamespaceNodeGen::create);
         add(NamespaceFunctions.UnregisterNamespace.class, NamespaceFunctionsFactory.UnregisterNamespaceNodeGen::create);
         add(NormalizePath.class, NormalizePathNodeGen::create);
         add(OnExit.class, OnExitNodeGen::create);
-        add(Options.class, OptionsNodeGen::create);
+        add(OptionsFunctions.Options.class, OptionsFunctionsFactory.OptionsNodeGen::create);
         add(Order.class, OrderNodeGen::create);
         add(PMatch.class, PMatchNodeGen::create);
         add(PMinMax.PMax.class, PMinMaxNodeGen.PMaxNodeGen::create);
@@ -412,6 +420,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Quit.class, QuitNodeGen::create);
         add(Quote.class, QuoteNodeGen::create);
         add(Range.class, RangeNodeGen::create);
+        add(Rank.class, RankNodeGen::create);
         add(RNGFunctions.RNGkind.class, RNGFunctionsFactory.RNGkindNodeGen::create);
         add(RNGFunctions.SetSeed.class, RNGFunctionsFactory.SetSeedNodeGen::create);
         add(RVersion.class, RVersionNodeGen::create);

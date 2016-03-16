@@ -251,6 +251,11 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public boolean op(String left, String right) {
+            /*
+             * TODO: On GnuR the comparison of strings depends on the ICU collate setting. If ICU is
+             * not in use the "1" < "-1" returns FALSE, if set to "root" as on Mac it returns TRUE.
+             * The Collator class should be used when we implement the ICU support.
+             */
             return left.compareTo(right) < 0;
         }
 

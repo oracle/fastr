@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,18 +32,18 @@ package com.oracle.truffle.r.runtime;
  */
 public class RVersionNumber {
     public static final String MAJOR = "3";
-    public static final String MINOR = "1";
-    public static final String PATCH = "3";
+    public static final String MINOR = "2";
+    public static final String PATCH = "4";
 
-    public static final int R_VERSION = (3 << 16) + (1 << 8) + 3;
+    public static final int R_VERSION = (3 << 16) + (2 << 8) + 4;
 
     public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
     public static final String MINOR_PATCH = MINOR + "." + PATCH;
     public static final String FULL = MAJOR + "." + MINOR + "." + PATCH;
 
-    public static final String RELEASE_YEAR = "2015";
-    public static final String RELEASE_MONTH = "05";
-    public static final String RELEASE_DAY = "09";
+    public static final String RELEASE_YEAR = "2016";
+    public static final String RELEASE_MONTH = "03";
+    public static final String RELEASE_DAY = "10";
 
     public static final String VERSION_STRING = "FastR version " + FULL + " (" + RELEASE_YEAR + "-" + RELEASE_MONTH + "-" + RELEASE_DAY + ")";
 

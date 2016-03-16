@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.nodes.instrument.NeedsWrapper;
 
 /**
  * Base class that represents a list of argument/name pairs with some convenience methods. Semantics
@@ -49,12 +48,10 @@ public abstract class ArgumentsNode extends RNode implements UnmatchedArguments 
         assert signature != null;
     }
 
-    @NeedsWrapper
     public RNode[] getArguments() {
         return arguments;
     }
 
-    @NeedsWrapper
     public ArgumentsSignature getSignature() {
         return signature;
     }

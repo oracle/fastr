@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -49,6 +50,7 @@ public abstract class Names extends RBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected Object getNames(REnvironment env) {
         controlVisibility();
         return env.ls(true, null, false);

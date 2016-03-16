@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,35 +50,28 @@ public class TestSimpleValues extends TestBase {
 
     private static final WhiteList BINARY_ARITHMETIC_WHITELIST = new WhiteList("binary arithmetic");
 
+    /**
+     * This list was generated on Mac OS X El Capitan on Mar 12th 2016 using the results from
+     * running R-3.2.4, and the {@code AnalyzeExpectedTestOutput} tool. Since FastR is consistent in
+     * its results across platforms, unlike GnuR, this whitelist can be used on any platform with an
+     * {@code ExpectedTestOutput.test} file generated on a Mac OS X system.
+     *
+     * However, if the entire {@code ExpectedTestOutput.test} file were to be regenerated on, say, a
+     * Linux platform, this whitelist would be incomplete and need to be updated.
+     */
     static {
-        BINARY_ARITHMETIC_WHITELIST.add("1i/(1/0)", "[1] 0+0i\n", "[1] NaN+NaNi\n");
-        BINARY_ARITHMETIC_WHITELIST.add("c(1i,1i,1i)/(1/0)", "[1] 0+0i 0+0i 0+0i\n", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n");
         BINARY_ARITHMETIC_WHITELIST.add("1i/(-(1/0))", "[1] 0+0i\n", "[1] NaN+NaNi\n");
+        BINARY_ARITHMETIC_WHITELIST.add("1i/(1/0)", "[1] 0+0i\n", "[1] NaN+NaNi\n");
         BINARY_ARITHMETIC_WHITELIST.add("c(1i,1i,1i)/(-(1/0))", "[1] 0+0i 0+0i 0+0i\n", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n");
-        BINARY_ARITHMETIC_WHITELIST.add("exp(-abs((0+1i)/(0+0i)))", "[1] NaN\n", "[1] 0\n");
-
-        // this block of values originate from differences between linux and mac
-        BINARY_ARITHMETIC_WHITELIST.add("(-(0/0))+1i", "[1] NaN+1i\n", "[1] NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(-(0/0))-1i", "[1] NaN-1i\n", "[1] NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(-(0/0))*1i", "[1] NaN+NaNi\n", "[1] NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(-(0/0))/1i", "[1] NaN+NaNi\n", "[1] NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(-(0/0))^1i", "[1] NaN+NaNi\n", "[1] NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(-(0/0))+c(1i,1i,1i)", "[1] NaN+1i NaN+1i NaN+1i\n", "[1] NA NA NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(-(0/0))-c(1i,1i,1i)", "[1] NaN-1i NaN-1i NaN-1i\n", "[1] NA NA NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(-(0/0))*c(1i,1i,1i)", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NA NA NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(-(0/0))/c(1i,1i,1i)", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NA NA NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(-(0/0))^c(1i,1i,1i)", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NA NA NA\n");
-
-        BINARY_ARITHMETIC_WHITELIST.add("c(1i,1i,1i)+(-(0/0))", "[1] NaN+1i NaN+1i NaN+1i\n", "[1] NA NA NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("c(1i,1i,1i)-(-(0/0))", "[1] NaN+1i NaN+1i NaN+1i\n", "[1] NA NA NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("c(1i,1i,1i)*(-(0/0))", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NA NA NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("c(1i,1i,1i)/(-(0/0))", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NA NA NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("c(1i,1i,1i)^(-(0/0))", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NA NA NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("1i+(-(0/0))", "[1] NaN+1i\n", "[1] NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("1i-(-(0/0))", "[1] NaN+1i\n", "[1] NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("1i*(-(0/0))", "[1] NaN+NaNi\n", "[1] NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("1i/(-(0/0))", "[1] NaN+NaNi\n", "[1] NA\n");
-        BINARY_ARITHMETIC_WHITELIST.add("1i^(-(0/0))", "[1] NaN+NaNi\n", "[1] NA\n");
+        BINARY_ARITHMETIC_WHITELIST.add("c(1i,1i,1i)/(1/0)", "[1] 0+0i 0+0i 0+0i\n", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n");
+        BINARY_ARITHMETIC_WHITELIST.add("(1/0)^((0/0)+1i)", "[1] NA\n", "[1] NaN+NaNi\n");
+        BINARY_ARITHMETIC_WHITELIST.add("(-(1/0))^((0/0)+1i)", "[1] NA\n", "[1] NaN+NaNi\n");
+        BINARY_ARITHMETIC_WHITELIST.add("((0/0)+1i)^(1/0)", "[1] NA\n", "[1] NaN+NaNi\n");
+        BINARY_ARITHMETIC_WHITELIST.add("(1i+NA)^(1/0)", "[1] NA\n", "[1] NaN+NaNi\n");
+        BINARY_ARITHMETIC_WHITELIST.add("(1/0)^(1i+NA)", "[1] NA\n", "[1] NaN+NaNi\n");
+        BINARY_ARITHMETIC_WHITELIST.add("(-(1/0))^(1i+NA)", "[1] NA\n", "[1] NaN+NaNi\n");
+        BINARY_ARITHMETIC_WHITELIST.add("((0/0)+1i)^(-(1/0))", "[1] NA\n", "[1] NaN+NaNi\n");
+        BINARY_ARITHMETIC_WHITELIST.add("(1i+NA)^(-(1/0))", "[1] NA\n", "[1] NaN+NaNi\n");
     }
 
     @Test

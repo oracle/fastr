@@ -175,7 +175,7 @@ public class TextConnections {
 
         @Override
         public OutputStream getOutputStream() throws IOException {
-            throw RInternalError.shouldNotReachHere();
+            return new ConnectionOutputStream();
         }
 
         @Override
@@ -197,13 +197,24 @@ public class TextConnections {
         private void writeStringInternal(String result) {
             int nlIndex;
             int px = 0;
+            boolean endOfLine = false;
             ArrayList<String> appendedLines = new ArrayList<>();
             while ((nlIndex = result.indexOf('\n', px)) >= 0) {
-                appendedLines.add(result.substring(px, nlIndex));
+                if (incompleteLine != null) {
+                    appendedLines.add(new StringBuffer(incompleteLine).append(result.substring(px, nlIndex)).toString());
+                    incompleteLine = null;
+                } else {
+                    appendedLines.add(result.substring(px, nlIndex));
+                }
                 nlIndex++;
                 px = nlIndex;
+                endOfLine = true;
             }
-            if (px < result.length()) {
+            if (incompleteLine != null && !endOfLine) {
+                // end of line not found - accumulate incomplete line
+                incompleteLine = new StringBuffer(incompleteLine).append(result).toString();
+            } else if (px < result.length()) {
+                // only reset incompleteLine if
                 incompleteLine = result.substring(px);
             }
             if (appendedLines.size() > 0) {
@@ -268,6 +279,33 @@ public class TextConnections {
 
         public String[] getValue() {
             throw RError.nyi(null, "textConnectionValue");
+        }
+
+        private class ConnectionOutputStream extends OutputStream {
+
+            @Override
+            public void close() {
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public void write(byte[] b) throws IOException {
+                writeStringInternal(new String(b));
+            }
+
+            @Override
+            public void write(byte[] b, int off, int len) {
+                throw RInternalError.unimplemented();
+            }
+
+            @Override
+            public void write(int b) {
+                throw RInternalError.unimplemented();
+            }
+
         }
 
     }

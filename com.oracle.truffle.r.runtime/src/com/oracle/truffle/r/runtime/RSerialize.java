@@ -1245,27 +1245,32 @@ public class RSerialize {
 
     }
 
+    public static final int XDR = 0; // actually any value other than the following
+    public static final int ASCII = 1;
+    public static final int ASCII_HEX = 2;
+    public static final int BINARY = 3;
+
     private static class Output extends Common {
+
         private State state;
         protected final POutputStream stream;
         private int version;
 
-        private Output(RConnection conn, char format, int version, CallHook hook) throws IOException {
+        private Output(RConnection conn, int format, int version, CallHook hook) throws IOException {
             this(conn.getOutputStream(), format, version, hook);
         }
 
-        private Output(OutputStream os, char format, int version, CallHook hook) throws IOException {
+        private Output(OutputStream os, int format, int version, CallHook hook) throws IOException {
             super(hook);
             this.version = version;
             switch (format) {
-                case 'A':
-                case 'B':
+                case ASCII:
+                case ASCII_HEX:
+                case BINARY:
                     throw formatError((byte) format, true);
-                case 'X':
+                default:
                     stream = new XdrOutputFormat(os);
                     break;
-                default:
-                    throw formatError((byte) format, false);
             }
         }
 
@@ -2081,10 +2086,10 @@ public class RSerialize {
      * For {@code lazyLoadDBinsertValue}.
      */
     @TruffleBoundary
-    public static byte[] serialize(Object obj, boolean ascii, @SuppressWarnings("unused") boolean xdr, int version, Object refhook) {
+    public static byte[] serialize(Object obj, int type, int version, Object refhook) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
-            Output output = new Output(out, ascii ? 'A' : 'X', version, (CallHook) refhook);
+            Output output = new Output(out, type, version, (CallHook) refhook);
             State state = new PLState(output);
             output.serialize(state, obj);
             return out.toByteArray();
@@ -2094,8 +2099,8 @@ public class RSerialize {
     }
 
     @TruffleBoundary
-    public static void serialize(RConnection conn, Object obj, boolean ascii, @SuppressWarnings("unused") boolean xdr, int version, Object refhook) throws IOException {
-        Output output = new Output(conn, ascii ? 'A' : 'X', version, (CallHook) refhook);
+    public static void serialize(RConnection conn, Object obj, int type, int version, Object refhook) throws IOException {
+        Output output = new Output(conn, type, version, (CallHook) refhook);
         State state = new PLState(output);
         output.serialize(state, obj);
     }

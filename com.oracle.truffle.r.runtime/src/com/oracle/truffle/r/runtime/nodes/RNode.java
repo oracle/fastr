@@ -199,14 +199,6 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
         return a.getLength() == b.getLength();
     }
 
-    public com.oracle.truffle.api.instrument.WrapperNode createRWrapperNode() {
-        return new com.oracle.truffle.r.runtime.nodes.instrument.RNodeWrapper(this);
-    }
-
-    public boolean isRInstrumentable() {
-        return true;
-    }
-
     private static final long WORK_SCALE_FACTOR = 100;
 
     /**
@@ -224,10 +216,7 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
             if (amount >= WORK_SCALE_FACTOR) {
                 int scaledAmount = (int) (amount / WORK_SCALE_FACTOR);
                 if (amount > 0) {
-                    RootNode root = base.getRootNode();
-                    if (root != null && root.getCallTarget() instanceof LoopCountReceiver) {
-                        ((LoopCountReceiver) root.getCallTarget()).reportLoopCount(scaledAmount);
-                    }
+                    LoopNode.reportLoopCount(base, scaledAmount);
                 }
             }
         }

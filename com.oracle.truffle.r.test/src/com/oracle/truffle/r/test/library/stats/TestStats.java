@@ -144,24 +144,24 @@ public class TestStats extends TestBase {
 
     @Test
     public void testRandomIgnore() {
-        assertEval(Ignored.Unknown, "{ round( rnorm(3,c(1000,2,3),c(10,11)), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ set.seed(7); round( rnorm(3,c(1000,2,3),c(10,11)), digits = 5 ) }");
 
-        assertEval(Ignored.Unknown, "{ round( runif(3), digits = 5 ) }");
-        assertEval(Ignored.Unknown, "{ round( runif(3,1,10), digits = 5 ) }");
-        assertEval(Ignored.Unknown, "{ round( runif(3,1:3,3:2), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ set.seed(7); round( runif(3), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ set.seed(7); round( runif(3,1,10), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ set.seed(7); round( runif(3,1:3,3:2), digits = 5 ) }");
 
-        assertEval(Ignored.Unknown, "{ round( rgamma(3,1), digits = 5 ) }");
-        assertEval(Ignored.Unknown, "{ round( rgamma(3,0.5,scale=1:3), digits = 5 ) }");
-        assertEval(Ignored.Unknown, "{ round( rgamma(3,0.5,rate=1:3), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ set.seed(7); round( rgamma(3,1), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ set.seed(7); round( rgamma(3,0.5,scale=1:3), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ set.seed(7); round( rgamma(3,0.5,rate=1:3), digits = 5 ) }");
 
-        assertEval(Ignored.Unknown, "{ round( rbinom(3,3,0.9), digits = 5 ) }");
-        assertEval(Ignored.Unknown, "{ round( rbinom(3,10,(1:5)/5), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ set.seed(7); round( rbinom(3,3,0.9), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ set.seed(7); round( rbinom(3,10,(1:5)/5), digits = 5 ) }");
 
-        assertEval(Ignored.Unknown, "{ round( rlnorm(3), digits = 5 ) }");
-        assertEval(Ignored.Unknown, "{ round( rlnorm(3,sdlog=c(10,3,0.5)), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ set.seed(7); round( rlnorm(3), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ set.seed(7); round( rlnorm(3,sdlog=c(10,3,0.5)), digits = 5 ) }");
 
-        assertEval(Ignored.Unknown, "{ round( rcauchy(3), digits = 5 ) }");
-        assertEval(Ignored.Unknown, "{ round( rcauchy(3, scale=4, location=1:3), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ set.seed(7); round( rcauchy(3), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ set.seed(7); round( rcauchy(3, scale=4, location=1:3), digits = 5 ) }");
     }
 
     @Test

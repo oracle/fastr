@@ -23,18 +23,15 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.instrument.wrappers.WriteSuperVariableNodeWrapper;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.instrument.NeedsWrapper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -50,7 +47,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * .
  */
 @NodeInfo(cost = NodeCost.NONE)
-@NeedsWrapper
 public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, RSyntaxCall, VisibilityController {
 
     @Child WriteVariableNode writeSuperFrameVariableNode;
@@ -66,19 +62,16 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
     }
 
     @Override
-    @NeedsWrapper
     public Object getName() {
         return writeSuperFrameVariableNode.getName();
     }
 
     @Override
-    @NeedsWrapper
     public RNode getRhs() {
         return writeSuperFrameVariableNode.getRhs();
     }
 
     @Override
-    @NeedsWrapper
     public Object execute(VirtualFrame frame) {
         Object result = writeSuperFrameVariableNode.execute(frame);
         forceVisibility(false);
@@ -86,7 +79,6 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
     }
 
     @Override
-    @NeedsWrapper
     public void execute(VirtualFrame frame, Object value) {
         writeSuperFrameVariableNode.execute(frame, value);
     }
@@ -105,11 +97,6 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
 
     public RSyntaxNode substituteImpl(REnvironment env) {
         throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public WrapperNode createRWrapperNode() {
-        return new WriteSuperVariableNodeWrapper(this);
     }
 
     public RSyntaxElement getSyntaxLHS() {

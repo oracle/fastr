@@ -39,6 +39,9 @@ public abstract class RList2EnvNode extends RBaseNode {
 
     @Specialization
     protected REnvironment doList2Env(RList list, REnvironment env) {
+        if (list.getLength() == 0) {
+            return env;
+        }
         RStringVector names = list.getNames();
         if (names == null) {
             throw RError.error(this, RError.Message.LIST_NAMES_SAME_LENGTH);

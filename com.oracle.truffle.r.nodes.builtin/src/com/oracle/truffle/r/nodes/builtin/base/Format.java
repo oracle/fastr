@@ -24,7 +24,7 @@ import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "format", kind = INTERNAL, parameterNames = {"x", "trim", "digits", "nsmall", "width", "justify", "na.encode", "scientific"})
+@RBuiltin(name = "format", kind = INTERNAL, parameterNames = {"x", "trim", "digits", "nsmall", "width", "justify", "na.encode", "scientific", "decimal.mark"})
 public abstract class Format extends RBuiltinNode {
 
     @Child private CastIntegerNode castInteger;
@@ -102,8 +102,8 @@ public abstract class Format extends RBuiltinNode {
 
     @Specialization
     protected RStringVector format(RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
-                    RLogicalVector naEncodeVec, RAbstractVector sciVec) {
-        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
+                    RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
+        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
         } else {
@@ -161,8 +161,8 @@ public abstract class Format extends RBuiltinNode {
 
     @Specialization
     protected RStringVector format(RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
-                    RLogicalVector naEncodeVec, RAbstractVector sciVec) {
-        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
+                    RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
+        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
         } else {
@@ -227,8 +227,8 @@ public abstract class Format extends RBuiltinNode {
 
     @Specialization
     protected RStringVector format(RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
-                    RLogicalVector naEncodeVec, RAbstractVector sciVec) {
-        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
+                    RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
+        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
         } else {
@@ -237,7 +237,8 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    private void processArguments(RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec, RAbstractVector sciVec) {
+    private void processArguments(RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec, RAbstractVector sciVec,
+                    RAbstractStringVector decimalMark) {
         byte trim = trimVec.getLength() > 0 ? trimVec.getDataAt(0) : RRuntime.LOGICAL_NA;
         int digits = digitsVec.getLength() > 0 ? digitsVec.getDataAt(0) : RRuntime.INT_NA;
         getConfig().digits = digits;
@@ -246,24 +247,29 @@ public abstract class Format extends RBuiltinNode {
         int justify = justifyVec.getLength() > 0 ? justifyVec.getDataAt(0) : RRuntime.INT_NA;
         byte naEncode = naEncodeVec.getLength() > 0 ? naEncodeVec.getDataAt(0) : RRuntime.LOGICAL_NA;
         int sci = computeSciArg(sciVec);
+        String myOutDec = decimalMark.getDataAt(0);
+        if (RRuntime.isNA(myOutDec)) {
+            myOutDec = ".";
+        }
     }
 
     @Specialization
     protected RStringVector format(RAbstractStringVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
-                    RLogicalVector naEncodeVec, RAbstractVector sciVec) {
-        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
+                    RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
+        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
         // TODO: implement full semantics
         return value.materialize();
     }
 
     @Specialization
     protected RStringVector format(RFactor value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
-                    RAbstractVector sciVec) {
-        return format(value.getVector(), trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
+                    RAbstractVector sciVec, RAbstractStringVector decimalMark) {
+        return format(value.getVector(), trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
     }
 
     // TruffleDSL bug - should not need multiple guards here
-    protected void checkArgs(RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec, RAbstractVector sciVec) {
+    protected void checkArgs(RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec, RAbstractVector sciVec,
+                    RAbstractStringVector decimalMark) {
         if (trimVec.getLength() > 0 && RRuntime.isNA(trimVec.getDataAt(0))) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "trim");
@@ -291,6 +297,10 @@ public abstract class Format extends RBuiltinNode {
         if (sciVec.getLength() != 1 || (sciVec.getElementClass() != RLogical.class && sciVec.getElementClass() != RInteger.class && sciVec.getElementClass() != RDouble.class)) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "scientific");
+        }
+        if (decimalMark.getLength() != 1) {
+            errorProfile.enter();
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "decmial.mark");
         }
     }
 

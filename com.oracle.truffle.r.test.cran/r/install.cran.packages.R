@@ -71,7 +71,7 @@ usage <- function() {
                       "[--no-install | -n] [--create-blacklist] [--blacklist-file file] [--ignore-blacklist]",
 					  "[--initial-blacklist-file file]",
 					  "[--testcount count]", "[--ok-pkg-filelist file]",
-					  "[--install.dependents]",
+					  "[--install-dependents]",
 					  "[--run-mode mode]",
 					  "[--pkg-filelist file]",
 					  "[--run-tests]",
@@ -264,14 +264,24 @@ get.installed.pkgs <- function() {
 	pkg.filelist
 }
 
-installed.ok <- function(pkgname) {
+installed.ok <- function(pkgname, initial_error_log_size) {
 	# try to determine if the install was successful
 	# 1. There must be a directory lib.install/pkgname
 	# 2. There must not be a directory lib.install/00LOCK-pkgname
+	# 3. The FastR error log must be the same size
 	if (!file.exists(file.path(lib.install, pkgname))) {
 		return(FALSE)
 	}
 	if (file.exists(file.path("00LOCK-", pkgname))) {
+		return(FALSE)
+	}
+	if (fastr_error_log_size() != initial_error_log_size) {
+		# This is a really nasty case where the error happens during
+		# the test load step. It is not detected by the package
+		# install code and leaves no LOCK file nor does it remove
+		# the faulty package, so it looks like it succeeded.
+		# We delete the package dir here to reflect the failure.
+		unlink(file.path(lib.install, pkgname), recursive=T)
 		return(FALSE)
 	}
 	return(TRUE)
@@ -298,6 +308,60 @@ get.pkgs <- function() {
 	toinstall.pkgs <<-avail.pkgs[matched.avail.pkgs, , drop=F]
 }
 
+# Serially install the packages in pkgnames.
+# Return TRUE if the entire install succeeded, FALSE otherwise
+# If dependents.install=T, this is a nested install of the dependents
+# of one of the initial list. N.B. In this case pkgnames is the
+# transitively computed list so this never recurses more than one level
+install.pkgs <- function(pkgnames, blacklist, dependents.install=F) {
+	if (verbose && !dry.run) {
+		cat("packages to install (+dependents):\n")
+		for (pkgname in pkgnames) {
+			cat(pkgname, "\n")
+		}
+	}
+	install.count = 1
+	install.total = length(pkgnames)
+	result <- TRUE
+	for (pkgname in pkgnames) {
+		dependent.install.ok <- T
+		if (pkgname %in% blacklist) {
+			cat("not installing:", pkgname, " - blacklisted\n")
+		} else {
+			if (!dependents.install && install.dependents) {
+				dependents <- install.order(avail.pkgs, avail.pkgs[pkgname, ])
+				if (length(dependents) > 0) {
+				    cat("installing dependents of:", pkgname, "\n")
+				    dependent.install.ok = install.pkgs(dependents, dependents.install=T, blacklist)
+			    }
+			}
+			if (dry.run) {
+				cat("would install:", pkgname, "\n")
+			} else {
+				if (dependent.install.ok) {
+					if (pkgname %in% names(install.status)) {
+						# already attempted
+						if (!install.status[pkgname]) {
+							# abort this (nested) install
+							return(FALSE)
+						}
+					} else {
+						cat("installing:", pkgname, "(", install.count, "of", install.total, ")", "\n")
+						this.result <- install.package(pkgname)
+						result <- result && this.result
+						if (dependents.install && !this.result) {
+							cat("aborting dependents install\n")
+							return(FALSE)
+						}
+					}
+				}
+			}
+		}
+		install.count = install.count + 1
+	}
+	return(result)
+}
+
 # performs the installation, or logs what it would install if dry.run = T
 # either creates the blacklist or reads it from a file
 do.it <- function() {
@@ -313,56 +377,6 @@ do.it <- function() {
 		} else {
 			blacklist <- readLines(blacklist.file)
 		}
-	}
-
-	# Serially install the packages in pkgnames.
-	# Return TRUE if the entire install succeeded, FALSE otherwise
-	# If are.dependents=T, this is a nested install of the dependents
-	# of one of the initial list.
-	install.pkgs <- function(pkgnames, are.dependents=F) {
-		if (verbose && !dry.run) {
-			cat("packages to install (+dependents):\n")
-			for (pkgname in pkgnames) {
-				cat(pkgname, "\n")
-			}
-		}
-		install.count = 1
-		install.total = length(pkgnames)
-		result <- TRUE
-		for (pkgname in pkgnames) {
-			dependent.install.ok <- T
-			if (pkgname %in% blacklist) {
-				cat("not installing:", pkgname, " - blacklisted\n")
-			} else {
-				if (!are.dependents && install.dependents) {
-					dependents <- install.order(avail.pkgs, avail.pkgs[pkgname, ])
-					dependent.install.ok = install.pkgs(dependents, are.dependents=T)
-				}
-				if (dry.run) {
-					cat("would install:", pkgname, "\n")
-				} else {
-					if (dependent.install.ok) {
-						if (pkgname %in% names(install.status)) {
-							# already attempted
-							if (!install.status[pkgname]) {
-								# abort this (nested) install
-								return(FALSE)
-							}
-						} else {
-							cat("installing:", pkgname, "(", install.count, "of", install.total, ")", "\n")
-							this.result <- install.package(pkgname)
-							result <- result && this.result
-							if (are.dependents && !this.result) {
-								cat("aborting dependents install\n")
-								return(FALSE)
-							}
-						}
-					}
-				}
-			}
-			install.count = install.count + 1
-		}
-		return(result)
 	}
 
 	if (list.versions) {
@@ -391,7 +405,7 @@ do.it <- function() {
 
 	if (install) {
 		cat("BEGIN package installation\n")
-		install.pkgs(test.pkgnames)
+		install.pkgs(test.pkgnames, blacklist)
 		cat("END package installation\n")
 		if (print.ok.installs) {
 			pkgnames.i <- get.installed.pkgs()
@@ -426,7 +440,17 @@ include.package <- function(x, blacklist) {
 	return (!(x["Package"] %in% blacklist || x["Package"] %in% ok.pkg.filelist))
 }
 
+fastr_error_log_size <- function() {
+	size <- file.info("fastr_errors.log")$size
+	if (is.na(size)) {
+		return(0)
+	} else {
+		return(size)
+	}
+}
+
 install.package <- function(pkgname) {
+	error_log_size <- fastr_error_log_size()
 	if (run.mode == "system") {
 		system.install(pkgname)
 	} else if (run.mode == "internal") {
@@ -434,9 +458,9 @@ install.package <- function(pkgname) {
 	} else if (run.mode == "context") {
 		stop("context run-mode not implemented\n")
 	}
-	rc <- installed.ok(pkgname)
+	rc <- installed.ok(pkgname, error_log_size)
 	names(rc) <- pkgname
-	install.status <- append(install.status, rc)
+	install.status <<- append(install.status, rc)
 	return(rc)
 }
 
