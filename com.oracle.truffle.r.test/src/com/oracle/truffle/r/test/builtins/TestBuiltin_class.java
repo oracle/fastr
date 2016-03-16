@@ -187,5 +187,7 @@ public class TestBuiltin_class extends TestBase {
         assertEval("{x<-c(1,2,3);class(x)}");
 
         assertEval("{x<-seq(1,10);class(x)}");
+
+        assertEval("{  gen<-function(object) 0; setGeneric(\"gen\"); class(gen) }");
     }
 }

@@ -21,7 +21,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "class", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class GetClass extends RBuiltinNode {
 
-    @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(true, true);
+    @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(true, false);
 
     @Specialization
     protected RAbstractStringVector getClass(Object x) {
