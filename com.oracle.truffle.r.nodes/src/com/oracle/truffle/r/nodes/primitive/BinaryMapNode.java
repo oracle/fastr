@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,8 @@ public final class BinaryMapNode extends RBaseNode {
     private final VectorLengthProfile rightLengthProfile = VectorLengthProfile.create();
     private final ConditionProfile dimensionsProfile;
     private final ConditionProfile maxLengthProfile;
+    private final ConditionProfile leftIsNAProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile rightIsNAProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile seenEmpty = BranchProfile.create();
     private final ConditionProfile shareLeft;
     private final ConditionProfile shareRight;
@@ -102,8 +104,8 @@ public final class BinaryMapNode extends RBaseNode {
         RAbstractVector left = leftClass.cast(originalLeft);
         RAbstractVector right = rightClass.cast(originalRight);
 
-        RAbstractVector leftCast = left.castSafe(argumentType);
-        RAbstractVector rightCast = right.castSafe(argumentType);
+        RAbstractVector leftCast = left.castSafe(argumentType, leftIsNAProfile);
+        RAbstractVector rightCast = right.castSafe(argumentType, rightIsNAProfile);
 
         assert leftCast != null;
         assert rightCast != null;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -53,29 +54,18 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
         return value;
     }
 
-    public RAbstractVector castSafe(RType type) {
+    @Override
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         switch (type) {
             case Logical:
                 return this;
             case Integer:
-                if (isNA()) {
-                    return RInteger.NA;
-                } else {
-                    return RInteger.valueOf(value);
-                }
+                return isNAProfile.profile(isNA()) ? RInteger.createNA() : RInteger.valueOf(value);
             case Numeric:
             case Double:
-                if (isNA()) {
-                    return RDouble.NA;
-                } else {
-                    return RDouble.valueOf(value);
-                }
+                return isNAProfile.profile(isNA()) ? RDouble.createNA() : RDouble.valueOf(value);
             case Complex:
-                if (isNA()) {
-                    return RComplex.NA;
-                } else {
-                    return RComplex.valueOf(value, 0.0);
-                }
+                return isNAProfile.profile(isNA()) ? RComplex.createNA() : RComplex.valueOf(value, 0.0);
             case Character:
                 return RClosures.createLogicalToStringVector(this);
             case List:

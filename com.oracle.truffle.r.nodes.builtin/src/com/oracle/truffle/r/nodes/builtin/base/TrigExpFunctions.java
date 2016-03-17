@@ -263,7 +263,7 @@ public class TrigExpFunctions {
 
     }
 
-    @RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @com.oracle.truffle.r.runtime.RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Sin extends TrigExpFunctionNode {
 
         @Child private UnaryArithmeticNode sinNode = UnaryArithmeticNodeGen.create(SinArithmetic::new, RType.Double,
@@ -385,7 +385,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "cos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @com.oracle.truffle.r.runtime.RBuiltin(name = "cos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Cos extends TrigExpFunctionNode {
 
         @Child private UnaryArithmeticNode cosNode = UnaryArithmeticNodeGen.create(CosArithmetic::new, RType.Double,
@@ -508,7 +508,7 @@ public class TrigExpFunctions {
 
     }
 
-    @RBuiltin(name = "tan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @com.oracle.truffle.r.runtime.RBuiltin(name = "tan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Tan extends TrigExpFunctionNode {
 
         @Child private UnaryArithmeticNode tanNode = UnaryArithmeticNodeGen.create(TanArithmetic::new, RType.Double,

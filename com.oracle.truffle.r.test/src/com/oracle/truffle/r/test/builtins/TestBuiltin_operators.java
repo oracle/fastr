@@ -1555,8 +1555,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators308() {
-        // GnuR formats !argv[[1]] not as a call
-        assertEval(Ignored.WrongCaller, "argv <- list(list());`|`(argv[[1]]);");
+        assertEval(Output.ContainsError, "argv <- list(list());`|`(argv[[1]]);");
     }
 
     @Test
@@ -1699,7 +1698,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators335() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));`&`(argv[[1]]);");
+        assertEval(Output.ContainsError, "argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));`&`(argv[[1]]);");
     }
 
     @Test
@@ -1746,8 +1745,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators344() {
-        // GnuR formats as &argv[[1]] not as a call
-        assertEval(Ignored.WrongCaller, "argv <- list(list());`&`(argv[[1]]);");
+        assertEval(Output.ContainsError, "argv <- list(list());`&`(argv[[1]]);");
     }
 
     @Test

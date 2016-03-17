@@ -25,14 +25,13 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @ValueType
 public final class RComplex extends RScalarVector implements RAbstractComplexVector {
-
-    public static final RComplex NA = new RComplex(RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART);
 
     private final double realPart;
     private final double imaginaryPart;
@@ -42,12 +41,16 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
         this.imaginaryPart = imaginaryPart;
     }
 
+    public static RComplex createNA() {
+        return RComplex.valueOf(RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART);
+    }
+
     public static RComplex valueOf(double real, double imaginary) {
         return new RComplex(real, imaginary);
     }
 
     @Override
-    public RAbstractVector castSafe(RType type) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         switch (type) {
             case Complex:
                 return this;

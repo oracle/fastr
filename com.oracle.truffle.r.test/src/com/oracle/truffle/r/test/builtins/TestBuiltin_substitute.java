@@ -65,10 +65,10 @@ public class TestBuiltin_substitute extends TestBase {
         assertEval("{ f <- function(expra, exprb) { substitute(expra + exprb) } ; f(a * b, a + b) }");
 
         assertEval("{ f <- function(z) { g <- function(y) { substitute(y)  } ; g(z) } ; f(a + d) }");
-        assertEval(Ignored.ReferenceError, "{ substitute(a[x], list(a = quote(x + y), x = 1)) }");
+        assertEval("{ substitute(a[x], list(a = quote(x + y), x = 1)) }");
         assertEval("{ substitute(x <- x + 1, list(x = 1) }");
 
-        assertEval(Ignored.Unknown, "{ f <- function(y) { substitute(y) } ; f() }");
+        assertEval("{ f <- function(y) { substitute(y) } ; f() }");
         assertEval(Ignored.Unknown, "{ substitute(function(x, a) { x + a }, list(a = quote(x + y), x = 1)) }");
 
         // GNU R generates warning here, but the test has been included nevertheless to make sure

@@ -112,8 +112,8 @@ public class TestUtilities {
         double[] array = new double[size << 1];
         for (int i = 0; i < size; i++) {
             boolean useNA = !complete && i % (NA_INDEX + 1) == NA_INDEX;
-            array[i << 1 - 1] = useNA ? RComplex.NA.getRealPart() : i;
-            array[i << 1] = useNA ? RComplex.NA.getRealPart() : i;
+            array[i << 1 - 1] = useNA ? RComplex.createNA().getRealPart() : i;
+            array[i << 1] = useNA ? RComplex.createNA().getRealPart() : i;
         }
         return RDataFactory.createComplexVector(array, complete || !complete && size < NA_INDEX);
     }

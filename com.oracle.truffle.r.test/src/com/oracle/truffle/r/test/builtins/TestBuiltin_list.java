@@ -64,8 +64,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist9() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(label = '', x = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'unit'), y = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'unit'), just = 'centre', hjust = NULL, vjust = NULL, rot = 0, check.overlap = FALSE, name = NULL, gp = structure(list(), class = 'gpar'), vp = NULL);list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]],argv[[8]],argv[[9]],argv[[10]],argv[[11]]);");
+        assertEval("argv <- list(label = '', x = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'unit'), y = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'unit'), just = 'centre', hjust = NULL, vjust = NULL, rot = 0, check.overlap = FALSE, name = NULL, gp = structure(list(), class = 'gpar'), vp = NULL);list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]],argv[[8]],argv[[9]],argv[[10]],argv[[11]]);");
     }
 
     @Test

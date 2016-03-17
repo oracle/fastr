@@ -62,8 +62,8 @@ public class TestBuiltin_Re extends TestBase {
         assertEval("{ Re(c(1,NA,2)) }");
         assertEval("{ Re(NA+2i) }");
 
-        assertEval(Ignored.Unknown, "{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Re(x) }");
-        assertEval(Ignored.Unknown, "{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Re(x) }");
+        assertEval("{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Re(x) }");
+        assertEval("{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Re(x) }");
 
         assertEval("{ Re(as.raw(12)) }");
     }

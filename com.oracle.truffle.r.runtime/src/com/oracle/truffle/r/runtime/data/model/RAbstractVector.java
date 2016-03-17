@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.interop.*;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -66,7 +67,7 @@ public interface RAbstractVector extends RAbstractContainer, TruffleObject {
      *
      * @see RType#getPrecedence()
      */
-    default RAbstractVector castSafe(RType type) {
+    default RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         if (type == getRType()) {
             return this;
         } else {

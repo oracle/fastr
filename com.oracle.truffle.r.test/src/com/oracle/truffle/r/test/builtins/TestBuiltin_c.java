@@ -83,7 +83,7 @@ public class TestBuiltin_c extends TestBase {
 
     @Test
     public void testc13() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1208822400, class = c('POSIXct', 'POSIXt')), structure(1209168000, class = c('POSIXct', 'POSIXt')));c(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(1208822400, class = c('POSIXct', 'POSIXt')), structure(1209168000, class = c('POSIXct', 'POSIXt')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -222,7 +222,7 @@ public class TestBuiltin_c extends TestBase {
 
     @Test
     public void testc39() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(c(1L, 2L, 4L), 1:3, c(2L, 1L)), class = c('package_version', 'numeric_version')));c(argv[[1]]);");
+        assertEval("argv <- list(structure(list(c(1L, 2L, 4L), 1:3, c(2L, 1L)), class = c('package_version', 'numeric_version')));c(argv[[1]]);");
     }
 
     @Test
@@ -232,8 +232,7 @@ public class TestBuiltin_c extends TestBase {
 
     @Test
     public void testc41() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(1:3), class = c('package_version', 'numeric_version')), structure(list(c(2L, 1L)), class = c('package_version', 'numeric_version')));c(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(1:3), class = c('package_version', 'numeric_version')), structure(list(c(2L, 1L)), class = c('package_version', 'numeric_version')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -351,7 +350,7 @@ public class TestBuiltin_c extends TestBase {
 
     @Test
     public void testc64() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1386393974.25184, class = c('POSIXct', 'POSIXt')), structure(1386393974.25184, class = c('POSIXct', 'POSIXt')));c(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(1386393974.25184, class = c('POSIXct', 'POSIXt')), structure(1386393974.25184, class = c('POSIXct', 'POSIXt')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test

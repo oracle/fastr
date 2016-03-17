@@ -108,21 +108,19 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization
-    protected RStringVector getClassHrStorage(RAttributeStorage arg, //
-                    @Cached("createClassProfile()") ValueProfile argProfile) {
-        return getClassHrAttributableInternal(arg, argProfile);
-    }
-
-    @Specialization(contains = "getClassHrStorage")
     protected RStringVector getClassHrAttributable(RAttributable arg, //
+                    @Cached("createBinaryProfile()") ConditionProfile attrStoraeProfile, //
                     @Cached("createClassProfile()") ValueProfile argProfile) {
-        return getClassHrAttributableInternal(arg, argProfile);
-    }
 
-    protected RStringVector getClassHrAttributableInternal(RAttributable arg, //
-                    @Cached("createClassProfile()") ValueProfile argProfile) {
-        RAttributable profiledArg = argProfile.profile(arg);
-        RAttributes attributes = profiledArg.getAttributes();
+        RAttributes attributes;
+        RAttributable profiledArg;
+        if (attrStoraeProfile.profile(arg instanceof RAttributeStorage)) {
+            attributes = ((RAttributeStorage) arg).getAttributes();
+            profiledArg = arg;
+        } else {
+            profiledArg = argProfile.profile(arg);
+            attributes = profiledArg.getAttributes();
+        }
         if (noAttributesProfile.profile(attributes != null)) {
             if (access == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -130,7 +128,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
             }
             RStringVector classHierarchy = (RStringVector) access.execute(attributes);
             if (nullAttributeProfile.profile(classHierarchy != null)) {
-                if (profiledArg.isS4() && isS4Profile.profile(withS4 && classHierarchy.getLength() > 0)) {
+                if (withS4 && arg.isS4() && isS4Profile.profile(classHierarchy.getLength() > 0)) {
                     if (s4Class == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         s4Class = insert(S4ClassNodeGen.create());
@@ -140,7 +138,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
                 return classHierarchy;
             }
         }
-        return withImplicitTypes ? profiledArg.getImplicitClass() : null;
+        return withImplicitTypes ? arg.getImplicitClass() : null;
     }
 
     protected static boolean isRTypedValue(Object obj) {

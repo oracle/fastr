@@ -56,10 +56,10 @@ public class TestBuiltin_Im extends TestBase {
         // GnuR3.1.3 probably wrongly interprets complex NAs (should be verified)
         assertEval(Ignored.ReferenceError, "{ Im(as.double(NA)) }");
         assertEval(Ignored.ReferenceError, "{ Im(c(1,NA,2)) }");
-        assertEval(Ignored.ReferenceError, "{ Im(NA+2i) }");
+        assertEval("{ Im(NA+2i) }");
 
-        assertEval(Ignored.Unknown, "{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Im(x) }");
-        assertEval(Ignored.Unknown, "{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Im(x) }");
+        assertEval("{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Im(x) }");
+        assertEval("{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Im(x) }");
 
         assertEval("{ Im(as.raw(12)) }");
     }

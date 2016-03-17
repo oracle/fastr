@@ -149,8 +149,7 @@ public class TestBuiltin_subset2 extends TestBase {
 
     @Test
     public void testsubset228() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(Df = c(NA, 1, 1, 1, 1), `Sum of Sq` = c(NA, 25.9509113775335, 2.97247824113524, 0.109090049888117, 0.246974722154086), RSS = c(47.863639350499, 73.8145507280325, 50.8361175916342, 47.9727294003871, 48.1106140726531), AIC = c(26.9442879283302, 30.5758847476115, 25.7275503692601, 24.9738836085411, 25.0111950072736)), .Names = c('Df', 'Sum of Sq', 'RSS', 'AIC'), row.names = c('<none>', '- x1', '- x2', '- x3', '- x4'), class = c('anova', 'data.frame')), 2L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(Df = c(NA, 1, 1, 1, 1), `Sum of Sq` = c(NA, 25.9509113775335, 2.97247824113524, 0.109090049888117, 0.246974722154086), RSS = c(47.863639350499, 73.8145507280325, 50.8361175916342, 47.9727294003871, 48.1106140726531), AIC = c(26.9442879283302, 30.5758847476115, 25.7275503692601, 24.9738836085411, 25.0111950072736)), .Names = c('Df', 'Sum of Sq', 'RSS', 'AIC'), row.names = c('<none>', '- x1', '- x2', '- x3', '- x4'), class = c('anova', 'data.frame')), 2L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test

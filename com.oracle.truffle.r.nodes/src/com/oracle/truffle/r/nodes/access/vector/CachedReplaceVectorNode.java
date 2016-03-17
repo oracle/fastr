@@ -55,6 +55,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final RAttributeProfiles vectorNamesProfile = RAttributeProfiles.create();
     private final RAttributeProfiles positionNamesProfile = RAttributeProfiles.create();
     private final ConditionProfile rightIsShared = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile valueIsNA = ConditionProfile.createBinaryProfile();
     private final BranchProfile rightIsNonTemp = BranchProfile.create();
     private final BranchProfile rightIsTemp = BranchProfile.create();
     private final BranchProfile resizeProfile = BranchProfile.create();
@@ -160,6 +161,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
          * rid of them as much as possible in the future.
          */
         RAbstractVector vector;
+        RLanguage.RepType repType = RLanguage.RepType.UNKNOWN;
         switch (vectorType) {
             case Null:
                 vector = castType.getEmpty();
@@ -173,6 +175,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             case Environment:
                 return doEnvironment((REnvironment) castVector, positions, castValue);
             case Language:
+                repType = RContext.getRRuntimeASTAccess().getRepType((RLanguage) castVector);
                 vector = RContext.getRRuntimeASTAccess().asList((RLanguage) castVector);
                 break;
             case Expression:
@@ -214,7 +217,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 value = copyValueOnAssignment(value);
             }
         } else if (value instanceof RAbstractVector) {
-            value = ((RAbstractVector) value).castSafe(castType);
+            value = ((RAbstractVector) value).castSafe(castType, valueIsNA);
         }
 
         vector = share(vector);
@@ -285,7 +288,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
         switch (vectorType) {
             case Language:
-                return RContext.getRRuntimeASTAccess().fromList((RList) vector);
+                return RContext.getRRuntimeASTAccess().fromList((RList) vector, repType);
             default:
                 return vector;
         }
