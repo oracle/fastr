@@ -56,6 +56,7 @@ import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -177,7 +178,9 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     result = ((RSyntaxFunction) s).getSyntaxBody();
                     break;
                 case 3:
-                    throw RInternalError.unimplemented("srcref of 'function'");
+                    // TODO: handle srcref properly - for now, clearly mark an erroneous access to
+                    // this piece of data
+                    return new RArgsValuesAndNames(new String[]{"DUMMY UNIMPLEMENTED SRCREF"}, ArgumentsSignature.get("dummy"));
                 default:
                     throw RInternalError.shouldNotReachHere();
             }
