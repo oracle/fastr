@@ -42,6 +42,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public interface RRuntimeASTAccess {
     /**
+     * Retrieves a type of RLanguage object's representation.
+     */
+    RLanguage.RepType getRepType(RLanguage rl);
+
+    /**
      * Computes the "length" of the language element as per the R specification.
      */
     int getLength(RLanguage rl);
@@ -62,7 +67,7 @@ public interface RRuntimeASTAccess {
      * object whose rep is a {@code RCallNode}, with the first list element as the function and the
      * remainder as the arguments.
      */
-    Object fromList(RList list);
+    Object fromList(RList list, RLanguage.RepType repType);
 
     /**
      * Get the "names" attribute for an {@link RLanguage} object, or {@code null} if none.

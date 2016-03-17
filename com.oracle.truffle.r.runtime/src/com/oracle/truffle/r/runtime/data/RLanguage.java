@@ -45,6 +45,15 @@ import com.oracle.truffle.r.runtime.nodes.*;
 @ValueType
 public class RLanguage extends RSharingAttributeStorage implements RAbstractContainer, RAttributable, RShareable {
 
+    /*
+     * Used for RLanguage construction from separate AST components.
+     */
+    public enum RepType {
+        CALL,
+        FUNCTION,
+        UNKNOWN
+    }
+
     private RBaseNode rep;
 
     /**

@@ -22,12 +22,17 @@
  */
 package com.oracle.truffle.r.engine;
 
+import java.util.List;
+import java.util.LinkedList;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -38,6 +43,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
@@ -62,6 +68,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -70,6 +77,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -77,6 +85,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
+import com.sun.org.apache.bcel.internal.generic.NEW;
 
 /**
  * Implementation of {@link RRuntimeASTAccess}.
@@ -127,6 +137,20 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @TruffleBoundary
     @Override
+    public RLanguage.RepType getRepType(RLanguage rl) {
+        RSyntaxElement s = RASTUtils.unwrap(rl.getRep()).asRSyntaxNode();
+
+        if (s instanceof RSyntaxCall) {
+            return RLanguage.RepType.CALL;
+        } else if (s instanceof RSyntaxFunction) {
+            return RLanguage.RepType.FUNCTION;
+        } else {
+            throw RInternalError.shouldNotReachHere("unexpected type: " + s.getClass());
+        }
+    }
+
+    @TruffleBoundary
+    @Override
     public int getLength(RLanguage rl) {
         RSyntaxElement s = RASTUtils.unwrap(rl.getRep()).asRSyntaxNode();
 
@@ -170,7 +194,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
                     Object list = RNull.instance;
                     for (int i = sig.getLength() - 1; i >= 0; i--) {
-                        list = RDataFactory.createPairList(defaults[i] == null ? RDataFactory.createSymbolInterned("") : getIntrinsicValue(defaults[i]), list,
+                        list = RDataFactory.createPairList(defaults[i] == null ? RSymbol.MISSING : getIntrinsicValue(defaults[i]), list,
                                         RDataFactory.createSymbolInterned(sig.getName(i)));
                     }
                     return list;
@@ -200,11 +224,11 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @TruffleBoundary
-    public Object fromList(RList list) {
+    public Object fromList(RList list, RLanguage.RepType repType) {
         int length = list.getLength();
         if (length == 0) {
             return RNull.instance;
-        } else {
+        } else if (repType == RLanguage.RepType.CALL) {
             RStringVector formals = list.getNames();
             boolean nullFormals = formals == null;
             RNode fn = unwrapToRNode(list.getDataAtAsObject(0));
@@ -220,6 +244,23 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             }
             RLanguage result = RDataFactory.createLanguage(RASTUtils.createCall(fn, false, ArgumentsSignature.get(sigNames), arguments).asRNode());
             return result;
+        } else if (repType == RLanguage.RepType.FUNCTION) {
+            RList argsList = (RList) list.getDataAt(1);
+            RSyntaxNode body = (RSyntaxNode) unwrapToRNode(list.getDataAt(2));
+            List<Argument<RSyntaxNode>> resArgs = new LinkedList<>();
+            RStringVector argsNames = argsList.getNames();
+            for (int i = 0; i < argsList.getLength(); i++) {
+                String argName = argsNames == null ? null : argsNames.getDataAt(i);
+                Object argVal = argsList.getDataAt(i);
+                Argument<RSyntaxNode> arg = RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, argName, argVal == RSymbol.MISSING ? null : (RSyntaxNode) unwrapToRNode(argVal));
+                resArgs.add(arg);
+            }
+            RootCallTarget rootCallTarget = new RASTBuilder().rootFunction(RSyntaxNode.LAZY_DEPARSE, resArgs, body, null);
+            FunctionExpressionNode fnExprNode = FunctionExpressionNode.create(RSyntaxNode.LAZY_DEPARSE, rootCallTarget);
+            RLanguage result = RDataFactory.createLanguage(fnExprNode);
+            return result;
+        } else {
+            throw RInternalError.shouldNotReachHere("unexpected type");
         }
     }
 

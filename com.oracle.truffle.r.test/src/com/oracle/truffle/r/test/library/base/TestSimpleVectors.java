@@ -685,6 +685,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-quote(function(x, y) 42); typeof(x[[2]][[1]]) }");
         assertEval("{ x<-quote(function(x, y) 42); names(x[[2]]) }");
         assertEval("{ x<-quote(function(x, y=7) 42); x[[2]] }");
+
+        assertEval("{ f<-quote(function(x=42) x); f[[2]]$x<-7; eval(f)() }");
     }
 
     @Test

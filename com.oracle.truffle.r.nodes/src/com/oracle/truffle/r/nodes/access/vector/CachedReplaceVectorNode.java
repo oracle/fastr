@@ -161,6 +161,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
          * rid of them as much as possible in the future.
          */
         RAbstractVector vector;
+        RLanguage.RepType repType = RLanguage.RepType.UNKNOWN;
         switch (vectorType) {
             case Null:
                 vector = castType.getEmpty();
@@ -174,6 +175,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             case Environment:
                 return doEnvironment((REnvironment) castVector, positions, castValue);
             case Language:
+                repType = RContext.getRRuntimeASTAccess().getRepType((RLanguage) castVector);
                 vector = RContext.getRRuntimeASTAccess().asList((RLanguage) castVector);
                 break;
             case Expression:
@@ -286,7 +288,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
         switch (vectorType) {
             case Language:
-                return RContext.getRRuntimeASTAccess().fromList((RList) vector);
+                return RContext.getRRuntimeASTAccess().fromList((RList) vector, repType);
             default:
                 return vector;
         }
