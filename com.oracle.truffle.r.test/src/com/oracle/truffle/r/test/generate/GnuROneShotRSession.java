@@ -38,13 +38,14 @@ import com.oracle.truffle.r.test.TestBase;
  * currently some differences in behavior (TBD). Which R is used is controlled by the environment
  * variable {@code FASTR_TESTGEN_GNUR}. If unset, we take the default, which is currently the system
  * installed version (more precisely whatever "R" resolves to on the PATH). If
- * {@code FASTR_TESTGEN_GNUR} is set to {@code internal}, we use the internally built GnuR. Any
- * other value behaves as if it was unset. {@code PATH}.
+ * {@code FASTR_TESTGEN_GNUR} is set to {@code internal} or the empty string, we use the internally
+ * built GnuR. Any other value is treated as a path to a directory assumed to contain an R HOME, i.e
+ * the executable used is {@code $FASTR_TESTGEN_GNUR/bin/R}.
  */
 public class GnuROneShotRSession implements RSession {
 
     private static final String[] GNUR_COMMANDLINE = new String[]{"R", "--vanilla", "--slave", "--silent"};
-    private static final String SYSTEM_GNUR_ENV = "FASTR_TESTGEN_GNUR";
+    private static final String FASTR_TESTGEN_GNUR = "FASTR_TESTGEN_GNUR";
     private static final String NATIVE_PROJECT = "com.oracle.truffle.r.native";
 
     //@formatter:off
@@ -61,10 +62,15 @@ public class GnuROneShotRSession implements RSession {
     protected static byte[] QUIT = "q()\n".getBytes();
 
     protected Process createGnuR() throws IOException {
-        String testGenGnuR = System.getenv(SYSTEM_GNUR_ENV);
-        if (testGenGnuR != null && testGenGnuR.equals("internal")) {
-            Path gnuRPath = FileSystems.getDefault().getPath(REnvVars.rHome(), NATIVE_PROJECT, "gnur", "R-" + RVersionNumber.FULL, "bin", "R");
-            GNUR_COMMANDLINE[0] = gnuRPath.toString();
+        String testGenGnuR = System.getenv(FASTR_TESTGEN_GNUR);
+        if (testGenGnuR != null) {
+            if (testGenGnuR.length() == 0 || testGenGnuR.equals("internal")) {
+                Path gnuRPath = FileSystems.getDefault().getPath(REnvVars.rHome(), NATIVE_PROJECT, "gnur", RVersionNumber.R_HYPHEN_FULL, "bin", "R");
+                GNUR_COMMANDLINE[0] = gnuRPath.toString();
+            } else {
+                GNUR_COMMANDLINE[0] = FileSystems.getDefault().getPath(testGenGnuR, "bin", "R").toString();
+            }
+
         }
         ProcessBuilder pb = new ProcessBuilder(GNUR_COMMANDLINE);
         // fix time zone to "CET" (to create consistent expected output)
@@ -113,5 +119,10 @@ public class GnuROneShotRSession implements RSession {
 
     public String name() {
         return "GnuR one-shot";
+    }
+
+    public static void main(String[] args) {
+        String testGenGnuR = System.getenv(FASTR_TESTGEN_GNUR);
+        System.out.printf("%s='%s'%n", FASTR_TESTGEN_GNUR, testGenGnuR);
     }
 }

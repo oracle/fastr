@@ -436,14 +436,31 @@ def testgen(args):
     # check we are in the home directory
     if os.getcwd() != _fastr_suite.dir:
         mx.abort('must run rtestgen from FastR home directory')
-    # check the version of GnuR against FastR
-    try:
-        fastr_version = subprocess.check_output([mx.get_jdk().java, '-cp', mx.classpath('com.oracle.truffle.r.runtime'), 'com.oracle.truffle.r.runtime.RVersionNumber'])
-        gnur_version = subprocess.check_output(['R', '--version'])
-        if not gnur_version.startswith(fastr_version):
-            mx.abort('R version is incompatible with FastR, please update to ' + fastr_version)
-    except subprocess.CalledProcessError:
-        mx.abort('RVersionNumber.main failed')
+
+    def need_version_check():
+        vardef = os.environ.has_key('FASTR_TESTGEN_GNUR')
+        varval = os.environ['FASTR_TESTGEN_GNUR'] if vardef else None
+        version_check = not vardef or varval != 'internal'
+        if version_check:
+            if vardef and varval != 'internal':
+                rpath = join(varval, 'bin', 'R')
+            else:
+                rpath = 'R'
+        else:
+            rpath = None
+        return version_check, rpath
+
+    version_check, rpath = need_version_check()
+    if version_check:
+        # check the version of GnuR against FastR
+        try:
+            fastr_version = subprocess.check_output([mx.get_jdk().java, '-cp', mx.classpath('com.oracle.truffle.r.runtime'), 'com.oracle.truffle.r.runtime.RVersionNumber'])
+            gnur_version = subprocess.check_output([rpath, '--version'])
+            if not gnur_version.startswith(fastr_version):
+                mx.abort('R version is incompatible with FastR, please update to ' + fastr_version)
+        except subprocess.CalledProcessError:
+            mx.abort('RVersionNumber.main failed')
+
     # clean the test project to invoke the test analyzer AP
     testOnly = ['--projects', 'com.oracle.truffle.r.test']
     mx.clean(['--no-dist', ] + testOnly)
