@@ -118,10 +118,15 @@ public abstract class AsFunction extends RBuiltinNode {
             }
         }
 
-        if (!(x.getDataAt(x.getLength() - 1) instanceof RLanguage)) {
+        RBaseNode body;
+        Object bodyObject = x.getDataAt(x.getLength() - 1);
+        if (bodyObject instanceof RLanguage) {
+            body = ((RLanguage) x.getDataAt(x.getLength() - 1)).getRep();
+        } else if (bodyObject instanceof RSymbol) {
+            body = ReadVariableNode.create(((RSymbol) bodyObject).getName());
+        } else {
             throw RInternalError.unimplemented();
         }
-        RBaseNode body = ((RLanguage) x.getDataAt(x.getLength() - 1)).getRep();
         if (!RBaseNode.isRSyntaxNode(body)) {
             throw RInternalError.unimplemented();
         }
