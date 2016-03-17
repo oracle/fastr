@@ -54,6 +54,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
         return null;
     }
 
+    @Override
     public abstract Object getValue();
 
     @Override

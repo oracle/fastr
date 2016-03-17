@@ -70,10 +70,12 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return data;
     }
 
+    @Override
     public int getDataAt(int index) {
         return data[index];
     }
 
+    @Override
     public int getDataAt(Object store, int index) {
         assert data == store;
         return ((int[]) store)[index];
@@ -158,6 +160,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
+    @Override
     public RIntVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createIntVector(data, isComplete(), newDimensions);
     }
@@ -208,6 +211,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return RDataFactory.createIntVector(copyResizedData(size, fillNA), isComplete);
     }
 
+    @Override
     public RIntVector materialize() {
         return this;
     }

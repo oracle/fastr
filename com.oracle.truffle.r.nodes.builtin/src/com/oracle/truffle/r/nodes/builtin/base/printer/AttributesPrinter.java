@@ -35,6 +35,7 @@ public class AttributesPrinter implements ValuePrinter<RAttributable> {
         this.useSlots = useSlots;
     }
 
+    @Override
     public void print(RAttributable value, PrintContext printCtx) throws IOException {
         RAttributes attrs = value.getAttributes();
         if (attrs == null) {

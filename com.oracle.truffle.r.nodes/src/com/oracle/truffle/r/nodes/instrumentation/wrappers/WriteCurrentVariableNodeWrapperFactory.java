@@ -96,6 +96,7 @@ public class WriteCurrentVariableNodeWrapperFactory implements InstrumentableFac
 
     }
 
+    @Override
     public com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode createWrapper(WriteCurrentVariableNode node, ProbeNode probe) {
         return new WriteCurrentVariableNodeWrapper(node, probe);
     }

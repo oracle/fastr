@@ -64,6 +64,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         }
     }
 
+    @Override
     public byte getRawDataAt(int index) {
         return data[index];
     }
@@ -74,6 +75,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return ((byte[]) store)[index];
     }
 
+    @Override
     public byte[] getInternalStore() {
         return data;
     }
@@ -104,6 +106,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return true;
     }
 
+    @Override
     public RRaw getDataAt(int i) {
         return RDataFactory.createRaw(data[i]);
     }
@@ -143,6 +146,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
+    @Override
     public RRawVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createRawVector(data, newDimensions);
     }
@@ -152,6 +156,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return getDataAt(index).toString();
     }
 
+    @Override
     public RRawVector materialize() {
         return this;
     }

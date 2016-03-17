@@ -39,6 +39,7 @@ public class CRFFI_JNR_Invoke implements CRFFI {
      * array (call by reference for scalars). As we already loaded the library and looked up the
      * symbol address we don't need to use JNR for that.
      */
+    @Override
     public void invoke(long address, Object[] args) {
         ParameterType[] parameterTypes = new ParameterType[args.length];
         for (int i = 0; i < args.length; i++) {

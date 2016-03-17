@@ -21,7 +21,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -232,6 +231,7 @@ public class HiddenInternalFunctions {
             }
             try {
                 RSerialize.CallHook callHook = new RSerialize.CallHook() {
+                    @Override
                     public Object eval(Object arg) {
                         Object[] callArgs = RArguments.create(envhook, caller, null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
                         return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
@@ -359,6 +359,7 @@ public class HiddenInternalFunctions {
             }
 
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
+                @Override
                 public Object eval(Object arg) {
                     Object[] callArgs = RArguments.create(hook, caller, null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
                     return callCache.execute(new SubstituteVirtualFrame(frame), hook.getTarget(), callArgs);

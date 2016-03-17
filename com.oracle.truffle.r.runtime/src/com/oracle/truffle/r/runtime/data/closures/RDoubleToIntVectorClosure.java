@@ -31,6 +31,7 @@ public class RDoubleToIntVectorClosure extends RToIntVectorClosure implements RA
         super(vector);
     }
 
+    @Override
     public int getDataAt(int index) {
         double value = ((RAbstractDoubleVector) vector).getDataAt(index);
         if (Double.isNaN(value)) {

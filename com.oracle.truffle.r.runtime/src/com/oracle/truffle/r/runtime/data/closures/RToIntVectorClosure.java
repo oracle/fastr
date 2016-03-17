@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,10 +31,12 @@ public abstract class RToIntVectorClosure extends RToVectorClosure implements RA
         super(vector);
     }
 
+    @Override
     public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createIntVector(new int[newLength], newIsComplete);
     }
 
+    @Override
     public final RIntVector materialize() {
         int length = getLength();
         int[] result = new int[length];

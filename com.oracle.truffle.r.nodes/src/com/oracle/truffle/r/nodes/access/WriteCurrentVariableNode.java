@@ -103,14 +103,17 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
         return create(RSyntaxNode.EAGER_DEPARSE, name, rhsSub);
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return RSyntaxLookup.createDummyLookup(null, "<-", true);
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(getSourceSection(), (String) getName(), false), getRhs().asRSyntaxNode()};
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ArgumentsSignature.empty(2);
     }

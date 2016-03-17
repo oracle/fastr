@@ -66,6 +66,7 @@ public class RExternalPtr extends RAttributeStorage implements RTypedValue {
         this.prot = prot;
     }
 
+    @Override
     public RType getRType() {
         return RType.ExternalPtr;
     }

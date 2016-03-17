@@ -141,6 +141,7 @@ public class TextConnections {
             throw RError.nyi(null, "readChar on text connection");
         }
 
+        @Override
         public String[] getValue() {
             throw RError.nyi(null, "textConnectionValue");
         }
@@ -277,6 +278,7 @@ public class TextConnections {
             throw RError.nyi(null, "writeBin on text connection");
         }
 
+        @Override
         public String[] getValue() {
             throw RError.nyi(null, "textConnectionValue");
         }

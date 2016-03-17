@@ -73,6 +73,7 @@ public final class RNodeWrapperFactory implements InstrumentableFactory<RNode> {
 
     }
 
+    @Override
     public com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode createWrapper(RNode node, ProbeNode probe) {
         return new RNodeWrapper(node, probe);
     }

@@ -96,15 +96,18 @@ public class RNodeTimer {
             return timeInfoMap;
         }
 
+        @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             getTimeInfo(context).enterTime = System.nanoTime();
         }
 
+        @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
             TimeInfo timeInfo = getTimeInfo(context);
             timeInfo.cumulativeTime += System.nanoTime() - timeInfo.enterTime;
         }
 
+        @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
             onReturnValue(context, frame, exception);
         }
@@ -173,6 +176,7 @@ public class RNodeTimer {
                 this.time += t;
             }
 
+            @Override
             public int compareTo(TimingData o) {
                 if (time < o.time) {
                     return 1;
@@ -189,6 +193,7 @@ public class RNodeTimer {
             private boolean stmts;
             private int threshold;
 
+            @Override
             public void initialize(String optionText) {
                 if (optionText.length() > 0) {
                     String[] subOptions = optionText.split(":");
@@ -202,6 +207,7 @@ public class RNodeTimer {
                 }
             }
 
+            @Override
             public String getName() {
                 return NAME;
             }
@@ -212,6 +218,7 @@ public class RNodeTimer {
              * target splitting. Functions that consumed less time than requested threshold (default
              * 0) are not included in the report. The report is sorted by cumulative time.
              */
+            @Override
             public void report() {
                 Map<FunctionUID, TimingData> functionMap = new TreeMap<>();
 

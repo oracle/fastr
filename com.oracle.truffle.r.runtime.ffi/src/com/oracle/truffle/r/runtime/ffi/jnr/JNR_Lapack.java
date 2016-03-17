@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,6 +86,7 @@ public class JNR_Lapack implements LapackRFFI {
         return LapackProvider.lapack();
     }
 
+    @Override
     @TruffleBoundary
     public void ilaver(int[] version) {
         int[] major = new int[1];
@@ -97,6 +98,7 @@ public class JNR_Lapack implements LapackRFFI {
         version[2] = patch[0];
     }
 
+    @Override
     @TruffleBoundary
     public int dgeev(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi, double[] vl, int ldvl, double[] vr, int ldvr, double[] work, int lwork) {
         int[] info = new int[1];
@@ -104,6 +106,7 @@ public class JNR_Lapack implements LapackRFFI {
         return info[0];
     }
 
+    @Override
     @TruffleBoundary
     public int dgeqp3(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork) {
         int[] info = new int[1];
@@ -111,6 +114,7 @@ public class JNR_Lapack implements LapackRFFI {
         return info[0];
     }
 
+    @Override
     @TruffleBoundary
     public int dormqr(char side, char trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork) {
         int[] info = new int[1];
@@ -118,6 +122,7 @@ public class JNR_Lapack implements LapackRFFI {
         return info[0];
     }
 
+    @Override
     @TruffleBoundary
     public int dtrtrs(char uplo, char trans, char diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb) {
         int[] info = new int[1];
@@ -125,6 +130,7 @@ public class JNR_Lapack implements LapackRFFI {
         return info[0];
     }
 
+    @Override
     @TruffleBoundary
     public int dgetrf(int m, int n, double[] a, int lda, int[] ipiv) {
         int[] info = new int[1];
@@ -132,6 +138,7 @@ public class JNR_Lapack implements LapackRFFI {
         return info[0];
     }
 
+    @Override
     @TruffleBoundary
     public int dpotrf(char uplo, int n, double[] a, int lda) {
         int[] info = new int[1];
@@ -139,6 +146,7 @@ public class JNR_Lapack implements LapackRFFI {
         return info[0];
     }
 
+    @Override
     @TruffleBoundary
     public int dpstrf(char uplo, int n, double[] a, int lda, int[] piv, int[] rank, double tol, double[] work) {
         int[] info = new int[1];
@@ -146,6 +154,7 @@ public class JNR_Lapack implements LapackRFFI {
         return info[0];
     }
 
+    @Override
     @TruffleBoundary
     public int dgesv(int n, int nrhs, double[] a, int lda, int[] ipiv, double[] b, int ldb) {
         int[] info = new int[1];
@@ -153,11 +162,13 @@ public class JNR_Lapack implements LapackRFFI {
         return info[0];
     }
 
+    @Override
     @TruffleBoundary
     public double dlange(char norm, int m, int n, double[] a, int lda, double[] work) {
         return lapack().dlange_(wrapChar(norm), wrapInt(m), wrapInt(n), a, wrapInt(lda), work);
     }
 
+    @Override
     @TruffleBoundary
     public int dgecon(char norm, int n, double[] a, int lda, double anorm, double[] rcond, double[] work, int[] iwork) {
         int[] info = new int[1];

@@ -159,6 +159,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, RSyntaxCall,
         return new BlockNode(RSyntaxNode.EAGER_DEPARSE, sequenceSubs);
     }
 
+    @Override
     public void setSourceSection(SourceSection sourceSection) {
         assert sourceSection != null;
         this.sourceSectionR = sourceSection;
@@ -169,14 +170,17 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, RSyntaxCall,
         return sourceSectionR;
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return RSyntaxLookup.createDummyLookup(getSourceSection(), "{", true);
     }
 
+    @Override
     public RSyntaxNode[] getSyntaxArguments() {
         return RASTUtils.asSyntaxNodes(sequence);
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ArgumentsSignature.empty(sequence.length);
     }

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -313,7 +313,7 @@ public class LaFunctions {
             RDoubleVector modulusVec = RDataFactory.createDoubleVectorFromScalar(modulus);
             modulusVec.setAttr("logarithm", useLogIn);
             RList result = RDataFactory.createList(new Object[]{modulusVec, sign}, NAMES_VECTOR);
-            RList.setVectorClassAttr(result, DET_CLASS, null, null);
+            RVector.setVectorClassAttr(result, DET_CLASS, null, null);
             return result;
         }
     }

@@ -29,6 +29,7 @@ public final class NullPrinter implements ValuePrinter<RNull> {
 
     public static NullPrinter INSTANCE = new NullPrinter();
 
+    @Override
     public void print(RNull value, PrintContext printCtx) {
         printCtx.output().print(RRuntime.NULL);
     }

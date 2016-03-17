@@ -142,7 +142,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     }
 
     protected BinaryBooleanNode createRecursive() {
-        return BinaryBooleanNodeGen.create(factory);
+        return BinaryBooleanNode.create(factory);
     }
 
     @Specialization(guards = {"isFactor(left) || isFactor(right)", "!meaningfulFactorOp(left, right)"})

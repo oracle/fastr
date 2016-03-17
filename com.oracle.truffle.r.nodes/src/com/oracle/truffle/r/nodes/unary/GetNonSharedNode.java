@@ -66,6 +66,7 @@ public abstract class GetNonSharedNode extends RNode implements RSyntaxNode {
         throw RInternalError.unimplemented("serializeImpl");
     }
 
+    @Override
     public void setSourceSection(SourceSection sourceSection) {
         throw RInternalError.shouldNotReachHere();
     }

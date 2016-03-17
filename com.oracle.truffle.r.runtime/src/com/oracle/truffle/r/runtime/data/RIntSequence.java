@@ -40,6 +40,7 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         this.stride = stride;
     }
 
+    @Override
     public int getDataAt(int index) {
         assert index >= 0 && index < getLength();
         return start + stride * index;
@@ -106,10 +107,12 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         return start + (getLength() - 1) * stride;
     }
 
+    @Override
     public RIntVector materialize() {
         return this.internalCreateVector();
     }
 
+    @Override
     public RStringVector getImplicitClass() {
         return RIntVector.implicitClassHeader;
     }

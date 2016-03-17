@@ -47,6 +47,7 @@ public abstract class RConnection extends RAttributeStorage implements RTypedVal
 
     public abstract String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException;
 
+    @Override
     public RType getRType() {
         return RType.Integer;
     }
@@ -187,6 +188,7 @@ public abstract class RConnection extends RAttributeStorage implements RTypedVal
      * Closes the internal state of the stream, but does not set the connection state to "closed",
      * i.e., allowing it to be re-opened.
      */
+    @Override
     public abstract void close() throws IOException;
 
     /**
@@ -322,66 +324,83 @@ public abstract class RConnection extends RAttributeStorage implements RTypedVal
      * transform to an RConnection via a class update.
      */
 
+    @Override
     public boolean isComplete() {
         return true;
     }
 
+    @Override
     public int getLength() {
         return 1;
     }
 
+    @Override
     public RAbstractContainer resize(int size) {
         return this;
     }
 
+    @Override
     public boolean hasDimensions() {
         return false;
     }
 
+    @Override
     public int[] getDimensions() {
         return null;
     }
 
+    @Override
     public void setDimensions(int[] newDimensions) {
     }
 
+    @Override
     public Class<?> getElementClass() {
         return RInteger.class;
     }
 
+    @Override
     public RAbstractContainer materializeNonShared() {
         return this;
     }
 
+    @Override
     public RShareable materializeToShareable() {
         throw RInternalError.shouldNotReachHere();
     }
 
+    @Override
     public Object getDataAtAsObject(int index) {
         return getDescriptor();
     }
 
+    @Override
     public RStringVector getNames(RAttributeProfiles attrProfiles) {
         return null;
     }
 
+    @Override
     public void setNames(RStringVector newNames) {
     }
 
+    @Override
     public RList getDimNames(RAttributeProfiles attrProfiles) {
         return null;
     }
 
+    @Override
     public void setDimNames(RList newDimNames) {
     }
 
+    @Override
     public Object getRowNames(RAttributeProfiles attrProfiles) {
         return null;
     }
 
+    @Override
     public void setRowNames(RAbstractVector rowNames) {
     }
 
+    @Override
     public boolean isObject(RAttributeProfiles attrProfiles) {
         return true;
     }

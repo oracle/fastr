@@ -22,13 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.primitive;
 
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
 
 @SuppressWarnings("unused")
 public abstract class UnaryMapFunctionNode extends RBaseNode {

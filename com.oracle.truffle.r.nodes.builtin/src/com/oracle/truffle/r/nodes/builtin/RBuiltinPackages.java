@@ -172,6 +172,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
      * {@link RBuiltinKind#INTERNAL}. N.B. special functions are not explicitly denoted currently,
      * only by virtue of the {@link RBuiltin#nonEvalArgs} attribute.
      */
+    @Override
     public boolean isPrimitiveBuiltin(String name) {
         RBuiltinPackage pkg = basePackage;
         RBuiltinDescriptor rbf = pkg.lookupByName(name);

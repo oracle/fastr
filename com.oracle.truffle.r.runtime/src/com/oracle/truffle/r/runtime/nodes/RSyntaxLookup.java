@@ -39,14 +39,17 @@ public interface RSyntaxLookup extends RSyntaxElement {
     static RSyntaxLookup createDummyLookup(SourceSection originalSource, String identifier, boolean isFunctionLookup) {
         SourceSection source = originalSource == null ? null : originalSource.getSource().createSection(null, originalSource.getCharIndex(), 1);
         return new RSyntaxLookup() {
+            @Override
             public SourceSection getSourceSection() {
                 return source;
             }
 
+            @Override
             public String getIdentifier() {
                 return identifier;
             }
 
+            @Override
             public boolean isFunctionLookup() {
                 return isFunctionLookup;
             }

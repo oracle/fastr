@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -272,15 +272,18 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
             hist.inc(effectiveSizeNow);
         }
 
+        @Override
         public void initialize(String optionText) {
             stats = this;
         }
 
+        @Override
         public String getName() {
             return "attributes";
 
         }
 
+        @Override
         public void report() {
             RPerfStats.out().printf("RAttributes: %d, max size %d%n", hist.getTotalCount(), hist.getMaxSize());
             hist.report();

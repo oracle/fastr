@@ -54,6 +54,7 @@ public class RFactorToComplexVectorClosure extends RToComplexVectorClosure imple
         }
     }
 
+    @Override
     public RComplex getDataAt(int index) {
         int val = ((RIntVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(val)) {

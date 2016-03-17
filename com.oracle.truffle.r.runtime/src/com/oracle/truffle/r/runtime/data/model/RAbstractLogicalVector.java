@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,12 +43,15 @@ public interface RAbstractLogicalVector extends RAbstractVector {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     default void setNA(Object store, int index) {
         setDataAt(store, index, RRuntime.LOGICAL_NA);
     }
 
+    @Override
     RLogicalVector materialize();
 
+    @Override
     default boolean checkCompleteness() {
         for (int i = 0; i < getLength(); i++) {
             if (RRuntime.isNA(getDataAt(i))) {
@@ -58,10 +61,12 @@ public interface RAbstractLogicalVector extends RAbstractVector {
         return true;
     }
 
+    @Override
     default RType getRType() {
         return RType.Logical;
     }
 
+    @Override
     default Class<?> getElementClass() {
         return RLogical.class;
     }

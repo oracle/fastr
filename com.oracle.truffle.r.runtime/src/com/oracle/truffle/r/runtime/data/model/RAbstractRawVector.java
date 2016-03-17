@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@ public interface RAbstractRawVector extends RAbstractVector {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     default void setNA(Object store, int index) {
     }
 
@@ -48,16 +49,20 @@ public interface RAbstractRawVector extends RAbstractVector {
 
     byte getRawDataAt(int index);
 
+    @Override
     RRawVector materialize();
 
+    @Override
     default boolean checkCompleteness() {
         return true;
     }
 
+    @Override
     default RType getRType() {
         return RType.Raw;
     }
 
+    @Override
     default Class<?> getElementClass() {
         return RRaw.class;
     }

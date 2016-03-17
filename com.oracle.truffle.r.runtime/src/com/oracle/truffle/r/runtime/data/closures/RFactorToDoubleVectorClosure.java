@@ -56,6 +56,7 @@ public class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure impleme
         }
     }
 
+    @Override
     public double getDataAt(int index) {
         int val = ((RIntVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(val)) {

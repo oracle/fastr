@@ -37,6 +37,7 @@ public final class StatsFunctions {
     }
 
     public interface Function3_1 extends Function3_2 {
+        @Override
         default double evaluate(double a, double b, double c, boolean x, boolean y) {
             return evaluate(a, b, c, x);
         }

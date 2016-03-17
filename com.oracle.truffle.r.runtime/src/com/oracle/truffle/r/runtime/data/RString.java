@@ -62,11 +62,13 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
         return value;
     }
 
+    @Override
     public String getDataAt(int index) {
         assert index == 0;
         return value;
     }
 
+    @Override
     public RStringVector materialize() {
         return RDataFactory.createStringVector(new String[]{getValue()}, isComplete());
     }

@@ -22,10 +22,12 @@ public final class MarsagliaMulticarry extends RNGInitAdapter {
 
     private final int[] state = new int[2];
 
+    @Override
     public void init(int seed) {
         super.init(seed, state);
     }
 
+    @Override
     public void fixupSeeds(boolean initial) {
         if (state[0] == 0) {
             state[0] = 1;
@@ -35,10 +37,12 @@ public final class MarsagliaMulticarry extends RNGInitAdapter {
         }
     }
 
+    @Override
     public int[] getSeeds() {
         return state;
     }
 
+    @Override
     public double[] genrandDouble(int count) {
         int state0 = state[0];
         int state1 = state[1];
@@ -55,6 +59,7 @@ public final class MarsagliaMulticarry extends RNGInitAdapter {
         return result;
     }
 
+    @Override
     public Kind getKind() {
         return Kind.MARSAGLIA_MULTICARRY;
     }

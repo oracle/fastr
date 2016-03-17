@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,11 +60,13 @@ public class JNR_RAppl implements RApplRFFI {
         return LinpackProvider.linpack();
     }
 
+    @Override
     @TruffleBoundary
     public void dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work) {
         linpack().dqrdc2_(x, wrapInt(ldx), wrapInt(n), wrapInt(p), wrapDouble(tol), rank, qraux, pivot, work);
     }
 
+    @Override
     @TruffleBoundary
     public void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info) {
         linpack().dqrcf_(x, wrapInt(n), wrapInt(k), qraux, y, wrapInt(ny), b, info);

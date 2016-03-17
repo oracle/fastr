@@ -288,6 +288,7 @@ public final class Utils {
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             boolean first = true;
 
+            @Override
             public Frame visitFrame(FrameInstance frameInstance) {
                 if (!first) {
                     Frame f = RArguments.unwrap(frameInstance.getFrame(fa, false));
@@ -315,6 +316,7 @@ public final class Utils {
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<T>() {
             boolean first = true;
 
+            @Override
             public T visitFrame(FrameInstance frameInstance) {
                 if (!first) {
                     Frame f = RArguments.unwrap(frameInstance.getFrame(fa, false));

@@ -61,6 +61,7 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
             case "node":
                 root.accept(new NodeVisitor() {
 
+                    @Override
                     public boolean visit(Node node) {
                         if (RBaseNode.isRSyntaxNode(node)) {
                             writeString(node.getClass().getSimpleName(), false);
@@ -77,6 +78,7 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
             case "syntaxnode":
                 RSyntaxNode.accept(root, 0, new RSyntaxNodeVisitor() {
 
+                    @Override
                     public boolean visit(RSyntaxNode node, int depth) {
                         printIndent(depth);
                         writeString(node.getClass().getSimpleName(), false);

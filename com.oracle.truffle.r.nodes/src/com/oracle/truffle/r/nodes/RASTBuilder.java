@@ -333,7 +333,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             if (i < calls.size() - 1) {
                 instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesIndex + i), update, WriteVariableNode.Mode.INVISIBLE));
             } else {
-                instructions.add(WriteLocalFrameVariableNode.createAnonymous(variable.getIdentifier(), update, WriteVariableNode.Mode.INVISIBLE, isSuper));
+                instructions.add(WriteVariableNode.createAnonymous(variable.getIdentifier(), update, WriteVariableNode.Mode.INVISIBLE, isSuper));
             }
         }
 

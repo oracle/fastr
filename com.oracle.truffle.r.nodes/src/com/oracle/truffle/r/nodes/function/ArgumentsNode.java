@@ -48,10 +48,12 @@ public abstract class ArgumentsNode extends RNode implements UnmatchedArguments 
         assert signature != null;
     }
 
+    @Override
     public RNode[] getArguments() {
         return arguments;
     }
 
+    @Override
     public ArgumentsSignature getSignature() {
         return signature;
     }

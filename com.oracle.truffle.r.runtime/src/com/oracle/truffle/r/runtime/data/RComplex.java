@@ -68,6 +68,7 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
         return RDataFactory.createComplexVectorFromScalar(this);
     }
 
+    @Override
     public RComplex getDataAt(int index) {
         assert index == 0;
         return this;

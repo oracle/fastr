@@ -36,10 +36,12 @@ public final class RFactor implements RShareable, RAbstractContainer {
         this.ordered = ordered;
     }
 
+    @Override
     public int[] getInternalStore() {
         return vector.getInternalStore();
     }
 
+    @Override
     public RType getRType() {
         return RType.Integer;
     }

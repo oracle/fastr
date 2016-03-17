@@ -54,6 +54,7 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
         }
     }
 
+    @Override
     public String getDataAt(int index) {
         if (levels == null || levels.getLength() == 0) {
             return RRuntime.STRING_NA;

@@ -423,18 +423,22 @@ public class RASTUtils {
      * Marker class for special '...' handling.
      */
     public abstract static class DotsNode extends RNode implements RSyntaxNode {
+        @Override
         public void deparseImpl(State state) {
             throw RInternalError.unimplemented();
         }
 
+        @Override
         public RSyntaxNode substituteImpl(REnvironment env) {
             throw RInternalError.unimplemented();
         }
 
+        @Override
         public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
             throw RInternalError.unimplemented();
         }
 
+        @Override
         public void setSourceSection(SourceSection sourceSection) {
             throw RInternalError.shouldNotReachHere();
         }

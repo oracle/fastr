@@ -68,7 +68,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -86,7 +85,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
-import com.sun.org.apache.bcel.internal.generic.NEW;
 
 /**
  * Implementation of {@link RRuntimeASTAccess}.
@@ -223,6 +221,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return getIntrinsicValue(result);
     }
 
+    @Override
     @TruffleBoundary
     public Object fromList(RList list, RLanguage.RepType repType) {
         int length = list.getLength();
@@ -279,6 +278,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         }
     }
 
+    @Override
     public RList asList(RLanguage rl) {
         Object[] data = new Object[getLength(rl)];
         for (int i = 0; i < data.length; i++) {
@@ -293,6 +293,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     }
 
+    @Override
     @TruffleBoundary
     public RStringVector getNames(RLanguage rl) {
         RBaseNode node = rl.getRep();
@@ -334,6 +335,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         }
     }
 
+    @Override
     @TruffleBoundary
     public void setNames(RLanguage rl, RStringVector names) {
         RNode node = (RNode) rl.getRep();
@@ -367,6 +369,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         RASTDeparse.deparse(state, f);
     }
 
+    @Override
     public Object callback(RFunction f, Object[] args) {
         boolean gd = DebugHandling.globalDisable(true);
         try {
@@ -380,6 +383,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         }
     }
 
+    @Override
     public Object forcePromise(Object val) {
         if (val instanceof RPromise) {
             return PromiseHelperNode.evaluateSlowPath(null, (RPromise) val);
@@ -436,27 +440,33 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         ((RBaseNode) node).serialize(state);
     }
 
+    @Override
     public Object createNodeForValue(Object value) {
         return RASTUtils.createNodeForValue(value);
     }
 
+    @Override
     public ArgumentsSignature getArgumentsSignature(RFunction f) {
         return ((RRootNode) f.getRootNode()).getSignature();
     }
 
+    @Override
     public Object[] getBuiltinDefaultParameterValues(RFunction f) {
         assert f.isBuiltin();
         return ((RBuiltinRootNode) f.getRootNode()).getBuiltin().getDefaultParameterValues();
     }
 
+    @Override
     public void setFunctionName(RootNode node, String name) {
         ((FunctionDefinitionNode) node).setDescription(name);
     }
 
+    @Override
     public Engine createEngine(RContext context) {
         return REngine.create(context);
     }
 
+    @Override
     public RLanguage getSyntaxCaller(RCaller rl) {
         RBaseNode bn = RASTUtils.unwrap(rl.getRep());
         return RDataFactory.createLanguage(checkBuiltin(bn).asRSyntaxNode().asRNode());
@@ -479,6 +489,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         }
     }
 
+    @Override
     public String getCallerSource(RLanguage rl) {
         RSyntaxNode sn = (RSyntaxNode) rl.getRep();
         SourceSection ss = sn.getSourceSection();
@@ -561,6 +572,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return getSyntaxCaller((RCaller) caller);
     }
 
+    @Override
     public RSyntaxNode[] isReplacementNode(Node node) {
         if (node instanceof ReplacementNode) {
             ReplacementNode rn = (ReplacementNode) node;
@@ -570,6 +582,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         }
     }
 
+    @Override
     public boolean isFunctionDefinitionNode(Node node) {
         return node instanceof FunctionDefinitionNode;
     }

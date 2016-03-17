@@ -47,6 +47,7 @@ public final class UserRNG extends RNGInitAdapter {
     private UserRngRFFI userRngRFFI;
     private int nSeeds;
 
+    @Override
     public void init(int seed) throws RNGException {
         userUnifRand = findSymbol(USER_UNIF_RAND, !OPTIONAL);
         userUnifInit = findSymbol(USER_UNIF_INIT, OPTIONAL);
@@ -75,10 +76,12 @@ public final class UserRNG extends RNGInitAdapter {
         }
     }
 
+    @Override
     public void fixupSeeds(boolean initial) {
         // no fixup
     }
 
+    @Override
     public int[] getSeeds() {
         if (userUnifSeedloc == 0) {
             return null;
@@ -88,6 +91,7 @@ public final class UserRNG extends RNGInitAdapter {
         return result;
     }
 
+    @Override
     public double[] genrandDouble(int count) {
         double[] result = new double[count];
         for (int i = 0; i < count; i++) {
@@ -96,6 +100,7 @@ public final class UserRNG extends RNGInitAdapter {
         return result;
     }
 
+    @Override
     public Kind getKind() {
         return Kind.USER_UNIF;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,10 +31,12 @@ public abstract class RToStringVectorClosure extends RToVectorClosure implements
         super(vector);
     }
 
+    @Override
     public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createStringVector(new String[newLength], newIsComplete);
     }
 
+    @Override
     public final RStringVector materialize() {
         int length = getLength();
         String[] result = new String[length];

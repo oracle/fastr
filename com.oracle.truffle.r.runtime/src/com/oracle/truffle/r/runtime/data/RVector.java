@@ -123,6 +123,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         rowNames = newRowNames;
     }
 
+    @Override
     public final void setComplete(boolean complete) {
         this.complete = complete;
         assert verify();
@@ -219,6 +220,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         attributes.put(attribute, value);
     }
 
+    @Override
     @TruffleBoundary
     public final void setAttr(String name, Object value) {
         if (attributes == null) {
@@ -252,6 +254,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         }
     }
 
+    @Override
     public final void removeAttr(RAttributeProfiles attrProfiles, String name) {
         if (attrProfiles.attrNullProfile(attributes == null)) {
             return;
@@ -292,6 +295,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         this.names = newNames;
     }
 
+    @Override
     public final void setNames(RStringVector newNames) {
         // TODO pass invoking Node
         setNames(newNames, RError.SHOW_CALLER2);
@@ -346,6 +350,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         this.dimNames = newDimNames;
     }
 
+    @Override
     public final void setDimNames(RList newDimNames) {
         // TODO pass invoking node
         setDimNames(newDimNames, RError.SHOW_CALLER2);
@@ -406,6 +411,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         return rowNames;
     }
 
+    @Override
     public final void setRowNames(RAbstractVector newRowNames) {
         if (newRowNames == null) {
             removeAttributeMapping(RRuntime.ROWNAMES_ATTR_KEY);
@@ -416,22 +422,27 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         }
     }
 
+    @Override
     public final boolean isComplete() {
         return complete;
     }
 
+    @Override
     public final boolean hasDimensions() {
         return dimensions != null;
     }
 
+    @Override
     public final boolean isMatrix() {
         return dimensions != null && dimensions.length == 2;
     }
 
+    @Override
     public final boolean isArray() {
         return dimensions != null && dimensions.length > 0;
     }
 
+    @Override
     public final int[] getDimensions() {
         return dimensions;
     }
@@ -450,6 +461,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         this.dimensions = newDimensions;
     }
 
+    @Override
     public final void setDimensions(int[] newDimensions) {
         setDimensions(newDimensions, null);
     }
@@ -711,6 +723,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         return this;
     }
 
+    @Override
     public final RVector resize(int size) {
         return resize(size, true);
     }
@@ -846,15 +859,18 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
             count++;
         }
 
+        @Override
         public void initialize(String optionData) {
             stats = this;
             count = 0;
         }
 
+        @Override
         public String getName() {
             return "vectorcopies";
         }
 
+        @Override
         public void report() {
             RPerfStats.out().printf("NUMBER OF VECTOR COPIES: %d\n", count);
         }

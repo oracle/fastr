@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,10 +60,12 @@ public class JNI_OSExtras {
             return osExtras;
         }
 
+        @Override
         public UtsName uname() {
             return JNI_UtsName.get();
         }
 
+        @Override
         public ArrayList<String> glob(String pattern) {
             return JNI_Glob.glob(pattern);
         }

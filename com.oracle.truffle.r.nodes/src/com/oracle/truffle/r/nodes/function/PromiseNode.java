@@ -185,11 +185,13 @@ public abstract class PromiseNode extends RNode {
         }
 
         // @TruffleBoundary
+        @Override
         public void onSuccess(RPromise promise) {
             // System.err.println("Opt SUCCESS: " + promise.getOptType());
         }
 
         // @TruffleBoundary
+        @Override
         public void onFailure(RPromise promise) {
             // System.err.println("Opt FAILURE: " + promise.getOptType());
             rewriteToFallback();
@@ -332,10 +334,12 @@ public abstract class PromiseNode extends RNode {
             state.endNodeDeparse(this);
         }
 
+        @Override
         public void serializeImpl(State state) {
             throw RInternalError.unimplemented();
         }
 
+        @Override
         public void setSourceSection(SourceSection sourceSection) {
             throw RInternalError.shouldNotReachHere();
         }
@@ -375,7 +379,7 @@ public abstract class PromiseNode extends RNode {
             for (int i = 0; i < nodes.length; i++) {
                 Closure closure = closureCache.getOrCreateClosure(nodes[i]);
                 this.closures[i] = closure;
-                this.promised[i] = PromisedNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), false, forcedEager);
+                this.promised[i] = PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), false, forcedEager);
             }
             this.signature = signature;
         }

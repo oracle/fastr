@@ -156,6 +156,7 @@ public class DebugHandling {
         SourceSectionFilter.Builder loopBuilder = RInstrumentation.createFunctionFilter(fdn, RSyntaxTags.LOOP);
         RSyntaxNode.accept(fdn, 0, new RSyntaxNodeVisitor() {
 
+            @Override
             public boolean visit(RSyntaxNode node, int depth) {
                 SourceSection ss = node.getSourceSection();
                 if (ss.hasTag(RSyntaxTags.LOOP)) {
@@ -551,9 +552,11 @@ public class DebugHandling {
             }
         }
 
+        @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
         }
 
+        @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
         }
 

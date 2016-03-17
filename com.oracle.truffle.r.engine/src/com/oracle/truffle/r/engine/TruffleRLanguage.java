@@ -125,6 +125,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             throw new com.oracle.truffle.api.vm.IncompleteSourceException(e);
         } catch (ParseException e) {
             return new CallTarget() {
+                @Override
                 public Object call(Object... arguments) {
                     try {
                         throw e.throwAsRError();

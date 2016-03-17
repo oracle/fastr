@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,11 +62,13 @@ public class Generic_Grid implements GridRFFI {
 
     }
 
+    @Override
     public Object initGrid(REnvironment gridEvalEnv) {
         SymbolInfo initGrid = GridProvider.gridProvider().getInitGrid();
         return RFFIFactory.getRFFI().getCallRFFI().invokeCall(initGrid.address, initGrid.symbol, new Object[]{gridEvalEnv});
     }
 
+    @Override
     public Object killGrid() {
         SymbolInfo killGrid = GridProvider.gridProvider().getKillGrid();
         return RFFIFactory.getRFFI().getCallRFFI().invokeCall(killGrid.address, killGrid.symbol, new Object[0]);

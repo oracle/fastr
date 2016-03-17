@@ -698,16 +698,19 @@ public class TestBase {
     private static class LocalDiagnosticHandler implements TestOutputManager.DiagnosticHandler {
         private boolean quiet;
 
+        @Override
         public void warning(String msg) {
             System.out.println("\nwarning: " + msg);
         }
 
+        @Override
         public void note(String msg) {
             if (!quiet) {
                 System.out.println("\nnote: " + msg);
             }
         }
 
+        @Override
         public void error(String msg) {
             System.err.println("\nerror: " + msg);
         }

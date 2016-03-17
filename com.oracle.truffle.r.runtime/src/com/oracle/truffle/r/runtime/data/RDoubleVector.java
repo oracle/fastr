@@ -75,11 +75,13 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return data;
     }
 
+    @Override
     public void setDataAt(Object store, int index, double value) {
         assert data == store;
         ((double[]) store)[index] = value;
     }
 
+    @Override
     public double getDataAt(Object store, int index) {
         assert data == store;
         return ((double[]) store)[index];
@@ -120,6 +122,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return true;
     }
 
+    @Override
     public double getDataAt(int i) {
         return data[i];
     }
@@ -159,6 +162,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
+    @Override
     public RDoubleVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createDoubleVector(data, isComplete(), newDimensions);
     }
@@ -210,6 +214,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return RDataFactory.createDoubleVector(copyResizedData(size, fillNA), isComplete);
     }
 
+    @Override
     public RDoubleVector materialize() {
         return this;
     }

@@ -83,6 +83,7 @@ public class GnuROneShotRSession implements RSession {
         return new String(data);
     }
 
+    @Override
     public String eval(String expression) {
         if (expression.contains("library(") && !TestBase.generatingExpected()) {
             System.out.println("==============================================");
@@ -111,6 +112,7 @@ public class GnuROneShotRSession implements RSession {
         gnuRinput.flush();
     }
 
+    @Override
     public String name() {
         return "GnuR one-shot";
     }

@@ -34,6 +34,7 @@ public class RDoubleToComplexVectorClosure extends RToComplexVectorClosure imple
         this.castVector = vector;
     }
 
+    @Override
     public RComplex getDataAt(int index) {
         double real = castVector.getDataAt(index);
         double imaginary = 0.0;

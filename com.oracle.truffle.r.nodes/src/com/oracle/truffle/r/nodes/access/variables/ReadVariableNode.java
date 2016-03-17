@@ -154,6 +154,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         this.copyProfile = kind != ReadKind.Copying ? null : ConditionProfile.createBinaryProfile();
     }
 
+    @Override
     public String getIdentifier() {
         return identifierAsString;
     }
@@ -870,6 +871,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         return kind == ReadKind.ForcedTypeCheck;
     }
 
+    @Override
     public boolean isFunctionLookup() {
         return mode == RType.Function;
     }

@@ -1118,14 +1118,17 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         }
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return functionNode.asRSyntaxNode();
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return signature;
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return arguments.v;
     }

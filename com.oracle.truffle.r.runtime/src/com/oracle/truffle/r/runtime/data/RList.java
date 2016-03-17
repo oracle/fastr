@@ -85,6 +85,7 @@ public final class RList extends RListBase implements RGPBits, TruffleObject {
         return getClassHierarchyHelper(implicitClassHeader);
     }
 
+    @Override
     public ForeignAccess getForeignAccess() {
         return RContext.getEngine().getForeignAccess(this);
     }

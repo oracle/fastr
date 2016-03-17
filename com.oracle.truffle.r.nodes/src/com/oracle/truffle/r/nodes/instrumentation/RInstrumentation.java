@@ -155,6 +155,7 @@ public class RInstrumentation {
     private static void fixupTags(FunctionDefinitionNode fdn) {
         RSyntaxNode.accept(fdn, 0, new RSyntaxNodeVisitor() {
 
+            @Override
             public boolean visit(RSyntaxNode node, int depth) {
                 SourceSection ss = node.getSourceSection();
                 assert ss != null;

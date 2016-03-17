@@ -42,6 +42,7 @@ public class RS4Object extends RSharingAttributeStorage {
         return implicitClass;
     }
 
+    @Override
     public RType getRType() {
         return RType.S4Object;
     }

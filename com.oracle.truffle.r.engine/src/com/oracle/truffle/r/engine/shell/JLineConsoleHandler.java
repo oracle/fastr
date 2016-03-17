@@ -43,18 +43,21 @@ public class JLineConsoleHandler implements ConsoleHandler {
         this.isInteractive = isInteractive;
     }
 
+    @Override
     @TruffleBoundary
     public void println(String s) {
         printWriter.println(s);
         printWriter.flush();
     }
 
+    @Override
     @TruffleBoundary
     public void print(String s) {
         printWriter.print(s);
         printWriter.flush();
     }
 
+    @Override
     @TruffleBoundary
     public String readLine() {
         try {
@@ -71,41 +74,50 @@ public class JLineConsoleHandler implements ConsoleHandler {
         }
     }
 
+    @Override
     public boolean isInteractive() {
         return isInteractive;
     }
 
+    @Override
     @TruffleBoundary
     public void printErrorln(String s) {
         println(s);
     }
 
+    @Override
     @TruffleBoundary
     public void printError(String s) {
         print(s);
     }
 
+    @Override
     public void redirectError() {
     }
 
+    @Override
     @TruffleBoundary
     public String getPrompt() {
         return console.getPrompt();
     }
 
+    @Override
     @TruffleBoundary
     public void setPrompt(String prompt) {
         console.setPrompt(prompt);
     }
 
+    @Override
     public int getWidth() {
         return RContext.CONSOLE_WIDTH;
     }
 
+    @Override
     public String getInputDescription() {
         return "<shell_input>";
     }
 
+    @Override
     public void setHistoryFrom(File file) {
         try {
             console.setHistory(new FileHistory(file));
@@ -114,6 +126,7 @@ public class JLineConsoleHandler implements ConsoleHandler {
         }
     }
 
+    @Override
     public void flushHistory() {
         History history = console.getHistory();
         if (history instanceof FileHistory) {

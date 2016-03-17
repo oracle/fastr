@@ -61,15 +61,18 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
         }
     }
 
+    @Override
     public RRawVector materialize() {
         return RDataFactory.createRawVector(new byte[]{value});
     }
 
+    @Override
     public byte getRawDataAt(int index) {
         assert index == 0;
         return value;
     }
 
+    @Override
     public RRaw getDataAt(int index) {
         assert index == 0;
         return this;

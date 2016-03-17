@@ -85,11 +85,13 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
         return RRuntime.logicalToString(value);
     }
 
+    @Override
     public byte getDataAt(int index) {
         assert index == 0;
         return getValue();
     }
 
+    @Override
     public RLogicalVector materialize() {
         return RDataFactory.createLogicalVectorFromScalar(value);
     }

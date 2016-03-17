@@ -204,6 +204,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     private final REnvFrameAccess frameAccess;
     private boolean locked;
 
+    @Override
     public RType getRType() {
         return RType.Environment;
     }

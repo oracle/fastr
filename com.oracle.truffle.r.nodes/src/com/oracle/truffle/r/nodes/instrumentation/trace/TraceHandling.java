@@ -206,18 +206,21 @@ public class TraceHandling {
     @SuppressWarnings("unused")
     private static class TraceStatementEventReceiver extends TraceEventListener {
 
+        @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!disabled()) {
                 //
             }
         }
 
+        @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 //
             }
         }
 
+        @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
             if (!disabled()) {
                 //

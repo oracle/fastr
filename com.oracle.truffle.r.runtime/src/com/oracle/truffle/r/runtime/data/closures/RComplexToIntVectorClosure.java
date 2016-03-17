@@ -35,6 +35,7 @@ public class RComplexToIntVectorClosure extends RToIntVectorClosure implements R
         super(vector);
     }
 
+    @Override
     public int getDataAt(int index) {
         RComplex right = ((RAbstractComplexVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(right)) {

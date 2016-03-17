@@ -502,6 +502,7 @@ public class FrameFunctions {
             Frame callerFrame = Utils.iterateRFrames(frameAccess(), new Function<Frame, Frame>() {
                 int parentDepth = RArguments.getDepth(frame) - n - 1;
 
+                @Override
                 public Frame apply(Frame f) {
                     if (RArguments.getDepth(f) == parentDepth) {
                         return f;

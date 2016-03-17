@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,10 +34,12 @@ public final class RAbstactVectorToListClosure extends RToVectorClosure implemen
         super(vector);
     }
 
+    @Override
     public Object getDataAtAsObject(int index) {
         return vector.getDataAtAsObject(index);
     }
 
+    @Override
     public RList materialize() {
         int length = getLength();
         Object[] result = new Object[length];
@@ -48,10 +50,12 @@ public final class RAbstactVectorToListClosure extends RToVectorClosure implemen
         return RDataFactory.createList(result);
     }
 
+    @Override
     public RAbstractVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
     }
 
+    @Override
     public RVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createList(new Object[newLength]);
     }

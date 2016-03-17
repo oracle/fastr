@@ -40,6 +40,7 @@ public final class RSymbol extends RAttributeStorage implements RTypedValue {
         this.name = name;
     }
 
+    @Override
     public RType getRType() {
         return RType.Symbol;
     }

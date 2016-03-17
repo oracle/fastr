@@ -80,11 +80,13 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
         return Double.toString(value);
     }
 
+    @Override
     public double getDataAt(int index) {
         assert index == 0;
         return getValue();
     }
 
+    @Override
     public RDoubleVector materialize() {
         return RDataFactory.createDoubleVectorFromScalar(getValue());
     }

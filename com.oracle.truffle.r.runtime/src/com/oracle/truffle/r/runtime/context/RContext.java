@@ -670,6 +670,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         return info.getSystemTimeZone();
     }
 
+    @Override
     public ForeignAccess getForeignAccess() {
         throw new IllegalStateException("cannot access " + RContext.class.getSimpleName() + " via Truffle");
     }

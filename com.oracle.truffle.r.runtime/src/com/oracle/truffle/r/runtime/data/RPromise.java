@@ -153,6 +153,7 @@ public class RPromise implements RTypedValue {
         return rep;
     }
 
+    @Override
     public RType getRType() {
         return RType.Promise;
     }

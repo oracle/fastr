@@ -45,6 +45,7 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
         return new RInteger(value);
     }
 
+    @Override
     public int getDataAt(int index) {
         assert index == 0;
         return value;
@@ -83,6 +84,7 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
         return RRuntime.intToString(value);
     }
 
+    @Override
     public RIntVector materialize() {
         return RDataFactory.createIntVectorFromScalar(value);
     }

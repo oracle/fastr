@@ -58,6 +58,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         }
     }
 
+    @Override
     public String[] getInternalStore() {
         return data;
     }
@@ -136,6 +137,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         return true;
     }
 
+    @Override
     public String getDataAt(int i) {
         return data[i];
     }
@@ -209,6 +211,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         return RDataFactory.createStringVector(data, isComplete(), newDimensions);
     }
 
+    @Override
     public RStringVector materialize() {
         return this;
     }

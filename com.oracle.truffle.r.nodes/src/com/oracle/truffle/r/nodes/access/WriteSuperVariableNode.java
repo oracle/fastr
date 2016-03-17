@@ -95,18 +95,22 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
         serializeHelper(state, "<<-");
     }
 
+    @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
         throw RInternalError.unimplemented();
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return RSyntaxLookup.createDummyLookup(null, "<<-", true);
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(getSourceSection(), (String) getName(), false), getRhs().asRSyntaxNode()};
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ArgumentsSignature.empty(2);
     }

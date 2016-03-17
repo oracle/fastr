@@ -645,6 +645,7 @@ public class FileFunctions {
                 this.pattern = pattern;
             }
 
+            @Override
             public boolean test(Path path, BasicFileAttributes u) {
                 if (u.isDirectory() && !includeDirs) {
                     return false;
@@ -703,6 +704,7 @@ public class FileFunctions {
         }
 
         private static class FileMatcher implements BiPredicate<Path, BasicFileAttributes> {
+            @Override
             public boolean test(Path path, BasicFileAttributes u) {
                 boolean result = u.isDirectory();
                 return result;

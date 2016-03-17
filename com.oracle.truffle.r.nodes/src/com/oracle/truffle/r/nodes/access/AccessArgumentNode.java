@@ -181,9 +181,11 @@ public final class AccessArgumentNode extends RNode {
             super(factory, rvn, wrapIndex);
         }
 
+        @Override
         public void onSuccess(RPromise promise) {
         }
 
+        @Override
         public void onFailure(RPromise promise) {
             // Assure that no further eager promises are created
             if (!deoptimized) {

@@ -96,14 +96,17 @@ public class REntryCounters {
             return counterMap;
         }
 
+        @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             getCounter(context).enterCount++;
         }
 
+        @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
             getCounter(context).exitCount++;
         }
 
+        @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
             getCounter(context).exitCount++;
         }
@@ -161,6 +164,7 @@ public class REntryCounters {
                     this.name = name;
                 }
 
+                @Override
                 public int compareTo(FunctionCount o) {
                     if (count < o.count) {
                         return 1;
@@ -174,9 +178,11 @@ public class REntryCounters {
 
             static final String NAME = "functioncounts";
 
+            @Override
             public void initialize(String optionText) {
             }
 
+            @Override
             public String getName() {
                 return NAME;
             }
@@ -185,6 +191,7 @@ public class REntryCounters {
              * R's anonymous function definitions don't help with reporting. We make an attempt to
              * locate a function name in the global/package environments.
              */
+            @Override
             public void report() {
                 RPerfStats.out().println("R Function Entry Counts");
                 ArrayList<FunctionCount> results = new ArrayList<>();

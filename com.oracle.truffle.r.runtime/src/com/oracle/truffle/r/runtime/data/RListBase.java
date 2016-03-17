@@ -44,6 +44,7 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
         return data.length;
     }
 
+    @Override
     public Object[] getInternalStore() {
         return data;
     }
@@ -133,6 +134,7 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
         data[toIndex] = other.getDataAtAsObject(fromIndex);
     }
 
+    @Override
     public final Class<?> getElementClass() {
         return Object.class;
     }
@@ -180,6 +182,7 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
         return newData;
     }
 
+    @Override
     public final boolean checkCompleteness() {
         return true;
     }

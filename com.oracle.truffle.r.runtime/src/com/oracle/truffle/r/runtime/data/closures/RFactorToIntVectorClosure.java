@@ -58,6 +58,7 @@ public class RFactorToIntVectorClosure extends RToIntVectorClosure implements RA
         }
     }
 
+    @Override
     public int getDataAt(int index) {
         int val = ((RIntVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(val)) {

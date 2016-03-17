@@ -124,6 +124,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return true;
     }
 
+    @Override
     public byte getDataAt(int i) {
         return data[i];
     }
@@ -220,6 +221,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return RDataFactory.createLogicalVector(data, isComplete(), newDimensions);
     }
 
+    @Override
     public RLogicalVector materialize() {
         return this;
     }

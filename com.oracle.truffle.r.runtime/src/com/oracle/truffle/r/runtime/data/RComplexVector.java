@@ -76,6 +76,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         }
     }
 
+    @Override
     public void setDataAt(Object store, int index, RComplex value) {
         assert data == store;
         double[] array = (double[]) store;
@@ -83,6 +84,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         array[(index << 1) + 1] = value.getImaginaryPart();
     }
 
+    @Override
     public RComplex getDataAt(Object store, int i) {
         assert data == store;
         double[] doubleStore = (double[]) store;
@@ -90,6 +92,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return RDataFactory.createComplex(doubleStore[index], doubleStore[index + 1]);
     }
 
+    @Override
     public RComplex getDataAt(int i) {
         return getDataAt(data, i);
     }
@@ -146,6 +149,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
+    @Override
     public RComplexVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createComplexVector(data, isComplete(), newDimensions);
     }
@@ -197,6 +201,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete);
     }
 
+    @Override
     public RComplexVector materialize() {
         return this;
     }

@@ -118,6 +118,7 @@ public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
      * methods.
      */
 
+    @Override
     SourceSection getSourceSection();
 
     void setSourceSection(SourceSection sourceSection);
