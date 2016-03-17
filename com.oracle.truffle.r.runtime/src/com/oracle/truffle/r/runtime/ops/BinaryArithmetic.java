@@ -695,7 +695,7 @@ public abstract class BinaryArithmetic extends Operation {
         // after libgcc2's x86 hypot - note the sign of NaN below (what GNU-R uses)
         // note that Math.hypot in Java is _very_ slow as it tries to be more precise
 
-        private static class CHypot extends Node {
+        public static class CHypot extends Node {
 
             private final ConditionProfile everSeenInfinite = ConditionProfile.createBinaryProfile();
 

@@ -47,5 +47,8 @@ public class TestBuiltin_expm1 extends TestBase {
         assertEval("{ expm1(2) }");
         assertEval("{ expm1(c(1,2,3)) }");
         assertEval("{ expm1() }");
+
+        assertEval(Ignored.ReferenceError, "{ round( expm1(c(1+1i,-2-3i)), digits=5 ) }");
+        assertEval(Ignored.ReferenceError, "{ round( expm1(1+2i), digits=5 ) }");
     }
 }

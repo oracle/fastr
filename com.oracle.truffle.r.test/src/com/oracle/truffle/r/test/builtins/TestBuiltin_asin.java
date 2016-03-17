@@ -29,7 +29,7 @@ public class TestBuiltin_asin extends TestBase {
 
     @Test
     public void testasin3() {
-        assertEval(Ignored.Unknown, "argv <- list(logical(0));asin(argv[[1]]);");
+        assertEval("argv <- list(logical(0));asin(argv[[1]]);");
     }
 
     @Test
@@ -38,9 +38,15 @@ public class TestBuiltin_asin extends TestBase {
     }
 
     @Test
+    public void testasin5() {
+        assertEval("argv <- list(c(0.34345+233i,-0.34345+0.3334i));asin(argv[[1]]);");
+    }
+
+    @Test
     public void testTrigExp() {
         assertEval("{ asin(0.4) }");
         assertEval("{ asin(c(0.3,0.6,0.9)) }");
         assertEval("{ asin() }");
+        assertEval("{ asin(2+0i) }");
     }
 }

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -24,7 +24,7 @@ public class TestBuiltin_asinh extends TestBase {
 
     @Test
     public void testasinh2() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE);asinh(argv[[1]]);");
+        assertEval("argv <- list(FALSE);asinh(argv[[1]]);");
     }
 
     @Test
@@ -36,4 +36,10 @@ public class TestBuiltin_asinh extends TestBase {
     public void testasinh4() {
         assertEval(Ignored.Unknown, "argv <- list(c(0+2i, 0.0001+2i, 0-2i, 0-2.0001i));asinh(argv[[1]]);");
     }
+
+    @Test
+    public void testasinh5() {
+        assertEval("argv <- list(c(0.34345+233i,-0.34345+0.3334i));asinh(argv[[1]]);");
+    }
+
 }

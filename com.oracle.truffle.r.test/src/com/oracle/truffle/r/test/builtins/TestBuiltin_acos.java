@@ -39,6 +39,11 @@ public class TestBuiltin_acos extends TestBase {
     }
 
     @Test
+    public void testacos5() {
+        assertEval("argv <- list(c(0.3+3i,-3+2i));acos(argv[[1]]);");
+    }
+
+    @Test
     public void testTrigExp() {
         assertEval("{ acos(0.4) }");
         assertEval("{ acos(c(0.3,0.6,0.9)) }");
