@@ -7,7 +7,7 @@
  * Copyright (c) 1997-2012, The R Core Team
  * Copyright (c) 2003-2008, The R Foundation
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
