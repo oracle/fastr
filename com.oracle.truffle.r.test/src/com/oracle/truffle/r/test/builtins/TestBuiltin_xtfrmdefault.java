@@ -22,5 +22,4 @@ public class TestBuiltin_xtfrmdefault extends TestBase {
     public void testxtfrmdefault1() {
         assertEval("argv <- structure(list(x = structure(1:3, id = 'An Example',     class = structure('numWithId', package = '.GlobalEnv'))),     .Names = 'x');do.call('xtfrm.default', argv)");
     }
-
 }

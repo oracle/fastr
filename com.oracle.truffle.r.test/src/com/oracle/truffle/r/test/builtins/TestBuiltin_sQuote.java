@@ -22,5 +22,4 @@ public class TestBuiltin_sQuote extends TestBase {
     public void testsQuote1() {
         assertEval("argv <- structure(list(x = character(0)), .Names = 'x');do.call('sQuote', argv)");
     }
-
 }

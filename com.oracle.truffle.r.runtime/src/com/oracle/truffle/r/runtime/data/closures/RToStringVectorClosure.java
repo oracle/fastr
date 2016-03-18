@@ -54,5 +54,4 @@ public abstract class RToStringVectorClosure extends RToVectorClosure implements
     public final RStringVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
     }
-
 }

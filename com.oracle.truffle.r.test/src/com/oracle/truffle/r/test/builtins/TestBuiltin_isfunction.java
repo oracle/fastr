@@ -181,5 +181,4 @@ public class TestBuiltin_isfunction extends TestBase {
     public void testisfunction32() {
         assertEval("argv <- list(function(cpu = Inf, elapsed = Inf, transient = FALSE) .Internal(setTimeLimit(cpu,     elapsed, transient)));do.call('is.function', argv)");
     }
-
 }

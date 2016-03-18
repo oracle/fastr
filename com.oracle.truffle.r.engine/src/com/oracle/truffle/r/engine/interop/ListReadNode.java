@@ -58,5 +58,4 @@ public abstract class ListReadNode extends RootNode {
         }
         return x;
     }
-
 }

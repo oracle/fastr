@@ -189,5 +189,4 @@ public class JNR_Base implements BaseRFFI {
     public ArrayList<String> glob(String pattern) {
         return JNI_OSExtras.glob(pattern);
     }
-
 }

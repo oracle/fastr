@@ -101,5 +101,4 @@ public class ScalarUnaryArithmeticNode extends UnaryMapNAFunctionNode {
         }
         return arithmetic.op(operand);
     }
-
 }

@@ -45,5 +45,4 @@ public abstract class FastRStackTrace extends RExternalBuiltinNode.Arg1 {
     protected Object fallback(Object a1) {
         throw RError.error(this, RError.Message.INVALID_ARGUMENT, "print.frame.contents");
     }
-
 }

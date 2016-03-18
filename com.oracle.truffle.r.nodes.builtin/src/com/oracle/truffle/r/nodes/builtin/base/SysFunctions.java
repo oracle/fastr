@@ -107,7 +107,6 @@ public class SysFunctions {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.WRONG_TYPE);
         }
-
     }
 
     @RBuiltin(name = "Sys.setenv", kind = INTERNAL, parameterNames = {"nm", "values"})
@@ -124,7 +123,6 @@ public class SysFunctions {
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
 
     @RBuiltin(name = "Sys.unsetenv", kind = INTERNAL, parameterNames = {"x"})
@@ -276,7 +274,6 @@ public class SysFunctions {
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
 
     // TODO implement
@@ -289,7 +286,6 @@ public class SysFunctions {
             controlVisibility();
             throw RError.nyi(this, "Sys.umask");
         }
-
     }
 
     @RBuiltin(name = "Sys.time", kind = INTERNAL, parameterNames = {})
@@ -300,7 +296,6 @@ public class SysFunctions {
             controlVisibility();
             return ((double) System.currentTimeMillis()) / 1000;
         }
-
     }
 
     @RBuiltin(name = "Sys.info", kind = INTERNAL, parameterNames = {})
@@ -326,7 +321,6 @@ public class SysFunctions {
             RStringVector result = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR, NAMES_ATTR);
             return result;
         }
-
     }
 
     @RBuiltin(name = "Sys.glob", kind = INTERNAL, parameterNames = {"paths", "dirmask"})
@@ -350,7 +344,5 @@ public class SysFunctions {
             matches.toArray(data);
             return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
-
 }

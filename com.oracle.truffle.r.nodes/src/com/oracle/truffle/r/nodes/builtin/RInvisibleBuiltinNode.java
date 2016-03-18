@@ -28,5 +28,4 @@ public abstract class RInvisibleBuiltinNode extends RBuiltinNode {
     public final boolean getVisibility() {
         return false;
     }
-
 }

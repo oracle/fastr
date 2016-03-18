@@ -344,5 +344,4 @@ public class ROptions {
         }
         return coercedValue;
     }
-
 }

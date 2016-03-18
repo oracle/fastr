@@ -244,7 +244,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         public RList getEvalResult() {
             return evalResult;
         }
-
     }
 
     private final ContextInfo info;
@@ -674,5 +673,4 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public ForeignAccess getForeignAccess() {
         throw new IllegalStateException("cannot access " + RContext.class.getSimpleName() + " via Truffle");
     }
-
 }

@@ -203,5 +203,4 @@ public abstract class Split extends RBuiltinNode {
             return RDataFactory.createStringVector(((RStringVector) levels).getDataCopy(), RDataFactory.COMPLETE_VECTOR);
         }
     }
-
 }

@@ -57,5 +57,4 @@ public final class IntValueProfile {
     public static IntValueProfile create() {
         return new IntValueProfile();
     }
-
 }

@@ -75,5 +75,4 @@ public abstract class GetNonSharedNode extends RNode implements RSyntaxNode {
     public SourceSection getSourceSection() {
         return RSyntaxNode.INTERNAL;
     }
-
 }

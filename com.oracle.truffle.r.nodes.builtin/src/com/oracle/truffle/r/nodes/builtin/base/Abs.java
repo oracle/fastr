@@ -84,7 +84,5 @@ public abstract class Abs extends RBuiltinNode {
         public double opd(double re, double im) {
             return RComplex.abs(re, im);
         }
-
     }
-
 }

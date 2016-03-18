@@ -47,5 +47,4 @@ public abstract class UnaryMapNAFunctionNode extends UnaryMapFunctionNode {
     public final boolean isComplete() {
         return operandNACheck.neverSeenNA();
     }
-
 }

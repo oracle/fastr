@@ -34,5 +34,4 @@ public final class ExternalPtrPrinter extends AbstractValuePrinter<RExternalPtr>
     protected void printValue(RExternalPtr value, PrintContext printCtx) throws IOException {
         printCtx.output().print("");
     }
-
 }

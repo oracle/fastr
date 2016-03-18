@@ -103,5 +103,4 @@ public class TempPathName {
             sb.append(RANDOM_CHARACTERS.charAt(rand.nextInt(RANDOM_CHARACTERS_LENGTH)));
         }
     }
-
 }

@@ -148,7 +148,6 @@ public class PkgDepends {
         } catch (Exception ex) {
             System.err.print(ex);
         }
-
     }
 
     private static void processDependencies(Package pkg, Fields fields, String kind) {
@@ -172,7 +171,6 @@ public class PkgDepends {
                 pkg.addDependency(dependeePkg);
             }
         }
-
     }
 
     private static void printInstallOrder(String pkgName, List<String> installOrder) {
@@ -285,5 +283,4 @@ public class PkgDepends {
             }
         }
     }
-
 }

@@ -53,5 +53,4 @@ public class FastRPkgSource {
             return RNull.instance;
         }
     }
-
 }

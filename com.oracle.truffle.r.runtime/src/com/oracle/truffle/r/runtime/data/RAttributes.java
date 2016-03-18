@@ -236,7 +236,6 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
         public RAttribute next() {
             return new AttrInstance(names[index], values[index++]);
         }
-
     }
 
     @TruffleBoundary
@@ -290,7 +289,6 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
             RPerfStats.out().printf("RAttributes: %d, max size %d%n", hist.getTotalCount(), hist.getMaxSize());
             hist.report();
         }
-
     }
 
     public void setSize(int size) {

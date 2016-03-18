@@ -54,5 +54,4 @@ public abstract class RToDoubleVectorClosure extends RToVectorClosure implements
     public final RDoubleVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
     }
-
 }

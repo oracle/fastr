@@ -341,5 +341,4 @@ public class RAccuracyInfo {
         System.out.printf("xmax %e\n", accuracyInfo.xmax);
 
     }
-
 }

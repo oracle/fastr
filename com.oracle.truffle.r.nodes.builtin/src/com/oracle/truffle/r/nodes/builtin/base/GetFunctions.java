@@ -139,7 +139,6 @@ public class GetFunctions {
             Object result = getInherits(frame, xv, envir, mode, true);
             return result;
         }
-
     }
 
     @RBuiltin(name = "get0", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits", "ifnotfound"})
@@ -300,7 +299,5 @@ public class GetFunctions {
             Object[] callArgs = argsNode.execute(ifnFunc, caller, callerFrame, RArguments.getDepth(frame) + 1, new Object[]{x}, ArgumentsSignature.empty(1), null);
             return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
         }
-
     }
-
 }

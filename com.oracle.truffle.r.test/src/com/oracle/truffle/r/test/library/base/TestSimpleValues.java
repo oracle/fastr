@@ -202,5 +202,4 @@ public class TestSimpleValues extends TestBase {
     public void testDefaultVariables() {
         assertEval("{ .Platform$endian }");
     }
-
 }

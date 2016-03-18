@@ -370,7 +370,6 @@ public abstract class Scan extends RBuiltinNode {
                 }
             }
         }
-
     }
 
     private void fillEmpty(int from, int to, int records, RList list, LocalData data) {

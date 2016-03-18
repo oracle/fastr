@@ -41,5 +41,4 @@ public class Operation extends RBaseNode {
     public boolean isAssociative() {
         return associative;
     }
-
 }

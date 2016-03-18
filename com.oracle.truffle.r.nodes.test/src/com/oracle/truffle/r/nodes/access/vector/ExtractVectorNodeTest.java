@@ -301,5 +301,4 @@ public class ExtractVectorNodeTest extends TestBase {
         return createHandle(ExtractVectorNode.create(mode, false), //
                         (node, args) -> node.apply(null, args[0], (Object[]) args[1], RLogical.valueOf(exact), RLogical.valueOf(dropDimension)));
     }
-
 }

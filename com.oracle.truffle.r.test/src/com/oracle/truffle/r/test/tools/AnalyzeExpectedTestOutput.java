@@ -87,7 +87,6 @@ public class AnalyzeExpectedTestOutput {
         } catch (Exception ex) {
             System.err.println(ex);
         }
-
     }
 
     private static class WhiteListInfo {
@@ -98,7 +97,6 @@ public class AnalyzeExpectedTestOutput {
             this.test = test;
             this.expected = expected;
         }
-
     }
 
     private static void usage() {

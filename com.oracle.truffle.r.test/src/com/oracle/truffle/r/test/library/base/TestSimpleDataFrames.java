@@ -180,5 +180,4 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ y<-data.frame(c(1,2,3)); length(y) }");
 
     }
-
 }

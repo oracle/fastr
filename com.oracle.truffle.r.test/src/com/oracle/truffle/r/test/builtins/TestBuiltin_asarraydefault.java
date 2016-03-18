@@ -22,5 +22,4 @@ public class TestBuiltin_asarraydefault extends TestBase {
     public void testasarraydefault1() {
         assertEval("argv <- structure(list(x = structure(c(1, 2), .Dim = 2L, .Dimnames = list(c('a',     'b')))), .Names = 'x');do.call('as.array.default', argv)");
     }
-
 }

@@ -81,5 +81,4 @@ public abstract class TypeofNode extends UnaryNode {
     protected static RType doGenericTyped(RTypedValue operand) {
         return operand.getRType();
     }
-
 }

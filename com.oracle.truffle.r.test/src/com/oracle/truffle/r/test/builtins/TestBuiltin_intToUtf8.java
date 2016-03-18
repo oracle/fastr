@@ -41,5 +41,4 @@ public class TestBuiltin_intToUtf8 extends TestBase {
     public void testintToUtf86() {
         assertEval(Ignored.Unknown, "argv <- structure(list(x = NA_integer_), .Names = 'x');do.call('intToUtf8', argv)");
     }
-
 }

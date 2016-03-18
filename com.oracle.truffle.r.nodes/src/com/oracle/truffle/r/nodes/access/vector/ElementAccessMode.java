@@ -37,5 +37,4 @@ public enum ElementAccessMode {
     public boolean isSubscript() {
         return this == SUBSCRIPT;
     }
-
 }

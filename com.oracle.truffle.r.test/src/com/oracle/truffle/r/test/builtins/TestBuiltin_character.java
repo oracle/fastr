@@ -22,5 +22,4 @@ public class TestBuiltin_character extends TestBase {
     public void testcharacter1() {
         assertEval("argv <- structure(list(length = 0L), .Names = 'length');do.call('character', argv)");
     }
-
 }

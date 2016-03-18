@@ -22,5 +22,4 @@ public class TestBuiltin_Encodingassign_ extends TestBase {
     public void testEncodingassign_1() {
         assertEval("argv <- structure(list(x = 'abc', value = 'UTF-8'), .Names = c('x',     'value'));do.call('Encoding<-', argv)");
     }
-
 }

@@ -70,5 +70,4 @@ public class JNR_Zip implements ZipRFFI {
     public int uncompress(byte[] dest, long[] destlen, byte[] source) {
         return zip().uncompress(dest, destlen, source, source.length);
     }
-
 }

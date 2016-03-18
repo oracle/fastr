@@ -234,5 +234,4 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     public void setElement(int i, Object value) {
         data[i] = (String) value;
     }
-
 }

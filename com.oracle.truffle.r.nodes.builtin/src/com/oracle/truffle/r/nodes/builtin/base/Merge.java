@@ -206,5 +206,4 @@ public abstract class Merge extends RBuiltinNode {
     protected boolean isNA(byte v) {
         return RRuntime.isNA(v);
     }
-
 }

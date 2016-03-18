@@ -72,5 +72,4 @@ public class TestBuiltin_nzchar extends TestBase {
     public void testnzchar12() {
         assertEval("argv <- list('');do.call('nzchar', argv)");
     }
-
 }

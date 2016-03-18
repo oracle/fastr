@@ -92,5 +92,4 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
             return snprintf(NB, fmt, "FALSE");
         }
     }
-
 }

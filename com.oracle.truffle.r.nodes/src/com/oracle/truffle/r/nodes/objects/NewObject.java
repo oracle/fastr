@@ -74,5 +74,4 @@ public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
     protected boolean isNull(Object o) {
         return o == RNull.instance;
     }
-
 }

@@ -624,5 +624,4 @@ final class REngine implements Engine, Engine.Timings {
             throw RInternalError.shouldNotReachHere("cannot create ForeignAccess for " + value);
         }
     }
-
 }

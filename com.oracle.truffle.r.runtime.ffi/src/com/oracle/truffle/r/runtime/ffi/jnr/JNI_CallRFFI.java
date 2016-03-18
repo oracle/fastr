@@ -163,5 +163,4 @@ public class JNI_CallRFFI implements CallRFFI {
             inCritical.release();
         }
     }
-
 }

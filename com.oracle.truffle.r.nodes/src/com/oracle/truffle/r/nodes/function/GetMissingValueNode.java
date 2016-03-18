@@ -58,7 +58,6 @@ public abstract class GetMissingValueNode extends RBaseNode {
             FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(name);
             return replace(new ResolvedGetMissingValueNode(slot)).execute(frame);
         }
-
     }
 
     private static final class ResolvedGetMissingValueNode extends GetMissingValueNode {

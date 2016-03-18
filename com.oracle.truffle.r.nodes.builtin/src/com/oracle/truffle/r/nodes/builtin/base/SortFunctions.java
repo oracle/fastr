@@ -124,7 +124,6 @@ public class SortFunctions {
             byte[] data = vec.materialize().getDataCopy();
             return RDataFactory.createLogicalVector(sort(data, decreasing), vec.isComplete());
         }
-
     }
 
     /**
@@ -161,7 +160,6 @@ public class SortFunctions {
         protected Object sort(Object vec, Object decreasing) {
             throw RError.nyi(this, ".Internal(sort)");
         }
-
     }
 
     @RBuiltin(name = "qsort", kind = INTERNAL, parameterNames = {"x", "decreasing"})
@@ -176,7 +174,6 @@ public class SortFunctions {
         protected RIntVector qsort(RAbstractIntVector vec, byte decreasing) {
             return jdkSort(vec, decreasing);
         }
-
     }
 
     @RBuiltin(name = "psort", kind = INTERNAL, parameterNames = {"x", "partial"})
@@ -220,5 +217,4 @@ public class SortFunctions {
             throw RError.nyi(this, ".Internal(raxdixsort)");
         }
     }
-
 }

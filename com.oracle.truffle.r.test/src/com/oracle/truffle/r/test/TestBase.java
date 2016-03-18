@@ -263,7 +263,6 @@ public class TestBase {
         boolean writeTestOutputFile() throws IOException {
             return writeTestOutputFile(oldExpectedOutputFileContent, checkOnly);
         }
-
     }
 
     private static class FastRTestOutputManager extends TestOutputManager {
@@ -514,7 +513,6 @@ public class TestBase {
             this.result = result;
             this.expected = expected;
         }
-
     }
 
     private CheckResult checkResult(WhiteList[] whiteLists, String input, String originalExpected, String originalResult, boolean containsWarning, boolean mayContainWarning, boolean containsError,
@@ -763,7 +761,6 @@ public class TestBase {
             Files.delete(p);
             return FileVisitResult.CONTINUE;
         }
-
     }
 
     private static final DeleteVisitor DELETE_VISITOR = new DeleteVisitor();

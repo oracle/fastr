@@ -30,5 +30,4 @@ public class TestChannels extends TestRBase {
     public String getTestDir() {
         return "channels";
     }
-
 }

@@ -463,5 +463,4 @@ public abstract class Unique extends RBuiltinNode {
             return RDataFactory.createRawVector(dataList.toArray());
         }
     }
-
 }

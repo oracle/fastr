@@ -64,6 +64,5 @@ public final class FactorPrinter extends AbstractValuePrinter<RFactor> {
                 out.print(strings[i]);
             }
         }
-
     }
 }

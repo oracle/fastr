@@ -63,5 +63,4 @@ public abstract class Names extends RBuiltinNode {
         controlVisibility();
         return RNull.instance;
     }
-
 }

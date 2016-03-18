@@ -138,5 +138,4 @@ public abstract class RLengthNode extends RNode {
             throw RError.interopError(this, e);
         }
     }
-
 }

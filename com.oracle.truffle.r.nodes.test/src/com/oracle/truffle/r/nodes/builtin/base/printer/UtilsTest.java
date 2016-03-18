@@ -40,5 +40,4 @@ public class UtilsTest {
         assertTrue(Utils.isValidName("..."));
         assertFalse(Utils.isValidName("while"));
     }
-
 }

@@ -81,7 +81,6 @@ public class BrowserFunctions {
             }
             return RNull.instance;
         }
-
     }
 
     private abstract static class RetrieveAdapter extends RBuiltinNode {
@@ -99,7 +98,6 @@ public class BrowserFunctions {
             }
             return helperState.get(nn - 1);
         }
-
     }
 
     @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})

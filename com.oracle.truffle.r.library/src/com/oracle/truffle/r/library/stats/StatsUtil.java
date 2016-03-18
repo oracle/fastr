@@ -232,5 +232,4 @@ public class StatsUtil {
         }
         return (b0 - b2) * 0.5;
     }
-
 }

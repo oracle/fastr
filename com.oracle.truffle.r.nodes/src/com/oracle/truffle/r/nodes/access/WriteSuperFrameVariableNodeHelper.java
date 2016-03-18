@@ -39,5 +39,4 @@ public abstract class WriteSuperFrameVariableNodeHelper extends BaseWriteVariabl
         execute(frame, value);
         return value;
     }
-
 }

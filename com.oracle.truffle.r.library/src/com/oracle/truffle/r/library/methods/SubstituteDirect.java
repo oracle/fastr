@@ -76,5 +76,4 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
         }
         return list2EnvNode.execute(list, env);
     }
-
 }

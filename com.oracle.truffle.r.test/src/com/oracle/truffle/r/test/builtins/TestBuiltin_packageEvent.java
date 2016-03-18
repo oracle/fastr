@@ -22,5 +22,4 @@ public class TestBuiltin_packageEvent extends TestBase {
     public void testpackageEvent1() {
         assertEval("argv <- structure(list(pkgname = 'stats4', event = 'onLoad'),     .Names = c('pkgname', 'event'));do.call('packageEvent', argv)");
     }
-
 }

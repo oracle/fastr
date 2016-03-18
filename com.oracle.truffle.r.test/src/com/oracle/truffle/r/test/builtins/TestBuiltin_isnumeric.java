@@ -134,5 +134,4 @@ public class TestBuiltin_isnumeric extends TestBase {
     public void testisnumeric24() {
         assertEval(Ignored.Unknown, "argv <- list(structure(16352, class = 'Date'));do.call('is.numeric', argv)");
     }
-
 }

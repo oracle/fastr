@@ -116,5 +116,4 @@ public interface ConsoleHandler {
     default void flushHistory() {
         // by default, do nothing
     }
-
 }

@@ -1819,7 +1819,6 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             return builderToString(b);
         }
-
     }
 
     @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "isListOrStringVector", type = RNode.class), @NodeChild(value = "isComplexOrRawVector", type = RNode.class),
@@ -1896,5 +1895,4 @@ public abstract class PrettyPrinterNode extends RNode {
             return builderToString(sb);
         }
     }
-
 }

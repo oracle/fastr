@@ -109,7 +109,5 @@ public class RSyntaxTags {
         } else {
             return ss.withTags(newTags);
         }
-
     }
-
 }

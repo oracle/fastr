@@ -56,5 +56,4 @@ public class TestBuiltin_basename extends TestBase {
     public void testbasename9() {
         assertEval("argv <- structure(list(path = 'myTst'), .Names = 'path');do.call('basename', argv)");
     }
-
 }

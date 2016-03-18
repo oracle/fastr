@@ -375,5 +375,4 @@ public final class RCmdOptions {
         System.out.println(RRuntime.LICENSE);
         System.exit(0);
     }
-
 }

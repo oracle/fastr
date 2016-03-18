@@ -1011,7 +1011,6 @@ public class RSerialize {
                 }
             }
         }
-
     }
 
     private abstract static class PInputStream {
@@ -1136,7 +1135,6 @@ public class RSerialize {
             System.arraycopy(buf, offset, data, 0, data.length);
             offset += data.length;
         }
-
     }
 
     /**
@@ -1174,7 +1172,6 @@ public class RSerialize {
 
             return result;
         }
-
     }
 
     // Serialize support is currently very limited, essentially to saving the CRAN package format
@@ -1283,7 +1280,6 @@ public class RSerialize {
             flushBuffer();
             os.flush();
         }
-
     }
 
     public static final int XDR = 0; // actually any value other than the following
@@ -1949,7 +1945,6 @@ public class RSerialize {
             }
             return symbol;
         }
-
     }
 
     /**
@@ -2120,7 +2115,6 @@ public class RSerialize {
                 assert !(obj instanceof RUnboundValue);
             }
         }
-
     }
 
     /**

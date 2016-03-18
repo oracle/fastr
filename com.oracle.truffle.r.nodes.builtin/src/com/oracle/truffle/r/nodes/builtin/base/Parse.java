@@ -211,7 +211,6 @@ public abstract class Parse extends RBuiltinNode {
                 return createFileSource(ConnectionSupport.removeFileURLPrefix(srcFileText), coalescedLines);
             }
         }
-
     }
 
     private static Source createSource(RConnection conn, String coalescedLines) {
@@ -266,5 +265,4 @@ public abstract class Parse extends RBuiltinNode {
         exprs.setAttr("wholeSrcref", RDataFactory.createIntVector(wholeSrcrefData, RDataFactory.COMPLETE_VECTOR));
         exprs.setAttr("srcfile", srcFile);
     }
-
 }

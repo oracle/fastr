@@ -69,5 +69,4 @@ public abstract class VectorReadNode extends RootNode {
             return RNull.instance;
         }
     }
-
 }

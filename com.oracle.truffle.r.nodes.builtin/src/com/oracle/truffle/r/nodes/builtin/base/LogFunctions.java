@@ -110,7 +110,6 @@ public class LogFunctions {
         protected static double logb(double x, double base) {
             return Math.log(x) / Math.log(base);
         }
-
     }
 
     @RBuiltin(name = "log10", kind = PRIMITIVE, parameterNames = {"x"})
@@ -193,7 +192,6 @@ public class LogFunctions {
             }
 
         }
-
     }
 
     @RBuiltin(name = "log1p", kind = PRIMITIVE, parameterNames = {"x"})
@@ -235,7 +233,5 @@ public class LogFunctions {
             }
 
         }
-
     }
-
 }

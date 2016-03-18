@@ -63,5 +63,4 @@ public class TestBuiltin_ceiling extends TestBase {
         assertEval("{ typeof(ceiling(42L)); }");
         assertEval("{ typeof(ceiling(TRUE)); }");
     }
-
 }

@@ -1326,7 +1326,6 @@ public class TOMS708 {
             double z = esum(mu, -(a * u + b * v), giveLog);
             return giveLog ? log(INV_SQRT_2_PI) + (log(b) + lx0) / 2. + z - bcorr(a, b) : INV_SQRT_2_PI * sqrt(b * x0) * z * exp(-bcorr(a, b));
         }
-
     } /* brcmp1 */
 
     // called only from bgrat() , as q_r = grat_r(b, z, log_r, eps) :
@@ -1542,7 +1541,6 @@ public class TOMS708 {
             double u = exp(-bcorr(a, b));
             return e0 * t * u * sum;
         }
-
     } /* basym_ */
 
     static double exparg(int l) {
@@ -1619,7 +1617,6 @@ public class TOMS708 {
                 return w - 0.5 - 0.5;
             }
         }
-
     } /* rexpm1 */
 
     static double alnrel(double a) {
@@ -2190,7 +2187,6 @@ public class TOMS708 {
                 return log(b) * -0.5 + e + w - u - v;
             }
         }
-
     } /* betaln */
 
     static double gsumln(double a, double b) {

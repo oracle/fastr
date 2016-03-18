@@ -154,7 +154,6 @@ public class TextConnections {
         public String[] getValue() {
             throw RError.nyi(null, "textConnectionValue");
         }
-
     }
 
     private static class TextWriteRConnection extends DelegateWriteRConnection implements GetConnectionValue {
@@ -318,7 +317,6 @@ public class TextConnections {
             }
 
         }
-
     }
 
     /**
@@ -363,7 +361,5 @@ public class TextConnections {
             sb = new StringBuffer();
             return result;
         }
-
     }
-
 }

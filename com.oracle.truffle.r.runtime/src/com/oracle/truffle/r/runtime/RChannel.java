@@ -101,7 +101,6 @@ public class RChannel {
         } finally {
             create.release();
         }
-
     }
 
     public static int getChannel(int key) {
@@ -216,7 +215,6 @@ public class RChannel {
         } else {
             return newMsg;
         }
-
     }
 
     private static boolean serializeObject(Object o) {
@@ -397,5 +395,4 @@ public class RChannel {
         }
         return null;
     }
-
 }

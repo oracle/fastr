@@ -32,7 +32,6 @@ public class ThreadTimings {
         if (bean == null) {
             bean = ManagementFactory.getThreadMXBean();
         }
-
     }
 
     public static long[] userSysTimeInNanos() {
@@ -40,5 +39,4 @@ public class ThreadTimings {
         long userTimeInNanos = bean.getCurrentThreadUserTime();
         return new long[]{userTimeInNanos, bean.getCurrentThreadCpuTime() - userTimeInNanos};
     }
-
 }

@@ -275,7 +275,6 @@ public abstract class PromiseNode extends RNode {
         public RSyntaxNode getRSyntaxNode() {
             return expression.asRSyntaxNode();
         }
-
     }
 
     /**
@@ -352,7 +351,6 @@ public abstract class PromiseNode extends RNode {
              */
             return RSyntaxNode.INTERNAL;
         }
-
     }
 
     @TruffleBoundary

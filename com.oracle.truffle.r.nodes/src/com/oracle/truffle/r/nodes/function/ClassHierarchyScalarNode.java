@@ -35,5 +35,4 @@ public abstract class ClassHierarchyScalarNode extends UnaryNode {
     protected String getClassHr(Object arg) {
         return classHierarchyNode.execute(arg).getDataAt(0);
     }
-
 }

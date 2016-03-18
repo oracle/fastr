@@ -134,5 +134,4 @@ public abstract class UpdateSlot extends RBuiltinNode {
         assert nameObjCached instanceof RPromise;
         return ((RPromise) nameObj).getRep() == ((RPromise) nameObjCached).getRep();
     }
-
 }

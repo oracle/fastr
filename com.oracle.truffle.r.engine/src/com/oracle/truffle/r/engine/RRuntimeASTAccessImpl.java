@@ -130,7 +130,6 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             assert result instanceof RSyntaxCall || result instanceof RSyntaxFunction : result.getClass();
             return RDataFactory.createLanguage(((RSyntaxNode) result).asRNode());
         }
-
     }
 
     @TruffleBoundary
@@ -290,7 +289,6 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         } else {
             return RDataFactory.createList(data, names);
         }
-
     }
 
     @Override
@@ -586,5 +584,4 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     public boolean isFunctionDefinitionNode(Node node) {
         return node instanceof FunctionDefinitionNode;
     }
-
 }

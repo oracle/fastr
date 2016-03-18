@@ -183,5 +183,4 @@ public abstract class Switch extends RBuiltinNode {
             return RNull.instance;
         }
     }
-
 }

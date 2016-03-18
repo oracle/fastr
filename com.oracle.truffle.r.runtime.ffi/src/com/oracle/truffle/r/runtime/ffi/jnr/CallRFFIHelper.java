@@ -331,7 +331,6 @@ public class CallRFFIHelper {
             default:
                 throw unimplemented("unexpected SEXPTYPE " + type);
         }
-
     }
 
     public static Object Rf_allocateArray(int mode, Object dimsObj) {
@@ -424,7 +423,6 @@ public class CallRFFIHelper {
         } else {
             throw unimplemented();
         }
-
     }
 
     public static int[] INTEGER(Object x) {

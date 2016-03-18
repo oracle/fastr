@@ -120,5 +120,4 @@ public abstract class ForceAndCall extends RBuiltinNode {
     public static boolean isBuiltin(RFunction fun) {
         return fun.isBuiltin();
     }
-
 }

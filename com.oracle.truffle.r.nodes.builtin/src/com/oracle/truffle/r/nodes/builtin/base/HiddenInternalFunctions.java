@@ -284,7 +284,6 @@ public class HiddenInternalFunctions {
             dataLengthBuf.position(0);
             return dataLengthBuf.getInt();
         }
-
     }
 
     @RBuiltin(name = "getRegisteredRoutines", kind = INTERNAL, parameterNames = "info")
@@ -330,7 +329,6 @@ public class HiddenInternalFunctions {
         public static boolean isDLLInfo(RExternalPtr externalPtr) {
             return DLL.isDLLInfo(externalPtr);
         }
-
     }
 
     @RBuiltin(name = "getVarsFromFrame", kind = INTERNAL, parameterNames = {"vars", "e", "force"})
@@ -471,7 +469,6 @@ public class HiddenInternalFunctions {
                 throw RError.error(this, Message.GENERIC, "lazyLoadDBinsertValue file append error");
             }
         }
-
     }
 
     @RBuiltin(name = "lazyLoadDBflush", kind = INTERNAL, parameterNames = "path")

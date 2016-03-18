@@ -190,5 +190,4 @@ abstract class PositionCastNode extends Node {
         }
         return null;
     }
-
 }

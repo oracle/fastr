@@ -301,5 +301,4 @@ public class RCommand {
         RStringVector continuePrompt = (RStringVector) RRuntime.asAbstractVector(RContext.getInstance().stateROptions.getValue("continue"));
         return continuePrompt.getDataAt(0);
     }
-
 }

@@ -192,5 +192,4 @@ public abstract class ColMeans extends RBuiltinNode {
     protected boolean isNaRm(byte naRm) {
         return naRm == RRuntime.LOGICAL_TRUE;
     }
-
 }

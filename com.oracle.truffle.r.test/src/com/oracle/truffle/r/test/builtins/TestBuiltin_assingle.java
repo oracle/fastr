@@ -22,5 +22,4 @@ public class TestBuiltin_assingle extends TestBase {
     public void testassingle1() {
         assertEval("argv <- structure(list(x = 1), .Names = 'x');do.call('as.single', argv)");
     }
-
 }

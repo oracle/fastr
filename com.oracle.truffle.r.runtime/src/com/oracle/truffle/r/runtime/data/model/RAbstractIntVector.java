@@ -72,5 +72,4 @@ public interface RAbstractIntVector extends RAbstractVector {
     default Class<?> getElementClass() {
         return RInteger.class;
     }
-
 }

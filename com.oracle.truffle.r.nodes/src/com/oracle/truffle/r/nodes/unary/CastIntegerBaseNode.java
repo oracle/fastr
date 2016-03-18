@@ -107,5 +107,4 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
     protected int doRaw(RRaw operand) {
         return RRuntime.raw2int(operand);
     }
-
 }

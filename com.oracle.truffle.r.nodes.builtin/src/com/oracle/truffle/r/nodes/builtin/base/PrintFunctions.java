@@ -63,7 +63,6 @@ public class PrintFunctions {
                 throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
         }
-
     }
 
     @RBuiltin(name = "print.default", kind = INTERNAL, parameterNames = {"x", "digits", "quote", "na.print", "print.gap", "right", "max", "useSource", "noOpt"})
@@ -113,7 +112,6 @@ public class PrintFunctions {
             // the same hack at this point - for details see definition of showDefault in show.R)
             return o instanceof RAttributable && ((RAttributable) o).isS4() && ((RAttributable) o).getClassAttr(attrProfiles) != null;
         }
-
     }
 
     @RBuiltin(name = "print.function", kind = INTERNAL, parameterNames = {"x", "useSource", "..."})

@@ -165,7 +165,6 @@ public class RPackageSource {
         } catch (NoSuchAlgorithmException ex) {
             throw RInternalError.shouldNotReachHere(ex.getMessage());
         }
-
     }
 
     /**
@@ -278,5 +277,4 @@ public class RPackageSource {
     private static Path indexPath() {
         return dirPath().resolve(INDEX);
     }
-
 }

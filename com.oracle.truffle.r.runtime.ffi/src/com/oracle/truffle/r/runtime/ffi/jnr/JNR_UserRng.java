@@ -100,5 +100,4 @@ public class JNR_UserRng implements UserRngRFFI {
             n[i] = pInt.getInt(i);
         }
     }
-
 }

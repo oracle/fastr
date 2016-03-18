@@ -321,5 +321,4 @@ public class RRNG {
         int millis = (int) (System.currentTimeMillis() & 0xFFFFFFFFL);
         return (millis << 16) ^ pid;
     }
-
 }

@@ -191,7 +191,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
             return r;
         }
-
     }
 
     public static class Subtract extends BinaryArithmetic {
@@ -249,7 +248,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
             return r;
         }
-
     }
 
     public static class Multiply extends BinaryArithmetic {
@@ -327,7 +325,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
             return (int) r;
         }
-
     }
 
     public static class Div extends BinaryArithmetic {
@@ -760,7 +757,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
 
         }
-
     }
 
     private static final class PowK extends Pow {
@@ -774,7 +770,6 @@ public abstract class BinaryArithmetic extends Operation {
             ensurePowKNodes();
             return powk(leftReal, leftImag, (int) rightReal);
         }
-
     }
 
     private static final class Pow0 extends Pow {
@@ -787,7 +782,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
             return RDataFactory.createComplex(1.0, 0.0);
         }
-
     }
 
     private static final class Pow1 extends Pow {
@@ -800,7 +794,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
             return RDataFactory.createComplex(leftReal, leftImag);
         }
-
     }
 
     private static final class Pow2 extends Pow {
@@ -814,7 +807,6 @@ public abstract class BinaryArithmetic extends Operation {
             ensurePow2();
             return cpow2.cpow2(leftReal, leftImag);
         }
-
     }
 
     private static final class PowNegative extends Pow {
@@ -870,7 +862,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
 
         }
-
     }
 
     private static final class PowFull extends Pow {
@@ -1046,5 +1037,4 @@ public abstract class BinaryArithmetic extends Operation {
             return left.compareTo(right) < 0 ? left : right;
         }
     }
-
 }

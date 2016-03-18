@@ -23,5 +23,4 @@ public class TestBuiltin_asdoubledifftime extends TestBase {
         assertEval("argv <- structure(list(x = structure(16351.8259046444, units = 'days',     class = 'difftime', origin = structure(0, class = c('POSIXct',         'POSIXt'), tzone = 'GMT'))), .Names = 'x');"
                         + "do.call('as.double.difftime', argv)");
     }
-
 }

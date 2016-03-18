@@ -99,5 +99,4 @@ public class TestSimpleIfEvaluator extends TestBase {
         assertEval("{ if (TRUE) invisible(23) }");
         assertEval("{ if (FALSE) 23 else invisible(23) }");
     }
-
 }

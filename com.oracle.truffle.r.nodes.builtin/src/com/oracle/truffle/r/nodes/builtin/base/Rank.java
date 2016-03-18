@@ -131,7 +131,5 @@ public abstract class Rank extends RBuiltinNode {
         } else {
             return RDataFactory.createIntVector(ik, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
-
 }

@@ -42,5 +42,4 @@ public abstract class Rhome extends RBuiltinNode {
         controlVisibility();
         return REnvVars.rHome();
     }
-
 }

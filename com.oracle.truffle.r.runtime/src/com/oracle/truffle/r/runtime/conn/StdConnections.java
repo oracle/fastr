@@ -172,7 +172,6 @@ public class StdConnections {
         public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.UNSEEKABLE_CONNECTION);
         }
-
     }
 
     private static class StdinConnection extends StdConnection {
@@ -242,7 +241,6 @@ public class StdConnections {
         public int getc() throws IOException {
             throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
         }
-
     }
 
     private static class StdoutConnection extends StdoutputAdapter {
@@ -385,7 +383,5 @@ public class StdConnections {
                 }
             }
         }
-
     }
-
 }

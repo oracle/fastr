@@ -103,7 +103,6 @@ public class BaseGammaFunctions {
         protected Object lgamma(@SuppressWarnings("unused") Object x) {
             throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
         }
-
     }
 
     @RBuiltin(name = "digamma", kind = PRIMITIVE, parameterNames = {"x"})
@@ -168,7 +167,6 @@ public class BaseGammaFunctions {
         protected Object digamma(@SuppressWarnings("unused") Object x) {
             throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
         }
-
     }
 
     @NodeChildren({@NodeChild(value = "x"), @NodeChild(value = "n"), @NodeChild(value = "kode"), @NodeChild(value = "ans")})
@@ -600,5 +598,4 @@ public class BaseGammaFunctions {
             return ans;
         }
     }
-
 }

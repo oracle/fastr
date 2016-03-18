@@ -84,7 +84,6 @@ public class RNGFunctions {
                 }
             }
         }
-
     }
 
     @RBuiltin(name = "RNGkind", kind = INTERNAL, parameterNames = {"kind", "normkind"})

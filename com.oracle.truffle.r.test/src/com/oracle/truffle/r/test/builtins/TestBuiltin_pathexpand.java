@@ -36,5 +36,4 @@ public class TestBuiltin_pathexpand extends TestBase {
     public void testpathexpand5() {
         assertEval("argv <- structure(list(path = '/tmp/RtmpagC9oa/Pkgs/exNSS4'),     .Names = 'path');do.call('path.expand', argv)");
     }
-
 }

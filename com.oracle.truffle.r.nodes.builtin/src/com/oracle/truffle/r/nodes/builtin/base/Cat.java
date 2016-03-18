@@ -234,5 +234,4 @@ public abstract class Cat extends RInvisibleBuiltinNode {
         }
         return false;
     }
-
 }

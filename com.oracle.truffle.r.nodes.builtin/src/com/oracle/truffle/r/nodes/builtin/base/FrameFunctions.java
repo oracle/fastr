@@ -372,7 +372,6 @@ public class FrameFunctions {
             }
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "call");
         }
-
     }
 
     @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {})
@@ -431,7 +430,6 @@ public class FrameFunctions {
         protected int sysParent(VirtualFrame frame, double n) {
             return sysParent(frame, (int) n);
         }
-
     }
 
     @RBuiltin(name = "sys.function", kind = INTERNAL, parameterNames = {"which"}, splitCaller = true, alwaysSplit = true)
@@ -481,7 +479,6 @@ public class FrameFunctions {
             }
             return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
 
     @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {})
@@ -557,5 +554,4 @@ public class FrameFunctions {
             return parentFrame(frame, (int) n);
         }
     }
-
 }

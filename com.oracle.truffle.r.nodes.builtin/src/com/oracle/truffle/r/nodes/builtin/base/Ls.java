@@ -41,5 +41,4 @@ public abstract class Ls extends RBuiltinNode {
         controlVisibility();
         return envir.ls(RRuntime.fromLogical(allNames), null, RRuntime.fromLogical(sorted));
     }
-
 }

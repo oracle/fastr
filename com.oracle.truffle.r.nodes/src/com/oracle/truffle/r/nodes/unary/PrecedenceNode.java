@@ -206,5 +206,4 @@ public abstract class PrecedenceNode extends RBaseNode {
     protected int doArgsValuesAndNames(RArgsValuesAndNames args, byte recursive, @Cached("createRecursive()") PrecedenceNode precedenceNode) {
         return precedenceNode.executeInteger(args.getArgument(0), recursive);
     }
-
 }

@@ -129,7 +129,5 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
             }
             return next;
         }
-
     }
-
 }

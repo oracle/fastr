@@ -46,12 +46,10 @@ public class UUIDFunctionUIDFactory extends FunctionUIDFactory {
         public String toString() {
             return uuid.toString();
         }
-
     }
 
     @Override
     public FunctionUID createUID() {
         return new UUIDFunctionUID(UUID.randomUUID());
     }
-
 }

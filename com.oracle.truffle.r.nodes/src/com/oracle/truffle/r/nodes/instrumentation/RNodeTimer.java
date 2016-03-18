@@ -69,7 +69,6 @@ public class RNodeTimer {
         public Object getIdent() {
             return ident;
         }
-
     }
 
     public abstract static class BasicListener implements ExecutionEventListener {
@@ -348,7 +347,5 @@ public class RNodeTimer {
             RSyntaxNode.accept(fdi.node.getBody().asNode(), 0, new LineTimesNodeVisitor(fdi.node.getUID(), times), false);
             return times;
         }
-
     }
-
 }

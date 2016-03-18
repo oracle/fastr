@@ -167,7 +167,6 @@ public class BitwiseFunctions {
         protected boolean shiftByCharacter(RAbstractVector n) {
             return typeofB.execute(n) == RType.Character;
         }
-
     }
 
     @RBuiltin(name = "bitwiseAnd", kind = RBuiltinKind.INTERNAL, parameterNames = {"a", "b"})

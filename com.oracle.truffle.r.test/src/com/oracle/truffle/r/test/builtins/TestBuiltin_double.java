@@ -22,5 +22,4 @@ public class TestBuiltin_double extends TestBase {
     public void testdouble1() {
         assertEval("argv <- list();do.call('double', argv)");
     }
-
 }

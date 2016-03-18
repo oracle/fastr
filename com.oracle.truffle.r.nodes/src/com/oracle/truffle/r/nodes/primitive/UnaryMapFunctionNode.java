@@ -71,5 +71,4 @@ public abstract class UnaryMapFunctionNode extends RBaseNode {
     public RComplex applyComplex(RComplex operand) {
         throw RInternalError.shouldNotReachHere();
     }
-
 }

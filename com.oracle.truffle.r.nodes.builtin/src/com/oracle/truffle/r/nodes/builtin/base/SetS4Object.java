@@ -90,5 +90,4 @@ public abstract class SetS4Object extends RBuiltinNode {
     protected boolean isSequence(Object o) {
         return o instanceof RSequence;
     }
-
 }

@@ -121,5 +121,4 @@ public abstract class RSharingAttributeStorage extends RAttributeStorage impleme
         }
         return this;
     }
-
 }

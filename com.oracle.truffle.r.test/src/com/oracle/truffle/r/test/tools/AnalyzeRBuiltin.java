@@ -101,7 +101,6 @@ public class AnalyzeRBuiltin {
         public String toString() {
             return name;
         }
-
     }
 
     private enum Visibility {
@@ -578,5 +577,4 @@ public class AnalyzeRBuiltin {
         }
         return false;
     }
-
 }

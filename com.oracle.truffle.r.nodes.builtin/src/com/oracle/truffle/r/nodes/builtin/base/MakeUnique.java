@@ -117,5 +117,4 @@ public abstract class MakeUnique extends RBuiltinNode {
     protected boolean sepIsString(RAbstractVector sep) {
         return sep.getElementClass() == RString.class && sep.getLength() == 1;
     }
-
 }

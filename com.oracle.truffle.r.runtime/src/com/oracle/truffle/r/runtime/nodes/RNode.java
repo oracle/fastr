@@ -360,5 +360,4 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
     protected static boolean isRAttributable(Object value) {
         return value instanceof RAttributable;
     }
-
 }

@@ -159,7 +159,6 @@ public class FileConnections {
         public void close() throws IOException {
             inputStream.close();
         }
-
     }
 
     private static class FileWriteTextRConnection extends DelegateWriteRConnection implements ReadWriteHelper {
@@ -257,7 +256,6 @@ public class FileConnections {
         public void close() throws IOException {
             inputStream.close();
         }
-
     }
 
     private static class FileWriteBinaryConnection extends DelegateWriteRConnection implements ReadWriteHelper {
@@ -313,7 +311,6 @@ public class FileConnections {
         public void flush() throws IOException {
             outputStream.flush();
         }
-
     }
 
     private static class FileReadWriteConnection extends DelegateReadWriteRConnection implements ReadWriteHelper {
@@ -471,5 +468,4 @@ public class FileConnections {
             throw RInternalError.unimplemented();
         }
     }
-
 }

@@ -67,5 +67,4 @@ public abstract class DuplicateNode extends RBaseNode {
     protected Object duplicate(@SuppressWarnings("unused") Object object) {
         throw RInternalError.unimplemented("duplication not supported");
     }
-
 }

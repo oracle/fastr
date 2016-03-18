@@ -145,5 +145,4 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
             return Math.sqrt(re * re + im * im);
         }
     }
-
 }

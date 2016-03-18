@@ -66,7 +66,6 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         protected void printEmptyVector() throws IOException {
             out.print("complex(0)");
         }
-
     }
 
     public static final class ComplexVectorMetrics extends FormatMetrics {
@@ -86,7 +85,6 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
             this.di = di;
             this.ei = ei;
         }
-
     }
 
     public static ComplexVectorMetrics formatComplexVector(RAbstractComplexVector x, int offs, int n, int nsmall, PrintParameters pp) {
@@ -429,5 +427,4 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         }
         return buff;
     }
-
 }

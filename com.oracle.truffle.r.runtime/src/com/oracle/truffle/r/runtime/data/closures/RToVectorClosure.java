@@ -197,5 +197,4 @@ public abstract class RToVectorClosure implements RAbstractVector {
     public boolean isS4() {
         return false;
     }
-
 }

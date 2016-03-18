@@ -192,5 +192,4 @@ public abstract class Mapply extends RBuiltinNode {
             return elementNodes;
         }
     }
-
 }

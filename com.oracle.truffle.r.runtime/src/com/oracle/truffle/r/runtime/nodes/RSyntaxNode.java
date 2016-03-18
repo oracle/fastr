@@ -158,5 +158,4 @@ public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
             }
         }
     }
-
 }

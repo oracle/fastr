@@ -49,5 +49,4 @@ public class ReadArgumentNode extends RNode {
     public int getIndex() {
         return index;
     }
-
 }

@@ -22,5 +22,4 @@ public class TestBuiltin_assign extends TestBase {
     public void testassign1() {
         assertEval("argv <- structure(list(x = '`', value = TRUE), .Names = c('x',     'value'));do.call('assign', argv)");
     }
-
 }

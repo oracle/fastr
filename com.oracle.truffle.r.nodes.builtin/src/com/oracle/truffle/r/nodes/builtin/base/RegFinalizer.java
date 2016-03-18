@@ -63,5 +63,4 @@ public abstract class RegFinalizer extends RBuiltinNode {
         }
         throw RError.error(this, RError.Message.REG_FINALIZER_SECOND);
     }
-
 }

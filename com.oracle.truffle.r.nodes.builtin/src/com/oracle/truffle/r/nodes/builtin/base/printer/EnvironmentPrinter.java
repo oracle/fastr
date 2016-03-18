@@ -34,5 +34,4 @@ public final class EnvironmentPrinter extends AbstractValuePrinter<REnvironment>
     protected void printValue(REnvironment value, PrintContext printCtx) throws IOException {
         printCtx.output().print(value.getPrintName());
     }
-
 }

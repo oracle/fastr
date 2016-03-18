@@ -22,5 +22,4 @@ public class TestBuiltin_allvars extends TestBase {
     public void testallvars1() {
         assertEval("argv <- structure(list(expr = expression(quote(temp[1, ] ~ 3))),     .Names = 'expr');do.call('all.vars', argv)");
     }
-
 }

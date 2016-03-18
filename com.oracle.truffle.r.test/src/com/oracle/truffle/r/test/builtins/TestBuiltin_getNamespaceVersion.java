@@ -22,5 +22,4 @@ public class TestBuiltin_getNamespaceVersion extends TestBase {
     public void testgetNamespaceVersion1() {
         assertEval("argv <- structure(list(ns = 'stats'), .Names = 'ns');do.call('getNamespaceVersion', argv)");
     }
-
 }

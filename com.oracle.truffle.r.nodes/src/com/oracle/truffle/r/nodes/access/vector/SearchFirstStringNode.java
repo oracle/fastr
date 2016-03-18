@@ -311,5 +311,4 @@ final class SearchFirstStringNode extends Node {
             }
         }
     }
-
 }

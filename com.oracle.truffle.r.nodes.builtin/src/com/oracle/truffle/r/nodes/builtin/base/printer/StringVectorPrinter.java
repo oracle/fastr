@@ -89,7 +89,6 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
         protected String elementTypeName() {
             return "character";
         }
-
     }
 
     public static int formatString(RAbstractStringVector x, int offs, int n, boolean quote, PrintParameters pp) {
@@ -181,5 +180,4 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
         }
         return StringVectorPrinter.encode(s, w, pp.getRight() ? PrintJustification.right : PrintJustification.left);
     }
-
 }

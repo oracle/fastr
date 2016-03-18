@@ -64,5 +64,4 @@ public abstract class Slot extends RBuiltinNode {
         assert name == name.intern();
         return accessSlotNode.executeAccess(object, name);
     }
-
 }

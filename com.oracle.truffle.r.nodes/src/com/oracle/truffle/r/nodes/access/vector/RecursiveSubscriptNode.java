@@ -58,5 +58,4 @@ abstract class RecursiveSubscriptNode extends Node {
         errorBranch.enter();
         return RError.error(this, RError.Message.NO_SUCH_INDEX, i);
     }
-
 }

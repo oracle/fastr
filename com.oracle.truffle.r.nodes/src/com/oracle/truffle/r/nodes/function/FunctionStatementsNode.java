@@ -48,5 +48,4 @@ public class FunctionStatementsNode extends BlockNode {
     public RSyntaxNode substituteImpl(REnvironment env) {
         return new FunctionStatementsNode(RSyntaxNode.EAGER_DEPARSE, super.substituteImpl(env));
     }
-
 }

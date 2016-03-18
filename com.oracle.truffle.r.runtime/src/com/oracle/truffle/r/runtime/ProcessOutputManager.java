@@ -42,7 +42,6 @@ public class ProcessOutputManager {
         public int getTotalRead() {
             return totalRead;
         }
-
     }
 
     /**
@@ -107,5 +106,4 @@ public class ProcessOutputManager {
             return data;
         }
     }
-
 }

@@ -107,5 +107,4 @@ public abstract class BinaryMapFunctionNode extends RBaseNode {
     public boolean isComplete() {
         return true;
     }
-
 }

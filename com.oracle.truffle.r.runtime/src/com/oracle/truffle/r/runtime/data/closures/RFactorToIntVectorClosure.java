@@ -77,5 +77,4 @@ public class RFactorToIntVectorClosure extends RToIntVectorClosure implements RA
     public RStringVector getNames(RAttributeProfiles attrProfiles) {
         return withNames ? super.getNames(attrProfiles) : null;
     }
-
 }

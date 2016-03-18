@@ -54,5 +54,4 @@ public abstract class RToIntVectorClosure extends RToVectorClosure implements RA
     public final RIntVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
     }
-
 }

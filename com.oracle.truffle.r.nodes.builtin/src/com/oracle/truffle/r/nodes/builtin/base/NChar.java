@@ -142,5 +142,4 @@ public abstract class NChar extends RBuiltinNode {
             throw RError.error(this, RError.Message.CANNOT_COERCE, RRuntime.classToString(obj.getClass(), false), "character");
         }
     }
-
 }

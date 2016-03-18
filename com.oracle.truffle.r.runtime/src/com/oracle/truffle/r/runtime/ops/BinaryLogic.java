@@ -132,7 +132,6 @@ public abstract class BinaryLogic extends BooleanOperation {
         public boolean op(RComplex left, RComplex right) {
             return !left.isZero() && !right.isZero();
         }
-
     }
 
     public static final class Or extends BinaryLogic {
@@ -188,6 +187,5 @@ public abstract class BinaryLogic extends BooleanOperation {
         public boolean op(RComplex left, RComplex right) {
             return !left.isZero() || !right.isZero();
         }
-
     }
 }

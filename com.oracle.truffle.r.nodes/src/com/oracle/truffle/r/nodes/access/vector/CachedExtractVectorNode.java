@@ -470,5 +470,4 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             return extractNodes[dimensionIndex].apply(vector, positions, profiles, RLogical.TRUE, RLogical.TRUE);
         }
     }
-
 }

@@ -208,7 +208,6 @@ public class RASTUtils {
         } else {
             return ConstantNode.create(value);
         }
-
     }
 
     public static boolean isLanguageOrExpression(Object expr) {
@@ -388,7 +387,6 @@ public class RASTUtils {
             // An actual value
             return ConstantNode.create(val);
         }
-
     }
 
     @TruffleBoundary
@@ -447,7 +445,6 @@ public class RASTUtils {
         public SourceSection getSourceSection() {
             throw RInternalError.shouldNotReachHere();
         }
-
     }
 
     /**
@@ -468,7 +465,6 @@ public class RASTUtils {
             assert false;
             return null;
         }
-
     }
 
     /**
@@ -480,7 +476,5 @@ public class RASTUtils {
             assert false;
             return null;
         }
-
     }
-
 }

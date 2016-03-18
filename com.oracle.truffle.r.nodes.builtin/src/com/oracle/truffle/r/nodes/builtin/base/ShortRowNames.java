@@ -116,5 +116,4 @@ public abstract class ShortRowNames extends RBuiltinNode {
     private RError typeError() {
         return RError.error(this, RError.Message.INVALID_ARGUMENT, "type");
     }
-
 }

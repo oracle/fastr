@@ -223,7 +223,6 @@ public class CompareLibR {
         try (BufferedOutputStream bs = new BufferedOutputStream(new FileOutputStream(file))) {
             bs.write(s.getBytes());
         }
-
     }
 
     private static void compareFiles(String path1, String path2) throws IOException {
@@ -243,5 +242,4 @@ public class CompareLibR {
         System.err.println("usage: --gnurhome path --package pkg | --files path1 path2");
         System.exit(1);
     }
-
 }

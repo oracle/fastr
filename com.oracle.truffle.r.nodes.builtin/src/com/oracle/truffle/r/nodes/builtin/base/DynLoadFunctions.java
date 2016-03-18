@@ -92,7 +92,6 @@ public class DynLoadFunctions {
             }
             return RNull.instance;
         }
-
     }
 
     @RBuiltin(name = "getLoadedDLLs", kind = INTERNAL, parameterNames = {})
@@ -167,7 +166,5 @@ public class DynLoadFunctions {
         public static boolean isDLLInfo(RExternalPtr externalPtr) {
             return DLL.isDLLInfo(externalPtr);
         }
-
     }
-
 }

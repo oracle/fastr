@@ -72,5 +72,4 @@ public class JNR_Stats implements StatsRFFI {
     public int fft_work(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
         return stats().fft_work(a, nseg, n, nspn, isn, work, iwork);
     }
-
 }

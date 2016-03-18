@@ -82,7 +82,5 @@ public abstract class Conj extends RBuiltinNode {
         public RComplex op(double re, double im) {
             return RComplex.valueOf(re, -im);
         }
-
     }
-
 }

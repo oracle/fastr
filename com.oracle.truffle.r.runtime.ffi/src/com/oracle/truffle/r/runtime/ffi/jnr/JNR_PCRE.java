@@ -89,5 +89,4 @@ public class JNR_PCRE implements PCRERFFI {
     public Result study(long code, int options) {
         throw RInternalError.unimplemented("pcre_study");
     }
-
 }

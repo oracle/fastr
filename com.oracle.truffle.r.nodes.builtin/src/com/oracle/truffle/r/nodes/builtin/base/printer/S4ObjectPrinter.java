@@ -70,5 +70,4 @@ public final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
     private static RFunction createShowFunction(VirtualFrame frame, ReadVariableNode showFind) {
         return (RFunction) showFind.execute(frame);
     }
-
 }

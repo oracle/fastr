@@ -521,7 +521,5 @@ public final class BinaryMapNode extends RBaseNode {
             void perform(BinaryMapFunctionNode action, A store, int resultIndex, V left, int leftIndex, V right, int rightIndex);
 
         }
-
     }
-
 }

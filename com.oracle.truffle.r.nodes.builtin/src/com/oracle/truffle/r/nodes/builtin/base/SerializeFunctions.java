@@ -103,7 +103,6 @@ public class SerializeFunctions {
             }
             return doSerializeToConnBase(object, conn, type, RRuntime.LOGICAL_NA, version, refhook);
         }
-
     }
 
     @RBuiltin(name = "unserialize", kind = INTERNAL, parameterNames = {"conn", "refhook"})

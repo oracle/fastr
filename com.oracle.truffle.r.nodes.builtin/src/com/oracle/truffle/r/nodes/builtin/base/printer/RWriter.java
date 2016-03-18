@@ -41,5 +41,4 @@ public class RWriter extends Writer {
     @Override
     public void close() throws IOException {
     }
-
 }

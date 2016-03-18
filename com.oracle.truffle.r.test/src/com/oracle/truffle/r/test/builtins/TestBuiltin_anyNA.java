@@ -22,5 +22,4 @@ public class TestBuiltin_anyNA extends TestBase {
     public void testanyNA1() {
         assertEval("argv <- list(c(1.81566026854212e-304, 0, 0, 0, 0, 0, 0, 0, 0,     0, 0, 0, 0, 0, 0, 0, 0, 0, 0));do.call('anyNA', argv)");
     }
-
 }

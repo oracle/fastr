@@ -37,5 +37,4 @@ public final class SymbolPrinter extends AbstractValuePrinter<RSymbol> {
                         RDeparse.SIMPLEDEPARSE, -1);
         printCtx.output().print(dp[0]);
     }
-
 }

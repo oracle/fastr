@@ -121,7 +121,6 @@ public class RPerfStats {
             out().printf(dFormat, hist[hist.length - 1]);
             out().println();
         }
-
     }
 
     private static final ArrayList<Handler> handlers = new ArrayList<>();

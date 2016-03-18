@@ -94,5 +94,4 @@ public final class RBuiltinRootNode extends RRootNode {
     public String toString() {
         return "RBuiltin(" + builtin + ")";
     }
-
 }

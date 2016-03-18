@@ -180,5 +180,4 @@ public abstract class ConvertBooleanNode extends RNode {
     public RSyntaxNode getRSyntaxNode() {
         return getOperand().asRSyntaxNode();
     }
-
 }

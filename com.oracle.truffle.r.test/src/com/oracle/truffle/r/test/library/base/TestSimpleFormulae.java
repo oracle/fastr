@@ -33,5 +33,4 @@ public class TestSimpleFormulae extends TestBase {
         assertEval("{ typeof(a~b) }");
         assertEval("{ class(a~b) }");
     }
-
 }

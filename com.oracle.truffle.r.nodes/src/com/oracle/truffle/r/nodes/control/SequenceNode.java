@@ -69,5 +69,4 @@ public class SequenceNode extends RNode {
         }
         return lastResult;
     }
-
 }

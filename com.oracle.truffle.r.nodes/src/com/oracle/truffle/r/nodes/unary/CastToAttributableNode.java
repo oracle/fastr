@@ -65,5 +65,4 @@ public abstract class CastToAttributableNode extends CastBaseNode {
     protected RAttributable cast(RS4Object object) {
         return object;
     }
-
 }

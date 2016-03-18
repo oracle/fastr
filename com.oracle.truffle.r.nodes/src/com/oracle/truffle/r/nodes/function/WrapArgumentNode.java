@@ -124,5 +124,4 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
             return wan;
         }
     }
-
 }

@@ -184,7 +184,6 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
                 printTags(ss);
             }
         }
-
     }
 
     private static void printSourceCode(SourceSection ss) {
@@ -220,5 +219,4 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
             throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, ex.getMessage() == null ? ex : ex.getMessage());
         }
     }
-
 }

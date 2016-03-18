@@ -82,5 +82,4 @@ public class JNI_OSExtras {
     static ArrayList<String> glob(String pattern) {
         return osExtras().glob(pattern);
     }
-
 }

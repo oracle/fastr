@@ -635,7 +635,6 @@ public abstract class Unlist extends RBuiltinNode {
         } else {
             return RRuntime.NAMES_ATTR_EMPTY_VALUE;
         }
-
     }
 
     private static String newName(String base, String tag, NamesInfo namesInfo) {

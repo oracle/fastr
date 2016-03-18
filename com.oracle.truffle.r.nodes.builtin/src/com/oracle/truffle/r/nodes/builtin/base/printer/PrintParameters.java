@@ -258,5 +258,4 @@ public final class PrintParameters {
     public void setSuppressIndexLabels(boolean suppressIndexLabels) {
         this.suppressIndexLabels = suppressIndexLabels;
     }
-
 }

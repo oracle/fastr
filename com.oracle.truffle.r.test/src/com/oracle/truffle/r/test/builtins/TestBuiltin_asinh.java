@@ -41,5 +41,4 @@ public class TestBuiltin_asinh extends TestBase {
     public void testasinh5() {
         assertEval("argv <- list(c(0.34345+233i,-0.34345+0.3334i));asinh(argv[[1]]);");
     }
-
 }

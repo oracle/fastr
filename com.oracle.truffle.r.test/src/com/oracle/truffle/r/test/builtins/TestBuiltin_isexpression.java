@@ -136,5 +136,4 @@ public class TestBuiltin_isexpression extends TestBase {
     public void testisexpression25() {
         assertEval("argv <- list(expression(quote(expression(b = pi^3))));do.call('is.expression', argv)");
     }
-
 }

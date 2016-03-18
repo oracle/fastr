@@ -104,5 +104,4 @@ public class NewInstrumentFactory extends RInstrumentFactory {
         long cumTime = RNodeTimer.StatementListener.findTimer(func);
         return cumTime;
     }
-
 }

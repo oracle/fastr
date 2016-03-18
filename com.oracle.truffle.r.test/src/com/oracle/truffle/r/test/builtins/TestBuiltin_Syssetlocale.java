@@ -26,5 +26,4 @@ public class TestBuiltin_Syssetlocale extends TestBase {
     public void testSyssetlocale3() {
         assertEval("argv <- structure(list(category = 'LC_TIME', locale = 'C'), .Names = c('category',     'locale'));do.call('Sys.setlocale', argv)");
     }
-
 }

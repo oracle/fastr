@@ -493,5 +493,4 @@ abstract class WriteIndexedVectorNode extends Node {
             valueNACheck.checkListElement(rightValue);
         }
     }
-
 }

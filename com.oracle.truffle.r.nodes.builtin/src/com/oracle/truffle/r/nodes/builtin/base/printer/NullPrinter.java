@@ -33,5 +33,4 @@ public final class NullPrinter implements ValuePrinter<RNull> {
     public void print(RNull value, PrintContext printCtx) {
         printCtx.output().print(RRuntime.NULL);
     }
-
 }

@@ -42,5 +42,4 @@ public final class ApplyCastNode extends RNode {
     public Object execute(VirtualFrame frame) {
         return cast.execute(value.execute(frame));
     }
-
 }

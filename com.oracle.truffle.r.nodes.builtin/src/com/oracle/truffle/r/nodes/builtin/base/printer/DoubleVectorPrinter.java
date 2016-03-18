@@ -63,7 +63,6 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         protected String elementTypeName() {
             return "double";
         }
-
     }
 
     public static class DoubleVectorMetrics extends FormatMetrics {
@@ -75,7 +74,6 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
             this.d = d;
             this.e = e;
         }
-
     }
 
     public static DoubleVectorMetrics formatDoubleVector(RAbstractDoubleVector x, int offs, int n, int nsmall, PrintParameters pp) {
@@ -249,7 +247,6 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
             this.nsig = nsig;
             this.roundingwidens = roundingwidens;
         }
-
     }
 
     public static ScientificDouble scientific(double x, PrintParameters pp) {
@@ -411,5 +408,4 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
 
         return buff;
     }
-
 }

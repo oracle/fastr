@@ -315,7 +315,6 @@ public class ConnectionSupport {
         ConnectionClass(String printName) {
             this.printName = printName;
         }
-
     }
 
     public static final String FILE_URL_PREFIX = "file://";
@@ -466,7 +465,6 @@ public class ConnectionSupport {
         public boolean isOpen() {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
-
     }
 
     /**
@@ -781,7 +779,6 @@ public class ConnectionSupport {
         public boolean isClosed() {
             return closed;
         }
-
     }
 
     public static BaseRConnection getBaseConnection(RConnection conn) {
@@ -948,7 +945,6 @@ public class ConnectionSupport {
         } else {
             return buffer;
         }
-
     }
 
     abstract static class DelegateRConnection extends RConnection {
@@ -987,7 +983,6 @@ public class ConnectionSupport {
         public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.UNSEEKABLE_CONNECTION);
         }
-
     }
 
     abstract static class DelegateReadRConnection extends DelegateRConnection {
@@ -1106,7 +1101,6 @@ public class ConnectionSupport {
         public int getc() throws IOException {
             return getInputStream().read();
         }
-
     }
 
     abstract static class BasePathRConnection extends BaseRConnection {
@@ -1125,7 +1119,5 @@ public class ConnectionSupport {
         public String getSummaryDescription() {
             return path;
         }
-
     }
-
 }

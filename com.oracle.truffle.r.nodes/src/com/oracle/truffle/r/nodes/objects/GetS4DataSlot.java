@@ -119,5 +119,4 @@ public abstract class GetS4DataSlot extends RNode {
             return RNull.instance;
         }
     }
-
 }

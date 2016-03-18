@@ -428,5 +428,4 @@ public class SplineFunctions {
             v[l] = y[i] + dx * (b[i] + dx * (c[i] + dx * tmp));
         }
     }
-
 }

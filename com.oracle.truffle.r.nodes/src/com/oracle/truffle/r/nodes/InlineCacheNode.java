@@ -120,5 +120,4 @@ public abstract class InlineCacheNode extends RBaseNode {
     private static Object evalPromise(Frame frame, Closure closure) {
         return RContext.getEngine().evalPromise(closure, frame.materialize());
     }
-
 }

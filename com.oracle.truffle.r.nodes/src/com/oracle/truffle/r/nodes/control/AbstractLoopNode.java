@@ -31,5 +31,4 @@ public abstract class AbstractLoopNode extends RSourceSectionNode {
     protected AbstractLoopNode(SourceSection sourceSection) {
         super(sourceSection.withTags(RSyntaxTags.LOOP));
     }
-
 }

@@ -41,5 +41,4 @@ public class TestBuiltin_chartr extends TestBase {
     public void testchartr6() {
         assertEval(Ignored.Unknown, "argv <- structure(list(old = 'NA', new = 'na', x = c('NA', NA,     'BANANA')), .Names = c('old', 'new', 'x'));do.call('chartr', argv)");
     }
-
 }

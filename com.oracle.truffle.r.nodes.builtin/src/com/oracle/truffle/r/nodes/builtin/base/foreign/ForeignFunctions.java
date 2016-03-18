@@ -185,7 +185,6 @@ public class ForeignFunctions {
             }
             return ((RExternalPtr) addressExtract.applyAccessField(frame, symbol, "address")).getAddr();
         }
-
     }
 
     /**

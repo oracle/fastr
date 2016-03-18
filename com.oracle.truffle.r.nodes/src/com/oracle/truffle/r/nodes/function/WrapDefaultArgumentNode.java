@@ -90,5 +90,4 @@ public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
             return new WrapDefaultArgumentNode(operand);
         }
     }
-
 }

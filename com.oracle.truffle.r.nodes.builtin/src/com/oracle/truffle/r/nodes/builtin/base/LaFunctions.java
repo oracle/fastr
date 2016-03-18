@@ -144,7 +144,6 @@ public class LaFunctions {
             RList result = RDataFactory.createList(new Object[]{values, vectorValues}, names);
             return result;
         }
-
     }
 
     @RBuiltin(name = "La_qr", kind = INTERNAL, parameterNames = {"in"})
@@ -261,7 +260,6 @@ public class LaFunctions {
             // TODO check complete
             return b;
         }
-
     }
 
     @RBuiltin(name = "det_ge_real", kind = INTERNAL, parameterNames = {"a", "uselog"})

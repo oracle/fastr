@@ -234,5 +234,4 @@ public enum RType {
     public boolean isNull() {
         return this == Null;
     }
-
 }

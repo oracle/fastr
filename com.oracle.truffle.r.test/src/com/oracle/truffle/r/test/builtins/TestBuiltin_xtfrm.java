@@ -87,5 +87,4 @@ public class TestBuiltin_xtfrm extends TestBase {
     public void testxtfrm15() {
         assertEval("argv <- list(structure(1:3, id = 'An Example', class = structure('numWithId',     package = '.GlobalEnv')));do.call('xtfrm', argv)");
     }
-
 }

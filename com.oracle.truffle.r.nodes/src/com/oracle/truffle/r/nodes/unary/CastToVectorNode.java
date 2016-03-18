@@ -79,5 +79,4 @@ public abstract class CastToVectorNode extends CastNode {
     public static CastToVectorNode create() {
         return CastToVectorNodeGen.create(false);
     }
-
 }

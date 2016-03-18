@@ -85,7 +85,6 @@ public abstract class Matrix extends RBuiltinNode {
         } else {
             return data.copyResizedWithDimensions(dim, false);
         }
-
     }
 
     @Specialization(guards = "!isTrue(byrow)")

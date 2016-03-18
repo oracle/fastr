@@ -169,7 +169,6 @@ public class SocketConnections {
         public void close() throws IOException {
             socket.close();
         }
-
     }
 
     private static class RServerSocketConnection extends RSocketReadWriteConnection {
@@ -204,7 +203,5 @@ public class SocketConnections {
             SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress(base.host, base.port));
             openStreams(socketChannel.socket());
         }
-
     }
-
 }

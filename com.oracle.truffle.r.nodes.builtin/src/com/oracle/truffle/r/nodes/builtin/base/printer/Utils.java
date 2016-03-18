@@ -157,5 +157,4 @@ public class Utils {
     public static int indexWidth(int n) {
         return (int) (Math.log10(n + 0.5) + 1);
     }
-
 }

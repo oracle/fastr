@@ -58,5 +58,4 @@ public class TestBuiltin_Encoding extends TestBase {
     public void testEncoding9() {
         assertEval("argv <- structure(list(x = 'abc'), .Names = 'x');do.call('Encoding', argv)");
     }
-
 }

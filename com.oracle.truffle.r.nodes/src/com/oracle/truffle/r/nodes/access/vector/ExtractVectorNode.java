@@ -182,7 +182,5 @@ public abstract class ExtractVectorNode extends Node {
             }
             return cached;
         }
-
     }
-
 }

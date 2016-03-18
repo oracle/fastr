@@ -194,5 +194,4 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
             throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
         }
     }
-
 }

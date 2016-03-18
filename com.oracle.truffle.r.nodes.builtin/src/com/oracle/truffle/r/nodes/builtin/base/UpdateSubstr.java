@@ -154,5 +154,4 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     protected boolean wrongValue(RAbstractVector value) {
         return value.getElementClass() != RString.class || value.getLength() == 0;
     }
-
 }

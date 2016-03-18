@@ -22,5 +22,4 @@ public class TestBuiltin_pairlist extends TestBase {
     public void testpairlist1() {
         assertEval("argv <- list();do.call('pairlist', argv)");
     }
-
 }

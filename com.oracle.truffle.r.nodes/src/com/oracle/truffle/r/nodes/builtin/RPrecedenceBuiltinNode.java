@@ -111,5 +111,4 @@ public abstract class RPrecedenceBuiltinNode extends RCastingBuiltinNode {
     protected boolean isExprPrecedence(Object arg) {
         return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.EXPRESSION_PRECEDENCE;
     }
-
 }

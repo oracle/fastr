@@ -183,5 +183,4 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
             container.setDimNames(newDimNames);
         }
     }
-
 }

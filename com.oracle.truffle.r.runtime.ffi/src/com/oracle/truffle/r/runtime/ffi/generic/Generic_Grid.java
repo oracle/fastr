@@ -59,7 +59,6 @@ public class Generic_Grid implements GridRFFI {
         DLL.SymbolInfo getKillGrid() {
             return killGrid;
         }
-
     }
 
     @Override
@@ -73,5 +72,4 @@ public class Generic_Grid implements GridRFFI {
         SymbolInfo killGrid = GridProvider.gridProvider().getKillGrid();
         return RFFIFactory.getRFFI().getCallRFFI().invokeCall(killGrid.address, killGrid.symbol, new Object[0]);
     }
-
 }

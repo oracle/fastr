@@ -39,5 +39,4 @@ public final class AnonymousFrameVariable {
     public static boolean isAnonymous(String name) {
         return name.startsWith(BASE_NAME);
     }
-
 }

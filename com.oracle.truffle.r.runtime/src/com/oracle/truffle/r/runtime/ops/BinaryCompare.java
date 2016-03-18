@@ -265,7 +265,5 @@ public abstract class BinaryCompare extends BooleanOperation {
         public boolean op(RComplex left, RComplex right) {
             throw RError.error(this, RError.Message.COMPARISON_COMPLEX);
         }
-
     }
-
 }

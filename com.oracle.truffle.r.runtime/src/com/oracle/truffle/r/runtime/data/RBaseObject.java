@@ -33,5 +33,4 @@ public class RBaseObject {
     public void setGPBits(int value) {
         gpbits = value;
     }
-
 }

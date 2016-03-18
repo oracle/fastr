@@ -142,7 +142,5 @@ public abstract class FastRTreeStats extends RExternalBuiltinNode.Arg2 {
                 return fdn.toString();
             }
         }
-
     }
-
 }

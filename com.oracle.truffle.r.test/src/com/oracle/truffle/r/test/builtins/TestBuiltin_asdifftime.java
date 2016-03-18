@@ -27,5 +27,4 @@ public class TestBuiltin_asdifftime extends TestBase {
     public void testasdifftime2() {
         assertEval(Ignored.Unknown, "argv <- structure(list(tim = c('3:20', '23:15', '2:'), format = '%H:%M'),     .Names = c('tim', 'format'));do.call('as.difftime', argv)");
     }
-
 }

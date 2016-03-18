@@ -254,7 +254,5 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             }
             return cached;
         }
-
     }
-
 }

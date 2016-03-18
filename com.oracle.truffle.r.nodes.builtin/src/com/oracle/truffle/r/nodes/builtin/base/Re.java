@@ -86,7 +86,5 @@ public abstract class Re extends RBuiltinNode {
         public double opd(double re, double im) {
             return re;
         }
-
     }
-
 }

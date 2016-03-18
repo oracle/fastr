@@ -83,7 +83,5 @@ public abstract class Mod extends RBuiltinNode {
         public double opd(double re, double im) {
             return RComplex.abs(re, im);
         }
-
     }
-
 }

@@ -62,5 +62,4 @@ public class RPlatform {
         }
         return osInfo;
     }
-
 }

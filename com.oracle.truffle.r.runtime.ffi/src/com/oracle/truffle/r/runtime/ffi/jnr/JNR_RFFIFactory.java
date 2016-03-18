@@ -198,5 +198,4 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
         }
         return pcreRFFI;
     }
-
 }

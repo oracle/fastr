@@ -93,5 +93,4 @@ public abstract class FastRCompile extends RExternalBuiltinNode.Arg2 {
     protected Object fallback(Object a1, Object a2) {
         throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
-
 }

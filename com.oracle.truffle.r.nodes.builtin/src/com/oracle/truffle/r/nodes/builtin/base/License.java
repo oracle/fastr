@@ -49,5 +49,4 @@ public abstract class License extends RInvisibleBuiltinNode {
         }
         return RNull.instance;
     }
-
 }

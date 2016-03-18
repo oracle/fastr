@@ -80,5 +80,4 @@ public abstract class Expression extends RBuiltinNode {
             return RASTUtils.createLanguageElement(RASTUtils.unwrap(promise.getRep()));
         }
     }
-
 }

@@ -41,5 +41,4 @@ public class TestBuiltin_enc2utf8 extends TestBase {
     public void testenc2utf86() {
         assertEval("argv <- list(NA_character_);do.call('enc2utf8', argv)");
     }
-
 }

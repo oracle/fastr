@@ -58,7 +58,6 @@ public class Generic_Tools implements ToolsRFFI {
         DLL.SymbolInfo getParseRd() {
             return parseRd;
         }
-
     }
 
     private static final Semaphore parseRdCritical = new Semaphore(1, false);
@@ -77,5 +76,4 @@ public class Generic_Tools implements ToolsRFFI {
             parseRdCritical.release();
         }
     }
-
 }

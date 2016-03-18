@@ -67,5 +67,4 @@ final class JNI_PkgInit {
     public static int forceSymbols(DLLInfo dllInfo, int value) {
         return DLL.forceSymbols(dllInfo, value);
     }
-
 }

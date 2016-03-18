@@ -82,5 +82,4 @@ public abstract class IsUnsorted extends RBuiltinNode {
         }
         return RRuntime.LOGICAL_FALSE;
     }
-
 }

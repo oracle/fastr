@@ -55,5 +55,4 @@ public abstract class Floor extends RBuiltinNode {
             return Math.floor(op);
         }
     }
-
 }

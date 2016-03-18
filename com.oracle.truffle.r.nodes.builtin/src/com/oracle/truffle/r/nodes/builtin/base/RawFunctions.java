@@ -63,7 +63,6 @@ public class RawFunctions {
         protected Object charToRaw(@SuppressWarnings("unused") Object x) {
             throw RError.error(this, RError.Message.ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE);
         }
-
     }
 
     @RBuiltin(name = "rawToChar", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "multiple"})
@@ -99,7 +98,6 @@ public class RawFunctions {
         protected Object rawToChar(Object x, Object multiple) {
             throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
         }
-
     }
 
     @RBuiltin(name = "rawShift", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "n"})

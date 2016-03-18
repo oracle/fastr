@@ -47,5 +47,4 @@ public class TestBuiltin_dirname extends TestBase {
     public void testdirname7() {
         assertEval("argv <- structure(list(path = character(0)), .Names = 'path');do.call('dirname', argv)");
     }
-
 }

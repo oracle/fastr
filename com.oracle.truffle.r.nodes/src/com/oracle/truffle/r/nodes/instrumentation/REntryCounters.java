@@ -65,7 +65,6 @@ public class REntryCounters {
         public Object getIdent() {
             return ident;
         }
-
     }
 
     /**
@@ -211,7 +210,5 @@ public class REntryCounters {
                 }
             }
         }
-
     }
-
 }

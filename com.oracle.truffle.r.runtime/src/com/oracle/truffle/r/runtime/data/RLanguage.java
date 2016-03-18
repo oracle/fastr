@@ -206,5 +206,4 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     public String toString() {
         return String.format("RLanguage(rep=%s)", getRep());
     }
-
 }

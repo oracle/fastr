@@ -36,5 +36,4 @@ public class TestBuiltin_beta extends TestBase {
     public void testbeta5() {
         assertEval(Ignored.Unknown, "argv <- structure(list(a = 1e-200, b = 1e-200), .Names = c('a',     'b'));do.call('beta', argv)");
     }
-
 }

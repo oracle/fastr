@@ -266,5 +266,4 @@ public final class RFactor implements RShareable, RAbstractContainer {
     public void setGPBits(int value) {
         vector.setGPBits(value);
     }
-
 }

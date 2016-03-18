@@ -69,5 +69,4 @@ public abstract class ListWriteNode extends RootNode {
         Object x = extract.apply(frame, receiver, new Object[]{field}, value);
         return x;
     }
-
 }

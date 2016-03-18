@@ -68,5 +68,4 @@ public abstract class BooleanOperation extends Operation {
         // in most cases it will be true (false only for the operand with short-circuit semantics)
         return true;
     }
-
 }

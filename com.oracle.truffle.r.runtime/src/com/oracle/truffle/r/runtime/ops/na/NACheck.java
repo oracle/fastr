@@ -378,5 +378,4 @@ public final class NACheck {
         }
         return RRuntime.string2logicalNoCheck(value);
     }
-
 }

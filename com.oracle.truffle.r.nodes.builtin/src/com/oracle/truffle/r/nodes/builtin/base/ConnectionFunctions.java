@@ -380,7 +380,6 @@ public abstract class ConnectionFunctions {
             checkIsConnection(con);
             throw RError.error(this, RError.Message.INVALID_ARG_TYPE);
         }
-
     }
 
     @RBuiltin(name = "close", kind = INTERNAL, parameterNames = {"con", "type"})
@@ -418,7 +417,6 @@ public abstract class ConnectionFunctions {
                 throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
         }
-
     }
 
     @RBuiltin(name = "readLines", kind = INTERNAL, parameterNames = {"con", "n", "ok", "warn", "encoding", "skipNul"})
@@ -544,7 +542,6 @@ public abstract class ConnectionFunctions {
         protected boolean newLineIsLogical(RAbstractVector newLine) {
             return newLine.getElementClass() == RLogical.class;
         }
-
     }
 
     @RBuiltin(name = "pushBackLength", kind = INTERNAL, parameterNames = {"connection"})
@@ -561,7 +558,6 @@ public abstract class ConnectionFunctions {
             controlVisibility();
             throw RError.error(this, RError.Message.INVALID_CONNECTION);
         }
-
     }
 
     @RBuiltin(name = "clearPushBack", kind = INTERNAL, parameterNames = {"connection"})
@@ -579,7 +575,6 @@ public abstract class ConnectionFunctions {
             controlVisibility();
             throw RError.error(this, RError.Message.INVALID_CONNECTION);
         }
-
     }
 
     @RBuiltin(name = "readChar", kind = INTERNAL, parameterNames = {"con", "nchars", "useBytes"})
@@ -621,7 +616,6 @@ public abstract class ConnectionFunctions {
         boolean useBytesEmpty(RAbstractLogicalVector useBytes) {
             return useBytes.getLength() == 0;
         }
-
     }
 
     @RBuiltin(name = "writeChar", kind = INTERNAL, parameterNames = {"object", "con", "nchars", "eos", "useBytes"})
@@ -1029,5 +1023,4 @@ public abstract class ConnectionFunctions {
             }
         }
     }
-
 }

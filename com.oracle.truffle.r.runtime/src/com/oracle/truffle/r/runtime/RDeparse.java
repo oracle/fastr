@@ -134,7 +134,6 @@ public class RDeparse {
         public PPInfo changePrec(int newPrec) {
             return new PPInfo(kind, newPrec, rightassoc);
         }
-
     }
 
     public static class Func {
@@ -145,7 +144,6 @@ public class RDeparse {
             this.op = op;
             this.info = info;
         }
-
     }
 
     // TODO COMPLETE THIS!
@@ -1057,7 +1055,6 @@ public class RDeparse {
         if (state.showAttributes()) {
             attr2(state, obj);
         }
-
     }
 
     /**
@@ -1526,5 +1523,4 @@ public class RDeparse {
             }
         }
     }
-
 }

@@ -22,5 +22,4 @@ public class TestBuiltin_raw extends TestBase {
     public void testraw1() {
         assertEval("argv <- structure(list(length = 0), .Names = 'length');do.call('raw', argv)");
     }
-
 }

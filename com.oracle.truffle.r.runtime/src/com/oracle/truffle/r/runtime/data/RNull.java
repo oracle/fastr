@@ -47,5 +47,4 @@ public final class RNull extends RScalar {
     public static Object toRNull(Object value) {
         return value == null ? instance : value;
     }
-
 }

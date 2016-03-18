@@ -148,5 +148,4 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
         return newFunction;
 
     }
-
 }

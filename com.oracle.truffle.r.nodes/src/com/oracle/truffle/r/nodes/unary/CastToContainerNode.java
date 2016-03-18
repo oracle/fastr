@@ -82,5 +82,4 @@ public abstract class CastToContainerNode extends CastBaseNode {
     protected REnvironment cast(REnvironment env) {
         return env;
     }
-
 }

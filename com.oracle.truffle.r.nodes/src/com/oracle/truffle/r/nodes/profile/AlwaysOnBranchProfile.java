@@ -60,5 +60,4 @@ public final class AlwaysOnBranchProfile {
     public static AlwaysOnBranchProfile create() {
         return new AlwaysOnBranchProfile();
     }
-
 }

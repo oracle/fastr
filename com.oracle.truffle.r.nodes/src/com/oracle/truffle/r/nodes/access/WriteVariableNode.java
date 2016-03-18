@@ -87,5 +87,4 @@ public abstract class WriteVariableNode extends RNode {
             return WriteLocalFrameVariableNode.create(name, rhs, mode);
         }
     }
-
 }

@@ -750,5 +750,4 @@ public final class Covcor extends RExternalBuiltinNode {
         check.enable(x);
         return check.check(x);
     }
-
 }

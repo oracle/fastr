@@ -128,5 +128,4 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
     public RSyntaxNode getRSyntaxNode() {
         return originalRvn;
     }
-
 }

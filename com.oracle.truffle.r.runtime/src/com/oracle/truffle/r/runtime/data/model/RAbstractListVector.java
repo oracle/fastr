@@ -63,5 +63,4 @@ public interface RAbstractListVector extends RAbstractVector {
     default void setNA(Object store, int index) {
         setDataAt(store, index, RNull.instance);
     }
-
 }

@@ -77,5 +77,4 @@ public abstract class ProcTime extends RBuiltinNode {
         long rtInMillis = tInMillis < T ? tInMillis : (tInMillis * T) / T;
         return (double) rtInMillis / T;
     }
-
 }

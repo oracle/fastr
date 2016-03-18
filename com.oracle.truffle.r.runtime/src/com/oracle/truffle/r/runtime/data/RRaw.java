@@ -105,5 +105,4 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
     public static RRaw valueOf(byte value) {
         return new RRaw(value);
     }
-
 }

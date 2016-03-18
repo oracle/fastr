@@ -104,7 +104,6 @@ public class GnuROneShotRSession implements RSession {
             System.err.print("exception: " + ex);
             return null;
         }
-
     }
 
     protected void send(OutputStream gnuRinput, byte[]... data) throws IOException {

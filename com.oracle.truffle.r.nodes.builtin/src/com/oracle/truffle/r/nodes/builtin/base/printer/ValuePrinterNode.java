@@ -116,7 +116,6 @@ public abstract class ValuePrinterNode extends RNode {
         } catch (IOException ex) {
             throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
-
     }
 
     private String prettyPrint(Object o, PrintParameters printParams, PrintWriter out, VirtualFrame frame)
@@ -134,5 +133,4 @@ public abstract class ValuePrinterNode extends RNode {
     private static void prettyPrint(Object o, PrintContext printCtx) throws IOException {
         ValuePrinters.INSTANCE.println(o, printCtx);
     }
-
 }

@@ -81,5 +81,4 @@ public final class FunctionPrinter extends AbstractValuePrinter<RFunction> {
             out.print(source);
         }
     }
-
 }

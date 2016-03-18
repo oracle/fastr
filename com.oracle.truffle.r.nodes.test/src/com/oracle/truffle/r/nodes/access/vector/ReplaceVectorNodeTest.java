@@ -297,5 +297,4 @@ public class ReplaceVectorNodeTest extends TestBase {
         return createHandle(ReplaceVectorNode.create(mode, false), //
                         (node, args) -> node.apply(null, args[0], (Object[]) args[1], args[2]));
     }
-
 }

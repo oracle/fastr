@@ -154,7 +154,6 @@ public class GrepFunctions {
             }
             return RDataFactory.createIntVector(naData, RDataFactory.INCOMPLETE_VECTOR);
         }
-
     }
 
     private abstract static class GrepAdapter extends CommonCodeAdapter {
@@ -266,7 +265,6 @@ public class GrepFunctions {
             Matcher m = Regexp.getPatternMatcher(pattern, text, ignoreCase);
             return m.find();
         }
-
     }
 
     @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "perl", "value", "fixed", "useBytes", "invert"})
@@ -564,7 +562,6 @@ public class GrepFunctions {
             controlVisibility();
             return doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, true);
         }
-
     }
 
     @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"})
@@ -876,5 +873,4 @@ public class GrepFunctions {
             return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         }
     }
-
 }

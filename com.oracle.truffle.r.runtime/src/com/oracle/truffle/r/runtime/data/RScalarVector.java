@@ -179,5 +179,4 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     public final boolean checkCompleteness() {
         return isComplete();
     }
-
 }

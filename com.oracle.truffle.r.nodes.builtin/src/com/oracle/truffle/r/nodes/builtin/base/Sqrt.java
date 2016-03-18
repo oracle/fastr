@@ -73,7 +73,5 @@ public abstract class Sqrt extends RBuiltinNode {
             double theta = Math.atan2(im, re) / 2;
             return RComplex.valueOf(r * Math.cos(theta), r * Math.sin(theta));
         }
-
     }
-
 }

@@ -251,5 +251,4 @@ public class RExpression implements RShareable, RAbstractContainer {
     public void setGPBits(int value) {
         data.setGPBits(value);
     }
-
 }

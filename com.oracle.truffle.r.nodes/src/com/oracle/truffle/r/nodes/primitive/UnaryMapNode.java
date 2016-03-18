@@ -325,7 +325,5 @@ public final class UnaryMapNode extends RBaseNode {
             void perform(UnaryMapFunctionNode action, A store, int resultIndex, V operand, int operandIndex);
 
         }
-
     }
-
 }

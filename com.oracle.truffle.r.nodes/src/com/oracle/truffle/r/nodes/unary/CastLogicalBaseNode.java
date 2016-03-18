@@ -76,5 +76,4 @@ public abstract class CastLogicalBaseNode extends CastBaseNode {
     protected byte doRaw(RRaw operand) {
         return RRuntime.raw2logical(operand);
     }
-
 }

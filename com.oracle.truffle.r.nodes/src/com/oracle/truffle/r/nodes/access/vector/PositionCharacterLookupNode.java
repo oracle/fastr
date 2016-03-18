@@ -90,5 +90,4 @@ final class PositionCharacterLookupNode extends Node {
             return RError.error(this, Message.SUBSCRIPT_BOUNDS);
         }
     }
-
 }

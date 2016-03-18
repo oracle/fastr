@@ -60,7 +60,6 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
         protected void printEmptyVector() throws IOException {
             out.print("integer(0)");
         }
-
     }
 
     public static FormatMetrics formatIntVector(RAbstractIntVector x, int offs, int n, int naWidth) {
@@ -118,5 +117,4 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
             return Utils.snprintf(NB, "%" + Utils.asBlankArg(Math.min(w, (NB - 1))) + "d", x);
         }
     }
-
 }

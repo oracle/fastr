@@ -80,5 +80,4 @@ public class RGraphics {
     private static GraphicsEngine getGraphicsEngine() {
         return GraphicsEngineImpl.getInstance();
     }
-
 }

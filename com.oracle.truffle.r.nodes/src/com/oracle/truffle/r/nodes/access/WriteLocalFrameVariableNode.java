@@ -135,7 +135,5 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
             FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameSlot, newValue, false, invalidateProfile);
             return value;
         }
-
     }
-
 }

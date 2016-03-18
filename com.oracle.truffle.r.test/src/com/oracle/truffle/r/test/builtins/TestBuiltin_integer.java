@@ -22,5 +22,4 @@ public class TestBuiltin_integer extends TestBase {
     public void testinteger1() {
         assertEval("argv <- structure(list(length = 2), .Names = 'length');do.call('integer', argv)");
     }
-
 }

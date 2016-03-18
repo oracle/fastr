@@ -464,5 +464,4 @@ public class TestOutputManager {
         sb.append(s.substring(ix));
         return sb.toString();
     }
-
 }

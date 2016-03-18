@@ -297,5 +297,4 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
         }
         return RDataFactory.createIntSequence(newStart, newStride, castSequence.getLength());
     }
-
 }

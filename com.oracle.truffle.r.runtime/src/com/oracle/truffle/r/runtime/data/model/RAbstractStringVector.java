@@ -72,5 +72,4 @@ public interface RAbstractStringVector extends RAbstractVector {
     default Class<?> getElementClass() {
         return RString.class;
     }
-
 }

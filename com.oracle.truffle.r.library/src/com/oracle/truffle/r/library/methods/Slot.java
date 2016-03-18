@@ -52,7 +52,6 @@ public class Slot {
         protected Object getSlot(Object object, Object nameVec) {
             throw RError.error(this, RError.Message.GENERIC, "invalid type or length for slot name");
         }
-
     }
 
     public abstract static class R_setSlot extends RExternalBuiltinNode.Arg3 {
@@ -79,7 +78,5 @@ public class Slot {
         protected Object setSlot(Object object, Object name, Object value) {
             throw RError.error(this, RError.Message.GENERIC, "invalid type or length for slot name");
         }
-
     }
-
 }

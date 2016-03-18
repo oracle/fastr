@@ -58,5 +58,4 @@ public abstract class CallInlineCacheNode extends RBaseNode {
     protected Object call(VirtualFrame frame, CallTarget target, Object[] arguments, @Cached("createIndirectCallNode()") IndirectCallNode callNode) {
         return callNode.call(frame, target, arguments);
     }
-
 }

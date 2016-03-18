@@ -291,7 +291,6 @@ public class DebugHandling {
                 stepIntoInstrument = null;
             }
         }
-
     }
 
     /**
@@ -433,7 +432,6 @@ public class DebugHandling {
             String callString = RContext.getRRuntimeASTAccess().getCallerSource(RArguments.getCall(frame));
             print(callString, true);
         }
-
     }
 
     private static void printNode(Node node, boolean curly) {
@@ -477,7 +475,6 @@ public class DebugHandling {
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
         }
-
     }
 
     private static class LoopStatementEventListener extends StatementEventListener {
@@ -531,7 +528,6 @@ public class DebugHandling {
                 fser.endFinishing();
             }
         }
-
     }
 
     private static AbstractLoopNode inLoop(final Node nodeArg) {
@@ -573,7 +569,5 @@ public class DebugHandling {
         @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
         }
-
     }
-
 }

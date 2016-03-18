@@ -200,5 +200,4 @@ public abstract class RowMeans extends RBuiltinNode {
     protected boolean isNaRm(byte naRm) {
         return naRm == RRuntime.LOGICAL_TRUE;
     }
-
 }

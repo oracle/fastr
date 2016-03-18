@@ -97,5 +97,4 @@ public abstract class Inherits extends RBuiltinNode {
     protected Object doesInherit(RExternalPtr x, RAbstractStringVector what, byte which) {
         return initInheritsNode().executeObject(x, what, which);
     }
-
 }

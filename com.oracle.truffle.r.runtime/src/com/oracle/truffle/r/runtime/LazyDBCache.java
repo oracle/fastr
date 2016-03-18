@@ -57,6 +57,5 @@ public class LazyDBCache {
         public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
             return new ContextStateImpl();
         }
-
     }
 }

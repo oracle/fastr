@@ -159,7 +159,6 @@ public class GZIPConnections {
         public void close() throws IOException {
             inputStream.close();
         }
-
     }
 
     private static class ByteGZipInputRConnection extends GZIPInputRConnection {
@@ -217,7 +216,5 @@ public class GZIPConnections {
         public void flush() throws IOException {
             outputStream.flush();
         }
-
     }
-
 }

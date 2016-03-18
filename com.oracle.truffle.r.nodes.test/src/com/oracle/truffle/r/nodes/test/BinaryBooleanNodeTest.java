@@ -298,5 +298,4 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
         return createHandle(BinaryBooleanNode.create(factory), //
                         (node, args) -> node.execute(null, args[0], args[1]));
     }
-
 }

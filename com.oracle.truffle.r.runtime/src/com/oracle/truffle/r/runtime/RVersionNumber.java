@@ -50,5 +50,4 @@ public class RVersionNumber {
     public static void main(String[] args) {
         System.out.printf("R version %s", FULL);
     }
-
 }

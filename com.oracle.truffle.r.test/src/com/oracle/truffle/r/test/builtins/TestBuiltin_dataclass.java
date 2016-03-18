@@ -22,5 +22,4 @@ public class TestBuiltin_dataclass extends TestBase {
     public void testdataclass1() {
         assertEval("argv <- structure(list(x = c('A', 'B', 'C', NA)), .Names = 'x');do.call('data.class', argv)");
     }
-
 }

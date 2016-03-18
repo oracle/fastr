@@ -1600,5 +1600,4 @@ public abstract class GammaFunctions {
             }
         }
     }
-
 }

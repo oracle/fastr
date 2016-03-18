@@ -46,5 +46,4 @@ class DefaultResourceHandlerFactory extends ResourceHandlerFactory implements Ha
     protected Handler newHandler() {
         return this;
     }
-
 }

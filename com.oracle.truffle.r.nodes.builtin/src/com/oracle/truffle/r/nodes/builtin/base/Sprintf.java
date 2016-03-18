@@ -584,5 +584,4 @@ public abstract class Sprintf extends RBuiltinNode {
     private static IllegalStateException fail(String message) {
         throw new IllegalStateException(message);
     }
-
 }

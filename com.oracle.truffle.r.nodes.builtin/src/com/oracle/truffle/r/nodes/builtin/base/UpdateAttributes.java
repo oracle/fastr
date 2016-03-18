@@ -249,5 +249,4 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
         }
         return obj;
     }
-
 }

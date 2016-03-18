@@ -91,5 +91,4 @@ public class TestBuiltin_ispairlist extends TestBase {
     public void testispairlist16() {
         assertEval("argv <- list(NULL);do.call('is.pairlist', argv)");
     }
-
 }

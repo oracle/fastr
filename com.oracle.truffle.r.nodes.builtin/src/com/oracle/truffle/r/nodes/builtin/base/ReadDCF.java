@@ -131,5 +131,4 @@ public abstract class ReadDCF extends RBuiltinNode {
     protected RStringVector doReadDCF(Object conn, Object fields, Object keepWhite) {
         throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
-
 }

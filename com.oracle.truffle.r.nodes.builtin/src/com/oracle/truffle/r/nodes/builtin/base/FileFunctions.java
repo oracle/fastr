@@ -563,7 +563,6 @@ public class FileFunctions {
             controlVisibility();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
-
     }
 
     // TODO Implement all the options
@@ -829,7 +828,6 @@ public class FileFunctions {
             }
             return false;
         }
-
     }
 
     /**
@@ -1177,6 +1175,5 @@ public class FileFunctions {
         protected RLogicalVector dirExists(@SuppressWarnings("unused") Object pathVec) {
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "filename");
         }
-
     }
 }

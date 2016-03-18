@@ -58,5 +58,4 @@ public abstract class Trunc extends RBuiltinNode {
             }
         }
     }
-
 }

@@ -217,7 +217,6 @@ public class TrigExpFunctions {
             }
 
         }
-
     }
 
     @RBuiltin(name = "expm1", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
@@ -260,7 +259,6 @@ public class TrigExpFunctions {
             }
 
         }
-
     }
 
     @com.oracle.truffle.r.runtime.RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
@@ -505,7 +503,6 @@ public class TrigExpFunctions {
             }
 
         }
-
     }
 
     @com.oracle.truffle.r.runtime.RBuiltin(name = "tan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
@@ -766,7 +763,6 @@ public class TrigExpFunctions {
                 return RDataFactory.createComplex(Math.PI / 2 - asin.getRealPart(), -asin.getImaginaryPart());
             }
         }
-
     }
 
     @RBuiltin(name = "acosh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})

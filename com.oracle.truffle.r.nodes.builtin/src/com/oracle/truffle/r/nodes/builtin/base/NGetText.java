@@ -97,5 +97,4 @@ public abstract class NGetText extends RBuiltinNode {
     protected boolean msgStringVectorOneElem(RAbstractVector msg1) {
         return msg1.getElementClass() == RString.class && msg1.getLength() == 1;
     }
-
 }

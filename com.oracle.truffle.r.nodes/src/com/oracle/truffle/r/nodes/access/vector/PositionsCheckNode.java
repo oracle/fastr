@@ -191,5 +191,4 @@ final class PositionsCheckNode extends Node {
         boolean containsNA;
 
     }
-
 }

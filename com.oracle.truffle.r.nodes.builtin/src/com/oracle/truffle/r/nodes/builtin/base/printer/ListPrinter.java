@@ -68,7 +68,6 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
             // no dim()
             printNoDimList(s, printCtx);
         }
-
     }
 
     private static void printDimList(RAbstractListVector s, PrintContext printCtx) throws IOException {
@@ -288,5 +287,4 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
 
         }
     }
-
 }

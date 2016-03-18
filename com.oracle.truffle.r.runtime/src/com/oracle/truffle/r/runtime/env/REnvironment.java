@@ -210,7 +210,6 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         void updateGlobal(Global globalEnv) {
             list.set(0, globalEnv);
         }
-
     }
 
     public static final String UNNAMED = new String("");
@@ -392,7 +391,6 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
             default:
                 // nothing to do
         }
-
     }
 
     private static SearchPath initSearchList(Global globalEnv) {

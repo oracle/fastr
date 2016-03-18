@@ -65,5 +65,4 @@ public class TestS4TestPackage extends TestRPackages {
                         "{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Truck\"), new(\"StateInspector\"))); detach(\"package:tests4\"); unloadNamespace(\"tests4\"); r }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
     }
-
 }

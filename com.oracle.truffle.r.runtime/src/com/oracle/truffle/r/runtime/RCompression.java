@@ -102,7 +102,6 @@ public class RCompression {
                 assert false;
                 return false;
         }
-
     }
 
     private static boolean gzipCompress(byte[] udata, byte[] cdata) {
@@ -207,5 +206,4 @@ public class RCompression {
         }
         return sb.toString();
     }
-
 }

@@ -176,5 +176,4 @@ public class JNR_Lapack implements LapackRFFI {
         lapack().dgecon_(wrapChar(norm), wrapInt(n), a, wrapInt(lda), wrapDouble(anorm), rcond, work, iwork, info);
         return info[0];
     }
-
 }

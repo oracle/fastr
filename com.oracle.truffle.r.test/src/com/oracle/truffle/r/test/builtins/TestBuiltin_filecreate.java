@@ -31,5 +31,4 @@ public class TestBuiltin_filecreate extends TestBase {
     public void testfilecreate4() {
         assertEval("argv <- structure(list('foo1'), .Names = '');do.call('file.create', argv)");
     }
-
 }

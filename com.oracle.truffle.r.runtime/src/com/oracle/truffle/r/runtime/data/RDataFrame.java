@@ -262,5 +262,4 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     public void setGPBits(int value) {
         vector.setGPBits(value);
     }
-
 }

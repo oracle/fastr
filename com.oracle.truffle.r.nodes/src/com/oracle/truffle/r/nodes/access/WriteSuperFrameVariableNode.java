@@ -142,7 +142,6 @@ public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariabl
                 replace(UnresolvedWriteLocalFrameVariableNodeGen.create(getRhs(), symbol, mode)).execute(frame, value);
             }
         }
-
     }
 
     public static class WriteSuperFrameVariableConditionalNode extends WriteSuperFrameVariableNodeHelper {

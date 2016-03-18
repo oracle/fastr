@@ -37,5 +37,4 @@ public class ParallelFunctions {
             return RRuntime.asLogical(RContext.getInstance().getParent() != null);
         }
     }
-
 }

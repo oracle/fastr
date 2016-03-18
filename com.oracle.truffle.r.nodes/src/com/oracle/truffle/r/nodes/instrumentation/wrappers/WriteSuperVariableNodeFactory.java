@@ -93,12 +93,10 @@ public class WriteSuperVariableNodeFactory implements InstrumentableFactory<Writ
         public java.lang.Object getName() {
             return delegate.getName();
         }
-
     }
 
     @Override
     public com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode createWrapper(WriteSuperVariableNode node, ProbeNode probe) {
         return new WriteSuperVariableNodeWrapper(node, probe);
     }
-
 }

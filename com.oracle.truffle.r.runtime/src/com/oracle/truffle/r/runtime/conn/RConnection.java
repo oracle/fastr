@@ -415,5 +415,4 @@ public abstract class RConnection extends RAttributeStorage implements RTypedVal
     public boolean isObject(RAttributeProfiles attrProfiles) {
         return true;
     }
-
 }

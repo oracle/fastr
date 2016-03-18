@@ -55,12 +55,10 @@ public class ALONGFunctionUIDFactory extends FunctionUIDFactory {
         public String toString() {
             return Long.toString(uuid);
         }
-
     }
 
     @Override
     public FunctionUID createUID() {
         return new ALongFunctionUID(ID.incrementAndGet());
     }
-
 }

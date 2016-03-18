@@ -46,5 +46,4 @@ public class TestBuiltin_islogical extends TestBase {
     public void testislogical7() {
         assertEval("argv <- list(c(FALSE, TRUE, FALSE));do.call('is.logical', argv)");
     }
-
 }

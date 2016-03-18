@@ -244,7 +244,6 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             }
             return sa;
         }
-
     }
 
     private final SyntaxArguments arguments;

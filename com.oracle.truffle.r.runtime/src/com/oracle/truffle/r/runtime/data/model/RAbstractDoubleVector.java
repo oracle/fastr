@@ -72,5 +72,4 @@ public interface RAbstractDoubleVector extends RAbstractVector {
     default Class<?> getElementClass() {
         return RDouble.class;
     }
-
 }

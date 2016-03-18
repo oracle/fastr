@@ -57,5 +57,4 @@ public abstract class RToComplexVectorClosure extends RToVectorClosure implement
     public final RComplexVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
     }
-
 }

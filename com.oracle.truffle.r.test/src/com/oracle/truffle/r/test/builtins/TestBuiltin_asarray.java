@@ -22,5 +22,4 @@ public class TestBuiltin_asarray extends TestBase {
     public void testasarray1() {
         assertEval("argv <- structure(list(x = 1:3), .Names = 'x');do.call('as.array', argv)");
     }
-
 }

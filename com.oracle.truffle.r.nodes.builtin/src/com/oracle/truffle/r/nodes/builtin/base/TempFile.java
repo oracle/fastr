@@ -130,5 +130,4 @@ public abstract class TempFile extends RBuiltinNode {
         }
         throw RError.error(this, RError.Message.GENERIC, msg);
     }
-
 }

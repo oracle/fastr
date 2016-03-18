@@ -88,5 +88,4 @@ public class TestBuiltin_formatinfo extends TestBase {
     public void testformatinfo15() {
         assertEval(Ignored.Unknown, "argv <- structure(list(x = c(complex(real = NaN, imaginary = NaN),     NA)), .Names = 'x');do.call('format.info', argv)");
     }
-
 }

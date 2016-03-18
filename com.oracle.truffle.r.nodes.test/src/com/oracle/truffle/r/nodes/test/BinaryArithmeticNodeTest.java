@@ -394,5 +394,4 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         return createHandle(BinaryArithmeticNode.create(factory, null), //
                         (node, args) -> node.execute(null, args[0], args[1]));
     }
-
 }

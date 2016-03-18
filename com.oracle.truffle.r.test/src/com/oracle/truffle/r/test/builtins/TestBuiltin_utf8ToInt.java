@@ -26,5 +26,4 @@ public class TestBuiltin_utf8ToInt extends TestBase {
     public void testutf8ToInt3() {
         assertEval(Ignored.Unknown, "argv <- structure(list(x = NA_character_), .Names = 'x');do.call('utf8ToInt', argv)");
     }
-
 }

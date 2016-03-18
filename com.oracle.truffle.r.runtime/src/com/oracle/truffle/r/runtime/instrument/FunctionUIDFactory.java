@@ -53,7 +53,6 @@ public abstract class FunctionUIDFactory {
         } catch (Exception ex) {
             Utils.fail("Failed to instantiate class: " + prop + ": " + ex);
         }
-
     }
 
     public static FunctionUIDFactory get() {

@@ -222,7 +222,5 @@ abstract class CachedVectorNode extends RBaseNode {
                 return profiledRowNames.getLength();
             }
         }
-
     }
-
 }

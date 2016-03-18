@@ -149,7 +149,6 @@ public class DLL {
             dllInfo.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS), false);
             return dllInfo;
         }
-
     }
 
     public static class SymbolInfo {
@@ -448,5 +447,4 @@ public class DLL {
         dllInfo.forceSymbols = value == 0 ? false : true;
         return old;
     }
-
 }

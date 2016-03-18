@@ -72,5 +72,4 @@ public class JNR_RAppl implements RApplRFFI {
     public void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info) {
         linpack().dqrcf_(x, wrapInt(n), wrapInt(k), qraux, y, wrapInt(ny), b, info);
     }
-
 }

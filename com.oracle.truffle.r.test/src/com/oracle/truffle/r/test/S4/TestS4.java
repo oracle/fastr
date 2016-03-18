@@ -107,5 +107,4 @@ public class TestS4 extends TestRBase {
     public String getTestDir() {
         return "S4";
     }
-
 }

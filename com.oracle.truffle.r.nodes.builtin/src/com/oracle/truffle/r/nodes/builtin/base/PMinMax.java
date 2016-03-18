@@ -341,7 +341,6 @@ public abstract class PMinMax extends RBuiltinNode {
             super(new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX, RError.Message.NO_NONMISSING_MAX_NA, false, true),
                             BinaryArithmetic.MAX);
         }
-
     }
 
     @RBuiltin(name = "pmin", kind = INTERNAL, parameterNames = {"na.rm", "..."})
@@ -351,7 +350,6 @@ public abstract class PMinMax extends RBuiltinNode {
             super(new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN, RError.Message.NO_NONMISSING_MIN_NA, false, true),
                             BinaryArithmetic.MIN);
         }
-
     }
 
     protected boolean isIntegerPrecedence(RArgsValuesAndNames args) {
@@ -476,7 +474,5 @@ public abstract class PMinMax extends RBuiltinNode {
             data[ind] = result;
             return warningAdded;
         }
-
     }
-
 }

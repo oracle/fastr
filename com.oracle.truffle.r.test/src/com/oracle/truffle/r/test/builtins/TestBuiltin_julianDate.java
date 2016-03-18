@@ -22,5 +22,4 @@ public class TestBuiltin_julianDate extends TestBase {
     public void testjulianDate1() {
         assertEval("argv <- structure(list(x = structure(16352, class = 'Date'),     origin = -2440588), .Names = c('x', 'origin'));do.call('julian.Date', argv)");
     }
-
 }

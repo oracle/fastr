@@ -41,5 +41,4 @@ public interface RTypedValue {
     default void unsetS4() {
         setGPBits(getGPBits() & ~S4_MASK);
     }
-
 }

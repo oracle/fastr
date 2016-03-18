@@ -197,5 +197,4 @@ public final class REnvVars implements RContext.ContextState {
             System.out.println(ex.getMessage());
         }
     }
-
 }

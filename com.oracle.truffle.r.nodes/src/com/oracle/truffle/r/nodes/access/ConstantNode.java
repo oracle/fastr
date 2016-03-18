@@ -192,7 +192,6 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
             controlVisibility();
             return intValue;
         }
-
     }
 
     private static final class ConstantObjectNode extends ConstantNode {

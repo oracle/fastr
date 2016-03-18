@@ -45,5 +45,4 @@ public abstract class Typeof extends RBuiltinNode {
         }
         return typeofNode.execute(obj).getName();
     }
-
 }

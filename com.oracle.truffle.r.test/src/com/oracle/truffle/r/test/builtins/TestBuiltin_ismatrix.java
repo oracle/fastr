@@ -126,5 +126,4 @@ public class TestBuiltin_ismatrix extends TestBase {
     public void testismatrix23() {
         assertEval("argv <- list(0.0597289453377495);do.call('is.matrix', argv)");
     }
-
 }

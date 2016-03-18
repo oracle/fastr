@@ -55,5 +55,4 @@ public class TestVanillaPackage extends TestRPackages {
         assertEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); r <- functionTest(c(1,2,3,4,5,6),8:10); detach(\"package:vanilla\"); r }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
     }
-
 }

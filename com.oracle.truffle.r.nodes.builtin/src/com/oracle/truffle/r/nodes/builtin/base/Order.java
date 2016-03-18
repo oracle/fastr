@@ -615,7 +615,6 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 indx[j] = itmp;
             }
         }
-
     }
 
     protected boolean isFirstIntegerPrecedence(RArgsValuesAndNames args) {
@@ -796,7 +795,5 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             }
             return 0; // equal
         }
-
     }
-
 }

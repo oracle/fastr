@@ -480,5 +480,4 @@ public abstract class Identical extends RBuiltinNode {
     public static Identical create(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
         return IdenticalNodeGen.create(false, arguments, builtin, suppliedSignature);
     }
-
 }

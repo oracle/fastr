@@ -120,7 +120,6 @@ public class DuplicatedFunctions {
                 typeof = insert(TypeofNodeGen.create());
             }
         }
-
     }
 
     @RBuiltin(name = "duplicated", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "imcomparables", "fromLast", "nmax"})
@@ -168,7 +167,6 @@ public class DuplicatedFunctions {
         protected RLogicalVector duplicatedEmpty(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast, int nmax) {
             return RDataFactory.createLogicalVector(0);
         }
-
     }
 
     @RBuiltin(name = "anyDuplicated", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "imcomparables", "fromLast"})

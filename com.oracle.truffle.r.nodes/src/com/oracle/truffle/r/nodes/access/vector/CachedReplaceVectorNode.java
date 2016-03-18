@@ -118,7 +118,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (castType != null && !castType.isNull()) {
             this.writeVectorNode = WriteIndexedVectorNode.create(castType, convertedPositions.length, false, true, mode.isSubscript() && !isDeleteElements());
         }
-
     }
 
     public boolean isSupported(Object target, Object[] positions, Object values) {
@@ -657,5 +656,4 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             return resultSize;
         }
     }
-
 }

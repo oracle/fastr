@@ -27,5 +27,4 @@ public class TestBuiltin_setdiff extends TestBase {
     public void setdiff() {
         assertEval("x <- c('a', 'b', 'x'); y <- c('a', 'y', 'z', 'x'); setdiff(x, y)");
     }
-
 }

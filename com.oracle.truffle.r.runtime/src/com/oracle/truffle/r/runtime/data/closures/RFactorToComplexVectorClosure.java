@@ -74,5 +74,4 @@ public class RFactorToComplexVectorClosure extends RToComplexVectorClosure imple
     public RStringVector getNames(RAttributeProfiles attrProfiles) {
         return withNames ? super.getNames(attrProfiles) : null;
     }
-
 }

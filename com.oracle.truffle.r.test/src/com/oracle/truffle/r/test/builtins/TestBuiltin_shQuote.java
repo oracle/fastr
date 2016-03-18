@@ -22,5 +22,4 @@ public class TestBuiltin_shQuote extends TestBase {
     public void testshQuote1() {
         assertEval(Ignored.Unknown, "argv <- structure(list(string = c('ABC', '\\'123\\'', 'a'b'), type = 'cmd'),     .Names = c('string', 'type'));do.call('shQuote', argv)");
     }
-
 }

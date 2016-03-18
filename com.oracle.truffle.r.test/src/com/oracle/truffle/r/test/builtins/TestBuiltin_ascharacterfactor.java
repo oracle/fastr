@@ -22,5 +22,4 @@ public class TestBuiltin_ascharacterfactor extends TestBase {
     public void testascharacterfactor1() {
         assertEval("argv <- structure(list(x = structure(c(1L, 2L, NA), .Label = c('AB',     'CD'), class = 'factor')), .Names = 'x');do.call('as.character.factor', argv)");
     }
-
 }

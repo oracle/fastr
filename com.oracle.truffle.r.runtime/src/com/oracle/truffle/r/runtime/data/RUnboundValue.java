@@ -44,5 +44,4 @@ public final class RUnboundValue extends RScalar {
     public static Object toRUnboundValue(Object value) {
         return value == null ? instance : value;
     }
-
 }

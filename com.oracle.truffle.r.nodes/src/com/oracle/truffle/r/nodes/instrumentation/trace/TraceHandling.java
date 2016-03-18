@@ -132,7 +132,6 @@ public class TraceHandling {
                 disabled = newState;
             }
         }
-
     }
 
     private abstract static class OutputHandler {
@@ -145,7 +144,6 @@ public class TraceHandling {
         void writeString(String s, boolean nl) throws IOException {
             StdConnections.getStdout().writeString(s, nl);
         }
-
     }
 
     private static class FileOutputHandler extends OutputHandler {
@@ -207,7 +205,6 @@ public class TraceHandling {
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
         }
-
     }
 
     @SuppressWarnings("unused")
@@ -234,5 +231,4 @@ public class TraceHandling {
             }
         }
     }
-
 }

@@ -39,5 +39,4 @@ public abstract class TruffleBoundaryNode extends RBaseNode implements ReplaceOb
     public final boolean nodeReplaced(Node oldNode, Node newNode, CharSequence reason) {
         return true;
     }
-
 }

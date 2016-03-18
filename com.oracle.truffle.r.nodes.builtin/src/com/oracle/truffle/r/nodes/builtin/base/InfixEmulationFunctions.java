@@ -178,7 +178,6 @@ public class InfixEmulationFunctions {
         protected Object get(VirtualFrame frame, Object x, RArgsValuesAndNames inds, Object dropVec) {
             return getInternal(frame, x, inds, dropVec);
         }
-
     }
 
     @RBuiltin(name = ".subset", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "drop"})
@@ -237,7 +236,6 @@ public class InfixEmulationFunctions {
         protected Object get(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
             return getInternal(frame, x, inds, exactVec);
         }
-
     }
 
     @RBuiltin(name = ".subset2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"})
@@ -349,7 +347,6 @@ public class InfixEmulationFunctions {
         protected Object fallbackError(@SuppressWarnings("unused") Object container, @SuppressWarnings("unused") Object field) {
             throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, RType.Language.getName());
         }
-
     }
 
     @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", "value"}, dispatch = INTERNAL_GENERIC)
@@ -505,5 +502,4 @@ public class InfixEmulationFunctions {
             throw nyi();
         }
     }
-
 }

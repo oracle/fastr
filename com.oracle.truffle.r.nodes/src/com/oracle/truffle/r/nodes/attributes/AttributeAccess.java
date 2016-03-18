@@ -112,5 +112,4 @@ public abstract class AttributeAccess extends RBaseNode {
     protected Object access(RAttributes attr) {
         return attr.get(name);
     }
-
 }

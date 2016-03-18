@@ -73,5 +73,4 @@ public class TestBuiltin_La extends TestBase {
     public void testMisc() {
         assertEval("{ x<-matrix(1:4, ncol=2); solve(x) }");
     }
-
 }

@@ -99,7 +99,6 @@ public class IsTypeFunctions {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
-
     }
 
     @RBuiltin(name = "is.recursive", kind = PRIMITIVE, parameterNames = {"x"})
@@ -566,5 +565,4 @@ public class IsTypeFunctions {
                             RRuntime.classToString(x.getElementClass()).equals(mode);
         }
     }
-
 }

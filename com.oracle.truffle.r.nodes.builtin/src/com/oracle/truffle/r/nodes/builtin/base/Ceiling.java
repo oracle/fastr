@@ -55,5 +55,4 @@ public abstract class Ceiling extends RBuiltinNode {
             return Math.ceil(op);
         }
     }
-
 }

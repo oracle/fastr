@@ -94,5 +94,4 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
             throw new AssertionError();
         }
     }
-
 }

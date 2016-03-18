@@ -59,7 +59,6 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
             super();
             this.maxWidth = maxWidth;
         }
-
     }
 
     private static final int R_MIN_LBLOFF = 2;
@@ -703,7 +702,5 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
         RAbstractStringVector getDimNamesAt(int dimLevel) {
             return dimLevel < dimnames.getLength() ? toStringVector(dimnames.getDataAt(dimLevel)) : null;
         }
-
     }
-
 }

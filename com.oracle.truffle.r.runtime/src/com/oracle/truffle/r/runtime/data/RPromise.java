@@ -492,5 +492,4 @@ public class RPromise implements RTypedValue {
     public boolean isS4() {
         return false;
     }
-
 }

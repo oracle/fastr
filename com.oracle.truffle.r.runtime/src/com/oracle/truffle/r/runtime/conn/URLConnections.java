@@ -110,7 +110,5 @@ public class URLConnections {
         public String readChar(int nchars, boolean useBytes) throws IOException {
             return readCharHelper(nchars, inputStream, useBytes);
         }
-
     }
-
 }

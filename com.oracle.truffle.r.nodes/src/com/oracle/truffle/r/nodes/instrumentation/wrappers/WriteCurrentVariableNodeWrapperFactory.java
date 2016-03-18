@@ -93,12 +93,10 @@ public class WriteCurrentVariableNodeWrapperFactory implements InstrumentableFac
         public java.lang.Object getName() {
             return delegate.getName();
         }
-
     }
 
     @Override
     public com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode createWrapper(WriteCurrentVariableNode node, ProbeNode probe) {
         return new WriteCurrentVariableNodeWrapper(node, probe);
     }
-
 }

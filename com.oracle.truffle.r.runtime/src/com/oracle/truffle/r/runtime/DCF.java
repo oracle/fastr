@@ -115,5 +115,4 @@ public class DCF {
         // TODO just spaces or tabs also legal
         return line.length() == 0;
     }
-
 }
