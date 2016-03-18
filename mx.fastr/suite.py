@@ -27,10 +27,10 @@ suite = {
   "imports" : {
     "suites" : [
             {
-               "name" : "graal-core",
-               "version" : "0a3eb8f750758773e8b75230afd48e4350dac15",
+               "name" : "truffle",
+               "version" : "f322868c76f775a399bf96915c95e077c4f2c08c",
                "urls" : [
-                    {"url" : "https://github.com/graalvm/graal-core", "kind" : "git"},
+                    {"url" : "https://github.com/graalvm/truffle", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
                 ]
             },
