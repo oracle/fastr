@@ -52,7 +52,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     public abstract RIntVector executeRIntVector(byte naLast, byte dec, RArgsValuesAndNames args);
 
-    @Child OrderVector1Node orderVector1Node;
+    @Child private OrderVector1Node orderVector1Node;
     @Child private CastToVectorNode castVector;
     @Child private CastToVectorNode castVector2;
     @Child private CmpNode cmpNode;

@@ -38,11 +38,11 @@ public final class ArgumentsSignature implements Iterable<String> {
     private static final ConcurrentHashMap<ArgumentsSignature, ArgumentsSignature> signatures = new ConcurrentHashMap<>();
 
     public static final String VARARG_NAME = "...";
-    public static final String VARARG_GETTER_PREFIX = "..";
     public static final int NO_VARARG = -1;
 
+    private static final String VARARG_GETTER_PREFIX = "..";
+
     @CompilationFinal private static final ArgumentsSignature[] EMPTY_SIGNATURES = new ArgumentsSignature[32];
-    public static final ArgumentsSignature VARARG_SIGNATURE = get(VARARG_NAME);
     public static final ArgumentsSignature INVALID_SIGNATURE = new ArgumentsSignature(new String[]{"<<invalid>>"});
 
     static {

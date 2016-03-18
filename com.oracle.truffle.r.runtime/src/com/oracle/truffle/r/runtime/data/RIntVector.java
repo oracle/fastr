@@ -188,7 +188,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return updateDataAt(i, (Integer) o, naCheck);
     }
 
-    public static int[] resizeData(int[] newData, int[] oldData, int oldDataLength, boolean fillNA) {
+    static int[] resizeData(int[] newData, int[] oldData, int oldDataLength, boolean fillNA) {
         if (newData.length > oldDataLength) {
             if (fillNA) {
                 for (int i = oldDataLength; i < newData.length; i++) {

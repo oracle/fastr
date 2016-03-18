@@ -36,7 +36,6 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
     public static final RLogical NA = new RLogical(RRuntime.LOGICAL_NA);
     public static final RLogical TRUE = new RLogical(RRuntime.LOGICAL_TRUE);
     public static final RLogical FALSE = new RLogical(RRuntime.LOGICAL_FALSE);
-    public static final RLogical DEFAULT = FALSE;
 
     private final byte value;
 

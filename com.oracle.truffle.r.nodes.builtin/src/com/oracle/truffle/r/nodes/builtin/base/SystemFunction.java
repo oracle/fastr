@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public abstract class SystemFunction extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
-    public Object system(RAbstractStringVector command, byte internLogical) {
+    protected Object system(RAbstractStringVector command, byte internLogical) {
         Object result;
         boolean intern = RRuntime.fromLogical(internLogical);
         String shell = RContext.getInstance().stateREnvVars.get("SHELL");

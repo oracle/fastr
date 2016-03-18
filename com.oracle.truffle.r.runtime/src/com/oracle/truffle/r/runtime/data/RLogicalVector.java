@@ -137,7 +137,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return RRuntime.logicalToString(this.getDataAt(index));
     }
 
-    public RLogicalVector updateDataAt(int index, byte right, NACheck valueNACheck) {
+    private RLogicalVector updateDataAt(int index, byte right, NACheck valueNACheck) {
         assert !this.isShared();
         data[index] = right;
         if (valueNACheck.check(right)) {

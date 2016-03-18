@@ -60,7 +60,7 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
 
     @NodeField(name = "mode", type = Mode.class)
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
-    public abstract static class UnresolvedWriteLocalFrameVariableNode extends WriteLocalFrameVariableNode {
+    abstract static class UnresolvedWriteLocalFrameVariableNode extends WriteLocalFrameVariableNode {
 
         public abstract Mode getMode();
 
@@ -100,14 +100,14 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
     }
 
     @NodeFields({@NodeField(name = "frameSlot", type = FrameSlot.class), @NodeField(name = "mode", type = Mode.class)})
-    public abstract static class ResolvedWriteLocalFrameVariableNode extends WriteLocalFrameVariableNode {
+    abstract static class ResolvedWriteLocalFrameVariableNode extends WriteLocalFrameVariableNode {
 
         private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
         private final BranchProfile invalidateProfile = BranchProfile.create();
 
         public abstract Mode getMode();
 
-        public static ResolvedWriteLocalFrameVariableNode create(RNode rhs, Object name, FrameSlot frameSlot, Mode mode) {
+        private static ResolvedWriteLocalFrameVariableNode create(RNode rhs, Object name, FrameSlot frameSlot, Mode mode) {
             return ResolvedWriteLocalFrameVariableNodeGen.create(rhs, name, frameSlot, mode);
         }
 

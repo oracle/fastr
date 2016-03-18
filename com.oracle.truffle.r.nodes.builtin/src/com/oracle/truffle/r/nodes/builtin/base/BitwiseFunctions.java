@@ -40,10 +40,10 @@ public class BitwiseFunctions {
         private final NACheck naCheckB = NACheck.create();
         private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
 
-        @Child protected CastTypeNode castTypeA = CastTypeNodeGen.create(null, null);
-        @Child protected CastTypeNode castTypeB = CastTypeNodeGen.create(null, null);
-        @Child protected TypeofNode typeofA = TypeofNodeGen.create();
-        @Child protected TypeofNode typeofB = TypeofNodeGen.create();
+        @Child private CastTypeNode castTypeA = CastTypeNodeGen.create(null, null);
+        @Child private CastTypeNode castTypeB = CastTypeNodeGen.create(null, null);
+        @Child private TypeofNode typeofA = TypeofNodeGen.create();
+        @Child private TypeofNode typeofB = TypeofNodeGen.create();
 
         protected enum Operation {
             AND("bitwAnd"),

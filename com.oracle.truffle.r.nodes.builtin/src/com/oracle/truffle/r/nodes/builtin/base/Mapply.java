@@ -62,13 +62,13 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @RBuiltin(name = "mapply", kind = INTERNAL, parameterNames = {"FUN", "dots", "MoreArgs"}, splitCaller = true)
 public abstract class Mapply extends RBuiltinNode {
 
-    protected static class ElementNode extends Node {
-        @Child Length lengthNode;
-        @Child AccessArraySubscriptBuiltin indexedLoadNode;
-        @Child WriteVariableNode writeVectorElementNode;
+    protected static final class ElementNode extends Node {
+        @Child private Length lengthNode;
+        @Child private AccessArraySubscriptBuiltin indexedLoadNode;
+        @Child private WriteVariableNode writeVectorElementNode;
         private final String vectorElementName;
 
-        ElementNode(String vectorElementName) {
+        private ElementNode(String vectorElementName) {
             this.vectorElementName = AnonymousFrameVariable.create(vectorElementName);
             this.lengthNode = insert(LengthNodeGen.create(null, null, null));
             this.indexedLoadNode = insert(InfixEmulationFunctionsFactory.AccessArraySubscriptBuiltinNodeGen.create(null, null, null));

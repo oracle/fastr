@@ -41,7 +41,7 @@ public abstract class Return extends RBuiltinNode {
 
     @Child private PromiseHelperNode promiseHelper;
 
-    protected PromiseHelperNode initPromiseHelper() {
+    private PromiseHelperNode initPromiseHelper() {
         if (promiseHelper == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             promiseHelper = insert(new PromiseHelperNode());

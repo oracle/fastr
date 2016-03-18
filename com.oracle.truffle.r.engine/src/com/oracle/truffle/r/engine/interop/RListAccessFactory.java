@@ -33,8 +33,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 
 public final class RListAccessFactory implements Factory10 {
 
-    public abstract class InteropRootNode extends RootNode {
-        public InteropRootNode() {
+    private abstract class InteropRootNode extends RootNode {
+        InteropRootNode() {
             super(TruffleRLanguage.class, null, null);
         }
     }

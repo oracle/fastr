@@ -280,7 +280,7 @@ public class RPromise implements RTypedValue {
      * any reason, a Promise gets {@link #deoptimize()} (which includes {@link #materialize()}ion).
      */
     public static final class EagerPromise extends RPromise {
-        protected final Object eagerValue;
+        private final Object eagerValue;
 
         private final Assumption notChangedNonLocally;
         private final int frameId;
@@ -337,10 +337,6 @@ public class RPromise implements RTypedValue {
 
         public boolean isValid() {
             return notChangedNonLocally.isValid();
-        }
-
-        public void notifySuccess() {
-            feedback.onSuccess(this);
         }
 
         public void notifyFailure() {
@@ -430,10 +426,6 @@ public class RPromise implements RTypedValue {
 
         public RPromise createPromisedPromise(RPromise promisedPromise, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
             return RDataFactory.createEagerPromise(type, OptType.PROMISED, exprClosure, promisedPromise, notChangedNonLocally, nFrameId, feedback, -1);
-        }
-
-        public RPromise createVarargPromise(RPromise promisedVararg) {
-            return RDataFactory.createVarargPromise(type, promisedVararg, exprClosure);
         }
 
         public Object getExpr() {

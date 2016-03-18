@@ -56,10 +56,10 @@ public class RErrorHandling {
     private static final int IN_HANDLER = 3;
     private static final RStringVector RESTART_CLASS = RDataFactory.createStringVectorFromScalar("restart");
 
-    public static class Warnings {
+    private static class Warnings {
         private static ArrayList<Warning> list = new ArrayList<>();
 
-        public int size() {
+        int size() {
             return list.size();
         }
 
@@ -67,11 +67,11 @@ public class RErrorHandling {
             return list.get(index);
         }
 
-        public void add(Warning warning) {
+        void add(Warning warning) {
             list.add(warning);
         }
 
-        public void clear() {
+        void clear() {
             list.clear();
         }
     }
@@ -132,7 +132,7 @@ public class RErrorHandling {
          * when this instance is created, the {@link REnvironment} context state has not been set
          * up, so we can't look up anything in the base env.
          */
-        RFunction getDotSignalSimpleWarning() {
+        private RFunction getDotSignalSimpleWarning() {
             if (dotSignalSimpleWarning == null) {
                 Object f = REnvironment.baseEnv().findFunction(".signalSimpleWarning");
                 dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
@@ -421,7 +421,7 @@ public class RErrorHandling {
      * The default error handler. This is where all the error message formatting is done and the
      * output.
      */
-    static RError errorcallDfltWithCall(Object call, Message msg, Object... objects) throws RError {
+    private static RError errorcallDfltWithCall(Object call, Message msg, Object... objects) throws RError {
         String fmsg = formatMessage(msg, objects);
 
         String errorMessage = createErrorMessage(call, fmsg);
@@ -540,11 +540,7 @@ public class RErrorHandling {
         }
     }
 
-    static void warningcallDflt(Message msg, Object... args) {
-        warningcallDfltWithCall(findCaller(null), msg, args);
-    }
-
-    static void warningcallDfltWithCall(Object call, Message msg, Object... args) {
+    private static void warningcallDfltWithCall(Object call, Message msg, Object... args) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         if (errorHandlingState.inWarning) {
             return;
@@ -678,7 +674,7 @@ public class RErrorHandling {
         return msg.hasArgs ? String.format(msg.message, args) : msg.message;
     }
 
-    static String wrapMessage(String preamble, String message) {
+    private static String wrapMessage(String preamble, String message) {
         // TODO find out about R's line-wrap policy
         // (is 74 a given percentage of console width?)
         if (preamble.length() + 1 + message.length() >= 74) {
@@ -689,11 +685,11 @@ public class RErrorHandling {
         }
     }
 
-    static String createErrorMessage(Object call, String formattedMsg) {
+    private static String createErrorMessage(Object call, String formattedMsg) {
         return createKindMessage("Error", call, formattedMsg);
     }
 
-    static String createWarningMessage(Object call, String formattedMsg) {
+    private static String createWarningMessage(Object call, String formattedMsg) {
         return createKindMessage("Warning", call, formattedMsg);
     }
 
@@ -701,7 +697,7 @@ public class RErrorHandling {
      * Creates an error message suitable for output to the user, taking into account {@code src},
      * which may be {@code null}.
      */
-    static String createKindMessage(String kind, Object call, String formattedMsg) {
+    private static String createKindMessage(String kind, Object call, String formattedMsg) {
         String preamble = kind;
         String errorMsg = null;
         assert call instanceof RNull || call instanceof RLanguage;

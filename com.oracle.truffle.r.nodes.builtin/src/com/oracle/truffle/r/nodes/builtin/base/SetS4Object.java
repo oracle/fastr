@@ -38,11 +38,10 @@ import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
-@SuppressWarnings("unused")
 @RBuiltin(name = "setS4Object", kind = INTERNAL, parameterNames = {"object", "flag", "complete"})
 public abstract class SetS4Object extends RBuiltinNode {
 
-    @Child AsS4 asS4 = AsS4NodeGen.create(null, null, null);
+    @Child private AsS4 asS4 = AsS4NodeGen.create(null, null, null);
 
     @Override
     protected void createCasts(CastBuilder casts) {

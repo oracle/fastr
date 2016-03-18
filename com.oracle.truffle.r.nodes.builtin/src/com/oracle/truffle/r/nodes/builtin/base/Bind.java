@@ -42,6 +42,8 @@ import com.oracle.truffle.r.nodes.unary.CastComplexNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
+import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
+import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
@@ -71,6 +73,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
 
     @Child private CastToVectorNode castVector;
     @Child private UseMethodInternalNode dcn;
+    @Child private CastLogicalNode castLogical;
 
     private final ConditionProfile nullNamesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyVectorProfile = ConditionProfile.createBinaryProfile();
@@ -92,6 +95,14 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
             castVector = insert(CastToVectorNodeGen.create(false));
         }
         return (RAbstractVector) castVector.execute(value);
+    }
+
+    protected Object castLogical(Object operand, boolean preserveAllAttr) {
+        if (castLogical == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castLogical = insert(CastLogicalNodeGen.create(true, preserveAllAttr, preserveAllAttr));
+        }
+        return castLogical.execute(operand);
     }
 
     @SuppressWarnings("unused")

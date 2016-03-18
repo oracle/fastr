@@ -99,11 +99,6 @@ public final class FastRSession implements RSession {
         }
 
         @Override
-        public void redirectError() {
-            // always
-        }
-
-        @Override
         public String getPrompt() {
             return null;
         }

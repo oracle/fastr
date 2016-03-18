@@ -92,7 +92,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
         int length = vector.getLength();
         byte[] result;
         if (zeroLengthProfile.profile(length == 0)) {
-            result = RDataFactory.EMPTY_LOGICAL_ARRAY;
+            result = new byte[0];
         } else {
             na.enable(vector);
             result = new byte[length];
@@ -111,7 +111,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
         int length = vector.getLength();
         byte[] result;
         if (zeroLengthProfile.profile(length == 0)) {
-            result = RDataFactory.EMPTY_LOGICAL_ARRAY;
+            result = new byte[0];
         } else {
             na.enable(vector);
             result = new byte[length];
@@ -130,7 +130,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
         int length = vector.getLength();
         byte[] result;
         if (zeroLengthProfile.profile(length == 0)) {
-            result = RDataFactory.EMPTY_LOGICAL_ARRAY;
+            result = new byte[0];
         } else {
             na.enable(vector);
             result = new byte[length];
@@ -149,7 +149,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
         int length = vector.getLength();
         byte[] result;
         if (zeroLengthProfile.profile(length == 0)) {
-            result = RDataFactory.EMPTY_RAW_ARRAY;
+            result = new byte[0];
         } else {
             result = new byte[length];
             for (int i = 0; i < length; i++) {

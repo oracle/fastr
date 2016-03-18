@@ -488,18 +488,18 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             controlVisibility();
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), args.getArguments());
         }
 
         @Specialization
-        public Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return callNamedFunctionWithPackage(name, args, null);
         }
 
         @Specialization
-        public Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
+        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {
@@ -570,19 +570,19 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             String name = getNameFromSymbolInfo(frame, symbol);
             Object list = encodeArgumentPairList(args, name);
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), name, new Object[]{list});
         }
 
         @Specialization
-        public Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return callNamedFunctionWithPackage(name, args, null);
         }
 
         @Specialization
-        public Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
+        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {
@@ -639,7 +639,7 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             String name = getNameFromSymbolInfo(frame, symbol);
             Object list = encodeArgumentPairList(args, name);
             // TODO: provide proper values for the CALL, OP and RHO parameters
@@ -647,12 +647,12 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return callNamedFunctionWithPackage(name, args, null);
         }
 
         @Specialization
-        public Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
+        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {
@@ -698,19 +698,19 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             String name = getNameFromSymbolInfo(frame, symbol);
             Object list = encodeArgumentPairList(args, name);
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), name, new Object[]{list});
         }
 
         @Specialization
-        public Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return callNamedFunctionWithPackage(name, args, null);
         }
 
         @Specialization
-        public Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
+        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {
@@ -755,17 +755,17 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), args.getArguments());
         }
 
         @Specialization
-        public Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return callNamedFunctionWithPackage(name, args, null);
         }
 
         @Specialization
-        public Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
+        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {

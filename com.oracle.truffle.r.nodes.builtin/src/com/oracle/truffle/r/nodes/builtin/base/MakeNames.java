@@ -190,7 +190,7 @@ public abstract class MakeNames extends RBuiltinNode {
         return allowUnderScoreArg.getLength() == 0 || RRuntime.isNA(allowUnderScoreArg.getDataAt(0));
     }
 
-    protected static final class AllowUnderscoreConverter extends CastNode {
+    private static final class AllowUnderscoreConverter extends CastNode {
 
         @Child private CastLogicalNode castLogical = CastLogicalNodeGen.create(false, false, false);
         @Child private CastToVectorNode castVector = CastToVectorNodeGen.create(false);

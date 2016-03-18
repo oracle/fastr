@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,7 +63,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
 
     private final BooleanOperation booleanLogic;
 
-    public BinaryBooleanScalarNode(BooleanOperationFactory factory) {
+    BinaryBooleanScalarNode(BooleanOperationFactory factory) {
         this.booleanLogic = factory.create();
     }
 
@@ -101,7 +101,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
         private final NACheck check;
         private final BranchProfile seenEmpty = BranchProfile.create();
 
-        public LogicalScalarCastNode(String opName, String argumentName, NACheck check) {
+        LogicalScalarCastNode(String opName, String argumentName, NACheck check) {
             this.opName = opName;
             this.argumentName = argumentName;
             this.check = check;

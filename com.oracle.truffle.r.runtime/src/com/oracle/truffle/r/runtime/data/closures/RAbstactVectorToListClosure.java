@@ -31,9 +31,9 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 /**
  * In converting complex numbers to integers, this closure discards the imaginary parts.
  */
-public final class RAbstactVectorToListClosure extends RToVectorClosure implements RAbstractListVector {
+final class RAbstactVectorToListClosure extends RToVectorClosure implements RAbstractListVector {
 
-    public RAbstactVectorToListClosure(RAbstractVector vector) {
+    RAbstactVectorToListClosure(RAbstractVector vector) {
         super(vector);
     }
 

@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 // TODO inherits is applicable to every type of object, if only because of "try-error".
 public abstract class Inherits extends RBuiltinNode {
 
-    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public abstract Object execute(Object x, Object what, Object which);
 

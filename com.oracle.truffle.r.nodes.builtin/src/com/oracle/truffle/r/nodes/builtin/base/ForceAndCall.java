@@ -47,8 +47,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @RBuiltin(name = "forceAndCall", kind = PRIMITIVE, parameterNames = {"n", "FUN", "..."}, nonEvalArgs = 2)
 public abstract class ForceAndCall extends RBuiltinNode {
 
-    @Child DoCall doCallNode;
-    @Child PromiseHelperNode promiseHelper;
+    @Child private DoCall doCallNode;
+    @Child private PromiseHelperNode promiseHelper;
 
     protected PromiseHelperNode initPromiseHelper() {
         if (promiseHelper == null) {
@@ -96,7 +96,7 @@ public abstract class ForceAndCall extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    protected RCallNode createCallNode(RFunction fun, RArgsValuesAndNames args) {
+    private RCallNode createCallNode(RFunction fun, RArgsValuesAndNames args) {
         RSyntaxNode[] synArgs = new RSyntaxNode[args.getLength()];
         Object[] argValues = args.getArguments();
         String[] names = new String[synArgs.length];
@@ -117,7 +117,7 @@ public abstract class ForceAndCall extends RBuiltinNode {
         throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
-    public static boolean isBuiltin(RFunction fun) {
+    protected static boolean isBuiltin(RFunction fun) {
         return fun.isBuiltin();
     }
 }

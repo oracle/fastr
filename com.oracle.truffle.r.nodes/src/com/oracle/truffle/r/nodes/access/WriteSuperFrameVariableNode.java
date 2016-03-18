@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 @SuppressWarnings("unused")
 @NodeChildren({@NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class), @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)})
 @NodeField(name = "mode", type = Mode.class)
-public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariableNodeHelper {
+abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariableNodeHelper {
     private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
     private final BranchProfile invalidateProfile = BranchProfile.create();
     private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
@@ -61,7 +61,7 @@ public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariabl
 
     public abstract Mode getMode();
 
-    public static WriteVariableNode create(String name, RNode rhs, Mode mode) {
+    static WriteVariableNode create(String name, RNode rhs, Mode mode) {
         return new UnresolvedWriteSuperFrameVariableNode(name, rhs, mode);
     }
 
@@ -87,13 +87,13 @@ public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariabl
         FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameSlot, newValue, true, invalidateProfile);
     }
 
-    public static class UnresolvedWriteSuperFrameVariableNode extends WriteSuperFrameVariableNodeHelper {
+    private static class UnresolvedWriteSuperFrameVariableNode extends WriteSuperFrameVariableNodeHelper {
 
         @Child private RNode rhs;
         private final String symbol;
         private final BaseWriteVariableNode.Mode mode;
 
-        public UnresolvedWriteSuperFrameVariableNode(String symbol, RNode rhs, BaseWriteVariableNode.Mode mode) {
+        UnresolvedWriteSuperFrameVariableNode(String symbol, RNode rhs, BaseWriteVariableNode.Mode mode) {
             this.rhs = rhs;
             this.symbol = symbol;
             this.mode = mode;

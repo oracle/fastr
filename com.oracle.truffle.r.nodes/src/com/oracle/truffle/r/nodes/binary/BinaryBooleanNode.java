@@ -64,7 +64,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     protected final BooleanOperationFactory factory;
 
-    public BinaryBooleanNode(BooleanOperationFactory factory) {
+    BinaryBooleanNode(BooleanOperationFactory factory) {
         this.factory = factory;
     }
 
@@ -210,11 +210,11 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return (isRNullOrEmpty(left) || isRNullOrEmpty(right)) && !(isRMissing(left) || isRMissing(right));
     }
 
-    protected static boolean isRNullOrEmpty(Object value) {
+    private static boolean isRNullOrEmpty(Object value) {
         return isRNull(value) || isEmpty(value);
     }
 
-    protected static boolean isEmpty(Object value) {
+    private static boolean isEmpty(Object value) {
         return (isRAbstractVector(value) && ((RAbstractVector) value).getLength() == 0);
     }
 
@@ -247,7 +247,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             this.cached = insert(cachedOperation);
         }
 
-        public BinaryMapNode get(BooleanOperation arithmetic, RAbstractVector left, RAbstractVector right) {
+        private BinaryMapNode get(BooleanOperation arithmetic, RAbstractVector left, RAbstractVector right) {
             CompilerAsserts.neverPartOfCompilation();
             if (!cached.isSupported(left, right)) {
                 cached = cached.replace(createCached(arithmetic, left, right));

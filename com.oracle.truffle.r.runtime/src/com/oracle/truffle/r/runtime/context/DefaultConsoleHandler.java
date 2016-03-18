@@ -78,11 +78,6 @@ public class DefaultConsoleHandler implements ConsoleHandler {
     }
 
     @Override
-    public void redirectError() {
-        // ?
-    }
-
-    @Override
     public String getPrompt() {
         return prompt;
     }

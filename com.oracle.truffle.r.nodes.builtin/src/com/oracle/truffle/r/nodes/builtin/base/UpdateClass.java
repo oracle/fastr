@@ -142,56 +142,56 @@ public abstract class UpdateClass extends RBuiltinNode {
     }
 
     @Specialization
-    public Object setClass(RFunction arg, RAbstractStringVector className) {
+    protected Object setClass(RFunction arg, RAbstractStringVector className) {
         controlVisibility();
         arg.setClassAttr(className.materialize(), false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(RFunction arg, @SuppressWarnings("unused") RNull className) {
+    protected Object setClass(RFunction arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         arg.setClassAttr(null, false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(REnvironment arg, RAbstractStringVector className) {
+    protected Object setClass(REnvironment arg, RAbstractStringVector className) {
         controlVisibility();
         arg.setClassAttr(className.materialize(), false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(REnvironment arg, @SuppressWarnings("unused") RNull className) {
+    protected Object setClass(REnvironment arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         arg.setClassAttr(null, false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(RSymbol arg, RAbstractStringVector className) {
+    protected Object setClass(RSymbol arg, RAbstractStringVector className) {
         controlVisibility();
         arg.setClassAttr(className.materialize(), false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(RSymbol arg, @SuppressWarnings("unused") RNull className) {
+    protected Object setClass(RSymbol arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         arg.setClassAttr(null, false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(RExternalPtr arg, RAbstractStringVector className) {
+    protected Object setClass(RExternalPtr arg, RAbstractStringVector className) {
         controlVisibility();
         arg.setClassAttr(className.materialize(), false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(RExternalPtr arg, @SuppressWarnings("unused") RNull className) {
+    protected Object setClass(RExternalPtr arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         arg.setClassAttr(null, false);
         return arg;

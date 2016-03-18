@@ -46,14 +46,14 @@ public abstract class RemoveAndAnswerNode extends RNode {
         return new RemoveAndAnswerUninitializedNode(name.toString());
     }
 
-    protected static final class RemoveAndAnswerUninitializedNode extends RemoveAndAnswerNode {
+    private static final class RemoveAndAnswerUninitializedNode extends RemoveAndAnswerNode {
 
         /**
          * The name of the variable that is to be removed and whose value is to be returned.
          */
         private final String name;
 
-        protected RemoveAndAnswerUninitializedNode(String name) {
+        RemoveAndAnswerUninitializedNode(String name) {
             this.name = name;
         }
 
@@ -85,10 +85,6 @@ public abstract class RemoveAndAnswerNode extends RNode {
             this.slot = slot;
         }
 
-        protected RemoveAndAnswerResolvedNode(RemoveAndAnswerResolvedNode other) {
-            slot = other.slot;
-        }
-
         @Override
         public boolean getVisibility() {
             return false;
@@ -111,7 +107,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
         }
 
         @Specialization(guards = "isObject(frame)")
-        public Object doObject(VirtualFrame frame) {
+        protected Object doObject(VirtualFrame frame) {
             controlVisibility();
             Object result;
             try {
@@ -126,7 +122,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
         }
 
         @Specialization(guards = "isInt(frame)")
-        public int doInt(VirtualFrame frame) {
+        protected int doInt(VirtualFrame frame) {
             controlVisibility();
             int result;
             try {
@@ -141,7 +137,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
         }
 
         @Specialization(guards = "isDouble(frame)")
-        public double doDouble(VirtualFrame frame) {
+        protected double doDouble(VirtualFrame frame) {
             controlVisibility();
             double result;
             try {
@@ -156,7 +152,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
         }
 
         @Specialization(guards = "isByte(frame)")
-        public byte doByte(VirtualFrame frame) {
+        protected byte doByte(VirtualFrame frame) {
             controlVisibility();
             byte result;
             try {

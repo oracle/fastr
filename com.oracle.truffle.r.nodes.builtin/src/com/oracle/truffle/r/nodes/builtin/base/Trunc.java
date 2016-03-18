@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 @RBuiltin(name = "trunc", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
 public abstract class Trunc extends RBuiltinNode {
 
-    public static final UnaryArithmeticFactory TRUNC = TruncArithmetic::new;
+    private static final UnaryArithmeticFactory TRUNC = TruncArithmetic::new;
 
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
     @Child private UnaryArithmeticNode trunc = UnaryArithmeticNodeGen.create(TRUNC, RError.Message.NON_NUMERIC_MATH, RType.Double);
@@ -47,7 +47,7 @@ public abstract class Trunc extends RBuiltinNode {
         return trunc.execute(boxPrimitive.execute(value));
     }
 
-    public static class TruncArithmetic extends Round.RoundArithmetic {
+    private static final class TruncArithmetic extends Round.RoundArithmetic {
 
         @Override
         public double op(double op) {

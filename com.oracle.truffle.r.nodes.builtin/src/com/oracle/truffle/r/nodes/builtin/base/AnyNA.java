@@ -49,8 +49,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 @RBuiltin(name = "anyNA", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.INTERNAL_GENERIC)
 public abstract class AnyNA extends RBuiltinNode {
 
-    protected static final int MAX_CACHED_LENGTH = 10;
-
     private final NACheck naCheck = NACheck.create();
 
     public abstract byte execute(VirtualFrame frame, Object value);

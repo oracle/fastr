@@ -173,7 +173,7 @@ public class FrameFunctions {
         }
 
         @TruffleBoundary
-        protected RLanguage createCall(Frame cframe) {
+        private RLanguage createCall(Frame cframe) {
             RCaller caller = RArguments.getCall(cframe);
             assert caller != null;
             return RContext.getRRuntimeASTAccess().getSyntaxCaller(caller);

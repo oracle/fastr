@@ -53,7 +53,7 @@ public abstract class InlineCacheNode extends RBaseNode {
 
     public abstract Object execute(Frame frame, Object value);
 
-    public InlineCacheNode(int maxPicDepth, Function<Object, RNode> reify, BiFunction<Frame, Object, Object> generic) {
+    InlineCacheNode(int maxPicDepth, Function<Object, RNode> reify, BiFunction<Frame, Object, Object> generic) {
         this.maxPicDepth = maxPicDepth;
         this.reify = reify;
         this.generic = generic;

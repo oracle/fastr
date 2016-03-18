@@ -48,7 +48,7 @@ public abstract class Floor extends RBuiltinNode {
         return floor.execute(boxPrimitive.execute(value));
     }
 
-    public static class FloorArithmetic extends Round.RoundArithmetic {
+    private static final class FloorArithmetic extends Round.RoundArithmetic {
 
         @Override
         public double op(double op) {

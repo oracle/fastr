@@ -209,7 +209,7 @@ public class DatePOSIXFunctions {
 
         @Specialization
         @TruffleBoundary
-        public RDoubleVector asPOSIXct(RList x, RAbstractStringVector tz) {
+        protected RDoubleVector asPOSIXct(RList x, RAbstractStringVector tz) {
             RAbstractVector secVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(0));
             RAbstractVector minVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(1));
             RAbstractVector hourVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(2));
@@ -263,7 +263,7 @@ public class DatePOSIXFunctions {
 
         @Specialization
         @TruffleBoundary
-        public RDoubleVector posix2date(RList x) {
+        protected RDoubleVector posix2date(RList x) {
             RAbstractVector secVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(0));
             RAbstractVector minVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(1));
             RAbstractVector hourVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(2));
@@ -315,7 +315,7 @@ public class DatePOSIXFunctions {
 
         @Specialization
         @TruffleBoundary
-        public RStringVector format(RList x, RAbstractStringVector format, RAbstractLogicalVector usetz) {
+        protected RStringVector format(RList x, RAbstractStringVector format, RAbstractLogicalVector usetz) {
             RAbstractDoubleVector secVector = (RAbstractDoubleVector) RRuntime.asAbstractVector(x.getDataAt(0));
             RAbstractIntVector minVector = (RAbstractIntVector) RRuntime.asAbstractVector(x.getDataAt(1));
             RAbstractIntVector hourVector = (RAbstractIntVector) RRuntime.asAbstractVector(x.getDataAt(2));
@@ -361,7 +361,7 @@ public class DatePOSIXFunctions {
 
         @Specialization
         @TruffleBoundary
-        public RList strptime(RAbstractStringVector x, RAbstractStringVector format, RAbstractStringVector tz) {
+        protected RList strptime(RAbstractStringVector x, RAbstractStringVector format, RAbstractStringVector tz) {
             TimeZone zone;
             String zoneString = RRuntime.asString(tz);
             if (zoneString.isEmpty()) {

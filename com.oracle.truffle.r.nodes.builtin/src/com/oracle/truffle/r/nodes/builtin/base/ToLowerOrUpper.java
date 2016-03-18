@@ -66,7 +66,7 @@ public abstract class ToLowerOrUpper extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    protected String processElement(String value) {
+    private String processElement(String value) {
         return lower ? value.toLowerCase() : value.toUpperCase();
     }
 

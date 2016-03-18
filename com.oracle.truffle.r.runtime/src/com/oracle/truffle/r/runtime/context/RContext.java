@@ -324,7 +324,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     /**
      * Associates this {@link RContext} with the current thread.
      */
-    public void attachThread() {
+    private void attachThread() {
         Thread current = Thread.currentThread();
         if (current instanceof ContextThread) {
             ((ContextThread) current).setContext(this);
@@ -338,7 +338,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      *
      * @throws InterruptedException
      */
-    public void joinThread() throws InterruptedException {
+    private void joinThread() throws InterruptedException {
         EvalThread t = this.evalThread;
         if (t == null) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "no eval thread in a given context");

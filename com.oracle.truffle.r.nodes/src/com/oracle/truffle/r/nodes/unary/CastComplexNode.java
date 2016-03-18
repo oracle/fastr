@@ -192,7 +192,7 @@ public abstract class CastComplexNode extends CastBaseNode {
 
     @Fallback
     @TruffleBoundary
-    public int doOther(Object operand) {
+    protected int doOther(Object operand) {
         throw new ConversionFailedException(operand.getClass().getName());
     }
 

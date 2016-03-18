@@ -78,7 +78,7 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
 
     @Override
     public boolean isNA() {
-        return !RRuntime.isComplete(value);
+        return RRuntime.isNA(value);
     }
 
     /*

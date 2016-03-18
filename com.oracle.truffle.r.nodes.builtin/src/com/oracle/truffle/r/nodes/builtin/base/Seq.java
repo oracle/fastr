@@ -696,19 +696,15 @@ public abstract class Seq extends RBuiltinNode {
         return seqRecursive(1.0, to, stride, lengthOut, alongWith);
     }
 
-    protected static boolean ascending(RAbstractIntVector start, RAbstractIntVector to) {
+    private static boolean ascending(RAbstractIntVector start, RAbstractIntVector to) {
         return to.getDataAt(0) > start.getDataAt(0);
     }
 
-    protected static boolean ascending(RAbstractLogicalVector start, RAbstractLogicalVector to) {
-        return RRuntime.logical2int(to.getDataAt(0)) > RRuntime.logical2int(start.getDataAt(0));
-    }
-
-    protected static boolean ascending(RAbstractIntVector start, RAbstractDoubleVector to) {
+    private static boolean ascending(RAbstractIntVector start, RAbstractDoubleVector to) {
         return to.getDataAt(0) > start.getDataAt(0);
     }
 
-    protected static boolean ascending(RAbstractDoubleVector start, RAbstractIntVector to) {
+    private static boolean ascending(RAbstractDoubleVector start, RAbstractIntVector to) {
         return to.getDataAt(0) > start.getDataAt(0);
     }
 

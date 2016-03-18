@@ -230,10 +230,6 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
         return RTypesGen.expectRType(execute(frame));
     }
 
-    public static boolean areSameLength(RAbstractContainer a, RAbstractContainer b) {
-        return a.getLength() == b.getLength();
-    }
-
     private static final long WORK_SCALE_FACTOR = 100;
 
     /**

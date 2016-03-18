@@ -84,12 +84,6 @@ public interface ConsoleHandler {
     boolean isInteractive();
 
     /**
-     * Redirect error output to the normal output.
-     */
-    @TruffleBoundary
-    void redirectError();
-
-    /**
      * Get the current prompt.
      */
     @TruffleBoundary

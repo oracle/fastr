@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 public final class MatchedArguments extends Arguments<RNode> {
 
-    public static final class MatchedArgumentsNode extends RBaseNode {
+    static final class MatchedArgumentsNode extends RBaseNode {
         @Children private final RNode[] arguments;
         private final ArgumentsSignature signature;
 
@@ -53,7 +53,7 @@ public final class MatchedArguments extends Arguments<RNode> {
         }
 
         @ExplodeLoop
-        public Object[] executeArray(VirtualFrame frame) {
+        Object[] executeArray(VirtualFrame frame) {
             Object[] result = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
                 result[i] = arguments[i].execute(frame);
@@ -74,7 +74,7 @@ public final class MatchedArguments extends Arguments<RNode> {
         super(arguments, signature);
     }
 
-    public MatchedArgumentsNode createNode() {
+    MatchedArgumentsNode createNode() {
         return new MatchedArgumentsNode(getArguments(), getSignature());
     }
 
@@ -82,7 +82,7 @@ public final class MatchedArguments extends Arguments<RNode> {
      * @return A fresh {@link MatchedArguments}; arguments may contain <code>null</code> iff there
      *         is neither a supplied argument nor a default argument
      */
-    public static MatchedArguments create(RNode[] arguments, ArgumentsSignature signature) {
+    static MatchedArguments create(RNode[] arguments, ArgumentsSignature signature) {
         return new MatchedArguments(arguments, signature);
     }
 
@@ -95,7 +95,7 @@ public final class MatchedArguments extends Arguments<RNode> {
      *         represents
      */
     @ExplodeLoop
-    public Object[] doExecuteArray(VirtualFrame frame) {
+    Object[] doExecuteArray(VirtualFrame frame) {
         Object[] result = new Object[getArguments().length];
         for (int i = 0; i < getArguments().length; i++) {
             result[i] = getArguments()[i].execute(frame);

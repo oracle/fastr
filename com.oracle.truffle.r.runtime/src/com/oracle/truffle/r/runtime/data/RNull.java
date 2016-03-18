@@ -32,6 +32,7 @@ public final class RNull extends RScalar {
     public static final RNull instance = new RNull();
 
     private RNull() {
+        // singleton
     }
 
     @Override
@@ -42,9 +43,5 @@ public final class RNull extends RScalar {
     @Override
     public RType getRType() {
         return RType.Null;
-    }
-
-    public static Object toRNull(Object value) {
-        return value == null ? instance : value;
     }
 }

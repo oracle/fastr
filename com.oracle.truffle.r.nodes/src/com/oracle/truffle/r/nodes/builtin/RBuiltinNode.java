@@ -144,7 +144,7 @@ public abstract class RBuiltinNode extends RNode implements VisibilityController
         return Truffle.getRuntime().createCallTarget(root);
     }
 
-    public final RBuiltinNode inline(ArgumentsSignature signature, RNode[] args) {
+    final RBuiltinNode inline(ArgumentsSignature signature, RNode[] args) {
         // static number of arguments
         return createNode(getBuiltin(), args, signature);
     }

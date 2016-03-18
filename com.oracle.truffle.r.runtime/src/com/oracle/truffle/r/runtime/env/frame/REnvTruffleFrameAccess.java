@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -189,6 +188,6 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     }
 
     private static String[] getStringIdentifiers(FrameDescriptor fd) {
-        return fd.getIdentifiers().stream().filter(e -> (e instanceof String)).collect(Collectors.toSet()).toArray(RRuntime.STRING_ARRAY_SENTINEL);
+        return fd.getIdentifiers().stream().filter(e -> (e instanceof String)).toArray(String[]::new);
     }
 }

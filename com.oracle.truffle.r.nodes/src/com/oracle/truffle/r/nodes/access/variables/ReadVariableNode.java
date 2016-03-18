@@ -126,8 +126,8 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         return result;
     }
 
-    @Child protected PromiseHelperNode promiseHelper;
-    @Child protected CheckTypeNode checkTypeNode;
+    @Child private PromiseHelperNode promiseHelper;
+    @Child private CheckTypeNode checkTypeNode;
     @CompilationFinal private FrameLevel read;
     @CompilationFinal private boolean needsCopying;
 
@@ -789,7 +789,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
      * @param objArg The object to check for proper type
      * @return see above
      */
-    protected boolean checkType(VirtualFrame frame, Object objArg, ConditionProfile isNullProfile) {
+    private boolean checkType(VirtualFrame frame, Object objArg, ConditionProfile isNullProfile) {
         Object obj = objArg;
         if ((isNullProfile == null && obj == null) || (isNullProfile != null && isNullProfile.profile(obj == null))) {
             return false;
@@ -828,7 +828,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     private static final ThreadLocal<String> slowPathEvaluationName = new ThreadLocal<>();
 
-    protected boolean checkTypeSlowPath(VirtualFrame frame, Object objArg) {
+    private boolean checkTypeSlowPath(VirtualFrame frame, Object objArg) {
         CompilerAsserts.neverPartOfCompilation();
         Object obj = objArg;
         if (obj == null) {

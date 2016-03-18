@@ -205,12 +205,6 @@ public final class RError extends RuntimeException {
     }
 
     @TruffleBoundary
-    public static void warning(Node node, Message msg, Object... args) {
-        assert node != null;
-        warning(findParentRBase(node), msg, args);
-    }
-
-    @TruffleBoundary
     public static RError stop(boolean showCall, RBaseNode node, Message msg, Object arg) {
         assert node != null;
         RErrorHandling.signalError(node, msg, arg);

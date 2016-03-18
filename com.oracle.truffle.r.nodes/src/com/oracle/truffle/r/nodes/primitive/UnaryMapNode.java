@@ -65,7 +65,7 @@ public final class UnaryMapNode extends RBaseNode {
     private final boolean mayFoldConstantTime;
     private final boolean mayShareOperand;
 
-    public UnaryMapNode(UnaryMapFunctionNode scalarNode, RAbstractVector operand, RType argumentType, RType resultType) {
+    private UnaryMapNode(UnaryMapFunctionNode scalarNode, RAbstractVector operand, RType argumentType, RType resultType) {
         this.scalarNode = scalarNode;
         this.vectorNode = MapUnaryVectorInternalNode.create(resultType, argumentType);
         this.operandClass = operand.getClass();
@@ -275,7 +275,7 @@ public final class UnaryMapNode extends RBaseNode {
             }
         }
 
-        public final void apply(UnaryMapFunctionNode scalarAction, Object store, RAbstractVector operand, int operandLength) {
+        private void apply(UnaryMapFunctionNode scalarAction, Object store, RAbstractVector operand, int operandLength) {
             assert operand.getLength() == operandLength;
             assert operand.getRType() == argumentType;
             assert isStoreCompatible(store, resultType, operandLength);
@@ -283,7 +283,7 @@ public final class UnaryMapNode extends RBaseNode {
             executeInternal(scalarAction, store, operand, operandLength);
         }
 
-        protected static boolean isStoreCompatible(Object store, RType resultType, int operandLength) {
+        private static boolean isStoreCompatible(Object store, RType resultType, int operandLength) {
             switch (resultType) {
                 case Logical:
                     assert store instanceof byte[] && ((byte[]) store).length == operandLength;

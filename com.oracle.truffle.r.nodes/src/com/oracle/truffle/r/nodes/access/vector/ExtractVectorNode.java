@@ -50,7 +50,7 @@ public abstract class ExtractVectorNode extends Node {
 
     protected static final int CACHE_LIMIT = 5;
 
-    protected final ElementAccessMode mode;
+    private final ElementAccessMode mode;
     private final boolean recursive;
     private final boolean ignoreRecursive;
 
@@ -140,7 +140,7 @@ public abstract class ExtractVectorNode extends Node {
         return null;
     }
 
-    protected boolean isRecursiveSubscript(Object vector, Object[] positions) {
+    private boolean isRecursiveSubscript(Object vector, Object[] positions) {
         return !recursive && !ignoreRecursive && mode.isSubscript() && vector instanceof RAbstractListVector && positions.length == 1;
     }
 

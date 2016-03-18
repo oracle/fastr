@@ -83,9 +83,13 @@ public final class AccessArgumentNode extends RNode {
     private final ConditionProfile isMissingProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isEmptyProfile = ConditionProfile.createBinaryProfile();
 
-    protected AccessArgumentNode(int index) {
+    private AccessArgumentNode(int index) {
         this.index = index;
         this.readArgNode = new ReadArgumentNode(index);
+    }
+
+    public static AccessArgumentNode create(int index) {
+        return new AccessArgumentNode(index);
     }
 
     public void setFormals(FormalArguments formals) {
@@ -93,10 +97,6 @@ public final class AccessArgumentNode extends RNode {
         assert this.formals == null;
         this.formals = formals;
         hasDefaultArg = formals.hasDefaultArgument(index);
-    }
-
-    public static AccessArgumentNode create(int index) {
-        return new AccessArgumentNode(index);
     }
 
     @Override
@@ -136,7 +136,7 @@ public final class AccessArgumentNode extends RNode {
         return result;
     }
 
-    protected Object doArgument(VirtualFrame frame, Object arg) {
+    private Object doArgument(VirtualFrame frame, Object arg) {
         if (hasDefaultArg) {
             if (isMissingProfile.profile(arg == RMissing.instance)) {
                 return doArgumentInternal(frame);
@@ -184,9 +184,9 @@ public final class AccessArgumentNode extends RNode {
         return true;
     }
 
-    protected final class OptVariableDefaultPromiseNode extends OptVariablePromiseBaseNode {
+    private final class OptVariableDefaultPromiseNode extends OptVariablePromiseBaseNode {
 
-        public OptVariableDefaultPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
+        OptVariableDefaultPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
             super(factory, rvn, wrapIndex);
         }
 

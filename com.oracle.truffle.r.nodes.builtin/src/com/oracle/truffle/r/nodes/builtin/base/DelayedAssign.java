@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 @RBuiltin(name = "delayedAssign", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "value", "eval.env", "assign.env"})
 public abstract class DelayedAssign extends RInvisibleBuiltinNode {
 
-    protected final BranchProfile errorProfile = BranchProfile.create();
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     @Specialization
     protected Object doDelayedAssign(RAbstractStringVector nameVec, Object value, REnvironment evalEnv, REnvironment assignEnv) {

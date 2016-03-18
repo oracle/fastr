@@ -724,11 +724,11 @@ public abstract class Unlist extends RBuiltinNode {
         return ((RRaw) dataAtAsObject).getValue();
     }
 
-    public static boolean isEmpty(RAbstractVector vector) {
+    protected static boolean isEmpty(RAbstractVector vector) {
         return vector.getLength() == 0;
     }
 
-    public static boolean isOneNull(RList list) {
+    protected static boolean isOneNull(RList list) {
         return list.getLength() == 1 && list.getDataAt(0) == RNull.instance;
     }
 }

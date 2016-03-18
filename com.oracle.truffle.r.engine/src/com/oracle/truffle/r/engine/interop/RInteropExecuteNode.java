@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,15 +35,15 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
-public class RInteropExecuteNode extends RootNode {
+class RInteropExecuteNode extends RootNode {
 
     private static final FrameDescriptor emptyFrameDescriptor = new FrameDescriptor();
 
-    @Child CallMatcherNode callMatcher = CallMatcherNode.create(false, true);
+    @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, true);
 
     private final ArgumentsSignature suppliedSignature;
 
-    public RInteropExecuteNode(int argumentsLength) {
+    RInteropExecuteNode(int argumentsLength) {
         super(TruffleRLanguage.class, null, null);
         suppliedSignature = ArgumentsSignature.empty(argumentsLength);
     }

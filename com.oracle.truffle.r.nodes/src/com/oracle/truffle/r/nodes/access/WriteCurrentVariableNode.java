@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 @NodeInfo(cost = NodeCost.NONE)
 public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, RSyntaxCall, VisibilityController {
-    @Child WriteLocalFrameVariableNode writeLocalFrameVariableNode;
+    @Child private WriteLocalFrameVariableNode writeLocalFrameVariableNode;
 
     protected WriteCurrentVariableNode(SourceSection src) {
         super(src);

@@ -38,7 +38,7 @@ public final class RBuiltinRootNode extends RRootNode {
 
     @Child private RBuiltinNode builtin;
 
-    public RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
+    RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
         super(null, formalArguments, frameDescriptor);
         this.builtin = builtin;
     }
@@ -78,11 +78,6 @@ public final class RBuiltinRootNode extends RRootNode {
     public RBuiltinNode inline(ArgumentsSignature signature, RNode[] args) {
         assert builtin.getSuppliedSignature() != null : this;
         return builtin.inline(signature, args);
-    }
-
-    public Object getDefaultParameterValue(int index) {
-        Object[] values = builtin.getDefaultParameterValues();
-        return index < values.length ? values[index] : null;
     }
 
     @Override

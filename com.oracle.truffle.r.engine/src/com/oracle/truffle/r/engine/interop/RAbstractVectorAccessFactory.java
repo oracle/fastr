@@ -35,8 +35,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class RAbstractVectorAccessFactory implements Factory10 {
 
-    public abstract class InteropRootNode extends RootNode {
-        public InteropRootNode() {
+    private abstract class InteropRootNode extends RootNode {
+        InteropRootNode() {
             super(TruffleRLanguage.class, null, null);
         }
     }

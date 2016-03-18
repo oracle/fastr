@@ -157,7 +157,7 @@ public final class REnvVars implements RContext.ContextState {
         }
     }
 
-    protected String expandParameters(String value) {
+    private String expandParameters(String value) {
         StringBuffer result = new StringBuffer();
         int x = 0;
         int paramStart = value.indexOf("${", x);
@@ -189,7 +189,7 @@ public final class REnvVars implements RContext.ContextState {
         throw new IOException("   File " + path + " contains invalid line(s)\n      " + line + "\n   They were ignored\n");
     }
 
-    public void safeReadEnvironFile(String path) {
+    private void safeReadEnvironFile(String path) {
         try {
             readEnvironFile(path);
         } catch (IOException ex) {

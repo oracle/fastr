@@ -196,12 +196,12 @@ public class HiddenInternalFunctions {
          * No error checking here as this called by trusted library code.
          */
         @Specialization
-        public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
+        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
             return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, compressed.getDataAt(0), envhook);
         }
 
         @Specialization
-        public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RDoubleVector compressed, RFunction envhook) {
+        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RDoubleVector compressed, RFunction envhook) {
             return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, (int) compressed.getDataAt(0), envhook);
         }
 
@@ -214,7 +214,7 @@ public class HiddenInternalFunctions {
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("n");
 
         @TruffleBoundary
-        public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
+        private Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
             if (CompilerDirectives.inInterpreter()) {
                 LoopNode.reportLoopCount(this, -5);
             }
@@ -326,7 +326,7 @@ public class HiddenInternalFunctions {
             throw RError.error(this, RError.Message.REQUIRES_DLLINFO);
         }
 
-        public static boolean isDLLInfo(RExternalPtr externalPtr) {
+        protected static boolean isDLLInfo(RExternalPtr externalPtr) {
             return DLL.isDLLInfo(externalPtr);
         }
     }
@@ -482,7 +482,7 @@ public class HiddenInternalFunctions {
 
     /*
      * Created as primitive function to avoid incrementing reference count for the argument.
-     * 
+     *
      * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
      * SHARED_PERMANENT_VAL for permanent shared
      */

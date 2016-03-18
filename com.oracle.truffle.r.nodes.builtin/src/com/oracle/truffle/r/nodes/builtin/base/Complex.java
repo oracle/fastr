@@ -78,7 +78,7 @@ public abstract class Complex extends RBuiltinNode {
         }
     }
 
-    public static boolean resultEmpty(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
+    protected static boolean resultEmpty(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
         return lengthOut == 0 && realAbsVec.getLength() == 0 && imaginaryAbsVec.getLength() == 0;
     }
 }

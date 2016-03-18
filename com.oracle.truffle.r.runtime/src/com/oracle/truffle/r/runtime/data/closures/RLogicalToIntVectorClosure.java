@@ -26,9 +26,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
-public class RLogicalToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
+final class RLogicalToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
 
-    public RLogicalToIntVectorClosure(RAbstractLogicalVector vector) {
+    RLogicalToIntVectorClosure(RAbstractLogicalVector vector) {
         super(vector);
     }
 

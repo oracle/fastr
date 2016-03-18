@@ -30,8 +30,8 @@ public class Slot {
 
     public abstract static class R_getSlot extends RExternalBuiltinNode.Arg2 {
 
-        @Child AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(null, null);
-        @Child CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
+        @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(null, null);
+        @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
         protected static String getInternedName(RAbstractStringVector nameVec) {
             return nameVec.getDataAt(0).intern();
@@ -56,8 +56,8 @@ public class Slot {
 
     public abstract static class R_setSlot extends RExternalBuiltinNode.Arg3 {
 
-        @Child UpdateSlotNode updateSlotNode = UpdateSlotNodeGen.create(null, null, null);
-        @Child CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
+        @Child private UpdateSlotNode updateSlotNode = UpdateSlotNodeGen.create(null, null, null);
+        @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
         protected static String getInternedName(RAbstractStringVector nameVec) {
             return nameVec.getDataAt(0).intern();

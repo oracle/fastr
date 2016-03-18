@@ -42,14 +42,14 @@ public class DuplicatedFunctions {
          * Code sharing vehicle for the slight differences in behavior between {@code duplicated}
          * and {@code anyDuplicated} and whether {@code fromLast} is {@code TRUE/FALSE}.
          */
-        protected static class DupState {
-            final RAbstractContainer x;
-            final HashSet<Object> vectorContents = new HashSet<>();
-            final HashSet<Object> incompContents;
-            final byte[] dupVec;
-            int index;
+        protected static final class DupState {
+            private final RAbstractContainer x;
+            private final HashSet<Object> vectorContents = new HashSet<>();
+            private final HashSet<Object> incompContents;
+            private final byte[] dupVec;
+            private int index;
 
-            DupState(RAbstractContainer x, RAbstractContainer incomparables, boolean justIndex, boolean fromLast) {
+            private DupState(RAbstractContainer x, RAbstractContainer incomparables, boolean justIndex, boolean fromLast) {
                 this.x = x;
                 vectorContents.add(x.getDataAtAsObject(fromLast ? x.getLength() - 1 : 0));
 

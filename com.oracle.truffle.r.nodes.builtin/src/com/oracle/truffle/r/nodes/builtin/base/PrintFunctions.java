@@ -27,11 +27,9 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
@@ -53,6 +51,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public class PrintFunctions {
     public abstract static class PrintAdapter extends RInvisibleBuiltinNode {
+
         @Child protected ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create(null, null, null, null, null, null, null, null, null);
 
         @TruffleBoundary
@@ -92,10 +91,6 @@ public class PrintFunctions {
 
         RFunction createShowFunction(VirtualFrame frame, ReadVariableNode showFind) {
             return (RFunction) showFind.execute(frame);
-        }
-
-        DirectCallNode createCallNode(RFunction f) {
-            return Truffle.getRuntime().createDirectCallNode(f.getTarget());
         }
 
         @SuppressWarnings("unused")

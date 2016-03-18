@@ -311,7 +311,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     }
 
     @TruffleBoundary
-    public final void setNames(RStringVector newNames, RBaseNode invokingNode) {
+    private void setNames(RStringVector newNames, RBaseNode invokingNode) {
         if (attributes != null && newNames == null) {
             // whether it's one dimensional array or not, assigning null always removes the "names"
             // attribute
@@ -366,7 +366,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     }
 
     @TruffleBoundary
-    public final void setDimNames(RList newDimNames, RBaseNode invokingNode) {
+    private void setDimNames(RList newDimNames, RBaseNode invokingNode) {
         if (attributes != null && newDimNames == null) {
             removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);
             this.dimNames = null;
@@ -475,7 +475,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         setDimensions(newDimensions, null);
     }
 
-    public final void setDimensions(int[] newDimensions, RBaseNode invokingNode) {
+    private void setDimensions(int[] newDimensions, RBaseNode invokingNode) {
         if (attributes != null && newDimensions == null) {
             removeAttributeMapping(RRuntime.DIM_ATTR_KEY);
             setDimNames(null, invokingNode);
@@ -625,14 +625,6 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
 
     public abstract void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex);
 
-    public final RStringVector toStringVector() {
-        String[] values = new String[getLength()];
-        for (int i = 0; i < getLength(); i++) {
-            values[i] = this.getDataAtAsString(i);
-        }
-        return RDataFactory.createStringVector(values, this.isComplete());
-    }
-
     public final RAttributable copyAttributesFrom(RAttributeProfiles attrProfiles, RAbstractContainer vector) {
         // it's meant to be used on a "fresh" vector with only dimensions potentially set
         assert (this.names == null);
@@ -737,7 +729,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         return resize(size, true);
     }
 
-    public final RVector resize(int size, boolean resetAll) {
+    private RVector resize(int size, boolean resetAll) {
         this.complete &= getLength() >= size;
         RVector res = this;
         RStringVector oldNames = res.names;

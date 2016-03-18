@@ -61,7 +61,7 @@ public final class RCmdOptions {
         public abstract String usage();
     }
 
-    public enum RCmdOptionType {
+    private enum RCmdOptionType {
         BOOLEAN,
         STRING,
         REPEATED_STRING
@@ -355,7 +355,7 @@ public final class RCmdOptions {
         }
     }
 
-    public static void printHelp(Client client) {
+    private static void printHelp(Client client) {
         System.out.println(client.usage());
         System.out.println("Options:");
         for (RCmdOption option : RCmdOption.values()) {

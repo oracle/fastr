@@ -22,23 +22,20 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import static com.oracle.truffle.r.nodes.test.TestUtilities.createHandle;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import static com.oracle.truffle.r.nodes.test.TestUtilities.*;
+import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.*;
+import static org.junit.Assume.*;
 
-import org.junit.Assert;
-import org.junit.experimental.theories.DataPoints;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
+import org.junit.*;
+import org.junit.experimental.theories.*;
+import org.junit.runner.*;
 
 import com.oracle.truffle.r.nodes.access.vector.SearchFirstStringNode.CompareStringNode;
 import com.oracle.truffle.r.nodes.access.vector.SearchFirstStringNode.CompareStringNode.StringEqualsNode;
-import com.oracle.truffle.r.nodes.test.TestBase;
+import com.oracle.truffle.r.nodes.test.*;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
-import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.*;
 
 @RunWith(Theories.class)
 public class StringCompareNodeTest extends TestBase {

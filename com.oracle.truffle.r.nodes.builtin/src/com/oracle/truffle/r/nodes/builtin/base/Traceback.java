@@ -48,7 +48,7 @@ public abstract class Traceback extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    public RStringVector traceback(int x) {
+    protected RStringVector traceback(int x) {
         String[] traceback = Utils.createTraceback();
         try {
             for (String s : traceback) {

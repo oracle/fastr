@@ -193,7 +193,7 @@ public class IsFiniteFunctions {
     @RBuiltin(name = "is.nan", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class IsNaN extends Adapter {
 
-        public static boolean isNaN(double value) {
+        private static boolean isNaN(double value) {
             return Double.isNaN(value) && !RRuntime.isNA(value);
         }
 

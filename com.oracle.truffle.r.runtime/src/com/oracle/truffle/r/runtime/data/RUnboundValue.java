@@ -29,6 +29,7 @@ public final class RUnboundValue extends RScalar {
     public static final RUnboundValue instance = new RUnboundValue();
 
     private RUnboundValue() {
+        // singleton
     }
 
     @Override
@@ -39,9 +40,5 @@ public final class RUnboundValue extends RScalar {
     @Override
     public RType getRType() {
         return RType.Unbound;
-    }
-
-    public static Object toRUnboundValue(Object value) {
-        return value == null ? instance : value;
     }
 }

@@ -27,9 +27,9 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-public class RComplexToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
+final class RComplexToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
 
-    public RComplexToStringVectorClosure(RAbstractComplexVector vector) {
+    RComplexToStringVectorClosure(RAbstractComplexVector vector) {
         super(vector);
     }
 

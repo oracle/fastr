@@ -37,10 +37,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 abstract class PositionCheckNode extends Node {
 
-    protected final Class<?> positionClass;
-    protected final int dimensionIndex;
+    private final Class<?> positionClass;
+    private final int dimensionIndex;
     protected final int numDimensions;
-    protected final VectorLengthProfile positionLengthProfile = VectorLengthProfile.create();
+    private final VectorLengthProfile positionLengthProfile = VectorLengthProfile.create();
     protected final BranchProfile error = BranchProfile.create();
     protected final boolean replace;
     protected final RType containerType;
@@ -129,7 +129,7 @@ abstract class PositionCheckNode extends Node {
 
     private final ValueProfile castedValue = ValueProfile.createClassProfile();
 
-    Object profilePosition(Object positionVector) {
+    private Object profilePosition(Object positionVector) {
         return castedValue.profile(positionVector);
     }
 

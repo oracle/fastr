@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public abstract class ShortRowNames extends RBuiltinNode {
 
     private final BranchProfile naValueMet = BranchProfile.create();
-    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile errorProfile = BranchProfile.create();
     private final ValueProfile operandTypeProfile = ValueProfile.createClassProfile();
 

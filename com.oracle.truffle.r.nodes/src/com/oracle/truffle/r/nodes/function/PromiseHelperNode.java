@@ -343,6 +343,14 @@ public class PromiseHelperNode extends RBaseNode {
         return nextNode;
     }
 
+    private boolean isNullFrame(RPromise promise) {
+        return isNullFrameProfile.profile(promise.isNullFrame());
+    }
+
+    private boolean isDeoptimized(EagerPromise promise) {
+        return isDeoptimizedProfile.profile(promise.isDeoptimized());
+    }
+
     /**
      * @return Whether this promise is of type {@link PromiseType#ARG_DEFAULT}
      */
@@ -350,16 +358,8 @@ public class PromiseHelperNode extends RBaseNode {
         return isDefaultProfile.profile(promise.isDefault());
     }
 
-    public boolean isNullFrame(RPromise promise) {
-        return isNullFrameProfile.profile(promise.isNullFrame());
-    }
-
     public boolean isEvaluated(RPromise promise) {
         return isEvaluatedProfile.profile(promise.isEvaluated());
-    }
-
-    public boolean isDeoptimized(EagerPromise promise) {
-        return isDeoptimizedProfile.profile(promise.isDeoptimized());
     }
 
     private final ConditionProfile isEvaluatedProfile = ConditionProfile.createBinaryProfile();

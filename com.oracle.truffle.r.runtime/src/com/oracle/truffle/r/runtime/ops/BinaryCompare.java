@@ -66,7 +66,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
     public static final BooleanOperationFactory[] ALL = new BooleanOperationFactory[]{NOT_EQUAL, EQUAL, GREATER_EQUAL, GREATER_THAN, LESS_EQUAL, LESS_THAN};
 
-    public BinaryCompare(boolean commutative) {
+    private BinaryCompare(boolean commutative) {
         super(commutative, false);
     }
 

@@ -121,12 +121,12 @@ public class RRNG {
      * R Errors and warnings are possible during operations like {@link #doSetSeed}, which are all
      * passed back to the associated builtin.
      */
-    public static class RNGException extends RErrorException {
+    public static final class RNGException extends RErrorException {
         private static final long serialVersionUID = 1L;
 
         private final boolean isError;
 
-        public RNGException(RError.Message msg, boolean isError, Object... args) {
+        private RNGException(RError.Message msg, boolean isError, Object... args) {
             super(msg, args);
             this.isError = isError;
         }
@@ -316,7 +316,7 @@ public class RRNG {
     /**
      * Create a random integer.
      */
-    public static Integer timeToSeed() {
+    private static Integer timeToSeed() {
         int pid = RFFIFactory.getRFFI().getBaseRFFI().getpid();
         int millis = (int) (System.currentTimeMillis() & 0xFFFFFFFFL);
         return (millis << 16) ^ pid;

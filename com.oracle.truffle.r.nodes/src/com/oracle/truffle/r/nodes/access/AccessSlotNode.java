@@ -114,7 +114,7 @@ public abstract class AccessSlotNode extends RNode {
         return getSlotS4Internal(object, internedName, value);
     }
 
-    protected RFunction getDataPartFunction(REnvironment methodsNamespace) {
+    private RFunction getDataPartFunction(REnvironment methodsNamespace) {
         Object f = methodsNamespace.findFunction("getDataPart");
         return (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
     }

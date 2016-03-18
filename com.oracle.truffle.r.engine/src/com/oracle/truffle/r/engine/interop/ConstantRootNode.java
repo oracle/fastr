@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,11 +27,11 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 
-public class ConstantRootNode extends RootNode {
+class ConstantRootNode extends RootNode {
 
     @Child private ConstantNode constant;
 
-    public ConstantRootNode(ConstantNode constant) {
+    ConstantRootNode(ConstantNode constant) {
         super(TruffleRLanguage.class, null, null);
         this.constant = constant;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,14 +24,25 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.builtin.RCastingBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.Lapply.LapplyInternalNode;
 import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastComplexNode;
+import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
+import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
@@ -63,7 +74,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * TODO Set dimnames on result if necessary.
  */
 @RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "USE.NAMES"}, splitCaller = true)
-public abstract class VApply extends RCastingBuiltinNode {
+public abstract class VApply extends RBuiltinNode {
 
     private final ValueProfile funValueProfile = ValueProfile.createClassProfile();
     private final ConditionProfile useNamesProfile = ConditionProfile.createBinaryProfile();
@@ -72,6 +83,52 @@ public abstract class VApply extends RCastingBuiltinNode {
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private LapplyInternalNode doApply = LapplyInternalNodeGen.create(null, null, null);
+
+    @Child private CastComplexNode castComplex;
+    @Child private CastDoubleNode castDouble;
+    @Child private CastIntegerNode castInteger;
+    @Child private CastLogicalNode castLogical;
+    @Child private CastStringNode castString;
+
+    private Object castComplex(Object operand, boolean preserveAllAttr) {
+        if (castComplex == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castComplex = insert(CastComplexNodeGen.create(true, preserveAllAttr, preserveAllAttr));
+        }
+        return castComplex.execute(operand);
+    }
+
+    private Object castDouble(Object operand, boolean preserveAllAttr) {
+        if (castDouble == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castDouble = insert(CastDoubleNodeGen.create(true, preserveAllAttr, preserveAllAttr));
+        }
+        return castDouble.execute(operand);
+    }
+
+    private Object castInteger(Object operand, boolean preserveAllAttr) {
+        if (castInteger == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castInteger = insert(CastIntegerNodeGen.create(true, preserveAllAttr, preserveAllAttr));
+        }
+        return castInteger.execute(operand);
+    }
+
+    private Object castLogical(Object operand, boolean preserveAllAttr) {
+        if (castLogical == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castLogical = insert(CastLogicalNodeGen.create(true, preserveAllAttr, preserveAllAttr));
+        }
+        return castLogical.execute(operand);
+    }
+
+    private Object castString(Object operand, boolean preserveAllAttr) {
+        if (castString == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castString = insert(CastStringNodeGen.create(false, true, preserveAllAttr, preserveAllAttr));
+        }
+        return castString.execute(operand);
+    }
 
     @Specialization
     protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, byte useNames) {

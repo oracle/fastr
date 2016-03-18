@@ -119,7 +119,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * flattened tree. Rather indexing the third element would produce another language element of
  * length 2.
  */
-public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
+class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     private static Object getIntrinsicValue(Object result) {
         if (result instanceof RSyntaxConstant) {

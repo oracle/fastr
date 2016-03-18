@@ -53,12 +53,12 @@ public abstract class CallMatcherNode extends RBaseNode {
     protected final ConditionProfile missingArgProfile = ConditionProfile.createBinaryProfile();
     protected final ConditionProfile emptyArgProfile = ConditionProfile.createBinaryProfile();
 
-    public CallMatcherNode(boolean forNextMethod, boolean argsAreEvaluated) {
+    private CallMatcherNode(boolean forNextMethod, boolean argsAreEvaluated) {
         this.forNextMethod = forNextMethod;
         this.argsAreEvaluated = argsAreEvaluated;
     }
 
-    protected static final int MAX_CACHE_DEPTH = 3;
+    private static final int MAX_CACHE_DEPTH = 3;
 
     public static CallMatcherNode create(boolean forNextMethod, boolean argsAreEvaluated) {
         return new CallMatcherUninitializedNode(forNextMethod, argsAreEvaluated);

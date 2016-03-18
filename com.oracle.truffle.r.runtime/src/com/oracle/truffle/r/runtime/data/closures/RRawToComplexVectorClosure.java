@@ -27,11 +27,11 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 
-public class RRawToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
+final class RRawToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
 
     private final RAbstractRawVector logicalVector;
 
-    public RRawToComplexVectorClosure(RAbstractRawVector vector) {
+    RRawToComplexVectorClosure(RAbstractRawVector vector) {
         super(vector);
         this.logicalVector = vector;
     }

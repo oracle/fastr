@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -123,7 +123,7 @@ public class EagerEvalHelper {
      * @return Whether the given {@link RNode} is a {@link ReadVariableNode}
      *
      */
-    public static boolean isVariableArgument(RBaseNode expr) {
+    private static boolean isVariableArgument(RBaseNode expr) {
         // Do NOT try to optimize anything that might force a Promise, as this might be arbitrary
         // complex (time and space)!
         return expr instanceof ReadVariableNode && !((ReadVariableNode) expr).isForceForTypeCheck();

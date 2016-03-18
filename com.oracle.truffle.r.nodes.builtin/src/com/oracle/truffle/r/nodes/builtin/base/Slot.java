@@ -30,14 +30,14 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 @RBuiltin(name = "@", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = 1)
 public abstract class Slot extends RBuiltinNode {
 
-    @Child AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(null, null);
+    @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(null, null);
 
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.toAttributable(0, true, true, true);
     }
 
-    protected String getName(Object nameObj) {
+    private String getName(Object nameObj) {
         if (nameObj instanceof RPromise) {
             Object rep = ((RPromise) nameObj).getRep();
             if (rep instanceof WrapArgumentNode) {

@@ -67,11 +67,7 @@ public final class CastBuilder {
     }
 
     public CastBuilder toVector(int index) {
-        return toVector(index, false);
-    }
-
-    public CastBuilder toVector(int index, boolean nonVectorPreserved) {
-        return insert(index, CastToVectorNodeGen.create(nonVectorPreserved));
+        return insert(index, CastToVectorNodeGen.create(false));
     }
 
     public CastBuilder toInteger(int index) {
@@ -91,19 +87,11 @@ public final class CastBuilder {
     }
 
     public CastBuilder toLogical(int index) {
-        return toLogical(index, false, false, false);
-    }
-
-    public CastBuilder toLogical(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        return insert(index, CastLogicalNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
+        return insert(index, CastLogicalNodeGen.create(false, false, false));
     }
 
     public CastBuilder toCharacter(int index) {
-        return toCharacter(index, false, false, false, false);
-    }
-
-    public CastBuilder toCharacter(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation, boolean emptyVectorConvertedToNull) {
-        return insert(index, CastStringNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation, emptyVectorConvertedToNull));
+        return insert(index, CastStringNodeGen.create(false, false, false, false));
     }
 
     public CastBuilder boxPrimitive(int index) {

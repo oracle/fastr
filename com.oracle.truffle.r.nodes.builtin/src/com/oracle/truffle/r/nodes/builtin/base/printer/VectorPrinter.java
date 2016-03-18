@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 //Transcribed from GnuR, src/main/print.c, src/main/printarray.c, src/main/printvector.c
 
-public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePrinter<T> {
+abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePrinter<T> {
 
     private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,18 +58,18 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!containsMetadata(source, attrSourceProfiles)")
-    public RAbstractVector copyNoMetadata(RAbstractVector target, RAbstractVector source) {
+    protected RAbstractVector copyNoMetadata(RAbstractVector target, RAbstractVector source) {
         return target;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"copyAllAttributes", "target == source"})
-    public RAbstractVector copySameVector(RAbstractVector target, RAbstractVector source) {
+    protected RAbstractVector copySameVector(RAbstractVector target, RAbstractVector source) {
         return target;
     }
 
     @Specialization(guards = {"!copyAllAttributes || target != source", "containsMetadata(source, attrSourceProfiles)"})
-    public RAbstractVector copySameLength(RAbstractVector target, RAbstractVector source, //
+    protected RAbstractVector copySameLength(RAbstractVector target, RAbstractVector source, //
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
                     @Cached("createDim()") RemoveAttributeNode removeDim, //
                     @Cached("createDimNames()") RemoveAttributeNode removeDimNames, //

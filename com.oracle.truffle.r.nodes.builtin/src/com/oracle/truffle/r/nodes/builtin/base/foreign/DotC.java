@@ -92,7 +92,7 @@ public abstract class DotC extends RBuiltinNode {
         return dispatch(this, symbolInfo.address, symbolInfo.symbol, naok, dup, args.getArguments());
     }
 
-    protected String getNameFromSymbolInfo(VirtualFrame frame, RList symbol) {
+    private String getNameFromSymbolInfo(VirtualFrame frame, RList symbol) {
         if (nameExtract == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             nameExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
@@ -100,7 +100,7 @@ public abstract class DotC extends RBuiltinNode {
         return RRuntime.asString(nameExtract.applyAccessField(frame, symbol, "name"));
     }
 
-    protected long getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
+    private long getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
         if (addressExtract == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
@@ -141,7 +141,7 @@ public abstract class DotC extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    public static RList dispatch(RBuiltinNode node, long address, String name, byte naok, byte dup, Object[] argValues) {
+    protected static RList dispatch(RBuiltinNode node, long address, String name, byte naok, byte dup, Object[] argValues) {
         @SuppressWarnings("unused")
         boolean dupArgs = RRuntime.fromLogical(dup);
         @SuppressWarnings("unused")

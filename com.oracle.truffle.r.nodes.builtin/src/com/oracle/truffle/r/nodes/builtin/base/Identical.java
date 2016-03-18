@@ -37,7 +37,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.SequenceNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.RConnection;
@@ -84,7 +83,7 @@ public abstract class Identical extends RBuiltinNode {
     @Child private Identical identicalRecursiveAttr;
     private final boolean recursive;
 
-    public Identical(boolean recursive) {
+    protected Identical(boolean recursive) {
         this.recursive = recursive;
     }
 
@@ -468,13 +467,6 @@ public abstract class Identical extends RBuiltinNode {
 
     protected boolean argConnections(Object x, Object y) {
         return x instanceof RConnection && y instanceof RConnection;
-    }
-
-    protected boolean checkExtraArg(byte value, String name) {
-        if (value == RRuntime.LOGICAL_NA) {
-            throw RError.error(this, RError.Message.INVALID_VALUE, name);
-        }
-        return true;
     }
 
     public static Identical create(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {

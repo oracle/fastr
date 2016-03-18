@@ -48,13 +48,6 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class RDataFactory {
 
-    @CompilationFinal public static final byte[] EMPTY_RAW_ARRAY = new byte[0];
-    @CompilationFinal public static final byte[] EMPTY_LOGICAL_ARRAY = new byte[0];
-    @CompilationFinal public static final int[] EMPTY_INTEGER_ARRAY = new int[0];
-    @CompilationFinal public static final double[] EMPTY_DOUBLE_ARRAY = new double[0];
-    @CompilationFinal public static final double[] EMPTY_COMPLEX_ARRAY = new double[0];
-    @CompilationFinal public static final String[] EMPTY_STRING_ARRAY = new String[0];
-
     /**
      * Profile for creation tracing; must precede following declarations.
      */
@@ -171,7 +164,7 @@ public final class RDataFactory {
     }
 
     public static RStringVector createStringVector(String value) {
-        return createStringVector(new String[]{value}, RRuntime.isComplete(value), null, null);
+        return createStringVector(new String[]{value}, !RRuntime.isNA(value), null, null);
     }
 
     public static RStringVector createStringVector(int length) {
@@ -265,15 +258,15 @@ public final class RDataFactory {
     }
 
     public static RIntVector createEmptyIntVector() {
-        return createIntVector(EMPTY_INTEGER_ARRAY, true);
+        return createIntVector(new int[0], true);
     }
 
     public static RDoubleVector createEmptyDoubleVector() {
-        return createDoubleVector(EMPTY_DOUBLE_ARRAY, true);
+        return createDoubleVector(new double[0], true);
     }
 
     public static RStringVector createEmptyStringVector() {
-        return createStringVector(EMPTY_STRING_ARRAY, true);
+        return createStringVector(new String[0], true);
     }
 
     public static RStringVector createNAStringVector() {
@@ -281,15 +274,15 @@ public final class RDataFactory {
     }
 
     public static RComplexVector createEmptyComplexVector() {
-        return createComplexVector(EMPTY_COMPLEX_ARRAY, true);
+        return createComplexVector(new double[0], true);
     }
 
     public static RLogicalVector createEmptyLogicalVector() {
-        return createLogicalVector(EMPTY_LOGICAL_ARRAY, true);
+        return createLogicalVector(new byte[0], true);
     }
 
     public static RRawVector createEmptyRawVector() {
-        return createRawVector(EMPTY_RAW_ARRAY);
+        return createRawVector(new byte[0]);
     }
 
     public static RComplex createComplex(double realPart, double imaginaryPart) {
@@ -301,7 +294,7 @@ public final class RDataFactory {
     }
 
     public static RStringVector createStringVectorFromScalar(String operand) {
-        return createStringVector(new String[]{operand}, RRuntime.isComplete(operand));
+        return createStringVector(new String[]{operand}, !RRuntime.isNA(operand));
     }
 
     public static RLogicalVector createLogicalVectorFromScalar(boolean data) {
@@ -309,15 +302,15 @@ public final class RDataFactory {
     }
 
     public static RLogicalVector createLogicalVectorFromScalar(byte operand) {
-        return createLogicalVector(new byte[]{operand}, RRuntime.isComplete(operand));
+        return createLogicalVector(new byte[]{operand}, !RRuntime.isNA(operand));
     }
 
     public static RIntVector createIntVectorFromScalar(int operand) {
-        return createIntVector(new int[]{operand}, RRuntime.isComplete(operand));
+        return createIntVector(new int[]{operand}, !RRuntime.isNA(operand));
     }
 
     public static RDoubleVector createDoubleVectorFromScalar(double operand) {
-        return createDoubleVector(new double[]{operand}, RRuntime.isComplete(operand));
+        return createDoubleVector(new double[]{operand}, !RRuntime.isNA(operand));
     }
 
     public static RComplexVector createComplexVectorFromScalar(RComplex operand) {

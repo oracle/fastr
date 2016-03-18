@@ -606,7 +606,7 @@ public class GrepFunctions {
         }
 
         @TruffleBoundary
-        public static Matcher getPatternMatcher(String pattern, String text, boolean ignoreCase) {
+        private static Matcher getPatternMatcher(String pattern, String text, boolean ignoreCase) {
             return Pattern.compile(pattern, ignoreCase ? Pattern.CASE_INSENSITIVE : 0).matcher(text);
         }
     }

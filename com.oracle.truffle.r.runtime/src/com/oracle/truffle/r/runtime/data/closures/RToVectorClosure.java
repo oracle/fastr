@@ -31,11 +31,11 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public abstract class RToVectorClosure implements RAbstractVector {
+abstract class RToVectorClosure implements RAbstractVector {
 
     protected final RAbstractVector vector;
 
-    public RToVectorClosure(RAbstractVector vector) {
+    RToVectorClosure(RAbstractVector vector) {
         this.vector = vector;
     }
 

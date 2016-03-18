@@ -44,13 +44,13 @@ import com.oracle.truffle.r.runtime.data.RFunction;
  * used to retrieve the counter associated with a node.
  *
  */
-public class REntryCounters {
-    public static final class Counter {
+class REntryCounters {
+    static final class Counter {
         private final Object ident;
         private int enterCount;
         private int exitCount;
 
-        private Counter(Object ident) {
+        Counter(Object ident) {
             this.ident = ident;
         }
 
@@ -70,7 +70,7 @@ public class REntryCounters {
     /**
      * Listener that is independent of the kind of node and specific instance being counted.
      */
-    public abstract static class BasicListener implements ExecutionEventListener {
+    private abstract static class BasicListener implements ExecutionEventListener {
 
         private HashMap<SourceSection, Counter> counterMap = new HashMap<>();
 
@@ -116,10 +116,10 @@ public class REntryCounters {
     /**
      * A counter that is specialized for function entry, tagged with the {@link FunctionUID}.
      */
-    public static class FunctionListener extends BasicListener {
+    static class FunctionListener extends BasicListener {
         private static final FunctionListener singleton = new FunctionListener();
 
-        public static void installCounters() {
+        static void installCounters() {
             if (enabled()) {
                 SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
                 builder.tagIs(RSyntaxTags.START_FUNCTION);
@@ -128,11 +128,11 @@ public class REntryCounters {
             }
         }
 
-        public static void installCounter(RFunction func) {
+        static void installCounter(RFunction func) {
             RInstrumentation.getInstrumenter().attachListener(RInstrumentation.createFunctionStartFilter(func).build(), singleton);
         }
 
-        public static Counter findCounter(RFunction func) {
+        static Counter findCounter(RFunction func) {
             FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
             FunctionStatementsNode fsn = ((FunctionStatementsNode) fdn.getBody());
             return singleton.getCounter(fsn.getSourceSection());
@@ -149,7 +149,7 @@ public class REntryCounters {
             RPerfStats.register(new PerfHandler());
         }
 
-        public static boolean enabled() {
+        static boolean enabled() {
             return RPerfStats.enabled(PerfHandler.NAME);
         }
 

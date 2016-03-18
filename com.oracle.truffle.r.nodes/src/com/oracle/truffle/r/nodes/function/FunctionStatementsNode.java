@@ -40,7 +40,7 @@ public class FunctionStatementsNode extends BlockNode {
         super(null, BlockNode.EMPTY_BLOCK);
     }
 
-    public FunctionStatementsNode(SourceSection src, RSyntaxNode sequence) {
+    FunctionStatementsNode(SourceSection src, RSyntaxNode sequence) {
         super(src.withTags(RSyntaxTags.START_FUNCTION), sequence);
     }
 

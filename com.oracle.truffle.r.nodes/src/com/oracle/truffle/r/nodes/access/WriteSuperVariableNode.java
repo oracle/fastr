@@ -49,13 +49,13 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @NodeInfo(cost = NodeCost.NONE)
 public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, RSyntaxCall, VisibilityController {
 
-    @Child WriteVariableNode writeSuperFrameVariableNode;
+    @Child private WriteVariableNode writeSuperFrameVariableNode;
 
     protected WriteSuperVariableNode(SourceSection src) {
         super(src);
     }
 
-    public static WriteSuperVariableNode create(SourceSection src, String name, RNode rhs) {
+    static WriteSuperVariableNode create(SourceSection src, String name, RNode rhs) {
         WriteSuperVariableNode result = new WriteSuperVariableNode(src);
         result.writeSuperFrameVariableNode = result.insert(WriteSuperFrameVariableNode.create(name, rhs, Mode.REGULAR));
         return result;

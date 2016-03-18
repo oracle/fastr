@@ -169,7 +169,7 @@ public class SysFunctions {
             return RNull.instance;
         }
 
-        public static boolean lengthOne(RStringVector vec) {
+        protected static boolean lengthOne(RStringVector vec) {
             return vec.getLength() == 1;
         }
 

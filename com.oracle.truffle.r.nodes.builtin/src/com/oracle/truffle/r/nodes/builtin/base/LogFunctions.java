@@ -85,7 +85,7 @@ public class LogFunctions {
             for (int i = 0; i < vector.getLength(); i++) {
                 int inputValue = vector.getDataAt(i);
                 double result = RRuntime.DOUBLE_NA;
-                if (RRuntime.isComplete(inputValue)) {
+                if (!RRuntime.isNA(inputValue)) {
                     result = logb(inputValue, base);
                 }
                 resultVector[i] = result;
@@ -99,7 +99,7 @@ public class LogFunctions {
             double[] doubleVector = new double[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 double value = vector.getDataAt(i);
-                if (RRuntime.isComplete(value)) {
+                if (!RRuntime.isNA(value)) {
                     value = logb(value, base);
                 }
                 doubleVector[i] = value;
@@ -107,7 +107,7 @@ public class LogFunctions {
             return RDataFactory.createDoubleVector(doubleVector, vector.isComplete());
         }
 
-        protected static double logb(double x, double base) {
+        private static double logb(double x, double base) {
             return Math.log(x) / Math.log(base);
         }
     }
@@ -116,15 +116,14 @@ public class LogFunctions {
     public abstract static class Log10 extends RBuiltinNode {
 
         @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-        @Child private UnaryArithmeticNode log10Node = UnaryArithmeticNodeGen.create(Log10Arithmetic::new,
-                        RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
+        @Child private UnaryArithmeticNode log10Node = UnaryArithmeticNodeGen.create(Log10Arithmetic::new, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
 
         @Specialization
         protected Object log10(Object value) {
             return log10Node.execute(boxPrimitive.execute(value));
         }
 
-        public static class Log10Arithmetic extends UnaryArithmetic {
+        private static final class Log10Arithmetic extends UnaryArithmetic {
 
             private static final double LOG_10 = Math.log(10);
 
@@ -149,7 +148,6 @@ public class LogFunctions {
                 double mod = RComplex.abs(re, im);
                 return RComplex.valueOf(Math.log10(mod), arg / LOG_10);
             }
-
         }
     }
 
@@ -157,15 +155,14 @@ public class LogFunctions {
     public abstract static class Log2 extends RBuiltinNode {
 
         @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-        @Child private UnaryArithmeticNode log2Node = UnaryArithmeticNodeGen.create(Log2Arithmetic::new,
-                        RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
+        @Child private UnaryArithmeticNode log2Node = UnaryArithmeticNodeGen.create(Log2Arithmetic::new, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
 
         @Specialization
         protected Object log2(Object value) {
             return log2Node.execute(boxPrimitive.execute(value));
         }
 
-        public static class Log2Arithmetic extends UnaryArithmetic {
+        private static final class Log2Arithmetic extends UnaryArithmetic {
 
             private static final double LOG_2 = Math.log(2);
 
@@ -190,7 +187,6 @@ public class LogFunctions {
                 double mod = RComplex.abs(re, im);
                 return RComplex.valueOf(Math.log(mod) / LOG_2, arg / LOG_2);
             }
-
         }
     }
 
@@ -198,15 +194,14 @@ public class LogFunctions {
     public abstract static class Log1p extends RBuiltinNode {
 
         @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-        @Child private UnaryArithmeticNode log1pNode = UnaryArithmeticNodeGen.create(Log1pArithmetic::new,
-                        RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
+        @Child private UnaryArithmeticNode log1pNode = UnaryArithmeticNodeGen.create(Log1pArithmetic::new, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
 
         @Specialization
         protected Object log1p(Object value) {
             return log1pNode.execute(boxPrimitive.execute(value));
         }
 
-        public static class Log1pArithmetic extends UnaryArithmetic {
+        private static final class Log1pArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -231,7 +226,6 @@ public class LogFunctions {
                 double mod = RComplex.abs(re, im);
                 return RComplex.valueOf(Math.log(mod), arg);
             }
-
         }
     }
 }

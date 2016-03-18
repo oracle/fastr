@@ -549,7 +549,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
 
-        protected boolean namesOnlyOrNoAttr(RAbstractVector x) {
+        private boolean namesOnlyOrNoAttr(RAbstractVector x) {
             // there should be no attributes other than names
             if (x.getNames(attrProfiles) == null) {
                 assert x.getAttributes() == null || x.getAttributes().size() > 0;
@@ -560,7 +560,7 @@ public class IsTypeFunctions {
             }
         }
 
-        protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
+        private boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
             return RType.Any.getName().equals(mode) || (x instanceof RList && mode.equals("list")) || (x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode)) ||
                             RRuntime.classToString(x.getElementClass()).equals(mode);
         }

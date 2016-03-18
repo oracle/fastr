@@ -15,7 +15,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
@@ -32,8 +31,6 @@ public abstract class FormatC extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
 
-    protected final BranchProfile errorProfile = BranchProfile.create();
-
     private RStringVector castStringVector(Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -44,21 +41,6 @@ public abstract class FormatC extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        // if (children.length != getSuppliedSignature().getLength()) {
-        // errorProfile.enter();
-        // throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED,
-        // children.length, ".Internal(formatC)", getSuppliedSignature().getLength());
-        // }
-        // // cast to vector as appropriate to eliminate NULL values
-        // children[2] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[2], false,
-        // false,
-        // false, false), false, false, false);
-        // children[3] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[3], false,
-        // false,
-        // false, false), false, false, false);
-        // children[6] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[6], false,
-        // false,
-        // false, false), false, false, false);
         casts.toInteger(2).toInteger(3).toInteger(6);
     }
 

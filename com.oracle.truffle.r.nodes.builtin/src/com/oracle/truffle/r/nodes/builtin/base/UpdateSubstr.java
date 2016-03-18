@@ -45,11 +45,11 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 @RBuiltin(name = "substr<-", kind = INTERNAL, parameterNames = {"x", "start", "stop", "value"})
 public abstract class UpdateSubstr extends RBuiltinNode {
 
-    protected final NACheck na = NACheck.create();
+    private final NACheck na = NACheck.create();
 
     private final BranchProfile everSeenIllegalRange = BranchProfile.create();
 
-    protected static boolean rangeOk(String x, int start, int stop) {
+    private static boolean rangeOk(String x, int start, int stop) {
         return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
     }
 
@@ -59,7 +59,7 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    protected String substr0(String x, int start, int stop, String value) {
+    private String substr0(String x, int start, int stop, String value) {
         if (na.check(x) || na.check(start) || na.check(stop)) {
             return RRuntime.STRING_NA;
         }

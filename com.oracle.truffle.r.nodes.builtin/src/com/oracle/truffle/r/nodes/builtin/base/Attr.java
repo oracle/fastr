@@ -52,7 +52,7 @@ public abstract class Attr extends RBuiltinNode {
 
     private final ConditionProfile searchPartialProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
-    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @CompilationFinal private String cachedName = "";
     @CompilationFinal private String cachedInternedName = "";

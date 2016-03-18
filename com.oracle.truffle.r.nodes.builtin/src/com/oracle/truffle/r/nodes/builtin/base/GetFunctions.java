@@ -82,7 +82,7 @@ public class GetFunctions {
             }
         }
 
-        public static boolean isInherits(byte inherits) {
+        protected static boolean isInherits(byte inherits) {
             return inherits == RRuntime.LOGICAL_TRUE;
         }
 
@@ -176,10 +176,6 @@ public class GetFunctions {
         @Child private RArgumentsNode argsNode;
 
         @CompilationFinal private boolean needsCallerFrame;
-
-        public static boolean isInherits(byte inherits) {
-            return inherits == RRuntime.LOGICAL_TRUE;
-        }
 
         private static class State {
             final int svLength;

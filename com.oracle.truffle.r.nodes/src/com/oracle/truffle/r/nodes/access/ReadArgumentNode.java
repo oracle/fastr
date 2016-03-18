@@ -26,7 +26,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-public class ReadArgumentNode extends RNode {
+class ReadArgumentNode extends RNode {
 
     private final int index;
 

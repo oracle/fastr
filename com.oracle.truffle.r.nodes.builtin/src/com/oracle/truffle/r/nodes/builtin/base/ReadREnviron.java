@@ -63,7 +63,7 @@ public abstract class ReadREnviron extends RInvisibleBuiltinNode {
         throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_STRING, "x");
     }
 
-    public static boolean lengthOneCVector(RAbstractStringVector vec) {
+    protected static boolean lengthOneCVector(RAbstractStringVector vec) {
         return vec.getLength() == 1;
     }
 }

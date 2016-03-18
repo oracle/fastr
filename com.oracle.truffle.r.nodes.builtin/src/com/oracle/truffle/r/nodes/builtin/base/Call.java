@@ -65,12 +65,12 @@ public abstract class Call extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    protected static RLanguage makeCall(String name, RArgsValuesAndNames args) {
+    private static RLanguage makeCall(String name, RArgsValuesAndNames args) {
         return makeCall0(name, false, args);
     }
 
     @TruffleBoundary
-    protected static RLanguage makeCall(RFunction function, RArgsValuesAndNames args) {
+    private static RLanguage makeCall(RFunction function, RArgsValuesAndNames args) {
         return makeCall0(function, false, args);
     }
 

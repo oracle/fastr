@@ -64,7 +64,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 @RBuiltin(name = ".Internal", kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = 0)
 public abstract class Internal extends RBuiltinNode {
 
-    protected final BranchProfile errorProfile = BranchProfile.create();
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     @Child private LeafCallNode builtinCallNode;
     @CompilationFinal private RFunction builtinFunction;
@@ -117,21 +117,20 @@ public abstract class Internal extends RBuiltinNode {
     }
 
     private static final String[] NOT_IMPLEMENTED = new String[]{
-//@formatter:off
-        ".addTryHandlers", "interruptsSuspended", "restart", "backsolve", "max.col", "row", "all.names", "comment", "`comment<-`", "list2env", "tcrossprod", "setFileTime", "lbeta",
-        "beta", "lchoose", "choose", "dchisq", "pchisq", "qchisq", "dexp", "pexp", "qexp", "dgeom", "pgeom", "qgeom", "dpois", "ppois", "qpois", "dt", "pt", "qt", "dsignrank",
-        "psignrank", "qsignrank", "besselJ", "besselY", "psigamma", "dbeta", "pbeta", "qbeta", "dbinom", "pbinom", "qbinom", "dcauchy", "pcauchy", "qcauchy", "df", "pf", "qf", "dgamma",
-        "pgamma", "qgamma", "dlnorm", "plnorm", "qlnorm", "dlogis", "plogis", "qlogis", "dnbinom", "pnbinom", "qnbinom", "dnorm", "pnorm", "qnorm", "dunif", "punif", "qunif", "dweibull",
-        "pweibull", "qweibull", "dnchisq", "pnchisq", "qnchisq", "dnt", "pnt", "qnt", "dwilcox", "pwilcox", "qwilcox", "besselI", "besselK", "dnbinom_mu", "pnbinom_mu", "qnbinom_mu",
-        "dhyper", "phyper", "qhyper", "dnbeta", "pnbeta", "qnbeta", "dnf", "pnf", "qnf", "dtukey", "ptukey", "qtukey", "rchisq", "rexp", "rgeom", "rpois", "rt", "rsignrank", "rbeta",
-        "rbinom", "rcauchy", "rf", "rgamma", "rlnorm", "rlogis", "rnbinom", "rnbinom_mu", "rnchisq", "rnorm", "runif", "rweibull", "rwilcox", "rhyper", "sample2", "format.info",
-        "abbreviate", "grepRaw", "regexec", "adist", "aregexec", "chartr", "intToBits", "rawToBits", "packBits", "utf8ToInt", "intToUtf8", "strtrim", "eapply", "machine", "save",
-        "saveToConn", "dput", "dump", "prmatrix", "gcinfo", "gctorture", "gctorture2", "memory.profile", "recordGraphics", "sys.calls", "sys.on.exit", "rank", "builtins", "bodyCode",
-        "rapply", "islistfactor", "inspect", "mem.limits", "merge", "capabilitiesX11", "Cstack_info", "file.show", "file.choose", "polyroot", "mkCode", "bcClose", "is.builtin.internal",
-        "disassemble", "bcVersion", "load.from.file", "save.to.file", "growconst", "putconst", "getconst", "enableJIT", "setNumMathThreads", "setMaxNumMathThreads", "isatty",
-        "isIncomplete", "pipe", "fifo", "bzfile", "xzfile", "unz", "truncate", "rawConnection", "rawConnectionValue", "sockSelect", "gzcon", "memCompress", "memDecompress", "mkUnbound",
-        "env.profile", "setTimeLimit", "setSessionTimeLimit", "icuSetCollate", "lazyLoadDBflush", "findInterval", "pretty", "crc64", "rowsum_matrix", "rowsum_df", "setS4Object",
-        "traceOnOff", "La_qr_cmplx", "La_rs", "La_rs_cmplx", "La_rg_cmplx", "La_rs", "La_rs_cmplx", "La_dlange", "La_dgecon", "La_dtrcon", "La_zgecon", "La_ztrcon", "La_solve_cmplx",
-        "La_chol2inv", "qr_qy_real", "qr_coef_cmplx", "qr_qy_cmpl", "La_svd", "La_svd_cmplx"};
+                    ".addTryHandlers", "interruptsSuspended", "restart", "backsolve", "max.col", "row", "all.names", "comment", "`comment<-`", "list2env", "tcrossprod", "setFileTime", "lbeta",
+                    "beta", "lchoose", "choose", "dchisq", "pchisq", "qchisq", "dexp", "pexp", "qexp", "dgeom", "pgeom", "qgeom", "dpois", "ppois", "qpois", "dt", "pt", "qt", "dsignrank",
+                    "psignrank", "qsignrank", "besselJ", "besselY", "psigamma", "dbeta", "pbeta", "qbeta", "dbinom", "pbinom", "qbinom", "dcauchy", "pcauchy", "qcauchy", "df", "pf", "qf", "dgamma",
+                    "pgamma", "qgamma", "dlnorm", "plnorm", "qlnorm", "dlogis", "plogis", "qlogis", "dnbinom", "pnbinom", "qnbinom", "dnorm", "pnorm", "qnorm", "dunif", "punif", "qunif", "dweibull",
+                    "pweibull", "qweibull", "dnchisq", "pnchisq", "qnchisq", "dnt", "pnt", "qnt", "dwilcox", "pwilcox", "qwilcox", "besselI", "besselK", "dnbinom_mu", "pnbinom_mu", "qnbinom_mu",
+                    "dhyper", "phyper", "qhyper", "dnbeta", "pnbeta", "qnbeta", "dnf", "pnf", "qnf", "dtukey", "ptukey", "qtukey", "rchisq", "rexp", "rgeom", "rpois", "rt", "rsignrank", "rbeta",
+                    "rbinom", "rcauchy", "rf", "rgamma", "rlnorm", "rlogis", "rnbinom", "rnbinom_mu", "rnchisq", "rnorm", "runif", "rweibull", "rwilcox", "rhyper", "sample2", "format.info",
+                    "abbreviate", "grepRaw", "regexec", "adist", "aregexec", "chartr", "intToBits", "rawToBits", "packBits", "utf8ToInt", "intToUtf8", "strtrim", "eapply", "machine", "save",
+                    "saveToConn", "dput", "dump", "prmatrix", "gcinfo", "gctorture", "gctorture2", "memory.profile", "recordGraphics", "sys.calls", "sys.on.exit", "rank", "builtins", "bodyCode",
+                    "rapply", "islistfactor", "inspect", "mem.limits", "merge", "capabilitiesX11", "Cstack_info", "file.show", "file.choose", "polyroot", "mkCode", "bcClose", "is.builtin.internal",
+                    "disassemble", "bcVersion", "load.from.file", "save.to.file", "growconst", "putconst", "getconst", "enableJIT", "setNumMathThreads", "setMaxNumMathThreads", "isatty",
+                    "isIncomplete", "pipe", "fifo", "bzfile", "xzfile", "unz", "truncate", "rawConnection", "rawConnectionValue", "sockSelect", "gzcon", "memCompress", "memDecompress", "mkUnbound",
+                    "env.profile", "setTimeLimit", "setSessionTimeLimit", "icuSetCollate", "lazyLoadDBflush", "findInterval", "pretty", "crc64", "rowsum_matrix", "rowsum_df", "setS4Object",
+                    "traceOnOff", "La_qr_cmplx", "La_rs", "La_rs_cmplx", "La_rg_cmplx", "La_rs", "La_rs_cmplx", "La_dlange", "La_dgecon", "La_dtrcon", "La_zgecon", "La_ztrcon", "La_solve_cmplx",
+                    "La_chol2inv", "qr_qy_real", "qr_coef_cmplx", "qr_qy_cmpl", "La_svd", "La_svd_cmplx"};
 
 }

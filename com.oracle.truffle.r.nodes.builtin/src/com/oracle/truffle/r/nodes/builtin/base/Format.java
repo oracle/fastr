@@ -45,7 +45,7 @@ public abstract class Format extends RBuiltinNode {
 
     @Child private CastIntegerNode castInteger;
 
-    protected final BranchProfile errorProfile = BranchProfile.create();
+    private final BranchProfile errorProfile = BranchProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     /**
      * This is just a dummy object used to invoke getNames on RAbstractDoubleVector. The
@@ -59,7 +59,7 @@ public abstract class Format extends RBuiltinNode {
 
     private static Config printConfig;
 
-    public static Config setPrintDefaults() {
+    private static Config setPrintDefaults() {
         if (printConfig == null) {
             printConfig = new Config();
         }
@@ -79,7 +79,7 @@ public abstract class Format extends RBuiltinNode {
         return printConfig;
     }
 
-    public static Config getConfig() {
+    private static Config getConfig() {
         return setPrintDefaults();
     }
 
@@ -320,7 +320,7 @@ public abstract class Format extends RBuiltinNode {
         }
     }
 
-    public static class Config {
+    private static class Config {
         public int width;
         public int naWidth;
         public int naWidthNoQuote;
@@ -336,7 +336,7 @@ public abstract class Format extends RBuiltinNode {
         public int cutoff;
     }
 
-    public enum Adjustment {
+    private enum Adjustment {
         LEFT,
         RIGHT,
         CENTRE,

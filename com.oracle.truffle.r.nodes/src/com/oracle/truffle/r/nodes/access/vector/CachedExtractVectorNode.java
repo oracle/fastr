@@ -60,8 +60,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 final class CachedExtractVectorNode extends CachedVectorNode {
 
-    protected static final boolean DEFAULT_EXACT = true;
-    protected static final boolean DEFAULT_DROP_DIMENSION = true;
+    private static final boolean DEFAULT_EXACT = true;
+    private static final boolean DEFAULT_DROP_DIMENSION = true;
 
     private final Class<? extends RTypedValue> targetClass;
     private final Class<? extends RTypedValue> exactClass;

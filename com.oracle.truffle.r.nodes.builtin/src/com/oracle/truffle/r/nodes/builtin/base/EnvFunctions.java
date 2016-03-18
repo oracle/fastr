@@ -114,7 +114,7 @@ public class EnvFunctions {
             return asEnvironmentInt(frame, posVec.getDataAt(0));
         }
 
-        protected REnvironment asEnvironmentInt(VirtualFrame frame, int pos) {
+        private REnvironment asEnvironmentInt(VirtualFrame frame, int pos) {
             controlVisibility();
             if (pos == -1) {
                 Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);

@@ -78,7 +78,7 @@ public abstract class PMinMax extends RBuiltinNode {
     private final ConditionProfile lengthProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
 
-    public PMinMax(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
+    protected PMinMax(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.semantics = semantics;
         this.factory = factory;
         this.op = factory.create();
@@ -376,10 +376,6 @@ public abstract class PMinMax extends RBuiltinNode {
         return precedence(args) == PrecedenceNode.RAW_PRECEDENCE;
     }
 
-    protected boolean oneVector(RArgsValuesAndNames args) {
-        return args.getLength() == 1;
-    }
-
     private int precedence(RArgsValuesAndNames args) {
         int precedence = -1;
         Object[] array = args.getArguments();
@@ -401,15 +397,11 @@ public abstract class PMinMax extends RBuiltinNode {
         private final NACheck na;
         private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
 
-        public MultiElemStringHandler(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
+        protected MultiElemStringHandler(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
             this.semantics = semantics;
             this.factory = factory;
             this.op = factory.create();
             this.na = na;
-        }
-
-        public MultiElemStringHandler(MultiElemStringHandler other) {
-            this(other.semantics, other.factory, other.na);
         }
 
         private byte handleString(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data) {

@@ -75,7 +75,7 @@ public abstract class BinaryLogic extends BooleanOperation {
         return new Or("||");
     }
 
-    public BinaryLogic() {
+    private BinaryLogic() {
         super(true, true);
     }
 
@@ -83,7 +83,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         private final String opName;
 
-        public And(String opName) {
+        private And(String opName) {
             this.opName = opName;
         }
 
@@ -138,7 +138,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         private final String opName;
 
-        public Or(String opName) {
+        private Or(String opName) {
             this.opName = opName;
         }
 

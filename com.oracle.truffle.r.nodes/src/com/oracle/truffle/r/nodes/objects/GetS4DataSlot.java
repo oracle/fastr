@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -37,16 +37,17 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 // transcribed from src/main/attrib.c
 @NodeChildren({@NodeChild(value = "obj", type = RNode.class), @NodeChild(value = "type", type = RNode.class)})
-public abstract class GetS4DataSlot extends RNode {
+abstract class GetS4DataSlot extends RNode {
 
     public abstract RTypedValue executeObject(RAttributable attObj, RType type);
 
-    @Child AttributeAccess s3ClassAttrAccess;
-    @Child AttributeAccess dotDataAttrAccess;
-    @Child AttributeAccess dotXDataAttrAccess;
-    @Child RemoveAttributeNode s3ClassAttrRemove;
-    @Child CastToVectorNode castToVector;
-    @Child TypeofNode typeOf = TypeofNodeGen.create();
+    @Child private AttributeAccess s3ClassAttrAccess;
+    @Child private AttributeAccess dotDataAttrAccess;
+    @Child private AttributeAccess dotXDataAttrAccess;
+    @Child private RemoveAttributeNode s3ClassAttrRemove;
+    @Child private CastToVectorNode castToVector;
+    @Child private TypeofNode typeOf = TypeofNodeGen.create();
+
     private final BranchProfile nonNullAttr = BranchProfile.create();
     private final BranchProfile stillNonNullAttr = BranchProfile.create();
     private final BranchProfile shareable = BranchProfile.create();

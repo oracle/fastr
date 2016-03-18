@@ -63,7 +63,7 @@ public class RInstrumentation {
     /**
      * Created lazily as needed.
      */
-    public static class FunctionIdentification {
+    static class FunctionIdentification {
         public final Source source;
         public final String name;
         public final String origin;
@@ -141,7 +141,7 @@ public class RInstrumentation {
      *
      * @param fdn
      */
-    public static void registerFunctionDefinition(FunctionDefinitionNode fdn) {
+    static void registerFunctionDefinition(FunctionDefinitionNode fdn) {
         fixupTags(fdn);
         // For PerfStats we need to record the info on fdn for the report
         if (functionMap != null) {
@@ -199,7 +199,7 @@ public class RInstrumentation {
         node.setSourceSection(node.getSourceSection().withTags(updatedTags));
     }
 
-    public static FunctionIdentification getFunctionIdentification(FunctionUID uid) {
+    static FunctionIdentification getFunctionIdentification(FunctionUID uid) {
         return functionMap.get(uid).getIdentification();
     }
 
@@ -211,7 +211,7 @@ public class RInstrumentation {
     /**
      * Create a filter that matches all the statement nodes in {@code func}.
      */
-    public static SourceSectionFilter.Builder createFunctionStatementFilter(RFunction func) {
+    static SourceSectionFilter.Builder createFunctionStatementFilter(RFunction func) {
         return createFunctionFilter(func, RSyntaxTags.STATEMENT);
     }
 
@@ -219,7 +219,7 @@ public class RInstrumentation {
         return createFunctionFilter(fdn, RSyntaxTags.STATEMENT);
     }
 
-    public static SourceSectionFilter.Builder createFunctionFilter(RFunction func, String tag) {
+    static SourceSectionFilter.Builder createFunctionFilter(RFunction func, String tag) {
         FunctionDefinitionNode fdn = getFunctionDefinitionNode(func);
         return createFunctionFilter(fdn, tag);
     }
@@ -273,7 +273,7 @@ public class RInstrumentation {
         return instrumenter;
     }
 
-    public static void checkDebugRequested(RFunction func) {
+    static void checkDebugRequested(RFunction func) {
         if (debugFunctionNames != null) {
             FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
             for (String debugFunctionName : debugFunctionNames) {

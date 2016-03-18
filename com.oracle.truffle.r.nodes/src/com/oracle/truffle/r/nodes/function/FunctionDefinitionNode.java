@@ -523,10 +523,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return instrumented;
     }
 
-    public void setInstrumented() {
-        instrumented = true;
-    }
-
     /**
      * A workaround for not representing left curly brace as a function call. We have to depend on
      * the source section and "parse" the start of the function definition.

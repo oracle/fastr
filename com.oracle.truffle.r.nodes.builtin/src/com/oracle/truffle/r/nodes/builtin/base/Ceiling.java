@@ -48,7 +48,7 @@ public abstract class Ceiling extends RBuiltinNode {
         return ceiling.execute(boxPrimitive.execute(value));
     }
 
-    public static class CeilingArithmetic extends Round.RoundArithmetic {
+    private static final class CeilingArithmetic extends Round.RoundArithmetic {
 
         @Override
         public double op(double op) {

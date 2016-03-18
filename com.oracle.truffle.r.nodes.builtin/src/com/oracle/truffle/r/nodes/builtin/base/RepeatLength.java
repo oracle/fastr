@@ -65,7 +65,7 @@ public abstract class RepeatLength extends RBuiltinNode {
         controlVisibility();
         int[] array = new int[length];
         Arrays.fill(array, length);
-        return RDataFactory.createIntVector(array, RRuntime.isComplete(value));
+        return RDataFactory.createIntVector(array, !RRuntime.isNA(value));
     }
 
     @Specialization
@@ -73,7 +73,7 @@ public abstract class RepeatLength extends RBuiltinNode {
         controlVisibility();
         double[] array = new double[length];
         Arrays.fill(array, value);
-        return RDataFactory.createDoubleVector(array, RRuntime.isComplete(value));
+        return RDataFactory.createDoubleVector(array, !RRuntime.isNA(value));
     }
 
     @Specialization

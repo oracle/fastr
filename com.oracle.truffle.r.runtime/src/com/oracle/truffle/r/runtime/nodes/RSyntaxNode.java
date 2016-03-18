@@ -108,11 +108,6 @@ public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
      */
     SourceSection EAGER_DEPARSE = SourceSection.createUnavailable("R", "eager deparse");
 
-    /**
-     * Indicates a wrapper "function" created for "eval" or an expression entered into shell.
-     */
-    SourceSection WRAPPER = SourceSection.createUnavailable("R", "wrapper");
-
     /*
      * Every implementor of this interface must either inherit or directly implement the following
      * methods.

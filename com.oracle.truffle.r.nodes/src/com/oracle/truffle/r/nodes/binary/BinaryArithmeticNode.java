@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,7 +59,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     protected static final int CACHE_LIMIT = 5;
 
     protected final BinaryArithmeticFactory binary;
-    protected final UnaryArithmeticFactory unary;
+    private final UnaryArithmeticFactory unary;
 
     public BinaryArithmeticNode(BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
         this.binary = binaryFactory;
@@ -70,8 +70,6 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.boxPrimitive(0).boxPrimitive(1);
     }
-
-    public abstract Object execute(VirtualFrame frame, Object left, Object right);
 
     public static BinaryArithmeticNode create(BinaryArithmeticFactory binary, UnaryArithmeticFactory unary) {
         return BinaryArithmeticNodeGen.create(binary, unary, new RNode[]{null, null}, null, null);

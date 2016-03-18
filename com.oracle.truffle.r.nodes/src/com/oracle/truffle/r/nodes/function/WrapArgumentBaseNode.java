@@ -48,7 +48,7 @@ public abstract class WrapArgumentBaseNode extends RNode {
     private final BranchProfile everSeenS4Object;
 
     protected final BranchProfile shareable;
-    protected final BranchProfile nonShareable;
+    private final BranchProfile nonShareable;
 
     protected WrapArgumentBaseNode(RNode operand, boolean initProfiles) {
         this.operand = operand;

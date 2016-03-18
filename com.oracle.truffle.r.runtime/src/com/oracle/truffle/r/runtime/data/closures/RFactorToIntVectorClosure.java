@@ -35,12 +35,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 /*
  * This closure is meant to be used only for implementation of the binary operators.
  */
-public class RFactorToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
+final class RFactorToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
 
     private final RAbstractIntVector levels;
     private final boolean withNames;
 
-    public RFactorToIntVectorClosure(RFactor factor, RAbstractIntVector levels, boolean withNames) {
+    RFactorToIntVectorClosure(RFactor factor, RAbstractIntVector levels, boolean withNames) {
         super(factor.getVector());
         assert levels != null;
         this.levels = levels;
@@ -48,7 +48,7 @@ public class RFactorToIntVectorClosure extends RToIntVectorClosure implements RA
     }
 
     @Override
-    public final RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         switch (type) {
             case Integer:
                 return this;

@@ -176,7 +176,7 @@ abstract class WriteIndexedVectorNode extends Node {
                         right, rightStore, rightBase, rightLength, parentNA);
     }
 
-    public int getPositionLength(Object position) {
+    private int getPositionLength(Object position) {
         if (position instanceof RAbstractVector) {
             return positionLengthProfile.profile(((RAbstractVector) position).getLength());
         } else {

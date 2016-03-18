@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-public enum PrintJustification {
+enum PrintJustification {
     left,
     center,
     right,

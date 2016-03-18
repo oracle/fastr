@@ -58,7 +58,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
     @Child private WriteVariableNode writeRangeNode;
     @Child private LoopNode loopNode;
 
-    protected ForNode(SourceSection src, WriteVariableNode cvar, RNode range, RNode body) {
+    private ForNode(SourceSection src, WriteVariableNode cvar, RNode range, RNode body) {
         super(src);
         String indexName = AnonymousFrameVariable.create("FOR_INDEX");
         String rangeName = AnonymousFrameVariable.create("FOR_RANGE");

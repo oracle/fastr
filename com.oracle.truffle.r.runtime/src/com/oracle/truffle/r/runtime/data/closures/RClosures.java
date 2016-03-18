@@ -87,10 +87,6 @@ public class RClosures {
         return new RDoubleToIntVectorClosure(vector);
     }
 
-    public static RAbstractIntVector createComplexToIntVectorDiscardImaginary(RAbstractComplexVector vector) {
-        return new RComplexToIntVectorClosure(vector);
-    }
-
     // Raw to ...
 
     public static RAbstractIntVector createRawToIntVector(RAbstractRawVector vector) {

@@ -26,7 +26,7 @@ import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
-public abstract class AbstractValuePrinter<T> implements ValuePrinter<T> {
+abstract class AbstractValuePrinter<T> implements ValuePrinter<T> {
 
     @Override
     public void print(T value, PrintContext printCtx) throws IOException {

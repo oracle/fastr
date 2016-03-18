@@ -56,7 +56,7 @@ abstract class CachedVectorNode extends RBaseNode {
 
     protected final BranchProfile errorBranch = BranchProfile.create();
     protected final int numberOfDimensions;
-    protected final int filteredPositionsLength;
+    private final int filteredPositionsLength;
 
     @Child private GetDataFrameDimensionNode getDataFrameDimension;
 
@@ -80,7 +80,7 @@ abstract class CachedVectorNode extends RBaseNode {
         }
     }
 
-    protected int initializeFilteredPositionsCount(Object[] positions) {
+    private int initializeFilteredPositionsCount(Object[] positions) {
         int dimensions = 0;
         for (int i = 0; i < positions.length; i++) {
             // for cases like RMissing the position does not contribute to the number of dimensions
@@ -99,11 +99,11 @@ abstract class CachedVectorNode extends RBaseNode {
         /*
          * we assume that the positions count cannot change as the isRemovePosition check is just
          * based on types and therefore does not change per position instance.
-         * 
+         *
          * normally empty positions are just empty but with S3 function dispatch it may happen that
          * positions are also of type RMissing. These values should not contribute to the access
          * dimensions.
-         * 
+         *
          * Example test case: dimensions.x<-data.frame(c(1,2), c(3,4)); x[1]
          */
         assert initializeFilteredPositionsCount(positions) == filteredPositionsLength;

@@ -140,8 +140,4 @@ public abstract class CastListNode extends CastBaseNode {
     public static CastListNode create() {
         return CastListNodeGen.create(true, true, true);
     }
-
-    public static CastListNode createNonPreserving() {
-        return CastListNodeGen.create(false, false, false);
-    }
 }

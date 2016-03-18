@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @TypeSystemReference(RTypes.class)
 public abstract class ToStringNode extends RBaseNode {
 
-    public static final String DEFAULT_SEPARATOR = ", ";
+    static final String DEFAULT_SEPARATOR = ", ";
 
     @Child private ToStringNode recursiveToString;
 

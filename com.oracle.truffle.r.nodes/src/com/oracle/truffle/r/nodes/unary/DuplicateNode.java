@@ -37,7 +37,7 @@ public abstract class DuplicateNode extends RBaseNode {
 
     private final boolean deep;
 
-    public DuplicateNode(boolean deep) {
+    protected DuplicateNode(boolean deep) {
         this.deep = deep;
     }
 

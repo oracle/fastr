@@ -28,9 +28,9 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDoubleVector {
+abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDoubleVector {
 
-    public RToDoubleVectorClosure(RAbstractVector vector) {
+    RToDoubleVectorClosure(RAbstractVector vector) {
         super(vector);
     }
 

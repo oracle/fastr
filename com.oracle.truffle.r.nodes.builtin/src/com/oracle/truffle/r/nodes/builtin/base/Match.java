@@ -789,10 +789,10 @@ public abstract class Match extends RBuiltinNode {
         }
     }
 
-    public static class NonRecursiveHashSetInt {
+    private static class NonRecursiveHashSetInt {
         private NonRecursiveHashMapInt map;
 
-        public NonRecursiveHashSetInt(int approxCapacity) {
+        NonRecursiveHashSetInt(int approxCapacity) {
             map = new NonRecursiveHashMapInt(approxCapacity);
         }
 
@@ -805,10 +805,10 @@ public abstract class Match extends RBuiltinNode {
         }
     }
 
-    public static class NonRecursiveHashSetDouble {
+    private static class NonRecursiveHashSetDouble {
         private NonRecursiveHashMapDouble map;
 
-        public NonRecursiveHashSetDouble(int approxCapacity) {
+        NonRecursiveHashSetDouble(int approxCapacity) {
             map = new NonRecursiveHashMapDouble(approxCapacity);
         }
 
@@ -821,10 +821,10 @@ public abstract class Match extends RBuiltinNode {
         }
     }
 
-    public static class NonRecursiveHashSetCharacter {
+    private static class NonRecursiveHashSetCharacter {
         private NonRecursiveHashMapCharacter map;
 
-        public NonRecursiveHashSetCharacter(int approxCapacity) {
+        NonRecursiveHashSetCharacter(int approxCapacity) {
             map = new NonRecursiveHashMapCharacter(approxCapacity);
         }
 
@@ -837,10 +837,10 @@ public abstract class Match extends RBuiltinNode {
         }
     }
 
-    public static class NonRecursiveHashSetComplex {
+    private static class NonRecursiveHashSetComplex {
         private NonRecursiveHashMapComplex map;
 
-        public NonRecursiveHashSetComplex(int approxCapacity) {
+        NonRecursiveHashSetComplex(int approxCapacity) {
             map = new NonRecursiveHashMapComplex(approxCapacity);
         }
 

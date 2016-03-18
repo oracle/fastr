@@ -74,10 +74,6 @@ public abstract class MatMult extends RBuiltinNode {
         this.na = NACheck.create();
     }
 
-    public MatMult(MatMult prev) {
-        this.na = prev.na;
-    }
-
     @Specialization(guards = "bothZeroDim(a, b)")
     protected RDoubleVector both0Dim(RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();

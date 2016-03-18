@@ -128,10 +128,6 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
         return Double.hashCode(realPart) ^ Double.hashCode(imaginaryPart);
     }
 
-    public double abs() {
-        return abs(realPart, imaginaryPart);
-    }
-
     public static double abs(double re, double im) {
         if (!RRuntime.isFinite(re) || !RRuntime.isFinite(im)) {
             if (Double.isInfinite(re) || Double.isInfinite(im)) {

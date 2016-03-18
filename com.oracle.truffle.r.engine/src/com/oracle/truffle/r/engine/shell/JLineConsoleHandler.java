@@ -36,12 +36,12 @@ import jline.console.UserInterruptException;
 import jline.console.history.FileHistory;
 import jline.console.history.History;
 
-public class JLineConsoleHandler implements ConsoleHandler {
+class JLineConsoleHandler implements ConsoleHandler {
     private final ConsoleReader console;
     private final boolean isInteractive;
     private final PrintWriter printWriter;
 
-    public JLineConsoleHandler(boolean isInteractive, ConsoleReader console) {
+    JLineConsoleHandler(boolean isInteractive, ConsoleReader console) {
         this.console = console;
         printWriter = new PrintWriter(console.getOutput());
         this.isInteractive = isInteractive;
@@ -93,10 +93,6 @@ public class JLineConsoleHandler implements ConsoleHandler {
     @TruffleBoundary
     public void printError(String s) {
         print(s);
-    }
-
-    @Override
-    public void redirectError() {
     }
 
     @Override

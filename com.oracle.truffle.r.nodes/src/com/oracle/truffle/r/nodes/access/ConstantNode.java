@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class ConstantNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxConstant, VisibilityController {
 
-    protected ConstantNode(SourceSection sourceSection) {
+    private ConstantNode(SourceSection sourceSection) {
         super(sourceSection);
     }
 
@@ -91,13 +91,6 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
     @Override
     public void serializeImpl(RSerialize.State state) {
         state.setCar(getValue());
-    }
-
-    public static Object getConstant(RNode node) {
-        if (node instanceof ConstantNode) {
-            return ((ConstantNode) node).getValue();
-        }
-        return null;
     }
 
     public static ConstantNode create(Object value) {

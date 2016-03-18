@@ -162,7 +162,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return getDataAt(index).toString();
     }
 
-    public RComplexVector updateDataAt(int i, RComplex right, NACheck rightNACheck) {
+    private RComplexVector updateDataAt(int i, RComplex right, NACheck rightNACheck) {
         assert !this.isShared();
         int index = i << 1;
         data[index] = right.getRealPart();
@@ -177,7 +177,6 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
     @Override
     public RComplexVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
         return updateDataAt(i, (RComplex) o, naCheck);
-
     }
 
     private double[] copyResizedData(int size, boolean fillNA) {

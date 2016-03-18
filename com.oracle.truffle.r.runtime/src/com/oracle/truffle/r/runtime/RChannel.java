@@ -353,7 +353,7 @@ public class RChannel {
         }
     }
 
-    public static Object processedReceivedMessage(Object msg) {
+    private static Object processedReceivedMessage(Object msg) {
         try {
             if (msg instanceof SerializedList) {
                 RList list = ((SerializedList) msg).getList();

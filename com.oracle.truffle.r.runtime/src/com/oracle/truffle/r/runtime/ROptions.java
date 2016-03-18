@@ -50,7 +50,7 @@ public class ROptions {
          */
         private final HashMap<String, Object> map;
 
-        ContextStateImpl(HashMap<String, Object> map) {
+        private ContextStateImpl(HashMap<String, Object> map) {
             this.map = map;
         }
 
@@ -72,23 +72,19 @@ public class ROptions {
             return value;
         }
 
-        public Object setValueNoCheck(String name, Object value) {
-            Object previous = map.get(name);
-            assert value != null;
-            if (value == RNull.instance) {
-                map.remove(name);
-            } else {
-                map.put(name, value);
-            }
-            return previous;
-        }
-
         public Object setValue(String name, Object value) throws OptionsException {
             Object coercedValue = value;
             if (CHECKED_OPTIONS_SET.contains(name)) {
                 coercedValue = check(name, value);
             }
-            return setValueNoCheck(name, coercedValue);
+            Object previous = map.get(name);
+            assert coercedValue != null;
+            if (coercedValue == RNull.instance) {
+                map.remove(name);
+            } else {
+                map.put(name, coercedValue);
+            }
+            return previous;
         }
 
         public static ContextStateImpl newContext(RContext context, REnvVars envVars) {

@@ -36,7 +36,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -65,8 +64,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * functions are used for special cases, where builtins make it necessary to re-match parameters,
  * e.g.: {@link #matchArgumentsEvaluated(RFunction, EvaluatedArguments, RBaseNode, boolean)} for
  * 'UseMethod' and {@link #matchArgumentsInlined(RFunction, UnmatchedArguments, RBaseNode)} for
- * builtins which are implemented in Java ( @see
- * {@link RBuiltinNode#inline(ArgumentsSignature, RNode[])}
+ * builtins which are implemented in Java.
  * </p>
  *
  * <p>
@@ -433,15 +431,15 @@ public class ArgumentMatcher {
         }
     }
 
-    public static final class MatchPermutation {
+    static final class MatchPermutation {
         public static final int UNMATCHED = -1;
         public static final int VARARGS = -2;
 
-        @CompilationFinal public final int[] resultPermutation;
-        @CompilationFinal public final int[] varargsPermutation;
-        public final ArgumentsSignature varargsSignature;
+        @CompilationFinal private final int[] resultPermutation;
+        @CompilationFinal private final int[] varargsPermutation;
+        private final ArgumentsSignature varargsSignature;
 
-        public MatchPermutation(int[] resultPermutation, int[] varargsPermutation, ArgumentsSignature varargsSignature) {
+        private MatchPermutation(int[] resultPermutation, int[] varargsPermutation, ArgumentsSignature varargsSignature) {
             this.resultPermutation = resultPermutation;
             this.varargsPermutation = varargsPermutation;
             this.varargsSignature = varargsSignature;

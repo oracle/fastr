@@ -82,7 +82,7 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        public Object fileAccess(RAbstractStringVector names, int mode) {
+        protected Object fileAccess(RAbstractStringVector names, int mode) {
             if (mode == RRuntime.INT_NA || mode < 0 || mode > 7) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, "mode");
             }
@@ -116,7 +116,7 @@ public class FileFunctions {
              * There are two simple (non-trivial) cases and one tricky 1. 1. Append one or more
              * files to a single file (len1 == 1, len2 >= 1) 2. Append one file to one file for
              * several files (len1 == len2)
-             * 
+             *
              * The tricky case is when len1 > 1 && len2 > len1. E.g. f1,f2 <- g1,g2,g3 In this case,
              * this is really f1,f2,f1 <- g1,g2,g3
              */
@@ -259,11 +259,11 @@ public class FileFunctions {
              * the information. The R closure that called the .Internal turns the result into a
              * dataframe and sets the row.names attributes to the paths in vec. It also updates the
              * mtime, ctime, atime fields using .POSIXct.
-             * 
+             *
              * We try to use the JDK classes, even though they provide a more abstract interface
              * than R. In particular there seems to be no way to get the uid/gid values. We might be
              * better off justing using a native call.
-             * 
+             *
              * TODO implement extras_cols=FALSE
              */
             controlVisibility();
@@ -594,7 +594,7 @@ public class FileFunctions {
             return doListFilesBody(vec, pattern, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
         }
 
-        protected RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, byte allFilesL, byte fullNamesL, byte recursiveL, byte ignoreCaseL, byte includeDirsL, byte noDotDotL) {
+        private RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, byte allFilesL, byte fullNamesL, byte recursiveL, byte ignoreCaseL, byte includeDirsL, byte noDotDotL) {
             controlVisibility();
             boolean allFiles = RRuntime.fromLogical(allFilesL);
             boolean fullNames = RRuntime.fromLogical(fullNamesL);
@@ -814,7 +814,7 @@ public class FileFunctions {
             return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         }
 
-        public static boolean lengthZero(RList list) {
+        protected static boolean lengthZero(RList list) {
             if (list.getLength() == 0) {
                 return true;
             }
@@ -841,7 +841,7 @@ public class FileFunctions {
             casts.toLogical(2).toLogical(3).toLogical(4).toLogical(5);
         }
 
-        protected boolean checkLogical(byte value, String name) throws RError {
+        private boolean checkLogical(byte value, String name) throws RError {
             if (RRuntime.isNA(value)) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, name);
             } else {
@@ -1029,7 +1029,7 @@ public class FileFunctions {
             casts.toLogical(1).toLogical(2);
         }
 
-        protected boolean checkLogical(byte value, String name) throws RError {
+        private boolean checkLogical(byte value, String name) throws RError {
             if (RRuntime.isNA(value)) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, name);
             } else {
@@ -1130,7 +1130,7 @@ public class FileFunctions {
             return RRuntime.asLogical(ok);
         }
 
-        protected boolean mkparentdirs(File file, byte showWarnings, int mode) {
+        private boolean mkparentdirs(File file, byte showWarnings, int mode) {
             if (file.isDirectory()) {
                 return true;
             }
@@ -1144,7 +1144,7 @@ public class FileFunctions {
             }
         }
 
-        protected boolean mkdir(String path, byte showWarnings, int mode) {
+        private boolean mkdir(String path, byte showWarnings, int mode) {
             try {
                 RFFIFactory.getRFFI().getBaseRFFI().mkdir(path, mode);
                 return true;

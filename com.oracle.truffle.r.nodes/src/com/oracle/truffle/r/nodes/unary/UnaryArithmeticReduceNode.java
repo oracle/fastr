@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,12 +72,6 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         this.factory = factory;
         this.semantics = semantics;
         this.arithmetic = factory.create();
-    }
-
-    protected UnaryArithmeticReduceNode(UnaryArithmeticReduceNode op) {
-        // we recreate the arithmetic each time this specialization specializes
-        // it also makes sense for polymorphic variations of this node
-        this(op.semantics, op.factory);
     }
 
     private String handleString(RStringVector operand, boolean naRm, boolean finite, int offset) {
@@ -449,7 +443,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         }
     }
 
-    protected static final class MultiElemStringHandlerNode extends RBaseNode {
+    private static final class MultiElemStringHandlerNode extends RBaseNode {
 
         @Child private MultiElemStringHandlerNode recursiveStringHandler;
         @Child private BinaryArithmetic arithmetic;
@@ -459,7 +453,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         private final NACheck na;
         private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
 
-        public MultiElemStringHandlerNode(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
+        MultiElemStringHandlerNode(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
             this.semantics = semantics;
             this.factory = factory;
             this.arithmetic = factory.create();

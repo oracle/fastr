@@ -225,7 +225,7 @@ public class MethodsListDispatch {
         }
     }
 
-    static String checkSingleString(Object o, boolean nonEmpty, String what, RBaseNode node, ClassHierarchyScalarNode classHierarchyNode) {
+    private static String checkSingleString(Object o, boolean nonEmpty, String what, RBaseNode node, ClassHierarchyScalarNode classHierarchyNode) {
         if (o instanceof RAbstractStringVector) {
             RAbstractStringVector vec = (RAbstractStringVector) o;
             if (vec.getLength() != 1) {

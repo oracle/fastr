@@ -128,7 +128,7 @@ public abstract class ColonNode extends RBuiltinNode {
         return intValue;
     }
 
-    public abstract static class ColonCastNode extends CastNode {
+    abstract static class ColonCastNode extends CastNode {
 
         private final ConditionProfile lengthGreaterOne = ConditionProfile.createBinaryProfile();
 

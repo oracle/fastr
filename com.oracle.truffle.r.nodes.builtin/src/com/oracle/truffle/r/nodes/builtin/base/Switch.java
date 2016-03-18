@@ -64,7 +64,7 @@ public abstract class Switch extends RBuiltinNode {
         return prepareResult(doSwitchString(frame, x, optionalArgs));
     }
 
-    protected Object doSwitchString(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
+    private Object doSwitchString(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         controlVisibility();
         Object[] optionalArgValues = optionalArgs.getArguments();
         final String xStr = x.getDataAt(0);
@@ -168,10 +168,6 @@ public abstract class Switch extends RBuiltinNode {
             throw RError.error(this, RError.Message.NO_ALTERNATIVE_IN_SWITCH);
         }
         return null;
-    }
-
-    protected boolean isLengthOne(RAbstractStringVector x) {
-        return x.getLength() == 1;
     }
 
     private Object prepareResult(Object value) {

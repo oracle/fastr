@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class RExpression implements RShareable, RAbstractContainer {
 
-    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Expression.getName());
+    private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Expression.getName());
 
     private final RList data;
 

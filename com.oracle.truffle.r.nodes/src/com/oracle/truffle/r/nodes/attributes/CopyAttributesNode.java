@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,7 +93,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!containsMetadata(left, attrLeftProfiles)", "!containsMetadata(right, attrRightProfiles)"})
-    public RAbstractVector copyNoMetadata(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
+    protected RAbstractVector copyNoMetadata(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
         if (LOG) {
             log("copyAttributes: no");
             countNo++;
@@ -102,7 +102,8 @@ public abstract class CopyAttributesNode extends RBaseNode {
     }
 
     @Specialization(guards = {"leftLength == rightLength", "containsMetadata(left, attrLeftProfiles) || containsMetadata(right, attrRightProfiles)"})
-    public RAbstractVector copySameLength(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength, //
+    protected RAbstractVector copySameLength(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right,
+                    @SuppressWarnings("unused") int rightLength, //
                     @Cached("create()") CopyOfRegAttributesNode copyOfRegLeft, //
                     @Cached("create()") CopyOfRegAttributesNode copyOfRegRight, //
                     @Cached("createDim()") RemoveAttributeNode removeDim, //
@@ -188,7 +189,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
     }
 
     @Specialization(guards = {"leftLength < rightLength", "containsMetadata(left, attrLeftProfiles) || containsMetadata(right, attrRightProfiles)"})
-    public RAbstractVector copyShorter(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength, //
+    protected RAbstractVector copyShorter(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength, //
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
                     @Cached("createBinaryProfile()") ConditionProfile rightNotResultProfile, //
                     @Cached("create()") BranchProfile leftHasDimensions, //
@@ -244,7 +245,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
     }
 
     @Specialization(guards = {"leftLength > rightLength", "containsMetadata(left, attrLeftProfiles) || containsMetadata(right, attrRightProfiles)"})
-    public RAbstractVector copyLonger(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength, //
+    protected RAbstractVector copyLonger(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength, //
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
                     @Cached("create()") BranchProfile leftHasDimensions, //
                     @Cached("create()") BranchProfile rightHasDimensions, //

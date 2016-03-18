@@ -163,7 +163,7 @@ public class DynLoadFunctions {
             throw RError.error(this, RError.Message.REQUIRES_NAME_DLLINFO);
         }
 
-        public static boolean isDLLInfo(RExternalPtr externalPtr) {
+        protected static boolean isDLLInfo(RExternalPtr externalPtr) {
             return DLL.isDLLInfo(externalPtr);
         }
     }

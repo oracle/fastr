@@ -99,7 +99,7 @@ public class TraceHandling {
         return false;
     }
 
-    public static void attachTraceHandler(RFunction func) {
+    private static void attachTraceHandler(RFunction func) {
         TraceFunctionEventListener fser = new TraceFunctionEventListener();
         RInstrumentation.getInstrumenter().attachListener(RInstrumentation.createFunctionStartFilter(func).build(), fser);
         setOutputHandler();

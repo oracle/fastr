@@ -190,7 +190,7 @@ public class TrigExpFunctions {
             return expNode.execute(value);
         }
 
-        public class ExpArithmetic extends UnaryArithmetic {
+        private final class ExpArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -215,7 +215,6 @@ public class TrigExpFunctions {
                 }
                 return calculatePowNode.op(Math.E, 0, re, im);
             }
-
         }
     }
 
@@ -231,7 +230,7 @@ public class TrigExpFunctions {
             return expm1Node.execute(value);
         }
 
-        public class ExpM1Arithmetic extends UnaryArithmetic {
+        private final class ExpM1Arithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -257,7 +256,6 @@ public class TrigExpFunctions {
                 RComplex x = calculatePowNode.op(Math.E, 0, re, im);
                 return RDataFactory.createComplex(x.getRealPart() - 1d, x.getImaginaryPart());
             }
-
         }
     }
 
@@ -272,7 +270,7 @@ public class TrigExpFunctions {
             return sinNode.execute(value);
         }
 
-        public static class SinArithmetic extends UnaryArithmetic {
+        static final class SinArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -295,7 +293,6 @@ public class TrigExpFunctions {
                 double sinIm = Math.cos(re) * Math.sinh(im);
                 return RDataFactory.createComplex(sinRe, sinIm);
             }
-
         }
     }
 
@@ -310,7 +307,7 @@ public class TrigExpFunctions {
             return sinhNode.execute(value);
         }
 
-        public static class SinhArithmetic extends UnaryArithmetic {
+        private static class SinhArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -333,7 +330,6 @@ public class TrigExpFunctions {
                 double sinhIm = Math.cosh(re) * Math.sin(im);
                 return RDataFactory.createComplex(sinhRe, sinhIm);
             }
-
         }
     }
 
@@ -348,7 +344,7 @@ public class TrigExpFunctions {
             return sinpiNode.execute(value);
         }
 
-        public class SinpiArithmetic extends UnaryArithmetic {
+        private final class SinpiArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -379,7 +375,6 @@ public class TrigExpFunctions {
             public RComplex op(double re, double im) {
                 throw new UnsupportedOperationException();
             }
-
         }
     }
 
@@ -394,7 +389,7 @@ public class TrigExpFunctions {
             return cosNode.execute(value);
         }
 
-        public static class CosArithmetic extends UnaryArithmetic {
+        static final class CosArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -417,7 +412,6 @@ public class TrigExpFunctions {
                 double cosIm = -Math.sin(re) * Math.sinh(im);
                 return RDataFactory.createComplex(cosRe, cosIm);
             }
-
         }
     }
 
@@ -432,7 +426,7 @@ public class TrigExpFunctions {
             return coshNode.execute(value);
         }
 
-        public static class CoshArithmetic extends UnaryArithmetic {
+        private static final class CoshArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -455,7 +449,6 @@ public class TrigExpFunctions {
                 double cosIm = -Math.sinh(re) * Math.sin(im);
                 return RDataFactory.createComplex(cosRe, cosIm);
             }
-
         }
     }
 
@@ -470,7 +463,7 @@ public class TrigExpFunctions {
             return cospiNode.execute(value);
         }
 
-        public static class CospiArithmetic extends UnaryArithmetic {
+        private static final class CospiArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -501,7 +494,6 @@ public class TrigExpFunctions {
             public RComplex op(double re, double im) {
                 throw new UnsupportedOperationException();
             }
-
         }
     }
 
@@ -519,7 +511,7 @@ public class TrigExpFunctions {
             return tanNode.execute(value);
         }
 
-        public static class TanArithmetic extends UnaryArithmetic {
+        static final class TanArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -561,7 +553,7 @@ public class TrigExpFunctions {
             return tanhNode.execute(value);
         }
 
-        public static class TanhArithmetic extends UnaryArithmetic {
+        private static final class TanhArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -598,7 +590,7 @@ public class TrigExpFunctions {
             return tanpiNode.execute(value);
         }
 
-        public static class TanpiArithmetic extends UnaryArithmetic {
+        private static final class TanpiArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -640,7 +632,7 @@ public class TrigExpFunctions {
             return asinNode.execute(value);
         }
 
-        public class AsinArithmetic extends UnaryArithmetic {
+        private final class AsinArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -703,7 +695,7 @@ public class TrigExpFunctions {
             return asinhNode.execute(value);
         }
 
-        public class AsinhArithmetic extends UnaryArithmetic {
+        private final class AsinhArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -740,7 +732,7 @@ public class TrigExpFunctions {
             return acosNode.execute(value);
         }
 
-        public class AcosArithmetic extends UnaryArithmetic {
+        private final class AcosArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -777,7 +769,7 @@ public class TrigExpFunctions {
             return acoshNode.execute(value);
         }
 
-        public class AcoshArithmetic extends UnaryArithmetic {
+        private final class AcoshArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -813,7 +805,7 @@ public class TrigExpFunctions {
             return atanNode.execute(value);
         }
 
-        public class AtanArithmetic extends UnaryArithmetic {
+        private final class AtanArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -862,7 +854,7 @@ public class TrigExpFunctions {
             return atanhNode.execute(value);
         }
 
-        public class AtanArithmetic extends UnaryArithmetic {
+        private final class AtanArithmetic extends UnaryArithmetic {
 
             @Override
             public int op(byte op) {
@@ -911,11 +903,11 @@ public class TrigExpFunctions {
         }
 
         @FunctionalInterface
-        protected interface IntDoubleFunction {
+        private interface IntDoubleFunction {
             double apply(int i);
         }
 
-        protected RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun, LoopConditionProfile profile) {
+        private RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun, LoopConditionProfile profile) {
             controlVisibility();
             double[] resultVector = new double[length];
             reportWork(length);

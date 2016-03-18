@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 
@@ -55,7 +56,14 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * {@link RootCallTarget} for every argument.
  * </p>
  */
-public class CallArgumentsNode extends ArgumentsNode {
+public final class CallArgumentsNode extends RNode implements UnmatchedArguments {
+    /**
+     * A list of arguments. Single arguments may be <code>null</code>; semantics have to be
+     * specified by implementing classes
+     */
+    @Children protected final RNode[] arguments;
+
+    protected final ArgumentsSignature signature;
 
     @Child private FrameSlotNode varArgsSlotNode;
     @Child private PromiseCheckHelperNode promiseHelper;
@@ -68,8 +76,11 @@ public class CallArgumentsNode extends ArgumentsNode {
 
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
-    CallArgumentsNode(RNode[] arguments, ArgumentsSignature signature, int[] varArgsSymbolIndices) {
-        super(arguments, signature);
+    private CallArgumentsNode(RNode[] arguments, ArgumentsSignature signature, int[] varArgsSymbolIndices) {
+        assert signature != null && signature.getLength() == arguments.length : Arrays.toString(arguments) + " " + signature;
+        this.arguments = arguments;
+        this.signature = signature;
+        assert signature != null;
         this.varArgsSymbolIndices = varArgsSymbolIndices;
         this.varArgsSlotNode = !containsVarArgsSymbol() ? null : FrameSlotNode.create(ArgumentsSignature.VARARG_NAME);
     }
@@ -268,6 +279,11 @@ public class CallArgumentsNode extends ArgumentsNode {
     @Override
     public RNode[] getArguments() {
         return arguments;
+    }
+
+    @Override
+    public ArgumentsSignature getSignature() {
+        return signature;
     }
 
     public RSyntaxNode[] getSyntaxArguments() {

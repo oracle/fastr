@@ -84,7 +84,7 @@ public abstract class BinaryArithmetic extends Operation {
 
     private final boolean supportsIntResult;
 
-    public BinaryArithmetic(boolean commutative, boolean associative, boolean supportsInt) {
+    private BinaryArithmetic(boolean commutative, boolean associative, boolean supportsInt) {
         super(commutative, associative);
         this.supportsIntResult = supportsInt;
     }
@@ -293,7 +293,7 @@ public abstract class BinaryArithmetic extends Operation {
             return RDataFactory.createComplex(res[0], res[1]);
         }
 
-        protected final void complexMult(double leftReal, double leftImag, double rightReal, double rightImag, double[] res, double[] interm) {
+        private void complexMult(double leftReal, double leftImag, double rightReal, double rightImag, double[] res, double[] interm) {
             interm[0] = op(leftReal, rightReal);
             interm[1] = op(leftImag, rightImag);
             interm[2] = op(leftImag, rightReal);

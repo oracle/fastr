@@ -27,28 +27,12 @@ import com.oracle.truffle.api.Truffle;
 
 public final class StableValue<T> {
 
-    public static final StableValue<?> INVALIDATED = new StableValue<>();
-
-    /**
-     * @return A singleton stable value instance that is invalidated.
-     */
-    @SuppressWarnings("unchecked")
-    public static <T> StableValue<T> invalidated() {
-        return (StableValue<T>) INVALIDATED;
-    }
-
     private final T value;
     private final Assumption assumption;
 
     public StableValue(T value, String name) {
         this.value = value;
         this.assumption = Truffle.getRuntime().createAssumption(name);
-    }
-
-    private StableValue() {
-        this.value = null;
-        this.assumption = Truffle.getRuntime().createAssumption("invalidated singleton");
-        this.assumption.invalidate();
     }
 
     public T getValue() {

@@ -109,7 +109,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization(guards = {"x.getLength() == 1", "times.getLength() == 1", "each <= 1", "!hasNames(x)"})
-    public RAbstractVector repNoEachNoNamesSimple(RAbstractDoubleVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
+    protected RAbstractVector repNoEachNoNamesSimple(RAbstractDoubleVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
         int length = lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut)) ? lengthOut : times.getDataAt(0);
         double[] data = new double[length];
         Arrays.fill(data, x.getDataAt(0));
@@ -117,7 +117,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization(guards = {"each > 1", "!hasNames(x)"})
-    public RAbstractVector repEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
+    protected RAbstractVector repEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
         if (times.getLength() > 1) {
             errorBranch.enter();
             throw invalidTimes();
@@ -131,7 +131,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization(guards = {"each <= 1", "!hasNames(x)"})
-    public RAbstractVector repNoEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
+    protected RAbstractVector repNoEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
             return handleLengthOut(x, lengthOut, true);
         } else {
@@ -140,7 +140,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization(guards = {"each > 1", "hasNames(x)"})
-    public RAbstractVector repEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
+    protected RAbstractVector repEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
         if (times.getLength() > 1) {
             errorBranch.enter();
             throw invalidTimes();
@@ -161,7 +161,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization(guards = {"each <= 1", "hasNames(x)"})
-    public RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
+    protected RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
             RStringVector names = (RStringVector) handleLengthOut(x.getNames(attrProfiles), lengthOut, true);
             RVector r = handleLengthOut(x, lengthOut, true);
@@ -176,7 +176,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization
-    public RAbstractContainer rep(RFactor x, RAbstractIntVector times, int lengthOut, int each) {
+    protected RAbstractContainer rep(RFactor x, RAbstractIntVector times, int lengthOut, int each) {
         RVector vec = (RVector) repeatRecursive(x.getVector(), times, lengthOut, each);
         vec.setAttr(RRuntime.LEVELS_ATTR_KEY, x.getLevels(attrProfiles));
         return RVector.setVectorClassAttr(vec, x.getClassAttr(attrProfiles), null, null);

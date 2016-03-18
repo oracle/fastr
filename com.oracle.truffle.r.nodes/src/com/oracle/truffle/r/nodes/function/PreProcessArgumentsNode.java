@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,9 +32,9 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * Encapsulates the nodes that increment reference count incremented when the argument node is
  * wrapped.
  */
-public final class PreProcessArgumentsNode extends RNode {
+final class PreProcessArgumentsNode extends RNode {
 
-    @Children protected final ArgumentStatePush[] sequence;
+    @Children private final ArgumentStatePush[] sequence;
 
     private PreProcessArgumentsNode(ArgumentStatePush[] sequence) {
         this.sequence = sequence;
@@ -49,7 +49,7 @@ public final class PreProcessArgumentsNode extends RNode {
         return sequence.length;
     }
 
-    public static PreProcessArgumentsNode create(int length) {
+    static PreProcessArgumentsNode create(int length) {
         ArgumentStatePush[] argStatePushNodes = new ArgumentStatePush[length];
         for (int i = 0; i < length; i++) {
             argStatePushNodes[i] = ArgumentStatePushNodeGen.create(i, null);

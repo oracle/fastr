@@ -324,7 +324,7 @@ public final class Utils {
     /**
      * Iterate over all R stack frames (skipping the first, current one) until the given function
      * returns a non-null value.
-     * 
+     *
      * @return the non-null value returned by the given function, or null if it never returned a
      *         non-null value.
      */
@@ -381,11 +381,6 @@ public final class Utils {
             return null;
         }
         return RArguments.unwrap(frameInstance.getFrame(FrameAccess.MATERIALIZE, true));
-    }
-
-    @TruffleBoundary
-    public static String createStackTrace() {
-        return createStackTrace(true);
     }
 
     /**

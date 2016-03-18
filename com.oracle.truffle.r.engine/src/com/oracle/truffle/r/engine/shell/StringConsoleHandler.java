@@ -29,14 +29,14 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 
-public class StringConsoleHandler implements ConsoleHandler {
+class StringConsoleHandler implements ConsoleHandler {
     private final PrintStream output;
     private final List<String> lines;
     private final String inputDescription;
     private String prompt;
     private int currentLine;
 
-    public StringConsoleHandler(List<String> lines, PrintStream output, String inputDescription) {
+    StringConsoleHandler(List<String> lines, PrintStream output, String inputDescription) {
         this.lines = lines;
         this.output = output;
         this.inputDescription = inputDescription;
@@ -85,10 +85,6 @@ public class StringConsoleHandler implements ConsoleHandler {
     @TruffleBoundary
     public void printError(String s) {
         print(s);
-    }
-
-    @Override
-    public void redirectError() {
     }
 
     @Override
