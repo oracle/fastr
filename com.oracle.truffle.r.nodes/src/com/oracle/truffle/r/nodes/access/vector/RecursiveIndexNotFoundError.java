@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.ControlFlowException;
 
 @SuppressWarnings("serial")
 final class RecursiveIndexNotFoundError extends ControlFlowException {

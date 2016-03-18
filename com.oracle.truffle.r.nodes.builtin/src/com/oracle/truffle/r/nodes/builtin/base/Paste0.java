@@ -22,14 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * A straightforward implementation in terms of {@code paste} that doesn't attempt to be more

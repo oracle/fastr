@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 
 @NodeInfo(cost = NodeCost.NONE)
 public final class ChainedCastNode extends CastNode {

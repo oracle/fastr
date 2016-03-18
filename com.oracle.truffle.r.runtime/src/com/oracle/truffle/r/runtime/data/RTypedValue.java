@@ -12,7 +12,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RType;
 
 /**
  * Interface for R values that are publicly flowing through the interpreter. Be aware that also the

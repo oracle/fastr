@@ -22,9 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 /**
  * In converting complex numbers to integers, this closure discards the imaginary parts.

@@ -22,12 +22,26 @@
  */
 package com.oracle.truffle.r.test.tools.cmpr;
 
-import java.io.*;
-import java.net.*;
-import java.nio.file.*;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
+import com.oracle.truffle.r.runtime.Utils;
 
 /**
  * Compare the FastR versions of .R files in the standard packages against GnuR. Removes all

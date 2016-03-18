@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * A statically typed interface to exactly those native functions required by the R {@code base}

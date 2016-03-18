@@ -30,9 +30,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
+import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 
 /**
  * The only variety in the signatures for {@code .Call} is the number of arguments. GnuR supports a

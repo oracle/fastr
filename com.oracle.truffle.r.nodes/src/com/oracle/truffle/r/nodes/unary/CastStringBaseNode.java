@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RRaw;
 
 public abstract class CastStringBaseNode extends CastBaseNode {
 

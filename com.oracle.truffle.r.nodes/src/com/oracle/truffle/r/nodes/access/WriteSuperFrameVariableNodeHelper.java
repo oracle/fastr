@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 /**
  * Helper class for the WriteSuperFrame variants. This ought to be a static class in

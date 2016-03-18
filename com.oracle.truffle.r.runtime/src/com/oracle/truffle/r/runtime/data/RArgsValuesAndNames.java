@@ -22,9 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.Arguments;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 
 /**
  * A simple wrapper class for passing the ... argument through RArguments

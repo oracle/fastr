@@ -22,7 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 public final class SubstituteVirtualFrame implements VirtualFrame, MaterializedFrame {
 

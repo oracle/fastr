@@ -22,13 +22,13 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
-import jnr.ffi.LibraryLoader;
-import jnr.ffi.annotations.In;
-import jnr.ffi.annotations.Out;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
+
+import jnr.ffi.LibraryLoader;
+import jnr.ffi.annotations.In;
+import jnr.ffi.annotations.Out;
 
 /**
  * PCRE support using JNR.

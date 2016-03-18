@@ -22,15 +22,19 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import java.io.*;
-
-import jline.console.*;
-import jline.console.history.FileHistory;
-import jline.console.history.History;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.RContext;
+
+import jline.console.ConsoleReader;
+import jline.console.UserInterruptException;
+import jline.console.history.FileHistory;
+import jline.console.history.History;
 
 public class JLineConsoleHandler implements ConsoleHandler {
     private final ConsoleReader console;

@@ -22,12 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
-
-import java.util.*;
-
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 public final class RList extends RListBase implements RGPBits, TruffleObject {

@@ -22,9 +22,12 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.*;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.HELP;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.VERSION;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
 
 /**
  * (Abstract) definition of the standard R command line options. The setting of the values from the

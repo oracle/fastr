@@ -22,11 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.env.frame;
 
-import java.util.regex.*;
+import java.util.regex.Pattern;
 
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**

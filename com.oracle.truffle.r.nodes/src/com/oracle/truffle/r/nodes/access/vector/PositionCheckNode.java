@@ -22,14 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
-import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 abstract class PositionCheckNode extends Node {
 

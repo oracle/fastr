@@ -11,9 +11,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 
 public final class MakeQuartzDefault extends RExternalBuiltinNode {
 

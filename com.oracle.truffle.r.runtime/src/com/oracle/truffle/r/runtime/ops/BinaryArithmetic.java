@@ -12,15 +12,25 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-import static com.oracle.truffle.r.runtime.RRuntime.*;
+import static com.oracle.truffle.r.runtime.RRuntime.INT_NA;
+import static com.oracle.truffle.r.runtime.RRuntime.isFinite;
+import static com.oracle.truffle.r.runtime.RRuntime.isNAorNaN;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.ExactMath;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 
 /*
  * Logic derived from GNU-R, Purdue FastR and gcc.

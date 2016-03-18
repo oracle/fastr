@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.ops.na;
 
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
 
 /**
  * This helper class provides automatically profiled NA checks. The checks themselves are delegated

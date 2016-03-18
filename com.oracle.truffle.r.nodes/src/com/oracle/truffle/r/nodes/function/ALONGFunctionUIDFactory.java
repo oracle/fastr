@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.instrument.FunctionUIDFactory;

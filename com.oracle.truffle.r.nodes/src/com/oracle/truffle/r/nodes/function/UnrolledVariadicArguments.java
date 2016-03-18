@@ -22,12 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.*;
+import java.util.IdentityHashMap;
 
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.r.runtime.Arguments;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * This is a simple container class for arguments whose "..." have been unrolled and inserted into

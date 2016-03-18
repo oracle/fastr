@@ -22,15 +22,18 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.*;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_INIT_FILE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_SITE_FILE;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * Handles the setup of system, site and user profile code. N.B. this class only reads the files and

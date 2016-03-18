@@ -22,15 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 @RBuiltin(name = "delayedAssign", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "value", "eval.env", "assign.env"})
 public abstract class DelayedAssign extends RInvisibleBuiltinNode {

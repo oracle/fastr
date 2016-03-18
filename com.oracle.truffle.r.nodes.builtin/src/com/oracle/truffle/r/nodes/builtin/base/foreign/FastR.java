@@ -23,12 +23,35 @@
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.library.fastr.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.library.fastr.FastRCallCountingFactory;
+import com.oracle.truffle.r.library.fastr.FastRCompileNodeGen;
+import com.oracle.truffle.r.library.fastr.FastRContextFactory;
+import com.oracle.truffle.r.library.fastr.FastRDebugNodeGen;
+import com.oracle.truffle.r.library.fastr.FastRDumpTreesNodeGen;
+import com.oracle.truffle.r.library.fastr.FastRFunctionTimerFactory;
+import com.oracle.truffle.r.library.fastr.FastRInspect;
+import com.oracle.truffle.r.library.fastr.FastRPkgSourceFactory;
+import com.oracle.truffle.r.library.fastr.FastRStackTraceNodeGen;
+import com.oracle.truffle.r.library.fastr.FastRSyntaxTreeNodeGen;
+import com.oracle.truffle.r.library.fastr.FastRThrowItFactory;
+import com.oracle.truffle.r.library.fastr.FastRTraceFactory;
+import com.oracle.truffle.r.library.fastr.FastRTreeNodeGen;
+import com.oracle.truffle.r.library.fastr.FastRTreeStatsNodeGen;
+import com.oracle.truffle.r.library.fastr.FastRTypeofNodeGen;
+import com.oracle.truffle.r.library.fastr.InteropEvalNodeGen;
+import com.oracle.truffle.r.library.fastr.InteropExportNodeGen;
+import com.oracle.truffle.r.library.fastr.InteropImportNodeGen;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 /**
  * This is a FastR-specific primitive that supports the extensions in the {@code fastr} package.

@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.unary.UnaryNode;
 
 public abstract class ClassHierarchyScalarNode extends UnaryNode {
 

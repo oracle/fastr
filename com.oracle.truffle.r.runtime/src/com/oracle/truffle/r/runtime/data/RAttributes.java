@@ -22,14 +22,16 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RPerfStats;
 
 /**
  * Provides the generic mechanism for associating attributes with a R object. It does no special

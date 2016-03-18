@@ -22,12 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
+
 import jnr.ffi.LibraryLoader;
 import jnr.ffi.Pointer;
 import jnr.ffi.annotations.In;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 
 //Checkstyle: stop method name
 public class JNR_UserRng implements UserRngRFFI {

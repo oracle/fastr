@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.primitive;
 
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class BinaryMapNAFunctionNode extends BinaryMapFunctionNode {
 

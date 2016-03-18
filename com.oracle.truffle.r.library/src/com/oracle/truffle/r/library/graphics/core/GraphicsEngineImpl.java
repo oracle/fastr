@@ -14,13 +14,13 @@
  */
 package com.oracle.truffle.r.library.graphics.core;
 
+import static com.oracle.truffle.r.library.graphics.core.GraphicsEvent.GE_FINAL_STATE;
+import static com.oracle.truffle.r.library.graphics.core.GraphicsEvent.GE_INIT_STATE;
+
 import com.oracle.truffle.r.library.grDevices.NullGraphicsDevice;
 import com.oracle.truffle.r.library.grDevices.fastrgd.FastRGraphicsDevice;
 import com.oracle.truffle.r.library.graphics.core.geometry.Coordinates;
 import com.oracle.truffle.r.runtime.Utils;
-
-import static com.oracle.truffle.r.library.graphics.core.GraphicsEvent.GE_FINAL_STATE;
-import static com.oracle.truffle.r.library.graphics.core.GraphicsEvent.GE_INIT_STATE;
 
 // todo implement 'active' devices array from devices.c
 public final class GraphicsEngineImpl implements GraphicsEngine {

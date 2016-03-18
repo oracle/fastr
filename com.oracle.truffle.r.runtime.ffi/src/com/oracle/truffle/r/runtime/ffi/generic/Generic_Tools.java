@@ -31,8 +31,8 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
+import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 

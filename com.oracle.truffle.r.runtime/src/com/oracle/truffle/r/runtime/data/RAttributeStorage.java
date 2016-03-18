@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RRuntime;
 
 /**
  * An adaptor class for the several R types that are attributable. Only useful for classes that

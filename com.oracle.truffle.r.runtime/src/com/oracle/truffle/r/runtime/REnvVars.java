@@ -22,15 +22,19 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.FileSystem;
-import java.util.*;
+import java.nio.file.FileSystems;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * Repository for environment variables, including those set by FastR itself, e.g.

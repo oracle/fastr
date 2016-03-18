@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 public final class NullProfile {

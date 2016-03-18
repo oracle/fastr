@@ -22,11 +22,15 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.util.*;
+import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.runtime.data.RFunction;
 
 /**
  * A "fake" {@link VirtualFrame}, to be used by {@code REngine}.eval only!

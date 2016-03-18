@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 /**
  * This interface can be used to provide a fast path, implemented in Java, for an R function. This

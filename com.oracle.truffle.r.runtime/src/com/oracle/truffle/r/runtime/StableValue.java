@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.Truffle;
 
 public final class StableValue<T> {
 

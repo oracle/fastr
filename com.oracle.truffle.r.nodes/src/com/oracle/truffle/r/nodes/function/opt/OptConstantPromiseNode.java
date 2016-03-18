@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.function.opt;
 
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.function.PromiseNode;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.OptType;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * A optimizing {@link PromiseNode}: It evaluates a constant directly.

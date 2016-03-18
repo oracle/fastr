@@ -14,11 +14,11 @@
  */
 package com.oracle.truffle.r.library.graphics.core.geometry;
 
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-
 import java.util.Arrays;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
+
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
 public final class CoordinatesFactory {
     private CoordinatesFactory() {

@@ -26,11 +26,12 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.Engine;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 public abstract class InteropEval extends RExternalBuiltinNode.Arg2 {
 

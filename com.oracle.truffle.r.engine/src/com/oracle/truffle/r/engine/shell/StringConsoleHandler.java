@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import java.io.*;
-import java.util.*;
+import java.io.PrintStream;
+import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 public class StringConsoleHandler implements ConsoleHandler {
     private final PrintStream output;

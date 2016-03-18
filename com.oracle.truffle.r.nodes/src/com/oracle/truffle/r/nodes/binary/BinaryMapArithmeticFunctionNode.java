@@ -22,17 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.r.nodes.primitive.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.*;
+import com.oracle.truffle.r.nodes.primitive.BinaryMapNAFunctionNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleSequence;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Add;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Div;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.IntegerDiv;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Multiply;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Subtract;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  *

@@ -22,13 +22,24 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.conn.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.dsl.ImplicitCast;
+import com.oracle.truffle.api.dsl.TypeCast;
+import com.oracle.truffle.api.dsl.TypeCheck;
+import com.oracle.truffle.api.dsl.TypeSystem;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Whenever you add a type {@code T} to the list below, make sure a corresponding {@code executeT()}

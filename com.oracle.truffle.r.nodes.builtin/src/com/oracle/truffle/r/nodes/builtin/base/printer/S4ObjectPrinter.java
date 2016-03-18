@@ -25,13 +25,13 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
 

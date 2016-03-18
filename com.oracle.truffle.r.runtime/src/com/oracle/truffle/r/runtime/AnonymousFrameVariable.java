@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.Frame;
 
 /**
  * Creates a unique name for situations when an anonymous variable needs to be stored in a

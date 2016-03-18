@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 
 public class RRawToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
 

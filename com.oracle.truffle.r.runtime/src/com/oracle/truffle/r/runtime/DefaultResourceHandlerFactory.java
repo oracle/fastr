@@ -22,10 +22,10 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.*;
-import java.net.*;
+import java.io.InputStream;
+import java.net.URL;
 
-import com.oracle.truffle.r.runtime.ResourceHandlerFactory.*;
+import com.oracle.truffle.r.runtime.ResourceHandlerFactory.Handler;
 
 /**
  * Default implementation uses the default mechanism in {@code java.lang.Class}.

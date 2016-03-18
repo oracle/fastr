@@ -14,9 +14,9 @@
  */
 package com.oracle.truffle.r.library.graphics.core.drawables;
 
-import com.oracle.truffle.r.library.graphics.core.geometry.CoordinateSystem;
+import java.awt.Graphics2D;
 
-import java.awt.*;
+import com.oracle.truffle.r.library.graphics.core.geometry.CoordinateSystem;
 
 /**
  * Denotes an object defined in <code>srcCoordinateSystem</code> that can be drawn in

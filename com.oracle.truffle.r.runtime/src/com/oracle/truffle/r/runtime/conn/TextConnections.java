@@ -22,15 +22,24 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
-import java.io.*;
-import java.nio.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateWriteRConnection;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 public class TextConnections {

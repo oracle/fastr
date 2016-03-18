@@ -14,10 +14,10 @@
  */
 package com.oracle.truffle.r.library.graphics.core.drawables;
 
+import java.awt.Graphics2D;
+
 import com.oracle.truffle.r.library.graphics.core.geometry.CoordinateSystem;
 import com.oracle.truffle.r.library.graphics.core.geometry.Coordinates;
-
-import java.awt.*;
 
 /**
  * Able to draw a polyline on {@link Graphics2D}.

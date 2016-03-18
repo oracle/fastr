@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class RScalarVector extends RScalar implements RAbstractVector {
 

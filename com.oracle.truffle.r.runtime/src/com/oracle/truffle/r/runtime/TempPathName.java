@@ -22,13 +22,13 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.*;
+import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Random;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  *

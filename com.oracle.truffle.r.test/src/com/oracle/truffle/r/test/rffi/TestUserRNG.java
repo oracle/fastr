@@ -22,13 +22,14 @@
  */
 package com.oracle.truffle.r.test.rffi;
 
-import java.nio.file.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ffi.*;
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
+import com.oracle.truffle.r.test.TestBase;
 
 /**
  * Test for a user-defined random number generator. Implicitly tests {@code dyn.load} as well as the

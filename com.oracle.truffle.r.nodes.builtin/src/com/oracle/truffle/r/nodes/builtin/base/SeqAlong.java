@@ -22,14 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.nodes.control.RLengthNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
 
 @RBuiltin(name = "seq_along", kind = PRIMITIVE, parameterNames = {"along.with"})
 public abstract class SeqAlong extends RBuiltinNode {

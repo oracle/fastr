@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 
 /**

@@ -22,9 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.r.nodes.unary.CastComplexNode;
+import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastListNode;
+import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
+import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastRawNode;
+import com.oracle.truffle.r.nodes.unary.CastRawNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.runtime.data.RList;
 
 public abstract class RCastingBuiltinNode extends RBuiltinNode {
 

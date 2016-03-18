@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.Arguments;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
 
 /**
  * Simple container class for holding arguments which are ready to be pushed into {@link RArguments}

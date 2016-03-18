@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.library.base;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // FIXME: I've seen tests crash when run by JUnit, but pass when run manually through console...
 public class TestSimpleTruffle extends TestBase {

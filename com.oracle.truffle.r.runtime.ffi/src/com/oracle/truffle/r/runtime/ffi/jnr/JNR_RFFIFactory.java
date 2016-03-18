@@ -23,9 +23,22 @@
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import com.oracle.truffle.r.runtime.RPlatform;
-import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+import com.oracle.truffle.r.runtime.ffi.CRFFI;
+import com.oracle.truffle.r.runtime.ffi.CallRFFI;
+import com.oracle.truffle.r.runtime.ffi.GridRFFI;
+import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
+import com.oracle.truffle.r.runtime.ffi.LibPaths;
+import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
+import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
+import com.oracle.truffle.r.runtime.ffi.RFFI;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
+import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
+import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
+import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 import com.oracle.truffle.r.runtime.ffi.generic.Generic_Grid;
 import com.oracle.truffle.r.runtime.ffi.generic.Generic_Tools;
 

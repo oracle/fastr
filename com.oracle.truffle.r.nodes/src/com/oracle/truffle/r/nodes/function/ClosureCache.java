@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.*;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * A trait that enables the caching of {@link Closure}s for certain expressions ({@link RNode}s).

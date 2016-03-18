@@ -32,7 +32,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
-import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.control.BlockNode;

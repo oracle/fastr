@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node;
 
 /**
  * Simple generic base class for pairs of {@link #values} and {@link #signature} (that are not

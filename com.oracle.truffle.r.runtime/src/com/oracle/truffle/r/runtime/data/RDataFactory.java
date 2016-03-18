@@ -22,23 +22,29 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RPerfStats;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.OptType;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.gnur.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class RDataFactory {
 

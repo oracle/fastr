@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.FastROptions;
 
 /**
  * An adaptor class for the several R types that are both attributable and shareable.

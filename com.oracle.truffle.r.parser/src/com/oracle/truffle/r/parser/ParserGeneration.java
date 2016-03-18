@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.parser;
 
-import com.oracle.truffle.r.parser.processor.*;
+import com.oracle.truffle.r.parser.processor.GenerateRParser;
 
 /**
  * This class exists simply to cause the annotation processor that creates the R parser/lexer files

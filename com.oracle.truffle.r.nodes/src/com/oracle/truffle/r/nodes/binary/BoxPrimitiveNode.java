@@ -22,11 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.unary.ApplyCastNode;
+import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Boxes all Java primitive values to a class that supports {@link RAbstractVector} and their typed

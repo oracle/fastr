@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.*;
-import java.util.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * Manage the creation/activation of handlers or performance analysis. Enabled by the

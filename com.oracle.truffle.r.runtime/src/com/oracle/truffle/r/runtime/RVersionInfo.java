@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public enum RVersionInfo {
     // @formatter:off

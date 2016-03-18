@@ -22,7 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public interface RAbstractContainer extends RAttributable, RTypedValue {
 

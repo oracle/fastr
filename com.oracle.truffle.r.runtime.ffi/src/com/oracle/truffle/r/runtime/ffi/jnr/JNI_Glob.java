@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
-import java.util.*;
+import java.util.ArrayList;
 
 public class JNI_Glob {
     private ArrayList<String> paths = new ArrayList<>();

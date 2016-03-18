@@ -23,10 +23,11 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class CastLogicalBaseNode extends CastBaseNode {
 

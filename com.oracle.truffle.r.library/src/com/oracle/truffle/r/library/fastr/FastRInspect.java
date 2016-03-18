@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.library.fastr;
 
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
  * Just a convenient way to inspect values in the Java debugger from the R shell.

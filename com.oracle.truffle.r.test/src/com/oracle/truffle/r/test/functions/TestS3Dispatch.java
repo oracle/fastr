@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.functions;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 public class TestS3Dispatch extends TestBase {
 

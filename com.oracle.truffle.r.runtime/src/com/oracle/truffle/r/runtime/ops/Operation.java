@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public class Operation extends RBaseNode {
 

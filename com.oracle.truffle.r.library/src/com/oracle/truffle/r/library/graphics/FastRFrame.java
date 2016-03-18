@@ -22,10 +22,14 @@
  */
 package com.oracle.truffle.r.library.graphics;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.HeadlessException;
+import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+
+import javax.swing.JFrame;
 
 public class FastRFrame extends JFrame {
 

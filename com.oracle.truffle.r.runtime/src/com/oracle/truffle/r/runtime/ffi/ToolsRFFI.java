@@ -22,9 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.r.runtime.conn.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Interface to native (C) methods provided by the {@code tools} package.

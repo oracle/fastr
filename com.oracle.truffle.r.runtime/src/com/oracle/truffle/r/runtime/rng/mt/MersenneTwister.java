@@ -63,9 +63,10 @@
  */
 package com.oracle.truffle.r.runtime.rng.mt;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.rng.*;
+import com.oracle.truffle.r.runtime.rng.RNGInitAdapter;
+import com.oracle.truffle.r.runtime.rng.RRNG;
 import com.oracle.truffle.r.runtime.rng.RRNG.Kind;
 
 public final class MersenneTwister extends RNGInitAdapter {

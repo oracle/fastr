@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.interop.ForeignAccess.Factory10;
-import com.oracle.truffle.api.interop.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.runtime.RInternalError;
 
 public final class RFunctionAccessFactory implements Factory10 {
 

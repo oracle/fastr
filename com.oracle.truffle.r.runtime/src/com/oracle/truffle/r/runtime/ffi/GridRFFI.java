@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public interface GridRFFI {
     Object initGrid(REnvironment gridEvalEnv);

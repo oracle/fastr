@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.profile;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.profiles.*;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 /**
  * {@link BranchProfile} implementation that is always enabled independent of the runtime. Useful if

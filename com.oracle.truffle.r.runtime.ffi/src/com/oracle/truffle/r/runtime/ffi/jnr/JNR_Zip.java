@@ -22,12 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
+
 import jnr.ffi.LibraryLoader;
 import jnr.ffi.annotations.In;
 import jnr.ffi.annotations.Out;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 /**
  * Zip support using JNR.

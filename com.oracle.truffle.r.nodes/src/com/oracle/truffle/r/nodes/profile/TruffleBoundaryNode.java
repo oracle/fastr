@@ -22,10 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.profile;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.ReplaceObserver;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Base class for nodes that are solely executed behind a {@link TruffleBoundary} to ensure that

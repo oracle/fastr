@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.data.RFunction;
 
 public interface RBuiltinLookup {
 

@@ -12,7 +12,8 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /**
  * Auxiliary functions and constants from GNU R. These are originally found in the source files

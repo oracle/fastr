@@ -22,19 +22,28 @@
  */
 package com.oracle.truffle.r.nodes.instrumentation;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.instrumentation.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.instrumentation.debug.*;
+import com.oracle.truffle.api.instrumentation.Instrumenter;
+import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
+import com.oracle.truffle.r.nodes.instrumentation.debug.DebugHandling;
 import com.oracle.truffle.r.nodes.instrumentation.trace.TraceHandling;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.instrument.*;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.FunctionUID;
+import com.oracle.truffle.r.runtime.RPerfStats;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.instrument.RPackageSource;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 

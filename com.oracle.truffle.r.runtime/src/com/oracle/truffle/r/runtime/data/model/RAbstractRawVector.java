@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 
 public interface RAbstractRawVector extends RAbstractVector {
 

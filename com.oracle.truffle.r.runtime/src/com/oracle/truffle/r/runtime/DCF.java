@@ -22,7 +22,10 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Read/write a <a href="http://www.debian.org/doc/debian-policy/ch-controlfields.html">Debian

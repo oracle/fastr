@@ -22,8 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class RToStringVectorClosure extends RToVectorClosure implements RAbstractStringVector {
 

@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 
 public class UtilsTest {

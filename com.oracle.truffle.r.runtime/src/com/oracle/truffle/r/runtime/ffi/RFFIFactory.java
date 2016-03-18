@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.context.RContext.*;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 
 /**
  * Factory class for the different possible implementations of the {@link RFFI} interface. The

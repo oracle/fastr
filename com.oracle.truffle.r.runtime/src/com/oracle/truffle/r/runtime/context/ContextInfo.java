@@ -22,14 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.vm.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
 /**

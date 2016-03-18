@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.library.fastr;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 
 public abstract class FastRTypeof extends RExternalBuiltinNode.Arg1 {
     @Specialization

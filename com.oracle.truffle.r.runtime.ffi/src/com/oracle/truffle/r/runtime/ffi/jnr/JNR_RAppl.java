@@ -24,12 +24,13 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.wrapDouble;
 import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.wrapInt;
-import jnr.ffi.LibraryLoader;
-import jnr.ffi.annotations.In;
-import jnr.ffi.annotations.Out;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
+
+import jnr.ffi.LibraryLoader;
+import jnr.ffi.annotations.In;
+import jnr.ffi.annotations.Out;
 
 //Checkstyle: stop method name
 public class JNR_RAppl implements RApplRFFI {

@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.nio.file.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RPlatform.*;
+import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.RPlatform;
+import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
 
 public class LibPaths {
 

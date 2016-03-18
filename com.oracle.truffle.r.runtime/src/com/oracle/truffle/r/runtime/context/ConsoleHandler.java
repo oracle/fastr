@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.context;
 
 import java.io.File;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /**
  * The interface to a source of input/output for the context, which may have different

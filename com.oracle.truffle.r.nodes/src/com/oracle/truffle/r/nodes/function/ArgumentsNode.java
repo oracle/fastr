@@ -22,10 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.*;
+import java.util.Arrays;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Base class that represents a list of argument/name pairs with some convenience methods. Semantics

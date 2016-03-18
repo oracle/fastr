@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.*;
-import java.net.*;
+import java.io.InputStream;
+import java.net.URL;
 
 public abstract class ResourceHandlerFactory {
     /**

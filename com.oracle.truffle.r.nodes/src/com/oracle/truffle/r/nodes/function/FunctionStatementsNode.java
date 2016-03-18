@@ -23,10 +23,10 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.control.BlockNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Encapsulates the sequence of statements (expressions) of a function, i.e. the function body. Has

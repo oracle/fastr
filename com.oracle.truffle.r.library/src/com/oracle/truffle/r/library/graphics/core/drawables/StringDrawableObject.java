@@ -14,11 +14,11 @@
  */
 package com.oracle.truffle.r.library.graphics.core.drawables;
 
+import java.awt.Graphics2D;
+import java.util.stream.IntStream;
+
 import com.oracle.truffle.r.library.graphics.core.geometry.CoordinateSystem;
 import com.oracle.truffle.r.library.graphics.core.geometry.Coordinates;
-
-import java.awt.*;
-import java.util.stream.IntStream;
 
 /**
  * Able to render a text on {@link Graphics2D}.

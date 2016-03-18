@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 @NodeChild(value = "arguments", type = RNode[].class)
 public abstract class RFastPathNode extends RNode {

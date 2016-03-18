@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
-import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
+import com.oracle.truffle.r.runtime.ffi.LibPaths;
 
 /**
  * Additional support for {@link BaseRFFI} that is implemented using JNI not JNR.

@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.ControlFlowException;
 
 @SuppressWarnings("serial")
 public final class ReturnException extends ControlFlowException {

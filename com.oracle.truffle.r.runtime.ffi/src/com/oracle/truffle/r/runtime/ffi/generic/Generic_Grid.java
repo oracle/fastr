@@ -25,10 +25,10 @@ package com.oracle.truffle.r.runtime.ffi.generic;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 import com.oracle.truffle.r.runtime.ffi.GridRFFI;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 
 public class Generic_Grid implements GridRFFI {
     private static final class GridProvider {

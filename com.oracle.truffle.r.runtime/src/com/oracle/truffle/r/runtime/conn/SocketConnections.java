@@ -22,14 +22,22 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
-import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 
-import java.io.*;
-import java.net.*;
-import java.nio.*;
-import java.nio.channels.*;
-
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadWriteRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ReadWriteHelper;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class SocketConnections {
     /**

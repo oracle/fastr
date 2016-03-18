@@ -22,13 +22,17 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RStringVector extends RVector implements RAbstractStringVector {
 

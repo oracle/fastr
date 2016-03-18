@@ -11,12 +11,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.io.*;
+import java.io.File;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.r.runtime.RAccuracyInfo;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Built-in initialization of some crucial {@code base} package variables.

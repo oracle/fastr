@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.test.library.fastr;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestRBase;
 
 public class TestChannels extends TestRBase {
 

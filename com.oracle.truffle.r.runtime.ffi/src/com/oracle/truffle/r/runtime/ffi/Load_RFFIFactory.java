@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.Utils;
 
 /**
  * Selects a particular subclass of {@link RFFIFactory}. Specification is based on system property

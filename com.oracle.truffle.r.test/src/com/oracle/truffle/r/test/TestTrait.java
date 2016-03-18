@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.test;
 
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 
 public interface TestTrait {
 

@@ -22,18 +22,26 @@
  */
 package com.oracle.truffle.r.runtime.env.frame;
 
-import java.util.*;
-import java.util.regex.*;
-import java.util.stream.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
  * Variant of {@link REnvFrameAccess} that provides access to an actual Truffle execution frame.

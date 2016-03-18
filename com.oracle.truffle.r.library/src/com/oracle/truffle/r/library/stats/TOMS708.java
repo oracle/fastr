@@ -11,12 +11,15 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.library.stats.MathConstants.M_LN2;
+import static com.oracle.truffle.r.library.stats.MathConstants.M_LN_SQRT_2PI;
+import static com.oracle.truffle.r.library.stats.MathConstants.M_SQRT_PI;
+import static com.oracle.truffle.r.library.stats.MathConstants.logspaceAdd;
+
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
-
-import static com.oracle.truffle.r.library.stats.MathConstants.*;
+import com.oracle.truffle.r.runtime.RRuntime;
 
 /*
  * transcribed from toms708.c - as the original file contains no copyright header, we assume that it is copyright R code and R foundation.

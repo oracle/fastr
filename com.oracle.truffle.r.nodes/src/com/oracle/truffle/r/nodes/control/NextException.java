@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.ControlFlowException;
 
 @SuppressWarnings("serial")
 public final class NextException extends ControlFlowException {
