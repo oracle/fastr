@@ -23,13 +23,21 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.primitive.*;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.primitive.UnaryMapNode;
+import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.*;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 public abstract class UnaryArithmeticNode extends UnaryNode {
 
@@ -121,7 +129,5 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
             }
             return next;
         }
-
     }
-
 }

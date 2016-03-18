@@ -23,10 +23,14 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Denotes an (unevaluated) R language element. It is equivalent to a LANGSXP value in GnuR. It
@@ -65,7 +69,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
         this.rep = rep;
     }
 
-    RLanguage(RNode rep, int length) {
+    private RLanguage(RNode rep, int length) {
         this.rep = rep;
         this.length = length;
     }
@@ -78,10 +82,12 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
         this.rep = rep;
     }
 
+    @Override
     public RType getRType() {
         return RType.Language;
     }
 
+    @Override
     public boolean isComplete() {
         return true;
     }
@@ -99,11 +105,13 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
         throw RInternalError.shouldNotReachHere();
     }
 
+    @Override
     public boolean hasDimensions() {
         // TODO
         return false;
     }
 
+    @Override
     public int[] getDimensions() {
         // TODO
         return null;
@@ -114,19 +122,23 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
         throw RInternalError.unimplemented();
     }
 
+    @Override
     public Class<?> getElementClass() {
         return RLanguage.class;
     }
 
+    @Override
     public RLanguage materializeNonShared() {
         return (RLanguage) getNonShared();
     }
 
+    @Override
     public RShareable materializeToShareable() {
         // TODO is copy necessary?
         return copy();
     }
 
+    @Override
     public Object getDataAtAsObject(int index) {
         return RContext.getRRuntimeASTAccess().getDataAtAsObject(this, index);
     }
@@ -194,5 +206,4 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     public String toString() {
         return String.format("RLanguage(rep=%s)", getRep());
     }
-
 }

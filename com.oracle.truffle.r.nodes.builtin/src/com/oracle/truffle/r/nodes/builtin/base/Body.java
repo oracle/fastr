@@ -36,13 +36,13 @@ import com.oracle.truffle.r.runtime.data.RNull;
 public abstract class Body extends RBuiltinNode {
 
     @Specialization
-    public Object doBody(RFunction fun) {
+    protected Object doBody(RFunction fun) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) fun.getRootNode();
         return RASTUtils.createLanguageElement(fdn.getBody().asRNode());
     }
 
     @Specialization(guards = "!isRFunction(fun)")
-    public RNull doBodyNull(@SuppressWarnings("unused") Object fun) {
+    protected RNull doBodyNull(@SuppressWarnings("unused") Object fun) {
         return RNull.instance;
     }
 }

@@ -10,21 +10,39 @@
  */
 package com.oracle.truffle.r.test;
 
-import java.io.*;
-import java.net.*;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.regex.*;
-
 import static org.junit.Assert.fail;
 
-import org.junit.*;
-import org.junit.runner.*;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Map.Entry;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.test.generate.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.Description;
+import org.junit.runner.Result;
+
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RPerfStats;
+import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.test.generate.FastRSession;
+import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
+import com.oracle.truffle.r.test.generate.TestOutputManager;
 
 /**
  * Base class for all unit tests. The unit tests are actually arranged as a collection of
@@ -245,7 +263,6 @@ public class TestBase {
         boolean writeTestOutputFile() throws IOException {
             return writeTestOutputFile(oldExpectedOutputFileContent, checkOnly);
         }
-
     }
 
     private static class FastRTestOutputManager extends TestOutputManager {
@@ -496,7 +513,6 @@ public class TestBase {
             this.result = result;
             this.expected = expected;
         }
-
     }
 
     private CheckResult checkResult(WhiteList[] whiteLists, String input, String originalExpected, String originalResult, boolean containsWarning, boolean mayContainWarning, boolean containsError,
@@ -698,16 +714,19 @@ public class TestBase {
     private static class LocalDiagnosticHandler implements TestOutputManager.DiagnosticHandler {
         private boolean quiet;
 
+        @Override
         public void warning(String msg) {
             System.out.println("\nwarning: " + msg);
         }
 
+        @Override
         public void note(String msg) {
             if (!quiet) {
                 System.out.println("\nnote: " + msg);
             }
         }
 
+        @Override
         public void error(String msg) {
             System.err.println("\nerror: " + msg);
         }
@@ -742,7 +761,6 @@ public class TestBase {
             Files.delete(p);
             return FileVisitResult.CONTINUE;
         }
-
     }
 
     private static final DeleteVisitor DELETE_VISITOR = new DeleteVisitor();

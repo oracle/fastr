@@ -22,13 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.primitive;
 
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @SuppressWarnings("unused")
 public abstract class UnaryMapFunctionNode extends RBaseNode {
@@ -74,5 +71,4 @@ public abstract class UnaryMapFunctionNode extends RBaseNode {
     public RComplex applyComplex(RComplex operand) {
         throw RInternalError.shouldNotReachHere();
     }
-
 }

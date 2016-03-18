@@ -42,9 +42,10 @@ public final class PrintParameters {
     private boolean suppressIndexLabels;
 
     public PrintParameters() {
+        // default constructor
     }
 
-    public PrintParameters(Object digits, boolean quote, Object naPrint,
+    PrintParameters(Object digits, boolean quote, Object naPrint,
                     Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
 
         setDefaults();
@@ -96,7 +97,7 @@ public final class PrintParameters {
         this.useSource = useSource;
     }
 
-    public PrintParameters cloneParameters() {
+    PrintParameters cloneParameters() {
         PrintParameters cloned = new PrintParameters();
         cloned.naString = this.naString;
         cloned.naStringNoquote = this.naStringNoquote;
@@ -258,5 +259,4 @@ public final class PrintParameters {
     public void setSuppressIndexLabels(boolean suppressIndexLabels) {
         this.suppressIndexLabels = suppressIndexLabels;
     }
-
 }

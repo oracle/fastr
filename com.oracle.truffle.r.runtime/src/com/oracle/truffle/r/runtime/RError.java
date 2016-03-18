@@ -13,11 +13,11 @@ package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * A facade for handling errors. This class extends {@link RuntimeException} so that it can be
@@ -202,12 +202,6 @@ public final class RError extends RuntimeException {
     public static void warning(RBaseNode node, Message msg, Object... args) {
         assert node != null;
         RErrorHandling.warningcall(true, node, msg, args);
-    }
-
-    @TruffleBoundary
-    public static void warning(Node node, Message msg, Object... args) {
-        assert node != null;
-        warning(findParentRBase(node), msg, args);
     }
 
     @TruffleBoundary

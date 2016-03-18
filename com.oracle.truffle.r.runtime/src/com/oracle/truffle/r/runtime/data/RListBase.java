@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class RListBase extends RVector implements RAbstractListVector {
 
@@ -44,6 +46,7 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
         return data.length;
     }
 
+    @Override
     public Object[] getInternalStore() {
         return data;
     }
@@ -133,6 +136,7 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
         data[toIndex] = other.getDataAtAsObject(fromIndex);
     }
 
+    @Override
     public final Class<?> getElementClass() {
         return Object.class;
     }
@@ -180,6 +184,7 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
         return newData;
     }
 
+    @Override
     public final boolean checkCompleteness() {
         return true;
     }

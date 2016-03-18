@@ -30,7 +30,7 @@ import java.util.Map;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.RInternalError;
 
-public final class PrintContext {
+final class PrintContext {
     private final ValuePrinterNode pn;
     private final PrintParameters params;
     private final PrintWriter out;
@@ -76,7 +76,7 @@ public final class PrintContext {
         return cloned;
     }
 
-    public static PrintContext enter(ValuePrinterNode printerNode, PrintParameters parameters, PrintWriter output, VirtualFrame frame) {
+    static PrintContext enter(ValuePrinterNode printerNode, PrintParameters parameters, PrintWriter output, VirtualFrame frame) {
         ArrayDeque<PrintContext> ctxStack = printCtxTL.get();
         if (ctxStack == null) {
             ctxStack = new ArrayDeque<>();
@@ -93,7 +93,7 @@ public final class PrintContext {
         }
     }
 
-    public static void leave() {
+    static void leave() {
         ArrayDeque<PrintContext> ctxStack = printCtxTL.get();
 
         RInternalError.guarantee(ctxStack != null, "No pretty-printer context stack");

@@ -25,12 +25,16 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-public final class NullPrinter implements ValuePrinter<RNull> {
+final class NullPrinter implements ValuePrinter<RNull> {
 
-    public static NullPrinter INSTANCE = new NullPrinter();
+    static NullPrinter INSTANCE = new NullPrinter();
 
+    private NullPrinter() {
+        // singleton
+    }
+
+    @Override
     public void print(RNull value, PrintContext printCtx) {
         printCtx.output().print(RRuntime.NULL);
     }
-
 }

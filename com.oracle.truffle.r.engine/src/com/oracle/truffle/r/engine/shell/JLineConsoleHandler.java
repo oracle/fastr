@@ -22,39 +22,46 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 
-import jline.console.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.RContext;
+
+import jline.console.ConsoleReader;
+import jline.console.UserInterruptException;
 import jline.console.history.FileHistory;
 import jline.console.history.History;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
-
-public class JLineConsoleHandler implements ConsoleHandler {
+class JLineConsoleHandler implements ConsoleHandler {
     private final ConsoleReader console;
     private final boolean isInteractive;
     private final PrintWriter printWriter;
 
-    public JLineConsoleHandler(boolean isInteractive, ConsoleReader console) {
+    JLineConsoleHandler(boolean isInteractive, ConsoleReader console) {
         this.console = console;
         printWriter = new PrintWriter(console.getOutput());
         this.isInteractive = isInteractive;
     }
 
+    @Override
     @TruffleBoundary
     public void println(String s) {
         printWriter.println(s);
         printWriter.flush();
     }
 
+    @Override
     @TruffleBoundary
     public void print(String s) {
         printWriter.print(s);
         printWriter.flush();
     }
 
+    @Override
     @TruffleBoundary
     public String readLine() {
         try {
@@ -71,41 +78,46 @@ public class JLineConsoleHandler implements ConsoleHandler {
         }
     }
 
+    @Override
     public boolean isInteractive() {
         return isInteractive;
     }
 
+    @Override
     @TruffleBoundary
     public void printErrorln(String s) {
         println(s);
     }
 
+    @Override
     @TruffleBoundary
     public void printError(String s) {
         print(s);
     }
 
-    public void redirectError() {
-    }
-
+    @Override
     @TruffleBoundary
     public String getPrompt() {
         return console.getPrompt();
     }
 
+    @Override
     @TruffleBoundary
     public void setPrompt(String prompt) {
         console.setPrompt(prompt);
     }
 
+    @Override
     public int getWidth() {
         return RContext.CONSOLE_WIDTH;
     }
 
+    @Override
     public String getInputDescription() {
         return "<shell_input>";
     }
 
+    @Override
     public void setHistoryFrom(File file) {
         try {
             console.setHistory(new FileHistory(file));
@@ -114,6 +126,7 @@ public class JLineConsoleHandler implements ConsoleHandler {
         }
     }
 
+    @Override
     public void flushHistory() {
         History history = console.getHistory();
         if (history instanceof FileHistory) {

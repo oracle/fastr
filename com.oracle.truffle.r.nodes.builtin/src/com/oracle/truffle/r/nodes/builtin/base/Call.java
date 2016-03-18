@@ -22,16 +22,23 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Construct a call object ({@link RLanguage}) from a name and optional arguments.
@@ -58,12 +65,12 @@ public abstract class Call extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    protected static RLanguage makeCall(String name, RArgsValuesAndNames args) {
+    private static RLanguage makeCall(String name, RArgsValuesAndNames args) {
         return makeCall0(name, false, args);
     }
 
     @TruffleBoundary
-    protected static RLanguage makeCall(RFunction function, RArgsValuesAndNames args) {
+    private static RLanguage makeCall(RFunction function, RArgsValuesAndNames args) {
         return makeCall0(function, false, args);
     }
 

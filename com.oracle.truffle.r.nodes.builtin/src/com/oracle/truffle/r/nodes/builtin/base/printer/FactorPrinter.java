@@ -31,9 +31,13 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public final class FactorPrinter extends AbstractValuePrinter<RFactor> {
+final class FactorPrinter extends AbstractValuePrinter<RFactor> {
 
-    public static final FactorPrinter INSTANCE = new FactorPrinter();
+    static final FactorPrinter INSTANCE = new FactorPrinter();
+
+    private FactorPrinter() {
+        // singleton
+    }
 
     private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
@@ -64,6 +68,5 @@ public final class FactorPrinter extends AbstractValuePrinter<RFactor> {
                 out.print(strings[i]);
             }
         }
-
     }
 }

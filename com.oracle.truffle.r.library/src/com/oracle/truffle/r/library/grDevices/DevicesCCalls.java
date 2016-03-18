@@ -8,17 +8,19 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.grDevices;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.library.grDevices.pdf.*;
-import com.oracle.truffle.r.library.graphics.core.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.library.grDevices.pdf.PdfGraphicsDevice;
+import com.oracle.truffle.r.library.graphics.core.GraphicsEngineImpl;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public class DevicesCCalls {
     public static final class C_DevOff extends RExternalBuiltinNode {

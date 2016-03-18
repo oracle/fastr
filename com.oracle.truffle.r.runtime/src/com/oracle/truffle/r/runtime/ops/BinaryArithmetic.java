@@ -12,15 +12,25 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-import static com.oracle.truffle.r.runtime.RRuntime.*;
+import static com.oracle.truffle.r.runtime.RRuntime.INT_NA;
+import static com.oracle.truffle.r.runtime.RRuntime.isFinite;
+import static com.oracle.truffle.r.runtime.RRuntime.isNAorNaN;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.ExactMath;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 
 /*
  * Logic derived from GNU-R, Purdue FastR and gcc.
@@ -74,7 +84,7 @@ public abstract class BinaryArithmetic extends Operation {
 
     private final boolean supportsIntResult;
 
-    public BinaryArithmetic(boolean commutative, boolean associative, boolean supportsInt) {
+    private BinaryArithmetic(boolean commutative, boolean associative, boolean supportsInt) {
         super(commutative, associative);
         this.supportsIntResult = supportsInt;
     }
@@ -181,7 +191,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
             return r;
         }
-
     }
 
     public static class Subtract extends BinaryArithmetic {
@@ -239,7 +248,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
             return r;
         }
-
     }
 
     public static class Multiply extends BinaryArithmetic {
@@ -285,7 +293,7 @@ public abstract class BinaryArithmetic extends Operation {
             return RDataFactory.createComplex(res[0], res[1]);
         }
 
-        protected final void complexMult(double leftReal, double leftImag, double rightReal, double rightImag, double[] res, double[] interm) {
+        private void complexMult(double leftReal, double leftImag, double rightReal, double rightImag, double[] res, double[] interm) {
             interm[0] = op(leftReal, rightReal);
             interm[1] = op(leftImag, rightImag);
             interm[2] = op(leftImag, rightReal);
@@ -317,7 +325,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
             return (int) r;
         }
-
     }
 
     public static class Div extends BinaryArithmetic {
@@ -750,7 +757,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
 
         }
-
     }
 
     private static final class PowK extends Pow {
@@ -764,7 +770,6 @@ public abstract class BinaryArithmetic extends Operation {
             ensurePowKNodes();
             return powk(leftReal, leftImag, (int) rightReal);
         }
-
     }
 
     private static final class Pow0 extends Pow {
@@ -777,7 +782,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
             return RDataFactory.createComplex(1.0, 0.0);
         }
-
     }
 
     private static final class Pow1 extends Pow {
@@ -790,7 +794,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
             return RDataFactory.createComplex(leftReal, leftImag);
         }
-
     }
 
     private static final class Pow2 extends Pow {
@@ -804,7 +807,6 @@ public abstract class BinaryArithmetic extends Operation {
             ensurePow2();
             return cpow2.cpow2(leftReal, leftImag);
         }
-
     }
 
     private static final class PowNegative extends Pow {
@@ -860,7 +862,6 @@ public abstract class BinaryArithmetic extends Operation {
             }
 
         }
-
     }
 
     private static final class PowFull extends Pow {
@@ -1036,5 +1037,4 @@ public abstract class BinaryArithmetic extends Operation {
             return left.compareTo(right) < 0 ? left : right;
         }
     }
-
 }

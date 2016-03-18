@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * An interface that identifies an AST node as being part of the syntactic structure of the
@@ -108,16 +108,12 @@ public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
      */
     SourceSection EAGER_DEPARSE = SourceSection.createUnavailable("R", "eager deparse");
 
-    /**
-     * Indicates a wrapper "function" created for "eval" or an expression entered into shell.
-     */
-    SourceSection WRAPPER = SourceSection.createUnavailable("R", "wrapper");
-
     /*
      * Every implementor of this interface must either inherit or directly implement the following
      * methods.
      */
 
+    @Override
     SourceSection getSourceSection();
 
     void setSourceSection(SourceSection sourceSection);
@@ -157,5 +153,4 @@ public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
             }
         }
     }
-
 }

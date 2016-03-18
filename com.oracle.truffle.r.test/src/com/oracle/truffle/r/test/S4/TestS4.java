@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.test.S4;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestRBase;
 
 // Checkstyle: stop LineLength
 
@@ -107,5 +107,4 @@ public class TestS4 extends TestRBase {
     public String getTestDir() {
         return "S4";
     }
-
 }

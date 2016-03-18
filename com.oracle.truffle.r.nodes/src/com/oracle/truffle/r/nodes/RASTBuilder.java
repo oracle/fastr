@@ -32,7 +32,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
-import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.control.BlockNode;
@@ -333,7 +332,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             if (i < calls.size() - 1) {
                 instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesIndex + i), update, WriteVariableNode.Mode.INVISIBLE));
             } else {
-                instructions.add(WriteLocalFrameVariableNode.createAnonymous(variable.getIdentifier(), update, WriteVariableNode.Mode.INVISIBLE, isSuper));
+                instructions.add(WriteVariableNode.createAnonymous(variable.getIdentifier(), update, WriteVariableNode.Mode.INVISIBLE, isSuper));
             }
         }
 

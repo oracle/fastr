@@ -14,13 +14,13 @@
  */
 package com.oracle.truffle.r.library.graphics.core;
 
+import static com.oracle.truffle.r.library.graphics.core.GraphicsEvent.GE_FINAL_STATE;
+import static com.oracle.truffle.r.library.graphics.core.GraphicsEvent.GE_INIT_STATE;
+
 import com.oracle.truffle.r.library.grDevices.NullGraphicsDevice;
 import com.oracle.truffle.r.library.grDevices.fastrgd.FastRGraphicsDevice;
 import com.oracle.truffle.r.library.graphics.core.geometry.Coordinates;
 import com.oracle.truffle.r.runtime.Utils;
-
-import static com.oracle.truffle.r.library.graphics.core.GraphicsEvent.GE_FINAL_STATE;
-import static com.oracle.truffle.r.library.graphics.core.GraphicsEvent.GE_INIT_STATE;
 
 // todo implement 'active' devices array from devices.c
 public final class GraphicsEngineImpl implements GraphicsEngine {
@@ -57,6 +57,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         graphicsDevices[NULL_GRAPHICS_DEVICE_INDEX] = NullGraphicsDevice.getInstance();
     }
 
+    @Override
     public void registerGraphicsSystem(GraphicsSystem newGraphicsSystem) throws Exception {
         if (newGraphicsSystem == null) {
             throw new NullPointerException("Graphics system to register is null");
@@ -94,6 +95,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         Utils.warn(warningMessage);
     }
 
+    @Override
     public void unRegisterGraphicsSystem(GraphicsSystem graphicsSystem) {
         int graphicsSystemId = graphicsSystem.getId();
         checkGraphicsSystemIndex(graphicsSystemId);
@@ -113,6 +115,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     }
 
     // todo implement '.Devices' list related logic from GEaddDevices (devices.c)
+    @Override
     public void registerGraphicsDevice(GraphicsDevice newGraphicsDevice) throws Exception {
         if (newGraphicsDevice == null) {
             throw new NullPointerException("Graphics device to register is null");
@@ -140,6 +143,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         }
     }
 
+    @Override
     public void unRegisterGraphicsDevice(GraphicsDevice deviceToUnregister) {
         if (deviceToUnregister == null) {
             throw new NullPointerException("Graphics device to unregister is null");
@@ -165,18 +169,22 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         deviceToUnregister.close();
     }
 
+    @Override
     public int getGraphicsDevicesAmount() {
         return devicesAmountWithoutNullDevice;
     }
 
+    @Override
     public boolean noGraphicsDevices() {
         return devicesAmountWithoutNullDevice == 0;
     }
 
+    @Override
     public int getCurrentGraphicsDeviceIndex() {
         return currentGraphicsDevice.graphicsDeviceIndex;
     }
 
+    @Override
     public GraphicsDevice getCurrentGraphicsDevice() {
         if (isNullDeviceIsCurrent()) {
             try {
@@ -197,6 +205,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         registerGraphicsDevice(new FastRGraphicsDevice());
     }
 
+    @Override
     public GraphicsDevice getGraphicsDeviceNextTo(GraphicsDevice graphicsDevice) {
         if (graphicsDevice == null) {
             throw new NullPointerException("Graphics device is null");
@@ -220,6 +229,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         }
     }
 
+    @Override
     public GraphicsDevice getGraphicsDevicePrevTo(GraphicsDevice graphicsDevice) {
         if (graphicsDevice == null) {
             throw new NullPointerException("Graphics device is null");

@@ -11,25 +11,41 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RFactor;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "format", kind = INTERNAL, parameterNames = {"x", "trim", "digits", "nsmall", "width", "justify", "na.encode", "scientific", "decimal.mark"})
 public abstract class Format extends RBuiltinNode {
 
     @Child private CastIntegerNode castInteger;
 
-    protected final BranchProfile errorProfile = BranchProfile.create();
+    private final BranchProfile errorProfile = BranchProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     /**
      * This is just a dummy object used to invoke getNames on RAbstractDoubleVector. The
@@ -43,7 +59,7 @@ public abstract class Format extends RBuiltinNode {
 
     private static Config printConfig;
 
-    public static Config setPrintDefaults() {
+    private static Config setPrintDefaults() {
         if (printConfig == null) {
             printConfig = new Config();
         }
@@ -63,7 +79,7 @@ public abstract class Format extends RBuiltinNode {
         return printConfig;
     }
 
-    public static Config getConfig() {
+    private static Config getConfig() {
         return setPrintDefaults();
     }
 
@@ -304,7 +320,7 @@ public abstract class Format extends RBuiltinNode {
         }
     }
 
-    public static class Config {
+    private static class Config {
         public int width;
         public int naWidth;
         public int naWidthNoQuote;
@@ -320,7 +336,7 @@ public abstract class Format extends RBuiltinNode {
         public int cutoff;
     }
 
-    public enum Adjustment {
+    private enum Adjustment {
         LEFT,
         RIGHT,
         CENTRE,

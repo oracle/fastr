@@ -22,15 +22,22 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.*;
-import java.util.concurrent.*;
+import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Semaphore;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.conn.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Implementation of a channel abstraction used for communication between parallel contexts in
@@ -94,7 +101,6 @@ public class RChannel {
         } finally {
             create.release();
         }
-
     }
 
     public static int getChannel(int key) {
@@ -209,7 +215,6 @@ public class RChannel {
         } else {
             return newMsg;
         }
-
     }
 
     private static boolean serializeObject(Object o) {
@@ -348,7 +353,7 @@ public class RChannel {
         }
     }
 
-    public static Object processedReceivedMessage(Object msg) {
+    private static Object processedReceivedMessage(Object msg) {
         try {
             if (msg instanceof SerializedList) {
                 RList list = ((SerializedList) msg).getList();
@@ -390,5 +395,4 @@ public class RChannel {
         }
         return null;
     }
-
 }

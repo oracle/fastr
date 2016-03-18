@@ -22,16 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.SearchFirstStringNode.CompareStringNode.StringEqualsNode;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * This node encapsulates a speculative search of the first elements in an character vector and
@@ -57,11 +60,11 @@ final class SearchFirstStringNode extends Node {
 
     /** Instead of using the notFoundStartIndex we use NA. */
     private final boolean useNAForNotFound;
-    protected final boolean exactMatch;
+    private final boolean exactMatch;
 
     @CompilationFinal private int[] cachedIndices;
 
-    SearchFirstStringNode(boolean exactMatch, boolean useNAForNotFound) {
+    private SearchFirstStringNode(boolean exactMatch, boolean useNAForNotFound) {
         this.exactMatch = exactMatch;
         this.useNAForNotFound = useNAForNotFound;
         if (!exactMatch) {
@@ -101,7 +104,7 @@ final class SearchFirstStringNode extends Node {
         return new SearchFirstStringNode(exactMatch, useNAForNotFound);
     }
 
-    protected int[] searchCached(RAbstractStringVector target, int targetLength, RAbstractStringVector elements, int elementsLength) {
+    private int[] searchCached(RAbstractStringVector target, int targetLength, RAbstractStringVector elements, int elementsLength) {
         if (exactMatch) {
             RAbstractIntVector genericResult = searchGeneric(target, targetLength, elements, elementsLength, -1, true);
             if (genericResult != null) {
@@ -111,7 +114,7 @@ final class SearchFirstStringNode extends Node {
         return null;
     }
 
-    protected boolean isCacheValid(RAbstractStringVector target, int targetLength, //
+    private boolean isCacheValid(RAbstractStringVector target, int targetLength, //
                     RAbstractStringVector elements, int elementsLength, int[] cached) {
         int cachedLength = cached.length;
         if (elementsLength != cachedLength) {
@@ -167,7 +170,7 @@ final class SearchFirstStringNode extends Node {
 
     private final BranchProfile notFoundProfile = BranchProfile.create();
 
-    protected RAbstractIntVector searchGeneric(RAbstractStringVector target, int targetLength, RAbstractStringVector elements, int elementsLength, int notFoundStartIndex, boolean nullOnNotFound) {
+    private RAbstractIntVector searchGeneric(RAbstractStringVector target, int targetLength, RAbstractStringVector elements, int elementsLength, int notFoundStartIndex, boolean nullOnNotFound) {
         int notFoundIndex = notFoundStartIndex;
         int[] indices = new int[elementsLength];
         boolean resultComplete = true;
@@ -308,5 +311,4 @@ final class SearchFirstStringNode extends Node {
             }
         }
     }
-
 }

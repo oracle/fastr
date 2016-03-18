@@ -22,16 +22,21 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
-import java.io.*;
-import java.nio.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class StdConnections {
 
@@ -167,7 +172,6 @@ public class StdConnections {
         public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.UNSEEKABLE_CONNECTION);
         }
-
     }
 
     private static class StdinConnection extends StdConnection {
@@ -237,7 +241,6 @@ public class StdConnections {
         public int getc() throws IOException {
             throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
         }
-
     }
 
     private static class StdoutConnection extends StdoutputAdapter {
@@ -380,7 +383,5 @@ public class StdConnections {
                 }
             }
         }
-
     }
-
 }

@@ -26,13 +26,16 @@ import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-public final class EnvironmentPrinter extends AbstractValuePrinter<REnvironment> {
+final class EnvironmentPrinter extends AbstractValuePrinter<REnvironment> {
 
-    public static final EnvironmentPrinter INSTANCE = new EnvironmentPrinter();
+    static final EnvironmentPrinter INSTANCE = new EnvironmentPrinter();
+
+    private EnvironmentPrinter() {
+        // singleton
+    }
 
     @Override
     protected void printValue(REnvironment value, PrintContext printCtx) throws IOException {
         printCtx.output().print(value.getPrintName());
     }
-
 }

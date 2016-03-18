@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 @RBuiltin(name = "complex", kind = INTERNAL, parameterNames = {"length.out", "real", "imaginary"})
 public abstract class Complex extends RBuiltinNode {
@@ -74,7 +78,7 @@ public abstract class Complex extends RBuiltinNode {
         }
     }
 
-    public static boolean resultEmpty(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
+    protected static boolean resultEmpty(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
         return lengthOut == 0 && realAbsVec.getLength() == 0 && imaginaryAbsVec.getLength() == 0;
     }
 }

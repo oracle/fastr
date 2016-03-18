@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RRuntime;
 
 /**
  * An adaptor class for the several R types that are attributable. Only useful for classes that
@@ -32,10 +32,12 @@ public abstract class RAttributeStorage extends RBaseObject implements RAttribut
 
     protected RAttributes attributes;
 
+    @Override
     public final RAttributes getAttributes() {
         return attributes;
     }
 
+    @Override
     public final RAttributes initAttributes() {
         if (attributes == null) {
             attributes = RAttributes.create();
@@ -43,6 +45,7 @@ public abstract class RAttributeStorage extends RBaseObject implements RAttribut
         return attributes;
     }
 
+    @Override
     public final void initAttributes(RAttributes newAttributes) {
         this.attributes = newAttributes;
     }
@@ -52,6 +55,7 @@ public abstract class RAttributeStorage extends RBaseObject implements RAttribut
         return attr == null ? null : attr.get(name);
     }
 
+    @Override
     public abstract RStringVector getImplicitClass();
 
     @Override

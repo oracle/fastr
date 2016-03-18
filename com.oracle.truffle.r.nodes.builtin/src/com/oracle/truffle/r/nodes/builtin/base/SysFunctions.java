@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,22 +22,32 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public class SysFunctions {
 
@@ -97,7 +107,6 @@ public class SysFunctions {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.WRONG_TYPE);
         }
-
     }
 
     @RBuiltin(name = "Sys.setenv", kind = INTERNAL, parameterNames = {"nm", "values"})
@@ -114,7 +123,6 @@ public class SysFunctions {
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
 
     @RBuiltin(name = "Sys.unsetenv", kind = INTERNAL, parameterNames = {"x"})
@@ -161,7 +169,7 @@ public class SysFunctions {
             return RNull.instance;
         }
 
-        public static boolean lengthOne(RStringVector vec) {
+        protected static boolean lengthOne(RStringVector vec) {
             return vec.getLength() == 1;
         }
 
@@ -266,7 +274,6 @@ public class SysFunctions {
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
 
     // TODO implement
@@ -279,7 +286,6 @@ public class SysFunctions {
             controlVisibility();
             throw RError.nyi(this, "Sys.umask");
         }
-
     }
 
     @RBuiltin(name = "Sys.time", kind = INTERNAL, parameterNames = {})
@@ -290,7 +296,6 @@ public class SysFunctions {
             controlVisibility();
             return ((double) System.currentTimeMillis()) / 1000;
         }
-
     }
 
     @RBuiltin(name = "Sys.info", kind = INTERNAL, parameterNames = {})
@@ -316,7 +321,6 @@ public class SysFunctions {
             RStringVector result = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR, NAMES_ATTR);
             return result;
         }
-
     }
 
     @RBuiltin(name = "Sys.glob", kind = INTERNAL, parameterNames = {"paths", "dirmask"})
@@ -340,7 +344,5 @@ public class SysFunctions {
             matches.toArray(data);
             return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
-
 }

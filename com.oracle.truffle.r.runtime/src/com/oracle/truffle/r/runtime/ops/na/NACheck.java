@@ -22,14 +22,18 @@
  */
 package com.oracle.truffle.r.runtime.ops.na;
 
-import static com.oracle.truffle.r.runtime.RRuntime.*;
+import static com.oracle.truffle.r.runtime.RRuntime.isNA;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 public final class NACheck {
 
@@ -374,5 +378,4 @@ public final class NACheck {
         }
         return RRuntime.string2logicalNoCheck(value);
     }
-
 }

@@ -230,6 +230,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return needsSplitting;
     }
 
+    @Override
     public FunctionUID getUID() {
         return uuid;
     }
@@ -395,6 +396,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      * serialize, since we do not distinguish them in other nodes at the present time.
      */
 
+    @Override
     public void deparseImpl(RDeparse.State state) {
         // TODO linebreaks
         state.startNodeDeparse(this);
@@ -521,10 +523,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return instrumented;
     }
 
-    public void setInstrumented() {
-        instrumented = true;
-    }
-
     /**
      * A workaround for not representing left curly brace as a function call. We have to depend on
      * the source section and "parse" the start of the function definition.
@@ -558,6 +556,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return false;
     }
 
+    @Override
     public void setSourceSection(SourceSection sourceSection) {
         assert sourceSection != null;
         this.sourceSectionR = sourceSection;

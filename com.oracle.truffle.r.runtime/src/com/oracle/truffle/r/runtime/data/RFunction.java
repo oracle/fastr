@@ -117,6 +117,7 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
         return target.toString();
     }
 
+    @Override
     public ForeignAccess getForeignAccess() {
         return RContext.getEngine().getForeignAccess(this);
     }
@@ -147,5 +148,4 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
         return newFunction;
 
     }
-
 }

@@ -11,21 +11,29 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.nodes.function.RMissingHelper;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RDeparse.State;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * The {@code switch} builtin. When called directly, the "..." arguments are not evaluated before
@@ -56,7 +64,7 @@ public abstract class Switch extends RBuiltinNode {
         return prepareResult(doSwitchString(frame, x, optionalArgs));
     }
 
-    protected Object doSwitchString(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
+    private Object doSwitchString(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         controlVisibility();
         Object[] optionalArgValues = optionalArgs.getArguments();
         final String xStr = x.getDataAt(0);
@@ -162,10 +170,6 @@ public abstract class Switch extends RBuiltinNode {
         return null;
     }
 
-    protected boolean isLengthOne(RAbstractStringVector x) {
-        return x.getLength() == 1;
-    }
-
     private Object prepareResult(Object value) {
         if (returnValueProfile.profile(value != null)) {
             forceVisibility(true);
@@ -175,5 +179,4 @@ public abstract class Switch extends RBuiltinNode {
             return RNull.instance;
         }
     }
-
 }

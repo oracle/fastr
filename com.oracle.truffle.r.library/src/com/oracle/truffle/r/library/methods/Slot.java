@@ -11,16 +11,18 @@
  */
 package com.oracle.truffle.r.library.methods;
 
-import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNode;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 // Transcribed from src/library/methods/slot.c
 
@@ -28,8 +30,8 @@ public class Slot {
 
     public abstract static class R_getSlot extends RExternalBuiltinNode.Arg2 {
 
-        @Child AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(null, null);
-        @Child CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
+        @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(null, null);
+        @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
         protected static String getInternedName(RAbstractStringVector nameVec) {
             return nameVec.getDataAt(0).intern();
@@ -50,13 +52,12 @@ public class Slot {
         protected Object getSlot(Object object, Object nameVec) {
             throw RError.error(this, RError.Message.GENERIC, "invalid type or length for slot name");
         }
-
     }
 
     public abstract static class R_setSlot extends RExternalBuiltinNode.Arg3 {
 
-        @Child UpdateSlotNode updateSlotNode = UpdateSlotNodeGen.create(null, null, null);
-        @Child CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
+        @Child private UpdateSlotNode updateSlotNode = UpdateSlotNodeGen.create(null, null, null);
+        @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
         protected static String getInternedName(RAbstractStringVector nameVec) {
             return nameVec.getDataAt(0).intern();
@@ -77,7 +78,5 @@ public class Slot {
         protected Object setSlot(Object object, Object name, Object value) {
             throw RError.error(this, RError.Message.GENERIC, "invalid type or length for slot name");
         }
-
     }
-
 }

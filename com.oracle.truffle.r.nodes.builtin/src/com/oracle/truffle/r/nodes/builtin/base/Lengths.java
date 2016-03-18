@@ -48,10 +48,11 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "lengths", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "use.names"})
 public abstract class Lengths extends RBuiltinNode {
-    @Child IsAtomic isAtomicNode;
+
+    @Child private IsAtomic isAtomicNode;
     @Child private Length lengthNode;
 
-    RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -113,7 +114,7 @@ public abstract class Lengths extends RBuiltinNode {
         return result;
     }
 
-    public static boolean isList(RDataFrame dataFrame) {
+    protected static boolean isList(RDataFrame dataFrame) {
         return dataFrame.getVector() instanceof RList;
     }
 }

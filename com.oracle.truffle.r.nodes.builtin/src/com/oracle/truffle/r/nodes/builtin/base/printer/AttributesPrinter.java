@@ -24,17 +24,17 @@ import com.oracle.truffle.r.runtime.data.RDataFrame;
 
 //Transcribed from GnuR, src/main/print.c
 
-public class AttributesPrinter implements ValuePrinter<RAttributable> {
+final class AttributesPrinter implements ValuePrinter<RAttributable> {
 
-    public static final AttributesPrinter INSTANCE = new AttributesPrinter(false);
+    static final AttributesPrinter INSTANCE = new AttributesPrinter(false);
 
     private final boolean useSlots;
 
-    public AttributesPrinter(boolean useSlots) {
-        super();
+    private AttributesPrinter(boolean useSlots) {
         this.useSlots = useSlots;
     }
 
+    @Override
     public void print(RAttributable value, PrintContext printCtx) throws IOException {
         RAttributes attrs = value.getAttributes();
         if (attrs == null) {
@@ -92,8 +92,6 @@ public class AttributesPrinter implements ValuePrinter<RAttributable> {
             } else {
                 ValuePrinters.INSTANCE.print(a.getValue(), printCtx);
             }
-
         }
     }
-
 }

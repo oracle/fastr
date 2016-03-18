@@ -24,13 +24,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -43,25 +40,14 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 public abstract class Conj extends RBuiltinNode {
 
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode conjNode = UnaryArithmeticNodeGen.create(ConjArithmetic::new,
-                    RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
+    @Child private UnaryArithmeticNode conjNode = UnaryArithmeticNodeGen.create(ConjArithmetic::new, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, RType.Double);
 
     @Specialization
     protected Object conj(Object value) {
         return conjNode.execute(boxPrimitive.execute(value));
     }
 
-    @Child private CastDoubleNode castDouble;
-
-    protected Object castDouble(Object value) {
-        if (castDouble == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeGen.create(true, true, true));
-        }
-        return castDouble.executeDouble(value);
-    }
-
-    public static class ConjArithmetic extends UnaryArithmetic {
+    private static final class ConjArithmetic extends UnaryArithmetic {
 
         @Override
         public int op(byte op) {
@@ -82,7 +68,5 @@ public abstract class Conj extends RBuiltinNode {
         public RComplex op(double re, double im) {
             return RComplex.valueOf(re, -im);
         }
-
     }
-
 }

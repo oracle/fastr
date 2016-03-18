@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class RIntSequence extends RSequence implements RAbstractIntVector {
 
@@ -40,6 +41,7 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         this.stride = stride;
     }
 
+    @Override
     public int getDataAt(int index) {
         assert index >= 0 && index < getLength();
         return start + stride * index;
@@ -106,10 +108,12 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         return start + (getLength() - 1) * stride;
     }
 
+    @Override
     public RIntVector materialize() {
         return this.internalCreateVector();
     }
 
+    @Override
     public RStringVector getImplicitClass() {
         return RIntVector.implicitClassHeader;
     }

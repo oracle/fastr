@@ -45,7 +45,6 @@ public interface PCRERFFI {
             this.errorMessage = errorMessage;
             this.errOffset = errOffset;
         }
-
     }
 
     long maketables();

@@ -23,19 +23,25 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RFactor;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /*
  * This closure is meant to be used only for implementation of the binary operators.
  */
-public class RFactorToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
+final class RFactorToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
 
     private final RAbstractComplexVector levels;
     private final boolean withNames;
 
-    public RFactorToComplexVectorClosure(RFactor factor, RAbstractComplexVector levels, boolean withNames) {
+    RFactorToComplexVectorClosure(RFactor factor, RAbstractComplexVector levels, boolean withNames) {
         super(factor.getVector());
         assert levels != null;
         this.levels = levels;
@@ -43,7 +49,7 @@ public class RFactorToComplexVectorClosure extends RToComplexVectorClosure imple
     }
 
     @Override
-    public final RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         switch (type) {
             case Character:
                 return new RComplexToStringVectorClosure(this);
@@ -54,6 +60,7 @@ public class RFactorToComplexVectorClosure extends RToComplexVectorClosure imple
         }
     }
 
+    @Override
     public RComplex getDataAt(int index) {
         int val = ((RIntVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(val)) {
@@ -67,5 +74,4 @@ public class RFactorToComplexVectorClosure extends RToComplexVectorClosure imple
     public RStringVector getNames(RAttributeProfiles attrProfiles) {
         return withNames ? super.getNames(attrProfiles) : null;
     }
-
 }

@@ -22,15 +22,18 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-public class RDoubleToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
+final class RDoubleToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
 
-    public RDoubleToIntVectorClosure(RAbstractDoubleVector vector) {
+    RDoubleToIntVectorClosure(RAbstractDoubleVector vector) {
         super(vector);
     }
 
+    @Override
     public int getDataAt(int index) {
         double value = ((RAbstractDoubleVector) vector).getDataAt(index);
         if (Double.isNaN(value)) {

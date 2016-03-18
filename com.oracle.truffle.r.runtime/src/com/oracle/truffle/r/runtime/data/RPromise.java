@@ -22,14 +22,19 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Denotes an R {@code promise}. Its child classes - namely {@link EagerPromise} and
@@ -153,6 +158,7 @@ public class RPromise implements RTypedValue {
         return rep;
     }
 
+    @Override
     public RType getRType() {
         return RType.Promise;
     }
@@ -274,7 +280,7 @@ public class RPromise implements RTypedValue {
      * any reason, a Promise gets {@link #deoptimize()} (which includes {@link #materialize()}ion).
      */
     public static final class EagerPromise extends RPromise {
-        protected final Object eagerValue;
+        private final Object eagerValue;
 
         private final Assumption notChangedNonLocally;
         private final int frameId;
@@ -331,10 +337,6 @@ public class RPromise implements RTypedValue {
 
         public boolean isValid() {
             return notChangedNonLocally.isValid();
-        }
-
-        public void notifySuccess() {
-            feedback.onSuccess(this);
         }
 
         public void notifyFailure() {
@@ -426,10 +428,6 @@ public class RPromise implements RTypedValue {
             return RDataFactory.createEagerPromise(type, OptType.PROMISED, exprClosure, promisedPromise, notChangedNonLocally, nFrameId, feedback, -1);
         }
 
-        public RPromise createVarargPromise(RPromise promisedVararg) {
-            return RDataFactory.createVarargPromise(type, promisedVararg, exprClosure);
-        }
-
         public Object getExpr() {
             if (exprClosure == null) {
                 return null;
@@ -486,5 +484,4 @@ public class RPromise implements RTypedValue {
     public boolean isS4() {
         return false;
     }
-
 }

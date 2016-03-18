@@ -244,7 +244,6 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             }
             return sa;
         }
-
     }
 
     private final SyntaxArguments arguments;
@@ -281,10 +280,6 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
 
     public RSyntaxNode getArgument(int index) {
         return arguments.v[index];
-    }
-
-    public void replaceArgument(int index, RSyntaxNode value) {
-        arguments.v[index] = value;
     }
 
     @Override
@@ -520,7 +515,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         }
     }
 
-    public static void serializeArguments(RSerialize.State state, RSyntaxNode[] arguments, ArgumentsSignature signature) {
+    static void serializeArguments(RSerialize.State state, RSyntaxNode[] arguments, ArgumentsSignature signature) {
         state.openPairList(SEXPTYPE.LISTSXP);
         if (arguments.length == 0) {
             state.setNull();
@@ -563,7 +558,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         return RASTUtils.createCall(functionSub, false, argsSub.getSignature(), argsSub.getArguments());
     }
 
-    public static Arguments<RSyntaxNode> substituteArguments(REnvironment env, RSyntaxNode[] arguments, ArgumentsSignature signature) {
+    static Arguments<RSyntaxNode> substituteArguments(REnvironment env, RSyntaxNode[] arguments, ArgumentsSignature signature) {
         ArrayList<RSyntaxNode> newArguments = new ArrayList<>();
         ArrayList<String> newNames = new ArrayList<>();
         for (int i = 0; i < arguments.length; i++) {
@@ -584,10 +579,6 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         RSyntaxNode[] newArgumentsArray = newArguments.stream().toArray(RSyntaxNode[]::new);
         String[] newNamesArray = newNames.stream().toArray(String[]::new);
         return new Arguments<>(newArgumentsArray, ArgumentsSignature.get(newNamesArray));
-    }
-
-    public static RCallNode createOpCall(SourceSection src, SourceSection opNameSrc, String function, RSyntaxNode... arguments) {
-        return createCall(src, ReadVariableNode.createFunctionLookup(opNameSrc, function), ArgumentsSignature.empty(arguments.length), arguments);
     }
 
     /**
@@ -631,28 +622,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         return call;
     }
 
-    /**
-     * A variant of {@link #createCall} that does not require a {@link SourceSection}, because, e.g,
-     * it is part of a {@code ReplacementNode} structure or some other internal rewrite (e.g.
-     * {@code LApply}).
-     */
-    public static RCallNode createCallNotSyntax(RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        RCallNode call = new RCallNode(RSyntaxNode.SOURCE_UNAVAILABLE, function, arguments, signature);
-        return call;
-    }
-
-    /**
-     * Since the {@link #arguments} field is not a Child, it it not cloned by
-     * {@link NodeUtil#cloneNode(Node)} and this is necessary in the creation of "syntaxAST" for a
-     * {@code ReplacementNode}.
-     */
-    public static void updateClonedArguments(RCallNode call, RSyntaxNode[] clonedArguments) {
-        for (int i = 0; i < call.arguments.v.length; i++) {
-            call.arguments.v[i] = clonedArguments[i];
-        }
-    }
-
-    public static RBuiltinRootNode findBuiltinRootNode(RootCallTarget callTarget) {
+    static RBuiltinRootNode findBuiltinRootNode(RootCallTarget callTarget) {
         RootNode root = callTarget.getRootNode();
         if (root instanceof RBuiltinRootNode) {
             return (RBuiltinRootNode) root;
@@ -660,7 +630,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         return null;
     }
 
-    protected RCallNode getParentCallNode() {
+    private RCallNode getParentCallNode() {
         RNode parent = (RNode) unwrapParent();
         if (!(parent instanceof RCallNode)) {
             throw RInternalError.shouldNotReachHere();
@@ -668,7 +638,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         return (RCallNode) parent;
     }
 
-    public static boolean needsSplitting(RFunction function) {
+    static boolean needsSplitting(RFunction function) {
         RootNode root = function.getRootNode();
         if (function.containsDispatch()) {
             return true;
@@ -684,12 +654,12 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
 
     }
 
-    public static final class GetTempNode extends RNode {
+    private static final class GetTempNode extends RNode {
 
         @Child private FrameSlotNode slot;
         private final RSyntaxNode arg;
 
-        public GetTempNode(Object identifier, RSyntaxNode arg) {
+        GetTempNode(Object identifier, RSyntaxNode arg) {
             slot = FrameSlotNode.createTemp(identifier, false);
             this.arg = arg;
         }
@@ -715,13 +685,13 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
      * @see RCallNode
      */
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
-    public static final class UninitializedCallNode extends RootCallNode {
+    private static final class UninitializedCallNode extends RootCallNode {
 
         private int depth;
         private final RCallNode call;
         private final Object dispatchTempIdentifier;
 
-        protected UninitializedCallNode(RCallNode call, Object dispatchTempIdentifier) {
+        UninitializedCallNode(RCallNode call, Object dispatchTempIdentifier) {
             this.call = call;
             this.dispatchTempIdentifier = dispatchTempIdentifier;
             this.depth = 0;
@@ -792,14 +762,14 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
      *
      * @see RCallNode
      */
-    public static final class CachedCallNode extends RootCallNode {
+    private static final class CachedCallNode extends RootCallNode {
 
         @Child private RootCallNode nextNode;
         @Child private LeafCallNode currentNode;
 
         private final CallTarget cachedCallTarget;
 
-        public CachedCallNode(LeafCallNode current, RootCallNode next, RFunction cachedFunction) {
+        CachedCallNode(LeafCallNode current, RootCallNode next, RFunction cachedFunction) {
             this.currentNode = current;
             this.nextNode = next;
             this.cachedCallTarget = cachedFunction.getTarget();
@@ -978,11 +948,11 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
      * @see RCallNode
      */
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
-    public static final class UninitializedVarArgsCacheCallNode extends VarArgsCacheCallNode {
+    private static final class UninitializedVarArgsCacheCallNode extends VarArgsCacheCallNode {
         @Child private CallArgumentsNode args;
         private int depth = 1;  // varargs cached is started with a [DV] DispatchedVarArgsCallNode
 
-        public UninitializedVarArgsCacheCallNode(CallArgumentsNode args, RCallNode creator) {
+        UninitializedVarArgsCacheCallNode(CallArgumentsNode args, RCallNode creator) {
             super(creator);
             this.args = args;
         }
@@ -1118,14 +1088,17 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         }
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return functionNode.asRSyntaxNode();
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return signature;
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return arguments.v;
     }

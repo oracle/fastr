@@ -118,6 +118,23 @@ package com.oracle.truffle.r.parser;
      */
     private int incompleteNesting;
     private final ArrayList<Integer> nestingStack = new ArrayList<>();
+    
+    private static String hexChar(String... chars) {
+        int value = 0;
+        for (int i = 0; i < chars.length; i++) {
+            value = value * 16 + Integer.parseInt(chars[i], 16);
+        }
+        return new String(new int[]{value}, 0, 1);
+    }
+
+    private static String octChar(String... chars) {
+        int value = 0;
+        for (int i = 0; i < chars.length; i++) {
+            value = value * 8 + Integer.parseInt(chars[i], 8);
+        }
+        value &= 0xff; // octal escape sequences are clamped the 0-255 range
+        return new String(new int[]{value}, 0, 1);
+    }
 }
 
 @lexer::init{
@@ -616,12 +633,12 @@ fragment ESCAPE [StringBuilder buf]
       | ' ' { buf.append(' '); }
       | '\\' { buf.append('\\'); }
       | '\n' { buf.append('\n'); }
-      | a = OCT_DIGIT b = OCT_DIGIT c = OCT_DIGIT { buf.append(ParseUtil.octChar($a.text, $b.text, $c.text)); }
-      | a = OCT_DIGIT b = OCT_DIGIT { buf.append(ParseUtil.octChar($a.text, $b.text)); }
-      | a = OCT_DIGIT { buf.append(ParseUtil.octChar($a.text)); }
-      | 'x' a = HEX_DIGIT b = HEX_DIGIT { buf.append(ParseUtil.hexChar($a.text, $b.text)); }
-      | 'u' a = HEX_DIGIT b = HEX_DIGIT c = HEX_DIGIT d = HEX_DIGIT { buf.append(ParseUtil.hexChar($a.text, $b.text, $c.text, $d.text)); }
-      | 'U' a = HEX_DIGIT b = HEX_DIGIT c = HEX_DIGIT d = HEX_DIGIT e = HEX_DIGIT f = HEX_DIGIT g = HEX_DIGIT h = HEX_DIGIT { buf.append(ParseUtil.hexChar($a.text, $b.text, $c.text, $d.text, $e.text, $f.text, $g.text, $h.text)); }
+      | a = OCT_DIGIT b = OCT_DIGIT c = OCT_DIGIT { buf.append(octChar($a.text, $b.text, $c.text)); }
+      | a = OCT_DIGIT b = OCT_DIGIT { buf.append(octChar($a.text, $b.text)); }
+      | a = OCT_DIGIT { buf.append(octChar($a.text)); }
+      | 'x' a = HEX_DIGIT b = HEX_DIGIT { buf.append(hexChar($a.text, $b.text)); }
+      | 'u' a = HEX_DIGIT b = HEX_DIGIT c = HEX_DIGIT d = HEX_DIGIT { buf.append(hexChar($a.text, $b.text, $c.text, $d.text)); }
+      | 'U' a = HEX_DIGIT b = HEX_DIGIT c = HEX_DIGIT d = HEX_DIGIT e = HEX_DIGIT f = HEX_DIGIT g = HEX_DIGIT h = HEX_DIGIT { buf.append(hexChar($a.text, $b.text, $c.text, $d.text, $e.text, $f.text, $g.text, $h.text)); }
       )
     ;
 

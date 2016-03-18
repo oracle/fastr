@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public interface RAbstractContainer extends RAttributable, RTypedValue {
 
@@ -70,5 +75,6 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
      * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
      * When {@code true}, it is possible to call {@link RAttributable#getClassHierarchy()}.
      */
+    @Override
     boolean isObject(RAttributeProfiles attrProfiles);
 }

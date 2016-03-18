@@ -64,7 +64,6 @@ public abstract class UnaryArithmetic extends Operation {
         public RComplex op(double re, double im) {
             return RDataFactory.createComplex(op(re), op(im));
         }
-
     }
 
     public static class Plus extends UnaryArithmetic {
@@ -88,7 +87,5 @@ public abstract class UnaryArithmetic extends Operation {
         public RComplex op(double re, double im) {
             return RDataFactory.createComplex(re, im);
         }
-
     }
-
 }

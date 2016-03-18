@@ -22,21 +22,30 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.InlineCacheNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.OptType;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.VarargPromise;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Holds {@link RPromise}-related functionality that cannot be implemented in
@@ -334,6 +343,14 @@ public class PromiseHelperNode extends RBaseNode {
         return nextNode;
     }
 
+    private boolean isNullFrame(RPromise promise) {
+        return isNullFrameProfile.profile(promise.isNullFrame());
+    }
+
+    private boolean isDeoptimized(EagerPromise promise) {
+        return isDeoptimizedProfile.profile(promise.isDeoptimized());
+    }
+
     /**
      * @return Whether this promise is of type {@link PromiseType#ARG_DEFAULT}
      */
@@ -341,16 +358,8 @@ public class PromiseHelperNode extends RBaseNode {
         return isDefaultProfile.profile(promise.isDefault());
     }
 
-    public boolean isNullFrame(RPromise promise) {
-        return isNullFrameProfile.profile(promise.isNullFrame());
-    }
-
     public boolean isEvaluated(RPromise promise) {
         return isEvaluatedProfile.profile(promise.isEvaluated());
-    }
-
-    public boolean isDeoptimized(EagerPromise promise) {
-        return isDeoptimizedProfile.profile(promise.isDeoptimized());
     }
 
     private final ConditionProfile isEvaluatedProfile = ConditionProfile.createBinaryProfile();

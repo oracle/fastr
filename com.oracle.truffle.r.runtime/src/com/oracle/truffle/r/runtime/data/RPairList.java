@@ -22,14 +22,17 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Iterator;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.gnur.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 /**
  * Denotes the (rarely seen) {@code pairlist} type in R.
@@ -69,6 +72,7 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
         this.type = type;
     }
 
+    @Override
     public RType getRType() {
         return RType.PairList;
     }
@@ -187,6 +191,7 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
         return type;
     }
 
+    @Override
     public boolean isComplete() {
         RInternalError.shouldNotReachHere();
         return false;
@@ -210,10 +215,12 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
         throw RInternalError.shouldNotReachHere();
     }
 
+    @Override
     public boolean hasDimensions() {
         return true;
     }
 
+    @Override
     public int[] getDimensions() {
         return new int[]{1};
     }
@@ -223,6 +230,7 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
         throw RInternalError.shouldNotReachHere();
     }
 
+    @Override
     public Class<?> getElementClass() {
         return null;
     }
@@ -233,11 +241,13 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
         return null;
     }
 
+    @Override
     public RShareable materializeToShareable() {
         RInternalError.shouldNotReachHere();
         return null;
     }
 
+    @Override
     public Object getDataAtAsObject(int index) {
         RPairList pl = this;
         int i = 0;
@@ -303,6 +313,7 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
         return RDataFactory.createStringVector(RType.PairList.getName());
     }
 
+    @Override
     public boolean isObject(RAttributeProfiles attrProfiles) {
         return false;
     }

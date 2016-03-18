@@ -8,20 +8,23 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.graphics;
 
-import com.oracle.truffle.r.library.graphics.core.drawables.DrawableObject;
-import com.oracle.truffle.r.library.graphics.core.geometry.CoordinateSystem;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import javax.swing.JComponent;
+
+import com.oracle.truffle.r.library.graphics.core.drawables.DrawableObject;
+import com.oracle.truffle.r.library.graphics.core.geometry.CoordinateSystem;
 
 public class FastRComponent extends JComponent {
 

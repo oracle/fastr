@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +22,24 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public abstract class RToStringVectorClosure extends RToVectorClosure implements RAbstractStringVector {
+abstract class RToStringVectorClosure extends RToVectorClosure implements RAbstractStringVector {
 
-    public RToStringVectorClosure(RAbstractVector vector) {
+    RToStringVectorClosure(RAbstractVector vector) {
         super(vector);
     }
 
+    @Override
     public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createStringVector(new String[newLength], newIsComplete);
     }
 
+    @Override
     public final RStringVector materialize() {
         int length = getLength();
         String[] result = new String[length];
@@ -49,5 +54,4 @@ public abstract class RToStringVectorClosure extends RToVectorClosure implements
     public final RStringVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
     }
-
 }

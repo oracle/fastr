@@ -56,6 +56,7 @@ public final class Qbinom implements StatsFunctions.Function3_2 {
     private final Pbinom pbinomSearch1 = new Pbinom();
     private final Pbinom pbinomSearch2 = new Pbinom();
 
+    @Override
     public double evaluate(double initialP, double n, double pr, boolean lowerTail, boolean logProb) {
         double p = initialP;
 

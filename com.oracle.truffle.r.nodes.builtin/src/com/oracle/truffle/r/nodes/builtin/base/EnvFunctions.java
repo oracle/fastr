@@ -114,7 +114,7 @@ public class EnvFunctions {
             return asEnvironmentInt(frame, posVec.getDataAt(0));
         }
 
-        protected REnvironment asEnvironmentInt(VirtualFrame frame, int pos) {
+        private REnvironment asEnvironmentInt(VirtualFrame frame, int pos) {
             controlVisibility();
             if (pos == -1) {
                 Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
@@ -182,7 +182,6 @@ public class EnvFunctions {
         protected REnvironment asEnvironment(@SuppressWarnings("unused") Object object) {
             throw RError.error(this, RError.Message.INVALID_OBJECT);
         }
-
     }
 
     @RBuiltin(name = "emptyenv", kind = PRIMITIVE, parameterNames = {})
@@ -278,7 +277,6 @@ public class EnvFunctions {
             }
             return env.getParent();
         }
-
     }
 
     @RBuiltin(name = "parent.env<-", kind = INTERNAL, parameterNames = {"env", "value"})
@@ -450,7 +448,6 @@ public class EnvFunctions {
             env.lock(bindings == RRuntime.LOGICAL_TRUE);
             return RNull.instance;
         }
-
     }
 
     @RBuiltin(name = "environmentIsLocked", kind = INTERNAL, parameterNames = {"env"})
@@ -460,7 +457,6 @@ public class EnvFunctions {
             controlVisibility();
             return RDataFactory.createLogicalVectorFromScalar(env.isLocked());
         }
-
     }
 
     private static RuntimeException typeError(RBaseNode invokingNode, Object sym, Object env) {
@@ -573,7 +569,6 @@ public class EnvFunctions {
         private static RStringVector envls(REnvironment env, boolean allNames, boolean sorted) {
             return env.ls(allNames, null, sorted);
         }
-
     }
 
     @NodeChild("operand")
@@ -640,7 +635,5 @@ public class EnvFunctions {
         Object copy(@SuppressWarnings("unused") Object o) {
             throw RInternalError.unimplemented("copying of object in the environment not supported");
         }
-
     }
-
 }

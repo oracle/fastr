@@ -40,15 +40,14 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 public abstract class Abs extends RBuiltinNode {
 
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode absNode = UnaryArithmeticNodeGen.create(AbsArithmetic::new,
-                    RError.Message.NON_NUMERIC_MATH, RType.Integer);
+    @Child private UnaryArithmeticNode absNode = UnaryArithmeticNodeGen.create(AbsArithmetic::new, RError.Message.NON_NUMERIC_MATH, RType.Integer);
 
     @Specialization
     protected Object abs(Object value) {
         return absNode.execute(boxPrimitive.execute(value));
     }
 
-    public static class AbsArithmetic extends UnaryArithmetic {
+    private static final class AbsArithmetic extends UnaryArithmetic {
 
         @Override
         public RType calculateResultType(RType argumentType) {
@@ -84,7 +83,5 @@ public abstract class Abs extends RBuiltinNode {
         public double opd(double re, double im) {
             return RComplex.abs(re, im);
         }
-
     }
-
 }

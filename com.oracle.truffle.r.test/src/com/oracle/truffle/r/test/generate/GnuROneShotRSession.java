@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.test.generate;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
@@ -89,6 +91,7 @@ public class GnuROneShotRSession implements RSession {
         return new String(data);
     }
 
+    @Override
     public String eval(String expression) {
         if (expression.contains("library(") && !TestBase.generatingExpected()) {
             System.out.println("==============================================");
@@ -107,7 +110,6 @@ public class GnuROneShotRSession implements RSession {
             System.err.print("exception: " + ex);
             return null;
         }
-
     }
 
     protected void send(OutputStream gnuRinput, byte[]... data) throws IOException {
@@ -117,6 +119,7 @@ public class GnuROneShotRSession implements RSession {
         gnuRinput.flush();
     }
 
+    @Override
     public String name() {
         return "GnuR one-shot";
     }

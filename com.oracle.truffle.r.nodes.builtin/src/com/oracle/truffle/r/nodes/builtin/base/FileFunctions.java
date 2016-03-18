@@ -11,26 +11,59 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.CopyOption;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
-import java.nio.file.attribute.*;
-import java.util.*;
-import java.util.function.*;
-import java.util.regex.*;
-import java.util.stream.*;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 // Much of this code was influences/transcribed from GnuR src/main/platform.c
 
@@ -49,7 +82,7 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        public Object fileAccess(RAbstractStringVector names, int mode) {
+        protected Object fileAccess(RAbstractStringVector names, int mode) {
             if (mode == RRuntime.INT_NA || mode < 0 || mode > 7) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, "mode");
             }
@@ -83,7 +116,7 @@ public class FileFunctions {
              * There are two simple (non-trivial) cases and one tricky 1. 1. Append one or more
              * files to a single file (len1 == 1, len2 >= 1) 2. Append one file to one file for
              * several files (len1 == len2)
-             * 
+             *
              * The tricky case is when len1 > 1 && len2 > len1. E.g. f1,f2 <- g1,g2,g3 In this case,
              * this is really f1,f2,f1 <- g1,g2,g3
              */
@@ -226,11 +259,11 @@ public class FileFunctions {
              * the information. The R closure that called the .Internal turns the result into a
              * dataframe and sets the row.names attributes to the paths in vec. It also updates the
              * mtime, ctime, atime fields using .POSIXct.
-             * 
+             *
              * We try to use the JDK classes, even though they provide a more abstract interface
              * than R. In particular there seems to be no way to get the uid/gid values. We might be
              * better off justing using a native call.
-             * 
+             *
              * TODO implement extras_cols=FALSE
              */
             controlVisibility();
@@ -530,7 +563,6 @@ public class FileFunctions {
             controlVisibility();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
-
     }
 
     // TODO Implement all the options
@@ -562,7 +594,7 @@ public class FileFunctions {
             return doListFilesBody(vec, pattern, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
         }
 
-        protected RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, byte allFilesL, byte fullNamesL, byte recursiveL, byte ignoreCaseL, byte includeDirsL, byte noDotDotL) {
+        private RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, byte allFilesL, byte fullNamesL, byte recursiveL, byte ignoreCaseL, byte includeDirsL, byte noDotDotL) {
             controlVisibility();
             boolean allFiles = RRuntime.fromLogical(allFilesL);
             boolean fullNames = RRuntime.fromLogical(fullNamesL);
@@ -645,6 +677,7 @@ public class FileFunctions {
                 this.pattern = pattern;
             }
 
+            @Override
             public boolean test(Path path, BasicFileAttributes u) {
                 if (u.isDirectory() && !includeDirs) {
                     return false;
@@ -703,6 +736,7 @@ public class FileFunctions {
         }
 
         private static class FileMatcher implements BiPredicate<Path, BasicFileAttributes> {
+            @Override
             public boolean test(Path path, BasicFileAttributes u) {
                 boolean result = u.isDirectory();
                 return result;
@@ -780,7 +814,7 @@ public class FileFunctions {
             return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         }
 
-        public static boolean lengthZero(RList list) {
+        protected static boolean lengthZero(RList list) {
             if (list.getLength() == 0) {
                 return true;
             }
@@ -794,7 +828,6 @@ public class FileFunctions {
             }
             return false;
         }
-
     }
 
     /**
@@ -808,7 +841,7 @@ public class FileFunctions {
             casts.toLogical(2).toLogical(3).toLogical(4).toLogical(5);
         }
 
-        protected boolean checkLogical(byte value, String name) throws RError {
+        private boolean checkLogical(byte value, String name) throws RError {
             if (RRuntime.isNA(value)) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, name);
             } else {
@@ -996,7 +1029,7 @@ public class FileFunctions {
             casts.toLogical(1).toLogical(2);
         }
 
-        protected boolean checkLogical(byte value, String name) throws RError {
+        private boolean checkLogical(byte value, String name) throws RError {
             if (RRuntime.isNA(value)) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, name);
             } else {
@@ -1097,7 +1130,7 @@ public class FileFunctions {
             return RRuntime.asLogical(ok);
         }
 
-        protected boolean mkparentdirs(File file, byte showWarnings, int mode) {
+        private boolean mkparentdirs(File file, byte showWarnings, int mode) {
             if (file.isDirectory()) {
                 return true;
             }
@@ -1111,7 +1144,7 @@ public class FileFunctions {
             }
         }
 
-        protected boolean mkdir(String path, byte showWarnings, int mode) {
+        private boolean mkdir(String path, byte showWarnings, int mode) {
             try {
                 RFFIFactory.getRFFI().getBaseRFFI().mkdir(path, mode);
                 return true;
@@ -1142,6 +1175,5 @@ public class FileFunctions {
         protected RLogicalVector dirExists(@SuppressWarnings("unused") Object pathVec) {
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "filename");
         }
-
     }
 }

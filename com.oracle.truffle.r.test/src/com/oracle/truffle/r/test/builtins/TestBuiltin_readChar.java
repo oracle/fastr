@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 
@@ -23,5 +23,4 @@ public class TestBuiltin_readChar extends TestBase {
         assertEval(Ignored.Unknown, "argv <- structure(list(con = as.raw(c(65, 66, 67, 68, 69, 70,     71, 72, 73, 74)), nchars = c(3, 3, 0, 3, 3, 3)), .Names = c('con',     'nchars'));"
                         + "do.call('readChar', argv)");
     }
-
 }

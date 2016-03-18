@@ -24,14 +24,12 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Writer;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.base.Inherits;
 import com.oracle.truffle.r.nodes.builtin.base.InheritsNodeGen;
@@ -46,7 +44,6 @@ import com.oracle.truffle.r.nodes.builtin.base.IsTypeFunctionsFactory.IsArrayNod
 import com.oracle.truffle.r.nodes.builtin.base.IsTypeFunctionsFactory.IsListNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.IsTypeFunctionsFactory.IsObjectNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -119,7 +116,6 @@ public abstract class ValuePrinterNode extends RNode {
         } catch (IOException ex) {
             throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
-
     }
 
     private String prettyPrint(Object o, PrintParameters printParams, PrintWriter out, VirtualFrame frame)
@@ -137,5 +133,4 @@ public abstract class ValuePrinterNode extends RNode {
     private static void prettyPrint(Object o, PrintContext printCtx) throws IOException {
         ValuePrinters.INSTANCE.println(o, printCtx);
     }
-
 }

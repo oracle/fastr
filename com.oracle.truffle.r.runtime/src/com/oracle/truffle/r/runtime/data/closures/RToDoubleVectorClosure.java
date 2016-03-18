@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +22,24 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDoubleVector {
+abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDoubleVector {
 
-    public RToDoubleVectorClosure(RAbstractVector vector) {
+    RToDoubleVectorClosure(RAbstractVector vector) {
         super(vector);
     }
 
+    @Override
     public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
     }
 
+    @Override
     public final RDoubleVector materialize() {
         int length = getLength();
         double[] result = new double[length];
@@ -49,5 +54,4 @@ public abstract class RToDoubleVectorClosure extends RToVectorClosure implements
     public final RDoubleVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
     }
-
 }

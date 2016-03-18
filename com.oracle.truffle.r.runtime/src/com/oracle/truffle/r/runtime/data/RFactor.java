@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class RFactor implements RShareable, RAbstractContainer {
 
@@ -36,10 +38,12 @@ public final class RFactor implements RShareable, RAbstractContainer {
         this.ordered = ordered;
     }
 
+    @Override
     public int[] getInternalStore() {
         return vector.getInternalStore();
     }
 
+    @Override
     public RType getRType() {
         return RType.Integer;
     }
@@ -262,5 +266,4 @@ public final class RFactor implements RShareable, RAbstractContainer {
     public void setGPBits(int value) {
         vector.setGPBits(value);
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class RDataFrame implements RShareable, RAbstractContainer {
 
@@ -36,6 +37,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
         this.length = vector instanceof RList ? vecLength : (vecLength == 0 ? 0 : 1);
     }
 
+    @Override
     public RType getRType() {
         return RType.List;
     }
@@ -260,5 +262,4 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     public void setGPBits(int value) {
         vector.setGPBits(value);
     }
-
 }

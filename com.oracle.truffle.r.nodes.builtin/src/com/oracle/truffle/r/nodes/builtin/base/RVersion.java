@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RVersionInfo;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 @RBuiltin(name = "Version", kind = INTERNAL, parameterNames = {})
 public abstract class RVersion extends RBuiltinNode {

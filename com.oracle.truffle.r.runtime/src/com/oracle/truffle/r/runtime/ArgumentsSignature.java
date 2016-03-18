@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,24 +22,27 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public final class ArgumentsSignature implements Iterable<String> {
 
     private static final ConcurrentHashMap<ArgumentsSignature, ArgumentsSignature> signatures = new ConcurrentHashMap<>();
 
     public static final String VARARG_NAME = "...";
-    public static final String VARARG_GETTER_PREFIX = "..";
     public static final int NO_VARARG = -1;
 
+    private static final String VARARG_GETTER_PREFIX = "..";
+
     @CompilationFinal private static final ArgumentsSignature[] EMPTY_SIGNATURES = new ArgumentsSignature[32];
-    public static final ArgumentsSignature VARARG_SIGNATURE = get(VARARG_NAME);
     public static final ArgumentsSignature INVALID_SIGNATURE = new ArgumentsSignature(new String[]{"<<invalid>>"});
 
     static {
@@ -148,6 +151,7 @@ public final class ArgumentsSignature implements Iterable<String> {
         return true;
     }
 
+    @Override
     public Iterator<String> iterator() {
         CompilerAsserts.neverPartOfCompilation();
         return Arrays.asList(names).iterator();

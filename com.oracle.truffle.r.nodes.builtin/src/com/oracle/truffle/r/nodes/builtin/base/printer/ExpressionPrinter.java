@@ -31,9 +31,13 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
-public final class ExpressionPrinter extends AbstractValuePrinter<RExpression> {
+final class ExpressionPrinter extends AbstractValuePrinter<RExpression> {
 
-    public static final ExpressionPrinter INSTANCE = new ExpressionPrinter();
+    static final ExpressionPrinter INSTANCE = new ExpressionPrinter();
+
+    private ExpressionPrinter() {
+        // singleton
+    }
 
     private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
@@ -58,5 +62,4 @@ public final class ExpressionPrinter extends AbstractValuePrinter<RExpression> {
         }
         out.print(')');
     }
-
 }

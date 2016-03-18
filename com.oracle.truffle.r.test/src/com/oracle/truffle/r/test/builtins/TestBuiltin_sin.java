@@ -10,10 +10,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
-import com.oracle.truffle.r.test.TestBase.Ignored;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_sin extends TestBase {

@@ -22,15 +22,16 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.util.*;
+import java.util.Arrays;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 // @formatter:off
 /**
@@ -79,9 +80,6 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  */
 // @formatter:on
 public final class RArguments {
-
-    @CompilationFinal public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-    @CompilationFinal public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     @ValueType
     public abstract static class DispatchArgs {
@@ -239,11 +237,6 @@ public final class RArguments {
         return Arrays.copyOfRange(args, INDEX_ARGUMENTS, INDEX_ARGUMENTS + ((ArgumentsSignature) args[INDEX_SIGNATURE]).getLength());
     }
 
-    public static void copyArguments(Frame frame, Object[] dest, int pos) {
-        Object[] args = frame.getArguments();
-        System.arraycopy(args, INDEX_ARGUMENTS, dest, pos, ((ArgumentsSignature) args[INDEX_SIGNATURE]).getLength());
-    }
-
     /**
      * <b>Only to be called from AccessArgumentNode!</b>
      *
@@ -270,10 +263,6 @@ public final class RArguments {
 
     public static void setEnvironment(Frame frame, REnvironment env) {
         frame.getArguments()[INDEX_ENVIRONMENT] = env;
-    }
-
-    public static void setDepth(Frame frame, int depth) {
-        frame.getArguments()[INDEX_DEPTH] = depth;
     }
 
     public static void setIsIrregular(Frame frame, boolean isIrregularFrame) {

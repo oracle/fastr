@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,26 +22,28 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
-import java.util.*;
+import java.util.List;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.interop.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.engine.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.nodes.function.CallMatcherNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.data.RFunction;
 
-public class RInteropExecuteNode extends RootNode {
+class RInteropExecuteNode extends RootNode {
 
     private static final FrameDescriptor emptyFrameDescriptor = new FrameDescriptor();
 
-    @Child CallMatcherNode callMatcher = CallMatcherNode.create(false, true);
+    @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, true);
 
     private final ArgumentsSignature suppliedSignature;
 
-    public RInteropExecuteNode(int argumentsLength) {
+    RInteropExecuteNode(int argumentsLength) {
         super(TruffleRLanguage.class, null, null);
         suppliedSignature = ArgumentsSignature.empty(argumentsLength);
     }

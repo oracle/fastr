@@ -236,14 +236,17 @@ public final class GroupDispatchNode extends RSourceSectionNode implements RSynt
         return callMatcher.execute(frame, signature, evaluatedArgs, function, s3Args);
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return RSyntaxLookup.createDummyLookup(null, fixedGenericName, true);
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return callArgsNode.getSyntaxArguments();
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return callArgsNode.getSignature();
     }

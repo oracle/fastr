@@ -22,17 +22,24 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import java.util.function.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
+import com.oracle.truffle.r.runtime.context.Engine;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * This node reifies a runtime object into the AST by creating nodes for frequently encountered
@@ -46,7 +53,7 @@ public abstract class InlineCacheNode extends RBaseNode {
 
     public abstract Object execute(Frame frame, Object value);
 
-    public InlineCacheNode(int maxPicDepth, Function<Object, RNode> reify, BiFunction<Frame, Object, Object> generic) {
+    InlineCacheNode(int maxPicDepth, Function<Object, RNode> reify, BiFunction<Frame, Object, Object> generic) {
         this.maxPicDepth = maxPicDepth;
         this.reify = reify;
         this.generic = generic;
@@ -113,5 +120,4 @@ public abstract class InlineCacheNode extends RBaseNode {
     private static Object evalPromise(Frame frame, Closure closure) {
         return RContext.getEngine().evalPromise(closure, frame.materialize());
     }
-
 }

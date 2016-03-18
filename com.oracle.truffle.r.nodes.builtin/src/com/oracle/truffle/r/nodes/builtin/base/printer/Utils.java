@@ -39,9 +39,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public class Utils {
+final class Utils {
 
-    public static final Set<String> keywords;
+    private Utils() {
+        // no instance allowed
+    }
+
+    private static final Set<String> keywords;
 
     static {
         String[] kw = {"NULL", "NA", "TRUE", "FALSE", "Inf", "NaN",
@@ -60,7 +64,7 @@ public class Utils {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T castTo(Object x) {
+    static <T> T castTo(Object x) {
         if (x instanceof RNull) {
             return null;
         } else {
@@ -68,11 +72,11 @@ public class Utils {
         }
     }
 
-    public static boolean canBeLogicalVector(Object o) {
+    static boolean canBeLogicalVector(Object o) {
         return o instanceof RAbstractLogicalVector || o instanceof Byte || o instanceof Boolean;
     }
 
-    public static RAbstractLogicalVector toLogicalVector(Object o) {
+    static RAbstractLogicalVector toLogicalVector(Object o) {
         if (o instanceof Byte) {
             return RLogical.valueOf((Byte) o);
         }
@@ -82,52 +86,52 @@ public class Utils {
         return Utils.<RAbstractLogicalVector> castTo(o);
     }
 
-    public static boolean canBeStringVector(Object o) {
+    static boolean canBeStringVector(Object o) {
         return o instanceof RAbstractStringVector || o instanceof String;
     }
 
-    public static RAbstractStringVector toStringVector(Object o) {
+    static RAbstractStringVector toStringVector(Object o) {
         if (o instanceof String) {
             return RString.valueOf((String) o);
         }
         return Utils.<RAbstractStringVector> castTo(o);
     }
 
-    public static boolean canBeIntVector(Object o) {
+    static boolean canBeIntVector(Object o) {
         return o instanceof RAbstractIntVector || o instanceof Integer;
     }
 
-    public static RAbstractIntVector toIntVector(Object o) {
+    static RAbstractIntVector toIntVector(Object o) {
         if (o instanceof Integer) {
             return RInteger.valueOf((Integer) o);
         }
         return Utils.<RAbstractIntVector> castTo(o);
     }
 
-    public static boolean canBeDoubleVector(Object o) {
+    static boolean canBeDoubleVector(Object o) {
         return o instanceof RAbstractDoubleVector || o instanceof Double;
     }
 
-    public static RAbstractDoubleVector toDoubleVector(Object o) {
+    static RAbstractDoubleVector toDoubleVector(Object o) {
         if (o instanceof Double) {
             return RDouble.valueOf((Double) o);
         }
         return Utils.<RAbstractDoubleVector> castTo(o);
     }
 
-    public static boolean canBeComplexVector(Object o) {
+    static boolean canBeComplexVector(Object o) {
         return o instanceof RAbstractComplexVector;
     }
 
-    public static RAbstractComplexVector toComplexVector(Object o) {
+    static RAbstractComplexVector toComplexVector(Object o) {
         return Utils.<RAbstractComplexVector> castTo(o);
     }
 
-    public static <T> T getDataAt(RAbstractVector v, int index) {
+    static <T> T getDataAt(RAbstractVector v, int index) {
         return index < v.getLength() ? Utils.<T> castTo(v.getDataAtAsObject(index)) : null;
     }
 
-    public static boolean isValidName(String name) {
+    static boolean isValidName(String name) {
         if (name.isEmpty()) {
             return false;
         }
@@ -154,8 +158,7 @@ public class Utils {
         return !keywords.contains(name);
     }
 
-    public static int indexWidth(int n) {
+    static int indexWidth(int n) {
         return (int) (Math.log10(n + 0.5) + 1);
     }
-
 }

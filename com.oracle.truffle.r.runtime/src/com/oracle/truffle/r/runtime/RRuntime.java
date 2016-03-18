@@ -11,17 +11,34 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.text.*;
-import java.util.*;
+import java.text.DecimalFormat;
+import java.util.Locale;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.interop.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 public class RRuntime {
 
@@ -58,15 +75,15 @@ public class RRuntime {
     public static final String R_TEXT_MIME = "text/x-r";
 
     public static final String STRING_NA = new String("NA");
-    public static final String STRING_NaN = new String("NaN");
-    public static final String STRING_TRUE = new String("TRUE");
-    public static final String STRING_FALSE = new String("FALSE");
+    private static final String STRING_NaN = "NaN";
+    private static final String STRING_TRUE = "TRUE";
+    private static final String STRING_FALSE = "FALSE";
     public static final int INT_NA = Integer.MIN_VALUE;
     public static final int INT_MIN_VALUE = Integer.MIN_VALUE + 1;
     public static final int INT_MAX_VALUE = Integer.MAX_VALUE;
 
     // R's NA is a special instance of IEEE's NaN
-    public static final long NA_LONGBITS = 0x7ff00000000007a2L;
+    private static final long NA_LONGBITS = 0x7ff00000000007a2L;
     public static final double DOUBLE_NA = Double.longBitsToDouble(NA_LONGBITS);
     public static final double EPSILON = Math.pow(2.0, -52.0);
 
@@ -81,7 +98,6 @@ public class RRuntime {
     public static final String CLASS_LANGUAGE = "call";
     public static final String CLASS_EXPRESSION = "expression";
 
-    @CompilationFinal public static final String[] STRING_ARRAY_SENTINEL = new String[0];
     public static final String DEFAULT = "default";
 
     public static final String GENERIC_ATTR_KEY = "generic";
@@ -112,8 +128,6 @@ public class RRuntime {
     public static final String DOT_S3_CLASS = ".S3Class";
 
     public static final String CLASS_ORDERED = "ordered";
-
-    public static final int LEN_METHOD_NAME = 512;
 
     public static final String RS3MethodsTable = ".__S3MethodsTable__.";
 
@@ -671,11 +685,6 @@ public class RRuntime {
         return value == STRING_NA;
     }
 
-    @SuppressFBWarnings(value = "ES_COMPARING_PARAMETER_STRING_WITH_EQ", justification = "string NaN is intended to be treated as an identity")
-    public static boolean isNaN(String value) {
-        return value == STRING_NaN;
-    }
-
     public static boolean isNA(byte value) {
         return value == LOGICAL_NA;
     }
@@ -690,26 +699,6 @@ public class RRuntime {
 
     public static boolean isNA(RComplex value) {
         return isNA(value.getRealPart());
-    }
-
-    public static boolean isComplete(String value) {
-        return !isNA(value);
-    }
-
-    public static boolean isComplete(byte value) {
-        return !isNA(value);
-    }
-
-    public static boolean isComplete(int value) {
-        return !isNA(value);
-    }
-
-    public static boolean isComplete(double value) {
-        return !isNA(value);
-    }
-
-    public static boolean isComplete(RComplex value) {
-        return !isNA(value);
     }
 
     @TruffleBoundary
@@ -878,5 +867,4 @@ public class RRuntime {
     public static boolean isForeignObject(Object obj) {
         return obj instanceof TruffleObject && !(obj instanceof RTypedValue);
     }
-
 }

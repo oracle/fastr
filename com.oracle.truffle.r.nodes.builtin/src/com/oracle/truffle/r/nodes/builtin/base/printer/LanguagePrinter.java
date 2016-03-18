@@ -28,9 +28,13 @@ import java.io.PrintWriter;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 
-public final class LanguagePrinter extends AbstractValuePrinter<RLanguage> {
+final class LanguagePrinter extends AbstractValuePrinter<RLanguage> {
 
-    public static final LanguagePrinter INSTANCE = new LanguagePrinter();
+    static final LanguagePrinter INSTANCE = new LanguagePrinter();
+
+    private LanguagePrinter() {
+        // singleton
+    }
 
     @Override
     protected void printValue(RLanguage language, PrintContext printCtx) throws IOException {
@@ -49,5 +53,4 @@ public final class LanguagePrinter extends AbstractValuePrinter<RLanguage> {
             }
         }
     }
-
 }

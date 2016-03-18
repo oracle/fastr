@@ -48,12 +48,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @RBuiltin(name = "@<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", "value"}, nonEvalArgs = 1)
 public abstract class UpdateSlot extends RBuiltinNode {
 
-    @CompilationFinal RFunction checkSlotAssignFunction;
+    @CompilationFinal private RFunction checkSlotAssignFunction;
     @Child private ClassHierarchyNode objClassHierarchy;
     @Child private ClassHierarchyNode valClassHierarchy;
-    @Child UpdateSlotNode updateSlotNode = com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen.create(null, null, null);
-    @Child ReadVariableNode checkAtAssignmentFind = ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, "checkAtAssignment");
-    @Child DirectCallNode checkAtAssignmentCall;
+    @Child private UpdateSlotNode updateSlotNode = com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen.create(null, null, null);
+    @Child private ReadVariableNode checkAtAssignmentFind = ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, "checkAtAssignment");
+    @Child private DirectCallNode checkAtAssignmentCall;
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
     private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
     private final RCaller caller = RDataFactory.createCaller(this);
@@ -134,5 +134,4 @@ public abstract class UpdateSlot extends RBuiltinNode {
         assert nameObjCached instanceof RPromise;
         return ((RPromise) nameObj).getRep() == ((RPromise) nameObjCached).getRep();
     }
-
 }

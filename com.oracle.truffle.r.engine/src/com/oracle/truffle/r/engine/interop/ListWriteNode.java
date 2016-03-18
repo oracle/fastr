@@ -32,11 +32,11 @@ import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctions.UpdateFieldBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
 
-public abstract class ListWriteNode extends RootNode {
+abstract class ListWriteNode extends RootNode {
     @Child private UpdateFieldBuiltin builtin;
     @Child private ReplaceVectorNode extract = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
 
-    public ListWriteNode() {
+    ListWriteNode() {
         super(TruffleRLanguage.class, null, null);
     }
 
@@ -69,5 +69,4 @@ public abstract class ListWriteNode extends RootNode {
         Object x = extract.apply(frame, receiver, new Object[]{field}, value);
         return x;
     }
-
 }

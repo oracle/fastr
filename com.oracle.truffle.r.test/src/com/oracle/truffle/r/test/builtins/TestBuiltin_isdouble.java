@@ -4,15 +4,15 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_isdouble extends TestBase {
@@ -46,5 +46,4 @@ public class TestBuiltin_isdouble extends TestBase {
     public void testisdouble7() {
         assertEval("argv <- list(structure(c(1, 5, 9, 13, 17, 21, 2, 6, 10, 14, 18,     22, 3, 7, 11, 15, 19, 23, 4, 8, 12, 16, 20, 24), .Dim = c(6L,     4L)));do.call('is.double', argv)");
     }
-
 }

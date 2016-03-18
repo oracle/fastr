@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.env.frame;
 
-import java.util.*;
+import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.r.runtime.RArguments;
 
 /**
  * This frame is used for {@code namespace:base}. It delegates all operations to

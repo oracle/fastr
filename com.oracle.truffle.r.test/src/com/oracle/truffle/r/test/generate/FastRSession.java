@@ -63,43 +63,47 @@ public final class FastRSession implements RSession {
             input.addAll(Arrays.asList(lines));
         }
 
+        @Override
         @TruffleBoundary
         public void println(String s) {
             buffer.append(s);
             buffer.append('\n');
         }
 
+        @Override
         @TruffleBoundary
         public void print(String s) {
             buffer.append(s);
         }
 
+        @Override
         public String readLine() {
             return input.pollFirst();
         }
 
+        @Override
         public boolean isInteractive() {
             return false;
         }
 
+        @Override
         @TruffleBoundary
         public void printErrorln(String s) {
             println(s);
         }
 
+        @Override
         @TruffleBoundary
         public void printError(String s) {
             print(s);
         }
 
-        public void redirectError() {
-            // always
-        }
-
+        @Override
         public String getPrompt() {
             return null;
         }
 
+        @Override
         public void setPrompt(String prompt) {
             // ignore
         }
@@ -109,10 +113,12 @@ public final class FastRSession implements RSession {
             buffer.delete(0, buffer.length());
         }
 
+        @Override
         public int getWidth() {
             return RContext.CONSOLE_WIDTH;
         }
 
+        @Override
         public String getInputDescription() {
             return "<test input>";
         }
@@ -158,6 +164,7 @@ public final class FastRSession implements RSession {
         }
     }
 
+    @Override
     @SuppressWarnings("deprecation")
     public String eval(String expression) throws Throwable {
         consoleHandler.reset();
@@ -259,6 +266,7 @@ public final class FastRSession implements RSession {
         }
     }
 
+    @Override
     public String name() {
         return "FastR";
     }

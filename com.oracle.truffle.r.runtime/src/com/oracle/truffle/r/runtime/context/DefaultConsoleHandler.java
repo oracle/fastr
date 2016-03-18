@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintStream;
 
 public class DefaultConsoleHandler implements ConsoleHandler {
 
@@ -35,22 +40,27 @@ public class DefaultConsoleHandler implements ConsoleHandler {
         this.out = new PrintStream(out);
     }
 
+    @Override
     public void println(String s) {
         out.println(s);
     }
 
+    @Override
     public void print(String s) {
         out.print(s);
     }
 
+    @Override
     public void printErrorln(String s) {
         out.println(s);
     }
 
+    @Override
     public void printError(String s) {
         out.print(s);
     }
 
+    @Override
     public String readLine() {
         try {
             if (prompt != null) {
@@ -62,26 +72,27 @@ public class DefaultConsoleHandler implements ConsoleHandler {
         }
     }
 
+    @Override
     public boolean isInteractive() {
         return true;
     }
 
-    public void redirectError() {
-        // ?
-    }
-
+    @Override
     public String getPrompt() {
         return prompt;
     }
 
+    @Override
     public void setPrompt(String prompt) {
         this.prompt = prompt;
     }
 
+    @Override
     public int getWidth() {
         return 80;
     }
 
+    @Override
     public String getInputDescription() {
         return "<PolyglotEngine env input>";
     }

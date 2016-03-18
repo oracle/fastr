@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 /**
  * This interface can be used to provide a fast path, implemented in Java, for an R function. This
@@ -37,14 +37,17 @@ public interface FastPathFactory {
 
     FastPathFactory FORCED_EAGER_ARGS = new FastPathFactory() {
 
+        @Override
         public RFastPathNode create() {
             return null;
         }
 
+        @Override
         public boolean evaluatesArgument(int index) {
             return false;
         }
 
+        @Override
         public boolean forcedEagerPromise(int index) {
             return true;
         }

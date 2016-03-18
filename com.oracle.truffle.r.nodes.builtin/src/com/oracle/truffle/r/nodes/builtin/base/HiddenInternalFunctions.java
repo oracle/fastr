@@ -11,34 +11,65 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import java.io.*;
-import java.nio.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.CallInlineCacheNode;
+import com.oracle.truffle.r.nodes.CallInlineCacheNodeGen;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EvalFunctions.Eval;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.runtime.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
+import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RCompression;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
-import com.oracle.truffle.r.runtime.ffi.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Private, undocumented, {@code .Internal} and {@code .Primitive} functions transcribed from GnuR,
@@ -165,12 +196,12 @@ public class HiddenInternalFunctions {
          * No error checking here as this called by trusted library code.
          */
         @Specialization
-        public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
+        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
             return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, compressed.getDataAt(0), envhook);
         }
 
         @Specialization
-        public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RDoubleVector compressed, RFunction envhook) {
+        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RDoubleVector compressed, RFunction envhook) {
             return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, (int) compressed.getDataAt(0), envhook);
         }
 
@@ -183,7 +214,7 @@ public class HiddenInternalFunctions {
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("n");
 
         @TruffleBoundary
-        public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
+        private Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
             if (CompilerDirectives.inInterpreter()) {
                 LoopNode.reportLoopCount(this, -5);
             }
@@ -232,6 +263,7 @@ public class HiddenInternalFunctions {
             }
             try {
                 RSerialize.CallHook callHook = new RSerialize.CallHook() {
+                    @Override
                     public Object eval(Object arg) {
                         Object[] callArgs = RArguments.create(envhook, caller, null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
                         return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
@@ -252,7 +284,6 @@ public class HiddenInternalFunctions {
             dataLengthBuf.position(0);
             return dataLengthBuf.getInt();
         }
-
     }
 
     @RBuiltin(name = "getRegisteredRoutines", kind = INTERNAL, parameterNames = "info")
@@ -295,10 +326,9 @@ public class HiddenInternalFunctions {
             throw RError.error(this, RError.Message.REQUIRES_DLLINFO);
         }
 
-        public static boolean isDLLInfo(RExternalPtr externalPtr) {
+        protected static boolean isDLLInfo(RExternalPtr externalPtr) {
             return DLL.isDLLInfo(externalPtr);
         }
-
     }
 
     @RBuiltin(name = "getVarsFromFrame", kind = INTERNAL, parameterNames = {"vars", "e", "force"})
@@ -359,6 +389,7 @@ public class HiddenInternalFunctions {
             }
 
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
+                @Override
                 public Object eval(Object arg) {
                     Object[] callArgs = RArguments.create(hook, caller, null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
                     return callCache.execute(new SubstituteVirtualFrame(frame), hook.getTarget(), callArgs);
@@ -438,7 +469,6 @@ public class HiddenInternalFunctions {
                 throw RError.error(this, Message.GENERIC, "lazyLoadDBinsertValue file append error");
             }
         }
-
     }
 
     @RBuiltin(name = "lazyLoadDBflush", kind = INTERNAL, parameterNames = "path")
@@ -452,7 +482,7 @@ public class HiddenInternalFunctions {
 
     /*
      * Created as primitive function to avoid incrementing reference count for the argument.
-     * 
+     *
      * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
      * SHARED_PERMANENT_VAL for permanent shared
      */

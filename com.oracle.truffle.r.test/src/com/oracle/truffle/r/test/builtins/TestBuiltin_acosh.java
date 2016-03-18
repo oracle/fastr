@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_acosh extends TestBase {
@@ -46,5 +46,4 @@ public class TestBuiltin_acosh extends TestBase {
     public void testacosh6() {
         assertEval(Ignored.OutputFormatting, "argv <- list(c(0.34345+233i,-0.34345+0.3334i));acosh(argv[[1]]);");
     }
-
 }

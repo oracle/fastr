@@ -22,17 +22,23 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
+import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.instrument.Browser;
 
 public class BrowserFunctions {
@@ -75,7 +81,6 @@ public class BrowserFunctions {
             }
             return RNull.instance;
         }
-
     }
 
     private abstract static class RetrieveAdapter extends RBuiltinNode {
@@ -93,7 +98,6 @@ public class BrowserFunctions {
             }
             return helperState.get(nn - 1);
         }
-
     }
 
     @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})

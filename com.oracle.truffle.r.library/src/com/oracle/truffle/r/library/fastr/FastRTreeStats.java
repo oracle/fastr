@@ -121,6 +121,7 @@ public abstract class FastRTreeStats extends RExternalBuiltinNode.Arg2 {
             this.knownName = knownName;
         }
 
+        @Override
         public boolean visit(Node node) {
             if (RBaseNode.isRSyntaxNode(node)) {
                 syntaxNodeCount++;
@@ -141,7 +142,5 @@ public abstract class FastRTreeStats extends RExternalBuiltinNode.Arg2 {
                 return fdn.toString();
             }
         }
-
     }
-
 }

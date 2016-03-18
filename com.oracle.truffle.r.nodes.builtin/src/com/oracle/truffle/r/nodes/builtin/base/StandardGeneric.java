@@ -176,5 +176,4 @@ public abstract class StandardGeneric extends RBuiltinNode {
             throw RError.error(this, RError.Message.EXPECTED_GENERIC, cl.getLength() == 0 ? RRuntime.STRING_NA : cl.getDataAt(0));
         }
     }
-
 }

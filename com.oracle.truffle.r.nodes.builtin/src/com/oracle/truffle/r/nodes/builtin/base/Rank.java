@@ -32,8 +32,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "rank", kind = INTERNAL, parameterNames = {"x", "len", "ties.method"})
 public abstract class Rank extends RBuiltinNode {
-    @Child Order.OrderVector1Node orderVector1Node;
-    @Child Order.CmpNode orderCmpNode;
+    @Child private Order.OrderVector1Node orderVector1Node;
+    @Child private Order.CmpNode orderCmpNode;
 
     private static final Object rho = new Object();
 
@@ -48,14 +48,14 @@ public abstract class Rank extends RBuiltinNode {
         casts.toInteger(1);
     }
 
-    Order.OrderVector1Node initOrderVector1() {
+    private Order.OrderVector1Node initOrderVector1() {
         if (orderVector1Node == null) {
             orderVector1Node = insert(OrderVector1NodeGen.create());
         }
         return orderVector1Node;
     }
 
-    Order.CmpNode initOrderCmp() {
+    private Order.CmpNode initOrderCmp() {
         if (orderCmpNode == null) {
             orderCmpNode = insert(CmpNodeGen.create());
         }
@@ -131,7 +131,5 @@ public abstract class Rank extends RBuiltinNode {
         } else {
             return RDataFactory.createIntVector(ik, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
-
 }

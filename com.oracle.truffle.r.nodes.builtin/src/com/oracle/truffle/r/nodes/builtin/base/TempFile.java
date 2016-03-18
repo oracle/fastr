@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,16 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-
-import static com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 @RBuiltin(name = "tempfile", kind = INTERNAL, parameterNames = {"pattern", "tempdir", "fileext"})
 public abstract class TempFile extends RBuiltinNode {
@@ -45,15 +47,11 @@ public abstract class TempFile extends RBuiltinNode {
         return "invalid '" + msg + "'";
     }
 
-    @Specialization(guards = "tempDirL1(tempDir)")
+    @Specialization(guards = "tempDir.getLength() == 1")
     @TruffleBoundary
     protected RStringVector tempfile(String pattern, RAbstractStringVector tempDir, String fileExt) {
         controlVisibility();
         return RDataFactory.createStringVector(TempPathName.createNonExistingFilePath(pattern, tempDir.getDataAt(0), fileExt));
-    }
-
-    public static boolean tempDirL1(RAbstractStringVector tempDir) {
-        return tempDir.getLength() == 1;
     }
 
     @Specialization
@@ -128,5 +126,4 @@ public abstract class TempFile extends RBuiltinNode {
         }
         throw RError.error(this, RError.Message.GENERIC, msg);
     }
-
 }

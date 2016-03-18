@@ -22,13 +22,16 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RIntVector extends RVector implements RAbstractIntVector {
 
@@ -70,10 +73,12 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return data;
     }
 
+    @Override
     public int getDataAt(int index) {
         return data[index];
     }
 
+    @Override
     public int getDataAt(Object store, int index) {
         assert data == store;
         return ((int[]) store)[index];
@@ -158,6 +163,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
+    @Override
     public RIntVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createIntVector(data, isComplete(), newDimensions);
     }
@@ -182,7 +188,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return updateDataAt(i, (Integer) o, naCheck);
     }
 
-    public static int[] resizeData(int[] newData, int[] oldData, int oldDataLength, boolean fillNA) {
+    static int[] resizeData(int[] newData, int[] oldData, int oldDataLength, boolean fillNA) {
         if (newData.length > oldDataLength) {
             if (fillNA) {
                 for (int i = oldDataLength; i < newData.length; i++) {
@@ -208,6 +214,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return RDataFactory.createIntVector(copyResizedData(size, fillNA), isComplete);
     }
 
+    @Override
     public RIntVector materialize() {
         return this;
     }

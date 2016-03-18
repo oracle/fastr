@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.instrumentation.InstrumentableFactory;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node;
 
 /**
  * Some additional support for instrumentable nodes.
@@ -53,5 +53,4 @@ public interface RInstrumentableNode {
             return p;
         }
     }
-
 }

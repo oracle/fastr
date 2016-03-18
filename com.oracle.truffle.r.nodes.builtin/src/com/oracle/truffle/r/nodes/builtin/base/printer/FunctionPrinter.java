@@ -36,9 +36,13 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-public final class FunctionPrinter extends AbstractValuePrinter<RFunction> {
+final class FunctionPrinter extends AbstractValuePrinter<RFunction> {
 
-    public static final FunctionPrinter INSTANCE = new FunctionPrinter();
+    static final FunctionPrinter INSTANCE = new FunctionPrinter();
+
+    private FunctionPrinter() {
+        // singleton
+    }
 
     @Override
     protected void printValue(RFunction operand, PrintContext printCtx) throws IOException {
@@ -81,5 +85,4 @@ public final class FunctionPrinter extends AbstractValuePrinter<RFunction> {
             out.print(source);
         }
     }
-
 }

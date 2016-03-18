@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
-public final class EvaluatedArgumentsFastPath implements FastPathFactory {
+final class EvaluatedArgumentsFastPath implements FastPathFactory {
 
     private final boolean[] forcedArguments;
 
@@ -36,14 +36,17 @@ public final class EvaluatedArgumentsFastPath implements FastPathFactory {
         this.forcedArguments = forcedArguments;
     }
 
+    @Override
     public RFastPathNode create() {
         return null;
     }
 
+    @Override
     public boolean evaluatesArgument(int index) {
         return false;
     }
 
+    @Override
     public boolean forcedEagerPromise(int index) {
         return forcedArguments[index];
     }

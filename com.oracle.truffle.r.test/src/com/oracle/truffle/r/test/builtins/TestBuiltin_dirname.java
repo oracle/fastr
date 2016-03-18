@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_dirname extends TestBase {
@@ -47,5 +47,4 @@ public class TestBuiltin_dirname extends TestBase {
     public void testdirname7() {
         assertEval("argv <- structure(list(path = character(0)), .Names = 'path');do.call('dirname', argv)");
     }
-
 }

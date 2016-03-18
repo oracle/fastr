@@ -22,13 +22,16 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RLogicalVector extends RVector implements RAbstractLogicalVector {
 
@@ -124,6 +127,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return true;
     }
 
+    @Override
     public byte getDataAt(int i) {
         return data[i];
     }
@@ -133,7 +137,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return RRuntime.logicalToString(this.getDataAt(index));
     }
 
-    public RLogicalVector updateDataAt(int index, byte right, NACheck valueNACheck) {
+    private RLogicalVector updateDataAt(int index, byte right, NACheck valueNACheck) {
         assert !this.isShared();
         data[index] = right;
         if (valueNACheck.check(right)) {
@@ -220,6 +224,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return RDataFactory.createLogicalVector(data, isComplete(), newDimensions);
     }
 
+    @Override
     public RLogicalVector materialize() {
         return this;
     }

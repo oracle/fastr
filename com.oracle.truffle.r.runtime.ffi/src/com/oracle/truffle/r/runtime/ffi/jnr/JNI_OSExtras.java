@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
-import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
+import com.oracle.truffle.r.runtime.ffi.LibPaths;
 
 /**
  * Additional support for {@link BaseRFFI} that is implemented using JNI not JNR.
@@ -60,10 +60,12 @@ public class JNI_OSExtras {
             return osExtras;
         }
 
+        @Override
         public UtsName uname() {
             return JNI_UtsName.get();
         }
 
+        @Override
         public ArrayList<String> glob(String pattern) {
             return JNI_Glob.glob(pattern);
         }
@@ -80,5 +82,4 @@ public class JNI_OSExtras {
     static ArrayList<String> glob(String pattern) {
         return osExtras().glob(pattern);
     }
-
 }

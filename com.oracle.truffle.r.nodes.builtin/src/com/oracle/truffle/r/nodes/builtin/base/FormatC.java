@@ -11,23 +11,25 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "formatC", kind = INTERNAL, parameterNames = {"x", "mode", "width", "digits", "format", "flat", "i.strlen"})
 public abstract class FormatC extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
-
-    protected final BranchProfile errorProfile = BranchProfile.create();
 
     private RStringVector castStringVector(Object o) {
         if (castStringNode == null) {
@@ -39,21 +41,6 @@ public abstract class FormatC extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        // if (children.length != getSuppliedSignature().getLength()) {
-        // errorProfile.enter();
-        // throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED,
-        // children.length, ".Internal(formatC)", getSuppliedSignature().getLength());
-        // }
-        // // cast to vector as appropriate to eliminate NULL values
-        // children[2] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[2], false,
-        // false,
-        // false, false), false, false, false);
-        // children[3] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[3], false,
-        // false,
-        // false, false), false, false, false);
-        // children[6] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[6], false,
-        // false,
-        // false, false), false, false, false);
         casts.toInteger(2).toInteger(3).toInteger(6);
     }
 

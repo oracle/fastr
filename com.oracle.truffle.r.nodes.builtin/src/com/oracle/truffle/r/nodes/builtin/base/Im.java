@@ -50,7 +50,7 @@ public abstract class Im extends RBuiltinNode {
         return imNode.execute(boxPrimitive.execute(value));
     }
 
-    public static class ImArithmetic extends UnaryArithmetic {
+    private static final class ImArithmetic extends UnaryArithmetic {
 
         @Override
         public RType calculateResultType(RType argumentType) {
@@ -86,7 +86,5 @@ public abstract class Im extends RBuiltinNode {
         public double opd(double re, double im) {
             return im;
         }
-
     }
-
 }

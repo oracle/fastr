@@ -38,7 +38,7 @@ public abstract class Tabulate extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector tabulate(RAbstractIntVector bin, int nBins) {
+    protected RIntVector tabulate(RAbstractIntVector bin, int nBins) {
         controlVisibility();
         if (RRuntime.isNA(nBins) || nBins < 0) {
             errorProfile.enter();
@@ -56,14 +56,14 @@ public abstract class Tabulate extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector tabulate(RFactor bin, int nBins) {
+    protected RIntVector tabulate(RFactor bin, int nBins) {
         return tabulate(bin.getVector(), nBins);
     }
 
     @SuppressWarnings("unused")
     @Fallback
     @TruffleBoundary
-    public RIntVector tabulate(Object bin, int nBins) {
+    protected RIntVector tabulate(Object bin, int nBins) {
         throw RError.error(this, RError.Message.INVALID_INPUT);
     }
 }

@@ -18,17 +18,40 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.StatsUtil.*;
+import static com.oracle.truffle.r.library.stats.StatsUtil.DBLEPSILON;
+import static com.oracle.truffle.r.library.stats.StatsUtil.M_1_SQRT_2PI;
+import static com.oracle.truffle.r.library.stats.StatsUtil.M_2PI;
+import static com.oracle.truffle.r.library.stats.StatsUtil.M_LN2;
+import static com.oracle.truffle.r.library.stats.StatsUtil.M_SQRT_32;
+import static com.oracle.truffle.r.library.stats.StatsUtil.chebyshevEval;
+import static com.oracle.truffle.r.library.stats.StatsUtil.expm1;
+import static com.oracle.truffle.r.library.stats.StatsUtil.fmax2;
+import static com.oracle.truffle.r.library.stats.StatsUtil.log1p;
+import static com.oracle.truffle.r.library.stats.StatsUtil.rd0;
+import static com.oracle.truffle.r.library.stats.StatsUtil.rd1;
+import static com.oracle.truffle.r.library.stats.StatsUtil.rdexp;
+import static com.oracle.truffle.r.library.stats.StatsUtil.rdfexp;
+import static com.oracle.truffle.r.library.stats.StatsUtil.rdt0;
+import static com.oracle.truffle.r.library.stats.StatsUtil.rdt1;
+import static com.oracle.truffle.r.library.stats.StatsUtil.rdtclog;
+import static com.oracle.truffle.r.library.stats.StatsUtil.rdtlog;
+import static com.oracle.truffle.r.library.stats.StatsUtil.rdtqiv;
+import static com.oracle.truffle.r.library.stats.StatsUtil.rlog1exp;
+import static com.oracle.truffle.r.library.stats.StatsUtil.rqp01check;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * Java implementation of the qgamma function. The logic was derived from GNU R (see inline
@@ -1577,5 +1600,4 @@ public abstract class GammaFunctions {
             }
         }
     }
-
 }

@@ -22,13 +22,16 @@ import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.Scien
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 
 //Transcribed from GnuR, src/main/printutils.c
 
-public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
+final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
 
-    public static final ComplexVectorPrinter INSTANCE = new ComplexVectorPrinter();
+    static final ComplexVectorPrinter INSTANCE = new ComplexVectorPrinter();
+
+    private ComplexVectorPrinter() {
+        // singleton
+    }
 
     @Override
     protected VectorPrinter<RAbstractComplexVector>.VectorPrintJob createJob(RAbstractComplexVector vector, int indx, PrintContext printCtx) {
@@ -67,10 +70,9 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         protected void printEmptyVector() throws IOException {
             out.print("complex(0)");
         }
-
     }
 
-    public static final class ComplexVectorMetrics extends FormatMetrics {
+    static final class ComplexVectorMetrics extends FormatMetrics {
         public final int wr;
         public final int dr;
         public final int er;
@@ -78,7 +80,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         public final int di;
         public final int ei;
 
-        public ComplexVectorMetrics(int wr, int dr, int er, int wi, int di, int ei) {
+        private ComplexVectorMetrics(int wr, int dr, int er, int wi, int di, int ei) {
             super(wr + wi + 2);
             this.wr = wr;
             this.dr = dr;
@@ -87,10 +89,9 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
             this.di = di;
             this.ei = ei;
         }
-
     }
 
-    public static ComplexVectorMetrics formatComplexVector(RAbstractComplexVector x, int offs, int n, int nsmall, PrintParameters pp) {
+    static ComplexVectorMetrics formatComplexVector(RAbstractComplexVector x, int offs, int n, int nsmall, PrintParameters pp) {
 
         int wr;
         int dr;
@@ -365,7 +366,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         return round.opd(x.getRealPart(), x.getImaginaryPart(), digits);
     }
 
-    public static String encodeComplex(RComplex x, ComplexVectorMetrics cvm, PrintParameters pp) {
+    static String encodeComplex(RComplex x, ComplexVectorMetrics cvm, PrintParameters pp) {
         if (RRuntime.isNA(x.getRealPart()) || RRuntime.isNA(x.getImaginaryPart())) {
             return DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, cvm.maxWidth, 0, 0, '.', pp);
         } else {
@@ -380,8 +381,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         }
     }
 
-    public static String encodeComplex(RComplex x, int wr, int dr, int er, int wi, int di, int ei,
-                    char cdec, PrintParameters pp) {
+    private static String encodeComplex(RComplex x, int wr, int dr, int er, int wi, int di, int ei, char cdec, PrintParameters pp) {
         String buff;
         String im;
         String re;
@@ -430,5 +430,4 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         }
         return buff;
     }
-
 }

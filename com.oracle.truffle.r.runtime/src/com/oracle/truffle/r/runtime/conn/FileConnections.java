@@ -22,15 +22,30 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
-import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.util.zip.GZIPInputStream;
 
-import java.io.*;
-import java.nio.*;
-import java.util.zip.*;
-
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.TempPathName;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BasePathRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadWriteRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateWriteRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.OpenMode;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ReadWriteHelper;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class FileConnections {
     /**
@@ -144,7 +159,6 @@ public class FileConnections {
         public void close() throws IOException {
             inputStream.close();
         }
-
     }
 
     private static class FileWriteTextRConnection extends DelegateWriteRConnection implements ReadWriteHelper {
@@ -242,7 +256,6 @@ public class FileConnections {
         public void close() throws IOException {
             inputStream.close();
         }
-
     }
 
     private static class FileWriteBinaryConnection extends DelegateWriteRConnection implements ReadWriteHelper {
@@ -298,7 +311,6 @@ public class FileConnections {
         public void flush() throws IOException {
             outputStream.flush();
         }
-
     }
 
     private static class FileReadWriteConnection extends DelegateReadWriteRConnection implements ReadWriteHelper {
@@ -456,5 +468,4 @@ public class FileConnections {
             throw RInternalError.unimplemented();
         }
     }
-
 }

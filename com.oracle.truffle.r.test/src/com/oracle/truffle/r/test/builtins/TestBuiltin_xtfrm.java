@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_xtfrm extends TestBase {
@@ -87,5 +87,4 @@ public class TestBuiltin_xtfrm extends TestBase {
     public void testxtfrm15() {
         assertEval("argv <- list(structure(1:3, id = 'An Example', class = structure('numWithId',     package = '.GlobalEnv')));do.call('xtfrm', argv)");
     }
-
 }

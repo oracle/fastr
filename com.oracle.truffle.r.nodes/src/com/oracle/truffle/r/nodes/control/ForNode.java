@@ -58,7 +58,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
     @Child private WriteVariableNode writeRangeNode;
     @Child private LoopNode loopNode;
 
-    protected ForNode(SourceSection src, WriteVariableNode cvar, RNode range, RNode body) {
+    private ForNode(SourceSection src, WriteVariableNode cvar, RNode range, RNode body) {
         super(src);
         String indexName = AnonymousFrameVariable.create("FOR_INDEX");
         String rangeName = AnonymousFrameVariable.create("FOR_RANGE");
@@ -174,6 +174,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
             return builder.call(RSyntaxNode.INTERNAL, access, receiver, index).asRNode();
         }
 
+        @Override
         public boolean executeRepeating(VirtualFrame frame) {
             int length;
             int index;
@@ -223,16 +224,19 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         }
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return RSyntaxLookup.createDummyLookup(getSourceSection(), "for", true);
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArguments() {
         ForRepeatingNode repeatingNode = (ForRepeatingNode) loopNode.getRepeatingNode();
         return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(null, (String) repeatingNode.writeElementNode.getName(), false), writeRangeNode.getRhs().asRSyntaxNode(),
                         repeatingNode.body.asRSyntaxNode()};
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ArgumentsSignature.empty(3);
     }

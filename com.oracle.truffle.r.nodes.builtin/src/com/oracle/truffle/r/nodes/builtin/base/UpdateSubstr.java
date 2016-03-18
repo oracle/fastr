@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,26 +22,34 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "substr<-", kind = INTERNAL, parameterNames = {"x", "start", "stop", "value"})
 public abstract class UpdateSubstr extends RBuiltinNode {
 
-    protected final NACheck na = NACheck.create();
+    private final NACheck na = NACheck.create();
 
     private final BranchProfile everSeenIllegalRange = BranchProfile.create();
 
-    protected static boolean rangeOk(String x, int start, int stop) {
+    private static boolean rangeOk(String x, int start, int stop) {
         return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
     }
 
@@ -51,7 +59,7 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    protected String substr0(String x, int start, int stop, String value) {
+    private String substr0(String x, int start, int stop, String value) {
         if (na.check(x) || na.check(start) || na.check(stop)) {
             return RRuntime.STRING_NA;
         }
@@ -146,5 +154,4 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     protected boolean wrongValue(RAbstractVector value) {
         return value.getElementClass() != RString.class || value.getLength() == 0;
     }
-
 }

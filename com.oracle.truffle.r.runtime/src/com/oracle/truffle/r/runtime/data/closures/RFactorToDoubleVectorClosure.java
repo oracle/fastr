@@ -23,19 +23,24 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RFactor;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /*
  * This closure is meant to be used only for implementation of the binary operators.
  */
-public class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
+final class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
 
     private final RAbstractDoubleVector levels;
     private final boolean withNames;
 
-    public RFactorToDoubleVectorClosure(RFactor factor, RAbstractDoubleVector levels, boolean withNames) {
+    RFactorToDoubleVectorClosure(RFactor factor, RAbstractDoubleVector levels, boolean withNames) {
         super(factor.getVector());
         assert levels != null;
         this.levels = levels;
@@ -43,7 +48,7 @@ public class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure impleme
     }
 
     @Override
-    public final RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         switch (type) {
             case Double:
                 return this;
@@ -56,6 +61,7 @@ public class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure impleme
         }
     }
 
+    @Override
     public double getDataAt(int index) {
         int val = ((RIntVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(val)) {
@@ -69,5 +75,4 @@ public class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure impleme
     public RStringVector getNames(RAttributeProfiles attrProfiles) {
         return withNames ? super.getNames(attrProfiles) : null;
     }
-
 }

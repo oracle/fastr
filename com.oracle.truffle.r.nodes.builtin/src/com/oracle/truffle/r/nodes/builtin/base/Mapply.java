@@ -23,25 +23,36 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
-import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctions.AccessArraySubscriptBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.MapplyNodeGen.MapplyInternalNodeGen;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.nodes.function.FormalArguments;
+import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Multivariate lapply. Essentially invokes
@@ -51,13 +62,13 @@ import com.oracle.truffle.r.runtime.nodes.*;
 @RBuiltin(name = "mapply", kind = INTERNAL, parameterNames = {"FUN", "dots", "MoreArgs"}, splitCaller = true)
 public abstract class Mapply extends RBuiltinNode {
 
-    protected static class ElementNode extends Node {
-        @Child Length lengthNode;
-        @Child AccessArraySubscriptBuiltin indexedLoadNode;
-        @Child WriteVariableNode writeVectorElementNode;
+    protected static final class ElementNode extends Node {
+        @Child private Length lengthNode;
+        @Child private AccessArraySubscriptBuiltin indexedLoadNode;
+        @Child private WriteVariableNode writeVectorElementNode;
         private final String vectorElementName;
 
-        ElementNode(String vectorElementName) {
+        private ElementNode(String vectorElementName) {
             this.vectorElementName = AnonymousFrameVariable.create(vectorElementName);
             this.lengthNode = insert(LengthNodeGen.create(null, null, null));
             this.indexedLoadNode = insert(InfixEmulationFunctionsFactory.AccessArraySubscriptBuiltinNodeGen.create(null, null, null));
@@ -181,5 +192,4 @@ public abstract class Mapply extends RBuiltinNode {
             return elementNodes;
         }
     }
-
 }

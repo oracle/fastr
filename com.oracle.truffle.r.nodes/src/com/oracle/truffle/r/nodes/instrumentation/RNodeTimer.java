@@ -51,9 +51,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
  * using {@link System#nanoTime()}.
  *
  */
-public class RNodeTimer {
+class RNodeTimer {
 
-    public static final class TimeInfo {
+    private static final class TimeInfo {
         private final Object ident;
         protected long enterTime;
         protected long cumulativeTime;
@@ -69,10 +69,9 @@ public class RNodeTimer {
         public Object getIdent() {
             return ident;
         }
-
     }
 
-    public abstract static class BasicListener implements ExecutionEventListener {
+    private abstract static class BasicListener implements ExecutionEventListener {
         private HashMap<SourceSection, TimeInfo> timeInfoMap = new HashMap<>();
 
         private TimeInfo getTimeInfo(EventContext context) {
@@ -96,15 +95,18 @@ public class RNodeTimer {
             return timeInfoMap;
         }
 
+        @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             getTimeInfo(context).enterTime = System.nanoTime();
         }
 
+        @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
             TimeInfo timeInfo = getTimeInfo(context);
             timeInfo.cumulativeTime += System.nanoTime() - timeInfo.enterTime;
         }
 
+        @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
             onReturnValue(context, frame, exception);
         }
@@ -113,10 +115,10 @@ public class RNodeTimer {
 
     }
 
-    public static class StatementListener extends BasicListener {
+    static class StatementListener extends BasicListener {
         private static final StatementListener singleton = new StatementListener();
 
-        public static long findTimer(RFunction func) {
+        static long findTimer(RFunction func) {
             FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
             FunctionUID uid = fdn.getUID();
             long cumTime = 0;
@@ -133,7 +135,7 @@ public class RNodeTimer {
             return cumTime;
         }
 
-        public static void installTimers() {
+        static void installTimers() {
             if (enabled()) {
                 SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
                 builder.tagIs(RSyntaxTags.STATEMENT);
@@ -142,7 +144,7 @@ public class RNodeTimer {
             }
         }
 
-        public static void installTimer(RFunction func) {
+        static void installTimer(RFunction func) {
             RInstrumentation.getInstrumenter().attachListener(RInstrumentation.createFunctionStatementFilter(func).build(), singleton);
         }
 
@@ -157,7 +159,7 @@ public class RNodeTimer {
             RPerfStats.register(new PerfHandler());
         }
 
-        public static boolean enabled() {
+        static boolean enabled() {
             return RPerfStats.enabled(PerfHandler.NAME);
         }
 
@@ -173,6 +175,7 @@ public class RNodeTimer {
                 this.time += t;
             }
 
+            @Override
             public int compareTo(TimingData o) {
                 if (time < o.time) {
                     return 1;
@@ -189,6 +192,7 @@ public class RNodeTimer {
             private boolean stmts;
             private int threshold;
 
+            @Override
             public void initialize(String optionText) {
                 if (optionText.length() > 0) {
                     String[] subOptions = optionText.split(":");
@@ -202,6 +206,7 @@ public class RNodeTimer {
                 }
             }
 
+            @Override
             public String getName() {
                 return NAME;
             }
@@ -212,6 +217,7 @@ public class RNodeTimer {
              * target splitting. Functions that consumed less time than requested threshold (default
              * 0) are not included in the report. The report is sorted by cumulative time.
              */
+            @Override
             public void report() {
                 Map<FunctionUID, TimingData> functionMap = new TreeMap<>();
 
@@ -274,7 +280,7 @@ public class RNodeTimer {
             return ((double) a * 100) / b;
         }
 
-        public abstract static class StatementVisitor implements RSyntaxNodeVisitor {
+        private abstract static class StatementVisitor implements RSyntaxNodeVisitor {
             protected final FunctionUID uid;
 
             StatementVisitor(FunctionUID uid) {
@@ -341,7 +347,5 @@ public class RNodeTimer {
             RSyntaxNode.accept(fdi.node.getBody().asNode(), 0, new LineTimesNodeVisitor(fdi.node.getUID(), times), false);
             return times;
         }
-
     }
-
 }

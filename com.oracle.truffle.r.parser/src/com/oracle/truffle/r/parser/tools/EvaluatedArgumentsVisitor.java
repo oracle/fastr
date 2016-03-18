@@ -41,7 +41,7 @@ final class Info {
 
     public final Set<String> evaluatedNames;
     public final Set<String> maybeAssignedNames;
-    public boolean assignsAny;
+    private boolean assignsAny;
 
     private Info(Set<String> evaluatedNames, Set<String> maybeAssignedNames, boolean assignsAny) {
         this.evaluatedNames = evaluatedNames;

@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 
@@ -22,5 +22,4 @@ public class TestBuiltin_allvars extends TestBase {
     public void testallvars1() {
         assertEval("argv <- structure(list(expr = expression(quote(temp[1, ] ~ 3))),     .Names = 'expr');do.call('all.vars', argv)");
     }
-
 }

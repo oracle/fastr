@@ -22,19 +22,23 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.function.FormalArguments;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class RBuiltinRootNode extends RRootNode {
 
     @Child private RBuiltinNode builtin;
 
-    public RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
+    RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
         super(null, formalArguments, frameDescriptor);
         this.builtin = builtin;
     }
@@ -76,11 +80,6 @@ public final class RBuiltinRootNode extends RRootNode {
         return builtin.inline(signature, args);
     }
 
-    public Object getDefaultParameterValue(int index) {
-        Object[] values = builtin.getDefaultParameterValues();
-        return index < values.length ? values[index] : null;
-    }
-
     @Override
     public String getSourceCode() {
         throw RInternalError.shouldNotReachHere();
@@ -90,5 +89,4 @@ public final class RBuiltinRootNode extends RRootNode {
     public String toString() {
         return "RBuiltin(" + builtin + ")";
     }
-
 }

@@ -8,11 +8,17 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.grDevices.fastrgd;
+
+import static com.oracle.truffle.r.library.graphics.core.geometry.AxisDirection.EAST;
+import static com.oracle.truffle.r.library.graphics.core.geometry.AxisDirection.NORTH;
+
+import java.util.Arrays;
+import java.util.function.Function;
 
 import com.oracle.truffle.r.library.graphics.FastRFrame;
 import com.oracle.truffle.r.library.graphics.core.DrawingParameters;
@@ -20,13 +26,11 @@ import com.oracle.truffle.r.library.graphics.core.GraphicsDevice;
 import com.oracle.truffle.r.library.graphics.core.drawables.DrawableObject;
 import com.oracle.truffle.r.library.graphics.core.drawables.PolylineDrawableObject;
 import com.oracle.truffle.r.library.graphics.core.drawables.StringDrawableObject;
-import com.oracle.truffle.r.library.graphics.core.geometry.*;
-
-import java.util.Arrays;
-import java.util.function.Function;
-
-import static com.oracle.truffle.r.library.graphics.core.geometry.AxisDirection.EAST;
-import static com.oracle.truffle.r.library.graphics.core.geometry.AxisDirection.NORTH;
+import com.oracle.truffle.r.library.graphics.core.geometry.Axis;
+import com.oracle.truffle.r.library.graphics.core.geometry.CoordinateSystem;
+import com.oracle.truffle.r.library.graphics.core.geometry.Coordinates;
+import com.oracle.truffle.r.library.graphics.core.geometry.CoordinatesFactory;
+import com.oracle.truffle.r.library.graphics.core.geometry.DoubleCoordinates;
 
 /**
  * Default interactive FastR graphics device.

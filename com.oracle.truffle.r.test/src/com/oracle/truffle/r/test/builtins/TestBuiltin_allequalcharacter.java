@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 
@@ -23,5 +23,4 @@ public class TestBuiltin_allequalcharacter extends TestBase {
         assertEval("argv <- structure(list(target = structure(c('A', 'E', 'I', 'M',     'Q', 'U', 'B', 'F', 'J', 'N', 'R', 'V', 'C', 'G', 'K', 'O',     'S', 'W', 'D', 'H', 'L', 'P', 'T', 'X'), .Dim = c(6L, 4L)),     current = structure(c('A', 'E', 'I', 'M', 'Q', 'U', 'B',         'F', 'J', 'N', 'R', 'V', 'C', 'G', 'K', 'O', 'S', 'W',         'D', 'H', 'L', 'P', 'T', 'X'), .Dim = c(6L, 4L))), .Names = c('target',     'current'));"
                         + "do.call('all.equal.character', argv)");
     }
-
 }

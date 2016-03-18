@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,18 +22,30 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFactor;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * The {@code rep} builtin works as follows.
@@ -97,7 +109,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization(guards = {"x.getLength() == 1", "times.getLength() == 1", "each <= 1", "!hasNames(x)"})
-    public RAbstractVector repNoEachNoNamesSimple(RAbstractDoubleVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
+    protected RAbstractVector repNoEachNoNamesSimple(RAbstractDoubleVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
         int length = lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut)) ? lengthOut : times.getDataAt(0);
         double[] data = new double[length];
         Arrays.fill(data, x.getDataAt(0));
@@ -105,7 +117,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization(guards = {"each > 1", "!hasNames(x)"})
-    public RAbstractVector repEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
+    protected RAbstractVector repEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
         if (times.getLength() > 1) {
             errorBranch.enter();
             throw invalidTimes();
@@ -119,7 +131,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization(guards = {"each <= 1", "!hasNames(x)"})
-    public RAbstractVector repNoEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
+    protected RAbstractVector repNoEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
             return handleLengthOut(x, lengthOut, true);
         } else {
@@ -128,7 +140,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization(guards = {"each > 1", "hasNames(x)"})
-    public RAbstractVector repEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
+    protected RAbstractVector repEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
         if (times.getLength() > 1) {
             errorBranch.enter();
             throw invalidTimes();
@@ -149,7 +161,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization(guards = {"each <= 1", "hasNames(x)"})
-    public RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
+    protected RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
             RStringVector names = (RStringVector) handleLengthOut(x.getNames(attrProfiles), lengthOut, true);
             RVector r = handleLengthOut(x, lengthOut, true);
@@ -164,7 +176,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization
-    public RAbstractContainer rep(RFactor x, RAbstractIntVector times, int lengthOut, int each) {
+    protected RAbstractContainer rep(RFactor x, RAbstractIntVector times, int lengthOut, int each) {
         RVector vec = (RVector) repeatRecursive(x.getVector(), times, lengthOut, each);
         vec.setAttr(RRuntime.LEVELS_ATTR_KEY, x.getLevels(attrProfiles));
         return RVector.setVectorClassAttr(vec, x.getClassAttr(attrProfiles), null, null);
@@ -227,5 +239,4 @@ public abstract class Repeat extends RBuiltinNode {
             return r;
         }
     }
-
 }

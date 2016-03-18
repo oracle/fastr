@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,26 @@
  */
 package com.oracle.truffle.r.test.tools.cmpr;
 
-import java.io.*;
-import java.net.*;
-import java.nio.file.*;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
+import com.oracle.truffle.r.runtime.Utils;
 
 /**
  * Compare the FastR versions of .R files in the standard packages against GnuR. Removes all
@@ -209,7 +223,6 @@ public class CompareLibR {
         try (BufferedOutputStream bs = new BufferedOutputStream(new FileOutputStream(file))) {
             bs.write(s.getBytes());
         }
-
     }
 
     private static void compareFiles(String path1, String path2) throws IOException {
@@ -229,5 +242,4 @@ public class CompareLibR {
         System.err.println("usage: --gnurhome path --package pkg | --files path1 path2");
         System.exit(1);
     }
-
 }

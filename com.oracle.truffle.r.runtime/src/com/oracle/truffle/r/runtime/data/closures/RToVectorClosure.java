@@ -31,18 +31,20 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public abstract class RToVectorClosure implements RAbstractVector {
+abstract class RToVectorClosure implements RAbstractVector {
 
     protected final RAbstractVector vector;
 
-    public RToVectorClosure(RAbstractVector vector) {
+    RToVectorClosure(RAbstractVector vector) {
         this.vector = vector;
     }
 
+    @Override
     public int getLength() {
         return vector.getLength();
     }
 
+    @Override
     public Void getInternalStore() {
         return null;
     }
@@ -52,10 +54,12 @@ public abstract class RToVectorClosure implements RAbstractVector {
         return vector.resize(size);
     }
 
+    @Override
     public final void setComplete(boolean complete) {
         this.vector.setComplete(complete);
     }
 
+    @Override
     public final boolean isComplete() {
         return vector.isComplete();
     }
@@ -144,22 +148,27 @@ public abstract class RToVectorClosure implements RAbstractVector {
         return vector.copyDropAttributes();
     }
 
+    @Override
     public final boolean isMatrix() {
         return vector.isMatrix();
     }
 
+    @Override
     public final boolean isArray() {
         return vector.isArray();
     }
 
+    @Override
     public final RStringVector getClassHierarchy() {
         return vector.getClassHierarchy();
     }
 
+    @Override
     public RStringVector getImplicitClass() {
         return vector.getImplicitClass();
     }
 
+    @Override
     public final boolean isObject(RAttributeProfiles attrProfiles) {
         return vector.isObject(attrProfiles);
     }
@@ -188,5 +197,4 @@ public abstract class RToVectorClosure implements RAbstractVector {
     public boolean isS4() {
         return false;
     }
-
 }

@@ -23,14 +23,28 @@
 package com.oracle.truffle.r.nodes.primitive;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.primitive.UnaryMapNodeFactory.MapUnaryVectorInternalNodeGen;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RScalarVector;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class UnaryMapNode extends RBaseNode {
 
@@ -51,7 +65,7 @@ public final class UnaryMapNode extends RBaseNode {
     private final boolean mayFoldConstantTime;
     private final boolean mayShareOperand;
 
-    public UnaryMapNode(UnaryMapFunctionNode scalarNode, RAbstractVector operand, RType argumentType, RType resultType) {
+    private UnaryMapNode(UnaryMapFunctionNode scalarNode, RAbstractVector operand, RType argumentType, RType resultType) {
         this.scalarNode = scalarNode;
         this.vectorNode = MapUnaryVectorInternalNode.create(resultType, argumentType);
         this.operandClass = operand.getClass();
@@ -261,7 +275,7 @@ public final class UnaryMapNode extends RBaseNode {
             }
         }
 
-        public final void apply(UnaryMapFunctionNode scalarAction, Object store, RAbstractVector operand, int operandLength) {
+        private void apply(UnaryMapFunctionNode scalarAction, Object store, RAbstractVector operand, int operandLength) {
             assert operand.getLength() == operandLength;
             assert operand.getRType() == argumentType;
             assert isStoreCompatible(store, resultType, operandLength);
@@ -269,7 +283,7 @@ public final class UnaryMapNode extends RBaseNode {
             executeInternal(scalarAction, store, operand, operandLength);
         }
 
-        protected static boolean isStoreCompatible(Object store, RType resultType, int operandLength) {
+        private static boolean isStoreCompatible(Object store, RType resultType, int operandLength) {
             switch (resultType) {
                 case Logical:
                     assert store instanceof byte[] && ((byte[]) store).length == operandLength;
@@ -311,7 +325,5 @@ public final class UnaryMapNode extends RBaseNode {
             void perform(UnaryMapFunctionNode action, A store, int resultIndex, V operand, int operandIndex);
 
         }
-
     }
-
 }

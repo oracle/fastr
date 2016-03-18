@@ -82,5 +82,4 @@ public class PrimitiveMethodsInfo {
     public PrimitiveMethodsInfo duplicate() {
         return new PrimitiveMethodsInfo(Arrays.copyOf(primMethodCodes, getSize()), Arrays.copyOf(primGenerics, getSize()), Arrays.copyOf(primMethodsList, getSize()));
     }
-
 }

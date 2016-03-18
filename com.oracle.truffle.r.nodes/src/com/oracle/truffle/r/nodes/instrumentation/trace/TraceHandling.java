@@ -26,15 +26,22 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrumentation.*;
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.instrumentation.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.EventContext;
+import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
+import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.utilities.CyclicAssumption;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -92,7 +99,7 @@ public class TraceHandling {
         return false;
     }
 
-    public static void attachTraceHandler(RFunction func) {
+    private static void attachTraceHandler(RFunction func) {
         TraceFunctionEventListener fser = new TraceFunctionEventListener();
         RInstrumentation.getInstrumenter().attachListener(RInstrumentation.createFunctionStartFilter(func).build(), fser);
         setOutputHandler();
@@ -125,7 +132,6 @@ public class TraceHandling {
                 disabled = newState;
             }
         }
-
     }
 
     private abstract static class OutputHandler {
@@ -138,7 +144,6 @@ public class TraceHandling {
         void writeString(String s, boolean nl) throws IOException {
             StdConnections.getStdout().writeString(s, nl);
         }
-
     }
 
     private static class FileOutputHandler extends OutputHandler {
@@ -200,29 +205,30 @@ public class TraceHandling {
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
         }
-
     }
 
     @SuppressWarnings("unused")
     private static class TraceStatementEventReceiver extends TraceEventListener {
 
+        @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!disabled()) {
                 //
             }
         }
 
+        @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 //
             }
         }
 
+        @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
             if (!disabled()) {
                 //
             }
         }
     }
-
 }

@@ -22,16 +22,27 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
-import java.io.*;
-import java.lang.ref.*;
-import java.nio.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 /**
  * Basic support classes and methods for the connection implementations.
@@ -304,7 +315,6 @@ public class ConnectionSupport {
         ConnectionClass(String printName) {
             this.printName = printName;
         }
-
     }
 
     public static final String FILE_URL_PREFIX = "file://";
@@ -455,7 +465,6 @@ public class ConnectionSupport {
         public boolean isOpen() {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
-
     }
 
     /**
@@ -770,7 +779,6 @@ public class ConnectionSupport {
         public boolean isClosed() {
             return closed;
         }
-
     }
 
     public static BaseRConnection getBaseConnection(RConnection conn) {
@@ -937,7 +945,6 @@ public class ConnectionSupport {
         } else {
             return buffer;
         }
-
     }
 
     abstract static class DelegateRConnection extends RConnection {
@@ -976,7 +983,6 @@ public class ConnectionSupport {
         public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.UNSEEKABLE_CONNECTION);
         }
-
     }
 
     abstract static class DelegateReadRConnection extends DelegateRConnection {
@@ -1095,7 +1101,6 @@ public class ConnectionSupport {
         public int getc() throws IOException {
             return getInputStream().read();
         }
-
     }
 
     abstract static class BasePathRConnection extends BaseRConnection {
@@ -1114,7 +1119,5 @@ public class ConnectionSupport {
         public String getSummaryDescription() {
             return path;
         }
-
     }
-
 }

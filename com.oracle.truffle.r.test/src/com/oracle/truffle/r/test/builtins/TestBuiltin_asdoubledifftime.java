@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 
@@ -23,5 +23,4 @@ public class TestBuiltin_asdoubledifftime extends TestBase {
         assertEval("argv <- structure(list(x = structure(16351.8259046444, units = 'days',     class = 'difftime', origin = structure(0, class = c('POSIXct',         'POSIXt'), tzone = 'GMT'))), .Names = 'x');"
                         + "do.call('as.double.difftime', argv)");
     }
-
 }

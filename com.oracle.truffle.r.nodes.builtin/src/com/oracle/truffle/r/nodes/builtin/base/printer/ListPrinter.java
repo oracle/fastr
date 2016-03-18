@@ -49,9 +49,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
+final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
 
-    public static final ListPrinter INSTANCE = new ListPrinter();
+    static final ListPrinter INSTANCE = new ListPrinter();
+
+    private ListPrinter() {
+        // singleton
+    }
 
     private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
@@ -68,7 +72,6 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
             // no dim()
             printNoDimList(s, printCtx);
         }
-
     }
 
     private static void printDimList(RAbstractListVector s, PrintContext printCtx) throws IOException {
@@ -285,8 +288,6 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
                 }
                 out.print("list()");
             }
-
         }
     }
-
 }

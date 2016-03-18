@@ -26,13 +26,16 @@ import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 
-public final class ExternalPtrPrinter extends AbstractValuePrinter<RExternalPtr> {
+final class ExternalPtrPrinter extends AbstractValuePrinter<RExternalPtr> {
 
-    public static final ExternalPtrPrinter INSTANCE = new ExternalPtrPrinter();
+    static final ExternalPtrPrinter INSTANCE = new ExternalPtrPrinter();
+
+    private ExternalPtrPrinter() {
+        // singleton
+    }
 
     @Override
     protected void printValue(RExternalPtr value, PrintContext printCtx) throws IOException {
         printCtx.output().print("");
     }
-
 }

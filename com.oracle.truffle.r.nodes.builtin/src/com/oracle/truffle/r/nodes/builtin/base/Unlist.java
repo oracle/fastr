@@ -11,19 +11,33 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.UnlistNodeGen.RecursiveLengthNodeGen;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
+import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDataFrame;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "unlist", kind = SUBSTITUTE, parameterNames = {"x", "recursive", "use.names"})
 // TODO INTERNAL
@@ -621,7 +635,6 @@ public abstract class Unlist extends RBuiltinNode {
         } else {
             return RRuntime.NAMES_ATTR_EMPTY_VALUE;
         }
-
     }
 
     private static String newName(String base, String tag, NamesInfo namesInfo) {
@@ -711,11 +724,11 @@ public abstract class Unlist extends RBuiltinNode {
         return ((RRaw) dataAtAsObject).getValue();
     }
 
-    public static boolean isEmpty(RAbstractVector vector) {
+    protected static boolean isEmpty(RAbstractVector vector) {
         return vector.getLength() == 0;
     }
 
-    public static boolean isOneNull(RList list) {
+    protected static boolean isOneNull(RList list) {
         return list.getLength() == 1 && list.getDataAt(0) == RNull.instance;
     }
 }

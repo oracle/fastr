@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * This node reifies a runtime object into the AST by creating nodes for frequently encountered
@@ -55,5 +58,4 @@ public abstract class CallInlineCacheNode extends RBaseNode {
     protected Object call(VirtualFrame frame, CallTarget target, Object[] arguments, @Cached("createIndirectCallNode()") IndirectCallNode callNode) {
         return callNode.call(frame, target, arguments);
     }
-
 }

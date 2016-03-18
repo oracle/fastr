@@ -17,7 +17,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -35,12 +34,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * Condition handling. Derived from GnUR src/main/errors.c
  */
 public class ConditionFunctions {
-    public abstract static class Adapter extends RBuiltinNode {
-        protected final BranchProfile errorProfile = BranchProfile.create();
 
-    }
-
-    public abstract static class EvalAdapter extends Adapter {
+    public abstract static class EvalAdapter extends RBuiltinNode {
         @Child private PromiseHelperNode promiseHelper;
 
         protected PromiseHelperNode initPromiseHelper() {
@@ -53,7 +48,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = ".addCondHands", kind = RBuiltinKind.INTERNAL, parameterNames = {"classes", "handlers", "parentenv", "target", "calling"})
-    public abstract static class AddCondHands extends Adapter {
+    public abstract static class AddCondHands extends RBuiltinNode {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isRNull(classes) || isRNull(handlers)")
@@ -76,7 +71,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = ".resetCondHands", kind = RBuiltinKind.INTERNAL, parameterNames = {"stack"})
-    public abstract static class ResetCondHands extends Adapter {
+    public abstract static class ResetCondHands extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull resetCondHands(Object stack) {
@@ -86,7 +81,7 @@ public class ConditionFunctions {
         }
     }
 
-    public abstract static class RestartAdapter extends Adapter {
+    public abstract static class RestartAdapter extends RBuiltinNode {
         public static boolean lengthok(Object restart) {
             return (restart instanceof RList) && ((RList) restart).getLength() >= 2;
         }
@@ -113,7 +108,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = ".getRestart", kind = RBuiltinKind.INTERNAL, parameterNames = "restart")
-    public abstract static class GetRestart extends Adapter {
+    public abstract static class GetRestart extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.toInteger(0);
@@ -148,7 +143,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = ".signalCondition", kind = RBuiltinKind.INTERNAL, parameterNames = {"condition", "msg", "call"})
-    public abstract static class SignalCondition extends Adapter {
+    public abstract static class SignalCondition extends RBuiltinNode {
         @Specialization
         protected RNull signalCondition(RList condition, RAbstractStringVector msg, Object call) {
             controlVisibility();
@@ -158,7 +153,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = "geterrmessage", kind = RBuiltinKind.INTERNAL, parameterNames = {})
-    public abstract static class Geterrmessage extends Adapter {
+    public abstract static class Geterrmessage extends RBuiltinNode {
         @Specialization
         protected String geterrmessage() {
             controlVisibility();
@@ -167,7 +162,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = "seterrmessage", kind = RBuiltinKind.INTERNAL, parameterNames = "msg")
-    public abstract static class Seterrmessage extends Adapter {
+    public abstract static class Seterrmessage extends RBuiltinNode {
         @Specialization
         protected RNull seterrmessage(RAbstractStringVector msg) {
             forceVisibility(false);
@@ -177,7 +172,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = ".dfltWarn", kind = RBuiltinKind.INTERNAL, parameterNames = {"message", "call"})
-    public abstract static class DfltWarn extends Adapter {
+    public abstract static class DfltWarn extends RBuiltinNode {
         @Specialization
         protected RNull dfltWarn(RAbstractStringVector msg, Object call) {
             controlVisibility();
@@ -187,7 +182,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = ".dfltStop", kind = RBuiltinKind.INTERNAL, parameterNames = {"message", "call"})
-    public abstract static class DfltStop extends Adapter {
+    public abstract static class DfltStop extends RBuiltinNode {
         @Specialization
         protected Object dfltStop(RAbstractStringVector message, Object call) {
             controlVisibility();
@@ -197,7 +192,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = "printDeferredWarnings", kind = RBuiltinKind.INTERNAL, parameterNames = {})
-    public abstract static class PrintDeferredWarnings extends Adapter {
+    public abstract static class PrintDeferredWarnings extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RNull printDeferredWarnings() {

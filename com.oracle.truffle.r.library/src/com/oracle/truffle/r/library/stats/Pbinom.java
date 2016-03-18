@@ -19,6 +19,7 @@ public final class Pbinom implements StatsFunctions.Function3_2 {
 
     private final BranchProfile nanProfile = BranchProfile.create();
 
+    @Override
     public double evaluate(double initialQ, double initialSize, double prob, boolean lowerTail, boolean logP) {
         double q = initialQ;
         double size = initialSize;

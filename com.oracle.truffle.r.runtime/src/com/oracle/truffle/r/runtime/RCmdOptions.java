@@ -22,9 +22,12 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.*;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.HELP;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.VERSION;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
 
 /**
  * (Abstract) definition of the standard R command line options. The setting of the values from the
@@ -58,7 +61,7 @@ public final class RCmdOptions {
         public abstract String usage();
     }
 
-    public enum RCmdOptionType {
+    private enum RCmdOptionType {
         BOOLEAN,
         STRING,
         REPEATED_STRING
@@ -352,7 +355,7 @@ public final class RCmdOptions {
         }
     }
 
-    public static void printHelp(Client client) {
+    private static void printHelp(Client client) {
         System.out.println(client.usage());
         System.out.println("Options:");
         for (RCmdOption option : RCmdOption.values()) {
@@ -372,5 +375,4 @@ public final class RCmdOptions {
         System.out.println(RRuntime.LICENSE);
         System.exit(0);
     }
-
 }

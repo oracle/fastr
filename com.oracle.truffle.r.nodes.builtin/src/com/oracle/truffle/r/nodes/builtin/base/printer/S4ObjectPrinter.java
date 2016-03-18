@@ -25,17 +25,21 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
+final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
 
-    public static final S4ObjectPrinter INSTANCE = new S4ObjectPrinter();
+    static final S4ObjectPrinter INSTANCE = new S4ObjectPrinter();
+
+    private S4ObjectPrinter() {
+        // singleton
+    }
 
     @Override
     public void print(RS4Object object, PrintContext printCtx) throws IOException {
@@ -55,7 +59,7 @@ public final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
         ValuePrinters.INSTANCE.print(attr.getValue(), printCtx);
     }
 
-    public static void printS4(PrintContext printCtx, Object o) {
+    static void printS4(PrintContext printCtx, Object o) {
         RContext.getEngine().evalFunction(createShowFunction(printCtx.frame(), createShowFind()), null, o);
         // The show function prints an additional new line character. The following attribute
         // instructs the ValuePrinter.println method not to print the new line since it was
@@ -70,5 +74,4 @@ public final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
     private static RFunction createShowFunction(VirtualFrame frame, ReadVariableNode showFind) {
         return (RFunction) showFind.execute(frame);
     }
-
 }

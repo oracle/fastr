@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 
 public final class RUnboundValue extends RScalar {
     public static final RUnboundValue instance = new RUnboundValue();
 
     private RUnboundValue() {
+        // singleton
     }
 
     @Override
@@ -39,9 +41,4 @@ public final class RUnboundValue extends RScalar {
     public RType getRType() {
         return RType.Unbound;
     }
-
-    public static Object toRUnboundValue(Object value) {
-        return value == null ? instance : value;
-    }
-
 }

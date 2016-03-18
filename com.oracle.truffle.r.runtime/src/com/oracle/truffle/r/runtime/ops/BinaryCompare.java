@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RComplex;
 
 /**
  * All methods must be invoked with non-NA values.
@@ -64,7 +66,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
     public static final BooleanOperationFactory[] ALL = new BooleanOperationFactory[]{NOT_EQUAL, EQUAL, GREATER_EQUAL, GREATER_THAN, LESS_EQUAL, LESS_THAN};
 
-    public BinaryCompare(boolean commutative) {
+    private BinaryCompare(boolean commutative) {
         super(commutative, false);
     }
 
@@ -263,7 +265,5 @@ public abstract class BinaryCompare extends BooleanOperation {
         public boolean op(RComplex left, RComplex right) {
             throw RError.error(this, RError.Message.COMPARISON_COMPLEX);
         }
-
     }
-
 }

@@ -24,9 +24,11 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @ValueType
 public final class RInteger extends RScalarVector implements RAbstractIntVector {
@@ -45,6 +47,7 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
         return new RInteger(value);
     }
 
+    @Override
     public int getDataAt(int index) {
         assert index == 0;
         return value;
@@ -83,6 +86,7 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
         return RRuntime.intToString(value);
     }
 
+    @Override
     public RIntVector materialize() {
         return RDataFactory.createIntVectorFromScalar(value);
     }

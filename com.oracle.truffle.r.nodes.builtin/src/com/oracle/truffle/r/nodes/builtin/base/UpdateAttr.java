@@ -142,7 +142,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     }
 
     @TruffleBoundary
-    public static RStringVector convertClassAttrFromObject(Object value) {
+    protected static RStringVector convertClassAttrFromObject(Object value) {
         if (value instanceof RStringVector) {
             return (RStringVector) value;
         } else if (value instanceof String) {

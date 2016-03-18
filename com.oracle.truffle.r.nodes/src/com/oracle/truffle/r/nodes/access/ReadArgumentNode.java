@@ -22,11 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
-public class ReadArgumentNode extends RNode {
+class ReadArgumentNode extends RNode {
 
     private final int index;
 
@@ -49,5 +49,4 @@ public class ReadArgumentNode extends RNode {
     public int getIndex() {
         return index;
     }
-
 }

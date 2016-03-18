@@ -58,7 +58,7 @@ public abstract class Warning extends RInvisibleBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    public String warning(byte callL, byte immediateL, byte noBreakWarningL, Object messageObj) {
+    protected String warning(byte callL, byte immediateL, byte noBreakWarningL, Object messageObj) {
         String message = RRuntime.asString(castString(messageObj));
         boolean call = RRuntime.fromLogical(callL);
         boolean immediate = RRuntime.fromLogical(immediateL);
@@ -70,7 +70,7 @@ public abstract class Warning extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")
     @Fallback
-    public String warning(Object callL, Object immediateL, Object noBreakWarningL, Object message) {
+    protected String warning(Object callL, Object immediateL, Object noBreakWarningL, Object message) {
         throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 }

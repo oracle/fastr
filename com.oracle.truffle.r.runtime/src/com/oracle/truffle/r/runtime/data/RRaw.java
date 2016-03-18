@@ -22,12 +22,13 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @ValueType
 public final class RRaw extends RScalarVector implements RAbstractRawVector {
@@ -61,15 +62,18 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
         }
     }
 
+    @Override
     public RRawVector materialize() {
         return RDataFactory.createRawVector(new byte[]{value});
     }
 
+    @Override
     public byte getRawDataAt(int index) {
         assert index == 0;
         return value;
     }
 
+    @Override
     public RRaw getDataAt(int index) {
         assert index == 0;
         return this;
@@ -101,5 +105,4 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
     public static RRaw valueOf(byte value) {
         return new RRaw(value);
     }
-
 }

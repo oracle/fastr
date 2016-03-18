@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,11 +28,11 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 
-public class VectorSizeNode extends RootNode {
+class VectorSizeNode extends RootNode {
 
     @Child private RLengthNode lengthNode = RLengthNode.create();
 
-    public VectorSizeNode() {
+    VectorSizeNode() {
         super(TruffleRLanguage.class, null, null);
     }
 

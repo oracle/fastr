@@ -231,5 +231,4 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
         return createHandle(UnaryArithmeticNodeGen.create(factory, null), //
                         (node, args) -> node.execute(args[0]));
     }
-
 }

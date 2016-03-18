@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,16 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RPerfStats;
 
 /**
  * Provides the generic mechanism for associating attributes with a R object. It does no special
@@ -234,7 +236,6 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
         public RAttribute next() {
             return new AttrInstance(names[index], values[index++]);
         }
-
     }
 
     @TruffleBoundary
@@ -272,20 +273,22 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
             hist.inc(effectiveSizeNow);
         }
 
+        @Override
         public void initialize(String optionText) {
             stats = this;
         }
 
+        @Override
         public String getName() {
             return "attributes";
 
         }
 
+        @Override
         public void report() {
             RPerfStats.out().printf("RAttributes: %d, max size %d%n", hist.getTotalCount(), hist.getMaxSize());
             hist.report();
         }
-
     }
 
     public void setSize(int size) {

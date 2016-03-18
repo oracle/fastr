@@ -21,9 +21,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 //Transcribed from GnuR, src/main/printutils.c, src/main/format.c
 
-public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVector> {
+final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVector> {
 
-    public static final LogicalVectorPrinter INSTANCE = new LogicalVectorPrinter();
+    static final LogicalVectorPrinter INSTANCE = new LogicalVectorPrinter();
+
+    private LogicalVectorPrinter() {
+        // singleton
+    }
 
     @Override
     protected VectorPrinter<RAbstractLogicalVector>.VectorPrintJob createJob(RAbstractLogicalVector vector, int indx, PrintContext printCtx) {
@@ -63,7 +67,7 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
         }
     }
 
-    public static FormatMetrics formatLogicalVector(RAbstractLogicalVector x, int offs, int n, int naWidth) {
+    static FormatMetrics formatLogicalVector(RAbstractLogicalVector x, int offs, int n, int naWidth) {
         int fieldwidth = 1;
         for (int i = 0; i < n; i++) {
             byte xi = x.getDataAt(offs + i);
@@ -82,7 +86,7 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
         return new FormatMetrics(fieldwidth);
     }
 
-    public static String encodeLogical(byte x, int w, PrintParameters pp) {
+    static String encodeLogical(byte x, int w, PrintParameters pp) {
         final String fmt = "%" + Utils.asBlankArg(Math.min(w, (NB - 1))) + "s";
         if (x == RRuntime.LOGICAL_NA) {
             return snprintf(NB, fmt, pp.getNaString());
@@ -92,5 +96,4 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
             return snprintf(NB, fmt, "FALSE");
         }
     }
-
 }

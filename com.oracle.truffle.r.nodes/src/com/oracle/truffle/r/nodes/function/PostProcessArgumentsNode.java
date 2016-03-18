@@ -40,9 +40,10 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 public final class PostProcessArgumentsNode extends RNode {
 
-    @Children protected final LocalReadVariableNode[] sequence;
+    @Children private final LocalReadVariableNode[] sequence;
     @Child private PostProcessArgumentsNode nextOptPostProccessArgNode;
-    @CompilationFinal public int transArgsBitSet;
+    @CompilationFinal int transArgsBitSet;
+
     // the first time this node is cloned (via FunctionDefinitionNode) it's from the trufflerizer -
     // in this case we should not create the node chain chain in the clone operation (below) at the
     // reference count meta data needs to be associated with this node and not its clone
@@ -107,7 +108,7 @@ public final class PostProcessArgumentsNode extends RNode {
      * Deep copies are also made from other places than the trufflerizer, in which case we need to
      * always create the node chain.
      */
-    public PostProcessArgumentsNode deepCopyUnconditional() {
+    private PostProcessArgumentsNode deepCopyUnconditional() {
         CompilerAsserts.neverPartOfCompilation();
         PostProcessArgumentsNode copy = (PostProcessArgumentsNode) super.deepCopy();
         nextOptPostProccessArgNode = insert(copy);
@@ -126,5 +127,4 @@ public final class PostProcessArgumentsNode extends RNode {
             return nextNode;
         }
     }
-
 }

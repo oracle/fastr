@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,19 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.FileSystem;
-import java.util.*;
+import java.nio.file.FileSystems;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * Repository for environment variables, including those set by FastR itself, e.g.
@@ -153,7 +157,7 @@ public final class REnvVars implements RContext.ContextState {
         }
     }
 
-    protected String expandParameters(String value) {
+    private String expandParameters(String value) {
         StringBuffer result = new StringBuffer();
         int x = 0;
         int paramStart = value.indexOf("${", x);
@@ -185,7 +189,7 @@ public final class REnvVars implements RContext.ContextState {
         throw new IOException("   File " + path + " contains invalid line(s)\n      " + line + "\n   They were ignored\n");
     }
 
-    public void safeReadEnvironFile(String path) {
+    private void safeReadEnvironFile(String path) {
         try {
             readEnvironFile(path);
         } catch (IOException ex) {
@@ -193,5 +197,4 @@ public final class REnvVars implements RContext.ContextState {
             System.out.println(ex.getMessage());
         }
     }
-
 }
