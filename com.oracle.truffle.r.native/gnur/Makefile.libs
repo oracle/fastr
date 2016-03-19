@@ -21,10 +21,14 @@
 # questions.
 #
 
-# Copies the Blas and lapack libraries and builds the pcre library
+# Copies the Blas and lapack libraries and (maybe) builds the pcre library
 
-ifneq ($(MAKECMDGOALS),clean)
+ifneq (,$(wildcard $(TOPDIR)/platform.mk))
 include $(TOPDIR)/platform.mk
+else
+ifneq ($(MAKECMDGOALS),clean)
+$(error no platform.mk available)
+endif
 endif
 
 TARGET_DIR := $(abspath $(TOPDIR)/../lib)
@@ -45,6 +49,8 @@ $(LAPACK_TARGET): $(GNUR_HOME)/lib/libRlapack$(DYLIB_EXT)
 ifeq ($(OS_NAME),Darwin)
 	install_name_tool -change libRblas.dylib $(BLAS_TARGET) $(LAPACK_TARGET)
 	install_name_tool -change libR.dylib $(TARGET_DIR)/libR.dylib $(LAPACK_TARGET)
+	install_name_tool -id $(BLAS_TARGET) $(BLAS_TARGET)
+	install_name_tool -id $(LAPACK_TARGET) $(LAPACK_TARGET)
 endif
 
 PCRE_OBJS := $(wildcard $(GNUR_HOME)/src/extra/pcre/pcre_*.o)
