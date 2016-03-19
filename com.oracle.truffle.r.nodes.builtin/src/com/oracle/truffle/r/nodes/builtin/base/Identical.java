@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -340,11 +341,19 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte doInternalIdenticalGeneric(RDataFrame x, RDataFrame y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
+    protected byte doInternalIdenticalGeneric(RFactor x, RFactor y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         if (!recursive) {
             controlVisibility();
         }
         return doInternalIdenticalGeneric(x.getVector(), y.getVector(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
+    }
+
+    @Specialization
+    protected byte doInternalIdenticalGeneric(RDataFrame x, RDataFrame y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
+        if (!recursive) {
+            controlVisibility();
+        }
+        return identicalRecursive(x.getVector(), y.getVector(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
     @SuppressWarnings("unused")
