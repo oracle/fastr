@@ -141,11 +141,20 @@ public final class FastRSession implements RSession {
 
     private static final Source GET_CONTEXT = Source.fromText("invisible(fastr.context.get())", "<get_context>").withMimeType(TruffleRLanguage.MIME);
 
-    public PolyglotEngine createTestContext() {
+    public PolyglotEngine createTestContext(ContextInfo contextInfoArg) {
         create();
+        ContextInfo contextInfo;
+        if (contextInfoArg == null) {
+            contextInfo = createContextInfo(ContextKind.SHARE_PARENT_RW);
+        } else {
+            contextInfo = contextInfoArg;
+        }
+        return contextInfo.apply(PolyglotEngine.newBuilder()).build();
+    }
+
+    public ContextInfo createContextInfo(ContextKind contextKind) {
         RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
-        ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_PARENT_RW, mainContext, consoleHandler, TimeZone.getTimeZone("CET"));
-        return info.apply(PolyglotEngine.newBuilder()).build();
+        return ContextInfo.create(options, contextKind, mainContext, consoleHandler, TimeZone.getTimeZone("CET"));
     }
 
     private FastRSession() {
@@ -166,12 +175,12 @@ public final class FastRSession implements RSession {
 
     @Override
     @SuppressWarnings("deprecation")
-    public String eval(String expression) throws Throwable {
+    public String eval(String expression, ContextInfo contextInfo) throws Throwable {
         consoleHandler.reset();
 
         EvalThread thread = evalThread;
-        if (thread == null || !thread.isAlive()) {
-            thread = new EvalThread();
+        if (thread == null || !thread.isAlive() || contextInfo != thread.contextInfo) {
+            thread = new EvalThread(contextInfo);
             thread.setName("FastR evaluation");
             thread.start();
             evalThread = thread;
@@ -202,9 +211,11 @@ public final class FastRSession implements RSession {
         private volatile Throwable killedByException;
         private final Semaphore entry = new Semaphore(0);
         private final Semaphore exit = new Semaphore(0);
+        private final ContextInfo contextInfo;
 
-        EvalThread() {
+        EvalThread(ContextInfo contextInfo) {
             super(null);
+            this.contextInfo = contextInfo;
         }
 
         public void push(String exp) {
@@ -225,7 +236,7 @@ public final class FastRSession implements RSession {
                     break;
                 }
                 try {
-                    PolyglotEngine vm = createTestContext();
+                    PolyglotEngine vm = createTestContext(contextInfo);
                     consoleHandler.setInput(expression.split("\n"));
                     try {
                         String input = consoleHandler.readLine();

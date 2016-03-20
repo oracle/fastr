@@ -64,7 +64,7 @@ public class TestRecommendedPackages extends TestRPackages {
 
     @Test
     public void testLoad() {
-        assertEval(TestBase.template("{ library(%1, lib.loc = \"%0\"); detach(\"package:%1\"); }",
+        assertEval(Context.NonShared, TestBase.template("{ library(%1, lib.loc = \"%0\"); detach(\"package:%1\"); }",
                         new String[]{TestRPackages.libLoc()}, OK_PACKAGES));
     }
 

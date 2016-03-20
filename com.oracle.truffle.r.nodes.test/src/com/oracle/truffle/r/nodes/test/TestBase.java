@@ -38,7 +38,7 @@ public class TestBase {
 
     @BeforeClass
     public static void setupClass() {
-        testVM = FastRSession.create().createTestContext();
+        testVM = FastRSession.create().createTestContext(null);
     }
 
     // clear out warnings (which are stored in shared base env)

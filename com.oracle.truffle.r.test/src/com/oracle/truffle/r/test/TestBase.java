@@ -40,6 +40,9 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
 import com.oracle.truffle.r.test.generate.TestOutputManager;
@@ -90,6 +93,10 @@ public class TestBase {
         public String getDescription() {
             return description;
         }
+    }
+
+    public enum Context implements TestTrait {
+        NonShared; // Test requires a new non-shared {@link RContext}.
     }
 
     /**
@@ -444,6 +451,9 @@ public class TestBase {
         boolean mayContainWarning = TestTrait.contains(traits, Output.MayContainWarning);
         boolean mayContainError = TestTrait.contains(traits, Output.MayContainError);
         boolean ambiguousError = TestTrait.contains(traits, Output.ContainsAmbiguousError);
+        boolean nonSharedContext = TestTrait.contains(traits, Context.NonShared);
+
+        ContextInfo contextInfo = nonSharedContext ? fastROutputManager.fastRSession.createContextInfo(ContextKind.SHARE_NOTHING) : null;
 
         int index = 1;
         boolean allOk = true;
@@ -452,7 +462,7 @@ public class TestBase {
             if (ignored || generatingExpected()) {
                 ignoredInputCount++;
             } else {
-                String result = fastREval(input);
+                String result = fastREval(input, contextInfo);
 
                 CheckResult checkResult = checkResult(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError);
 
@@ -637,13 +647,14 @@ public class TestBase {
     }
 
     /**
-     * Evaluate {@code input} in FastR, returning all (virtual) console output that was produced.
+     * Evaluate {@code input} in FastR, returning all (virtual) console output that was produced. If
+     * {@code nonShared} then this must evaluate in a new, non-shared, {@link RContext}.
      */
-    protected static String fastREval(String input) {
+    protected static String fastREval(String input, ContextInfo contextInfo) {
         microTestInfo.expression = input;
         String result;
         try {
-            result = fastROutputManager.fastRSession.eval(input);
+            result = fastROutputManager.fastRSession.eval(input, contextInfo);
         } catch (Throwable e) {
             String clazz;
             if (e instanceof RInternalError && e.getCause() != null) {

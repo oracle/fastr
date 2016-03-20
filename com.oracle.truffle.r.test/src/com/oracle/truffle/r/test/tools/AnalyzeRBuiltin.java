@@ -523,7 +523,7 @@ public class AnalyzeRBuiltin {
                     if (gnrFunctionInput != null) {
                         output = gnrFunctionInput.get(rInfo.name);
                     } else {
-                        output = gnurRSession().eval(rInfo.name);
+                        output = gnurRSession().eval(rInfo.name, null);
                     }
                     assert output != null;
                     if (pkgs.size() == 0 || isInPackage(pkgs, output)) {
