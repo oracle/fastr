@@ -31,13 +31,15 @@ public interface RSyntaxLookup extends RSyntaxElement {
 
     String getIdentifier();
 
+    boolean isFunctionLookup();
+
     /**
      * Helper function: creates a synthetic RSyntaxLookup. The first {@code identifier.length()}
      * characters of the original source section (if non-null) will be used as the new source
      * section.
      */
     static RSyntaxLookup createDummyLookup(SourceSection originalSource, String identifier, boolean isFunctionLookup) {
-        SourceSection source = originalSource == null ? null : originalSource.getSource().createSection(null, originalSource.getCharIndex(), 1);
+        SourceSection source = originalSource == null || originalSource.getSource() == null ? null : originalSource.getSource().createSection(null, originalSource.getCharIndex(), 1);
         return new RSyntaxLookup() {
             @Override
             public SourceSection getSourceSection() {
@@ -53,8 +55,10 @@ public interface RSyntaxLookup extends RSyntaxElement {
             public boolean isFunctionLookup() {
                 return isFunctionLookup;
             }
+
+            public void setSourceSection(SourceSection src) {
+                // ignored
+            }
         };
     }
-
-    boolean isFunctionLookup();
 }
