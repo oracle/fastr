@@ -390,7 +390,7 @@ def junit(args):
     return mx.junit(args, _junit_r_harness, parser=parser)
 
 def junit_simple(args):
-    return mx.command_function('junit')(['--tests', _library_unit_tests()] + args)
+    return mx.command_function('junit')(['--tests', _simple_unit_tests()] + args)
 
 def junit_noapps(args):
     return mx.command_function('junit')(['--tests', _gate_noapps_unit_tests()] + args)
@@ -407,11 +407,11 @@ def _test_package():
 def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
-def _library_unit_tests():
-    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr']))
+def _simple_unit_tests():
+    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'tck', 'parser', 'S4']))
 
-def _tests_unit_tests():
-    return ','.join(map(_test_subpackage, ['rffi', 'rpackages', 'builtins', 'functions', 'tck', 'parser', 'S4']))
+def _package_unit_tests():
+    return ','.join(map(_test_subpackage, ['rffi', 'rpackages']))
 
 def _nodes_unit_tests():
     return 'com.oracle.truffle.r.nodes.test'
@@ -420,7 +420,7 @@ def _apps_unit_tests():
     return _test_subpackage('apps')
 
 def _gate_noapps_unit_tests():
-    return ','.join([_library_unit_tests(), _nodes_unit_tests(), _tests_unit_tests()])
+    return ','.join([_simple_unit_tests(), _nodes_unit_tests(), _package_unit_tests()])
 
 def _gate_unit_tests():
     return ','.join([_gate_noapps_unit_tests(), _apps_unit_tests()])
