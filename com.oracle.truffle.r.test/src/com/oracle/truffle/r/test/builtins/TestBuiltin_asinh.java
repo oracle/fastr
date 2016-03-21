@@ -34,7 +34,7 @@ public class TestBuiltin_asinh extends TestBase {
 
     @Test
     public void testasinh4() {
-        assertEval(Ignored.Unknown, "argv <- list(c(0+2i, 0.0001+2i, 0-2i, 0-2.0001i));asinh(argv[[1]]);");
+        assertEval("argv <- list(c(0+2i, 0.0001+2i, 0-2i, 0-2.0001i));asinh(argv[[1]]);");
     }
 
     @Test

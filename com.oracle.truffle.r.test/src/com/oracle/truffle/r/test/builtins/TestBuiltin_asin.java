@@ -24,7 +24,7 @@ public class TestBuiltin_asin extends TestBase {
 
     @Test
     public void testasin2() {
-        assertEval(Ignored.Unknown, "argv <- list(c(2+0i, 2-0.0001i, -2+0i, -2+0.0001i));asin(argv[[1]]);");
+        assertEval("argv <- list(c(2+0i, 2-0.0001i, -2+0i, -2+0.0001i));asin(argv[[1]]);");
     }
 
     @Test

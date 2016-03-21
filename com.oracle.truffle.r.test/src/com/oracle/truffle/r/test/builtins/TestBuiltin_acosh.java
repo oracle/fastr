@@ -24,7 +24,7 @@ public class TestBuiltin_acosh extends TestBase {
 
     @Test
     public void testacosh2() {
-        assertEval(Ignored.Unknown, "argv <- list(logical(0));acosh(argv[[1]]);");
+        assertEval("argv <- list(logical(0));acosh(argv[[1]]);");
     }
 
     @Test
@@ -34,7 +34,7 @@ public class TestBuiltin_acosh extends TestBase {
 
     @Test
     public void testacosh4() {
-        assertEval(Ignored.Unknown, "argv <- list(c(0+2i, 0.0001+2i, 0-2i, 0-2.0001i));acosh(argv[[1]]);");
+        assertEval("argv <- list(c(0+2i, 0.0001+2i, 0-2i, 0-2.0001i));acosh(argv[[1]]);");
     }
 
     @Test
