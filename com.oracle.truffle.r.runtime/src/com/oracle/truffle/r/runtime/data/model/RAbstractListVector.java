@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data.model;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public interface RAbstractListVector extends RAbstractVector {
 
@@ -58,6 +59,8 @@ public interface RAbstractListVector extends RAbstractVector {
     default void setDataAt(Object store, int index, Object value) {
         throw new UnsupportedOperationException();
     }
+
+    RStringVector getNames();
 
     @Override
     default void setNA(Object store, int index) {
