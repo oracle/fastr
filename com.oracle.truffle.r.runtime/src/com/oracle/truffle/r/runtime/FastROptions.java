@@ -95,8 +95,11 @@ public enum FastROptions {
         for (FastROptions option : VALUES) {
             if (name.equals(option.name())) {
                 option.value = value;
+                return;
             }
         }
+        System.out.println("unknown FastR option: " + name + " (value: " + value + ")");
+        System.exit(2);
     }
 
     private static boolean initialized;
