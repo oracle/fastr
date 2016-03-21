@@ -236,6 +236,7 @@ public enum RType {
     public static RType[] getVectorTypes() {
         return VECTOR_TYPES;
     }
+
     public boolean isNull() {
         return this == Null;
     }

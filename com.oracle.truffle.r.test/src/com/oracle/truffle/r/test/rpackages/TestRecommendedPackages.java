@@ -37,7 +37,6 @@ import com.oracle.truffle.r.test.TestBase;
  * Test the installation of the "recommended" packages that come with GnuR. N.B. There are no
  * specific tests beyond install/load as that is handled separately in the package testing
  * framework. We are primarily concerned with detecting installation regressions.
- *
  */
 public class TestRecommendedPackages extends TestRPackages {
     private static final String[] OK_PACKAGES = new String[]{"MASS", "boot", "class", "cluster", "codetools", "foreign", "lattice", "nnet", "spatial", "survival"};
@@ -64,8 +63,6 @@ public class TestRecommendedPackages extends TestRPackages {
 
     @Test
     public void testLoad() {
-        assertEval(Context.NonShared, TestBase.template("{ library(%1, lib.loc = \"%0\"); detach(\"package:%1\"); }",
-                        new String[]{TestRPackages.libLoc()}, OK_PACKAGES));
+        assertEval(Context.NonShared, TestBase.template("{ library(%1, lib.loc = \"%0\"); detach(\"package:%1\"); }", new String[]{TestRPackages.libLoc()}, OK_PACKAGES));
     }
-
 }
