@@ -57,7 +57,6 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
         switch (type) {
             case Integer:
                 return this;
-            case Numeric:
             case Double:
                 return this;
             case Complex:

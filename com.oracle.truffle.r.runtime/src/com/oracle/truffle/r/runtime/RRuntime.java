@@ -208,31 +208,26 @@ public class RRuntime {
 
     @TruffleBoundary
     // TODO refactor this into RType so it is complete and more efficient
-    public static String classToString(Class<?> c, boolean numeric) {
+    public static String classToString(Class<?> c) {
         if (c == RLogical.class) {
-            return RType.Logical.getName();
+            return RType.Logical.getClazz();
         } else if (c == RInteger.class) {
-            return RType.Integer.getName();
+            return RType.Integer.getClazz();
         } else if (c == RDouble.class) {
-            return numeric ? RType.Numeric.getName() : RType.Double.getName();
+            return RType.Double.getClazz();
         } else if (c == RComplex.class) {
-            return RType.Complex.getName();
+            return RType.Complex.getClazz();
         } else if (c == RRaw.class) {
-            return RType.Raw.getName();
+            return RType.Raw.getClazz();
         } else if (c == RString.class) {
-            return RType.Character.getName();
+            return RType.Character.getClazz();
         } else if (c == RFunction.class) {
-            return RType.Function.getName();
+            return RType.Function.getClazz();
         } else if (c == Object.class) {
-            return RType.Any.getName();
+            return RType.Any.getClazz();
         } else {
             throw new RuntimeException("internal error, unknown class: " + c);
         }
-    }
-
-    @TruffleBoundary
-    public static String classToString(Class<?> c) {
-        return classToString(c, true);
     }
 
     @TruffleBoundary
@@ -832,7 +827,7 @@ public class RRuntime {
         if (type == RType.Logical) {
             return obj instanceof Byte;
         }
-        if (type == RType.Integer || type == RType.Double || type == RType.Numeric) {
+        if (type == RType.Integer || type == RType.Double) {
             return obj instanceof Integer || obj instanceof Double;
         }
         return false;

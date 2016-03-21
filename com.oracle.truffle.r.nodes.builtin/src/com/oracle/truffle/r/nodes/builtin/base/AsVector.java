@@ -213,7 +213,7 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     protected boolean castToDouble(RAbstractContainer x, String mode) {
-        return x.getElementClass() != RDouble.class && (RType.Numeric.getName().equals(mode) || RType.Double.getName().equals(mode));
+        return x.getElementClass() != RDouble.class && (RType.Double.getClazz().equals(mode) || RType.Double.getName().equals(mode));
     }
 
     protected boolean castToComplex(RAbstractContainer x, String mode) {

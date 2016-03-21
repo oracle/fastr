@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RLogicalVector extends RVector implements RAbstractLogicalVector {
 
-    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Logical.getName());
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Logical.getClazz());
 
     private final byte[] data;
 
@@ -55,7 +55,6 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
             case Logical:
                 return this;
             case Double:
-            case Numeric:
                 return RClosures.createLogicalToDoubleVector(this);
             case Integer:
                 return RClosures.createLogicalToIntVector(this);

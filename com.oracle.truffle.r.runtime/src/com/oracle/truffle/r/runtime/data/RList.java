@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 
 public final class RList extends RListBase implements RGPBits, TruffleObject {
 
-    private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getName());
+    private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getClazz());
 
     public String elementNamePrefix;
 

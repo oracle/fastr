@@ -98,7 +98,7 @@ public abstract class UpdateClass extends RBuiltinNode {
         if (!arg.isObject(attrProfiles)) {
             initTypeof();
             RType argType = typeof.execute(arg);
-            if (argType.equals(className) || (mode == RType.Numeric && (argType == RType.Integer || argType == RType.Double))) {
+            if (argType.equals(className) || (mode == RType.Double && (argType == RType.Integer || argType == RType.Double))) {
                 // "explicit" attribute might have been set (e.g. by oldClass<-)
                 return setClass(arg, RNull.instance);
             }

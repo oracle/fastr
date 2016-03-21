@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RIntVector extends RVector implements RAbstractIntVector {
 
-    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Integer.getName());
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Integer.getClazz());
 
     private final int[] data;
 
@@ -53,7 +53,6 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         switch (type) {
             case Double:
-            case Numeric:
                 return RClosures.createIntToDoubleVector(this);
             case Integer:
                 return this;

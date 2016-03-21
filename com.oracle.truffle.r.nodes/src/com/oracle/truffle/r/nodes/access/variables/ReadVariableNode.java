@@ -892,12 +892,12 @@ abstract class CheckTypeNode extends RBaseNode {
 
     @Specialization
     boolean checkType(@SuppressWarnings("unused") Integer o) {
-        return type == RType.Any || type == RType.Integer || type == RType.Double || type == RType.Numeric ? true : false;
+        return type == RType.Any || type == RType.Integer || type == RType.Double ? true : false;
     }
 
     @Specialization
     boolean checkType(@SuppressWarnings("unused") Double o) {
-        return type == RType.Any || type == RType.Integer || type == RType.Double || type == RType.Numeric ? true : false;
+        return type == RType.Any || type == RType.Integer || type == RType.Double ? true : false;
     }
 
     @Specialization

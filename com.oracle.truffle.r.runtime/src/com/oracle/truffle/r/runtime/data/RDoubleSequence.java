@@ -74,7 +74,6 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
         // TODO might be possible to implement some of these without closures
         switch (type) {
             case Double:
-            case Numeric:
                 return this;
             case Integer:
                 return RClosures.createDoubleToIntVector(this);

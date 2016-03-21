@@ -67,7 +67,6 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
         switch (type) {
             case Integer:
                 return this;
-            case Numeric:
             case Double:
                 return isNAProfile.profile(isNA()) ? RDouble.createNA() : RDouble.valueOf(value);
             case Complex:

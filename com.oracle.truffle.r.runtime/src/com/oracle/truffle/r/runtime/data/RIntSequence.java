@@ -53,7 +53,6 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
             case Integer:
                 return this;
             case Double:
-            case Numeric:
                 return RDataFactory.createDoubleSequence(getStart(), getStride(), getLength());
             case Complex:
                 return RClosures.createIntToComplexVector(this);

@@ -24,8 +24,7 @@ public enum RType {
     Raw("raw", 0),
     Logical("logical", 1),
     Integer("integer", 2),
-    Numeric("numeric", 3),
-    Double("double", 3),
+    Double("double", "numeric", 3),
     Complex("complex", 4),
     Character("character", 5),
     List("list", 6),
@@ -54,15 +53,25 @@ public enum RType {
     public static final int NUMBER_OF_PRECEDENCES = 9;
 
     private final String name;
+    private final String clazz;
     private final int precedence;
 
     RType(String name, int precedence) {
+        this(name, name, precedence);
+    }
+
+    RType(String name, String clazz, int precedence) {
         this.name = name;
+        this.clazz = clazz;
         this.precedence = precedence;
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getClazz() {
+        return clazz;
     }
 
     public int getPrecedence() {
@@ -72,7 +81,6 @@ public enum RType {
     public boolean isNumeric() {
         switch (this) {
             case Logical:
-            case Numeric:
             case Double:
             case Integer:
             case Complex:
@@ -85,7 +93,6 @@ public enum RType {
     public boolean isVector() {
         switch (this) {
             case Logical:
-            case Numeric:
             case Double:
             case Integer:
             case Complex:
@@ -182,7 +189,6 @@ public enum RType {
 
     public RVector getEmpty() {
         switch (this) {
-            case Numeric:
             case Double:
                 return RDataFactory.createEmptyDoubleVector();
             case Integer:
@@ -230,7 +236,6 @@ public enum RType {
     public static RType[] getVectorTypes() {
         return VECTOR_TYPES;
     }
-
     public boolean isNull() {
         return this == Null;
     }

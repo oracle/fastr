@@ -139,7 +139,7 @@ public abstract class NChar extends RBuiltinNode {
             }
             return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames(attrProfiles));
         } else {
-            throw RError.error(this, RError.Message.CANNOT_COERCE, RRuntime.classToString(obj.getClass(), false), "character");
+            throw RError.error(this, RError.Message.CANNOT_COERCE, RRuntime.classToString(obj.getClass()), "character");
         }
     }
 }

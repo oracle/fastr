@@ -81,7 +81,6 @@ public abstract class CastTypeNode extends BinaryNode {
             case Complex:
                 return CastComplexNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case Double:
-            case Numeric:
                 return CastDoubleNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case Integer:
                 return CastIntegerNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);

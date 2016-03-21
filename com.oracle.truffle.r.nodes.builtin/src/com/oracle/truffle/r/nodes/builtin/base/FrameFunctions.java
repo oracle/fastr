@@ -173,7 +173,7 @@ public class FrameFunctions {
         }
 
         @TruffleBoundary
-        private RLanguage createCall(Frame cframe) {
+        private static RLanguage createCall(Frame cframe) {
             RCaller caller = RArguments.getCall(cframe);
             assert caller != null;
             return RContext.getRRuntimeASTAccess().getSyntaxCaller(caller);
@@ -324,7 +324,7 @@ public class FrameFunctions {
                 Object argument = varArgParameter.getArgument(((VarArgNode) arg).getIndex());
                 if (argument instanceof RPromise) {
                     RNode unwrapped = (RNode) RASTUtils.unwrap(((RPromise) argument).getRep());
-                    return unwrapped instanceof ConstantNode ? unwrapped : ConstantNode.create(createVarArgSymbol((VarArgNode) arg));
+                    return unwrapped instanceof ConstantNode ? unwrapped : ReadVariableNode.create(createVarArgName((VarArgNode) arg));
                 } else {
                     return ConstantNode.create(argument);
                 }
@@ -345,10 +345,16 @@ public class FrameFunctions {
         }
 
         private static RSymbol createVarArgSymbol(VarArgNode varArgNode) {
-            int vn = varArgNode.getIndex() + 1;
             CompilerAsserts.neverPartOfCompilation(); // for string concatenation and interning
-            String varArgSymbol = (vn < 10 ? ".." : ".") + vn;
+            String varArgSymbol = createVarArgName(varArgNode);
             return RDataFactory.createSymbolInterned(varArgSymbol);
+        }
+
+        private static String createVarArgName(VarArgNode varArgNode) {
+            CompilerAsserts.neverPartOfCompilation(); // for string concatenation and interning
+            int vn = varArgNode.getIndex() + 1;
+            String varArgSymbol = (vn < 10 ? ".." : ".") + vn;
+            return varArgSymbol;
         }
 
         @Specialization
