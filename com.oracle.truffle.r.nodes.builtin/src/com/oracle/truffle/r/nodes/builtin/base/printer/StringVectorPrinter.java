@@ -104,7 +104,7 @@ final class StringVectorPrinter extends VectorPrinter<RAbstractStringVector> {
 
         for (int i = 0; i < n; i++) {
             String s = x.getDataAt(offs + i);
-            String xi = quote ? RRuntime.quoteString(s) : s;
+            String xi = quote ? RRuntime.quoteString(s, false) : s;
 
             if (xi == RRuntime.STRING_NA) {
                 l = quote ? pp.getNaWidth() : pp.getNaWidthNoquote();
@@ -173,7 +173,7 @@ final class StringVectorPrinter extends VectorPrinter<RAbstractStringVector> {
             if (RRuntime.isNA(value)) {
                 s = pp.getNaString();
             } else {
-                s = RRuntime.quoteString(value);
+                s = RRuntime.quoteString(value, false);
             }
         } else {
             if (RRuntime.isNA(value)) {

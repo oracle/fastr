@@ -68,7 +68,7 @@ public abstract class ToStringNode extends RBaseNode {
             return value;
         }
         if (quotes) {
-            return RRuntime.quoteString(value);
+            return RRuntime.quoteString(value, false);
         }
         return value;
 

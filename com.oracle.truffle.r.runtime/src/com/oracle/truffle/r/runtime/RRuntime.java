@@ -697,7 +697,7 @@ public class RRuntime {
     }
 
     @TruffleBoundary
-    public static String quoteString(String value) {
+    public static String quoteString(String value, boolean encodeNonASCII) {
         if (isNA(value)) {
             return STRING_NA;
         }
@@ -735,8 +735,12 @@ public class RRuntime {
                     str.append("\\\"");
                     break;
                 default:
-                    if (codepoint < 32) {
-                        str.append("\\0").append(codepoint / 8).append(codepoint % 8);
+                    if (codepoint < 32 || codepoint == 0x7f) {
+                        str.append("\\").append(codepoint / 64).append((codepoint / 8) % 8).append(codepoint % 8);
+                    } else if (encodeNonASCII && codepoint > 0x7f && codepoint <= 0xff) {
+                        str.append("\\x" + Integer.toHexString(codepoint));
+                        // } else if (codepoint > 0x7f && codepoint <= 0xff) {
+                        // str.append("\\u" + Integer.toHexString(codepoint));
                     } else {
                         str.appendCodePoint(codepoint);
                     }
