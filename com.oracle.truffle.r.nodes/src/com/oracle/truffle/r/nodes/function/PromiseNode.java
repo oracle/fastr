@@ -377,7 +377,11 @@ public abstract class PromiseNode extends RNode {
             for (int i = 0; i < nodes.length; i++) {
                 Closure closure = closureCache.getOrCreateClosure(nodes[i]);
                 this.closures[i] = closure;
-                this.promised[i] = PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), false, forcedEager);
+                if (ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(nodes[i]))) {
+                    this.promised[i] = nodes[i];
+                } else {
+                    this.promised[i] = PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), false, forcedEager);
+                }
             }
             this.signature = signature;
         }

@@ -439,11 +439,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public Object createNodeForValue(Object value) {
-        return RASTUtils.createNodeForValue(value);
-    }
-
-    @Override
     public ArgumentsSignature getArgumentsSignature(RFunction f) {
         return ((RRootNode) f.getRootNode()).getSignature();
     }

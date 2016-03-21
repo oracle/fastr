@@ -147,9 +147,8 @@ public class ArgumentMatcher {
      * @return A fresh {@link InlinedArguments} containing the arguments in correct order and
      *         wrapped in special {@link PromiseNode}s
      */
-    public static InlinedArguments matchArgumentsInlined(RFunction function, UnmatchedArguments suppliedArgs, RBaseNode callingNode) {
-        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callingNode, suppliedArgs, false);
-        return new InlinedArguments(wrappedArgs, suppliedArgs.getSignature());
+    public static RNode[] matchArgumentsInlined(RFunction function, UnmatchedArguments suppliedArgs, RBaseNode callingNode) {
+        return matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callingNode, suppliedArgs, false);
     }
 
     public static MatchPermutation matchArguments(ArgumentsSignature suppliedSignature, ArgumentsSignature formalSignature, RBaseNode callingNode, boolean forNextMethod, RBuiltinDescriptor builtin) {

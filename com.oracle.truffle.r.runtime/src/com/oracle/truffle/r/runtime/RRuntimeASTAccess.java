@@ -143,13 +143,6 @@ public interface RRuntimeASTAccess {
     Object forcePromise(Object val);
 
     /**
-     * {@code RASTUtils.createNodeForValue}.
-     *
-     * @return and {@code RNode} for {@code value}.
-     */
-    Object createNodeForValue(Object value);
-
-    /**
      * Returns the {@link ArgumentsSignature} for {@code f}.
      */
     ArgumentsSignature getArgumentsSignature(RFunction f);

@@ -132,12 +132,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary
- * 
+ *
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
- * 
+ *
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -150,11 +150,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * non varargs, max depth:
  * |
  * D-D-D-U
- * 
+ *
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- * 
+ *
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -162,7 +162,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- * 
+ *
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -174,7 +174,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    DGV
- * 
+ *
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -736,17 +736,15 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
 
                 // We inline the given arguments here, as builtins are executed inside the same
                 // frame as they are called.
-                InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, creator);
-                callNode = new BuiltinCallNode(root.inline(inlinedArgs.getSignature(), inlinedArgs.getArguments()), creator);
+                RNode[] inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, creator);
+                callNode = new BuiltinCallNode(root.inline(args.getSignature(), inlinedArgs), creator);
             } else {
                 // Now we need to distinguish: Do supplied arguments vary between calls?
                 if (args.containsVarArgsSymbol()) {
-                    // Yes, maybe.
                     VarArgsCacheCallNode nextNode = new UninitializedVarArgsCacheCallNode(args, creator);
                     ArgumentsSignature varArgsSignature = CallArgumentsNode.getVarargsAndNames(frame).getSignature();
                     callNode = DispatchedVarArgsCallNode.create(frame, args, nextNode, creator, function, varArgsSignature);
                 } else {
-                    // Nope! (peeewh)
                     MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, args, creator, false);
                     callNode = new DispatchedCallNode(function, matchedArgs, creator);
                 }

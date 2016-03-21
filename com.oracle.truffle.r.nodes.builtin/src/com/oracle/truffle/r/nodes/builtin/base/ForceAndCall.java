@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
+import java.util.ArrayList;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -78,37 +80,47 @@ public abstract class ForceAndCall extends RBuiltinNode {
     @Specialization(guards = "!isBuiltin(fun)")
     protected Object forceAndCall(VirtualFrame frame, int n, RFunction fun, RArgsValuesAndNames args) {
         initPromiseHelper();
+        RArgsValuesAndNames flattened = flatten(args);
         // In GnuR there appears to be no error checks on n > args.length
-        int an = args.getLength();
-        Object[] newArgValues = new Object[an];
-        for (int i = 0; i < an; i++) {
+        int cnt = Math.min(flattened.getLength(), n);
+        for (int i = 0; i < cnt; i++) {
             RPromise arg = (RPromise) args.getArgument(i);
-            Object newArg;
-            if (i < n) {
-                newArg = initPromiseHelper().evaluate(frame, arg);
-            } else {
-                newArg = arg;
-            }
-            newArgValues[i] = newArg;
+            initPromiseHelper().evaluate(frame, arg);
         }
-        RArgsValuesAndNames newArgs = new RArgsValuesAndNames(newArgValues, args.getSignature());
-        return createCallNode(fun, newArgs).execute(frame, fun);
+        return getDoCallNode().execute(frame, fun, flattened, RNull.instance);
     }
 
     @TruffleBoundary
-    private RCallNode createCallNode(RFunction fun, RArgsValuesAndNames args) {
-        RSyntaxNode[] synArgs = new RSyntaxNode[args.getLength()];
-        Object[] argValues = args.getArguments();
-        String[] names = new String[synArgs.length];
-        for (int i = 0; i < synArgs.length; i++) {
-            synArgs[i] = (RSyntaxNode) RASTUtils.createNodeForValue(argValues[i]);
-            String name = args.getSignature().getName(i);
-            if (name != null && !name.isEmpty()) {
-                names[i] = name;
+    private static RArgsValuesAndNames flatten(RArgsValuesAndNames args) {
+        boolean hasVarArgs = false;
+        int finalSize = args.getLength();
+        for (Object arg : args.getArguments()) {
+            if (arg instanceof RArgsValuesAndNames) {
+                hasVarArgs = true;
+                finalSize += ((RArgsValuesAndNames) arg).getLength() - 1;
             }
         }
-        ArgumentsSignature argsSig = ArgumentsSignature.get(names);
-        return (RCallNode) RASTUtils.createCall(fun, true, argsSig, synArgs);
+        if (!hasVarArgs) {
+            return args;
+        }
+        Object[] values = new Object[finalSize];
+        String[] names = new String[finalSize];
+        int pos = 0;
+        Object[] arguments = args.getArguments();
+        for (int i = 0; i < arguments.length; i++) {
+            Object arg = arguments[i];
+            if (arg instanceof RArgsValuesAndNames) {
+                RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
+                for (int j = 0; j < varArgs.getLength(); j++) {
+                    values[pos] = varArgs.getArgument(j);
+                    names[pos++] = varArgs.getSignature().getName(j);
+                }
+            } else {
+                values[pos] = arg;
+                names[pos++] = args.getSignature().getName(i);
+            }
+        }
+        return new RArgsValuesAndNames(values, ArgumentsSignature.get(names));
     }
 
     @SuppressWarnings("unused")
