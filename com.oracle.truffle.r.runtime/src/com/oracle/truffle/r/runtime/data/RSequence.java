@@ -51,6 +51,11 @@ public abstract class RSequence implements RAbstractVector {
         return true;
     }
 
+    @Override
+    public boolean checkCompleteness() {
+        return true;
+    }
+
     public void setComplete(boolean complete) {
         // sequences are always complete
     }
