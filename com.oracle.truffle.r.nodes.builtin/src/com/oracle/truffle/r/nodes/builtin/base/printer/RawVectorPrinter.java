@@ -26,9 +26,13 @@ import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 
-public final class RawVectorPrinter extends VectorPrinter<RAbstractRawVector> {
+final class RawVectorPrinter extends VectorPrinter<RAbstractRawVector> {
 
-    public static final RawVectorPrinter INSTANCE = new RawVectorPrinter();
+    static final RawVectorPrinter INSTANCE = new RawVectorPrinter();
+
+    private RawVectorPrinter() {
+        // singleton
+    }
 
     @Override
     protected RawVectorPrintJob createJob(RAbstractRawVector vector, int indx, PrintContext printCtx) {

@@ -49,13 +49,13 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @NodeInfo(cost = NodeCost.NONE)
 public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, RSyntaxCall, VisibilityController {
 
-    @Child WriteVariableNode writeSuperFrameVariableNode;
+    @Child private WriteVariableNode writeSuperFrameVariableNode;
 
     protected WriteSuperVariableNode(SourceSection src) {
         super(src);
     }
 
-    public static WriteSuperVariableNode create(SourceSection src, String name, RNode rhs) {
+    static WriteSuperVariableNode create(SourceSection src, String name, RNode rhs) {
         WriteSuperVariableNode result = new WriteSuperVariableNode(src);
         result.writeSuperFrameVariableNode = result.insert(WriteSuperFrameVariableNode.create(name, rhs, Mode.REGULAR));
         return result;
@@ -95,18 +95,22 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
         serializeHelper(state, "<<-");
     }
 
+    @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
         throw RInternalError.unimplemented();
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return RSyntaxLookup.createDummyLookup(null, "<<-", true);
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(getSourceSection(), (String) getName(), false), getRhs().asRSyntaxNode()};
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ArgumentsSignature.empty(2);
     }

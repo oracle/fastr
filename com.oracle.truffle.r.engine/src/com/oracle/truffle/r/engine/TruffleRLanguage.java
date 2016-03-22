@@ -32,7 +32,6 @@ import com.oracle.truffle.api.instrument.Visualizer;
 import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.instrumentation.NewInstrumentFactory;
@@ -125,6 +124,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             throw new com.oracle.truffle.api.vm.IncompleteSourceException(e);
         } catch (ParseException e) {
             return new CallTarget() {
+                @Override
                 public Object call(Object... arguments) {
                     try {
                         throw e.throwAsRError();
@@ -148,7 +148,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     // TODO: why isn't the original method public?
-    public Node actuallyCreateFindContextNode() {
+    Node actuallyCreateFindContextNode() {
         return createFindContextNode();
     }
 
@@ -172,13 +172,4 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     protected Object evalInContext(Source source, Node node, MaterializedFrame frame) throws IOException {
         return RContext.getEngine().parseAndEval(source, frame, false);
     }
-
-    /**
-     * Temporary workaround until {@link PolyglotEngine} provides a way to invoke
-     * {@link #evalInContext}.
-     */
-    public Object internalEvalInContext(Source source, Node node, MaterializedFrame frame) throws IOException {
-        return evalInContext(source, node, frame);
-    }
-
 }

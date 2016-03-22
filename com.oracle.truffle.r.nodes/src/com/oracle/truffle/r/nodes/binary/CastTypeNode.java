@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -12,11 +12,21 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.nodes.unary.CastRawNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.nodes.unary.TypeofNode;
+import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RDataFrame;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class CastTypeNode extends BinaryNode {
 
@@ -59,6 +69,10 @@ public abstract class CastTypeNode extends BinaryNode {
         return createCast(type, false, false, false);
     }
 
+    public static CastTypeNode create() {
+        return CastTypeNodeGen.create(null, null);
+    }
+
     @TruffleBoundary
     public static CastNode createCast(RType type, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         switch (type) {
@@ -67,7 +81,6 @@ public abstract class CastTypeNode extends BinaryNode {
             case Complex:
                 return CastComplexNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case Double:
-            case Numeric:
                 return CastDoubleNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case Integer:
                 return CastIntegerNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
@@ -85,9 +98,5 @@ public abstract class CastTypeNode extends BinaryNode {
 
     protected static boolean isNull(Object value) {
         return value == null;
-    }
-
-    public static CastTypeNode create() {
-        return CastTypeNodeGen.create(null, null);
     }
 }

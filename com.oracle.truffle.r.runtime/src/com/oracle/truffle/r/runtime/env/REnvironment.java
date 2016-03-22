@@ -22,18 +22,35 @@
  */
 package com.oracle.truffle.r.runtime.env;
 
-import java.util.*;
-import java.util.regex.*;
+import java.util.ArrayList;
+import java.util.regex.Pattern;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.env.frame.NSBaseMaterializedFrame;
+import com.oracle.truffle.r.runtime.env.frame.REnvEmptyFrameAccess;
+import com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess;
+import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
 
 /**
  * Denotes an R {@code environment}.
@@ -193,7 +210,6 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         void updateGlobal(Global globalEnv) {
             list.set(0, globalEnv);
         }
-
     }
 
     public static final String UNNAMED = new String("");
@@ -204,6 +220,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     private final REnvFrameAccess frameAccess;
     private boolean locked;
 
+    @Override
     public RType getRType() {
         return RType.Environment;
     }
@@ -374,7 +391,6 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
             default:
                 // nothing to do
         }
-
     }
 
     private static SearchPath initSearchList(Global globalEnv) {

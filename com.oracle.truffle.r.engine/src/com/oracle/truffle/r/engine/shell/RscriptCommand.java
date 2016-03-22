@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,19 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.*;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.EXPR;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.FILE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.HELP;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_RESTORE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SLAVE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.VERSION;
 
-import java.util.*;
+import java.util.ArrayList;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.RCmdOptions;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RVersionNumber;
+import com.oracle.truffle.r.runtime.context.ContextInfo;
 
 /**
  * Emulates the (Gnu)Rscript command as precisely as possible. in GnuR, Rscript is a genuine wrapper

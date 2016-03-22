@@ -5,19 +5,31 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.runtime;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.context.RContext.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 /**
  * Central location for all R options, that is for the {@code options(...)} and {@code getOption}
@@ -38,7 +50,7 @@ public class ROptions {
          */
         private final HashMap<String, Object> map;
 
-        ContextStateImpl(HashMap<String, Object> map) {
+        private ContextStateImpl(HashMap<String, Object> map) {
             this.map = map;
         }
 
@@ -60,23 +72,19 @@ public class ROptions {
             return value;
         }
 
-        public Object setValueNoCheck(String name, Object value) {
-            Object previous = map.get(name);
-            assert value != null;
-            if (value == RNull.instance) {
-                map.remove(name);
-            } else {
-                map.put(name, value);
-            }
-            return previous;
-        }
-
         public Object setValue(String name, Object value) throws OptionsException {
             Object coercedValue = value;
             if (CHECKED_OPTIONS_SET.contains(name)) {
                 coercedValue = check(name, value);
             }
-            return setValueNoCheck(name, coercedValue);
+            Object previous = map.get(name);
+            assert coercedValue != null;
+            if (coercedValue == RNull.instance) {
+                map.remove(name);
+            } else {
+                map.put(name, coercedValue);
+            }
+            return previous;
         }
 
         public static ContextStateImpl newContext(RContext context, REnvVars envVars) {
@@ -332,5 +340,4 @@ public class ROptions {
         }
         return coercedValue;
     }
-
 }

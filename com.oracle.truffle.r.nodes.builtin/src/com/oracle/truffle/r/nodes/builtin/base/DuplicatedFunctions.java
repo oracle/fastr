@@ -11,18 +11,26 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
+import java.util.HashSet;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.binary.CastTypeNode;
+import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class DuplicatedFunctions {
 
@@ -34,14 +42,14 @@ public class DuplicatedFunctions {
          * Code sharing vehicle for the slight differences in behavior between {@code duplicated}
          * and {@code anyDuplicated} and whether {@code fromLast} is {@code TRUE/FALSE}.
          */
-        protected static class DupState {
-            final RAbstractContainer x;
-            final HashSet<Object> vectorContents = new HashSet<>();
-            final HashSet<Object> incompContents;
-            final byte[] dupVec;
-            int index;
+        protected static final class DupState {
+            private final RAbstractContainer x;
+            private final HashSet<Object> vectorContents = new HashSet<>();
+            private final HashSet<Object> incompContents;
+            private final byte[] dupVec;
+            private int index;
 
-            DupState(RAbstractContainer x, RAbstractContainer incomparables, boolean justIndex, boolean fromLast) {
+            private DupState(RAbstractContainer x, RAbstractContainer incomparables, boolean justIndex, boolean fromLast) {
                 this.x = x;
                 vectorContents.add(x.getDataAtAsObject(fromLast ? x.getLength() - 1 : 0));
 
@@ -112,7 +120,6 @@ public class DuplicatedFunctions {
                 typeof = insert(TypeofNodeGen.create());
             }
         }
-
     }
 
     @RBuiltin(name = "duplicated", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "imcomparables", "fromLast", "nmax"})
@@ -160,7 +167,6 @@ public class DuplicatedFunctions {
         protected RLogicalVector duplicatedEmpty(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast, int nmax) {
             return RDataFactory.createLogicalVector(0);
         }
-
     }
 
     @RBuiltin(name = "anyDuplicated", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "imcomparables", "fromLast"})

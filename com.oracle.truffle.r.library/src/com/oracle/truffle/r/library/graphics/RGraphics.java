@@ -16,11 +16,15 @@ package com.oracle.truffle.r.library.graphics;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.oracle.truffle.r.library.graphics.core.*;
+import com.oracle.truffle.r.library.graphics.core.GraphicsEngine;
+import com.oracle.truffle.r.library.graphics.core.GraphicsEngineImpl;
 import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -76,5 +80,4 @@ public class RGraphics {
     private static GraphicsEngine getGraphicsEngine() {
         return GraphicsEngineImpl.getInstance();
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,28 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeGen.LogicalScalarCastNodeGen;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.ops.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.ops.BooleanOperation;
+import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
 
@@ -55,7 +63,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
 
     private final BooleanOperation booleanLogic;
 
-    public BinaryBooleanScalarNode(BooleanOperationFactory factory) {
+    BinaryBooleanScalarNode(BooleanOperationFactory factory) {
         this.booleanLogic = factory.create();
     }
 
@@ -93,7 +101,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
         private final NACheck check;
         private final BranchProfile seenEmpty = BranchProfile.create();
 
-        public LogicalScalarCastNode(String opName, String argumentName, NACheck check) {
+        LogicalScalarCastNode(String opName, String argumentName, NACheck check) {
             this.opName = opName;
             this.argumentName = argumentName;
             this.check = check;

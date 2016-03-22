@@ -31,9 +31,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter.ComplexVectorMetrics;
-import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.DoubleVectorMetrics;
-import com.oracle.truffle.r.nodes.builtin.base.printer.VectorPrinter.FormatMetrics;
+import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorMetrics;
+import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorMetrics;
+import com.oracle.truffle.r.nodes.builtin.base.printer.FormatMetrics;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -50,9 +50,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
+final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
 
-    public static final ListPrinter INSTANCE = new ListPrinter();
+    static final ListPrinter INSTANCE = new ListPrinter();
+
+    private ListPrinter() {
+        // singleton
+    }
 
     private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
@@ -69,7 +73,6 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
             // no dim()
             printNoDimList(s, printCtx);
         }
-
     }
 
     private static void printDimList(RAbstractListVector s, PrintContext printCtx) throws IOException {
@@ -287,8 +290,6 @@ public final class ListPrinter extends AbstractValuePrinter<RAbstractListVector>
                 }
                 out.print("list()");
             }
-
         }
     }
-
 }

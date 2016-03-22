@@ -32,11 +32,11 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctions.AccessFieldBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
 
-public abstract class ListReadNode extends RootNode {
+abstract class ListReadNode extends RootNode {
     @Child private AccessFieldBuiltin builtin;
     @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
 
-    public ListReadNode() {
+    ListReadNode() {
         super(TruffleRLanguage.class, null, null);
     }
 
@@ -58,5 +58,4 @@ public abstract class ListReadNode extends RootNode {
         }
         return x;
     }
-
 }

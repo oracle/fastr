@@ -22,23 +22,35 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.CallInlineCacheNode;
+import com.oracle.truffle.r.nodes.CallInlineCacheNodeGen;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.signature.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * assert: not expected to be fast even when called as, e.g., {@code get("x")}.
@@ -70,7 +82,7 @@ public class GetFunctions {
             }
         }
 
-        public static boolean isInherits(byte inherits) {
+        protected static boolean isInherits(byte inherits) {
             return inherits == RRuntime.LOGICAL_TRUE;
         }
 
@@ -127,7 +139,6 @@ public class GetFunctions {
             Object result = getInherits(frame, xv, envir, mode, true);
             return result;
         }
-
     }
 
     @RBuiltin(name = "get0", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits", "ifnotfound"})
@@ -165,10 +176,6 @@ public class GetFunctions {
         @Child private RArgumentsNode argsNode;
 
         @CompilationFinal private boolean needsCallerFrame;
-
-        public static boolean isInherits(byte inherits) {
-            return inherits == RRuntime.LOGICAL_TRUE;
-        }
 
         private static class State {
             final int svLength;
@@ -288,7 +295,5 @@ public class GetFunctions {
             Object[] callArgs = argsNode.execute(ifnFunc, caller, callerFrame, RArguments.getDepth(frame) + 1, new Object[]{x}, ArgumentsSignature.empty(1), null);
             return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
         }
-
     }
-
 }

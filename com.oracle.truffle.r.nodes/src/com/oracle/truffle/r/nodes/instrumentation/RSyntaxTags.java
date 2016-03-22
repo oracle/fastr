@@ -51,15 +51,15 @@ public class RSyntaxTags {
     /*
      * Hopefully Temporary if can agree on lang-call syntax.
      */
-    public static final String DEBUG_CALL = Debugger.CALL_TAG;
-    public static final String DEBUG_HALT = Debugger.HALT_TAG;
+    static final String DEBUG_CALL = Debugger.CALL_TAG;
+    static final String DEBUG_HALT = Debugger.HALT_TAG;
 
     public static final String[] ALL_TAGS = new String[]{CALL, STATEMENT, START_FUNCTION, LOOP, DEBUG_CALL, DEBUG_HALT};
 
     /**
      * Returns the existing set of tags or {@code null} if none.
      */
-    public static String[] getTags(SourceSection ss) {
+    static String[] getTags(SourceSection ss) {
         ArrayList<String> oldTags = new ArrayList<>();
         for (String tag : RSyntaxTags.ALL_TAGS) {
             if (ss.hasTag(tag)) {
@@ -75,7 +75,7 @@ public class RSyntaxTags {
         }
     }
 
-    public static boolean containsTag(String[] tags, String atag) {
+    static boolean containsTag(String[] tags, String atag) {
         for (String tag : tags) {
             if (tag.equals(atag)) {
                 return true;
@@ -109,7 +109,5 @@ public class RSyntaxTags {
         } else {
             return ss.withTags(newTags);
         }
-
     }
-
 }

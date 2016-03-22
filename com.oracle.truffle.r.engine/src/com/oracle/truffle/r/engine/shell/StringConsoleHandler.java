@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,37 +22,41 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import java.io.*;
-import java.util.*;
+import java.io.PrintStream;
+import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.RContext;
 
-public class StringConsoleHandler implements ConsoleHandler {
+class StringConsoleHandler implements ConsoleHandler {
     private final PrintStream output;
     private final List<String> lines;
     private final String inputDescription;
     private String prompt;
     private int currentLine;
 
-    public StringConsoleHandler(List<String> lines, PrintStream output, String inputDescription) {
+    StringConsoleHandler(List<String> lines, PrintStream output, String inputDescription) {
         this.lines = lines;
         this.output = output;
         this.inputDescription = inputDescription;
     }
 
+    @Override
     @TruffleBoundary
     public void println(String s) {
         output.println(s);
         output.flush();
     }
 
+    @Override
     @TruffleBoundary
     public void print(String s) {
         output.print(s);
         output.flush();
     }
 
+    @Override
     @TruffleBoundary
     public String readLine() {
         if (currentLine < lines.size()) {
@@ -66,37 +70,41 @@ public class StringConsoleHandler implements ConsoleHandler {
         }
     }
 
+    @Override
     public boolean isInteractive() {
         return false;
     }
 
+    @Override
     @TruffleBoundary
     public void printErrorln(String s) {
         println(s);
     }
 
+    @Override
     @TruffleBoundary
     public void printError(String s) {
         print(s);
     }
 
-    public void redirectError() {
-    }
-
+    @Override
     @TruffleBoundary
     public String getPrompt() {
         return prompt;
     }
 
+    @Override
     @TruffleBoundary
     public void setPrompt(String prompt) {
         this.prompt = prompt;
     }
 
+    @Override
     public int getWidth() {
         return RContext.CONSOLE_WIDTH;
     }
 
+    @Override
     public String getInputDescription() {
         return inputDescription;
     }

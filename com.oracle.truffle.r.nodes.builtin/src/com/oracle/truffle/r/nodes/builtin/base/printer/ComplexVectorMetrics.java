@@ -22,33 +22,28 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
+/**
+ * The complex number formatting metrics. N.B. This class is public since it may
+ * be used in the PrettyWriter public API.
+ * @see PrettyWriter
+ */
+public final class ComplexVectorMetrics extends FormatMetrics {
+    
+    public final int wr;
+    public final int dr;
+    public final int er;
+    public final int wi;
+    public final int di;
+    public final int ei;
 
-import com.oracle.truffle.r.runtime.conn.StdConnections;
-
-public class RBufferedWriter extends Writer {
-
-    private final StringWriter w = new StringWriter();
-
-    @Override
-    public void write(char[] cbuf, int off, int len) throws IOException {
-        w.write(cbuf, off, len);
+    ComplexVectorMetrics(int wr, int dr, int er, int wi, int di, int ei) {
+        super(wr + wi + 2);
+        this.wr = wr;
+        this.dr = dr;
+        this.er = er;
+        this.wi = wi;
+        this.di = di;
+        this.ei = ei;
     }
-
-    @Override
-    public void flush() throws IOException {
-        w.flush();
-    }
-
-    public void commit() throws IOException {
-        StdConnections.getStdout().writeString(w.toString(), false);
-    }
-
-    @Override
-    public void close() throws IOException {
-        w.close();
-    }
-
+    
 }

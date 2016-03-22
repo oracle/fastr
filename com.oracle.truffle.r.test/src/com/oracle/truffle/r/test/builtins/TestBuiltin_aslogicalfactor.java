@@ -4,15 +4,15 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 
@@ -22,5 +22,4 @@ public class TestBuiltin_aslogicalfactor extends TestBase {
     public void testaslogicalfactor1() {
         assertEval("argv <- structure(list(x = structure(1:2, .Label = c('FALSE',     'TRUE'), class = 'factor')), .Names = 'x');do.call('as.logical.factor', argv)");
     }
-
 }

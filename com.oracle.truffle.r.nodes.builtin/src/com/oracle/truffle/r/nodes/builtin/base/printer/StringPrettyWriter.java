@@ -53,11 +53,11 @@ public class StringPrettyWriter extends StringWriter implements PrettyWriter {
     }
 
     @Override
-    public void beginElement(RAbstractVector vector, int index, VectorPrinter.FormatMetrics fm) {
+    public void beginElement(RAbstractVector vector, int index, FormatMetrics fm) {
     }
 
     @Override
-    public void endElement(RAbstractVector vector, int index, VectorPrinter.FormatMetrics fm) {
+    public void endElement(RAbstractVector vector, int index, FormatMetrics fm) {
     }
 
     @Override

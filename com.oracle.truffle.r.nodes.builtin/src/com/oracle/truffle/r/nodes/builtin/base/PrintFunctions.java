@@ -27,11 +27,9 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
@@ -53,6 +51,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public class PrintFunctions {
     public abstract static class PrintAdapter extends RInvisibleBuiltinNode {
+
         @Child protected ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create(null, null, null, null, null, null, null, null, null);
 
         @TruffleBoundary
@@ -63,7 +62,6 @@ public class PrintFunctions {
                 throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
         }
-
     }
 
     @RBuiltin(name = "print.default", kind = INTERNAL, parameterNames = {"x", "digits", "quote", "na.print", "print.gap", "right", "max", "useSource", "noOpt"})
@@ -95,10 +93,6 @@ public class PrintFunctions {
             return (RFunction) showFind.execute(frame);
         }
 
-        DirectCallNode createCallNode(RFunction f) {
-            return Truffle.getRuntime().createDirectCallNode(f.getTarget());
-        }
-
         @SuppressWarnings("unused")
         @Specialization(guards = "isS4(o)")
         protected Object printDefaultS4(VirtualFrame frame, RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt,
@@ -113,7 +107,6 @@ public class PrintFunctions {
             // the same hack at this point - for details see definition of showDefault in show.R)
             return o instanceof RAttributable && ((RAttributable) o).isS4() && ((RAttributable) o).getClassAttr(attrProfiles) != null;
         }
-
     }
 
     @RBuiltin(name = "print.function", kind = INTERNAL, parameterNames = {"x", "useSource", "..."})

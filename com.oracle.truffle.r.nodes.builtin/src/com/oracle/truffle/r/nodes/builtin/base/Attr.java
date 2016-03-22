@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,7 @@ public abstract class Attr extends RBuiltinNode {
 
     private final ConditionProfile searchPartialProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
-    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @CompilationFinal private String cachedName = "";
     @CompilationFinal private String cachedInternedName = "";

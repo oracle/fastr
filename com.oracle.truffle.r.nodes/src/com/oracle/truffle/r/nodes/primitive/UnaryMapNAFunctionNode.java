@@ -22,13 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.primitive;
 
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@SuppressWarnings("unused")
 public abstract class UnaryMapNAFunctionNode extends UnaryMapFunctionNode {
 
     protected final NACheck operandNACheck = NACheck.create();
@@ -50,5 +46,4 @@ public abstract class UnaryMapNAFunctionNode extends UnaryMapFunctionNode {
     public final boolean isComplete() {
         return operandNACheck.neverSeenNA();
     }
-
 }

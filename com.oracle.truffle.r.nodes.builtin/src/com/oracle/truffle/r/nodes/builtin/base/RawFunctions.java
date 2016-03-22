@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 /**
  * Conversion and manipulation of objects of type "raw".
@@ -53,7 +63,6 @@ public class RawFunctions {
         protected Object charToRaw(@SuppressWarnings("unused") Object x) {
             throw RError.error(this, RError.Message.ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE);
         }
-
     }
 
     @RBuiltin(name = "rawToChar", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "multiple"})
@@ -89,7 +98,6 @@ public class RawFunctions {
         protected Object rawToChar(Object x, Object multiple) {
             throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
         }
-
     }
 
     @RBuiltin(name = "rawShift", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "n"})

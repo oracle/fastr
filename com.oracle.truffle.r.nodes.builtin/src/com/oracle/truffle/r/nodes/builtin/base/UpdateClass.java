@@ -4,27 +4,42 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.nodes.binary.CastTypeNode;
+import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "class<-", kind = PRIMITIVE, parameterNames = {"x", "value"})
 public abstract class UpdateClass extends RBuiltinNode {
@@ -83,7 +98,7 @@ public abstract class UpdateClass extends RBuiltinNode {
         if (!arg.isObject(attrProfiles)) {
             initTypeof();
             RType argType = typeof.execute(arg);
-            if (argType.equals(className) || (mode == RType.Numeric && (argType == RType.Integer || argType == RType.Double))) {
+            if (argType.equals(className) || (mode == RType.Double && (argType == RType.Integer || argType == RType.Double))) {
                 // "explicit" attribute might have been set (e.g. by oldClass<-)
                 return setClass(arg, RNull.instance);
             }
@@ -127,56 +142,56 @@ public abstract class UpdateClass extends RBuiltinNode {
     }
 
     @Specialization
-    public Object setClass(RFunction arg, RAbstractStringVector className) {
+    protected Object setClass(RFunction arg, RAbstractStringVector className) {
         controlVisibility();
         arg.setClassAttr(className.materialize(), false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(RFunction arg, @SuppressWarnings("unused") RNull className) {
+    protected Object setClass(RFunction arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         arg.setClassAttr(null, false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(REnvironment arg, RAbstractStringVector className) {
+    protected Object setClass(REnvironment arg, RAbstractStringVector className) {
         controlVisibility();
         arg.setClassAttr(className.materialize(), false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(REnvironment arg, @SuppressWarnings("unused") RNull className) {
+    protected Object setClass(REnvironment arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         arg.setClassAttr(null, false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(RSymbol arg, RAbstractStringVector className) {
+    protected Object setClass(RSymbol arg, RAbstractStringVector className) {
         controlVisibility();
         arg.setClassAttr(className.materialize(), false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(RSymbol arg, @SuppressWarnings("unused") RNull className) {
+    protected Object setClass(RSymbol arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         arg.setClassAttr(null, false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(RExternalPtr arg, RAbstractStringVector className) {
+    protected Object setClass(RExternalPtr arg, RAbstractStringVector className) {
         controlVisibility();
         arg.setClassAttr(className.materialize(), false);
         return arg;
     }
 
     @Specialization
-    public Object setClass(RExternalPtr arg, @SuppressWarnings("unused") RNull className) {
+    protected Object setClass(RExternalPtr arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         arg.setClassAttr(null, false);
         return arg;

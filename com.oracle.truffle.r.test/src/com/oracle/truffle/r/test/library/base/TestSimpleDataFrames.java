@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.test.library.base;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 public class TestSimpleDataFrames extends TestBase {
 
@@ -180,5 +180,4 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ y<-data.frame(c(1,2,3)); length(y) }");
 
     }
-
 }

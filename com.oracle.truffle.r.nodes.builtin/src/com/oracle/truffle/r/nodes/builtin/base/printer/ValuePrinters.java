@@ -23,8 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFactor;
@@ -43,15 +41,14 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class ValuePrinters implements ValuePrinter<Object> {
+final class ValuePrinters implements ValuePrinter<Object> {
 
     private final Map<Class<?>, ValuePrinter<?>> printers = new HashMap<>();
 
-    public static final ValuePrinters INSTANCE = new ValuePrinters();
+    static final ValuePrinters INSTANCE = new ValuePrinters();
 
     private ValuePrinters() {
         printers.put(RNull.class, NullPrinter.INSTANCE);
@@ -100,5 +97,4 @@ public final class ValuePrinters implements ValuePrinter<Object> {
             printer.print(x, printCtx);
         }
     }
-
 }

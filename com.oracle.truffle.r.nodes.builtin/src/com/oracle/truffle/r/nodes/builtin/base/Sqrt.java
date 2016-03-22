@@ -35,22 +35,19 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
-import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 @RBuiltin(name = "sqrt", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Sqrt extends RBuiltinNode {
 
-    public static final UnaryArithmeticFactory SQRT = SqrtArithmetic::new;
-
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode sqrtNode = UnaryArithmeticNodeGen.create(SQRT, RError.Message.NON_NUMERIC_MATH, RType.Double);
+    @Child private UnaryArithmeticNode sqrtNode = UnaryArithmeticNodeGen.create(SqrtArithmetic::new, RError.Message.NON_NUMERIC_MATH, RType.Double);
 
     @Specialization
     protected Object sqrt(Object value) {
         return sqrtNode.execute(boxPrimitive.execute(value));
     }
 
-    public static class SqrtArithmetic extends UnaryArithmetic {
+    private static final class SqrtArithmetic extends UnaryArithmetic {
 
         @Override
         public int op(byte op) {
@@ -73,7 +70,5 @@ public abstract class Sqrt extends RBuiltinNode {
             double theta = Math.atan2(im, re) / 2;
             return RComplex.valueOf(r * Math.cos(theta), r * Math.sin(theta));
         }
-
     }
-
 }

@@ -22,28 +22,57 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.CallInlineCacheNode;
+import com.oracle.truffle.r.nodes.CallInlineCacheNodeGen;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
-import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
+import com.oracle.truffle.r.nodes.function.EvaluatedArguments;
+import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode.RootCallNode;
+import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
-import com.oracle.truffle.r.nodes.function.signature.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.nodes.function.signature.GetCallerFrameNode;
+import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RDispatch;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 // TODO Implement properly, this is a simple implementation that works when the environment doesn't matter
 @RBuiltin(name = "do.call", kind = INTERNAL, parameterNames = {"what", "args", "envir"})
@@ -134,6 +163,7 @@ public abstract class DoCall extends RBuiltinNode {
         RBuiltinDescriptor builtin = func.getRBuiltin();
         if (func.isBuiltin() && builtin.getDispatch() == RDispatch.INTERNAL_GENERIC) {
             if (dispatchLookup == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 dispatchLookup = insert(S3FunctionLookupNode.create(true, false));
                 classHierarchyNode = insert(ClassHierarchyNodeGen.create(true, true));
                 hierarchyPromiseHelper = insert(new PromiseCheckHelperNode());

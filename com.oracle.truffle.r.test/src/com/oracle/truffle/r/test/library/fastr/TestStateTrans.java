@@ -22,10 +22,10 @@
  */
 package com.oracle.truffle.r.test.library.fastr;
 
-import org.junit.*;
+import org.junit.Test;
 
 import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 public class TestStateTrans extends TestBase {

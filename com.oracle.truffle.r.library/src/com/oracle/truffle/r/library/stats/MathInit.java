@@ -80,5 +80,4 @@ public final class MathInit {
                 // return 0;
         }
     }
-
 }

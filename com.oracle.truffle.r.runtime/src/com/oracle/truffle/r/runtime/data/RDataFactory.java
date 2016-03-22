@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,32 +22,31 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RPerfStats;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.OptType;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.gnur.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class RDataFactory {
-
-    @CompilationFinal public static final byte[] EMPTY_RAW_ARRAY = new byte[0];
-    @CompilationFinal public static final byte[] EMPTY_LOGICAL_ARRAY = new byte[0];
-    @CompilationFinal public static final int[] EMPTY_INTEGER_ARRAY = new int[0];
-    @CompilationFinal public static final double[] EMPTY_DOUBLE_ARRAY = new double[0];
-    @CompilationFinal public static final double[] EMPTY_COMPLEX_ARRAY = new double[0];
-    @CompilationFinal public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     /**
      * Profile for creation tracing; must precede following declarations.
@@ -165,7 +164,7 @@ public final class RDataFactory {
     }
 
     public static RStringVector createStringVector(String value) {
-        return createStringVector(new String[]{value}, RRuntime.isComplete(value), null, null);
+        return createStringVector(new String[]{value}, !RRuntime.isNA(value), null, null);
     }
 
     public static RStringVector createStringVector(int length) {
@@ -259,15 +258,15 @@ public final class RDataFactory {
     }
 
     public static RIntVector createEmptyIntVector() {
-        return createIntVector(EMPTY_INTEGER_ARRAY, true);
+        return createIntVector(new int[0], true);
     }
 
     public static RDoubleVector createEmptyDoubleVector() {
-        return createDoubleVector(EMPTY_DOUBLE_ARRAY, true);
+        return createDoubleVector(new double[0], true);
     }
 
     public static RStringVector createEmptyStringVector() {
-        return createStringVector(EMPTY_STRING_ARRAY, true);
+        return createStringVector(new String[0], true);
     }
 
     public static RStringVector createNAStringVector() {
@@ -275,15 +274,15 @@ public final class RDataFactory {
     }
 
     public static RComplexVector createEmptyComplexVector() {
-        return createComplexVector(EMPTY_COMPLEX_ARRAY, true);
+        return createComplexVector(new double[0], true);
     }
 
     public static RLogicalVector createEmptyLogicalVector() {
-        return createLogicalVector(EMPTY_LOGICAL_ARRAY, true);
+        return createLogicalVector(new byte[0], true);
     }
 
     public static RRawVector createEmptyRawVector() {
-        return createRawVector(EMPTY_RAW_ARRAY);
+        return createRawVector(new byte[0]);
     }
 
     public static RComplex createComplex(double realPart, double imaginaryPart) {
@@ -295,7 +294,7 @@ public final class RDataFactory {
     }
 
     public static RStringVector createStringVectorFromScalar(String operand) {
-        return createStringVector(new String[]{operand}, RRuntime.isComplete(operand));
+        return createStringVector(new String[]{operand}, !RRuntime.isNA(operand));
     }
 
     public static RLogicalVector createLogicalVectorFromScalar(boolean data) {
@@ -303,15 +302,15 @@ public final class RDataFactory {
     }
 
     public static RLogicalVector createLogicalVectorFromScalar(byte operand) {
-        return createLogicalVector(new byte[]{operand}, RRuntime.isComplete(operand));
+        return createLogicalVector(new byte[]{operand}, !RRuntime.isNA(operand));
     }
 
     public static RIntVector createIntVectorFromScalar(int operand) {
-        return createIntVector(new int[]{operand}, RRuntime.isComplete(operand));
+        return createIntVector(new int[]{operand}, !RRuntime.isNA(operand));
     }
 
     public static RDoubleVector createDoubleVectorFromScalar(double operand) {
-        return createDoubleVector(new double[]{operand}, RRuntime.isComplete(operand));
+        return createDoubleVector(new double[]{operand}, !RRuntime.isNA(operand));
     }
 
     public static RComplexVector createComplexVectorFromScalar(RComplex operand) {
@@ -495,15 +494,18 @@ public final class RDataFactory {
             hist.inc(length);
         }
 
+        @Override
         public void initialize(String optionData) {
             stats = this;
             histMap = new HashMap<>();
         }
 
+        @Override
         public String getName() {
             return "datafactory";
         }
 
+        @Override
         public void report() {
             RPerfStats.out().println("Scalar types");
             for (Map.Entry<Class<?>, RPerfStats.Histogram> entry : histMap.entrySet()) {
@@ -524,5 +526,4 @@ public final class RDataFactory {
             RPerfStats.out().println();
         }
     }
-
 }

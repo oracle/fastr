@@ -63,9 +63,10 @@
  */
 package com.oracle.truffle.r.runtime.rng.mt;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.rng.*;
+import com.oracle.truffle.r.runtime.rng.RNGInitAdapter;
+import com.oracle.truffle.r.runtime.rng.RRNG;
 import com.oracle.truffle.r.runtime.rng.RRNG.Kind;
 
 public final class MersenneTwister extends RNGInitAdapter {
@@ -101,6 +102,7 @@ public final class MersenneTwister extends RNGInitAdapter {
     /**
      * We have to recreate the effect of having the number of seeds in the array.
      */
+    @Override
     public int[] getSeeds() {
         int[] result = new int[mt.length + 1];
         System.arraycopy(mt, 0, result, 1, mt.length);
@@ -116,6 +118,7 @@ public final class MersenneTwister extends RNGInitAdapter {
      * in GnuR and FastR. The values in the vector should be the same.
      *
      */
+    @Override
     public void init(int seedParam) {
         int seed = seedParam;
 
@@ -124,6 +127,7 @@ public final class MersenneTwister extends RNGInitAdapter {
         super.init(seed, mt);
     }
 
+    @Override
     public void fixupSeeds(boolean initial) {
         if (initial) {
             dummy0 = N;
@@ -150,6 +154,7 @@ public final class MersenneTwister extends RNGInitAdapter {
      * {@link com.oracle.truffle.api.CompilerDirectives.TruffleBoundary} annotation on
      * {@link #generateNewNumbers()}.
      */
+    @Override
     public double[] genrandDouble(int count) {
         int localDummy0 = dummy0;
         int localMti = mti;
@@ -353,6 +358,7 @@ public final class MersenneTwister extends RNGInitAdapter {
         mt[0] = 0x80000000; /* MSB is 1; assuring non-zero initial array */
     }
 
+    @Override
     public Kind getKind() {
         return Kind.MERSENNE_TWISTER;
     }

@@ -27,12 +27,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -42,63 +39,42 @@ import com.oracle.truffle.r.test.TestBase;
 
 /**
  * Tests related to the loading, etc. of R packages.
+ *
+ * THis class should be subclassed by a test that wishes to install one or more packages and
+ * possibly run additional tests after installation using a pattern of the form
+ * {@code library(pkg, lib.loc="%0"); sometest()}. Note the use of the {@code %0}, which must be
+ * satisfied by passing the value of {@code libLoc()}. This is required because the test VM is not
+ * aware of the test install location so it must be explicitly specified. The use of the {@code %0}
+ * parameter mechanism also requires the use of {@link TestBase#template} in the test itself.
+ *
+ * A subclass must provide {@code @BeforeClass} and {@code @AfterClass}methods that call
+ * {@link #setupInstallTestPackages} and {@link #tearDownUninstallTestPackages}, respectively, to
+ * install/remove the specific set of packages relevant to the test.
+ *
+ * N.B. The same directory is used when generating expected output with GnuR, and running FastR, to
+ * keep the {@code lib_loc} argument the same in the test string. So the install is destructive, but
+ * ok as there is never a clash.
+ *
+ * The install directory is cleaned on every call to {@link #setupInstallTestPackages} in case a
+ * previous install failed to complete {@link #tearDownUninstallTestPackages} successfully.
  */
-public class TestRPackages extends TestBase {
+public abstract class TestRPackages extends TestBase {
 
     /**
-     * Create {@link Path}s to needed folders. N.B. The same directory is used when generating
-     * expected output with GnuR, and running FastR, to keep the {@code lib_loc} argument the same
-     * in the test string. So the install is destructive, but ok as there is never a clash.
+     * Create {@link Path}s to needed folders.
      *
      */
     protected static final class PackagePaths {
         /**
-         * The path containing the package distributions as tar files. These are built in the
-         * {@code com.oracle.truffle.r.test.native} project in the {@code packages} directory.
+         * The path containing the package distributions as tar files.
          */
-        private final Path rpackagesDists;
-        /**
-         * The path to where the package will be installed (R_LIBS_USER).
-         */
-        protected final Path rpackagesLibs;
+        private final Path packagePath;
 
-        private PackagePaths() {
-            Path rpackages = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test", "rpackages");
-            rpackagesLibs = TestBase.relativize(rpackages.resolve("testrlibs_user"));
-            // Empty it in case of failure that didn't clean up
-            if (rpackagesLibs.toFile().exists()) {
-                try {
-                    Files.walkFileTree(rpackagesLibs, new SimpleFileVisitor<Path>() {
-
-                        @Override
-                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                            Files.delete(file);
-                            return FileVisitResult.CONTINUE;
-                        }
-
-                        @Override
-                        public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
-                            if (e == null) {
-                                Files.delete(dir);
-                                return FileVisitResult.CONTINUE;
-                            } else {
-                                // directory iteration failed
-                                throw e;
-                            }
-                        }
-
-                    });
-                } catch (IOException e) {
-                    assert false;
-                }
-            }
-
-            rpackagesLibs.toFile().mkdirs();
-            rpackagesDists = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native", "packages");
+        private PackagePaths(Path rpackagesDists) {
+            this.packagePath = rpackagesDists;
         }
 
-        protected boolean installPackage(String packageName) {
-            Path packagePath = rpackagesDists.resolve(packageName).resolve("lib").resolve(packageName + ".tar");
+        protected boolean installPackage() {
             String[] cmds = new String[4];
             if (generatingExpected()) {
                 // use GnuR
@@ -112,7 +88,7 @@ public class TestRPackages extends TestBase {
             cmds[cmds.length - 1] = packagePath.toString();
             ProcessBuilder pb = new ProcessBuilder(cmds);
             Map<String, String> env = pb.environment();
-            env.put("R_LIBS_USER", rpackagesLibs.toString());
+            env.put("R_LIBS_USER", installDir().toString());
             if (!generatingExpected()) {
                 env.put("R_INSTALL_TAR", RContext.getInstance().stateREnvVars.get("TAR"));
             }
@@ -146,26 +122,73 @@ public class TestRPackages extends TestBase {
                 return false;
             }
         }
-
-        protected boolean uninstallPackage(String packageName) {
-            Path packageDir = rpackagesLibs.resolve(packageName);
-            try {
-                deleteDir(packageDir);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
-            }
-            return true;
-        }
-
     }
 
-    protected static final PackagePaths packagePaths = new PackagePaths();
+    /**
+     * The path to the install directory. This is fixed across all tests.
+     */
+    private static Path installDir;
+
+    /**
+     * Map from package name to info on its location.
+     */
+    private static final Map<String, PackagePaths> packageMap = new HashMap<>();
+
+    private static Path installDir() {
+        if (installDir == null) {
+            installDir = TestBase.relativize(Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test", "rpackages", "testrlibs_user"));
+        }
+        return installDir;
+    }
+
+    protected static String libLoc() {
+        return installDir().toString();
+    }
+
+    private static boolean uninstallPackage(String packageName) {
+        Path packageDir = installDir().resolve(packageName);
+        try {
+            deleteDir(packageDir);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Pass a custom subclass of this class to override the actual location of the package tar file.
+     */
+    protected static class Resolver {
+        Path getPath(String p) {
+            return testNativePath().resolve(p).resolve("lib").resolve(p + ".tar");
+        }
+    }
+
+    private static Path testNativePath() {
+        return Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native", "packages");
+    }
+
+    private static PackagePaths getPackagePaths(String pkg, Path path) {
+        PackagePaths result = packageMap.get(pkg);
+        if (result == null) {
+            result = new PackagePaths(path);
+            packageMap.put(pkg, result);
+        }
+        return result;
+    }
 
     protected static void setupInstallTestPackages(String[] testPackages) {
+        setupInstallTestPackages(testPackages, new Resolver());
+    }
+
+    protected static void setupInstallTestPackages(String[] testPackages, Resolver resolver) {
         if (!checkOnly()) {
+            TestBase.deleteDir(installDir());
+            installDir().toFile().mkdirs();
             for (String p : testPackages) {
-                if (!packagePaths.installPackage(p)) {
+                PackagePaths packagePaths = getPackagePaths(p, resolver.getPath(p));
+                if (!packagePaths.installPackage()) {
                     throw new AssertionError();
                 }
             }
@@ -175,11 +198,10 @@ public class TestRPackages extends TestBase {
     protected static void tearDownUninstallTestPackages(String[] testPackages) {
         if (!checkOnly()) {
             for (String p : testPackages) {
-                if (!packagePaths.uninstallPackage(p)) {
+                if (!uninstallPackage(p)) {
                     throw new AssertionError();
                 }
             }
         }
     }
-
 }

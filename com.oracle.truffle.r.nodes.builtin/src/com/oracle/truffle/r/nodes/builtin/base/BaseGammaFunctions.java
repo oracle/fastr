@@ -12,22 +12,37 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.library.stats.StatsUtil.*;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.library.stats.StatsUtil.DBLEPSILON;
+import static com.oracle.truffle.r.library.stats.StatsUtil.DBL_MANT_DIG;
+import static com.oracle.truffle.r.library.stats.StatsUtil.DBL_MAX_EXP;
+import static com.oracle.truffle.r.library.stats.StatsUtil.DBL_MIN_EXP;
+import static com.oracle.truffle.r.library.stats.StatsUtil.M_LOG10_2;
+import static com.oracle.truffle.r.library.stats.StatsUtil.M_PI;
+import static com.oracle.truffle.r.library.stats.StatsUtil.fmax2;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.library.stats.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.NodeChildren;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.library.stats.GammaFunctions;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.BaseGammaFunctionsFactory.DpsiFnCalcNodeGen;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class BaseGammaFunctions {
 
@@ -88,7 +103,6 @@ public class BaseGammaFunctions {
         protected Object lgamma(@SuppressWarnings("unused") Object x) {
             throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
         }
-
     }
 
     @RBuiltin(name = "digamma", kind = PRIMITIVE, parameterNames = {"x"})
@@ -153,7 +167,6 @@ public class BaseGammaFunctions {
         protected Object digamma(@SuppressWarnings("unused") Object x) {
             throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
         }
-
     }
 
     @NodeChildren({@NodeChild(value = "x"), @NodeChild(value = "n"), @NodeChild(value = "kode"), @NodeChild(value = "ans")})
@@ -585,5 +598,4 @@ public class BaseGammaFunctions {
             return ans;
         }
     }
-
 }

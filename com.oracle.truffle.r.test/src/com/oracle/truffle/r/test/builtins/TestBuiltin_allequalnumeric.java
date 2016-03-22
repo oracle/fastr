@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 
@@ -41,5 +41,4 @@ public class TestBuiltin_allequalnumeric extends TestBase {
         assertEval("argv <- structure(list(target = 3.18309886183776e-301, current = 3.18309886183791e-301,     tolerance = 1e-15), .Names = c('target', 'current', 'tolerance'));"
                         + "do.call('all.equal.numeric', argv)");
     }
-
 }

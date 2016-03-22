@@ -105,18 +105,22 @@ public class ReadVariadicComponentNode extends RSourceSectionNode implements RSy
         state.endNodeDeparse(this);
     }
 
+    @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
         throw RInternalError.unimplemented();
     }
 
+    @Override
     public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
         state.setCarAsSymbol(getPrintForm());
     }
 
+    @Override
     public String getIdentifier() {
         return getPrintForm();
     }
 
+    @Override
     public boolean isFunctionLookup() {
         return false;
     }

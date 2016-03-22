@@ -26,15 +26,19 @@ import com.oracle.truffle.api.frame.Frame;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 
-public final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
+final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
 
-    public static final S4ObjectPrinter INSTANCE = new S4ObjectPrinter();
+    static final S4ObjectPrinter INSTANCE = new S4ObjectPrinter();
+
+    private S4ObjectPrinter() {
+        // singleton
+    }
 
     @Override
     public void print(RS4Object object, PrintContext printCtx) throws IOException {
@@ -54,7 +58,7 @@ public final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
         ValuePrinters.INSTANCE.print(attr.getValue(), printCtx);
     }
 
-    public static void printS4(PrintContext printCtx, Object o) {
+    static void printS4(PrintContext printCtx, Object o) {
         Frame frame = com.oracle.truffle.r.runtime.Utils.getActualCurrentFrame();
         RContext.getEngine().evalFunction(createShowFunction(frame), null, o);
         // The show function prints an additional new line character. The following attribute
@@ -66,5 +70,4 @@ public final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
     private static RFunction createShowFunction(Frame frame) {
         return ReadVariableNode.lookupFunction("show", frame, false);
     }
-
 }

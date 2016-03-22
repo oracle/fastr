@@ -22,14 +22,26 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
-import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
-import java.io.*;
-import java.nio.*;
-import java.util.zip.*;
-
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RCompression;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BasePathRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateWriteRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ReadWriteHelper;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class GZIPConnections {
     public static final int GZIP_BUFFER_SIZE = (2 << 20);
@@ -147,7 +159,6 @@ public class GZIPConnections {
         public void close() throws IOException {
             inputStream.close();
         }
-
     }
 
     private static class ByteGZipInputRConnection extends GZIPInputRConnection {
@@ -205,7 +216,5 @@ public class GZIPConnections {
         public void flush() throws IOException {
             outputStream.flush();
         }
-
     }
-
 }

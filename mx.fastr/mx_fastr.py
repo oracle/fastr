@@ -390,7 +390,7 @@ def junit(args):
     return mx.junit(args, _junit_r_harness, parser=parser)
 
 def junit_simple(args):
-    return mx.command_function('junit')(['--tests', _library_unit_tests()] + args)
+    return mx.command_function('junit')(['--tests', _simple_unit_tests()] + args)
 
 def junit_noapps(args):
     return mx.command_function('junit')(['--tests', _gate_noapps_unit_tests()] + args)
@@ -407,11 +407,11 @@ def _test_package():
 def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
-def _library_unit_tests():
-    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr']))
+def _simple_unit_tests():
+    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'tck', 'parser', 'S4']))
 
-def _tests_unit_tests():
-    return ','.join(map(_test_subpackage, ['rffi', 'rpackages', 'builtins', 'functions', 'tck', 'parser', 'S4']))
+def _package_unit_tests():
+    return ','.join(map(_test_subpackage, ['rffi', 'rpackages']))
 
 def _nodes_unit_tests():
     return 'com.oracle.truffle.r.nodes.test'
@@ -420,7 +420,7 @@ def _apps_unit_tests():
     return _test_subpackage('apps')
 
 def _gate_noapps_unit_tests():
-    return ','.join([_library_unit_tests(), _nodes_unit_tests(), _tests_unit_tests()])
+    return ','.join([_simple_unit_tests(), _nodes_unit_tests(), _package_unit_tests()])
 
 def _gate_unit_tests():
     return ','.join([_gate_noapps_unit_tests(), _apps_unit_tests()])
@@ -436,14 +436,31 @@ def testgen(args):
     # check we are in the home directory
     if os.getcwd() != _fastr_suite.dir:
         mx.abort('must run rtestgen from FastR home directory')
-    # check the version of GnuR against FastR
-    try:
-        fastr_version = subprocess.check_output([mx.get_jdk().java, '-cp', mx.classpath('com.oracle.truffle.r.runtime'), 'com.oracle.truffle.r.runtime.RVersionNumber'])
-        gnur_version = subprocess.check_output(['R', '--version'])
-        if not gnur_version.startswith(fastr_version):
-            mx.abort('R version is incompatible with FastR, please update to ' + fastr_version)
-    except subprocess.CalledProcessError:
-        mx.abort('RVersionNumber.main failed')
+
+    def need_version_check():
+        vardef = os.environ.has_key('FASTR_TESTGEN_GNUR')
+        varval = os.environ['FASTR_TESTGEN_GNUR'] if vardef else None
+        version_check = not vardef or varval != 'internal'
+        if version_check:
+            if vardef and varval != 'internal':
+                rpath = join(varval, 'bin', 'R')
+            else:
+                rpath = 'R'
+        else:
+            rpath = None
+        return version_check, rpath
+
+    version_check, rpath = need_version_check()
+    if version_check:
+        # check the version of GnuR against FastR
+        try:
+            fastr_version = subprocess.check_output([mx.get_jdk().java, '-cp', mx.classpath('com.oracle.truffle.r.runtime'), 'com.oracle.truffle.r.runtime.RVersionNumber'])
+            gnur_version = subprocess.check_output([rpath, '--version'])
+            if not gnur_version.startswith(fastr_version):
+                mx.abort('R version is incompatible with FastR, please update to ' + fastr_version)
+        except subprocess.CalledProcessError:
+            mx.abort('RVersionNumber.main failed')
+
     # clean the test project to invoke the test analyzer AP
     testOnly = ['--projects', 'com.oracle.truffle.r.test']
     mx.clean(['--no-dist', ] + testOnly)
@@ -557,16 +574,21 @@ def installcran(args):
     script = join(cran_test, 'r', 'install.cran.packages.R')
     return rscript([script] + args)
 
-def load_optional_suite(name, rev):
-    hg_base = mx.get_env('MX_HG_BASE')
-    urlinfos = None if hg_base is None else [mx.SuiteImportURLInfo(join(hg_base, name), 'hg', mx.vc_system('hg'))]
+def load_optional_suite(name, rev, kind='hg', build=True, url=None):
+    if not url:
+        hg_base = mx.get_env('MX_' + kind.upper() + '_BASE')
+        if hg_base is None:
+            url = None
+        else:
+            url = join(hg_base, name)
+    urlinfos = None if url is None else [mx.SuiteImportURLInfo(url, kind, mx.vc_system(kind))]
     opt_suite = _fastr_suite.import_suite(name, version=rev, urlinfos=urlinfos)
-    if opt_suite:
+    if opt_suite and build:
         mx.build_suite(opt_suite)
     return opt_suite
 
 _r_apptests_rev = '2f363c204f713520ea1d881af71bac8962a82c72'
-_r_benchmarks_rev = '0b4f36819086323aebce7a2d7bc62949ff90950b'
+_r_benchmarks_rev = 'ecca4e50c2782a227468274a10d515d4d641e4ad'
 
 def mx_post_parse_cmd_line(opts):
     # load optional suites, r_apptests first so r_benchmarks can find it

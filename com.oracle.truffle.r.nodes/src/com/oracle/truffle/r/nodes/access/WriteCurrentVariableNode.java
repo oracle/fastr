@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 @NodeInfo(cost = NodeCost.NONE)
 public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, RSyntaxCall, VisibilityController {
-    @Child WriteLocalFrameVariableNode writeLocalFrameVariableNode;
+    @Child private WriteLocalFrameVariableNode writeLocalFrameVariableNode;
 
     protected WriteCurrentVariableNode(SourceSection src) {
         super(src);
@@ -103,14 +103,17 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
         return create(RSyntaxNode.EAGER_DEPARSE, name, rhsSub);
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return RSyntaxLookup.createDummyLookup(null, "<-", true);
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(getSourceSection(), (String) getName(), false), getRhs().asRSyntaxNode()};
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ArgumentsSignature.empty(2);
     }

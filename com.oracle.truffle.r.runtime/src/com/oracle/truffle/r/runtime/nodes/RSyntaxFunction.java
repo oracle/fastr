@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 
 /**
@@ -36,4 +37,30 @@ public interface RSyntaxFunction extends RSyntaxElement {
 
     RSyntaxElement getSyntaxBody();
 
+    /**
+     * Helper function: creates a synthetic RSyntaxFunction.
+     */
+    static RSyntaxFunction createDummyFunction(SourceSection originalSource, ArgumentsSignature signature, RSyntaxElement[] arguments, RSyntaxElement body) {
+        return new RSyntaxFunction() {
+            public SourceSection getSourceSection() {
+                return originalSource;
+            }
+
+            public ArgumentsSignature getSyntaxSignature() {
+                return signature;
+            }
+
+            public RSyntaxElement[] getSyntaxArgumentDefaults() {
+                return arguments;
+            }
+
+            public RSyntaxElement getSyntaxBody() {
+                return body;
+            }
+
+            public void setSourceSection(SourceSection src) {
+                // ignored
+            }
+        };
+    }
 }

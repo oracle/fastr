@@ -160,10 +160,12 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
         return create(RSyntaxNode.EAGER_DEPARSE, condition.substitute(env), thenPart.substitute(env), elsePart == null ? null : elsePart.substitute(env));
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return RSyntaxLookup.createDummyLookup(getSourceSection(), "if", true);
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArguments() {
         if (elsePart == null) {
             return new RSyntaxElement[]{condition.asRSyntaxNode(), thenPart.asRSyntaxNode()};
@@ -172,6 +174,7 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
         }
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ArgumentsSignature.empty(elsePart == null ? 2 : 3);
     }

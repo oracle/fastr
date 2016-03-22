@@ -22,24 +22,33 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.*;
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.getOptimizableConstant;
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.isOptimizableDefault;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.opt.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
+import com.oracle.truffle.r.nodes.function.ArgumentStatePush;
+import com.oracle.truffle.r.nodes.function.FormalArguments;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
+import com.oracle.truffle.r.nodes.function.opt.OptConstantPromiseNode;
+import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * This {@link RNode} returns a function's argument specified by its formal index. It is used to
@@ -74,9 +83,13 @@ public final class AccessArgumentNode extends RNode {
     private final ConditionProfile isMissingProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isEmptyProfile = ConditionProfile.createBinaryProfile();
 
-    protected AccessArgumentNode(int index) {
+    private AccessArgumentNode(int index) {
         this.index = index;
         this.readArgNode = new ReadArgumentNode(index);
+    }
+
+    public static AccessArgumentNode create(int index) {
+        return new AccessArgumentNode(index);
     }
 
     public void setFormals(FormalArguments formals) {
@@ -84,10 +97,6 @@ public final class AccessArgumentNode extends RNode {
         assert this.formals == null;
         this.formals = formals;
         hasDefaultArg = formals.hasDefaultArgument(index);
-    }
-
-    public static AccessArgumentNode create(int index) {
-        return new AccessArgumentNode(index);
     }
 
     @Override
@@ -127,7 +136,7 @@ public final class AccessArgumentNode extends RNode {
         return result;
     }
 
-    protected Object doArgument(VirtualFrame frame, Object arg) {
+    private Object doArgument(VirtualFrame frame, Object arg) {
         if (hasDefaultArg) {
             if (isMissingProfile.profile(arg == RMissing.instance)) {
                 return doArgumentInternal(frame);
@@ -175,15 +184,17 @@ public final class AccessArgumentNode extends RNode {
         return true;
     }
 
-    protected final class OptVariableDefaultPromiseNode extends OptVariablePromiseBaseNode {
+    private final class OptVariableDefaultPromiseNode extends OptVariablePromiseBaseNode {
 
-        public OptVariableDefaultPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
+        OptVariableDefaultPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
             super(factory, rvn, wrapIndex);
         }
 
+        @Override
         public void onSuccess(RPromise promise) {
         }
 
+        @Override
         public void onFailure(RPromise promise) {
             // Assure that no further eager promises are created
             if (!deoptimized) {

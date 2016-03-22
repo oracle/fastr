@@ -22,14 +22,26 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDataFrame;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 abstract class CachedVectorNode extends RBaseNode {
 
@@ -44,7 +56,7 @@ abstract class CachedVectorNode extends RBaseNode {
 
     protected final BranchProfile errorBranch = BranchProfile.create();
     protected final int numberOfDimensions;
-    protected final int filteredPositionsLength;
+    private final int filteredPositionsLength;
 
     @Child private GetDataFrameDimensionNode getDataFrameDimension;
 
@@ -68,7 +80,7 @@ abstract class CachedVectorNode extends RBaseNode {
         }
     }
 
-    protected int initializeFilteredPositionsCount(Object[] positions) {
+    private int initializeFilteredPositionsCount(Object[] positions) {
         int dimensions = 0;
         for (int i = 0; i < positions.length; i++) {
             // for cases like RMissing the position does not contribute to the number of dimensions
@@ -87,11 +99,11 @@ abstract class CachedVectorNode extends RBaseNode {
         /*
          * we assume that the positions count cannot change as the isRemovePosition check is just
          * based on types and therefore does not change per position instance.
-         * 
+         *
          * normally empty positions are just empty but with S3 function dispatch it may happen that
          * positions are also of type RMissing. These values should not contribute to the access
          * dimensions.
-         * 
+         *
          * Example test case: dimensions.x<-data.frame(c(1,2), c(3,4)); x[1]
          */
         assert initializeFilteredPositionsCount(positions) == filteredPositionsLength;
@@ -210,7 +222,5 @@ abstract class CachedVectorNode extends RBaseNode {
                 return profiledRowNames.getLength();
             }
         }
-
     }
-
 }

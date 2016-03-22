@@ -58,7 +58,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class ClassHierarchyNode extends UnaryNode {
 
-    public static final RStringVector truffleObjectClassHeader = RDataFactory.createStringVectorFromScalar("truffle.object");
+    private static final RStringVector truffleObjectClassHeader = RDataFactory.createStringVectorFromScalar("truffle.object");
 
     @Child private AttributeAccess access;
     @Child private S4Class s4Class;
@@ -151,7 +151,8 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization
-    protected RStringVector getClassHrVarArgs(RArgsValuesAndNames args) {
+    protected RStringVector getClassHrVarArgs(@SuppressWarnings("unused") RArgsValuesAndNames args) {
+        // TODO: reinvestigate - this should not be necessary
         return RDataFactory.createEmptyStringVector();
     }
 

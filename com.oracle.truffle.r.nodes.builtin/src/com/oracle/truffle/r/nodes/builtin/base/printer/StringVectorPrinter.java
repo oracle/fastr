@@ -21,9 +21,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 //Transcribed from GnuR, src/main/format.c
 
-public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVector> {
+final class StringVectorPrinter extends VectorPrinter<RAbstractStringVector> {
 
-    public static final StringVectorPrinter INSTANCE = new StringVectorPrinter();
+    static final StringVectorPrinter INSTANCE = new StringVectorPrinter();
+
+    private StringVectorPrinter() {
+        // singleton
+    }
 
     @Override
     protected VectorPrinter<RAbstractStringVector>.VectorPrintJob createJob(RAbstractStringVector vector, int indx, PrintContext printCtx) {
@@ -89,10 +93,9 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
         protected String elementTypeName() {
             return "character";
         }
-
     }
 
-    public static int formatString(RAbstractStringVector x, int offs, int n, boolean quote, PrintParameters pp) {
+    static int formatString(RAbstractStringVector x, int offs, int n, boolean quote, PrintParameters pp) {
         int xmax = 0;
         int l;
 
@@ -101,7 +104,7 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
 
         for (int i = 0; i < n; i++) {
             String s = x.getDataAt(offs + i);
-            String xi = quote ? RRuntime.quoteString(s) : s;
+            String xi = quote ? RRuntime.quoteString(s, false) : s;
 
             if (xi == RRuntime.STRING_NA) {
                 l = quote ? pp.getNaWidth() : pp.getNaWidthNoquote();
@@ -118,12 +121,12 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
         return fieldwidth;
     }
 
-    public static void printString(String s, int w, PrintContext printCtx) {
+    static void printString(String s, int w, PrintContext printCtx) {
         String outS = encode(s, w, printCtx.parameters());
         printCtx.output().print(outS);
     }
 
-    public static String encode(String s, int w, PrintJustification justify) {
+    static String encode(String s, int w, PrintJustification justify) {
         // justification
         final int b = w - s.length(); // total amount of blanks
         int bl = 0; // left blanks
@@ -163,14 +166,14 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
         return sb.toString();
     }
 
-    public static String encode(String value, int w, PrintParameters pp) {
+    static String encode(String value, int w, PrintParameters pp) {
         final boolean quote = pp.getQuote();
         final String s;
         if (quote) {
             if (RRuntime.isNA(value)) {
                 s = pp.getNaString();
             } else {
-                s = RRuntime.quoteString(value);
+                s = RRuntime.quoteString(value, false);
             }
         } else {
             if (RRuntime.isNA(value)) {
@@ -181,5 +184,4 @@ public final class StringVectorPrinter extends VectorPrinter<RAbstractStringVect
         }
         return StringVectorPrinter.encode(s, w, pp.getRight() ? PrintJustification.right : PrintJustification.left);
     }
-
 }

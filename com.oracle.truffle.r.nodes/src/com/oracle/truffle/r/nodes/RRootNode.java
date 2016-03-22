@@ -84,6 +84,7 @@ public abstract class RRootNode extends RootNode implements HasSignature {
         return formalArguments;
     }
 
+    @Override
     public ArgumentsSignature getSignature() {
         return formalArguments.getSignature();
     }

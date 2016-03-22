@@ -11,13 +11,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.library.grDevices.*;
-import com.oracle.truffle.r.library.graphics.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.library.grDevices.DevicesCCalls;
+import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_Par;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_PlotXY;
 import com.oracle.truffle.r.library.grid.GridFunctionsFactory.InitGridNodeGen;
@@ -34,23 +36,53 @@ import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SubstituteDirectNodeGen;
 import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildNodeGen;
-import com.oracle.truffle.r.library.stats.*;
+import com.oracle.truffle.r.library.stats.CompleteCases;
+import com.oracle.truffle.r.library.stats.Covcor;
+import com.oracle.truffle.r.library.stats.Dbinom;
 import com.oracle.truffle.r.library.stats.GammaFunctionsFactory.QgammaNodeGen;
+import com.oracle.truffle.r.library.stats.Pbinom;
+import com.oracle.truffle.r.library.stats.Pnorm;
+import com.oracle.truffle.r.library.stats.Qbinom;
+import com.oracle.truffle.r.library.stats.Qnorm;
+import com.oracle.truffle.r.library.stats.RbinomNodeGen;
+import com.oracle.truffle.r.library.stats.RnormNodeGen;
+import com.oracle.truffle.r.library.stats.RunifNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
-import com.oracle.truffle.r.library.tools.*;
+import com.oracle.truffle.r.library.stats.StatsFunctionsFactory;
+import com.oracle.truffle.r.library.tools.C_ParseRdNodeGen;
+import com.oracle.truffle.r.library.tools.DirChmodNodeGen;
+import com.oracle.truffle.r.library.tools.Rmd5NodeGen;
 import com.oracle.truffle.r.library.tools.ToolsTextFactory.CodeFilesAppendNodeGen;
 import com.oracle.truffle.r.library.tools.ToolsTextFactory.DoTabExpandNodeGen;
-import com.oracle.truffle.r.library.utils.*;
-import com.oracle.truffle.r.nodes.access.vector.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.objects.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.library.utils.CountFields;
+import com.oracle.truffle.r.library.utils.Crc64NodeGen;
+import com.oracle.truffle.r.library.utils.Download;
+import com.oracle.truffle.r.library.utils.MenuNodeGen;
+import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
+import com.oracle.truffle.r.library.utils.WriteTable;
+import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
+import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * {@code .Call} {@code .Fortran}, {@code .External}, {@code .External2}, {@code External.graphics}
@@ -153,7 +185,6 @@ public class ForeignFunctions {
             }
             return ((RExternalPtr) addressExtract.applyAccessField(frame, symbol, "address")).getAddr();
         }
-
     }
 
     /**
@@ -457,18 +488,18 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             controlVisibility();
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), args.getArguments());
         }
 
         @Specialization
-        public Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return callNamedFunctionWithPackage(name, args, null);
         }
 
         @Specialization
-        public Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
+        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {
@@ -539,19 +570,19 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             String name = getNameFromSymbolInfo(frame, symbol);
             Object list = encodeArgumentPairList(args, name);
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), name, new Object[]{list});
         }
 
         @Specialization
-        public Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return callNamedFunctionWithPackage(name, args, null);
         }
 
         @Specialization
-        public Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
+        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {
@@ -608,7 +639,7 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             String name = getNameFromSymbolInfo(frame, symbol);
             Object list = encodeArgumentPairList(args, name);
             // TODO: provide proper values for the CALL, OP and RHO parameters
@@ -616,12 +647,12 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return callNamedFunctionWithPackage(name, args, null);
         }
 
         @Specialization
-        public Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
+        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {
@@ -667,19 +698,19 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             String name = getNameFromSymbolInfo(frame, symbol);
             Object list = encodeArgumentPairList(args, name);
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), name, new Object[]{list});
         }
 
         @Specialization
-        public Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return callNamedFunctionWithPackage(name, args, null);
         }
 
         @Specialization
-        public Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
+        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {
@@ -724,17 +755,17 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), args.getArguments());
         }
 
         @Specialization
-        public Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return callNamedFunctionWithPackage(name, args, null);
         }
 
         @Specialization
-        public Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
+        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {

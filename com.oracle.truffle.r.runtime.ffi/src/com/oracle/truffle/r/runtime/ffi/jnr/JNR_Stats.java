@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
+
 import jnr.ffi.LibraryLoader;
 import jnr.ffi.annotations.In;
 import jnr.ffi.annotations.Out;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
-import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
 // Checkstyle: stop method name
 public class JNR_Stats implements StatsRFFI {
@@ -61,14 +61,15 @@ public class JNR_Stats implements StatsRFFI {
         return StatsProvider.fft();
     }
 
+    @Override
     @TruffleBoundary
     public void fft_factor(int n, int[] pmaxf, int[] pmaxp) {
         stats().fft_factor(n, pmaxf, pmaxp);
     }
 
+    @Override
     @TruffleBoundary
     public int fft_work(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
         return stats().fft_work(a, nseg, n, nspn, isn, work, iwork);
     }
-
 }

@@ -48,7 +48,6 @@ import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -112,15 +111,6 @@ public class RASTUtils {
     @TruffleBoundary
     public static ReadVariableNode createReadVariableNode(String name) {
         return ReadVariableNode.create(name);
-    }
-
-    /**
-     * Creates a language element for the {@code index}'th element of {@code args}.
-     */
-    @TruffleBoundary
-    public static Object createLanguageElement(Arguments<RSyntaxNode> args, int index) {
-        Node argNode = unwrap(args.getArguments()[index]);
-        return RASTUtils.createLanguageElement((RNode) argNode);
     }
 
     /**
@@ -208,11 +198,6 @@ public class RASTUtils {
         } else {
             return ConstantNode.create(value);
         }
-
-    }
-
-    public static boolean isLanguageOrExpression(Object expr) {
-        return expr instanceof RExpression || expr instanceof RLanguage;
     }
 
     /**
@@ -299,12 +284,6 @@ public class RASTUtils {
         }
     }
 
-    public static boolean isNamedFunctionNode(Node aCallNode) {
-        RNode n = (RNode) unwrap(getFunctionNode(aCallNode));
-        return (n instanceof ReadVariableNode || n instanceof GroupDispatchNode || n instanceof RBuiltinNode || ConstantNode.isFunction(n));
-
-    }
-
     /**
      * Unifies {@link RCallNode} and {@link GroupDispatchNode} for accessing (likely) function name.
      */
@@ -315,19 +294,6 @@ public class RASTUtils {
             return (RNode) node;
         }
         assert false;
-        return null;
-    }
-
-    /**
-     * Get the {@code n}'th child of {@code node}.
-     */
-    public static Node getChild(Node node, int n) {
-        int i = 0;
-        for (Node child : node.getChildren()) {
-            if (i++ == n) {
-                return child;
-            }
-        }
         return null;
     }
 
@@ -388,7 +354,6 @@ public class RASTUtils {
             // An actual value
             return ConstantNode.create(val);
         }
-
     }
 
     @TruffleBoundary
@@ -422,19 +387,23 @@ public class RASTUtils {
     /**
      * Marker class for special '...' handling.
      */
-    public abstract static class DotsNode extends RNode implements RSyntaxNode {
+    private abstract static class DotsNode extends RNode implements RSyntaxNode {
+        @Override
         public void deparseImpl(State state) {
             throw RInternalError.unimplemented();
         }
 
+        @Override
         public RSyntaxNode substituteImpl(REnvironment env) {
             throw RInternalError.unimplemented();
         }
 
+        @Override
         public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
             throw RInternalError.unimplemented();
         }
 
+        @Override
         public void setSourceSection(SourceSection sourceSection) {
             throw RInternalError.shouldNotReachHere();
         }
@@ -443,7 +412,6 @@ public class RASTUtils {
         public SourceSection getSourceSection() {
             throw RInternalError.shouldNotReachHere();
         }
-
     }
 
     /**
@@ -451,11 +419,11 @@ public class RASTUtils {
      * array of values from processing '...'. Allows {@link RSyntaxNode#substituteImpl} to always
      * return a single node.
      */
-    public static class ExpandedDotsNode extends DotsNode {
+    public static final class ExpandedDotsNode extends DotsNode {
 
         public final RSyntaxNode[] nodes;
 
-        ExpandedDotsNode(RSyntaxNode[] nodes) {
+        private ExpandedDotsNode(RSyntaxNode[] nodes) {
             this.nodes = nodes;
         }
 
@@ -464,7 +432,6 @@ public class RASTUtils {
             assert false;
             return null;
         }
-
     }
 
     /**
@@ -476,7 +443,5 @@ public class RASTUtils {
             assert false;
             return null;
         }
-
     }
-
 }

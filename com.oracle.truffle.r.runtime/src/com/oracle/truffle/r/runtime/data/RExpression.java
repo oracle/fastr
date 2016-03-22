@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class RExpression implements RShareable, RAbstractContainer {
 
-    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Expression.getName());
+    private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Expression.getClazz());
 
     private final RList data;
 
@@ -35,6 +37,7 @@ public class RExpression implements RShareable, RAbstractContainer {
         this.data = data;
     }
 
+    @Override
     public RType getRType() {
         return RType.Expression;
     }
@@ -77,6 +80,7 @@ public class RExpression implements RShareable, RAbstractContainer {
         return data.resetAllAttributes(nullify);
     }
 
+    @Override
     public boolean isComplete() {
         return data.isComplete();
     }
@@ -91,10 +95,12 @@ public class RExpression implements RShareable, RAbstractContainer {
         return data.resize(size);
     }
 
+    @Override
     public boolean hasDimensions() {
         return data.hasDimensions();
     }
 
+    @Override
     public int[] getDimensions() {
         return data.getDimensions();
     }
@@ -104,15 +110,18 @@ public class RExpression implements RShareable, RAbstractContainer {
         data.setDimensions(newDimensions);
     }
 
+    @Override
     public Class<?> getElementClass() {
         return RExpression.class;
     }
 
+    @Override
     public RExpression materializeNonShared() {
         RVector d = data.materializeNonShared();
         return data != d ? RDataFactory.createExpression((RList) d) : this;
     }
 
+    @Override
     public Object getDataAtAsObject(int index) {
         return data.getDataAtAsObject(index);
     }
@@ -147,6 +156,7 @@ public class RExpression implements RShareable, RAbstractContainer {
         data.setRowNames(rowNames);
     }
 
+    @Override
     public final RStringVector getClassHierarchy() {
         RStringVector v = (RStringVector) data.getAttribute(RRuntime.CLASS_ATTR_KEY);
         if (v == null) {
@@ -156,10 +166,12 @@ public class RExpression implements RShareable, RAbstractContainer {
         }
     }
 
+    @Override
     public RStringVector getImplicitClass() {
         return implicitClassHeader;
     }
 
+    @Override
     public boolean isObject(RAttributeProfiles attrProfiles) {
         return false;
     }
@@ -239,5 +251,4 @@ public class RExpression implements RShareable, RAbstractContainer {
     public void setGPBits(int value) {
         data.setGPBits(value);
     }
-
 }

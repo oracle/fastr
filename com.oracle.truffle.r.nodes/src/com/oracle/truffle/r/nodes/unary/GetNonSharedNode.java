@@ -25,8 +25,8 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
@@ -66,6 +66,7 @@ public abstract class GetNonSharedNode extends RNode implements RSyntaxNode {
         throw RInternalError.unimplemented("serializeImpl");
     }
 
+    @Override
     public void setSourceSection(SourceSection sourceSection) {
         throw RInternalError.shouldNotReachHere();
     }
@@ -74,5 +75,4 @@ public abstract class GetNonSharedNode extends RNode implements RSyntaxNode {
     public SourceSection getSourceSection() {
         return RSyntaxNode.INTERNAL;
     }
-
 }

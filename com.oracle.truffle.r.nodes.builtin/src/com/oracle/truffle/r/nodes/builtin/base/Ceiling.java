@@ -22,14 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ops.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 @RBuiltin(name = "ceiling", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Ceiling extends RBuiltinNode {
@@ -44,12 +48,11 @@ public abstract class Ceiling extends RBuiltinNode {
         return ceiling.execute(boxPrimitive.execute(value));
     }
 
-    public static class CeilingArithmetic extends Round.RoundArithmetic {
+    private static final class CeilingArithmetic extends Round.RoundArithmetic {
 
         @Override
         public double op(double op) {
             return Math.ceil(op);
         }
     }
-
 }

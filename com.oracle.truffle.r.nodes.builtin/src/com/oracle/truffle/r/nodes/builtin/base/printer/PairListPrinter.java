@@ -38,9 +38,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 
 //Transcribed from GnuR, src/main/print.c
 
-public final class PairListPrinter extends AbstractValuePrinter<RPairList> {
+final class PairListPrinter extends AbstractValuePrinter<RPairList> {
 
-    public static final PairListPrinter INSTANCE = new PairListPrinter();
+    static final PairListPrinter INSTANCE = new PairListPrinter();
+
+    private PairListPrinter() {
+        // singleton
+    }
 
     private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 

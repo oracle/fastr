@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * A sequence of {@link RNode}s. A {@link SequenceNode} is not a syntactic construct per se, but is
@@ -37,24 +40,12 @@ public class SequenceNode extends RNode {
 
     @Children protected final RNode[] sequence;
 
-    public SequenceNode(RNode[] sequence) {
+    SequenceNode(RNode[] sequence) {
         this.sequence = sequence;
-    }
-
-    protected SequenceNode(RNode node) {
-        this(convert(node));
     }
 
     public RNode[] getSequence() {
         return sequence;
-    }
-
-    private static RNode[] convert(RNode node) {
-        if (node instanceof SequenceNode) {
-            return ((SequenceNode) node).sequence;
-        } else {
-            return new RNode[]{node};
-        }
     }
 
     @Override
@@ -66,5 +57,4 @@ public class SequenceNode extends RNode {
         }
         return lastResult;
     }
-
 }

@@ -85,7 +85,7 @@ public abstract class PromiseNode extends RNode {
      */
     public abstract RSyntaxNode getPromiseExpr();
 
-    public static RNode createInlined(RNode expression, Object defaultValue, boolean unwrap) {
+    static RNode createInlined(RNode expression, Object defaultValue, boolean unwrap) {
         CompilerAsserts.neverPartOfCompilation();
         RNode clonedExpression = RASTUtils.cloneNode(expression);
         RNode pn = clonedExpression instanceof ConstantNode ? clonedExpression : new InlinedSuppliedArgumentNode(clonedExpression, defaultValue, unwrap);
@@ -98,7 +98,7 @@ public abstract class PromiseNode extends RNode {
      *         implementation
      */
     @TruffleBoundary
-    public static RNode create(RPromiseFactory factory, boolean noOpt, boolean forcedEager) {
+    static RNode create(RPromiseFactory factory, boolean noOpt, boolean forcedEager) {
         assert factory.getType() != PromiseType.NO_ARG;
 
         // For ARG_DEFAULT, expr == defaultExpr!
@@ -185,11 +185,13 @@ public abstract class PromiseNode extends RNode {
         }
 
         // @TruffleBoundary
+        @Override
         public void onSuccess(RPromise promise) {
             // System.err.println("Opt SUCCESS: " + promise.getOptType());
         }
 
         // @TruffleBoundary
+        @Override
         public void onFailure(RPromise promise) {
             // System.err.println("Opt FAILURE: " + promise.getOptType());
             rewriteToFallback();
@@ -273,7 +275,6 @@ public abstract class PromiseNode extends RNode {
         public RSyntaxNode getRSyntaxNode() {
             return expression.asRSyntaxNode();
         }
-
     }
 
     /**
@@ -295,7 +296,7 @@ public abstract class PromiseNode extends RNode {
             this.index = index;
         }
 
-        public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
+        private RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
             if (lookupVarArgs == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 lookupVarArgs = insert(ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any));
@@ -332,10 +333,12 @@ public abstract class PromiseNode extends RNode {
             state.endNodeDeparse(this);
         }
 
+        @Override
         public void serializeImpl(State state) {
             throw RInternalError.unimplemented();
         }
 
+        @Override
         public void setSourceSection(SourceSection sourceSection) {
             throw RInternalError.shouldNotReachHere();
         }
@@ -348,16 +351,15 @@ public abstract class PromiseNode extends RNode {
              */
             return RSyntaxNode.INTERNAL;
         }
-
     }
 
     @TruffleBoundary
-    public static RNode createVarArgsInlined(RNode[] nodes, ArgumentsSignature signature) {
+    static RNode createVarArgsInlined(RNode[] nodes, ArgumentsSignature signature) {
         return new InlineVarArgsNode(nodes, signature);
     }
 
     @TruffleBoundary
-    public static RNode createVarArgs(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache, boolean forcedEager) {
+    static RNode createVarArgs(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache, boolean forcedEager) {
         return new VarArgsPromiseNode(nodes, signature, closureCache, forcedEager);
     }
 
@@ -369,13 +371,17 @@ public abstract class PromiseNode extends RNode {
         private final Closure[] closures;
         private final ArgumentsSignature signature;
 
-        public VarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache, boolean forcedEager) {
+        private VarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache, boolean forcedEager) {
             this.promised = new RNode[nodes.length];
             this.closures = new Closure[nodes.length];
             for (int i = 0; i < nodes.length; i++) {
                 Closure closure = closureCache.getOrCreateClosure(nodes[i]);
                 this.closures[i] = closure;
-                this.promised[i] = PromisedNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), false, forcedEager);
+                if (ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(nodes[i]))) {
+                    this.promised[i] = nodes[i];
+                } else {
+                    this.promised[i] = PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), false, forcedEager);
+                }
             }
             this.signature = signature;
         }
@@ -404,7 +410,7 @@ public abstract class PromiseNode extends RNode {
      * "..." might include values from an outer "...", which might resolve to an empty argument
      * list.
      */
-    public static final class InlineVarArgsNode extends RNode {
+    private static final class InlineVarArgsNode extends RNode {
         @Children private final RNode[] varargs;
         protected final ArgumentsSignature signature;
 
@@ -415,18 +421,10 @@ public abstract class PromiseNode extends RNode {
         @CompilationFinal ArgumentsSignature cachedVarArgSignature;
         @CompilationFinal ArgumentsSignature cachedResultSignature;
 
-        public InlineVarArgsNode(RNode[] nodes, ArgumentsSignature signature) {
+        InlineVarArgsNode(RNode[] nodes, ArgumentsSignature signature) {
             this.varargs = nodes;
             this.signature = signature;
             assert varargs.length == signature.getLength();
-        }
-
-        public RNode[] getVarargs() {
-            return varargs;
-        }
-
-        public ArgumentsSignature getSignature() {
-            return signature;
         }
 
         @Override

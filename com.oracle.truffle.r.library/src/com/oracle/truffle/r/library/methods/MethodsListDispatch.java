@@ -112,7 +112,6 @@ public class MethodsListDispatch {
         protected Object callGetClassFromCache(Object klass, REnvironment table) {
             throw RError.error(this, RError.Message.GENERIC, "class should be either a character-string name or a class definition");
         }
-
     }
 
     public abstract static class R_set_method_dispatch extends RExternalBuiltinNode.Arg1 {
@@ -226,7 +225,7 @@ public class MethodsListDispatch {
         }
     }
 
-    static String checkSingleString(Object o, boolean nonEmpty, String what, RBaseNode node, ClassHierarchyScalarNode classHierarchyNode) {
+    private static String checkSingleString(Object o, boolean nonEmpty, String what, RBaseNode node, ClassHierarchyScalarNode classHierarchyNode) {
         if (o instanceof RAbstractStringVector) {
             RAbstractStringVector vec = (RAbstractStringVector) o;
             if (vec.getLength() != 1) {
@@ -240,7 +239,6 @@ public class MethodsListDispatch {
         } else {
             throw RError.error(node, RError.Message.SINGLE_STRING_WRONG_TYPE, what, classHierarchyNode.executeString(o));
         }
-
     }
 
     public abstract static class R_getGeneric extends RExternalBuiltinNode.Arg4 {
@@ -265,7 +263,6 @@ public class MethodsListDispatch {
             }
             return value;
         }
-
     }
 
     abstract static class GetGenericInternal extends RBaseNode {
@@ -389,5 +386,4 @@ public class MethodsListDispatch {
             return RDataFactory.createExternalPtr(0, RNull.instance, RNull.instance);
         }
     }
-
 }

@@ -47,7 +47,7 @@ public abstract class Mod extends RBuiltinNode {
         return modNode.execute(boxPrimitive.execute(value));
     }
 
-    public static class ModArithmetic extends UnaryArithmetic {
+    private static final class ModArithmetic extends UnaryArithmetic {
 
         @Override
         public RType calculateResultType(RType argumentType) {
@@ -83,7 +83,5 @@ public abstract class Mod extends RBuiltinNode {
         public double opd(double re, double im) {
             return RComplex.abs(re, im);
         }
-
     }
-
 }

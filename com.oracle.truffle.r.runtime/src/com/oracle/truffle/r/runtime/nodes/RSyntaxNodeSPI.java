@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * {@link RSyntaxNode}. Instead the generic methods on {@link RBaseNode} should be called.
  *
  */
-public interface RSyntaxNodeSPI {
+interface RSyntaxNodeSPI {
     /**
      * Support for the {@code deparse} builtin function. The source representation should be
      * appended to the {@link State}.

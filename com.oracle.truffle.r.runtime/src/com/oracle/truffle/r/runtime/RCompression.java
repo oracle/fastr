@@ -23,8 +23,8 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
 
 import com.oracle.truffle.r.runtime.conn.GZIPConnections.GZIPRConnection;
@@ -102,7 +102,6 @@ public class RCompression {
                 assert false;
                 return false;
         }
-
     }
 
     private static boolean gzipCompress(byte[] udata, byte[] cdata) {
@@ -207,5 +206,4 @@ public class RCompression {
         }
         return sb.toString();
     }
-
 }

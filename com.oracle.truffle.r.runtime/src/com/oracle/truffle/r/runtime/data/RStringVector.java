@@ -22,17 +22,21 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RStringVector extends RVector implements RAbstractStringVector {
 
-    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Character.getName());
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Character.getClazz());
 
     private final String[] data;
 
@@ -58,6 +62,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         }
     }
 
+    @Override
     public String[] getInternalStore() {
         return data;
     }
@@ -136,6 +141,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         return true;
     }
 
+    @Override
     public String getDataAt(int i) {
         return data[i];
     }
@@ -209,6 +215,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         return RDataFactory.createStringVector(data, isComplete(), newDimensions);
     }
 
+    @Override
     public RStringVector materialize() {
         return this;
     }
@@ -227,5 +234,4 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     public void setElement(int i, Object value) {
         data[i] = (String) value;
     }
-
 }

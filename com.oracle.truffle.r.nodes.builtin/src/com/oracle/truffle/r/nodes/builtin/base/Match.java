@@ -22,21 +22,39 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import java.util.*;
+import java.util.Arrays;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFactor;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 @RBuiltin(name = "match", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "incomparables"})
 public abstract class Match extends RBuiltinNode {
@@ -771,10 +789,10 @@ public abstract class Match extends RBuiltinNode {
         }
     }
 
-    public static class NonRecursiveHashSetInt {
+    private static class NonRecursiveHashSetInt {
         private NonRecursiveHashMapInt map;
 
-        public NonRecursiveHashSetInt(int approxCapacity) {
+        NonRecursiveHashSetInt(int approxCapacity) {
             map = new NonRecursiveHashMapInt(approxCapacity);
         }
 
@@ -787,10 +805,10 @@ public abstract class Match extends RBuiltinNode {
         }
     }
 
-    public static class NonRecursiveHashSetDouble {
+    private static class NonRecursiveHashSetDouble {
         private NonRecursiveHashMapDouble map;
 
-        public NonRecursiveHashSetDouble(int approxCapacity) {
+        NonRecursiveHashSetDouble(int approxCapacity) {
             map = new NonRecursiveHashMapDouble(approxCapacity);
         }
 
@@ -803,10 +821,10 @@ public abstract class Match extends RBuiltinNode {
         }
     }
 
-    public static class NonRecursiveHashSetCharacter {
+    private static class NonRecursiveHashSetCharacter {
         private NonRecursiveHashMapCharacter map;
 
-        public NonRecursiveHashSetCharacter(int approxCapacity) {
+        NonRecursiveHashSetCharacter(int approxCapacity) {
             map = new NonRecursiveHashMapCharacter(approxCapacity);
         }
 
@@ -819,10 +837,10 @@ public abstract class Match extends RBuiltinNode {
         }
     }
 
-    public static class NonRecursiveHashSetComplex {
+    private static class NonRecursiveHashSetComplex {
         private NonRecursiveHashMapComplex map;
 
-        public NonRecursiveHashSetComplex(int approxCapacity) {
+        NonRecursiveHashSetComplex(int approxCapacity) {
             map = new NonRecursiveHashMapComplex(approxCapacity);
         }
 

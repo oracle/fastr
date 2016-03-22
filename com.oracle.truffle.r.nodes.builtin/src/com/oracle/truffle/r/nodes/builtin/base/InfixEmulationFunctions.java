@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -76,12 +77,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *
  */
 public class InfixEmulationFunctions {
-
-    public abstract static class ErrorAdapter extends RBuiltinNode {
-        protected RError nyi() throws RError {
-            throw RError.nyi(this, String.valueOf(getBuiltin()));
-        }
-    }
 
     @NodeChild(value = "op")
     protected abstract static class PromiseEvaluator extends RNode {
@@ -121,7 +116,6 @@ public class InfixEmulationFunctions {
 
     public abstract static class AccessArrayBuiltin extends RBuiltinNode {
 
-        // new
         @Child private ExtractVectorNode extractNode;
 
         @Override
@@ -152,10 +146,6 @@ public class InfixEmulationFunctions {
             return true;
         }
 
-        protected Object getInternal(VirtualFrame frame, Object x, RArgsValuesAndNames inds, Object dropVec) {
-            return access(frame, x, RRuntime.LOGICAL_TRUE, inds, dropVec);
-        }
-
         @SuppressWarnings("unused")
         @Specialization
         protected RNull get(RNull x, Object inds, Object dropVec) {
@@ -176,9 +166,8 @@ public class InfixEmulationFunctions {
 
         @Specialization(guards = "!noInd(inds)")
         protected Object get(VirtualFrame frame, Object x, RArgsValuesAndNames inds, Object dropVec) {
-            return getInternal(frame, x, inds, dropVec);
+            return access(frame, x, RRuntime.LOGICAL_TRUE, inds, dropVec);
         }
-
     }
 
     @RBuiltin(name = ".subset", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "drop"})
@@ -194,25 +183,11 @@ public class InfixEmulationFunctions {
             return false;
         }
 
-        protected final ConditionProfile emptyExactProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile emptyExactProfile = ConditionProfile.createBinaryProfile();
 
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE};
-        }
-
-        protected Object getInternal(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
-            /*
-             * TODO this should not be handled here. The new vector access nodes handle this, remove
-             * this check as soon as its the default and the old implementation is gone.
-             */
-            byte exact;
-            if (emptyExactProfile.profile(exactVec.getLength() == 0)) {
-                exact = RRuntime.LOGICAL_FALSE;
-            } else {
-                exact = exactVec.getDataAt(0);
-            }
-            return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE);
         }
 
         @SuppressWarnings("unused")
@@ -235,9 +210,18 @@ public class InfixEmulationFunctions {
 
         @Specialization(guards = "!noInd(inds)")
         protected Object get(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
-            return getInternal(frame, x, inds, exactVec);
+            /*
+             * TODO this should not be handled here. The new vector access nodes handle this, remove
+             * this check as soon as its the default and the old implementation is gone.
+             */
+            byte exact;
+            if (emptyExactProfile.profile(exactVec.getLength() == 0)) {
+                exact = RRuntime.LOGICAL_FALSE;
+            } else {
+                exact = exactVec.getDataAt(0);
+            }
+            return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE);
         }
-
     }
 
     @RBuiltin(name = ".subset2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"})
@@ -300,29 +284,29 @@ public class InfixEmulationFunctions {
     }
 
     @RBuiltin(name = "<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
-    public abstract static class AssignBuiltin extends ErrorAdapter {
+    public abstract static class AssignBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x, Object i) {
-            throw nyi();
+            throw RInternalError.unimplemented();
         }
     }
 
     @RBuiltin(name = "=", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
-    public abstract static class AssignBuiltinEq extends ErrorAdapter {
+    public abstract static class AssignBuiltinEq extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x, Object i) {
-            throw nyi();
+            throw RInternalError.unimplemented();
         }
     }
 
     @RBuiltin(name = "<<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
-    public abstract static class AssignOuterBuiltin extends ErrorAdapter {
+    public abstract static class AssignOuterBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x, Object i) {
-            throw nyi();
+            throw RInternalError.unimplemented();
         }
     }
 
@@ -349,7 +333,6 @@ public class InfixEmulationFunctions {
         protected Object fallbackError(@SuppressWarnings("unused") Object container, @SuppressWarnings("unused") Object field) {
             throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, RType.Language.getName());
         }
-
     }
 
     @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", "value"}, dispatch = INTERNAL_GENERIC)
@@ -391,20 +374,20 @@ public class InfixEmulationFunctions {
     }
 
     @RBuiltin(name = "{", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class BraceBuiltin extends ErrorAdapter {
+    public abstract static class BraceBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x) {
-            throw nyi();
+            throw RInternalError.unimplemented();
         }
     }
 
     @RBuiltin(name = "(", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class ParenBuiltin extends ErrorAdapter {
+    public abstract static class ParenBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x) {
-            throw nyi();
+            throw RInternalError.unimplemented();
         }
     }
 
@@ -444,66 +427,65 @@ public class InfixEmulationFunctions {
     }
 
     @RBuiltin(name = "if", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IfBuiltin extends ErrorAdapter {
+    public abstract static class IfBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x) {
-            throw nyi();
+            throw RInternalError.unimplemented();
         }
     }
 
     @RBuiltin(name = "while", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class WhileBuiltin extends ErrorAdapter {
+    public abstract static class WhileBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x) {
-            throw nyi();
+            throw RInternalError.unimplemented();
         }
     }
 
     @RBuiltin(name = "repeat", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class RepeatBuiltin extends ErrorAdapter {
+    public abstract static class RepeatBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x) {
-            throw nyi();
+            throw RInternalError.unimplemented();
         }
     }
 
     @RBuiltin(name = "for", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class ForBuiltin extends ErrorAdapter {
+    public abstract static class ForBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x) {
-            throw nyi();
+            throw RInternalError.unimplemented();
         }
     }
 
     @RBuiltin(name = "break", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class BreakBuiltin extends ErrorAdapter {
+    public abstract static class BreakBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x) {
-            throw nyi();
+            throw RInternalError.unimplemented();
         }
     }
 
     @RBuiltin(name = "next", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class NextBuiltin extends ErrorAdapter {
+    public abstract static class NextBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x) {
-            throw nyi();
+            throw RInternalError.unimplemented();
         }
     }
 
     @RBuiltin(name = "function", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class FunctionBuiltin extends ErrorAdapter {
+    public abstract static class FunctionBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x) {
-            throw nyi();
+            throw RInternalError.unimplemented();
         }
     }
-
 }

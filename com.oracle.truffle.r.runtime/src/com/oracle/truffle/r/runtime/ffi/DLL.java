@@ -11,16 +11,26 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 
 /**
  * Support for Dynamically Loaded Libraries.
@@ -139,7 +149,6 @@ public class DLL {
             dllInfo.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS), false);
             return dllInfo;
         }
-
     }
 
     public static class SymbolInfo {
@@ -438,5 +447,4 @@ public class DLL {
         dllInfo.forceSymbols = value == 0 ? false : true;
         return old;
     }
-
 }

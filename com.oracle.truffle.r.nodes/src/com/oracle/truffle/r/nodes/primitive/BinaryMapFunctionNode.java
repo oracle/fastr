@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.primitive;
 
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * A typed binary map function for use in {@link BinaryMapNode}. The called methods depend on the
@@ -109,5 +107,4 @@ public abstract class BinaryMapFunctionNode extends RBaseNode {
     public boolean isComplete() {
         return true;
     }
-
 }

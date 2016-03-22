@@ -23,10 +23,10 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.control.BlockNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Encapsulates the sequence of statements (expressions) of a function, i.e. the function body. Has
@@ -40,7 +40,7 @@ public class FunctionStatementsNode extends BlockNode {
         super(null, BlockNode.EMPTY_BLOCK);
     }
 
-    public FunctionStatementsNode(SourceSection src, RSyntaxNode sequence) {
+    FunctionStatementsNode(SourceSection src, RSyntaxNode sequence) {
         super(src.withTags(RSyntaxTags.START_FUNCTION), sequence);
     }
 
@@ -48,5 +48,4 @@ public class FunctionStatementsNode extends BlockNode {
     public RSyntaxNode substituteImpl(REnvironment env) {
         return new FunctionStatementsNode(RSyntaxNode.EAGER_DEPARSE, super.substituteImpl(env));
     }
-
 }

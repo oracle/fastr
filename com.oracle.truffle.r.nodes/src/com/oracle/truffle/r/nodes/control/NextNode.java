@@ -59,18 +59,22 @@ public final class NextNode extends RSourceSectionNode implements RSyntaxNode, R
         state.setAsBuiltin("next");
     }
 
+    @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
         return this;
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return RSyntaxLookup.createDummyLookup(getSourceSection(), "next", true);
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return new RSyntaxElement[0];
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ArgumentsSignature.empty(0);
     }

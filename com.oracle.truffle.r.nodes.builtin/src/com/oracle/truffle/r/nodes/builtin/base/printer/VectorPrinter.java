@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 //Transcribed from GnuR, src/main/print.c, src/main/printarray.c, src/main/printvector.c
 
-public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePrinter<T> {
+abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePrinter<T> {
 
     private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
@@ -52,25 +52,6 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
         array
     }
 
-    public static class FormatMetrics {
-        final int originalMaxWidth;
-        int maxWidth;
-
-        public FormatMetrics(int maxWidth) {
-            super();
-            this.originalMaxWidth = maxWidth;
-            this.maxWidth = maxWidth;
-        }
-        
-        public int getOriginalMaxWidth() {
-            return originalMaxWidth;
-        }
-
-        public int getAdjustedMaxWidth() {
-            return maxWidth;
-        }
-
-    }
 
     private static final int R_MIN_LBLOFF = 2;
 
@@ -725,7 +706,5 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
         RAbstractStringVector getDimNamesAt(int dimLevel) {
             return dimLevel < dimnames.getLength() ? toStringVector(dimnames.getDataAt(dimLevel)) : null;
         }
-
     }
-
 }

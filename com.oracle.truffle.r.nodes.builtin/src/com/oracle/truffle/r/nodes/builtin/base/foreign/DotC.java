@@ -11,20 +11,36 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
-import java.util.*;
+import java.util.Arrays;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.access.vector.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
+import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * {@code .C} functions.
@@ -76,7 +92,7 @@ public abstract class DotC extends RBuiltinNode {
         return dispatch(this, symbolInfo.address, symbolInfo.symbol, naok, dup, args.getArguments());
     }
 
-    protected String getNameFromSymbolInfo(VirtualFrame frame, RList symbol) {
+    private String getNameFromSymbolInfo(VirtualFrame frame, RList symbol) {
         if (nameExtract == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             nameExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
@@ -84,7 +100,7 @@ public abstract class DotC extends RBuiltinNode {
         return RRuntime.asString(nameExtract.applyAccessField(frame, symbol, "name"));
     }
 
-    protected long getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
+    private long getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
         if (addressExtract == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
@@ -125,7 +141,7 @@ public abstract class DotC extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    public static RList dispatch(RBuiltinNode node, long address, String name, byte naok, byte dup, Object[] argValues) {
+    protected static RList dispatch(RBuiltinNode node, long address, String name, byte naok, byte dup, Object[] argValues) {
         @SuppressWarnings("unused")
         boolean dupArgs = RRuntime.fromLogical(dup);
         @SuppressWarnings("unused")

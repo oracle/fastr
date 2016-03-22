@@ -40,6 +40,7 @@ public class RVersionNumber {
     public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
     public static final String MINOR_PATCH = MINOR + "." + PATCH;
     public static final String FULL = MAJOR + "." + MINOR + "." + PATCH;
+    public static final String R_HYPHEN_FULL = "R-" + FULL;
 
     public static final String RELEASE_YEAR = "2016";
     public static final String RELEASE_MONTH = "03";
@@ -50,5 +51,4 @@ public class RVersionNumber {
     public static void main(String[] args) {
         System.out.printf("R version %s", FULL);
     }
-
 }

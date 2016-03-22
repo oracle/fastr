@@ -79,14 +79,14 @@ public class PrettyPrintWriter extends PrintWriter implements PrettyWriter {
     }
 
     @Override
-    public void beginElement(RAbstractVector vector, int index, VectorPrinter.FormatMetrics fm) {
+    public void beginElement(RAbstractVector vector, int index, FormatMetrics fm) {
         if (out instanceof PrettyWriter) {
             ((PrettyWriter)out).beginElement(vector, index, fm);
         }
     }
 
     @Override
-    public void endElement(RAbstractVector vector, int index, VectorPrinter.FormatMetrics fm) {
+    public void endElement(RAbstractVector vector, int index, FormatMetrics fm) {
         if (out instanceof PrettyWriter) {
             ((PrettyWriter)out).endElement(vector, index, fm);
         }

@@ -22,24 +22,39 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.Arrays;
+import java.util.function.IntFunction;
+import java.util.function.IntPredicate;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.FastPathFactory;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * <p>
@@ -49,8 +64,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * functions are used for special cases, where builtins make it necessary to re-match parameters,
  * e.g.: {@link #matchArgumentsEvaluated(RFunction, EvaluatedArguments, RBaseNode, boolean)} for
  * 'UseMethod' and {@link #matchArgumentsInlined(RFunction, UnmatchedArguments, RBaseNode)} for
- * builtins which are implemented in Java ( @see
- * {@link RBuiltinNode#inline(ArgumentsSignature, RNode[])}
+ * builtins which are implemented in Java.
  * </p>
  *
  * <p>
@@ -133,9 +147,8 @@ public class ArgumentMatcher {
      * @return A fresh {@link InlinedArguments} containing the arguments in correct order and
      *         wrapped in special {@link PromiseNode}s
      */
-    public static InlinedArguments matchArgumentsInlined(RFunction function, UnmatchedArguments suppliedArgs, RBaseNode callingNode) {
-        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callingNode, suppliedArgs, false);
-        return new InlinedArguments(wrappedArgs, suppliedArgs.getSignature());
+    public static RNode[] matchArgumentsInlined(RFunction function, UnmatchedArguments suppliedArgs, RBaseNode callingNode) {
+        return matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callingNode, suppliedArgs, false);
     }
 
     public static MatchPermutation matchArguments(ArgumentsSignature suppliedSignature, ArgumentsSignature formalSignature, RBaseNode callingNode, boolean forNextMethod, RBuiltinDescriptor builtin) {
@@ -417,15 +430,15 @@ public class ArgumentMatcher {
         }
     }
 
-    public static final class MatchPermutation {
+    static final class MatchPermutation {
         public static final int UNMATCHED = -1;
         public static final int VARARGS = -2;
 
-        @CompilationFinal public final int[] resultPermutation;
-        @CompilationFinal public final int[] varargsPermutation;
-        public final ArgumentsSignature varargsSignature;
+        @CompilationFinal private final int[] resultPermutation;
+        @CompilationFinal private final int[] varargsPermutation;
+        private final ArgumentsSignature varargsSignature;
 
-        public MatchPermutation(int[] resultPermutation, int[] varargsPermutation, ArgumentsSignature varargsSignature) {
+        private MatchPermutation(int[] resultPermutation, int[] varargsPermutation, ArgumentsSignature varargsSignature) {
             this.resultPermutation = resultPermutation;
             this.varargsPermutation = varargsPermutation;
             this.varargsSignature = varargsSignature;

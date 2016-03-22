@@ -27,9 +27,13 @@ import java.io.IOException;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 
-public final class SymbolPrinter extends AbstractValuePrinter<RSymbol> {
+final class SymbolPrinter extends AbstractValuePrinter<RSymbol> {
 
-    public static final SymbolPrinter INSTANCE = new SymbolPrinter();
+    static final SymbolPrinter INSTANCE = new SymbolPrinter();
+
+    private SymbolPrinter() {
+        // singleton
+    }
 
     @Override
     protected void printValue(RSymbol value, PrintContext printCtx) throws IOException {
@@ -37,5 +41,4 @@ public final class SymbolPrinter extends AbstractValuePrinter<RSymbol> {
                         RDeparse.SIMPLEDEPARSE, -1);
         printCtx.output().print(dp[0]);
     }
-
 }

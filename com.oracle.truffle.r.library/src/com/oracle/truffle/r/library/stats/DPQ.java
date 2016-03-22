@@ -108,7 +108,7 @@ public final class DPQ {
         private static final long serialVersionUID = 1182697355931636213L;
         public final double result;
 
-        public EarlyReturn(double result) {
+        private EarlyReturn(double result) {
             this.result = result;
         }
     }
@@ -116,11 +116,11 @@ public final class DPQ {
     /*
      * Do the boundaries exactly for q*() functions : Often _LEFT_ = ML_NEGINF , and very often
      * _RIGHT_ = ML_POSINF;
-     * 
+     *
      * R_Q_P01_boundaries(p, _LEFT_, _RIGHT_) :<==>
-     * 
+     *
      * R_Q_P01_check(p); if (p == R_DT_0) return _LEFT_ ; if (p == R_DT_1) return _RIGHT_;
-     * 
+     *
      * the following implementation should be more efficient (less tests):
      */
     public static void qP01Boundaries(double p, double left, double right, boolean lowerTail, boolean logP) throws EarlyReturn {

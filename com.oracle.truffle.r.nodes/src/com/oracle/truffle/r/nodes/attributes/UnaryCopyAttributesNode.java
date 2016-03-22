@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Simple attribute access node that specializes on the position at which the attribute was found
@@ -52,18 +58,18 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!containsMetadata(source, attrSourceProfiles)")
-    public RAbstractVector copyNoMetadata(RAbstractVector target, RAbstractVector source) {
+    protected RAbstractVector copyNoMetadata(RAbstractVector target, RAbstractVector source) {
         return target;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"copyAllAttributes", "target == source"})
-    public RAbstractVector copySameVector(RAbstractVector target, RAbstractVector source) {
+    protected RAbstractVector copySameVector(RAbstractVector target, RAbstractVector source) {
         return target;
     }
 
     @Specialization(guards = {"!copyAllAttributes || target != source", "containsMetadata(source, attrSourceProfiles)"})
-    public RAbstractVector copySameLength(RAbstractVector target, RAbstractVector source, //
+    protected RAbstractVector copySameLength(RAbstractVector target, RAbstractVector source, //
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
                     @Cached("createDim()") RemoveAttributeNode removeDim, //
                     @Cached("createDimNames()") RemoveAttributeNode removeDimNames, //

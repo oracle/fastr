@@ -47,13 +47,12 @@ public class TestVanillaPackage extends TestRPackages {
 
     @Test
     public void testLoadVanilla() {
-        assertEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); r <- vanilla(); detach(\"package:vanilla\"); r }", new String[]{packagePaths.rpackagesLibs.toString()}));
+        assertEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); r <- vanilla(); detach(\"package:vanilla\"); r }", new String[]{TestRPackages.libLoc()}));
     }
 
     @Test
     public void testSimpleFunction() {
         assertEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); r <- functionTest(c(1,2,3,4,5,6),8:10); detach(\"package:vanilla\"); r }",
-                        new String[]{packagePaths.rpackagesLibs.toString()}));
+                        new String[]{TestRPackages.libLoc()}));
     }
-
 }

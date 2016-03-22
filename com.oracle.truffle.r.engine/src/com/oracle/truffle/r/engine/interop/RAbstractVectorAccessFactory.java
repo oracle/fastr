@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,12 +35,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class RAbstractVectorAccessFactory implements Factory10 {
 
-    public abstract class InteropRootNode extends RootNode {
-        public InteropRootNode() {
+    private abstract class InteropRootNode extends RootNode {
+        InteropRootNode() {
             super(TruffleRLanguage.class, null, null);
         }
     }
 
+    @Override
     public CallTarget accessIsNull() {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
             @Override
@@ -50,10 +51,12 @@ public final class RAbstractVectorAccessFactory implements Factory10 {
         });
     }
 
+    @Override
     public CallTarget accessIsExecutable() {
         throw RInternalError.shouldNotReachHere("message: accessIsExecutable");
     }
 
+    @Override
     public CallTarget accessIsBoxed() {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
             @Override
@@ -64,6 +67,7 @@ public final class RAbstractVectorAccessFactory implements Factory10 {
         });
     }
 
+    @Override
     public CallTarget accessHasSize() {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
             @Override
@@ -73,10 +77,12 @@ public final class RAbstractVectorAccessFactory implements Factory10 {
         });
     }
 
+    @Override
     public CallTarget accessGetSize() {
         return Truffle.getRuntime().createCallTarget(new VectorSizeNode());
     }
 
+    @Override
     public CallTarget accessUnbox() {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
             @Override
@@ -87,26 +93,32 @@ public final class RAbstractVectorAccessFactory implements Factory10 {
         });
     }
 
+    @Override
     public CallTarget accessRead() {
         return Truffle.getRuntime().createCallTarget(VectorReadNodeGen.create());
     }
 
+    @Override
     public CallTarget accessWrite() {
         throw RInternalError.shouldNotReachHere("message: accessWrite");
     }
 
+    @Override
     public CallTarget accessExecute(int argumentsLength) {
         throw RInternalError.shouldNotReachHere("message: accessExecute");
     }
 
+    @Override
     public CallTarget accessInvoke(int argumentsLength) {
         throw RInternalError.shouldNotReachHere("message: accessInvoke");
     }
 
+    @Override
     public CallTarget accessMessage(Message unknown) {
         throw RInternalError.shouldNotReachHere("message: " + unknown);
     }
 
+    @Override
     @SuppressWarnings("all")
     public CallTarget accessNew(int argumentsLength) {
         return null;

@@ -39,9 +39,9 @@ public interface PrettyWriter {
 
     void endAttributes(RAttributeStorage value);
 
-    void beginElement(RAbstractVector vector, int index, VectorPrinter.FormatMetrics fm);
+    void beginElement(RAbstractVector vector, int index, FormatMetrics fm);
 
-    void endElement(RAbstractVector vector, int index, VectorPrinter.FormatMetrics fm);
+    void endElement(RAbstractVector vector, int index, FormatMetrics fm);
     
     Object getPrintReport();
 }

@@ -64,5 +64,4 @@ public abstract class RList2EnvNode extends RBaseNode {
     protected REnvironment doList2Env(Object obj, REnvironment env) {
         throw RError.error(this, RError.Message.FIRST_ARGUMENT_NOT_NAMED_LIST);
     }
-
 }

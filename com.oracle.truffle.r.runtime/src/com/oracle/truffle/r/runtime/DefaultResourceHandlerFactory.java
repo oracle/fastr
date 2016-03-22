@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,22 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.*;
-import java.net.*;
+import java.io.InputStream;
+import java.net.URL;
 
-import com.oracle.truffle.r.runtime.ResourceHandlerFactory.*;
+import com.oracle.truffle.r.runtime.ResourceHandlerFactory.Handler;
 
 /**
  * Default implementation uses the default mechanism in {@code java.lang.Class}.
  */
 class DefaultResourceHandlerFactory extends ResourceHandlerFactory implements Handler {
 
+    @Override
     public URL getResource(Class<?> accessor, String name) {
         return accessor.getResource(name);
     }
 
+    @Override
     public InputStream getResourceAsStream(Class<?> accessor, String name) {
         return accessor.getResourceAsStream(name);
     }
@@ -44,5 +46,4 @@ class DefaultResourceHandlerFactory extends ResourceHandlerFactory implements Ha
     protected Handler newHandler() {
         return this;
     }
-
 }

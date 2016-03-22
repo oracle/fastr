@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,14 +35,14 @@ import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-public abstract class VectorReadNode extends RootNode {
+abstract class VectorReadNode extends RootNode {
 
     @CompilationFinal private boolean lengthAccess;
     @Child private AccessArraySubscriptBuiltin builtin;
     @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
     @Child private RLengthNode lengthNode = RLengthNode.create();
 
-    public VectorReadNode() {
+    VectorReadNode() {
         super(TruffleRLanguage.class, null, null);
         this.lengthAccess = false;
     }
@@ -69,5 +69,4 @@ public abstract class VectorReadNode extends RootNode {
             return RNull.instance;
         }
     }
-
 }

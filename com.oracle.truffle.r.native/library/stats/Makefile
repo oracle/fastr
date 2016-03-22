@@ -26,12 +26,11 @@
 # GnuR stats library source - those that do not depend on GnuR internals (always true for .f)
 # Also do some necessary modifications to a copy of fft.c.
 
-.PHONY: cleanpkg nametool
+.PHONY: cleanpkg
 
 GNUR_FFT = $(addprefix $(GNUR_HOME)/src/library/stats/src/, fft.c)
 FFT_OBJECT = $(addprefix $(OBJ)/, fft.o)
 LIB_PKG_PRE = $(FFT_OBJECT)
-LIB_PKG_POST = nametool
 CLEAN_PKG := cleanpkg
 
 
@@ -70,13 +69,6 @@ $(OBJ)/%.o: $(GNUR_SRC)/%.c
 
 $(OBJ)/%.o: $(GNUR_SRC)/%.f
 	$(F77) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
-
-# ensure that the references to Rblas, Rlapack and appl are absolute
-nametool:
-ifeq ($(OS_NAME),Darwin)
-	install_name_tool -change libRblas.dylib $(FASTR_R_HOME)/lib/libRblas.dylib $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
-	install_name_tool -change libRlapack.dylib $(FASTR_R_HOME)/lib/libRlapack.dylib $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
-endif
 
 cleanpkg:
 	rm -f $(SRC)/fft.c

@@ -24,6 +24,7 @@ import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
 public final class Qnorm implements StatsFunctions.Function3_2 {
     private final BranchProfile nanProfile = BranchProfile.create();
 
+    @Override
     public double evaluate(double p, double mu, double sigma, boolean lowerTail, boolean logP) {
         if (Double.isNaN(p) || Double.isNaN(mu) || Double.isNaN(sigma)) {
             nanProfile.enter();

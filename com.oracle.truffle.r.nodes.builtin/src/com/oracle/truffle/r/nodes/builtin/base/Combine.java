@@ -42,7 +42,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.RCastingBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.CombineNodeGen.CombineInputCastNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
@@ -75,7 +75,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"..."}, dispatch = RDispatch.INTERNAL_GENERIC)
-public abstract class Combine extends RCastingBuiltinNode {
+public abstract class Combine extends RBuiltinNode {
 
     public static Combine create() {
         return CombineNodeGen.create(null, null, null);
@@ -275,7 +275,7 @@ public abstract class Combine extends RCastingBuiltinNode {
         return (precedence == EXPRESSION_PRECEDENCE && value instanceof RLanguage) ? value : castNode.execute(value);
     }
 
-    protected RAbstractVector namesMerge(RAbstractVector vector, String name) {
+    private RAbstractVector namesMerge(RAbstractVector vector, String name) {
         RStringVector orgNamesObject = vector.getNames(attrProfiles);
         if (name == null) {
             return vector;
@@ -327,7 +327,7 @@ public abstract class Combine extends RCastingBuiltinNode {
         return CombineNodeGen.create(null, null, null);
     }
 
-    protected static RVector createResultVector(int precedence, int size, RStringVector names) {
+    private static RVector createResultVector(int precedence, int size, RStringVector names) {
         switch (precedence) {
             case COMPLEX_PRECEDENCE:
                 return RDataFactory.createComplexVector(new double[size * 2], true, names);
@@ -431,7 +431,7 @@ public abstract class Combine extends RCastingBuiltinNode {
         public abstract Object execute(Object operand);
 
         @Specialization(guards = "!isVector(operand)")
-        public Object pass(Object operand) {
+        protected Object pass(Object operand) {
             return operand;
         }
 
@@ -440,7 +440,7 @@ public abstract class Combine extends RCastingBuiltinNode {
         }
 
         @Specialization(guards = "needsCopy(vector)")
-        public RAbstractVector noCopy(RAbstractVector vector, //
+        protected RAbstractVector noCopy(RAbstractVector vector, //
                         @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile, //
                         @Cached("createBinaryProfile()") ConditionProfile hasDimNamesProfile) {
             RVector materialized = vector.materialize();
@@ -461,7 +461,7 @@ public abstract class Combine extends RCastingBuiltinNode {
         }
 
         @Specialization(guards = "!needsCopy(vector)")
-        public RAbstractVector prepareVector(RAbstractVector vector) {
+        protected RAbstractVector prepareVector(RAbstractVector vector) {
             return vector;
         }
 

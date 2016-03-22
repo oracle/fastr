@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,22 +41,27 @@ public class JNI_UtsName implements UtsName {
         return singleton;
     }
 
+    @Override
     public String sysname() {
         return sysname;
     }
 
+    @Override
     public String release() {
         return release;
     }
 
+    @Override
     public String version() {
         return version;
     }
 
+    @Override
     public String machine() {
         return machine;
     }
 
+    @Override
     public String nodename() {
         return nodename;
     }

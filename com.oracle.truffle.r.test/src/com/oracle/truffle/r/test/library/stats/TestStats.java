@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.test.library.stats;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 public class TestStats extends TestBase {
     @Test

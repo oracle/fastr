@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,15 +28,15 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+
 import jnr.constants.platform.Errno;
 import jnr.ffi.LibraryLoader;
 import jnr.ffi.annotations.In;
 import jnr.ffi.annotations.Out;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 public class JNR_Base implements BaseRFFI {
     /**
@@ -81,14 +81,17 @@ public class JNR_Base implements BaseRFFI {
         return posix;
     }
 
+    @Override
     public int getpid() {
         return posix().getpid();
     }
 
+    @Override
     public int setwd(String dir) {
         return posix().chdir(dir);
     }
 
+    @Override
     public String getwd() {
         byte[] buf = new byte[4096];
         int rc = libcx().getwd(buf);
@@ -103,6 +106,7 @@ public class JNR_Base implements BaseRFFI {
         }
     }
 
+    @Override
     public String readlink(String path) throws IOException {
         String s = posix().readlink(path);
         if (s == null) {
@@ -117,6 +121,7 @@ public class JNR_Base implements BaseRFFI {
         return s;
     }
 
+    @Override
     public String mkdtemp(String template) {
         ByteBuffer bb = ByteBuffer.wrap(template.getBytes());
         long result = libcx().mkdtemp(bb);
@@ -127,6 +132,7 @@ public class JNR_Base implements BaseRFFI {
         }
     }
 
+    @Override
     public void mkdir(String dir, int mode) throws IOException {
         try {
             posix().mkdir(dir, mode);
@@ -135,10 +141,12 @@ public class JNR_Base implements BaseRFFI {
         }
     }
 
+    @Override
     public int chmod(String path, int mode) {
         return posix().chmod(path, mode);
     }
 
+    @Override
     public long strtol(String s, int base) throws IllegalArgumentException {
         posix().errno(0);
         long result = libcx().strtol(s, null, base);
@@ -150,30 +158,35 @@ public class JNR_Base implements BaseRFFI {
         }
     }
 
+    @Override
     public Object dlopen(String path, boolean local, boolean now) {
         int flags = (local ? com.kenai.jffi.Library.LOCAL : com.kenai.jffi.Library.GLOBAL) | (now ? com.kenai.jffi.Library.NOW : com.kenai.jffi.Library.LAZY);
         return com.kenai.jffi.Library.getCachedInstance(path, flags);
     }
 
+    @Override
     public long dlsym(Object handle, String symbol) {
         return ((com.kenai.jffi.Library) handle).getSymbolAddress(symbol);
     }
 
+    @Override
     public int dlclose(Object handle) {
         // TODO JNR provides no (public) way to close a library
         return 1;
     }
 
+    @Override
     public String dlerror() {
         return com.kenai.jffi.Library.getLastError();
     }
 
+    @Override
     public UtsName uname() {
         return JNI_OSExtras.uname();
     }
 
+    @Override
     public ArrayList<String> glob(String pattern) {
         return JNI_OSExtras.glob(pattern);
     }
-
 }

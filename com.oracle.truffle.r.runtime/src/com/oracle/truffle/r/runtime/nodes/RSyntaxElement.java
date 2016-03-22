@@ -34,4 +34,6 @@ public interface RSyntaxElement {
 
     SourceSection getSourceSection();
 
+    void setSourceSection(SourceSection source);
+
 }

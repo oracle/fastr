@@ -136,14 +136,17 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
         return new FunctionExpressionNode(RSyntaxNode.EAGER_DEPARSE, Truffle.getRuntime().createCallTarget(fdn));
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArgumentDefaults() {
         return RASTUtils.asSyntaxNodes(((FunctionDefinitionNode) callTarget.getRootNode()).getFormalArguments().getArguments());
     }
 
+    @Override
     public RSyntaxElement getSyntaxBody() {
         return ((FunctionDefinitionNode) callTarget.getRootNode()).getBody();
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ((FunctionDefinitionNode) callTarget.getRootNode()).getFormalArguments().getSignature();
     }

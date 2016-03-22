@@ -26,8 +26,8 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -148,7 +148,6 @@ public class PkgDepends {
         } catch (Exception ex) {
             System.err.print(ex);
         }
-
     }
 
     private static void processDependencies(Package pkg, Fields fields, String kind) {
@@ -172,7 +171,6 @@ public class PkgDepends {
                 pkg.addDependency(dependeePkg);
             }
         }
-
     }
 
     private static void printInstallOrder(String pkgName, List<String> installOrder) {
@@ -285,5 +283,4 @@ public class PkgDepends {
             }
         }
     }
-
 }

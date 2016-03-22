@@ -22,9 +22,10 @@
  */
 package com.oracle.truffle.r.test.library.base;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.WhiteList;
 
 /**
  * Testing of simple values. Most of the tests in this class are generated from templates using the
@@ -201,5 +202,4 @@ public class TestSimpleValues extends TestBase {
     public void testDefaultVariables() {
         assertEval("{ .Platform$endian }");
     }
-
 }

@@ -27,7 +27,7 @@ import java.io.Writer;
 
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 
-public class RWriter extends Writer {
+class RWriter extends Writer {
 
     @Override
     public void write(char[] cbuf, int off, int len) throws IOException {
@@ -41,5 +41,4 @@ public class RWriter extends Writer {
     @Override
     public void close() throws IOException {
     }
-
 }

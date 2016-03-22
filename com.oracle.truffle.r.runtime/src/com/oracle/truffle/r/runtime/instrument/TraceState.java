@@ -70,5 +70,4 @@ public class TraceState {
     public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
         return new ContextStateImpl();
     }
-
 }

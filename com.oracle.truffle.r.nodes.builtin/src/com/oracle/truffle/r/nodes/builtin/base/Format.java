@@ -11,7 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -39,7 +39,7 @@ public abstract class Format extends RBuiltinNode {
 
     private static Config printConfig;
 
-    public static Config setPrintDefaults() {
+    private static Config setPrintDefaults() {
         if (printConfig == null) {
             printConfig = new Config();
         }
@@ -59,7 +59,7 @@ public abstract class Format extends RBuiltinNode {
         return printConfig;
     }
 
-    public static Config getConfig() {
+    private static Config getConfig() {
         return setPrintDefaults();
     }
 
@@ -200,7 +200,7 @@ public abstract class Format extends RBuiltinNode {
         }
     }
 
-    public static class Config {
+    private static class Config {
         public int width;
         public int naWidth;
         public int naWidthNoQuote;
@@ -216,7 +216,7 @@ public abstract class Format extends RBuiltinNode {
         public int cutoff;
     }
 
-    public enum Adjustment {
+    private enum Adjustment {
         LEFT,
         RIGHT,
         CENTRE,

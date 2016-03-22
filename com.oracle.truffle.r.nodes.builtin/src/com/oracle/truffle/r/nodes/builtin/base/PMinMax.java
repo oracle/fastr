@@ -22,21 +22,46 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.NodeChildren;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.PMinMaxNodeGen.MultiElemStringHandlerNodeGen;
-import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
+import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
+import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.ops.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class PMinMax extends RBuiltinNode {
 
@@ -53,7 +78,7 @@ public abstract class PMinMax extends RBuiltinNode {
     private final ConditionProfile lengthProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
 
-    public PMinMax(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
+    protected PMinMax(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.semantics = semantics;
         this.factory = factory;
         this.op = factory.create();
@@ -316,7 +341,6 @@ public abstract class PMinMax extends RBuiltinNode {
             super(new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX, RError.Message.NO_NONMISSING_MAX_NA, false, true),
                             BinaryArithmetic.MAX);
         }
-
     }
 
     @RBuiltin(name = "pmin", kind = INTERNAL, parameterNames = {"na.rm", "..."})
@@ -326,7 +350,6 @@ public abstract class PMinMax extends RBuiltinNode {
             super(new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN, RError.Message.NO_NONMISSING_MIN_NA, false, true),
                             BinaryArithmetic.MIN);
         }
-
     }
 
     protected boolean isIntegerPrecedence(RArgsValuesAndNames args) {
@@ -353,10 +376,6 @@ public abstract class PMinMax extends RBuiltinNode {
         return precedence(args) == PrecedenceNode.RAW_PRECEDENCE;
     }
 
-    protected boolean oneVector(RArgsValuesAndNames args) {
-        return args.getLength() == 1;
-    }
-
     private int precedence(RArgsValuesAndNames args) {
         int precedence = -1;
         Object[] array = args.getArguments();
@@ -378,15 +397,11 @@ public abstract class PMinMax extends RBuiltinNode {
         private final NACheck na;
         private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
 
-        public MultiElemStringHandler(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
+        protected MultiElemStringHandler(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
             this.semantics = semantics;
             this.factory = factory;
             this.op = factory.create();
             this.na = na;
-        }
-
-        public MultiElemStringHandler(MultiElemStringHandler other) {
-            this(other.semantics, other.factory, other.na);
         }
 
         private byte handleString(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data) {
@@ -451,7 +466,5 @@ public abstract class PMinMax extends RBuiltinNode {
             data[ind] = result;
             return warningAdded;
         }
-
     }
-
 }

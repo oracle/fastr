@@ -129,5 +129,4 @@ public abstract class UnClass extends RBuiltinNode {
         }
         return arg;
     }
-
 }

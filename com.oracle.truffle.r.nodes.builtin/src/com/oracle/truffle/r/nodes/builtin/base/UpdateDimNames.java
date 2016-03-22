@@ -75,7 +75,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
 
     public abstract RAbstractContainer executeRAbstractContainer(RAbstractContainer container, Object o);
 
-    public RList convertToListOfStrings(RList oldList) {
+    private RList convertToListOfStrings(RList oldList) {
         RList list = oldList;
         if (shareListProfile.profile(list.isShared())) {
             list = (RList) list.copy();
@@ -183,5 +183,4 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
             container.setDimNames(newDimNames);
         }
     }
-
 }

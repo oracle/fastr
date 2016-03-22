@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 
 public interface RAbstractComplexVector extends RAbstractVector {
 
@@ -38,6 +40,7 @@ public interface RAbstractComplexVector extends RAbstractVector {
         return getDataAt(index);
     }
 
+    @Override
     RComplexVector materialize();
 
     @SuppressWarnings("unused")
@@ -45,10 +48,12 @@ public interface RAbstractComplexVector extends RAbstractVector {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     default void setNA(Object store, int index) {
         setDataAt(store, index, RComplex.createNA());
     }
 
+    @Override
     default boolean checkCompleteness() {
         for (int i = 0; i < getLength(); i++) {
             if (RRuntime.isNA(getDataAt(i))) {
@@ -58,10 +63,12 @@ public interface RAbstractComplexVector extends RAbstractVector {
         return true;
     }
 
+    @Override
     default RType getRType() {
         return RType.Complex;
     }
 
+    @Override
     default Class<?> getElementClass() {
         return RComplex.class;
     }

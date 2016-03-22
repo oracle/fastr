@@ -20,9 +20,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 //Transcribed from GnuR, src/main/printutils.c, src/main/format.c
 
-public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector> {
+final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector> {
 
-    public static final IntegerVectorPrinter INSTANCE = new IntegerVectorPrinter();
+    static final IntegerVectorPrinter INSTANCE = new IntegerVectorPrinter();
+
+    private IntegerVectorPrinter() {
+        // singleton
+    }
 
     @Override
     protected IntegerVectorPrintJob createJob(RAbstractIntVector vector, int indx, PrintContext printCtx) {
@@ -60,10 +64,9 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
         protected void printEmptyVector() throws IOException {
             out.print("integer(0)");
         }
-
     }
 
-    public static FormatMetrics formatIntVector(RAbstractIntVector x, int offs, int n, int naWidth) {
+    static FormatMetrics formatIntVector(RAbstractIntVector x, int offs, int n, int naWidth) {
         int xmin = RRuntime.INT_MAX_VALUE;
         int xmax = RRuntime.INT_MIN_VALUE;
         boolean naflag = false;
@@ -109,14 +112,13 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
     /*
      * There is no documented (or enforced) limit on 'w' here, so use snprintf
      */
-    public static int NB = 1000;
+    static int NB = 1000;
 
-    public static String encodeInteger(int x, int w, PrintParameters pp) {
+    static String encodeInteger(int x, int w, PrintParameters pp) {
         if (x == RRuntime.INT_NA) {
             return Utils.snprintf(NB, "%" + Utils.asBlankArg(Math.min(w, (NB - 1))) + "s", pp.getNaString());
         } else {
             return Utils.snprintf(NB, "%" + Utils.asBlankArg(Math.min(w, (NB - 1))) + "d", x);
         }
     }
-
 }

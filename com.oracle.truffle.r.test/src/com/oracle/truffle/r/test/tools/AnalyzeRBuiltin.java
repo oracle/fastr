@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,39 @@
  */
 package com.oracle.truffle.r.test.tools;
 
-import java.io.*;
-import java.nio.charset.*;
-import java.nio.file.*;
-import java.util.*;
-import java.util.concurrent.atomic.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.Charset;
+import java.nio.charset.MalformedInputException;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnmappableCharacterException;
+import java.nio.file.Files;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicLong;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.test.generate.*;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
+import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
 
 /**
  * Analyzes the {@link RBuiltin} classes against GnuR. The starting points are:
@@ -76,7 +101,6 @@ public class AnalyzeRBuiltin {
         public String toString() {
             return name;
         }
-
     }
 
     private enum Visibility {
@@ -499,7 +523,7 @@ public class AnalyzeRBuiltin {
                     if (gnrFunctionInput != null) {
                         output = gnrFunctionInput.get(rInfo.name);
                     } else {
-                        output = gnurRSession().eval(rInfo.name);
+                        output = gnurRSession().eval(rInfo.name, null);
                     }
                     assert output != null;
                     if (pkgs.size() == 0 || isInPackage(pkgs, output)) {
@@ -553,5 +577,4 @@ public class AnalyzeRBuiltin {
         }
         return false;
     }
-
 }

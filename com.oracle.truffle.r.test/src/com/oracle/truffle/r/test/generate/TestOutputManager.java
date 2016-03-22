@@ -22,10 +22,24 @@
  */
 package com.oracle.truffle.r.test.generate;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RInternalError;
 
 /**
  * Supports the management of expected test output.
@@ -346,7 +360,7 @@ public class TestOutputManager {
             String expected = null;
             if (!checkOnly) {
                 try {
-                    expected = rSession.eval(test);
+                    expected = rSession.eval(test, null);
                 } catch (Throwable e) {
                     throw RInternalError.shouldNotReachHere("unexpected exception thrown by GNUR session: " + e);
                 }
@@ -450,5 +464,4 @@ public class TestOutputManager {
         sb.append(s.substring(ix));
         return sb.toString();
     }
-
 }

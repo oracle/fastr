@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,10 @@ package com.oracle.truffle.r.runtime.ffi.generic;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 import com.oracle.truffle.r.runtime.ffi.GridRFFI;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 
 public class Generic_Grid implements GridRFFI {
     private static final class GridProvider {
@@ -59,17 +59,17 @@ public class Generic_Grid implements GridRFFI {
         DLL.SymbolInfo getKillGrid() {
             return killGrid;
         }
-
     }
 
+    @Override
     public Object initGrid(REnvironment gridEvalEnv) {
         SymbolInfo initGrid = GridProvider.gridProvider().getInitGrid();
         return RFFIFactory.getRFFI().getCallRFFI().invokeCall(initGrid.address, initGrid.symbol, new Object[]{gridEvalEnv});
     }
 
+    @Override
     public Object killGrid() {
         SymbolInfo killGrid = GridProvider.gridProvider().getKillGrid();
         return RFFIFactory.getRFFI().getCallRFFI().invokeCall(killGrid.address, killGrid.symbol, new Object[0]);
     }
-
 }

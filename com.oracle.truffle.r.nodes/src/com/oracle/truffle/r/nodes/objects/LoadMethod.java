@@ -43,14 +43,14 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public abstract class LoadMethod extends RBaseNode {
+abstract class LoadMethod extends RBaseNode {
 
     public abstract RFunction executeRFunction(VirtualFrame frame, RAttributable fdef, String fname);
 
-    @Child AttributeAccess targetAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_TARGET);
-    @Child AttributeAccess definedAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_DEFINED);
-    @Child AttributeAccess nextMethodAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_NEXT_METHOD);
-    @Child AttributeAccess sourceAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_SOURCE);
+    @Child private AttributeAccess targetAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_TARGET);
+    @Child private AttributeAccess definedAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_DEFINED);
+    @Child private AttributeAccess nextMethodAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_NEXT_METHOD);
+    @Child private AttributeAccess sourceAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_SOURCE);
     @Child private WriteLocalFrameVariableNode writeRTarget = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_TARGET, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRDefined = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_DEFINED, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRNextMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, null, WriteVariableNode.Mode.REGULAR);
@@ -103,20 +103,20 @@ public abstract class LoadMethod extends RBaseNode {
         }
 
         writeRMethod.execute(frame, fdef);
-        if (fname.equals("loadMethod")) {
+        if (fname.equals(RRuntime.R_LOAD_METHOD_NAME)) {
             // the loadMethod function contains the following call:
             // standardGeneric("loadMethod")
             // which we are handling here, so == is fine
             return fdef;
         }
-        assert !fname.equals("loadMethod");
+        assert !fname.equals(RRuntime.R_LOAD_METHOD_NAME);
         RFunction ret;
         if (moreAttributes.profile(found < fdef.getAttributes().size())) {
             RFunction currentFunction;
             REnvironment methodsEnv = (REnvironment) methodsEnvRead.execute(frame, REnvironment.getNamespaceRegistry().getFrame(regFrameAccessProfile));
             if (loadMethodFind == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                loadMethodFind = insert(ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, "loadMethod"));
+                loadMethodFind = insert(ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, RRuntime.R_LOAD_METHOD_NAME));
                 currentFunction = (RFunction) loadMethodFind.execute(null, methodsEnv.getFrame());
                 loadMethodFunction = currentFunction;
                 loadMethodCall = insert(Truffle.getRuntime().createDirectCallNode(loadMethodFunction.getTarget()));

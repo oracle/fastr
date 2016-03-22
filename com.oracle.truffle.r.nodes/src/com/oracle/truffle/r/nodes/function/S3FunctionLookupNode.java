@@ -52,7 +52,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
     protected final boolean throwsError;
     protected final boolean nextMethod;
 
-    protected S3FunctionLookupNode(boolean throwsError, boolean nextMethod) {
+    private S3FunctionLookupNode(boolean throwsError, boolean nextMethod) {
         this.throwsError = throwsError;
         this.nextMethod = nextMethod;
     }
@@ -66,7 +66,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         public final String targetFunctionName;
         public final boolean groupMatch;
 
-        public Result(String generic, RFunction function, Object clazz, String targetFunctionName, boolean groupMatch) {
+        private Result(String generic, RFunction function, Object clazz, String targetFunctionName, boolean groupMatch) {
             this.generic = generic.intern();
             this.function = function;
             this.signature = function == null ? null : ArgumentMatcher.getFunctionSignature(function);
@@ -426,10 +426,10 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
 
     @SuppressWarnings("serial")
     public static final class NoGenericMethodException extends ControlFlowException {
-        public static final NoGenericMethodException instance = new NoGenericMethodException();
+        private static final NoGenericMethodException instance = new NoGenericMethodException();
 
         private NoGenericMethodException() {
-            // empty
+            // singleton
         }
     }
 }

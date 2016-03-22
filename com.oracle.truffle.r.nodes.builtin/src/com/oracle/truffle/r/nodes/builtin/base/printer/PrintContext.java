@@ -22,15 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import java.io.PrintWriter;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.RInternalError;
 
-public final class PrintContext {
+final class PrintContext {
     private final ValuePrinterNode pn;
     private final PrintParameters params;
     private final PrettyPrintWriter out;
@@ -70,7 +68,7 @@ public final class PrintContext {
         return cloned;
     }
 
-    public static PrintContext enter(ValuePrinterNode printerNode, PrintParameters parameters, WriterFactory wf) {
+    static PrintContext enter(ValuePrinterNode printerNode, PrintParameters parameters, WriterFactory wf) {
         ArrayDeque<PrintContext> ctxStack = printCtxTL.get();
         if (ctxStack == null) {
             ctxStack = new ArrayDeque<>();
@@ -87,7 +85,7 @@ public final class PrintContext {
         }
     }
 
-    public static PrintContext leave() {
+    static PrintContext leave() {
         ArrayDeque<PrintContext> ctxStack = printCtxTL.get();
 
         RInternalError.guarantee(ctxStack != null, "No pretty-printer context stack");

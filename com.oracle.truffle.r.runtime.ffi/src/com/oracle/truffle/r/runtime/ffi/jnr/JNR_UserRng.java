@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
+
 import jnr.ffi.LibraryLoader;
 import jnr.ffi.Pointer;
 import jnr.ffi.annotations.In;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 
 //Checkstyle: stop method name
 public class JNR_UserRng implements UserRngRFFI {
@@ -66,28 +66,33 @@ public class JNR_UserRng implements UserRngRFFI {
         return UserRngProvider.userRng();
     }
 
+    @Override
     @SuppressWarnings("unused")
     public void setLibrary(String path) {
         new UserRngProvider(path);
 
     }
 
+    @Override
     @TruffleBoundary
     public void init(int seed) {
         userRng().user_unif_init(seed);
     }
 
+    @Override
     @TruffleBoundary
     public double rand() {
         Pointer pDouble = userRng().user_unif_rand();
         return pDouble.getDouble(0);
     }
 
+    @Override
     @TruffleBoundary
     public int nSeed() {
         return userRng().user_unif_nseed().getInt(0);
     }
 
+    @Override
     @TruffleBoundary
     public void seeds(int[] n) {
         Pointer pInt = userRng().user_unif_seedloc();
@@ -95,5 +100,4 @@ public class JNR_UserRng implements UserRngRFFI {
             n[i] = pInt.getInt(i);
         }
     }
-
 }

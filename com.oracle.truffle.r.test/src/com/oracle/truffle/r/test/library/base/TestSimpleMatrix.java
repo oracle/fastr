@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.test.library.base;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 public class TestSimpleMatrix extends TestBase {
 
@@ -171,5 +171,4 @@ public class TestSimpleMatrix extends TestBase {
         assertEval("{ i <- c(1L,3L,5L) ; m <- 1:10 ; dim(m) <- c(2,5) ; m[2,i] }");
         assertEval("{ i <- c(1L,3L,5L) ; m <- c(\"a\",\"b\",\"c\",\"d\",\"e\",\"f\",\"g\",\"h\",\"i\",\"j\") ; dim(m) <- c(2,5) ; m[2,i] }");
     }
-
 }

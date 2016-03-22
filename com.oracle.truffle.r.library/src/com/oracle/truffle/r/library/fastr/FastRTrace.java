@@ -54,7 +54,5 @@ public class FastRTrace {
             // supposed to return the function name
             return RNull.instance;
         }
-
     }
-
 }

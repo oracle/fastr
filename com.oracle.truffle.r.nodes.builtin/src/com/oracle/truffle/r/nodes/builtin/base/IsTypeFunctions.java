@@ -22,19 +22,42 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.conn.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFrame;
+import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RFactor;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Handles all builtin functions of the form {@code is.xxx}, where is {@code xxx} is a "type".
@@ -76,7 +99,6 @@ public class IsTypeFunctions {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
-
     }
 
     @RBuiltin(name = "is.recursive", kind = PRIMITIVE, parameterNames = {"x"})
@@ -527,7 +549,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
 
-        protected boolean namesOnlyOrNoAttr(RAbstractVector x) {
+        private boolean namesOnlyOrNoAttr(RAbstractVector x) {
             // there should be no attributes other than names
             if (x.getNames(attrProfiles) == null) {
                 assert x.getAttributes() == null || x.getAttributes().size() > 0;
@@ -538,10 +560,9 @@ public class IsTypeFunctions {
             }
         }
 
-        protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
+        private boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
             return RType.Any.getName().equals(mode) || (x instanceof RList && mode.equals("list")) || (x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode)) ||
                             RRuntime.classToString(x.getElementClass()).equals(mode);
         }
     }
-
 }

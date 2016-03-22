@@ -85,7 +85,7 @@ public class RCommand {
         throw RInternalError.shouldNotReachHere();
     }
 
-    public static ContextInfo createContextInfoFromCommandLine(RCmdOptions options) {
+    static ContextInfo createContextInfoFromCommandLine(RCmdOptions options) {
         if (options.getBoolean(SLAVE)) {
             options.setValue(QUIET, true);
             options.setValue(NO_SAVE, true);
@@ -186,7 +186,7 @@ public class RCommand {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    public static void readEvalPrint(ContextInfo info) {
+    static void readEvalPrint(ContextInfo info) {
         PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
         ConsoleHandler consoleHandler = info.getConsoleHandler();
         Source source = Source.fromNamedAppendableText(consoleHandler.getInputDescription());
@@ -301,5 +301,4 @@ public class RCommand {
         RStringVector continuePrompt = (RStringVector) RRuntime.asAbstractVector(RContext.getInstance().stateROptions.getValue("continue"));
         return continuePrompt.getDataAt(0);
     }
-
 }

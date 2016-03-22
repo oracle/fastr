@@ -22,19 +22,28 @@
  */
 package com.oracle.truffle.r.nodes.instrumentation;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.instrumentation.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.instrumentation.debug.*;
+import com.oracle.truffle.api.instrumentation.Instrumenter;
+import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
+import com.oracle.truffle.r.nodes.instrumentation.debug.DebugHandling;
 import com.oracle.truffle.r.nodes.instrumentation.trace.TraceHandling;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.instrument.*;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.FunctionUID;
+import com.oracle.truffle.r.runtime.RPerfStats;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.instrument.RPackageSource;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 
@@ -54,7 +63,7 @@ public class RInstrumentation {
     /**
      * Created lazily as needed.
      */
-    public static class FunctionIdentification {
+    static class FunctionIdentification {
         public final Source source;
         public final String name;
         public final String origin;
@@ -132,7 +141,7 @@ public class RInstrumentation {
      *
      * @param fdn
      */
-    public static void registerFunctionDefinition(FunctionDefinitionNode fdn) {
+    static void registerFunctionDefinition(FunctionDefinitionNode fdn) {
         fixupTags(fdn);
         // For PerfStats we need to record the info on fdn for the report
         if (functionMap != null) {
@@ -155,6 +164,7 @@ public class RInstrumentation {
     private static void fixupTags(FunctionDefinitionNode fdn) {
         RSyntaxNode.accept(fdn, 0, new RSyntaxNodeVisitor() {
 
+            @Override
             public boolean visit(RSyntaxNode node, int depth) {
                 SourceSection ss = node.getSourceSection();
                 assert ss != null;
@@ -189,7 +199,7 @@ public class RInstrumentation {
         node.setSourceSection(node.getSourceSection().withTags(updatedTags));
     }
 
-    public static FunctionIdentification getFunctionIdentification(FunctionUID uid) {
+    static FunctionIdentification getFunctionIdentification(FunctionUID uid) {
         return functionMap.get(uid).getIdentification();
     }
 
@@ -201,7 +211,7 @@ public class RInstrumentation {
     /**
      * Create a filter that matches all the statement nodes in {@code func}.
      */
-    public static SourceSectionFilter.Builder createFunctionStatementFilter(RFunction func) {
+    static SourceSectionFilter.Builder createFunctionStatementFilter(RFunction func) {
         return createFunctionFilter(func, RSyntaxTags.STATEMENT);
     }
 
@@ -209,7 +219,7 @@ public class RInstrumentation {
         return createFunctionFilter(fdn, RSyntaxTags.STATEMENT);
     }
 
-    public static SourceSectionFilter.Builder createFunctionFilter(RFunction func, String tag) {
+    static SourceSectionFilter.Builder createFunctionFilter(RFunction func, String tag) {
         FunctionDefinitionNode fdn = getFunctionDefinitionNode(func);
         return createFunctionFilter(fdn, tag);
     }
@@ -263,7 +273,7 @@ public class RInstrumentation {
         return instrumenter;
     }
 
-    public static void checkDebugRequested(RFunction func) {
+    static void checkDebugRequested(RFunction func) {
         if (debugFunctionNames != null) {
             FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
             for (String debugFunctionName : debugFunctionNames) {

@@ -30,14 +30,20 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.SlowPathException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.nodes.profile.*;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
+import com.oracle.truffle.r.nodes.profile.IntValueProfile;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RScalarVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -170,7 +176,7 @@ abstract class WriteIndexedVectorNode extends Node {
                         right, rightStore, rightBase, rightLength, parentNA);
     }
 
-    public int getPositionLength(Object position) {
+    private int getPositionLength(Object position) {
         if (position instanceof RAbstractVector) {
             return positionLengthProfile.profile(((RAbstractVector) position).getLength());
         } else {
@@ -487,5 +493,4 @@ abstract class WriteIndexedVectorNode extends Node {
             valueNACheck.checkListElement(rightValue);
         }
     }
-
 }

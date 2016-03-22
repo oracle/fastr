@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class RSequence implements RAbstractVector {
 
@@ -47,6 +48,7 @@ public abstract class RSequence implements RAbstractVector {
 
     public abstract Object getStrideObject();
 
+    @Override
     public final boolean isComplete() {
         return true;
     }
@@ -56,14 +58,17 @@ public abstract class RSequence implements RAbstractVector {
         return true;
     }
 
+    @Override
     public void setComplete(boolean complete) {
         // sequences are always complete
     }
 
+    @Override
     public final boolean hasDimensions() {
         return false;
     }
 
+    @Override
     public final int[] getDimensions() {
         return null;
     }
@@ -143,10 +148,12 @@ public abstract class RSequence implements RAbstractVector {
         return null;
     }
 
+    @Override
     public final boolean isMatrix() {
         return false;
     }
 
+    @Override
     public final boolean isArray() {
         return false;
     }
@@ -156,6 +163,7 @@ public abstract class RSequence implements RAbstractVector {
         return false;
     }
 
+    @Override
     public final RStringVector getClassHierarchy() {
         return getImplicitClass();
     }
@@ -194,5 +202,4 @@ public abstract class RSequence implements RAbstractVector {
     public boolean isS4() {
         return false;
     }
-
 }

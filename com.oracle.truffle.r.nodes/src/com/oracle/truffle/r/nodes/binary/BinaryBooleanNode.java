@@ -22,24 +22,41 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.nodes.primitive.*;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.nodes.primitive.BinaryMapNode;
+import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.conn.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.ops.*;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFactor;
+import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.ops.BinaryCompare;
+import com.oracle.truffle.r.runtime.ops.BinaryLogic;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.And;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.Or;
+import com.oracle.truffle.r.runtime.ops.BooleanOperation;
+import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
 
 public abstract class BinaryBooleanNode extends RBuiltinNode {
 
@@ -47,7 +64,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     protected final BooleanOperationFactory factory;
 
-    public BinaryBooleanNode(BooleanOperationFactory factory) {
+    BinaryBooleanNode(BooleanOperationFactory factory) {
         this.factory = factory;
     }
 
@@ -142,7 +159,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     }
 
     protected BinaryBooleanNode createRecursive() {
-        return BinaryBooleanNodeGen.create(factory);
+        return BinaryBooleanNode.create(factory);
     }
 
     @Specialization(guards = {"isFactor(left) || isFactor(right)", "!meaningfulFactorOp(left, right)"})
@@ -193,11 +210,11 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return (isRNullOrEmpty(left) || isRNullOrEmpty(right)) && !(isRMissing(left) || isRMissing(right));
     }
 
-    protected static boolean isRNullOrEmpty(Object value) {
+    private static boolean isRNullOrEmpty(Object value) {
         return isRNull(value) || isEmpty(value);
     }
 
-    protected static boolean isEmpty(Object value) {
+    private static boolean isEmpty(Object value) {
         return (isRAbstractVector(value) && ((RAbstractVector) value).getLength() == 0);
     }
 
@@ -230,14 +247,12 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             this.cached = insert(cachedOperation);
         }
 
-        public BinaryMapNode get(BooleanOperation arithmetic, RAbstractVector left, RAbstractVector right) {
+        private BinaryMapNode get(BooleanOperation arithmetic, RAbstractVector left, RAbstractVector right) {
             CompilerAsserts.neverPartOfCompilation();
             if (!cached.isSupported(left, right)) {
                 cached = cached.replace(createCached(arithmetic, left, right));
             }
             return cached;
         }
-
     }
-
 }

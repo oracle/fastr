@@ -39,14 +39,12 @@ import com.oracle.truffle.r.nodes.unary.FirstStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Syntax node for element writes.
@@ -62,7 +60,7 @@ public abstract class ReplaceVectorNode extends Node {
     @Child private BoxPrimitiveNode boxVector = BoxPrimitiveNode.create();
     @Child private BoxPrimitiveNode boxValue = BoxPrimitiveNode.create();
 
-    public ReplaceVectorNode(ElementAccessMode mode, boolean recursive, boolean ignoreRecursive) {
+    ReplaceVectorNode(ElementAccessMode mode, boolean recursive, boolean ignoreRecursive) {
         this.mode = mode;
         this.recursive = recursive;
         this.ignoreRecursive = ignoreRecursive;
@@ -80,14 +78,6 @@ public abstract class ReplaceVectorNode extends Node {
 
     static ReplaceVectorNode createRecursive(ElementAccessMode mode) {
         return ReplaceVectorNodeGen.create(mode, true, false);
-    }
-
-    @SuppressWarnings("unchecked")
-    protected Class<? extends RTypedValue> getInvalidVectorType(Object vector) {
-        if (vector instanceof REnvironment || vector instanceof RFunction) {
-            return (Class<? extends RTypedValue>) vector.getClass();
-        }
-        return null;
     }
 
     protected Node createForeignWrite(Object[] positions) {
@@ -189,7 +179,7 @@ public abstract class ReplaceVectorNode extends Node {
             this.cached = insert(cachedOperation);
         }
 
-        public CachedReplaceVectorNode get(ReplaceVectorNode node, Object vector, Object[] positions, Object value) {
+        private CachedReplaceVectorNode get(ReplaceVectorNode node, Object vector, Object[] positions, Object value) {
             CompilerAsserts.neverPartOfCompilation();
             if (!cached.isSupported(vector, positions, value)) {
                 cached = cached.replace(createDefaultCached(node, vector, positions, value));

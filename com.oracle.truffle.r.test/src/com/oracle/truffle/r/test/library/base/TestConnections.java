@@ -22,12 +22,15 @@
  */
 package com.oracle.truffle.r.test.library.base;
 
-import java.nio.file.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.test.TestBase;
 
 public class TestConnections extends TestBase {
     private static final class TestDir {

@@ -22,33 +22,61 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import java.util.*;
+import java.util.ArrayList;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
+import com.oracle.truffle.r.nodes.function.CallArgumentsNode;
+import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
+import com.oracle.truffle.r.nodes.function.MatchedArguments;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
+import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.UnrolledVariadicArguments;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.gnur.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * sys.R. See <a
@@ -145,7 +173,7 @@ public class FrameFunctions {
         }
 
         @TruffleBoundary
-        protected RLanguage createCall(Frame cframe) {
+        private static RLanguage createCall(Frame cframe) {
             RCaller caller = RArguments.getCall(cframe);
             assert caller != null;
             return RContext.getRRuntimeASTAccess().getSyntaxCaller(caller);
@@ -296,7 +324,7 @@ public class FrameFunctions {
                 Object argument = varArgParameter.getArgument(((VarArgNode) arg).getIndex());
                 if (argument instanceof RPromise) {
                     RNode unwrapped = (RNode) RASTUtils.unwrap(((RPromise) argument).getRep());
-                    return unwrapped instanceof ConstantNode ? unwrapped : ConstantNode.create(createVarArgSymbol((VarArgNode) arg));
+                    return unwrapped instanceof ConstantNode ? unwrapped : ReadVariableNode.create(createVarArgName((VarArgNode) arg));
                 } else {
                     return ConstantNode.create(argument);
                 }
@@ -317,10 +345,16 @@ public class FrameFunctions {
         }
 
         private static RSymbol createVarArgSymbol(VarArgNode varArgNode) {
-            int vn = varArgNode.getIndex() + 1;
             CompilerAsserts.neverPartOfCompilation(); // for string concatenation and interning
-            String varArgSymbol = (vn < 10 ? ".." : ".") + vn;
+            String varArgSymbol = createVarArgName(varArgNode);
             return RDataFactory.createSymbolInterned(varArgSymbol);
+        }
+
+        private static String createVarArgName(VarArgNode varArgNode) {
+            CompilerAsserts.neverPartOfCompilation(); // for string concatenation and interning
+            int vn = varArgNode.getIndex() + 1;
+            String varArgSymbol = (vn < 10 ? ".." : ".") + vn;
+            return varArgSymbol;
         }
 
         @Specialization
@@ -344,7 +378,6 @@ public class FrameFunctions {
             }
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "call");
         }
-
     }
 
     @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {})
@@ -403,7 +436,6 @@ public class FrameFunctions {
         protected int sysParent(VirtualFrame frame, double n) {
             return sysParent(frame, (int) n);
         }
-
     }
 
     @RBuiltin(name = "sys.function", kind = INTERNAL, parameterNames = {"which"}, splitCaller = true, alwaysSplit = true)
@@ -453,7 +485,6 @@ public class FrameFunctions {
             }
             return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
 
     @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {})
@@ -502,6 +533,7 @@ public class FrameFunctions {
             Frame callerFrame = Utils.iterateRFrames(frameAccess(), new Function<Frame, Frame>() {
                 int parentDepth = RArguments.getDepth(frame) - n - 1;
 
+                @Override
                 public Frame apply(Frame f) {
                     if (RArguments.getDepth(f) == parentDepth) {
                         return f;
@@ -528,5 +560,4 @@ public class FrameFunctions {
             return parentFrame(frame, (int) n);
         }
     }
-
 }

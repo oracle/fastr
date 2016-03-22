@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RLogical;
 
 /**
  * All methods must be invoked with non-NA values.
@@ -71,7 +75,7 @@ public abstract class BinaryLogic extends BooleanOperation {
         return new Or("||");
     }
 
-    public BinaryLogic() {
+    private BinaryLogic() {
         super(true, true);
     }
 
@@ -79,7 +83,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         private final String opName;
 
-        public And(String opName) {
+        private And(String opName) {
             this.opName = opName;
         }
 
@@ -128,14 +132,13 @@ public abstract class BinaryLogic extends BooleanOperation {
         public boolean op(RComplex left, RComplex right) {
             return !left.isZero() && !right.isZero();
         }
-
     }
 
     public static final class Or extends BinaryLogic {
 
         private final String opName;
 
-        public Or(String opName) {
+        private Or(String opName) {
             this.opName = opName;
         }
 
@@ -184,6 +187,5 @@ public abstract class BinaryLogic extends BooleanOperation {
         public boolean op(RComplex left, RComplex right) {
             return !left.isZero() || !right.isZero();
         }
-
     }
 }

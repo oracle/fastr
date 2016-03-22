@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import com.oracle.truffle.api.source.SourceSection;
+
 /**
  * Represents a constant (logical, character, integer, double, complex, NULL or missing/empty) in
  * the tree of elements that make up an R closure.
@@ -29,4 +31,23 @@ package com.oracle.truffle.r.runtime.nodes;
 public interface RSyntaxConstant extends RSyntaxElement {
 
     Object getValue();
+
+    /**
+     * Helper function: creates a synthetic RSyntaxConstant.
+     */
+    static RSyntaxConstant createDummyConstant(SourceSection originalSource, Object value) {
+        return new RSyntaxConstant() {
+            public SourceSection getSourceSection() {
+                return originalSource;
+            }
+
+            public Object getValue() {
+                return value;
+            }
+
+            public void setSourceSection(SourceSection src) {
+                // ignored
+            }
+        };
+    }
 }

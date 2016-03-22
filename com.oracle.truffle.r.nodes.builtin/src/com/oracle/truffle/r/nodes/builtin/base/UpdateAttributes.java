@@ -209,7 +209,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
      */
     @Fallback
     @TruffleBoundary
-    public Object doOther(Object o, Object operand) {
+    protected Object doOther(Object o, Object operand) {
         controlVisibility();
         Object obj = o;
         if (obj instanceof RShareable) {
@@ -249,5 +249,4 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
         }
         return obj;
     }
-
 }

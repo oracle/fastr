@@ -119,7 +119,6 @@ public class WhichFunctions {
             }
             return maxIndex + 1;
         }
-
     }
 
     @RBuiltin(name = "which.min", kind = RBuiltinKind.INTERNAL, parameterNames = {"x"})

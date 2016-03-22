@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class OptVariablePromiseBaseNode extends PromiseNode implements EagerFeedback {
-    protected final ReadVariableNode originalRvn;
+    private final ReadVariableNode originalRvn;
     @Child private FrameSlotNode frameSlotNode;
     @Child private RNode fallback = null;
     @Child private LocalReadVariableNode readNode;
@@ -128,5 +128,4 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
     public RSyntaxNode getRSyntaxNode() {
         return originalRvn;
     }
-
 }

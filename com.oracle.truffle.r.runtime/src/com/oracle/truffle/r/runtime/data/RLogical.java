@@ -24,9 +24,11 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @ValueType
 public final class RLogical extends RScalarVector implements RAbstractLogicalVector {
@@ -34,7 +36,6 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
     public static final RLogical NA = new RLogical(RRuntime.LOGICAL_NA);
     public static final RLogical TRUE = new RLogical(RRuntime.LOGICAL_TRUE);
     public static final RLogical FALSE = new RLogical(RRuntime.LOGICAL_FALSE);
-    public static final RLogical DEFAULT = FALSE;
 
     private final byte value;
 
@@ -61,7 +62,6 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
                 return this;
             case Integer:
                 return isNAProfile.profile(isNA()) ? RInteger.createNA() : RInteger.valueOf(value);
-            case Numeric:
             case Double:
                 return isNAProfile.profile(isNA()) ? RDouble.createNA() : RDouble.valueOf(value);
             case Complex:
@@ -85,11 +85,13 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
         return RRuntime.logicalToString(value);
     }
 
+    @Override
     public byte getDataAt(int index) {
         assert index == 0;
         return getValue();
     }
 
+    @Override
     public RLogicalVector materialize() {
         return RDataFactory.createLogicalVectorFromScalar(value);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,30 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.ops.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDoubleSequence;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * TODO: handle "finite" parameter correctly.
@@ -56,12 +72,6 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         this.factory = factory;
         this.semantics = semantics;
         this.arithmetic = factory.create();
-    }
-
-    protected UnaryArithmeticReduceNode(UnaryArithmeticReduceNode op) {
-        // we recreate the arithmetic each time this specialization specializes
-        // it also makes sense for polymorphic variations of this node
-        this(op.semantics, op.factory);
     }
 
     private String handleString(RStringVector operand, boolean naRm, boolean finite, int offset) {
@@ -433,7 +443,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         }
     }
 
-    protected static final class MultiElemStringHandlerNode extends RBaseNode {
+    private static final class MultiElemStringHandlerNode extends RBaseNode {
 
         @Child private MultiElemStringHandlerNode recursiveStringHandler;
         @Child private BinaryArithmetic arithmetic;
@@ -443,7 +453,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         private final NACheck na;
         private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
 
-        public MultiElemStringHandlerNode(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
+        MultiElemStringHandlerNode(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
             this.semantics = semantics;
             this.factory = factory;
             this.arithmetic = factory.create();

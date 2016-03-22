@@ -22,17 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RRawVector extends RVector implements RAbstractRawVector {
 
-    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Raw.getName());
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Raw.getClazz());
 
     private final byte[] data;
 
@@ -64,6 +67,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         }
     }
 
+    @Override
     public byte getRawDataAt(int index) {
         return data[index];
     }
@@ -74,6 +78,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return ((byte[]) store)[index];
     }
 
+    @Override
     public byte[] getInternalStore() {
         return data;
     }
@@ -104,6 +109,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return true;
     }
 
+    @Override
     public RRaw getDataAt(int i) {
         return RDataFactory.createRaw(data[i]);
     }
@@ -143,6 +149,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
+    @Override
     public RRawVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createRawVector(data, newDimensions);
     }
@@ -152,6 +159,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return getDataAt(index).toString();
     }
 
+    @Override
     public RRawVector materialize() {
         return this;
     }

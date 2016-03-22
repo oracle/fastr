@@ -22,25 +22,42 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.*;
-import java.net.*;
-import java.nio.file.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.nio.file.FileSystem;
-import java.nio.file.attribute.*;
-import java.util.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
 import java.util.function.Function;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleRuntime;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.nodes.GraphPrintVisitor;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
-import com.oracle.truffle.r.runtime.conn.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.conn.StdConnections;
+import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class Utils {
@@ -288,6 +305,7 @@ public final class Utils {
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             boolean first = true;
 
+            @Override
             public Frame visitFrame(FrameInstance frameInstance) {
                 if (!first) {
                     Frame f = RArguments.unwrap(frameInstance.getFrame(fa, false));
@@ -306,7 +324,7 @@ public final class Utils {
     /**
      * Iterate over all R stack frames (skipping the first, current one) until the given function
      * returns a non-null value.
-     * 
+     *
      * @return the non-null value returned by the given function, or null if it never returned a
      *         non-null value.
      */
@@ -315,6 +333,7 @@ public final class Utils {
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<T>() {
             boolean first = true;
 
+            @Override
             public T visitFrame(FrameInstance frameInstance) {
                 if (!first) {
                     Frame f = RArguments.unwrap(frameInstance.getFrame(fa, false));
@@ -362,11 +381,6 @@ public final class Utils {
             return null;
         }
         return RArguments.unwrap(frameInstance.getFrame(FrameAccess.MATERIALIZE, true));
-    }
-
-    @TruffleBoundary
-    public static String createStackTrace() {
-        return createStackTrace(true);
     }
 
     /**
@@ -781,5 +795,4 @@ public final class Utils {
         }
         return r;
     }
-
 }

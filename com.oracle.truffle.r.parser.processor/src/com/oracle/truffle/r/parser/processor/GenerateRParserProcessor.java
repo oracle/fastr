@@ -181,5 +181,4 @@ public class GenerateRParserProcessor extends AbstractProcessor {
         // The tmp file is not actually created because we don't create a stream to it.
         return new File(filer.createResource(StandardLocation.SOURCE_OUTPUT, "", "tmp").toUri().getPath()).getParentFile();
     }
-
 }

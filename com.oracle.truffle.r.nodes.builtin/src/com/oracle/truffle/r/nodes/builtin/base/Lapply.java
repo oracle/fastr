@@ -176,7 +176,6 @@ public abstract class Lapply extends RBuiltinNode {
             SourceSection ss = createCallSourceSection(callTarget, argsSig, args);
             return RCallNode.createCall(ss, null, argsSig, args);
         }
-
     }
 
     static SourceSection createCallSourceSection(RootCallTarget callTarget, ArgumentsSignature argsSig, RSyntaxNode[] args) {

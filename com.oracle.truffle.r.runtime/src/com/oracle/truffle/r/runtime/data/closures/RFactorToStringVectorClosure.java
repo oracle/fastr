@@ -23,19 +23,25 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RFactor;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /*
  * This closure is meant to be used only for implementation of the binary operators.
  */
-public class RFactorToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
+public final class RFactorToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
 
     private final RAbstractStringVector levels;
     private final boolean withNames;
 
-    public RFactorToStringVectorClosure(RFactor factor, RAbstractStringVector levels, boolean withNames) {
+    RFactorToStringVectorClosure(RFactor factor, RAbstractStringVector levels, boolean withNames) {
         super(factor.getVector());
         this.levels = levels;
         this.withNames = withNames;
@@ -45,7 +51,7 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
     }
 
     @Override
-    public final RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         switch (type) {
             case Character:
                 return this;
@@ -54,6 +60,7 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
         }
     }
 
+    @Override
     public String getDataAt(int index) {
         if (levels == null || levels.getLength() == 0) {
             return RRuntime.STRING_NA;

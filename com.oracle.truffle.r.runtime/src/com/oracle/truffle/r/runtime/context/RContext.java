@@ -244,7 +244,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         public RList getEvalResult() {
             return evalResult;
         }
-
     }
 
     private final ContextInfo info;
@@ -325,7 +324,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     /**
      * Associates this {@link RContext} with the current thread.
      */
-    public void attachThread() {
+    private void attachThread() {
         Thread current = Thread.currentThread();
         if (current instanceof ContextThread) {
             ((ContextThread) current).setContext(this);
@@ -339,7 +338,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      *
      * @throws InterruptedException
      */
-    public void joinThread() throws InterruptedException {
+    private void joinThread() throws InterruptedException {
         EvalThread t = this.evalThread;
         if (t == null) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "no eval thread in a given context");
@@ -670,8 +669,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         return info.getSystemTimeZone();
     }
 
+    @Override
     public ForeignAccess getForeignAccess() {
         throw new IllegalStateException("cannot access " + RContext.class.getSimpleName() + " via Truffle");
     }
-
 }

@@ -55,7 +55,6 @@ import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -214,7 +213,7 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     protected boolean castToDouble(RAbstractContainer x, String mode) {
-        return x.getElementClass() != RDouble.class && (RType.Numeric.getName().equals(mode) || RType.Double.getName().equals(mode));
+        return x.getElementClass() != RDouble.class && (RType.Double.getClazz().equals(mode) || RType.Double.getName().equals(mode));
     }
 
     protected boolean castToComplex(RAbstractContainer x, String mode) {
@@ -225,20 +224,12 @@ public abstract class AsVector extends RBuiltinNode {
         return x.getElementClass() != RLogical.class && RType.Logical.getName().equals(mode);
     }
 
-    protected boolean castToString(RAbstractContainer x, String mode) {
-        return x.getElementClass() != RString.class && RType.Character.getName().equals(mode);
-    }
-
     protected boolean castToString(String mode) {
         return RType.Character.getName().equals(mode);
     }
 
     protected boolean castToRaw(RAbstractContainer x, String mode) {
         return x.getElementClass() != RRaw.class && RType.Raw.getName().equals(mode);
-    }
-
-    protected boolean castToList(RAbstractContainer x, String mode) {
-        return x.getElementClass() != Object.class && RType.List.getName().equals(mode);
     }
 
     protected boolean castToList(String mode) {

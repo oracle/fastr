@@ -10,11 +10,11 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import java.util.*;
+import java.util.Arrays;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_c extends TestBase {

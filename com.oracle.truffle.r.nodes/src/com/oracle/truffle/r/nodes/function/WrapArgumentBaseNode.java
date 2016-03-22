@@ -22,9 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.runtime.data.RDataFrame;
+import com.oracle.truffle.r.runtime.data.RFactor;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * {@link WrapArgumentBaseNode} is a super class of wrappers handling function arguments.
@@ -41,7 +48,7 @@ public abstract class WrapArgumentBaseNode extends RNode {
     private final BranchProfile everSeenS4Object;
 
     protected final BranchProfile shareable;
-    protected final BranchProfile nonShareable;
+    private final BranchProfile nonShareable;
 
     protected WrapArgumentBaseNode(RNode operand, boolean initProfiles) {
         this.operand = operand;
@@ -99,5 +106,4 @@ public abstract class WrapArgumentBaseNode extends RNode {
     public RSyntaxNode getRSyntaxNode() {
         return getOperand().asRSyntaxNode();
     }
-
 }

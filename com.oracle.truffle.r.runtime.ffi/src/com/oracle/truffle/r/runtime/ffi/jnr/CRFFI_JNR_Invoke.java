@@ -22,12 +22,18 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
-import java.lang.invoke.*;
+import java.lang.invoke.MethodHandle;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.ffi.CRFFI;
 
-import jnr.invoke.*;
+import jnr.invoke.CodeAddress;
+import jnr.invoke.DataDirection;
+import jnr.invoke.Native;
+import jnr.invoke.NativeType;
+import jnr.invoke.ParameterType;
+import jnr.invoke.ResultType;
+import jnr.invoke.Signature;
 
 /**
  * An implementation of {@link CRFFI} that uses {@code jnr-invoke}.
@@ -39,6 +45,7 @@ public class CRFFI_JNR_Invoke implements CRFFI {
      * array (call by reference for scalars). As we already loaded the library and looked up the
      * symbol address we don't need to use JNR for that.
      */
+    @Override
     public void invoke(long address, Object[] args) {
         ParameterType[] parameterTypes = new ParameterType[args.length];
         for (int i = 0; i < args.length; i++) {

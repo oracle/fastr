@@ -10,9 +10,10 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 
@@ -52,12 +53,12 @@ public class TestBuiltin_asmatrix extends TestBase {
 
     @Test
     public void testIgnoredMatrixExpression1() {
-        Assert.assertEquals(expectedOut1, fastREval("{ matrix(1i,10,10) }"));
+        Assert.assertEquals(expectedOut1, fastREval("{ matrix(1i,10,10) }", null));
     }
 
     @Test
     public void testIgnoredMatrixExpression2() {
-        Assert.assertEquals(expectedOut2, fastREval("{ matrix(c(1i,NA),10,10) }"));
+        Assert.assertEquals(expectedOut2, fastREval("{ matrix(c(1i,NA),10,10) }", null));
     }
 
     @Test

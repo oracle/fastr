@@ -8,15 +8,15 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.graphics.core.drawables;
 
-import com.oracle.truffle.r.library.graphics.core.geometry.CoordinateSystem;
+import java.awt.Graphics2D;
 
-import java.awt.*;
+import com.oracle.truffle.r.library.graphics.core.geometry.CoordinateSystem;
 
 /**
  * Denotes an object defined in <code>srcCoordinateSystem</code> that can be drawn in

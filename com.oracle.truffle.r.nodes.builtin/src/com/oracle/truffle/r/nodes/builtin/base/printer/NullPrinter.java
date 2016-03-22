@@ -27,9 +27,13 @@ import java.io.IOException;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-public final class NullPrinter extends AbstractValuePrinter<RNull> {
+final class NullPrinter extends AbstractValuePrinter<RNull> {
 
-    public static NullPrinter INSTANCE = new NullPrinter();
+    static NullPrinter INSTANCE = new NullPrinter();
+
+    private NullPrinter() {
+        // singleton
+    }
 
     @Override
     protected void printValue(RNull value, PrintContext printCtx) throws IOException {

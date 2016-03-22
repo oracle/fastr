@@ -23,7 +23,8 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 
 /**
  * Denotes an R "symbol" or "name". Its rep is a {@code String} but it's a different type in the
@@ -40,6 +41,7 @@ public final class RSymbol extends RAttributeStorage implements RTypedValue {
         this.name = name;
     }
 
+    @Override
     public RType getRType() {
         return RType.Symbol;
     }

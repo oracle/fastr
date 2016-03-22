@@ -34,7 +34,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "list2env", kind = INTERNAL, parameterNames = {"x", "envir"})
 public abstract class List2Env extends RBuiltinNode {
-    @Child RList2EnvNode list2EnvNode;
+
+    @Child private RList2EnvNode list2EnvNode;
 
     @Specialization
     protected REnvironment doList2Env(RList list, REnvironment env) {
@@ -43,5 +44,4 @@ public abstract class List2Env extends RBuiltinNode {
         }
         return list2EnvNode.execute(list, env);
     }
-
 }

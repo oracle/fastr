@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,10 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Read/write a <a href="http://www.debian.org/doc/debian-policy/ch-controlfields.html">Debian
@@ -112,5 +115,4 @@ public class DCF {
         // TODO just spaces or tabs also legal
         return line.length() == 0;
     }
-
 }

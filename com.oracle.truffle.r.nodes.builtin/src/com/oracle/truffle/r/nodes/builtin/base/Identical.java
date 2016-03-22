@@ -37,7 +37,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.SequenceNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.RConnection;
@@ -46,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -84,7 +84,7 @@ public abstract class Identical extends RBuiltinNode {
     @Child private Identical identicalRecursiveAttr;
     private final boolean recursive;
 
-    public Identical(boolean recursive) {
+    protected Identical(boolean recursive) {
         this.recursive = recursive;
     }
 
@@ -341,11 +341,19 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte doInternalIdenticalGeneric(RDataFrame x, RDataFrame y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
+    protected byte doInternalIdenticalGeneric(RFactor x, RFactor y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         if (!recursive) {
             controlVisibility();
         }
         return doInternalIdenticalGeneric(x.getVector(), y.getVector(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
+    }
+
+    @Specialization
+    protected byte doInternalIdenticalGeneric(RDataFrame x, RDataFrame y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
+        if (!recursive) {
+            controlVisibility();
+        }
+        return identicalRecursive(x.getVector(), y.getVector(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
     @SuppressWarnings("unused")
@@ -470,15 +478,7 @@ public abstract class Identical extends RBuiltinNode {
         return x instanceof RConnection && y instanceof RConnection;
     }
 
-    protected boolean checkExtraArg(byte value, String name) {
-        if (value == RRuntime.LOGICAL_NA) {
-            throw RError.error(this, RError.Message.INVALID_VALUE, name);
-        }
-        return true;
-    }
-
     public static Identical create(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
         return IdenticalNodeGen.create(false, arguments, builtin, suppliedSignature);
     }
-
 }

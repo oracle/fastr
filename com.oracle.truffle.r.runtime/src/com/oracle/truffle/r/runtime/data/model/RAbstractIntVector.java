@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RInteger;
 
 public interface RAbstractIntVector extends RAbstractVector {
 
@@ -43,12 +45,15 @@ public interface RAbstractIntVector extends RAbstractVector {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     default void setNA(Object store, int index) {
         setDataAt(store, index, RRuntime.INT_NA);
     }
 
+    @Override
     RIntVector materialize();
 
+    @Override
     default boolean checkCompleteness() {
         for (int i = 0; i < getLength(); i++) {
             if (RRuntime.isNA(getDataAt(i))) {
@@ -58,12 +63,13 @@ public interface RAbstractIntVector extends RAbstractVector {
         return true;
     }
 
+    @Override
     default RType getRType() {
         return RType.Integer;
     }
 
+    @Override
     default Class<?> getElementClass() {
         return RInteger.class;
     }
-
 }

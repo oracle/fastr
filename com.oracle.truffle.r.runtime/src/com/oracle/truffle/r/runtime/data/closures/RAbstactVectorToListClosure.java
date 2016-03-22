@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,22 +22,29 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * In converting complex numbers to integers, this closure discards the imaginary parts.
  */
-public final class RAbstactVectorToListClosure extends RToVectorClosure implements RAbstractListVector {
+final class RAbstactVectorToListClosure extends RToVectorClosure implements RAbstractListVector {
 
-    public RAbstactVectorToListClosure(RAbstractVector vector) {
+    RAbstactVectorToListClosure(RAbstractVector vector) {
         super(vector);
     }
 
+    @Override
     public Object getDataAtAsObject(int index) {
         return vector.getDataAtAsObject(index);
     }
 
+    @Override
     public RList materialize() {
         int length = getLength();
         Object[] result = new Object[length];
@@ -48,11 +55,17 @@ public final class RAbstactVectorToListClosure extends RToVectorClosure implemen
         return RDataFactory.createList(result);
     }
 
+    @Override
     public RAbstractVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
     }
 
+    @Override
     public RVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createList(new Object[newLength]);
+    }
+
+    public RStringVector getNames() {
+        throw RInternalError.shouldNotReachHere();
     }
 }

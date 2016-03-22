@@ -4,15 +4,15 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 
@@ -22,5 +22,4 @@ public class TestBuiltin_shQuote extends TestBase {
     public void testshQuote1() {
         assertEval(Ignored.Unknown, "argv <- structure(list(string = c('ABC', '\\'123\\'', 'a'b'), type = 'cmd'),     .Names = c('string', 'type'));do.call('shQuote', argv)");
     }
-
 }

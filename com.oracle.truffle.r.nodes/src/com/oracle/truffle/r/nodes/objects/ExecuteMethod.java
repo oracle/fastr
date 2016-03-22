@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-public final class ExecuteMethod extends RBaseNode {
+final class ExecuteMethod extends RBaseNode {
 
     @Child private LocalReadVariableNode readDefined = LocalReadVariableNode.create(RRuntime.R_DOT_DEFINED, true);
     @Child private LocalReadVariableNode readMethod = LocalReadVariableNode.create(RRuntime.R_DOT_METHOD, true);

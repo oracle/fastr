@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * A {@link WrapArgumentNode} is used to wrap all arguments to function calls to implement correct
@@ -109,11 +112,11 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
         return operand.executeNull(frame);
     }
 
-    public static WrapArgumentNode create(int index) {
+    static WrapArgumentNode create(int index) {
         return new WrapArgumentNode(null, true, index);
     }
 
-    public static RNode create(RNode operand, boolean modeChange, int index) {
+    static RNode create(RNode operand, boolean modeChange, int index) {
         if (operand instanceof WrapArgumentNode || operand instanceof ConstantNode) {
             return operand;
         } else {
@@ -121,5 +124,4 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
             return wan;
         }
     }
-
 }

@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.test;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A {@link WhiteList} instance is a map of test inputs to a pairs:

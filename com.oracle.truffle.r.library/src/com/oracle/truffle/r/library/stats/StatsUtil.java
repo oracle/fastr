@@ -6,13 +6,14 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2012, The R Core Team
  * Copyright (c) 2004, The R Foundation
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /**
  * Auxiliary functions and constants from GNU R. These are originally found in the source files
@@ -231,5 +232,4 @@ public class StatsUtil {
         }
         return (b0 - b2) * 0.5;
     }
-
 }

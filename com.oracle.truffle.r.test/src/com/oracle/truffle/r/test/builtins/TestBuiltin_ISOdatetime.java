@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 
@@ -30,5 +30,4 @@ public class TestBuiltin_ISOdatetime extends TestBase {
         assertEval(Ignored.Unknown, "argv <- structure(list(year = 2002, month = 6, day = 24, hour = 0,     min = 0, sec = 10), .Names = c('year', 'month', 'day', 'hour',     'min', 'sec'));"
                         + "do.call('ISOdatetime', argv)");
     }
-
 }

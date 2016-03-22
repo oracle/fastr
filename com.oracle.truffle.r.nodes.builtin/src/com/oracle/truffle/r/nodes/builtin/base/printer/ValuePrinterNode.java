@@ -27,7 +27,6 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.base.Inherits;
 import com.oracle.truffle.r.nodes.builtin.base.InheritsNodeGen;
@@ -47,7 +46,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import java.io.IOException;
 
-@SuppressWarnings("unused")
 @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "digits", type = RNode.class), @NodeChild(value = "quote", type = RNode.class),
                 @NodeChild(value = "naPrint", type = RNode.class), @NodeChild(value = "printGap", type = RNode.class), @NodeChild(value = "right", type = RNode.class),
                 @NodeChild(value = "max", type = RNode.class), @NodeChild(value = "useSource", type = RNode.class), @NodeChild(value = "noOpt", type = RNode.class),
@@ -123,7 +121,6 @@ public abstract class ValuePrinterNode extends RNode {
         } catch (IOException ex) {
             throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
-
     }
 
     private String prettyPrint(Object o, PrintParameters printParams, WriterFactory wf)
@@ -141,5 +138,4 @@ public abstract class ValuePrinterNode extends RNode {
     private static void prettyPrint(Object o, PrintContext printCtx) throws IOException {
         ValuePrinters.INSTANCE.println(o, printCtx);
     }
-
 }

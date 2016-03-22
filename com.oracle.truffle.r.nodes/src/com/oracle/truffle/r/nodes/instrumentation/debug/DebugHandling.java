@@ -23,24 +23,38 @@
 package com.oracle.truffle.r.nodes.instrumentation.debug;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.WeakHashMap;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrumentation.*;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.EventBinding;
+import com.oracle.truffle.api.instrumentation.EventContext;
+import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
+import com.oracle.truffle.api.instrumentation.Instrumenter;
+import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.instrumentation.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.utilities.CyclicAssumption;
+import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
+import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
+import com.oracle.truffle.r.runtime.FunctionUID;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.instrument.Browser;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 
 /**
  * The implementation of the R debug functions.
@@ -156,6 +170,7 @@ public class DebugHandling {
         SourceSectionFilter.Builder loopBuilder = RInstrumentation.createFunctionFilter(fdn, RSyntaxTags.LOOP);
         RSyntaxNode.accept(fdn, 0, new RSyntaxNodeVisitor() {
 
+            @Override
             public boolean visit(RSyntaxNode node, int depth) {
                 SourceSection ss = node.getSourceSection();
                 if (ss.hasTag(RSyntaxTags.LOOP)) {
@@ -276,7 +291,6 @@ public class DebugHandling {
                 stepIntoInstrument = null;
             }
         }
-
     }
 
     /**
@@ -418,7 +432,6 @@ public class DebugHandling {
             String callString = RContext.getRRuntimeASTAccess().getCallerSource(RArguments.getCall(frame));
             print(callString, true);
         }
-
     }
 
     private static void printNode(Node node, boolean curly) {
@@ -462,7 +475,6 @@ public class DebugHandling {
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
         }
-
     }
 
     private static class LoopStatementEventListener extends StatementEventListener {
@@ -516,7 +528,6 @@ public class DebugHandling {
                 fser.endFinishing();
             }
         }
-
     }
 
     private static AbstractLoopNode inLoop(final Node nodeArg) {
@@ -551,12 +562,12 @@ public class DebugHandling {
             }
         }
 
+        @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
         }
 
+        @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
         }
-
     }
-
 }

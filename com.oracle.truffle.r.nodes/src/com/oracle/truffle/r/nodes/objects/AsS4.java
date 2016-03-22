@@ -6,14 +6,16 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.objects;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.NodeChildren;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -36,7 +38,7 @@ public abstract class AsS4 extends RNode {
     private final BranchProfile shareable = BranchProfile.create();
     private final BranchProfile error = BranchProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-    @Child GetS4DataSlot getS4DataSlot;
+    @Child private GetS4DataSlot getS4DataSlot;
 
     @SuppressWarnings("unused")
     @Specialization

@@ -22,17 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RDoubleVector extends RVector implements RAbstractDoubleVector {
 
-    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Numeric.getName());
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Double.getClazz());
 
     private final double[] data;
 
@@ -50,7 +53,6 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         switch (type) {
             case Double:
-            case Numeric:
                 return this;
             case Integer:
                 return RClosures.createDoubleToIntVector(this);
@@ -75,11 +77,13 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return data;
     }
 
+    @Override
     public void setDataAt(Object store, int index, double value) {
         assert data == store;
         ((double[]) store)[index] = value;
     }
 
+    @Override
     public double getDataAt(Object store, int index) {
         assert data == store;
         return ((double[]) store)[index];
@@ -120,6 +124,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return true;
     }
 
+    @Override
     public double getDataAt(int i) {
         return data[i];
     }
@@ -159,6 +164,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
+    @Override
     public RDoubleVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createDoubleVector(data, isComplete(), newDimensions);
     }
@@ -210,6 +216,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return RDataFactory.createDoubleVector(copyResizedData(size, fillNA), isComplete);
     }
 
+    @Override
     public RDoubleVector materialize() {
         return this;
     }

@@ -71,6 +71,7 @@ public class BinaryVectorTest extends TestBase {
 
     protected Matcher<Object> isEmptyVectorOf(RType type) {
         return new CustomMatcher<Object>("empty vector of type " + type) {
+            @Override
             public boolean matches(Object item) {
                 return item instanceof RAbstractVector && ((RAbstractVector) item).getLength() == 0 && ((RAbstractVector) item).getRType() == type;
             }

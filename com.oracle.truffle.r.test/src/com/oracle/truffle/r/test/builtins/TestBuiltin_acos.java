@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_acos extends TestBase {
@@ -24,7 +24,7 @@ public class TestBuiltin_acos extends TestBase {
 
     @Test
     public void testacos2() {
-        assertEval(Ignored.Unknown, "argv <- list(1.54308063481524+0i);acos(argv[[1]]);");
+        assertEval("argv <- list(1.54308063481524+0i);acos(argv[[1]]);");
     }
 
     @Test

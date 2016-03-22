@@ -135,14 +135,17 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
         return this;
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return RSyntaxLookup.createDummyLookup(null, isSuper ? "<<-" : "<-", true);
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return new RSyntaxElement[]{syntaxLhs, storeRhs.getRhs().asRSyntaxNode()};
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ArgumentsSignature.empty(2);
     }

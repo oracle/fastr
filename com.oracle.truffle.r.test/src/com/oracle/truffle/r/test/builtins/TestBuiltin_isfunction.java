@@ -10,9 +10,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import org.junit.*;
+import org.junit.Test;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_isfunction extends TestBase {
@@ -181,5 +181,4 @@ public class TestBuiltin_isfunction extends TestBase {
     public void testisfunction32() {
         assertEval("argv <- list(function(cpu = Inf, elapsed = Inf, transient = FALSE) .Internal(setTimeLimit(cpu,     elapsed, transient)));do.call('is.function', argv)");
     }
-
 }

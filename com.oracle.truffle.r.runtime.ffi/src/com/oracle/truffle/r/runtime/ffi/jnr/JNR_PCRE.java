@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,13 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
-import jnr.ffi.LibraryLoader;
-import jnr.ffi.annotations.In;
-import jnr.ffi.annotations.Out;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
+
+import jnr.ffi.LibraryLoader;
+import jnr.ffi.annotations.In;
+import jnr.ffi.annotations.Out;
 
 /**
  * PCRE support using JNR.
@@ -63,10 +63,12 @@ public class JNR_PCRE implements PCRERFFI {
         return PCREProvider.pcre();
     }
 
+    @Override
     public long maketables() {
         return pcre().pcre_maketables();
     }
 
+    @Override
     public Result compile(String pattern, int options, long tables) {
         int[] errOffset = new int[1];
         byte[] errorMessage = new byte[512];
@@ -78,12 +80,13 @@ public class JNR_PCRE implements PCRERFFI {
         }
     }
 
+    @Override
     public int exec(long code, long extra, String subject, int offset, int options, int[] ovector) {
         return pcre().pcre_exec(code, extra, subject.getBytes(), subject.length(), offset, options, ovector, ovector.length);
     }
 
+    @Override
     public Result study(long code, int options) {
         throw RInternalError.unimplemented("pcre_study");
     }
-
 }

@@ -59,7 +59,7 @@ public final class FrameSlotChangeMonitor {
      * result based on the system's knowledge about the hierarchy of environments and the stable
      * values of certain bindings. Most function lookups can be answered based only on this
      * information.
-     *
+     * 
      * These lookups are stored for caching and invalidation, i.e., to save on repeated lookups and
      * to invalidate lookups in case the environment hierarchy changes.
      */
@@ -77,12 +77,12 @@ public final class FrameSlotChangeMonitor {
 
         public abstract Object getValue() throws InvalidAssumptionException;
 
-        public void invalidate() {
+        private void invalidate() {
             assumption.invalidate();
         }
     }
 
-    public static final class StableValueLookupResult extends LookupResult {
+    private static final class StableValueLookupResult extends LookupResult {
         private final StableValue<Object> value;
 
         private StableValueLookupResult(String identifier, StableValue<Object> value) {
@@ -104,7 +104,7 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    public static final class MissingLookupResult extends LookupResult {
+    private static final class MissingLookupResult extends LookupResult {
 
         private MissingLookupResult(String identifier) {
             super(identifier);
@@ -338,7 +338,7 @@ public final class FrameSlotChangeMonitor {
         initializeEnclosingFrame(handleBaseNamespaceEnv(frame), newEnclosingFrame);
     }
 
-    public static synchronized void setEnclosingFrame(FrameDescriptor descriptor, MaterializedFrame newEnclosingFrame, MaterializedFrame oldEnclosingFrame) {
+    private static synchronized void setEnclosingFrame(FrameDescriptor descriptor, MaterializedFrame newEnclosingFrame, MaterializedFrame oldEnclosingFrame) {
         CompilerAsserts.neverPartOfCompilation();
         FrameDescriptorMetaData target = getMetaData(descriptor);
         assert target != null : "frame descriptor wasn't registered properly for " + descriptor;
@@ -487,7 +487,7 @@ public final class FrameSlotChangeMonitor {
         return getFrameSlotInfo(slot).nonLocalModifiedAssumption;
     }
 
-    public static FrameSlotInfoImpl getFrameSlotInfo(FrameSlot slot) {
+    private static FrameSlotInfoImpl getFrameSlotInfo(FrameSlot slot) {
         Object info = slot.getInfo();
         if (!(info instanceof FrameSlotInfoImpl)) {
             CompilerDirectives.transferToInterpreter();

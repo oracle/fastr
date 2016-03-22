@@ -22,11 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
 abstract class RecursiveSubscriptNode extends Node {
 
@@ -58,5 +58,4 @@ abstract class RecursiveSubscriptNode extends Node {
         errorBranch.enter();
         return RError.error(this, RError.Message.NO_SUCH_INDEX, i);
     }
-
 }

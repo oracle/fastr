@@ -42,6 +42,7 @@ public abstract class RSourceSectionNode extends RNode implements RSyntaxNode {
         this.sourceSectionR = sourceSection;
     }
 
+    @Override
     public final void setSourceSection(SourceSection sourceSection) {
         assert sourceSection != null;
         this.sourceSectionR = sourceSection;

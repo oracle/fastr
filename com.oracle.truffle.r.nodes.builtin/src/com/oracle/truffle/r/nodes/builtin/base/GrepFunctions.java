@@ -5,26 +5,40 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import java.util.*;
-import java.util.regex.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ffi.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RegExp;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * {@code grep} in all its variants. No usages in the general case merits being Truffle optimized,
@@ -140,7 +154,6 @@ public class GrepFunctions {
             }
             return RDataFactory.createIntVector(naData, RDataFactory.INCOMPLETE_VECTOR);
         }
-
     }
 
     private abstract static class GrepAdapter extends CommonCodeAdapter {
@@ -252,7 +265,6 @@ public class GrepFunctions {
             Matcher m = Regexp.getPatternMatcher(pattern, text, ignoreCase);
             return m.find();
         }
-
     }
 
     @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "perl", "value", "fixed", "useBytes", "invert"})
@@ -550,7 +562,6 @@ public class GrepFunctions {
             controlVisibility();
             return doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, true);
         }
-
     }
 
     @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"})
@@ -595,7 +606,7 @@ public class GrepFunctions {
         }
 
         @TruffleBoundary
-        public static Matcher getPatternMatcher(String pattern, String text, boolean ignoreCase) {
+        private static Matcher getPatternMatcher(String pattern, String text, boolean ignoreCase) {
             return Pattern.compile(pattern, ignoreCase ? Pattern.CASE_INSENSITIVE : 0).matcher(text);
         }
     }
@@ -862,5 +873,4 @@ public class GrepFunctions {
             return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         }
     }
-
 }

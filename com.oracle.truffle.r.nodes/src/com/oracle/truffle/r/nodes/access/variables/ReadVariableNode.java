@@ -126,8 +126,8 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         return result;
     }
 
-    @Child protected PromiseHelperNode promiseHelper;
-    @Child protected CheckTypeNode checkTypeNode;
+    @Child private PromiseHelperNode promiseHelper;
+    @Child private CheckTypeNode checkTypeNode;
     @CompilationFinal private FrameLevel read;
     @CompilationFinal private boolean needsCopying;
 
@@ -154,6 +154,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         this.copyProfile = kind != ReadKind.Copying ? null : ConditionProfile.createBinaryProfile();
     }
 
+    @Override
     public String getIdentifier() {
         return identifierAsString;
     }
@@ -788,7 +789,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
      * @param objArg The object to check for proper type
      * @return see above
      */
-    protected boolean checkType(VirtualFrame frame, Object objArg, ConditionProfile isNullProfile) {
+    private boolean checkType(VirtualFrame frame, Object objArg, ConditionProfile isNullProfile) {
         Object obj = objArg;
         if ((isNullProfile == null && obj == null) || (isNullProfile != null && isNullProfile.profile(obj == null))) {
             return false;
@@ -827,7 +828,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     private static final ThreadLocal<String> slowPathEvaluationName = new ThreadLocal<>();
 
-    protected boolean checkTypeSlowPath(VirtualFrame frame, Object objArg) {
+    private boolean checkTypeSlowPath(VirtualFrame frame, Object objArg) {
         CompilerAsserts.neverPartOfCompilation();
         Object obj = objArg;
         if (obj == null) {
@@ -870,6 +871,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         return kind == ReadKind.ForcedTypeCheck;
     }
 
+    @Override
     public boolean isFunctionLookup() {
         return mode == RType.Function;
     }
@@ -890,12 +892,12 @@ abstract class CheckTypeNode extends RBaseNode {
 
     @Specialization
     boolean checkType(@SuppressWarnings("unused") Integer o) {
-        return type == RType.Any || type == RType.Integer || type == RType.Double || type == RType.Numeric ? true : false;
+        return type == RType.Any || type == RType.Integer || type == RType.Double ? true : false;
     }
 
     @Specialization
     boolean checkType(@SuppressWarnings("unused") Double o) {
-        return type == RType.Any || type == RType.Integer || type == RType.Double || type == RType.Numeric ? true : false;
+        return type == RType.Any || type == RType.Integer || type == RType.Double ? true : false;
     }
 
     @Specialization

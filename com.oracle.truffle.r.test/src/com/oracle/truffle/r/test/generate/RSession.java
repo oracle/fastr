@@ -22,14 +22,19 @@
  */
 package com.oracle.truffle.r.test.generate;
 
+import com.oracle.truffle.r.runtime.context.ContextInfo;
+
 /**
  * Represents an R session that may be interactive or non-interactive.
  */
 public interface RSession {
     /**
      * Returns the result of evaluating {@code expression} including errors and warnings.
+     *
+     * If {@code contextInfo is non-null} it is used for the evaluation, else the choice is left to
+     * the implementation.
      */
-    String eval(String expression) throws Throwable;
+    String eval(String expression, ContextInfo contextInfo) throws Throwable;
 
     /**
      * A name to identify the session.

@@ -48,7 +48,7 @@ public abstract class DPut extends RInvisibleBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    public Object dput(Object x, RConnection file, int opts) {
+    protected Object dput(Object x, RConnection file, int opts) {
         controlVisibility();
 
         String string = RDeparse.deparse1Line(x, false, RDeparse.DEFAULT_Cutoff, opts);

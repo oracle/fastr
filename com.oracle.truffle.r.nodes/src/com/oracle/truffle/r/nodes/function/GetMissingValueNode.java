@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * This is a node abstraction for the functionality defined in
@@ -55,7 +58,6 @@ public abstract class GetMissingValueNode extends RBaseNode {
             FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(name);
             return replace(new ResolvedGetMissingValueNode(slot)).execute(frame);
         }
-
     }
 
     private static final class ResolvedGetMissingValueNode extends GetMissingValueNode {

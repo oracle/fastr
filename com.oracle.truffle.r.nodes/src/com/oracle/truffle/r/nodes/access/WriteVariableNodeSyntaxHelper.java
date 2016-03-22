@@ -22,14 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -65,21 +61,6 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
         }
     }
 
-    protected Object getRelementHelper(String op, int index) {
-        switch (index) {
-            case 0:
-                assert op == op.intern();
-                return RDataFactory.createSymbol(op);
-            case 1:
-                CompilerAsserts.neverPartOfCompilation();
-                return RDataFactory.createSymbolInterned(getName().toString());
-            case 2:
-                return RASTUtils.createLanguageElement(getRhs());
-            default:
-                throw RInternalError.shouldNotReachHere();
-        }
-    }
-
     public void setSourceSection(SourceSection sourceSection) {
         this.sourceSectionR = sourceSection;
     }
@@ -87,9 +68,5 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
     @Override
     public SourceSection getSourceSection() {
         return sourceSectionR;
-    }
-
-    public void unsetSourceSection() {
-        sourceSectionR = null;
     }
 }

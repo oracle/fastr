@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,16 +22,18 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-public class RComplexToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
+final class RComplexToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
 
-    public RComplexToStringVectorClosure(RAbstractComplexVector vector) {
+    RComplexToStringVectorClosure(RAbstractComplexVector vector) {
         super(vector);
     }
 
+    @Override
     public String getDataAt(int index) {
         RComplex data = ((RAbstractComplexVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(data)) {

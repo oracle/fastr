@@ -22,9 +22,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 //Transcribed from GnuR, src/main/format.c
 
-public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
+final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
 
-    public static final DoubleVectorPrinter INSTANCE = new DoubleVectorPrinter();
+    static final DoubleVectorPrinter INSTANCE = new DoubleVectorPrinter();
+
+    private DoubleVectorPrinter() {
+        // singleton
+    }
 
     @Override
     protected VectorPrinter<RAbstractDoubleVector>.VectorPrintJob createJob(RAbstractDoubleVector vector, int indx, PrintContext printCtx) {
@@ -63,22 +67,10 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         protected String elementTypeName() {
             return "double";
         }
-
     }
 
-    public static class DoubleVectorMetrics extends FormatMetrics {
-        public final int d;
-        public final int e;
 
-        public DoubleVectorMetrics(int w, int d, int e) {
-            super(w);
-            this.d = d;
-            this.e = e;
-        }
-
-    }
-
-    public static DoubleVectorMetrics formatDoubleVector(RAbstractDoubleVector x, int offs, int n, int nsmall, PrintParameters pp) {
+    static DoubleVectorMetrics formatDoubleVector(RAbstractDoubleVector x, int offs, int n, int nsmall, PrintParameters pp) {
         int left;
         int right;
         int sleft;
@@ -236,20 +228,19 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
 
     public static final int NB = 1000;
 
-    public static class ScientificDouble {
+    static final class ScientificDouble {
         public final int sgn;
         public final int kpower;
         public final int nsig;
         public final boolean roundingwidens;
 
-        public ScientificDouble(int sgn, int kpower, int nsig, boolean roundingwidens) {
+        ScientificDouble(int sgn, int kpower, int nsig, boolean roundingwidens) {
             super();
             this.sgn = sgn;
             this.kpower = kpower;
             this.nsig = nsig;
             this.roundingwidens = roundingwidens;
         }
-
     }
 
     public static ScientificDouble scientific(double x, PrintParameters pp) {
@@ -360,15 +351,16 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         return new ScientificDouble(sgn, kpower, nsig, roundingwidens);
     }
 
-    public static String encodeReal(double x, DoubleVectorMetrics dm, PrintParameters pp) {
+    static String encodeReal(double x, DoubleVectorMetrics dm, PrintParameters pp) {
         return encodeReal(x, dm.maxWidth, dm.d, dm.e, '.', pp);
     }
 
-    public static String encodeReal(double x, int w, int d, int e, char cdec, PrintParameters pp) {
+    static String encodeReal(double initialX, int w, int d, int e, char cdec, PrintParameters pp) {
         final String buff;
         String fmt;
 
         /* IEEE allows signed zeros (yuck!) */
+        double x = initialX;
         if (x == 0.0) {
             x = 0.0;
         }
@@ -411,5 +403,4 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
 
         return buff;
     }
-
 }

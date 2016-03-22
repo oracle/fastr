@@ -23,12 +23,21 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.NodeField;
+import com.oracle.truffle.api.dsl.NodeFields;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @NodeChild(value = "rhs", type = RNode.class)
 @NodeFields({@NodeField(name = "name", type = Object.class)})
@@ -62,7 +71,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * replacement forms of vector updates where a vector is assigned to a temporary (visible)
      * variable and then, again, to the original variable (which would cause the vector to be copied
      * each time); (non-Javadoc)
-     *
+     * 
      * @see
      * com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode#shareObjectValue(com.oracle.truffle
      * .api.frame.Frame, com.oracle.truffle.api.frame.FrameSlot, java.lang.Object,
@@ -111,7 +120,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
         return newValue;
     }
 
-    protected static boolean isCurrentValue(Frame frame, FrameSlot frameSlot, Object value) {
+    private static boolean isCurrentValue(Frame frame, FrameSlot frameSlot, Object value) {
         try {
             return frame.isObject(frameSlot) && frame.getObject(frameSlot) == value;
         } catch (FrameSlotTypeException ex) {

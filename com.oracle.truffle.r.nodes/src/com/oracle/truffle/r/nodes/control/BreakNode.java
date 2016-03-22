@@ -59,18 +59,22 @@ public final class BreakNode extends RSourceSectionNode implements RSyntaxNode, 
         throw BreakException.instance;
     }
 
+    @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
         return this;
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return RSyntaxLookup.createDummyLookup(getSourceSection(), "break", true);
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return new RSyntaxElement[0];
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ArgumentsSignature.empty(0);
     }

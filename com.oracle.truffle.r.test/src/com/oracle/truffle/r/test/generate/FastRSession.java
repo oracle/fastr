@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
+import com.oracle.truffle.r.test.TestBase;
 
 public final class FastRSession implements RSession {
 
@@ -63,43 +64,47 @@ public final class FastRSession implements RSession {
             input.addAll(Arrays.asList(lines));
         }
 
+        @Override
         @TruffleBoundary
         public void println(String s) {
             buffer.append(s);
             buffer.append('\n');
         }
 
+        @Override
         @TruffleBoundary
         public void print(String s) {
             buffer.append(s);
         }
 
+        @Override
         public String readLine() {
             return input.pollFirst();
         }
 
+        @Override
         public boolean isInteractive() {
             return false;
         }
 
+        @Override
         @TruffleBoundary
         public void printErrorln(String s) {
             println(s);
         }
 
+        @Override
         @TruffleBoundary
         public void printError(String s) {
             print(s);
         }
 
-        public void redirectError() {
-            // always
-        }
-
+        @Override
         public String getPrompt() {
             return null;
         }
 
+        @Override
         public void setPrompt(String prompt) {
             // ignore
         }
@@ -109,10 +114,12 @@ public final class FastRSession implements RSession {
             buffer.delete(0, buffer.length());
         }
 
+        @Override
         public int getWidth() {
             return RContext.CONSOLE_WIDTH;
         }
 
+        @Override
         public String getInputDescription() {
             return "<test input>";
         }
@@ -135,11 +142,20 @@ public final class FastRSession implements RSession {
 
     private static final Source GET_CONTEXT = Source.fromText("invisible(fastr.context.get())", "<get_context>").withMimeType(TruffleRLanguage.MIME);
 
-    public PolyglotEngine createTestContext() {
+    public PolyglotEngine createTestContext(ContextInfo contextInfoArg) {
         create();
+        ContextInfo contextInfo;
+        if (contextInfoArg == null) {
+            contextInfo = createContextInfo(ContextKind.SHARE_PARENT_RW);
+        } else {
+            contextInfo = contextInfoArg;
+        }
+        return contextInfo.apply(PolyglotEngine.newBuilder()).build();
+    }
+
+    public ContextInfo createContextInfo(ContextKind contextKind) {
         RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
-        ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_PARENT_RW, mainContext, consoleHandler, TimeZone.getTimeZone("CET"));
-        return info.apply(PolyglotEngine.newBuilder()).build();
+        return ContextInfo.create(options, contextKind, mainContext, consoleHandler, TimeZone.getTimeZone("CET"));
     }
 
     private FastRSession() {
@@ -158,13 +174,14 @@ public final class FastRSession implements RSession {
         }
     }
 
+    @Override
     @SuppressWarnings("deprecation")
-    public String eval(String expression) throws Throwable {
+    public String eval(String expression, ContextInfo contextInfo) throws Throwable {
         consoleHandler.reset();
 
         EvalThread thread = evalThread;
-        if (thread == null || !thread.isAlive()) {
-            thread = new EvalThread();
+        if (thread == null || !thread.isAlive() || contextInfo != thread.contextInfo) {
+            thread = new EvalThread(contextInfo);
             thread.setName("FastR evaluation");
             thread.start();
             evalThread = thread;
@@ -195,9 +212,11 @@ public final class FastRSession implements RSession {
         private volatile Throwable killedByException;
         private final Semaphore entry = new Semaphore(0);
         private final Semaphore exit = new Semaphore(0);
+        private final ContextInfo contextInfo;
 
-        EvalThread() {
+        EvalThread(ContextInfo contextInfo) {
             super(null);
+            this.contextInfo = contextInfo;
         }
 
         public void push(String exp) {
@@ -218,7 +237,7 @@ public final class FastRSession implements RSession {
                     break;
                 }
                 try {
-                    PolyglotEngine vm = createTestContext();
+                    PolyglotEngine vm = createTestContext(contextInfo);
                     consoleHandler.setInput(expression.split("\n"));
                     try {
                         String input = consoleHandler.readLine();
@@ -249,6 +268,9 @@ public final class FastRSession implements RSession {
                     if (t instanceof RError) {
                         // nothing to do
                     } else {
+                        if (!TestBase.ProcessFailedTests && t instanceof RInternalError) {
+                            RInternalError.reportError(t);
+                        }
                         t.printStackTrace();
                         killedByException = t;
                     }
@@ -259,6 +281,7 @@ public final class FastRSession implements RSession {
         }
     }
 
+    @Override
     public String name() {
         return "FastR";
     }

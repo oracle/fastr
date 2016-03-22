@@ -73,7 +73,7 @@ public abstract class Unique extends RBuiltinNode {
 
     private final ConditionProfile bigProfile = ConditionProfile.createBinaryProfile();
 
-    protected RVector uniqueRecursive(VirtualFrame frame, RVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
+    private RVector uniqueRecursive(VirtualFrame frame, RVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
         if (uniqueRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             uniqueRecursive = insert(UniqueNodeGen.create(new RNode[5], null, null));
@@ -319,7 +319,7 @@ public abstract class Unique extends RBuiltinNode {
         return RDataFactory.createList(data.toArray());
     }
 
-    public static boolean lengthOne(RList list) {
+    protected static boolean lengthOne(RList list) {
         return list.getLength() == 1;
     }
 
@@ -463,5 +463,4 @@ public abstract class Unique extends RBuiltinNode {
             return RDataFactory.createRawVector(dataList.toArray());
         }
     }
-
 }

@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
 
-public interface ValuePrinter<T> {
+interface ValuePrinter<T> {
 
     /**
      * This attribute instructs the <code>println</code> method not to print the new line character

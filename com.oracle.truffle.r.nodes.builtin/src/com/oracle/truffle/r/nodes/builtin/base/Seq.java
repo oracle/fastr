@@ -22,19 +22,30 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleSequence;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "seq.default", aliases = {"seq.int"}, kind = SUBSTITUTE, parameterNames = {"from", "to", "by", "length.out", "along.with"})
 // Implement in R, but seq.int is PRIMITIVE (and may have to contain most, if not all, of the code
@@ -685,19 +696,15 @@ public abstract class Seq extends RBuiltinNode {
         return seqRecursive(1.0, to, stride, lengthOut, alongWith);
     }
 
-    protected static boolean ascending(RAbstractIntVector start, RAbstractIntVector to) {
+    private static boolean ascending(RAbstractIntVector start, RAbstractIntVector to) {
         return to.getDataAt(0) > start.getDataAt(0);
     }
 
-    protected static boolean ascending(RAbstractLogicalVector start, RAbstractLogicalVector to) {
-        return RRuntime.logical2int(to.getDataAt(0)) > RRuntime.logical2int(start.getDataAt(0));
-    }
-
-    protected static boolean ascending(RAbstractIntVector start, RAbstractDoubleVector to) {
+    private static boolean ascending(RAbstractIntVector start, RAbstractDoubleVector to) {
         return to.getDataAt(0) > start.getDataAt(0);
     }
 
-    protected static boolean ascending(RAbstractDoubleVector start, RAbstractIntVector to) {
+    private static boolean ascending(RAbstractDoubleVector start, RAbstractIntVector to) {
         return to.getDataAt(0) > start.getDataAt(0);
     }
 

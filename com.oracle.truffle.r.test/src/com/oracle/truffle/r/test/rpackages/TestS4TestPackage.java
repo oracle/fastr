@@ -47,23 +47,23 @@ public class TestS4TestPackage extends TestRPackages {
 
     @Test
     public void testS4Load() {
-        assertEval(TestBase.template("{ library(\"tests4\", lib.loc = \"%0\"); detach(\"package:tests4\"); unloadNamespace(\"tests4\") }", new String[]{packagePaths.rpackagesLibs.toString()}));
+        assertEval(TestBase.template("{ library(\"tests4\", lib.loc = \"%0\"); detach(\"package:tests4\"); unloadNamespace(\"tests4\") }",
+                        new String[]{TestRPackages.libLoc()}));
     }
 
     @Test
     public void testS4Execute() {
         assertEval(TestBase.template(
                         "{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Car\"), new(\"Inspector\"))); detach(\"package:tests4\"); unloadNamespace(\"tests4\"); r }",
-                        new String[]{packagePaths.rpackagesLibs.toString()}));
+                        new String[]{TestRPackages.libLoc()}));
         assertEval(TestBase.template(
                         "{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Truck\"), new(\"Inspector\"))); detach(\"package:tests4\"); unloadNamespace(\"tests4\"); r }",
-                        new String[]{packagePaths.rpackagesLibs.toString()}));
+                        new String[]{TestRPackages.libLoc()}));
         assertEval(TestBase.template(
                         "{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Car\"), new(\"StateInspector\"))); detach(\"package:tests4\"); unloadNamespace(\"tests4\"); r }",
-                        new String[]{packagePaths.rpackagesLibs.toString()}));
+                        new String[]{TestRPackages.libLoc()}));
         assertEval(TestBase.template(
                         "{ library(\"tests4\", lib.loc = \"%0\"); r<-print(tests4:::inspect.vehicle(new(\"Truck\"), new(\"StateInspector\"))); detach(\"package:tests4\"); unloadNamespace(\"tests4\"); r }",
-                        new String[]{packagePaths.rpackagesLibs.toString()}));
+                        new String[]{TestRPackages.libLoc()}));
     }
-
 }

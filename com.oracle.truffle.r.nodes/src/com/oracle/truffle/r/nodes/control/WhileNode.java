@@ -153,6 +153,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
             return condition;
         }
 
+        @Override
         public boolean executeRepeating(VirtualFrame frame) {
             try {
                 if (conditionProfile.profile(condition.executeByte(frame) == RRuntime.LOGICAL_TRUE)) {
@@ -193,10 +194,12 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
         }
     }
 
+    @Override
     public RSyntaxElement getSyntaxLHS() {
         return RSyntaxLookup.createDummyLookup(getSourceSection(), isRepeat ? "repeat" : "while", true);
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArguments() {
         WhileRepeatingNode repeatingNode = (WhileRepeatingNode) loop.getRepeatingNode();
         if (isRepeat) {
@@ -206,6 +209,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
         }
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ArgumentsSignature.empty(isRepeat ? 1 : 2);
     }

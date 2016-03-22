@@ -22,17 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RComplexVector extends RVector implements RAbstractComplexVector {
 
-    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Complex.getName());
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Complex.getClazz());
 
     private final double[] data;
 
@@ -76,6 +79,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         }
     }
 
+    @Override
     public void setDataAt(Object store, int index, RComplex value) {
         assert data == store;
         double[] array = (double[]) store;
@@ -83,6 +87,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         array[(index << 1) + 1] = value.getImaginaryPart();
     }
 
+    @Override
     public RComplex getDataAt(Object store, int i) {
         assert data == store;
         double[] doubleStore = (double[]) store;
@@ -90,6 +95,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return RDataFactory.createComplex(doubleStore[index], doubleStore[index + 1]);
     }
 
+    @Override
     public RComplex getDataAt(int i) {
         return getDataAt(data, i);
     }
@@ -146,6 +152,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
+    @Override
     public RComplexVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createComplexVector(data, isComplete(), newDimensions);
     }
@@ -155,7 +162,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return getDataAt(index).toString();
     }
 
-    public RComplexVector updateDataAt(int i, RComplex right, NACheck rightNACheck) {
+    private RComplexVector updateDataAt(int i, RComplex right, NACheck rightNACheck) {
         assert !this.isShared();
         int index = i << 1;
         data[index] = right.getRealPart();
@@ -170,7 +177,6 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
     @Override
     public RComplexVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
         return updateDataAt(i, (RComplex) o, naCheck);
-
     }
 
     private double[] copyResizedData(int size, boolean fillNA) {
@@ -197,6 +203,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete);
     }
 
+    @Override
     public RComplexVector materialize() {
         return this;
     }

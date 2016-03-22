@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -298,5 +298,4 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
         return createHandle(BinaryBooleanNode.create(factory), //
                         (node, args) -> node.execute(null, args[0], args[1]));
     }
-
 }

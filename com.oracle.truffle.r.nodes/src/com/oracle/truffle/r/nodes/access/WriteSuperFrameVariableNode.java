@@ -22,22 +22,27 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.*;
+import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.findOrAddFrameSlot;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.nodes.Node.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.NodeChildren;
+import com.oracle.truffle.api.dsl.NodeField;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNodeFactory.UnresolvedWriteLocalFrameVariableNodeGen;
-import com.oracle.truffle.r.nodes.access.BaseWriteVariableNode.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * {@link WriteSuperFrameVariableNode} captures a write to a variable in some parent frame.
@@ -47,7 +52,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
 @SuppressWarnings("unused")
 @NodeChildren({@NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class), @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)})
 @NodeField(name = "mode", type = Mode.class)
-public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariableNodeHelper {
+abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariableNodeHelper {
     private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
     private final BranchProfile invalidateProfile = BranchProfile.create();
     private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
@@ -56,7 +61,7 @@ public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariabl
 
     public abstract Mode getMode();
 
-    public static WriteVariableNode create(String name, RNode rhs, Mode mode) {
+    static WriteVariableNode create(String name, RNode rhs, Mode mode) {
         return new UnresolvedWriteSuperFrameVariableNode(name, rhs, mode);
     }
 
@@ -82,13 +87,13 @@ public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariabl
         FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameSlot, newValue, true, invalidateProfile);
     }
 
-    public static class UnresolvedWriteSuperFrameVariableNode extends WriteSuperFrameVariableNodeHelper {
+    private static class UnresolvedWriteSuperFrameVariableNode extends WriteSuperFrameVariableNodeHelper {
 
         @Child private RNode rhs;
         private final String symbol;
         private final BaseWriteVariableNode.Mode mode;
 
-        public UnresolvedWriteSuperFrameVariableNode(String symbol, RNode rhs, BaseWriteVariableNode.Mode mode) {
+        UnresolvedWriteSuperFrameVariableNode(String symbol, RNode rhs, BaseWriteVariableNode.Mode mode) {
             this.rhs = rhs;
             this.symbol = symbol;
             this.mode = mode;
@@ -137,7 +142,6 @@ public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariabl
                 replace(UnresolvedWriteLocalFrameVariableNodeGen.create(getRhs(), symbol, mode)).execute(frame, value);
             }
         }
-
     }
 
     public static class WriteSuperFrameVariableConditionalNode extends WriteSuperFrameVariableNodeHelper {

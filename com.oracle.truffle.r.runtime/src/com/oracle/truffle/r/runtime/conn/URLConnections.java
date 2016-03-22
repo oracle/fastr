@@ -22,13 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
-import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.ByteBuffer;
 
-import java.io.*;
-import java.net.*;
-import java.nio.*;
-
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ReadWriteHelper;
 
 public class URLConnections {
     public static class URLRConnection extends BaseRConnection {
@@ -103,7 +110,5 @@ public class URLConnections {
         public String readChar(int nchars, boolean useBytes) throws IOException {
             return readCharHelper(nchars, inputStream, useBytes);
         }
-
     }
-
 }

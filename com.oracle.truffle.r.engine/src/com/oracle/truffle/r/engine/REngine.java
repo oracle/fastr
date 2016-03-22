@@ -143,6 +143,7 @@ final class REngine implements Engine, Engine.Timings {
         return engine;
     }
 
+    @Override
     public void activate(REnvironment.ContextStateImpl stateREnvironment) {
         this.globalFrame = stateREnvironment.getGlobalFrame();
         this.startTime = System.nanoTime();
@@ -195,6 +196,7 @@ final class REngine implements Engine, Engine.Timings {
         RBuiltinPackages.loadDefaultPackageOverrides();
     }
 
+    @Override
     public void checkAndRunStartupShutdownFunction(String name, String... args) {
         Object func = REnvironment.globalEnv().findFunction(name);
         if (func != null) {
@@ -222,18 +224,22 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
+    @Override
     public Timings getTimings() {
         return this;
     }
 
+    @Override
     public long elapsedTimeInNanos() {
         return System.nanoTime() - startTime;
     }
 
+    @Override
     public long[] childTimesInNanos() {
         return childTimes;
     }
 
+    @Override
     public long[] userSysTimeInNanos() {
         return ThreadTimings.userSysTimeInNanos();
     }
@@ -299,12 +305,14 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
+    @Override
     public RExpression parse(Source source) throws ParseException {
         List<RSyntaxNode> list = parseImpl(source);
         Object[] data = list.stream().map(node -> RDataFactory.createLanguage(node.asRNode())).toArray();
         return RDataFactory.createExpression(RDataFactory.createList(data));
     }
 
+    @Override
     public RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws ParseException {
         RParser<RSyntaxNode> parser = new RParser<>(source, new RASTBuilder());
         try {
@@ -367,6 +375,7 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
+    @Override
     public Object eval(RExpression exprs, REnvironment envir, int depth) {
         Object result = RNull.instance;
         for (int i = 0; i < exprs.getLength(); i++) {
@@ -380,10 +389,12 @@ final class REngine implements Engine, Engine.Timings {
         return result;
     }
 
+    @Override
     public Object eval(RLanguage expr, REnvironment envir, int depth) {
         return evalNode((RNode) expr.getRep(), envir, depth);
     }
 
+    @Override
     public Object eval(RExpression expr, MaterializedFrame frame) {
         Object result = null;
         for (int i = 0; i < expr.getLength(); i++) {
@@ -396,6 +407,7 @@ final class REngine implements Engine, Engine.Timings {
         return result;
     }
 
+    @Override
     public Object eval(RLanguage expr, MaterializedFrame frame) {
         RNode n = (RNode) expr.getRep();
         // TODO perhaps this ought to be being checked earlier
@@ -406,6 +418,7 @@ final class REngine implements Engine, Engine.Timings {
         return callTarget.call(frame);
     }
 
+    @Override
     public Object evalFunction(RFunction func, MaterializedFrame frame, Object... args) {
         ArgumentsSignature argsSig = ((RRootNode) func.getRootNode()).getSignature();
         MaterializedFrame actualFrame = frame == null ? Utils.getActualCurrentFrame().materialize() : frame;
@@ -440,6 +453,7 @@ final class REngine implements Engine, Engine.Timings {
         return callTarget.call(vFrame);
     }
 
+    @Override
     public Object evalPromise(Closure closure, MaterializedFrame frame) {
         return closure.getCallTarget().call(frame);
     }
@@ -554,6 +568,7 @@ final class REngine implements Engine, Engine.Timings {
 
     private static final ArgumentsSignature PRINT_SIGNATURE = ArgumentsSignature.get("x", "...");
 
+    @Override
     @TruffleBoundary
     public void printResult(Object result) {
         // this supports printing of non-R values (via toString for now)
@@ -575,6 +590,7 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
+    @Override
     public String toString(Object result) {
         // this supports printing of non-R values (via toString for now)
         if (result == null || (result instanceof TruffleObject && !(result instanceof RTypedValue))) {
@@ -591,10 +607,12 @@ final class REngine implements Engine, Engine.Timings {
         return value instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) value) : value;
     }
 
+    @Override
     public Class<? extends TruffleLanguage<RContext>> getTruffleLanguage() {
         return TruffleRLanguage.class;
     }
 
+    @Override
     public ForeignAccess getForeignAccess(RTypedValue value) {
         if (value instanceof RList) {
             return ForeignAccess.create(RList.class, new RListAccessFactory());
@@ -606,5 +624,4 @@ final class REngine implements Engine, Engine.Timings {
             throw RInternalError.shouldNotReachHere("cannot create ForeignAccess for " + value);
         }
     }
-
 }

@@ -22,17 +22,16 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
-
-import java.util.*;
-
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 public final class RList extends RListBase implements RGPBits, TruffleObject {
 
-    private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getName());
+    private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getClazz());
 
     public String elementNamePrefix;
 
@@ -85,8 +84,8 @@ public final class RList extends RListBase implements RGPBits, TruffleObject {
         return getClassHierarchyHelper(implicitClassHeader);
     }
 
+    @Override
     public ForeignAccess getForeignAccess() {
         return RContext.getEngine().getForeignAccess(this);
     }
-
 }

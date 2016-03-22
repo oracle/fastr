@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,18 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.unary.UnaryNode;
 
 public abstract class ClassHierarchyScalarNode extends UnaryNode {
 
     public abstract String executeString(Object o);
 
-    @Child ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true, true);
+    @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true, true);
 
     @Specialization
     protected String getClassHr(Object arg) {
         return classHierarchyNode.execute(arg).getDataAt(0);
     }
-
 }

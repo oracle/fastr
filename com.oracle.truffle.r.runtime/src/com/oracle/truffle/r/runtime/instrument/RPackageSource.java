@@ -22,13 +22,26 @@
  */
 package com.oracle.truffle.r.runtime.instrument;
 
-import java.io.*;
-import java.nio.file.*;
-import java.security.*;
-import java.util.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.RFunction;
 
 /**
  * Support for locating the automatically generated source file for a package function when
@@ -152,7 +165,6 @@ public class RPackageSource {
         } catch (NoSuchAlgorithmException ex) {
             throw RInternalError.shouldNotReachHere(ex.getMessage());
         }
-
     }
 
     /**
@@ -265,5 +277,4 @@ public class RPackageSource {
     private static Path indexPath() {
         return dirPath().resolve(INDEX);
     }
-
 }
