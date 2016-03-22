@@ -57,7 +57,8 @@ public class SerializeFunctions {
         }
 
         @TruffleBoundary
-        protected Object doSerializeToConnBase(Object object, RConnection conn, int type, byte xdrLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook) {
+        protected Object doSerializeToConnBase(Object object, RConnection conn, int type, @SuppressWarnings("unused") byte xdrLogical, @SuppressWarnings("unused") RNull version,
+                        @SuppressWarnings("unused") RNull refhook) {
             controlVisibility();
             // xdr is only relevant if ascii is false
             try (RConnection openConn = conn.forceOpen(type != RSerialize.XDR ? "wt" : "wb")) {
