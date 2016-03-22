@@ -298,7 +298,7 @@ def check_install(text):
     if start_index is not None:
         for i in range(start_index, nlines):
             line = lines[i]
-            if line.startswith('installing: '):
+            if line.startswith('installing: ') or line.startswith('processing: '):
                 ex = line.find('(')
                 if ex > 0:
                     pkgname = line[12 : ex - 1]
@@ -312,7 +312,7 @@ def check_install(text):
                     if line.startswith('* installing *source*') and _extract_pkgname(line) == pkgname:
                         install_status[pkgname] = find_done(j, pkgname)
                         break
-                    elif line.startswith('ERROR: dependenc') and _extract_depend_pkgname(line) == pkgname:
+                    elif line.startswith('ERROR: dependency') and _extract_depend_pkgname(line) == pkgname:
                         fail_categories = [line]
                     elif line.startswith('* removing') and _extract_remove_pkgname(line) == pkgname:
                         install_status[pkgname] = InstallStatus(False, fail_categories)
@@ -322,10 +322,20 @@ def check_install(text):
 
     return install_status
 
+class BlackListEntry:
+    def __init__(self, pkgname, reason, analysis=None):
+        self.pkgname = pkgname
+        self.reason = reason
+        self.analysis = analysis
+        self.keep = True
+
+
 def rpt_check_install_log(args):
     parser = ArgumentParser(prog='mx rpt-check-install-log')
     parser.add_argument('--log', action='store', help='file containing install log', required=True)
     parser.add_argument('--fail-detail', action='store_true', help='provide detail on failures')
+    parser.add_argument('--update-initial-blacklist', action='store_true', help='update initial.blacklist based on OK installs')
+    parser.add_argument('--check-initial-blacklist', action='store_true', help='check initial.blacklist based on OK installs')
     args = parser.parse_args(args)
 
     with open(args.log) as f:
@@ -339,6 +349,92 @@ def rpt_check_install_log(args):
         if not pkg_install_status.ok and args.fail_detail:
             for c in pkg_install_status.fail_categories:
                 print "  " + c
+
+    if args.update_initial_blacklist or args.check_initial_blacklist:
+        initial_blacklist = _read_initial_blacklist();
+        for pkgname, b in initial_blacklist.iteritems():
+            if install_status.has_key(b.pkgname):
+                pkg_install_status = install_status[b.pkgname]
+                if pkg_install_status.ok:
+                    b.keep = False
+            else:
+                print 'WARNING: ' + b.pkgname + ' not found in ' + args.log
+
+        if args.check_initial_blacklist:
+                for b in initial_blacklist.itervalues():
+                    if not b.keep:
+                        print 'would remove: ' + b.pkgname
+
+        if args.update_initial_blacklist:
+            _update_initial_blacklist(initial_blacklist)
+
+
+def _initial_blacklist_file():
+    return join('com.oracle.truffle.r.test.cran', 'initial.package.blacklist')
+
+def _read_initial_blacklist():
+    def expect(line, prefix, optional=False):
+        x = line.find(prefix)
+        if x < 0 :
+            if optional:
+                return None
+            else:
+                mx.abort('expecting: ' + prefix + ' in ' + line)
+        return line[x + len(prefix):].strip()
+
+    blacklist_file = _initial_blacklist_file()
+    with open(blacklist_file, 'r') as f:
+        initial_blacklist = dict()
+        lines = f.readlines()
+        i = 0
+        while i < len(lines):
+            line1 = lines[i].strip()
+            if len(line1) == 0:
+                i = i + 1
+                continue
+            pkgname = expect(line1, 'Package:')
+            i = i + 1
+            reason = expect(lines[i], 'Reason:')
+            i = i + 1
+            if i <len(lines):
+                analysis = expect(lines[i], 'Analysis:', optional=True)
+                if analysis is not None:
+                    i = i + 1
+            initial_blacklist[pkgname] = BlackListEntry(pkgname, reason, analysis)
+    return initial_blacklist
+
+def _update_initial_blacklist(initial_blacklist):
+    blacklist_file = _initial_blacklist_file()
+    with open(blacklist_file,'w') as f:
+        for b in initial_blacklist.itervalues():
+            if b.keep:
+                f.write('Package: ' + b.pkgname + '\n')
+                f.write('Reason: ' + b.reason + '\n')
+                if b.analysis:
+                    f.write('Analysis: ' + b.analysis + '\n')
+                f.write('\n')
+            else:
+                print 'removing: ' + b.pkgname
+
+def rpt_update_initial_blacklist(args):
+    parser = ArgumentParser(prog='mx rpt_update_initial_blacklist')
+    parser.add_argument('--file', action='store', help='file containing ok packages', required=True)
+    parser.add_argument('-n', action='store_true', help='report changes but do not update')
+    args = parser.parse_args(args)
+
+    initial_blacklist = _read_initial_blacklist();
+    with open(args.file) as f:
+        pkgnames = f.readlines()
+
+    for pkgname in pkgnames:
+        pkgname = pkgname.rstrip()
+        if initial_blacklist.has_key(pkgname):
+            if args.n:
+                print 'would remove ' + pkgname
+            initial_blacklist[pkgname].keep = False
+
+    if not args.n:
+        _update_initial_blacklist(initial_blacklist)
 
 def _extract_pkgname(line):
     sx = line.find("'")
@@ -798,5 +894,6 @@ _commands = {
     'rpt-compare': [rpt_compare, '[options]'],
     'rpt-check-install-log': [rpt_check_install_log, '[options]'],
     'rpt-list-testdates' : [rpt_list_testdates, '[options]'],
+    'rpt-update-initial-blacklist' : [rpt_update_initial_blacklist, '[options]'],
     'pkgtestanalyze': [rpt_compare, '[options]'],
 }
