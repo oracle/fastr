@@ -351,7 +351,7 @@ def rpt_check_install_log(args):
                 print "  " + c
 
     if args.update_initial_blacklist or args.check_initial_blacklist:
-        initial_blacklist = _read_initial_blacklist();
+        initial_blacklist = _read_initial_blacklist()
         for pkgname, b in initial_blacklist.iteritems():
             if install_status.has_key(b.pkgname):
                 pkg_install_status = install_status[b.pkgname]
@@ -361,9 +361,9 @@ def rpt_check_install_log(args):
                 print 'WARNING: ' + b.pkgname + ' not found in ' + args.log
 
         if args.check_initial_blacklist:
-                for b in initial_blacklist.itervalues():
-                    if not b.keep:
-                        print 'would remove: ' + b.pkgname
+            for b in initial_blacklist.itervalues():
+                if not b.keep:
+                    print 'would remove: ' + b.pkgname
 
         if args.update_initial_blacklist:
             _update_initial_blacklist(initial_blacklist)
@@ -375,7 +375,7 @@ def _initial_blacklist_file():
 def _read_initial_blacklist():
     def expect(line, prefix, optional=False):
         x = line.find(prefix)
-        if x < 0 :
+        if x < 0:
             if optional:
                 return None
             else:
@@ -396,7 +396,7 @@ def _read_initial_blacklist():
             i = i + 1
             reason = expect(lines[i], 'Reason:')
             i = i + 1
-            if i <len(lines):
+            if i < len(lines):
                 analysis = expect(lines[i], 'Analysis:', optional=True)
                 if analysis is not None:
                     i = i + 1
@@ -405,7 +405,7 @@ def _read_initial_blacklist():
 
 def _update_initial_blacklist(initial_blacklist):
     blacklist_file = _initial_blacklist_file()
-    with open(blacklist_file,'w') as f:
+    with open(blacklist_file, 'w') as f:
         for b in initial_blacklist.itervalues():
             if b.keep:
                 f.write('Package: ' + b.pkgname + '\n')
@@ -422,7 +422,7 @@ def rpt_update_initial_blacklist(args):
     parser.add_argument('-n', action='store_true', help='report changes but do not update')
     args = parser.parse_args(args)
 
-    initial_blacklist = _read_initial_blacklist();
+    initial_blacklist = _read_initial_blacklist()
     with open(args.file) as f:
         pkgnames = f.readlines()
 
