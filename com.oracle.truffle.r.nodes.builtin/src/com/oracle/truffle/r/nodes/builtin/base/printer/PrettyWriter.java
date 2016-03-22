@@ -42,6 +42,6 @@ public interface PrettyWriter {
     void beginElement(RAbstractVector vector, int index, FormatMetrics fm);
 
     void endElement(RAbstractVector vector, int index, FormatMetrics fm);
-    
+
     Object getPrintReport();
 }

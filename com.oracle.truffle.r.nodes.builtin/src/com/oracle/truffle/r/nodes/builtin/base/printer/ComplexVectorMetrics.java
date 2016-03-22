@@ -28,7 +28,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
  * @see PrettyWriter
  */
 public final class ComplexVectorMetrics extends FormatMetrics {
-    
+
     public final int wr;
     public final int dr;
     public final int er;
@@ -45,5 +45,5 @@ public final class ComplexVectorMetrics extends FormatMetrics {
         this.di = di;
         this.ei = ei;
     }
-    
+
 }

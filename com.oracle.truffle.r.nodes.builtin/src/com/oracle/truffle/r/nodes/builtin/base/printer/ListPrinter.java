@@ -31,9 +31,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorMetrics;
-import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorMetrics;
-import com.oracle.truffle.r.nodes.builtin.base.printer.FormatMetrics;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;

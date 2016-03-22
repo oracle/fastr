@@ -110,7 +110,6 @@ public abstract class ValuePrinterNode extends RNode {
             PrintContext.leave();
         }
     }
-    
 
     @Specialization
     protected String prettyPrint(VirtualFrame frame, Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {

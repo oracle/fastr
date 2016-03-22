@@ -97,7 +97,7 @@ final class PrintContext {
             ctx.out.close();
             printCtxTL.remove();
         }
-        
+
         return ctx;
     }
 }

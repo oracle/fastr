@@ -35,7 +35,7 @@ public class StringPrettyWriter extends StringWriter implements PrettyWriter {
     @Override
     public void end(Object value) {
     }
-    
+
     @Override
     public void beginAttributes(RAttributeStorage value) {
     }
@@ -64,5 +64,5 @@ public class StringPrettyWriter extends StringWriter implements PrettyWriter {
     public String getPrintReport() {
         return toString();
     }
-    
+
 }

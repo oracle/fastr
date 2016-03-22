@@ -23,12 +23,13 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 /**
- * The double number formatting metrics. N.B. This class is public since it may
- * be used in the PrettyWriter public API.
+ * The double number formatting metrics. N.B. This class is public since it may be used in the 
+ * PrettyWriter public API.
+ * 
  * @see PrettyWriter
  */
 public final class DoubleVectorMetrics extends FormatMetrics {
-    
+
     public final int d;
     public final int e;
 
@@ -37,5 +38,5 @@ public final class DoubleVectorMetrics extends FormatMetrics {
         this.d = d;
         this.e = e;
     }
-    
+
 }

@@ -38,7 +38,7 @@ public class AnyVectorToStringVectorWriter extends Writer implements PrettyWrite
     private String[] stringElements = null;
     private int levelCounter = 0;
     private boolean addSpaces;
-    
+
     private static final RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     @Override
@@ -50,7 +50,7 @@ public class AnyVectorToStringVectorWriter extends Writer implements PrettyWrite
     public void end(Object value) {
         levelCounter--;
     }
-    
+
     @Override
     public void beginAttributes(RAttributeStorage value) {
     }
@@ -82,12 +82,12 @@ public class AnyVectorToStringVectorWriter extends Writer implements PrettyWrite
     public void endElement(RAbstractVector vector, int index, FormatMetrics fm) {
         if (levelCounter == 1) {
             String s = sb.toString().trim();
-            
+
             if (index == 0) {
-                addSpaces = (vector instanceof RAbstractLogicalVector) || 
-                        s.length() < fm.originalMaxWidth;
+                addSpaces = (vector instanceof RAbstractLogicalVector) ||
+                                s.length() < fm.originalMaxWidth;
             }
-            
+
             if (addSpaces) {
                 int ns = fm.getOriginalMaxWidth() - s.length();
                 char[] spaces = new char[ns];
@@ -114,7 +114,7 @@ public class AnyVectorToStringVectorWriter extends Writer implements PrettyWrite
     @Override
     public void close() throws IOException {
     }
-    
+
     @Override
     public RStringVector getPrintReport() {
         RStringVector sv = RDataFactory.createStringVector(stringElements, vector.isComplete());

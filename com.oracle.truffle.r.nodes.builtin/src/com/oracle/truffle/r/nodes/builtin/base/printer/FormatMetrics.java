@@ -28,7 +28,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
  * @see PrettyWriter
  */
 public class FormatMetrics {
-    
+
     final int originalMaxWidth;
     int maxWidth;
 
@@ -45,5 +45,5 @@ public class FormatMetrics {
     public int getAdjustedMaxWidth() {
         return maxWidth;
     }
-    
+
 }

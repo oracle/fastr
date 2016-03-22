@@ -28,78 +28,77 @@ import java.io.PrintWriter;
 import java.io.Writer;
 
 public class PrettyPrintWriter extends PrintWriter implements PrettyWriter {
-    
+
     public PrettyPrintWriter(Writer out) {
         super(out);
     }
     @Override
     public void begin(Object value) {
         if (out instanceof PrettyWriter) {
-            ((PrettyWriter)out).begin(value);
+            ((PrettyWriter) out).begin(value);
         }
     }
 
     @Override
     public void end(Object value) {
         if (out instanceof PrettyWriter) {
-            ((PrettyWriter)out).end(value);
+            ((PrettyWriter) out).end(value);
         }
     }
-    
+
     @Override
     public void beginAttributes(RAttributeStorage value) {
         if (out instanceof PrettyWriter) {
-            ((PrettyWriter)out).beginAttributes(value);
+            ((PrettyWriter) out).beginAttributes(value);
         }
     }
 
     @Override
     public void endAttributes(RAttributeStorage value) {
         if (out instanceof PrettyWriter) {
-            ((PrettyWriter)out).endAttributes(value);
+            ((PrettyWriter) out).endAttributes(value);
         }
     }
 
     @Override
     public void beginValue(Object value) {
         if (out instanceof PrettyWriter) {
-            ((PrettyWriter)out).beginValue(value);
+            ((PrettyWriter) out).beginValue(value);
         }
     }
 
     public Writer getUnderlyingWriter() {
         return out;
     }
-    
+
     @Override
     public void endValue(Object value) {
         if (out instanceof PrettyWriter) {
-            ((PrettyWriter)out).endValue(value);
+            ((PrettyWriter) out).endValue(value);
         }
     }
 
     @Override
     public void beginElement(RAbstractVector vector, int index, FormatMetrics fm) {
         if (out instanceof PrettyWriter) {
-            ((PrettyWriter)out).beginElement(vector, index, fm);
+            ((PrettyWriter) out).beginElement(vector, index, fm);
         }
     }
 
     @Override
     public void endElement(RAbstractVector vector, int index, FormatMetrics fm) {
         if (out instanceof PrettyWriter) {
-            ((PrettyWriter)out).endElement(vector, index, fm);
+            ((PrettyWriter) out).endElement(vector, index, fm);
         }
     }
 
     @Override
     public Object getPrintReport() {
         if (out instanceof PrettyWriter) {
-            return ((PrettyWriter)out).getPrintReport();
+            return ((PrettyWriter) out).getPrintReport();
         } else {
             return null;
         }
     }
-    
-    
+
 }
