@@ -52,7 +52,6 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         array
     }
 
-
     private static final int R_MIN_LBLOFF = 2;
 
     protected abstract class VectorPrintJob {

@@ -23,8 +23,9 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 /**
- * The complex number formatting metrics. N.B. This class is public since it may
- * be used in the PrettyWriter public API.
+ * The complex number formatting metrics. N.B. This class is public since it may be used in the
+ * PrettyWriter public API.
+ * 
  * @see PrettyWriter
  */
 public final class ComplexVectorMetrics extends FormatMetrics {

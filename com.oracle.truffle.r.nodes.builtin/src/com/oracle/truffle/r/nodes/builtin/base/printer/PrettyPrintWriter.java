@@ -32,6 +32,7 @@ public class PrettyPrintWriter extends PrintWriter implements PrettyWriter {
     public PrettyPrintWriter(Writer out) {
         super(out);
     }
+
     @Override
     public void begin(Object value) {
         if (out instanceof PrettyWriter) {

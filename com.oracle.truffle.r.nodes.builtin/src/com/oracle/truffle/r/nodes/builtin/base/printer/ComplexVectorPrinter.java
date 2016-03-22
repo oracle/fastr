@@ -72,7 +72,6 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
         }
     }
 
-
     static ComplexVectorMetrics formatComplexVector(RAbstractComplexVector x, int offs, int n, int nsmall, PrintParameters pp) {
 
         int wr;
