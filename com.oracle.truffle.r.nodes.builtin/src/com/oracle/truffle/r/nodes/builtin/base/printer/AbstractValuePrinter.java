@@ -28,14 +28,21 @@ import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 public abstract class AbstractValuePrinter<T> implements ValuePrinter<T> {
 
+    @Override
     public void print(T value, PrintContext printCtx) throws IOException {
+        printCtx.output().begin(value);
+        printCtx.output().beginValue(value);
         printValue(value, printCtx);
+        printCtx.output().endValue(value);
         printAttributes(value, printCtx);
+        printCtx.output().end(value);
     }
 
     private void printAttributes(T value, PrintContext printCtx) throws IOException {
         if (value instanceof RAttributeStorage) {
+            printCtx.output().beginAttributes((RAttributeStorage) value);
             AttributesPrinter.INSTANCE.print((RAttributeStorage) value, printCtx);
+            printCtx.output().endAttributes((RAttributeStorage) value);
         }
     }
 

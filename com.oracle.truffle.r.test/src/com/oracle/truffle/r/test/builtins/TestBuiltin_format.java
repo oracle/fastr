@@ -53,8 +53,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat8() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(NA_real_, FALSE, 4L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(NA_real_, FALSE, 4L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -102,8 +101,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat17() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(2.3e-05, 4.5e-06), FALSE, 5L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(c(2.3e-05, 4.5e-06), FALSE, 5L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -169,8 +167,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat31() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(2.2250738585072e-308, TRUE, NULL, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(2.2250738585072e-308, TRUE, NULL, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -187,8 +184,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat34() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(-Inf, -Inf, -2.248e+263, -Inf, -3.777e+116, -1), .Names = c('Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.')), FALSE, 7L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c(-Inf, -Inf, -2.248e+263, -Inf, -3.777e+116, -1), .Names = c('Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.')), FALSE, 7L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test

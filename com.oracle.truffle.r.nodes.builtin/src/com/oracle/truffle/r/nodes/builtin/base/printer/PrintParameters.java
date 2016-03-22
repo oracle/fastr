@@ -127,7 +127,7 @@ public final class PrintParameters {
         return max;
     }
 
-    private void setDefaults() {
+    public void setDefaults() {
         this.naString = RRuntime.STRING_NA;
         this.naStringNoquote = "<NA>";
         this.naWidth = this.naString.length();

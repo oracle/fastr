@@ -14,10 +14,12 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.printer.AnyVectorToStringVectorWriter;
+import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
+import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
@@ -28,15 +30,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Format extends RBuiltinNode {
 
     @Child private CastIntegerNode castInteger;
+    @Child protected ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create(null, null, null, null, null, null, null, null, null);
 
     protected final BranchProfile errorProfile = BranchProfile.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-    /**
-     * This is just a dummy object used to invoke getNames on RAbstractDoubleVector. The
-     * RAbstractDoubleVector has no method for obtaining the names associated with the values in the
-     * vector other than getNames(RAttributeProfiles).
-     */
-    private static final RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     public static final int R_MAX_DIGITS_OPT = 22;
     public static final int R_MIN_DIGITS_OPT = 0;
@@ -86,95 +82,18 @@ public abstract class Format extends RBuiltinNode {
         casts.toVector(7);
     }
 
-    // TODO: handling of logical values has been derived from GNU R, with handling of other
-    // types following suit at some point for compliance
-
-    @TruffleBoundary
-    private static RStringVector convertToString(RAbstractLogicalVector value) {
-        int width = formatLogical(value);
-        String[] data = new String[value.getLength()];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = PrettyPrinterNode.prettyPrint(value.getDataAt(i), width);
-        }
-        // vector is complete because strings are created by string builder
-        return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
-    }
-
     @Specialization
     protected RStringVector format(RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
         checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
-        if (value.getLength() == 0) {
-            return RDataFactory.createEmptyStringVector();
-        } else {
-            return convertToString(value);
-        }
-    }
-
-    private static int formatLogical(RAbstractLogicalVector value) {
-        int width = 1;
-        for (int i = 0; i < value.getLength(); i++) {
-            byte val = value.getDataAt(i);
-            if (RRuntime.isNA(val)) {
-                width = getConfig().naWidth;
-            } else if (val != RRuntime.LOGICAL_FALSE && width < 4) {
-                width = 4;
-            } else if (val == RRuntime.LOGICAL_FALSE && width < 5) {
-                width = 5;
-                break;
-            }
-        }
-        return width;
-    }
-
-    // TODO: handling of other types re-uses our current formatting code in PrettyPrinterNode, which
-    // should be sufficient for the time being but is likely not 100% compliant
-
-    private static void addSpaces(String[] data, int width) {
-        for (int i = 0; i < data.length; i++) {
-            StringBuilder sb = new StringBuilder();
-            data[i] = PrettyPrinterNode.spaces(sb, width - data[i].length()).append(data[i]).toString();
-        }
-    }
-
-    @TruffleBoundary
-    private static RStringVector convertToString(RAbstractIntVector value) {
-        String[] data = new String[value.getLength()];
-        int width = 0;
-        int widthChanges = 0;
-        boolean complete = RDataFactory.COMPLETE_VECTOR;
-        for (int i = 0; i < data.length; i++) {
-            data[i] = PrettyPrinterNode.prettyPrint(value.getDataAt(i));
-            if (RRuntime.isNA(data[i])) {
-                complete = RDataFactory.INCOMPLETE_VECTOR;
-            }
-            if (width < data[i].length()) {
-                width = data[i].length();
-                widthChanges++;
-            }
-        }
-        if (widthChanges > 1) {
-            addSpaces(data, width);
-        }
-        return RDataFactory.createStringVector(data, complete);
+        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
     }
 
     @Specialization
     protected RStringVector format(RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
         checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
-        if (value.getLength() == 0) {
-            return RDataFactory.createEmptyStringVector();
-        } else {
-            RStringVector result = convertToString(value);
-            if (value.getDimensions() != null) {
-                result.setDimensions(value.getDimensions());
-                result.setDimNames(value.getDimNames(attrProfiles));
-            } else {
-                result.setNames(value.getNames(attrProfiles));
-            }
-            return result;
-        }
+        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
     }
 
     // TODO: even though format's arguments are not used at this point, their processing mirrors
@@ -199,41 +118,18 @@ public abstract class Format extends RBuiltinNode {
         return ret;
     }
 
-    @TruffleBoundary
-    private static RStringVector convertToString(RAbstractDoubleVector value) {
-        String[] data = new String[value.getLength()];
-        int width = 0;
-        int widthChanges = 0;
-        boolean complete = RDataFactory.COMPLETE_VECTOR;
-        for (int i = 0; i < data.length; i++) {
-            data[i] = PrettyPrinterNode.prettyPrint(value.getDataAt(i));
-            if (RRuntime.isNA(data[i])) {
-                complete = RDataFactory.INCOMPLETE_VECTOR;
-            }
-        }
-        PrettyPrinterNode.padTrailingDecimalPointAndZeroesIfRequired(data);
-        for (int i = 0; i < data.length; i++) {
-            if (width < data[i].length()) {
-                width = data[i].length();
-                widthChanges++;
-            }
-        }
-        if (widthChanges > 1) {
-            addSpaces(data, width);
-        }
-        // vector is complete because strings are created by string builder
-        return RDataFactory.createStringVector(data, complete, value.getNames(dummyAttrProfiles));
-    }
-
     @Specialization
     protected RStringVector format(RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
         checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
-        if (value.getLength() == 0) {
-            return RDataFactory.createEmptyStringVector();
-        } else {
-            return convertToString(value);
-        }
+        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
+    }
+
+    @Specialization
+    protected RStringVector format(RAbstractComplexVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+                    RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
+        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
+        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
     }
 
     @SuppressWarnings("unused")

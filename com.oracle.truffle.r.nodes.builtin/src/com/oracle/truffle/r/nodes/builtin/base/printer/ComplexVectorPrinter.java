@@ -22,7 +22,6 @@ import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.Scien
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 
 //Transcribed from GnuR, src/main/printutils.c
 

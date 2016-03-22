@@ -52,12 +52,22 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
         array
     }
 
-    protected static class FormatMetrics {
+    public static class FormatMetrics {
+        final int originalMaxWidth;
         int maxWidth;
 
         public FormatMetrics(int maxWidth) {
             super();
+            this.originalMaxWidth = maxWidth;
             this.maxWidth = maxWidth;
+        }
+        
+        public int getOriginalMaxWidth() {
+            return originalMaxWidth;
+        }
+
+        public int getAdjustedMaxWidth() {
+            return maxWidth;
         }
 
     }
@@ -73,7 +83,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
         protected final int labwidth;
         protected final boolean quote;
         protected final PrintContext printCtx;
-        protected final PrintWriter out;
+        protected final PrettyPrintWriter out;
         protected final JobMode jobMode;
         protected final RAbstractStringVector names;
         protected final String title;
@@ -198,7 +208,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                     width = doLab(i);
                 }
                 out.printf("%" + asBlankArg(gap) + "s", "");
-                printElement(i, fm);
+                printElementAndNotify(i, fm);
                 width += w + gap;
             }
             if (nPr < n) {
@@ -252,7 +262,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                 }
                 out.println();
                 for (j = 0; j < nperline && (k = i * nperline + j) < n; j++) {
-                    printElement(k, fm);
+                    printElementAndNotify(k, fm);
                     out.printf("%" + asBlankArg(gap) + "s", "");
                 }
             }
@@ -386,7 +396,7 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
                         matrixRowLabel(rl, i, rlabw, lbloff); /* starting with an "\n" */
                         if (printij) {
                             for (j = jmin; j < jmax; j++) {
-                                printCell(offset + i + j * r, w[j]);
+                                printCellAndNotify(offset + i + j * r, w[j]);
                             }
                         }
                     }
@@ -622,6 +632,12 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
          */
         protected abstract void printElement(int i, FormatMetrics fm) throws IOException;
 
+        private void printElementAndNotify(int i, FormatMetrics fm) throws IOException {
+            out.beginElement(vector, i, fm);
+            printElement(i, fm);
+            out.endElement(vector, i, fm);
+        }
+
         /**
          * Prints the matrix cell at position (i,j).
          *
@@ -631,6 +647,12 @@ public abstract class VectorPrinter<T extends RAbstractVector> extends AbstractV
          * @throws IOException
          */
         protected abstract void printCell(int i, FormatMetrics fm) throws IOException;
+
+        private void printCellAndNotify(int i, FormatMetrics fm) throws IOException {
+            out.beginElement(vector, i, fm);
+            printCell(i, fm);
+            out.endElement(vector, i, fm);
+        }
 
         protected int matrixIndividualCellColumnWidthCorrection() {
             return 0;

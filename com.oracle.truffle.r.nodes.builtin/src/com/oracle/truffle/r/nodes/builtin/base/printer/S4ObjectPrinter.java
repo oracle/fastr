@@ -22,12 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
+import com.oracle.truffle.api.frame.Frame;
 import java.io.IOException;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -56,19 +55,16 @@ public final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
     }
 
     public static void printS4(PrintContext printCtx, Object o) {
-        RContext.getEngine().evalFunction(createShowFunction(printCtx.frame(), createShowFind()), null, o);
+        Frame frame = com.oracle.truffle.r.runtime.Utils.getActualCurrentFrame();
+        RContext.getEngine().evalFunction(createShowFunction(frame), null, o);
         // The show function prints an additional new line character. The following attribute
         // instructs the ValuePrinter.println method not to print the new line since it was
         // already printed.
         printCtx.setAttribute(DONT_PRINT_NL_ATTR, true);
     }
 
-    private static ReadVariableNode createShowFind() {
-        return ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, "show");
-    }
-
-    private static RFunction createShowFunction(VirtualFrame frame, ReadVariableNode showFind) {
-        return (RFunction) showFind.execute(frame);
+    private static RFunction createShowFunction(Frame frame) {
+        return ReadVariableNode.lookupFunction("show", frame, false);
     }
 
 }
