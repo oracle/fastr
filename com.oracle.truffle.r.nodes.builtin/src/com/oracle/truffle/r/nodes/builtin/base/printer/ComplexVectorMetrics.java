@@ -22,22 +22,29 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import java.io.IOException;
+/**
+ * The complex number formatting metrics. N.B. This class is public since it may be used in the
+ * PrettyWriter public API.
+ * 
+ * @see PrettyWriter
+ */
+public final class ComplexVectorMetrics extends FormatMetrics {
 
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RNull;
+    public final int wr;
+    public final int dr;
+    public final int er;
+    public final int wi;
+    public final int di;
+    public final int ei;
 
-final class NullPrinter extends AbstractValuePrinter<RNull> {
-
-    static NullPrinter INSTANCE = new NullPrinter();
-
-    private NullPrinter() {
-        // singleton
-    }
-
-    @Override
-    protected void printValue(RNull value, PrintContext printCtx) throws IOException {
-        printCtx.output().print(RRuntime.NULL);
+    ComplexVectorMetrics(int wr, int dr, int er, int wi, int di, int ei) {
+        super(wr + wi + 2);
+        this.wr = wr;
+        this.dr = dr;
+        this.er = er;
+        this.wi = wi;
+        this.di = di;
+        this.ei = ei;
     }
 
 }

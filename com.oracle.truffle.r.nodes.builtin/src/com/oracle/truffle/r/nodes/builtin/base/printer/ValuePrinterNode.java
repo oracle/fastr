@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
@@ -47,6 +44,7 @@ import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import java.io.IOException;
 
 @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "digits", type = RNode.class), @NodeChild(value = "quote", type = RNode.class),
                 @NodeChild(value = "naPrint", type = RNode.class), @NodeChild(value = "printGap", type = RNode.class), @NodeChild(value = "right", type = RNode.class),
@@ -98,28 +96,35 @@ public abstract class ValuePrinterNode extends RNode {
 
     public abstract Object executeString(VirtualFrame frame, Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt);
 
-    // TODO: More specializations should be added
+    public Object prettyPrint(Object v, WriterFactory wf) {
+        PrintParameters printParams = new PrintParameters();
+        printParams.setDefaults();
+        printParams.setSuppressIndexLabels(true);
+        PrintContext printCtx = PrintContext.enter(this, printParams, wf);
+        try {
+            ValuePrinters.INSTANCE.print(v, printCtx);
+            return printCtx.output().getPrintReport();
+        } catch (IOException ex) {
+            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+        } finally {
+            PrintContext.leave();
+        }
+    }
 
     @Specialization
     protected String prettyPrint(VirtualFrame frame, Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
-        // Until the new code is fully functional we have to use RBufferedWriter. In case
-        // an exception is thrown by the new code, the content accumulated in the
-        // RBufferedWriter is not printed and the old code is invoked to print the value. When
-        // the new code stabilizes the RBufferedWriter will be replaced by RWriter.
-        try (RWriter rw = new RWriter(); PrintWriter out = new PrintWriter(rw)) {
+        try {
             prettyPrint(o, new PrintParameters(digits, quote, naPrint, printGap,
-                            right, max, useSource, noOpt), out, frame);
-            out.flush();
-            // rw.commit();
+                            right, max, useSource, noOpt), RWriter::new);
             return null;
         } catch (IOException ex) {
             throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
     }
 
-    private String prettyPrint(Object o, PrintParameters printParams, PrintWriter out, VirtualFrame frame)
+    private String prettyPrint(Object o, PrintParameters printParams, WriterFactory wf)
                     throws IOException {
-        PrintContext printCtx = PrintContext.enter(this, printParams, out, frame);
+        PrintContext printCtx = PrintContext.enter(this, printParams, wf);
         try {
             prettyPrint(o, printCtx);
             return null;

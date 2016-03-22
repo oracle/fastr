@@ -72,25 +72,6 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
         }
     }
 
-    static final class ComplexVectorMetrics extends FormatMetrics {
-        public final int wr;
-        public final int dr;
-        public final int er;
-        public final int wi;
-        public final int di;
-        public final int ei;
-
-        private ComplexVectorMetrics(int wr, int dr, int er, int wi, int di, int ei) {
-            super(wr + wi + 2);
-            this.wr = wr;
-            this.dr = dr;
-            this.er = er;
-            this.wi = wi;
-            this.di = di;
-            this.ei = ei;
-        }
-    }
-
     static ComplexVectorMetrics formatComplexVector(RAbstractComplexVector x, int offs, int n, int nsmall, PrintParameters pp) {
 
         int wr;

@@ -22,28 +22,24 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import java.io.PrintWriter;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 final class PrintContext {
     private final ValuePrinterNode pn;
     private final PrintParameters params;
-    private final PrintWriter out;
+    private final PrettyPrintWriter out;
     private final Map<String, Object> attrs = new HashMap<>();
-    private final VirtualFrame frame;
 
     private static final ThreadLocal<ArrayDeque<PrintContext>> printCtxTL = new ThreadLocal<>();
 
-    private PrintContext(ValuePrinterNode printerNode, PrintParameters parameters, PrintWriter output, VirtualFrame frame) {
+    private PrintContext(ValuePrinterNode printerNode, PrintParameters parameters, PrettyPrintWriter output) {
         this.pn = printerNode;
         this.params = parameters;
         this.out = output;
-        this.frame = frame;
     }
 
     public PrintParameters parameters() {
@@ -54,11 +50,7 @@ final class PrintContext {
         return pn;
     }
 
-    public VirtualFrame frame() {
-        return frame;
-    }
-
-    public PrintWriter output() {
+    public PrettyPrintWriter output() {
         return out;
     }
 
@@ -71,38 +63,41 @@ final class PrintContext {
     }
 
     public PrintContext cloneContext() {
-        PrintContext cloned = new PrintContext(pn, params.cloneParameters(), out, frame);
+        PrintContext cloned = new PrintContext(pn, params.cloneParameters(), out);
         cloned.attrs.putAll(attrs);
         return cloned;
     }
 
-    static PrintContext enter(ValuePrinterNode printerNode, PrintParameters parameters, PrintWriter output, VirtualFrame frame) {
+    static PrintContext enter(ValuePrinterNode printerNode, PrintParameters parameters, WriterFactory wf) {
         ArrayDeque<PrintContext> ctxStack = printCtxTL.get();
         if (ctxStack == null) {
             ctxStack = new ArrayDeque<>();
             printCtxTL.set(ctxStack);
-            PrintContext ctx = new PrintContext(printerNode, parameters, output, frame);
+            PrintContext ctx = new PrintContext(printerNode, parameters, new PrettyPrintWriter(wf.createWriter()));
             ctxStack.push(ctx);
             return ctx;
         } else {
             PrintContext parentCtx = ctxStack.peek();
-            PrintContext ctx = new PrintContext(printerNode, parameters, parentCtx.output(), frame);
+            PrintContext ctx = new PrintContext(printerNode, parameters, parentCtx.output());
             ctx.attrs.putAll(parentCtx.attrs);
             ctxStack.push(ctx);
             return ctx;
         }
     }
 
-    static void leave() {
+    static PrintContext leave() {
         ArrayDeque<PrintContext> ctxStack = printCtxTL.get();
 
         RInternalError.guarantee(ctxStack != null, "No pretty-printer context stack");
         RInternalError.guarantee(!ctxStack.isEmpty(), "Pretty-printer context stack is empty");
 
-        ctxStack.pop();
+        PrintContext ctx = ctxStack.pop();
 
         if (ctxStack.isEmpty()) {
+            ctx.out.close();
             printCtxTL.remove();
         }
+
+        return ctx;
     }
 }

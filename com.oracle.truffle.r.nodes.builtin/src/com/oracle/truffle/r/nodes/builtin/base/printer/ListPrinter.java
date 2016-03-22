@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 //Transcribed from GnuR, src/main/print.c
 
+import com.oracle.truffle.api.frame.Frame;
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.canBeDoubleVector;
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.canBeIntVector;
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.canBeLogicalVector;
@@ -30,9 +31,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter.ComplexVectorMetrics;
-import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.DoubleVectorMetrics;
-import com.oracle.truffle.r.nodes.builtin.base.printer.VectorPrinter.FormatMetrics;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -275,7 +273,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 if (klass != null && klass.getLength() == 1) {
                     String ss = klass.getDataAt(0);
                     String str = snprintf(200, ".__C__%s", ss);
-                    if (ReadVariableNode.lookupAny(str, printCtx.frame(), false) != null) {
+                    Frame frame = com.oracle.truffle.r.runtime.Utils.getActualCurrentFrame();
+                    if (ReadVariableNode.lookupAny(str, frame, false) != null) {
                         className = ss;
                     }
                 }

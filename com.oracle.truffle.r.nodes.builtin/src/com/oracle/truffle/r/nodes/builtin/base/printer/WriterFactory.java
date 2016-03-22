@@ -22,22 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import java.io.IOException;
+import java.io.Writer;
 
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RNull;
-
-final class NullPrinter extends AbstractValuePrinter<RNull> {
-
-    static NullPrinter INSTANCE = new NullPrinter();
-
-    private NullPrinter() {
-        // singleton
-    }
-
-    @Override
-    protected void printValue(RNull value, PrintContext printCtx) throws IOException {
-        printCtx.output().print(RRuntime.NULL);
-    }
-
+public interface WriterFactory {
+    Writer createWriter();
 }

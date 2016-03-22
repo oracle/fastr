@@ -22,22 +22,47 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import java.io.IOException;
+import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import java.io.StringWriter;
 
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RNull;
+public class StringPrettyWriter extends StringWriter implements PrettyWriter {
 
-final class NullPrinter extends AbstractValuePrinter<RNull> {
-
-    static NullPrinter INSTANCE = new NullPrinter();
-
-    private NullPrinter() {
-        // singleton
+    @Override
+    public void begin(Object value) {
     }
 
     @Override
-    protected void printValue(RNull value, PrintContext printCtx) throws IOException {
-        printCtx.output().print(RRuntime.NULL);
+    public void end(Object value) {
+    }
+
+    @Override
+    public void beginAttributes(RAttributeStorage value) {
+    }
+
+    @Override
+    public void endAttributes(RAttributeStorage value) {
+    }
+
+    @Override
+    public void beginValue(Object value) {
+    }
+
+    @Override
+    public void endValue(Object value) {
+    }
+
+    @Override
+    public void beginElement(RAbstractVector vector, int index, FormatMetrics fm) {
+    }
+
+    @Override
+    public void endElement(RAbstractVector vector, int index, FormatMetrics fm) {
+    }
+
+    @Override
+    public String getPrintReport() {
+        return toString();
     }
 
 }

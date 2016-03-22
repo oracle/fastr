@@ -69,17 +69,6 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
         }
     }
 
-    static final class DoubleVectorMetrics extends FormatMetrics {
-        public final int d;
-        public final int e;
-
-        private DoubleVectorMetrics(int w, int d, int e) {
-            super(w);
-            this.d = d;
-            this.e = e;
-        }
-    }
-
     static DoubleVectorMetrics formatDoubleVector(RAbstractDoubleVector x, int offs, int n, int nsmall, PrintParameters pp) {
         int left;
         int right;

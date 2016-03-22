@@ -22,22 +22,29 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import java.io.IOException;
+/**
+ * The generic formatting metrics. N.B. This class is public since it is used in the PrettyWriter
+ * public API.
+ * 
+ * @see PrettyWriter
+ */
+public class FormatMetrics {
 
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RNull;
+    final int originalMaxWidth;
+    int maxWidth;
 
-final class NullPrinter extends AbstractValuePrinter<RNull> {
-
-    static NullPrinter INSTANCE = new NullPrinter();
-
-    private NullPrinter() {
-        // singleton
+    FormatMetrics(int maxWidth) {
+        super();
+        this.originalMaxWidth = maxWidth;
+        this.maxWidth = maxWidth;
     }
 
-    @Override
-    protected void printValue(RNull value, PrintContext printCtx) throws IOException {
-        printCtx.output().print(RRuntime.NULL);
+    public int getOriginalMaxWidth() {
+        return originalMaxWidth;
+    }
+
+    public int getAdjustedMaxWidth() {
+        return maxWidth;
     }
 
 }
