@@ -389,11 +389,15 @@ public class FrameFunctions {
         }
     }
 
+    private abstract static class DeoptHelper extends FrameHelper {
+        protected final PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
+
+    }
+
     @RBuiltin(name = "sys.frame", kind = INTERNAL, parameterNames = {"which"})
-    public abstract static class SysFrame extends FrameHelper {
+    public abstract static class SysFrame extends DeoptHelper {
 
         private final ConditionProfile zeroProfile = ConditionProfile.createBinaryProfile();
-        private final PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
 
         @Override
         protected final FrameAccess frameAccess() {
@@ -420,6 +424,72 @@ public class FrameFunctions {
         protected REnvironment sysFrame(VirtualFrame frame, double which) {
             return sysFrame(frame, (int) which);
         }
+    }
+
+    @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {})
+    public abstract static class SysFrames extends DeoptHelper {
+        @Override
+        protected final FrameAccess frameAccess() {
+            return FrameAccess.MATERIALIZE;
+        }
+
+        @Specialization
+        protected Object sysFrames(VirtualFrame frame) {
+            controlVisibility();
+            int depth = RArguments.getDepth(frame);
+            if (depth == 1) {
+                return RNull.instance;
+            } else {
+                RPairList result = RDataFactory.createPairList();
+                RPairList next = result;
+                for (int i = 1; i < depth; i++) {
+                    MaterializedFrame mf = getNumberedFrame(frame, i).materialize();
+                    deoptFrameNode.deoptimizeFrame(mf);
+                    next.setCar(REnvironment.frameToEnvironment(mf));
+                    if (i != depth - 1) {
+                        RPairList pl = RDataFactory.createPairList();
+                        next.setCdr(pl);
+                        next = pl;
+                    } else {
+                        next.setCdr(RNull.instance);
+                    }
+                }
+                return result;
+            }
+        }
+    }
+
+    @RBuiltin(name = "sys.calls", kind = INTERNAL, parameterNames = {})
+    public abstract static class SysCalls extends FrameHelper {
+        @Override
+        protected final FrameAccess frameAccess() {
+            return FrameAccess.READ_ONLY;
+        }
+
+        @Specialization
+        protected Object sysCalls(VirtualFrame frame) {
+            controlVisibility();
+            int depth = RArguments.getDepth(frame);
+            if (depth == 1) {
+                return RNull.instance;
+            } else {
+                RPairList result = RDataFactory.createPairList();
+                RPairList next = result;
+                for (int i = 1; i < depth; i++) {
+                    Frame f = getNumberedFrame(frame, i);
+                    next.setCar(SysCall.createCall(f));
+                    if (i != depth - 1) {
+                        RPairList pl = RDataFactory.createPairList();
+                        next.setCdr(pl);
+                        next = pl;
+                    } else {
+                        next.setCdr(RNull.instance);
+                    }
+                }
+                return result;
+            }
+        }
+
     }
 
     @RBuiltin(name = "sys.parent", kind = INTERNAL, parameterNames = {"n"})
@@ -484,22 +554,6 @@ public class FrameFunctions {
                 data[i] = i;
             }
             return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
-        }
-    }
-
-    @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {})
-    public abstract static class SysFrames extends FrameHelper {
-
-        @Override
-        protected final FrameAccess frameAccess() {
-            return FrameAccess.READ_ONLY;
-        }
-
-        @Specialization
-        protected Object sysFrames() {
-            errorProfile.enter();
-            // TODO DEOPT RPromise.deoptimizeFrame every frame that escapes it's stack here
-            throw RError.nyi(null, "sys.frames");
         }
     }
 

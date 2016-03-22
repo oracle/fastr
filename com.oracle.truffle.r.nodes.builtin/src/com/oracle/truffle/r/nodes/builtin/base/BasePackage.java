@@ -279,6 +279,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FrameFunctions.MatchCall.class, FrameFunctionsFactory.MatchCallNodeGen::create);
         add(FrameFunctions.ParentFrame.class, FrameFunctionsFactory.ParentFrameNodeGen::create);
         add(FrameFunctions.SysCall.class, FrameFunctionsFactory.SysCallNodeGen::create);
+        add(FrameFunctions.SysCalls.class, FrameFunctionsFactory.SysCallsNodeGen::create);
         add(FrameFunctions.SysFrame.class, FrameFunctionsFactory.SysFrameNodeGen::create);
         add(FrameFunctions.SysFrames.class, FrameFunctionsFactory.SysFramesNodeGen::create);
         add(FrameFunctions.SysFunction.class, FrameFunctionsFactory.SysFunctionNodeGen::create);
