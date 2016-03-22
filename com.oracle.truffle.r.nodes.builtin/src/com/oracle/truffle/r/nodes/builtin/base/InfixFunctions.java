@@ -39,7 +39,7 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.InfixFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
@@ -76,7 +76,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * packages and the deparse logic depends on them being found as builtins. See {@link RDeparse}.
  *
  */
-public class InfixEmulationFunctions {
+public class InfixFunctions {
 
     @NodeChild(value = "op")
     protected abstract static class PromiseEvaluator extends RNode {
