@@ -1342,3 +1342,11 @@ int R_check_class_etc (SEXP x, const char **valid) {
 	return (int) unimplemented("R_check_class_etc");
 }
 
+void R_PreserveObject(SEXP x) {
+	// Not applicable
+}
+
+void R_ReleaseObject(SEXP x) {
+	// Not applicable
+}
+
