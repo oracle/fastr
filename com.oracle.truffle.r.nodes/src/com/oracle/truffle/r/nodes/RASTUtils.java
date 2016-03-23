@@ -374,16 +374,6 @@ public class RASTUtils {
         }
     }
 
-    public static boolean hasBraces(RSyntaxNode node) {
-        SourceSection ss = node.getSourceSection();
-        if (ss == null || ss == RSyntaxNode.SOURCE_UNAVAILABLE) {
-            // this is statistical guess
-            return true;
-        } else {
-            return ss.getCode().startsWith("{");
-        }
-    }
-
     /**
      * Marker class for special '...' handling.
      */

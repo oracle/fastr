@@ -49,7 +49,7 @@ public class TestBuiltin_allnames extends TestBase {
         assertEval("all.names(quote(a+y+z+y*y*foo(bar/2)), functions=TRUE, max.names=10, unique=FALSE)");
         assertEval("all.names(quote(a+y+z+y*y*foo(bar/2)), functions=TRUE, max.names=2, unique=TRUE)");
         assertEval("all.names(quote(a+y+z+y*y*foo(bar/2)), functions=FALSE, max.names=10, unique=TRUE)");
-        assertEval(Ignored.ImplementationError, "all.names(quote(a+y+z+y*y*function(x=bar/2) baz(1)), functions=TRUE, max.names=10, unique=TRUE)");
+        assertEval("all.names(quote(a+y+z+y*y*function(x=bar/2) baz(1)), functions=TRUE, max.names=10, unique=TRUE)");
         assertEval("all.names(quote(a+y+z+y*y*function(x=bar/2) baz(1)), functions=TRUE, max.names=10, unique=FALSE)");
         assertEval("all.names(quote(a+y+z+y*y*function(x=bar/2) baz(1)), functions=TRUE, max.names=2, unique=TRUE)");
         assertEval("all.names(quote(a+y+z+y*y*function(x=bar/2) baz(1)), functions=FALSE, max.names=10, unique=TRUE)");
