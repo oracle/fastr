@@ -137,7 +137,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 }
                 switch (symbol) {
                     case "repeat":
-                        return WhileNode.create(source, ConstantNode.create(RRuntime.LOGICAL_TRUE), BlockNode.ensureBlock(args.get(0).value), true);
+                        return WhileNode.create(source, ConstantNode.create(RRuntime.LOGICAL_TRUE), args.get(0).value, true);
                     case "(":
                         return args.get(0).value;
                 }
@@ -148,9 +148,9 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 }
                 switch (symbol) {
                     case "while":
-                        return WhileNode.create(source, args.get(0).value, BlockNode.ensureBlock(args.get(1).value), false);
+                        return WhileNode.create(source, args.get(0).value, args.get(1).value, false);
                     case "if":
-                        return IfNode.create(source, args.get(0).value, BlockNode.ensureBlock(args.get(1).value), null);
+                        return IfNode.create(source, args.get(0).value, args.get(1).value, null);
                     case "=":
                     case "<-":
                     case ":=":
@@ -167,11 +167,11 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                         if (args.get(0).value instanceof RSyntaxLookup) {
                             String name = ((RSyntaxLookup) args.get(0).value).getIdentifier();
                             WriteVariableNode cvar = WriteVariableNode.create(source, name, null, false);
-                            return ForNode.create(source, cvar, args.get(1).value, new BlockNode(args.get(2).value.getSourceSection(), args.get(2).value));
+                            return ForNode.create(source, cvar, args.get(1).value, args.get(2).value);
                         }
                         break;
                     case "if":
-                        return IfNode.create(source, args.get(0).value, BlockNode.ensureBlock(args.get(1).value), BlockNode.ensureBlock(args.get(2).value));
+                        return IfNode.create(source, args.get(0).value, args.get(1).value, args.get(2).value);
                 }
             }
             switch (symbol) {
