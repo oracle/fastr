@@ -454,7 +454,7 @@ public final class Utils {
             if (call != null) {
                 RRuntimeASTAccess rASTAccess = RContext.getRRuntimeASTAccess();
                 String callSrc = rASTAccess.getCallerSource(rASTAccess.getSyntaxCaller(call));
-                str.append("Frame: ").append(callTarget).append(isVirtual ? " (virtual)" : "");
+                str.append("Frame(d=").append(RArguments.getDepth(unwrapped)).append("): ").append(callTarget).append(isVirtual ? " (virtual)" : "");
                 str.append(" (called as: ").append(callSrc).append(')');
             }
             if (printFrameSlots) {
