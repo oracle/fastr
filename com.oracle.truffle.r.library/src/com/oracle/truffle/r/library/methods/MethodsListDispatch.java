@@ -292,6 +292,7 @@ public class MethodsListDispatch {
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
         @Child private CastToVectorNode castToVector = CastToVectorNodeGen.create(false);
         @Child private ClassHierarchyScalarNode classHierarchyNode = ClassHierarchyScalarNodeGen.create();
+        @Child private PromiseHelperNode promiseHelper;
 
         @Specialization
         protected Object getGeneric(String name, REnvironment env, String pckg) {
@@ -306,9 +307,6 @@ public class MethodsListDispatch {
                 FrameDescriptor currentFrameDesc = currentFrame.getFrameDescriptor();
                 Object o = slotRead(currentFrame, currentFrameDesc, name);
                 if (o != null) {
-                    if (o instanceof RPromise) {
-                        o = PromiseHelperNode.evaluateSlowPath(null, (RPromise) o);
-                    }
                     RAttributable vl = (RAttributable) o;
                     boolean ok = false;
                     if (vl instanceof RFunction && vl.getAttr(attrProfiles, RRuntime.GENERIC_ATTR_KEY) != null) {
@@ -341,7 +339,13 @@ public class MethodsListDispatch {
         private static Object slotRead(MaterializedFrame currentFrame, FrameDescriptor desc, String name) {
             FrameSlot slot = desc.findFrameSlot(name);
             if (slot != null) {
-                return currentFrame.getValue(slot);
+                Object res = currentFrame.getValue(slot);
+                if (res != null) {
+                    if (res instanceof RPromise) {
+                        res = PromiseHelperNode.evaluateSlowPath(null, (RPromise) res);
+                    }
+                }
+                return res;
             } else {
                 return null;
             }
