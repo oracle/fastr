@@ -52,6 +52,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.instrument.Browser;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 
@@ -391,9 +392,8 @@ public class DebugHandling {
                  * state should be stacked to match the call stack in the recursive case.
                  */
                 enableChildren();
-                boolean brace = fdn.hasBraces();
-                if (brace) {
-                    printNode(context.getInstrumentedNode(), brace);
+                if (RSyntaxCall.isCallTo(fdn.getBody(), "{")) {
+                    printNode(context.getInstrumentedNode(), true);
                     browserInteract(context.getInstrumentedNode(), frame);
                 }
             }

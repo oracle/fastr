@@ -27,7 +27,6 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -450,11 +449,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public void serializeImpl(RSerialize.State state) {
         serializeFormals(state);
-        boolean hasBraces = checkOpenBrace(state);
-
         serializeBody(state);
-
-        checkCloseBrace(state, hasBraces);
     }
 
     /**
@@ -464,34 +459,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         state.openPairList();
         body.serialize(state);
         state.setCdr(state.closePairList());
-    }
-
-    /**
-     * Also called by {@link FunctionExpressionNode}.
-     */
-    public boolean checkOpenBrace(RSerialize.State state) {
-        boolean hasBraces = hasBraces();
-        if (hasBraces) {
-            state.openBrace();
-            state.openPairList();
-        }
-        return hasBraces;
-    }
-
-    /**
-     * Also called by {@link FunctionExpressionNode}.
-     */
-    public static void checkCloseBrace(RSerialize.State state, boolean hasBraces) {
-        if (hasBraces) {
-            if (state.isNull()) {
-                // special case of empty body "{ }"
-                state.setNull();
-            } else {
-                state.switchCdrToCar();
-            }
-            state.setCdr(state.closePairList());
-            state.setCdr(state.closePairList());
-        }
     }
 
     /**
@@ -524,39 +491,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     public boolean getInstrumented() {
         return instrumented;
-    }
-
-    /**
-     * A workaround for not representing left curly brace as a function call. We have to depend on
-     * the source section and "parse" the start of the function definition.
-     */
-    @TruffleBoundary
-    public boolean hasBraces() {
-        SourceSection src = getSourceSection();
-        if (src == null) {
-            return true; // statistically probable
-        }
-        String s = src.getCode();
-        int ix = s.indexOf('(') + 1;
-        int bdepth = 1;
-        while (ix < s.length() && bdepth > 0) {
-            char ch = s.charAt(ix);
-            if (ch == '(') {
-                bdepth++;
-            } else if (ch == ')') {
-                bdepth--;
-            }
-            ix++;
-        }
-        while (ix < s.length()) {
-            char ch = s.charAt(ix);
-            boolean whitespace = Character.isWhitespace(ch);
-            if (!whitespace) {
-                return ch == '{';
-            }
-            ix++;
-        }
-        return false;
     }
 
     @Override

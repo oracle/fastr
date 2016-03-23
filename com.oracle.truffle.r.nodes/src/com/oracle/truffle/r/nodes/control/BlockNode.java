@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -105,26 +106,14 @@ public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, 
 
     @Override
     public void serializeImpl(RSerialize.State state) {
-        /*
-         * In GnuR there are no empty statement sequences, because "{" is really a function in R, so
-         * it is represented as a LANGSXP with symbol "{" and a NULL cdr, representing the empty
-         * sequence.
-         * 
-         * The representation is a LISTSXP pairlist, where the car is the statement and the cdr is
-         * either NILSXP or a LISTSXP for the next statement. Typically the statement (car) is
-         * itself a LANGSXP pairlist but it might be a simple value, e.g. SYMSXP.
-         */
-        if (sequence.length == 0) {
-            state.setNull();
-        } else {
-            for (int i = 0; i < sequence.length; i++) {
-                state.serializeNodeSetCar(sequence[i]);
-                if (i != sequence.length - 1) {
-                    state.openPairList();
-                }
-            }
-            state.linkPairList(sequence.length);
+        state.setAsLangType();
+        state.setCarAsSymbol("{");
+
+        for (int i = 0; i < sequence.length; i++) {
+            state.openPairList(SEXPTYPE.LISTSXP);
+            state.serializeNodeSetCar(sequence[i]);
         }
+        state.linkPairList(sequence.length + 1);
     }
 
     @TruffleBoundary

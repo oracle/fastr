@@ -683,8 +683,13 @@ public class RSerialize {
                         if (RRuntime.isNA(imVal)) {
                             complete = false;
                         }
-                        data[ix] = reVal;
-                        data[ix + 1] = imVal;
+                        if (RRuntime.isNA(reVal) && RRuntime.isNA(imVal)) {
+                            data[ix] = RRuntime.COMPLEX_NA_REAL_PART;
+                            data[ix + 1] = RRuntime.COMPLEX_NA_IMAGINARY_PART;
+                        } else {
+                            data[ix] = reVal;
+                            data[ix + 1] = imVal;
+                        }
                     }
                     result = RDataFactory.createComplexVector(data, complete);
                     break;
@@ -1260,7 +1265,7 @@ public class RSerialize {
         @Override
         void writeDouble(double value) throws IOException {
             ensureSpace(8);
-            long valueBits = Double.doubleToLongBits(value);
+            long valueBits = Double.doubleToRawLongBits(value);
             buf[offset++] = (byte) (valueBits >>> 56);
             buf[offset++] = (byte) ((valueBits >> 48) & 0xff);
             buf[offset++] = (byte) ((valueBits >> 40) & 0xff);
@@ -1510,8 +1515,13 @@ public class RSerialize {
                             stream.writeInt(vec.getLength());
                             for (int i = 0; i < vec.getLength(); i++) {
                                 RComplex val = vec.getDataAt(i);
-                                stream.writeDouble(val.getRealPart());
-                                stream.writeDouble(val.getImaginaryPart());
+                                if (RRuntime.isNA(val)) {
+                                    stream.writeDouble(RRuntime.DOUBLE_NA);
+                                    stream.writeDouble(RRuntime.DOUBLE_NA);
+                                } else {
+                                    stream.writeDouble(val.getRealPart());
+                                    stream.writeDouble(val.getImaginaryPart());
+                                }
                             }
                             break;
                         }
@@ -1578,8 +1588,13 @@ public class RSerialize {
                         case FASTR_COMPLEX: {
                             RComplex value = (RComplex) obj;
                             stream.writeInt(1);
-                            stream.writeDouble(value.getRealPart());
-                            stream.writeDouble(value.getImaginaryPart());
+                            if (RRuntime.isNA(value)) {
+                                stream.writeDouble(RRuntime.DOUBLE_NA);
+                                stream.writeDouble(RRuntime.DOUBLE_NA);
+                            } else {
+                                stream.writeDouble(value.getRealPart());
+                                stream.writeDouble(value.getImaginaryPart());
+                            }
                             break;
                         }
 
@@ -1727,17 +1742,19 @@ public class RSerialize {
          * treats a {@code String} as an STRSXP.
          */
         private void writeCHARSXP(String s) throws IOException {
-            /*
-             * GnuR uses the gpbits field of an SEXP to encode CHARSXP charset bits. We obviously
-             * can't do that for a String as we have nowhere to store the value. For temporary
-             * compatibility we set the ASCII bit to allow tests that inspect the raw form of the
-             * serialized output (e.g digest) to pass
-             */
-            int flags = Flags.packFlags(SEXPTYPE.CHARSXP, ASCII_MASK, false, false, false);
-            stream.writeInt(flags);
             if (s == RRuntime.STRING_NA) {
+                int flags = Flags.packFlags(SEXPTYPE.CHARSXP, 0, false, false, false);
+                stream.writeInt(flags);
                 stream.writeInt(-1);
             } else {
+                /*
+                 * GnuR uses the gpbits field of an SEXP to encode CHARSXP charset bits. We
+                 * obviously can't do that for a String as we have nowhere to store the value. For
+                 * temporary compatibility we set the ASCII bit to allow tests that inspect the raw
+                 * form of the serialized output (e.g digest) to pass
+                 */
+                int flags = Flags.packFlags(SEXPTYPE.CHARSXP, ASCII_MASK, false, false, false);
+                stream.writeInt(flags);
                 stream.writeString(s);
             }
         }
@@ -1917,15 +1934,6 @@ public class RSerialize {
          */
         public void setCarMissing() {
             setCar(RMissing.instance);
-        }
-
-        public void openBrace() {
-            openPairList(SEXPTYPE.LANGSXP);
-            setCarAsSymbol("{");
-        }
-
-        public void closeBrace() {
-            setCar(closePairList());
         }
 
         public void setAsBuiltin(String name) {

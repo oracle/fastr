@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.control.BreakNode;
 import com.oracle.truffle.r.nodes.control.ForNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.NextNode;
+import com.oracle.truffle.r.nodes.control.ParNode;
 import com.oracle.truffle.r.nodes.control.ReplacementNode;
 import com.oracle.truffle.r.nodes.control.WhileNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
@@ -139,7 +140,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                     case "repeat":
                         return WhileNode.create(source, ConstantNode.create(RRuntime.LOGICAL_TRUE), args.get(0).value, true);
                     case "(":
-                        return args.get(0).value;
+                        return new ParNode(source, args.get(0).value.asRNode());
                 }
             } else if (args.size() == 2) {
                 // handle binary arithmetics, for the time being
