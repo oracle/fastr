@@ -34,6 +34,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.ExecutionContext;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
@@ -351,6 +352,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     @CompilationFinal private static RContext singleContext;
 
     private final Env env;
+    @CompilationFinal private final Instrumenter instrumenter;
     private final HashMap<String, TruffleObject> exportedSymbols = new HashMap<>();
 
     /**
@@ -376,7 +378,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
                         stateLazyDBCache, stateTraceHandling};
     }
 
-    private RContext(Env env, boolean isInitial) {
+    private RContext(Env env, Instrumenter instrumenter, boolean isInitial) {
         ContextInfo initialInfo = (ContextInfo) env.importSymbol(ContextInfo.GLOBAL_SYMBOL);
         if (initialInfo == null) {
             this.info = ContextInfo.create(RCmdOptions.parseArguments(Client.R, new String[0]), ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env.in(), env.out()));
@@ -399,6 +401,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         }
 
         this.env = env;
+        this.instrumenter = instrumenter;
         if (info.getConsoleHandler() == null) {
             throw Utils.fail("no console handler set");
         }
@@ -461,8 +464,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      *
      * @param isInitial {@code true} iff this is the initial context
      */
-    public static RContext create(Env env, boolean isInitial) {
-        return new RContext(env, isInitial);
+    public static RContext create(Env env, Instrumenter instrumenter, boolean isInitial) {
+        return new RContext(env, instrumenter, isInitial);
     }
 
     /**
@@ -488,6 +491,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public Env getEnv() {
         return env;
+    }
+
+    public Instrumenter getInstrumenter() {
+        return instrumenter;
     }
 
     public ContextKind getKind() {

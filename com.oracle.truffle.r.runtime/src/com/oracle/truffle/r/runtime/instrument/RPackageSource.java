@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -97,19 +98,21 @@ public class RPackageSource {
     private static Map<String, String> pathToNameMap;
 
     public static void initialize() {
-        Path indexPath = indexPath();
-        try {
-            List<String> lines = Files.readAllLines(indexPath);
-            checkCreateMaps();
-            Path dirPath = dirPath();
-            for (String line : lines) {
-                String[] parts = line.split(",");
-                String canonPath = dirPath.resolve(parts[PKG]).resolve(parts[RPATH]).toString();
-                indexMap.put(parts[FINGERPRINT], new FunctionInfo(parts[FINGERPRINT], parts[PKG], canonPath));
-                pathToNameMap.put(canonPath, parts[FNAME]);
+        if (FastROptions.LoadPkgSourcesIndex.getBooleanValue()) {
+            Path indexPath = indexPath();
+            try {
+                List<String> lines = Files.readAllLines(indexPath);
+                checkCreateMaps();
+                Path dirPath = dirPath();
+                for (String line : lines) {
+                    String[] parts = line.split(",");
+                    String canonPath = dirPath.resolve(parts[PKG]).resolve(parts[RPATH]).toString();
+                    indexMap.put(parts[FINGERPRINT], new FunctionInfo(parts[FINGERPRINT], parts[PKG], canonPath));
+                    pathToNameMap.put(canonPath, parts[FNAME]);
+                }
+            } catch (IOException ex) {
+                // no index, not a problem
             }
-        } catch (IOException ex) {
-            // no index, not a problem
         }
     }
 

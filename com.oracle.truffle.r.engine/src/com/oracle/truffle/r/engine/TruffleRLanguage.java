@@ -35,7 +35,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
-import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RError;
@@ -49,6 +48,7 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.instrument.RPackageSource;
 
 /**
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
@@ -59,8 +59,8 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     /**
      * The choice of {@link RFFIFactory} is made statically so that it is bound into an AOT-compiled
-     * VM. The decision is node made directly in {@link RFFIFactory} to avoid some project
-     * dependencies that cause build problems.
+     * VM. The decision is made directly in {@link RFFIFactory} to avoid some project dependencies
+     * that cause build problems.
      */
     private static void initialize() {
         try {
@@ -70,6 +70,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             RAccuracyInfo.initialize();
             RVersionInfo.initialize();
             TempPathName.initialize();
+            RPackageSource.initialize();
             RContext.initialize(new RASTBuilder(), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance());
         } catch (Throwable t) {
             System.out.println("error during engine initialization:");
@@ -100,10 +101,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             initialize();
             initialized = true;
         }
-        if (initialContext) {
-            RInstrumentation.initialize(env.lookup(Instrumenter.class));
-        }
-        RContext result = RContext.create(env, initialContext);
+        RContext result = RContext.create(env, env.lookup(Instrumenter.class), initialContext);
         return result;
     }
 

@@ -66,6 +66,7 @@ import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
+import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.parser.RParser;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
@@ -145,6 +146,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public void activate(REnvironment.ContextStateImpl stateREnvironment) {
+        RInstrumentation.activate(context);
         this.globalFrame = stateREnvironment.getGlobalFrame();
         this.startTime = System.nanoTime();
         if (context.getKind() == RContext.ContextKind.SHARE_NOTHING) {

@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.instrument.RPackageSource;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 
@@ -125,11 +124,9 @@ public class RInstrumentation {
         }
     }
 
-    @CompilationFinal private static Instrumenter instrumenter;
-
     /**
      * The function names that were requested to be used in implicit {@code debug(f)} calls, when
-     * those functions are defined.
+     * those functions are defined. Global to all contexts.
      */
     @CompilationFinal private static String[] debugFunctionNames;
 
@@ -247,14 +244,10 @@ public class RInstrumentation {
     }
 
     /**
-     * Initialize the instrumentation system.
-     *
+     * Activate the instrumentation system for {@code context}. Currently this simply checks for the
+     * global (command-line) options for tracing and timing. They are applied to every context.
      */
-    public static void initialize(Instrumenter instrumenterArg) {
-        instrumenter = instrumenterArg;
-        if (FastROptions.LoadPkgSourcesIndex.getBooleanValue()) {
-            RPackageSource.initialize();
-        }
+    public static void activate(@SuppressWarnings("unused") RContext context) {
         String rdebugValue = FastROptions.Rdebug.getStringValue();
         if (rdebugValue != null) {
             debugFunctionNames = rdebugValue.split(",");
@@ -264,11 +257,12 @@ public class RInstrumentation {
             REntryCounters.FunctionListener.installCounters();
             RNodeTimer.StatementListener.installTimers();
         }
+        // Check for function tracing
         RContext.getRRuntimeASTAccess().traceAllFunctions();
     }
 
     public static Instrumenter getInstrumenter() {
-        return instrumenter;
+        return RContext.getInstance().getInstrumenter();
     }
 
     public static void checkDebugRequested(RFunction func) {
