@@ -50,7 +50,8 @@ public abstract class Quit extends RInvisibleBuiltinNode {
     protected Object doQuit(String saveArg, int status, byte runLast) {
         controlVisibility();
         if (BrowserInteractNode.inBrowser()) {
-            throw RError.error(this, RError.Message.BROWSER_QUIT);
+            RError.warning(this, RError.Message.BROWSER_QUIT);
+            return null;
         }
         String save = saveArg;
         // Quit does not divert its output to sink
