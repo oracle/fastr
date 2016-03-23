@@ -351,7 +351,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     @CompilationFinal private static RContext singleContext;
 
     private final Env env;
-    private final RInstrumentFactory instrumentFactory;
     private final HashMap<String, TruffleObject> exportedSymbols = new HashMap<>();
 
     /**
@@ -377,7 +376,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
                         stateLazyDBCache, stateTraceHandling};
     }
 
-    private RContext(Env env, RInstrumentFactory instrumentFactory, boolean isInitial) {
+    private RContext(Env env, boolean isInitial) {
         ContextInfo initialInfo = (ContextInfo) env.importSymbol(ContextInfo.GLOBAL_SYMBOL);
         if (initialInfo == null) {
             this.info = ContextInfo.create(RCmdOptions.parseArguments(Client.R, new String[0]), ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env.in(), env.out()));
@@ -400,7 +399,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         }
 
         this.env = env;
-        this.instrumentFactory = instrumentFactory;
         if (info.getConsoleHandler() == null) {
             throw Utils.fail("no console handler set");
         }
@@ -463,8 +461,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      *
      * @param isInitial {@code true} iff this is the initial context
      */
-    public static RContext create(Env env, RInstrumentFactory instrumentFactory, boolean isInitial) {
-        return new RContext(env, instrumentFactory, isInitial);
+    public static RContext create(Env env, boolean isInitial) {
+        return new RContext(env, isInitial);
     }
 
     /**
@@ -490,10 +488,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public Env getEnv() {
         return env;
-    }
-
-    public RInstrumentFactory getInstrumentFactory() {
-        return instrumentFactory;
     }
 
     public ContextKind getKind() {

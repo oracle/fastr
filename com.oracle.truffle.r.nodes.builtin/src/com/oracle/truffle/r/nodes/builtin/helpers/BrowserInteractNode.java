@@ -20,45 +20,52 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.instrument;
+package com.oracle.truffle.r.nodes.builtin.helpers;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameInstance;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.nodes.builtin.base.FrameFunctions.SysCalls;
+import com.oracle.truffle.r.nodes.builtin.base.FrameFunctionsFactory.SysCallsNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
+import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.ReturnException;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * The interactive component of the {@code browser} function.
  */
-public class Browser {
+public abstract class BrowserInteractNode extends RNode {
 
-    public enum ExitMode {
-        STEP,
-        NEXT,
-        CONTINUE,
-        FINISH
-    }
+    public static final int STEP = 0;
+    public static final int NEXT = 1;
+    public static final int CONTINUE = 2;
+    public static final int FINISH = 3;
 
     private static final String BROWSER_SOURCE = "<browser_input>";
     private static String lastEmptyLineCommand = "n";
 
-    @TruffleBoundary
-    public static ExitMode interact(MaterializedFrame frame) {
+    @Child private SysCalls sysCalls;
+    @Child private PrettyPrinterNode printer;
+
+    @Specialization
+    protected int interact(VirtualFrame frame) {
+        CompilerDirectives.transferToInterpreter();
+        MaterializedFrame mFrame = frame.materialize();
         ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
         String savedPrompt = ch.getPrompt();
         ch.setPrompt(browserPrompt(RArguments.getDepth(frame)));
-        ExitMode exitMode = ExitMode.NEXT;
+        int exitMode = NEXT;
         try {
             LW: while (true) {
                 String input = ch.readLine().trim();
@@ -71,45 +78,50 @@ public class Browser {
                 switch (input) {
                     case "c":
                     case "cont":
-                        exitMode = ExitMode.CONTINUE;
+                        exitMode = CONTINUE;
                         break LW;
                     case "n":
-                        exitMode = ExitMode.NEXT;
+                        exitMode = NEXT;
                         lastEmptyLineCommand = "n";
                         break LW;
                     case "s":
-                        exitMode = ExitMode.STEP;
+                        exitMode = STEP;
                         lastEmptyLineCommand = "s";
                         break LW;
                     case "f":
-                        exitMode = ExitMode.FINISH;
+                        exitMode = FINISH;
                         break LW;
                     case "Q":
                         throw new BrowserQuitException();
                     case "where": {
-                        int ix = RArguments.getDepth(frame);
-                        Frame stackFrame = frame;
-                        do {
-                            RCaller caller = RArguments.getCall(stackFrame);
-                            String callString;
-                            if (caller == null) {
-                                // FIXME should not happen, seems S4-related
-                                callString = "<no source>";
-                            } else {
-                                callString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
+                        /*
+                         * This is experimental and perhaps too indirect, but by using syscalls and
+                         * the printer we avoid repeating the logic for stack traversal and
+                         * printing. TODO print source info where available as per GnuR
+                         */
+                        if (sysCalls == null) {
+                            sysCalls = insert(SysCallsNodeGen.create(new RNode[0], null, null));
+                            sysCalls.setIncludeTop();
+                            printer = insert(PrettyPrinterNodeGen.create(null, null, null, null, false));
+                        }
+                        if (RArguments.getDepth(mFrame) > 1) {
+                            RPairList stack = (RPairList) sysCalls.execute(frame);
+                            int length = stack.getLength();
+                            for (int i = length - 1; i >= 0; i--) {
+                                Object element = stack.getDataAtAsObject(i);
+                                String call = (String) printer.executeString(element, null, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE);
+                                ch.printf("where %d: %s%n", length - i, call);
                             }
-                            ch.println(callString);
-                            ix--;
-                        } while (ix > 0 && (stackFrame = Utils.getStackFrame(FrameInstance.FrameAccess.READ_ONLY, ix)) != null);
+                        }
                         ch.println("");
                         break;
                     }
 
                     default:
                         try {
-                            RContext.getEngine().parseAndEval(Source.fromText(input, BROWSER_SOURCE), frame, true);
+                            RContext.getEngine().parseAndEval(Source.fromText(input, BROWSER_SOURCE), mFrame, true);
                         } catch (ReturnException e) {
-                            exitMode = ExitMode.NEXT;
+                            exitMode = NEXT;
                             break LW;
                         } catch (ParseException e) {
                             throw e.throwAsRError();

@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.instrumentation.debug;
+package com.oracle.truffle.r.nodes.builtin.helpers;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,6 +36,7 @@ import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
@@ -51,7 +52,6 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.instrument.Browser;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
@@ -206,6 +206,8 @@ public class DebugHandling {
         @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("debug event disabled state unchanged");
 
+        @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
+
         protected DebugEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition) {
             this.text = text;
             this.condition = condition;
@@ -244,11 +246,11 @@ public class DebugHandling {
         }
 
         protected void browserInteract(Node node, VirtualFrame frame) {
-            Browser.ExitMode exitMode = Browser.interact(frame.materialize());
+            int exitMode = (int) browserInteractNode.execute(frame);
             switch (exitMode) {
-                case NEXT:
+                case BrowserInteractNode.NEXT:
                     break;
-                case STEP:
+                case BrowserInteractNode.STEP:
                     if (this instanceof StatementEventListener) {
                         /*
                          * We have no idea what function will be called but we have to stop there
@@ -261,12 +263,12 @@ public class DebugHandling {
                                         new StepIntoInstrumentListener(listenerMap.get(functionDefinitionNode.getUID())));
                     }
                     break;
-                case CONTINUE:
+                case BrowserInteractNode.CONTINUE:
                     // Have to disable
                     doContinue();
                     clearStepInstrument();
                     break;
-                case FINISH:
+                case BrowserInteractNode.FINISH:
                     // If in loop, continue to loop end, else act like CONTINUE
                     AbstractLoopNode loopNode = inLoop(node);
                     if (loopNode != null) {

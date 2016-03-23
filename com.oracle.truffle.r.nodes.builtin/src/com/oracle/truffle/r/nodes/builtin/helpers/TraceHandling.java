@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.instrumentation.trace;
+package com.oracle.truffle.r.nodes.builtin.helpers;
 
 import java.io.FileWriter;
 import java.io.IOException;

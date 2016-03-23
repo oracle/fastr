@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -461,6 +462,9 @@ public class FrameFunctions {
 
     @RBuiltin(name = "sys.calls", kind = INTERNAL, parameterNames = {})
     public abstract static class SysCalls extends FrameHelper {
+
+        @CompilationFinal private boolean includeTop;
+
         @Override
         protected final FrameAccess frameAccess() {
             return FrameAccess.READ_ONLY;
@@ -475,10 +479,11 @@ public class FrameFunctions {
             } else {
                 RPairList result = RDataFactory.createPairList();
                 RPairList next = result;
-                for (int i = 1; i < depth; i++) {
+                int rdepth = includeTop ? depth + 1 : depth;
+                for (int i = 1; i < rdepth; i++) {
                     Frame f = getNumberedFrame(frame, i);
                     next.setCar(SysCall.createCall(f));
-                    if (i != depth - 1) {
+                    if (i != rdepth - 1) {
                         RPairList pl = RDataFactory.createPairList();
                         next.setCdr(pl);
                         next = pl;
@@ -488,6 +493,13 @@ public class FrameFunctions {
                 }
                 return result;
             }
+        }
+
+        /**
+         * For debug use, includes the top frame.
+         */
+        public void setIncludeTop() {
+            includeTop = true;
         }
 
     }

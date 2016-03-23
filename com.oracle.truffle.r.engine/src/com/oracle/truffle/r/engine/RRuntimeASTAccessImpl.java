@@ -40,6 +40,8 @@ import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
+import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
+import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
@@ -47,7 +49,6 @@ import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.instrumentation.debug.DebugHandling;
 import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -578,5 +579,21 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public boolean isFunctionDefinitionNode(Node node) {
         return node instanceof FunctionDefinitionNode;
+    }
+
+    @Override
+    public void traceAllFunctions() {
+        TraceHandling.traceAllFunctions();
+    }
+
+    @Override
+    public void enableStatementTrace(RFunction func, RSyntaxNode tracerNode) {
+        TraceHandling.enableStatementTrace(func, tracerNode);
+    }
+
+    @Override
+    public void enableDebug(RFunction func) {
+        DebugHandling.enableDebug(func, "", RNull.instance, false);
+
     }
 }

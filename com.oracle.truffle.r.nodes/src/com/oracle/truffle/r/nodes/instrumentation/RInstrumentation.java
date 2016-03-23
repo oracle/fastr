@@ -33,13 +33,11 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
-import com.oracle.truffle.r.nodes.instrumentation.debug.DebugHandling;
-import com.oracle.truffle.r.nodes.instrumentation.trace.TraceHandling;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RPerfStats;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -141,7 +139,7 @@ public class RInstrumentation {
      *
      * @param fdn
      */
-    static void registerFunctionDefinition(FunctionDefinitionNode fdn) {
+    public static void registerFunctionDefinition(FunctionDefinitionNode fdn) {
         fixupTags(fdn);
         // For PerfStats we need to record the info on fdn for the report
         if (functionMap != null) {
@@ -266,19 +264,19 @@ public class RInstrumentation {
             REntryCounters.FunctionListener.installCounters();
             RNodeTimer.StatementListener.installTimers();
         }
-        TraceHandling.traceAllFunctions();
+        RContext.getRRuntimeASTAccess().traceAllFunctions();
     }
 
     public static Instrumenter getInstrumenter() {
         return instrumenter;
     }
 
-    static void checkDebugRequested(RFunction func) {
+    public static void checkDebugRequested(RFunction func) {
         if (debugFunctionNames != null) {
             FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
             for (String debugFunctionName : debugFunctionNames) {
                 if (debugFunctionName.equals(fdn.toString())) {
-                    DebugHandling.enableDebug(func, "", RNull.instance, false);
+                    RContext.getRRuntimeASTAccess().enableDebug(func);
                 }
             }
         }

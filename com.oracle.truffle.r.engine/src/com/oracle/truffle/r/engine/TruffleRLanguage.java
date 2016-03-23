@@ -30,11 +30,12 @@ import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrument.Visualizer;
 import com.oracle.truffle.api.instrument.WrapperNode;
+import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
-import com.oracle.truffle.r.nodes.instrumentation.NewInstrumentFactory;
+import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RError;
@@ -93,14 +94,16 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected RContext createContext(Env env) {
-        // Currently using env.instrumenter as "initialized" flag
         boolean initialContext = !initialized;
         if (!initialized) {
             FastROptions.initialize();
             initialize();
             initialized = true;
         }
-        RContext result = RContext.create(env, new NewInstrumentFactory(env), initialContext);
+        if (initialContext) {
+            RInstrumentation.initialize(env.lookup(Instrumenter.class));
+        }
+        RContext result = RContext.create(env, initialContext);
         return result;
     }
 

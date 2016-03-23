@@ -26,8 +26,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.instrumentation.RNodeTimer;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -39,9 +39,7 @@ public class FastRFunctionTimer {
         @TruffleBoundary
         protected RNull createFunctionTimer(RFunction function) {
             if (!function.isBuiltin()) {
-                if (!RContext.getInstance().getInstrumentFactory().installFunctionTimer(function)) {
-                    throw RError.error(this, RError.Message.GENERIC, "failed to apply timer, instrumention disabled?");
-                }
+                RNodeTimer.StatementListener.installTimer(function);
             }
             return RNull.instance;
         }
@@ -58,7 +56,7 @@ public class FastRFunctionTimer {
         @TruffleBoundary
         protected Object getFunctionTimer(RFunction function, RAbstractStringVector scale) {
             if (!function.isBuiltin()) {
-                long timeInfo = RContext.getInstance().getInstrumentFactory().getFunctionTime(function);
+                long timeInfo = RNodeTimer.StatementListener.findTimer(function);
                 if (timeInfo < 0) {
                     throw RError.error(this, RError.Message.GENERIC, "no associated timer");
                 } else {

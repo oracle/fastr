@@ -26,9 +26,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.nodes.instrumentation.trace.TraceHandling;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -50,7 +50,7 @@ public class FastRTrace {
             } else {
                 throw RError.error(this, RError.Message.GENERIC, "tracer is unexpected type");
             }
-            TraceHandling.enableStatementTrace(what, tracerNode);
+            RContext.getRRuntimeASTAccess().enableStatementTrace(what, tracerNode);
             // supposed to return the function name
             return RNull.instance;
         }

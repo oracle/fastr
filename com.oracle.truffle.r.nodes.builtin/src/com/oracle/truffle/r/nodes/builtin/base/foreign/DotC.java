@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -72,7 +73,7 @@ public abstract class DotC extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+    protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding) {
         controlVisibility();
         long address = getAddressFromSymbolInfo(frame, symbol);
         String name = getNameFromSymbolInfo(frame, symbol);
@@ -81,10 +82,11 @@ public abstract class DotC extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RList c(String f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding, //
+    protected RList c(RAbstractStringVector f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackageObj, RMissing encoding, //
                     @Cached("create()") BranchProfile errorProfile) {
         controlVisibility();
-        SymbolInfo symbolInfo = DLL.findSymbolInfo(f, null);
+        String rPackage = RRuntime.asString(rPackageObj);
+        SymbolInfo symbolInfo = DLL.findSymbolInfo(f.getDataAt(0), rPackage);
         if (symbolInfo == null) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);

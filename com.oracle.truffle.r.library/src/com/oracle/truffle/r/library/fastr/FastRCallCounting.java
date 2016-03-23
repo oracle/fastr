@@ -26,8 +26,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.instrumentation.REntryCounters;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -38,9 +38,7 @@ public class FastRCallCounting {
         @TruffleBoundary
         protected RNull createCallCounter(RFunction function) {
             if (!function.isBuiltin()) {
-                if (!RContext.getInstance().getInstrumentFactory().installCounter(function)) {
-                    throw RError.error(this, RError.Message.GENERIC, "failed to apply counter, instrumention disabled?");
-                }
+                REntryCounters.FunctionListener.installCounter(function);
             }
             return RNull.instance;
         }
@@ -57,7 +55,7 @@ public class FastRCallCounting {
         @TruffleBoundary
         protected Object getCallCount(RFunction function) {
             if (!function.isBuiltin()) {
-                int entryCount = RContext.getInstance().getInstrumentFactory().getCounter(function);
+                int entryCount = REntryCounters.FunctionListener.findCounter(function).getEnterCount();
                 if (entryCount < 0) {
                     throw RError.error(this, RError.Message.GENERIC, "no associated counter");
                 } else {
