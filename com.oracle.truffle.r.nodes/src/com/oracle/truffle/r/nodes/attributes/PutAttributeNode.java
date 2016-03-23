@@ -62,13 +62,13 @@ public abstract class PutAttributeNode extends RBaseNode {
          * The length check is against names.length instead of size, so that the check folds into
          * the array bounds check.
          */
-        return index != -1 && attr.getNames().length > index && attr.getNames()[index] == name;
+        return index != -1 && attr.size() > index && attr.getNameAtIndex(index) == name;
     }
 
     @Specialization(limit = "1", guards = "nameMatches(attr, index)")
     protected void putCached(RAttributes attr, Object value, //
                     @Cached("attr.find(name)") int index) {
-        attr.getValues()[index] = value;
+        attr.setValueAtIndex(index, value);
     }
 
     @Specialization(limit = "1", guards = "cachedSize == attr.size()")
@@ -78,21 +78,20 @@ public abstract class PutAttributeNode extends RBaseNode {
                     @Cached("create()") BranchProfile foundProfile, //
                     @Cached("create()") BranchProfile notFoundProfile, //
                     @Cached("create()") BranchProfile resizeProfile) {
-        String[] names = attr.getNames();
         for (int i = 0; i < cachedSize; i++) {
-            if (names[i] == name) {
+            if (attr.getNameAtIndex(i) == name) {
                 foundProfile.enter();
-                attr.getValues()[i] = value;
+                attr.setValueAtIndex(i, value);
                 return;
             }
         }
         notFoundProfile.enter();
-        if (attr.getNames().length == cachedSize) {
+        if (attr.size() == cachedSize) {
             resizeProfile.enter();
             attr.ensureFreeSpace();
         }
-        attr.getNames()[cachedSize] = name;
-        attr.getValues()[cachedSize] = value;
+        attr.setNameAtIndex(cachedSize, name);
+        attr.setValueAtIndex(cachedSize, value);
         attr.setSize(cachedSize + 1);
     }
 
