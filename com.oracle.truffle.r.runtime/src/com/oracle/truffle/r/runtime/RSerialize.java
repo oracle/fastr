@@ -60,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.OptType;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RScalar;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -877,11 +878,19 @@ public class RSerialize {
                 RSymbol tagSym = (RSymbol) pl.getTag();
                 String tag = tagSym.getName().intern();
                 // this may convert a plain vector to a data.frame or factor
+                Object attrValue = pl.car();
+                if (attrValue instanceof RShareable && ((RShareable) attrValue).isTemporary()) {
+                    if (FastROptions.NewStateTransition.getBooleanValue()) {
+                        ((RShareable) attrValue).incRefCount();
+                    } else {
+                        ((RShareable) attrValue).markNonTemporary();
+                    }
+                }
                 if (result instanceof RVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
-                    RStringVector classes = (RStringVector) pl.car();
+                    RStringVector classes = (RStringVector) attrValue;
                     result = ((RVector) result).setClassAttr(classes, false);
                 } else {
-                    rAttributable.setAttr(tag, pl.car());
+                    rAttributable.setAttr(tag, attrValue);
                 }
                 Object cdr = pl.cdr();
                 if (cdr instanceof RNull) {

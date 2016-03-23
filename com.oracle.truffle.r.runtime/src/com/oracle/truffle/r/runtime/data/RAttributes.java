@@ -124,7 +124,9 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
             pos = size++;
             names[pos] = name;
         }
-        assert value == null || !(value instanceof RShareable) || !((RShareable) value).isTemporary();
+        // TODO: this assertion should hold in general
+        // assert value == null || !(value instanceof RShareable) || !((RShareable)
+        // value).isTemporary();
         values[pos] = value;
         if (statsProfile.profile(stats != null)) {
             stats.update(this);
@@ -169,7 +171,8 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
     }
 
     public void setValueAtIndex(int i, Object v) {
-        assert v == null || !(v instanceof RShareable) || !((RShareable) v).isTemporary();
+        // TODO: this assertion should hold in general
+        // assert v == null || !(v instanceof RShareable) || !((RShareable) v).isTemporary();
         values[i] = v;
     }
 
