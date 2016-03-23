@@ -31,4 +31,9 @@ public class TestInteractiveDebug extends TestBase {
     public void simple() {
         assertEval("f <- function(x) {\n  t <- x + 1\n  print(t)\n  t}\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn");
     }
+
+    @Test
+    public void noBracket() {
+        assertEval("f <- function(x) print(x)\ndebug(f)\nf(5)\nx\nn\n");
+    }
 }

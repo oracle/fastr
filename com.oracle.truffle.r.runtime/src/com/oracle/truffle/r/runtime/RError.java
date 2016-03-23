@@ -667,7 +667,8 @@ public final class RError extends RuntimeException {
         NON_LANG_ASSIGNMENT_TARGET("target of assignment expands to non-language object"),
         INVALID_LARGE_NA_VALUE("invalid '%s' value (too large or NA)"),
         INVALID_NEGATIVE_VALUE("invalid '%s' value (< 0)"),
-        POSITIVE_LENGTH("'%s' must have positive length");
+        POSITIVE_LENGTH("'%s' must have positive length"),
+        BROWSER_QUIT("cannot quit from browser");
 
         public final String message;
         final boolean hasArgs;

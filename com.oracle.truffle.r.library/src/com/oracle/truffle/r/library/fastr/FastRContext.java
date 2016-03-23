@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
@@ -97,7 +98,7 @@ public class FastRContext {
             RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
             for (int i = 0; i < threads.length; i++) {
                 ContextInfo info = checkContext(contexts.getDataAt(i), this);
-                threads[i] = new RContext.EvalThread(info, Source.fromText(exprs.getDataAt(i % threads.length), "<context_eval>").withMimeType(RRuntime.R_APP_MIME));
+                threads[i] = new RContext.EvalThread(info, Source.fromText(exprs.getDataAt(i % threads.length), RInternalSourceDescriptions.CONTEXT_EVAL).withMimeType(RRuntime.R_APP_MIME));
             }
             for (int i = 0; i < threads.length; i++) {
                 threads[i].start();
@@ -142,7 +143,7 @@ public class FastRContext {
                 RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
                 for (int i = 0; i < threads.length; i++) {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
-                    threads[i] = new RContext.EvalThread(info, Source.fromText(exprs.getDataAt(i % threads.length), "<context_eval>").withMimeType(RRuntime.R_APP_MIME));
+                    threads[i] = new RContext.EvalThread(info, Source.fromText(exprs.getDataAt(i % threads.length), RInternalSourceDescriptions.CONTEXT_EVAL).withMimeType(RRuntime.R_APP_MIME));
                 }
                 for (int i = 0; i < threads.length; i++) {
                     threads[i].start();
@@ -160,7 +161,7 @@ public class FastRContext {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
                     PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
                     try {
-                        Source source = Source.fromText(exprs.getDataAt(i % exprs.getLength()), "<eval>").withMimeType(RRuntime.R_APP_MIME);
+                        Source source = Source.fromText(exprs.getDataAt(i % exprs.getLength()), RInternalSourceDescriptions.CONTEXT_EVAL).withMimeType(RRuntime.R_APP_MIME);
                         PolyglotEngine.Value resultValue = vm.eval(source);
                         results[i] = RContext.EvalThread.createEvalResult(resultValue);
                     } catch (ParseException e) {

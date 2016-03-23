@@ -59,6 +59,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
@@ -488,7 +489,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         RSyntaxNode sn = (RSyntaxNode) rl.getRep();
         SourceSection ss = sn.getSourceSection();
         if (ss == null) {
-            return "<no source>";
+            return RInternalSourceDescriptions.NO_SOURCE;
         } else {
             String code = ss.getCode();
             int pos = code.indexOf('{');

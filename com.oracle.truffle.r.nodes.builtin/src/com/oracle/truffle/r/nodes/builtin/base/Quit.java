@@ -28,8 +28,10 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -47,6 +49,9 @@ public abstract class Quit extends RInvisibleBuiltinNode {
     @TruffleBoundary
     protected Object doQuit(String saveArg, int status, byte runLast) {
         controlVisibility();
+        if (BrowserInteractNode.inBrowser()) {
+            throw RError.error(this, RError.Message.BROWSER_QUIT);
+        }
         String save = saveArg;
         // Quit does not divert its output to sink
         ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();

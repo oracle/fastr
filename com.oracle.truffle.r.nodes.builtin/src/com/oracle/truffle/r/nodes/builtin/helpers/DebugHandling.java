@@ -47,12 +47,14 @@ import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 
@@ -387,17 +389,14 @@ public class DebugHandling {
             if (!disabled()) {
                 print("debugging in: ", false);
                 printCall(frame);
-                FunctionDefinitionNode fdn = (FunctionDefinitionNode) RArguments.getFunction(frame).getRootNode();
                 /*
                  * If this is a recursive call, then returnCleanup will not have happened, so we
                  * enable our child listeners unconditionally. TODO It is possible that the enabled
                  * state should be stacked to match the call stack in the recursive case.
                  */
                 enableChildren();
-                if (RSyntaxCall.isCallTo(fdn.getBody(), "{")) {
-                    printNode(context.getInstrumentedNode(), true);
-                    browserInteract(context.getInstrumentedNode(), frame);
-                }
+                printNode(context.getInstrumentedNode(), true);
+                browserInteract(context.getInstrumentedNode(), frame);
             }
         }
 
@@ -435,25 +434,28 @@ public class DebugHandling {
         }
     }
 
-    private static void printNode(Node node, boolean curly) {
+    private static void printNode(Node node, boolean startFunction) {
         ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
+        /*
+         * N.B. It would seem that GnuR does a deparse that because, e.g., a function that ends with
+         * } without a preceding newline prints with one and indentation is standardized.
+         */
         RDeparse.State state = RDeparse.State.createPrintableState();
         RBaseNode rNode = (RBaseNode) node;
         rNode.deparse(state);
-        SourceSection source = rNode.asRSyntaxNode().getSourceSection();
-        if (source == null) {
+        boolean curly = RSyntaxCall.isCallTo((RSyntaxElement) node, "{");
+
+        if (startFunction && !curly) {
             consoleHandler.print("debug: ");
         } else {
-            consoleHandler.print("debug at #" + source.getStartLine() + ": ");
-        }
-        boolean printCurly = curly && !state.toString().startsWith("{");
-        if (printCurly) {
-            consoleHandler.println("{");
+            SourceSection source = ((RBaseNode) node).asRSyntaxNode().getSourceSection();
+            String path = source.getSource().getPath();
+            if (path == null || RInternalSourceDescriptions.isInternal(path)) {
+                path = "";
+            }
+            consoleHandler.print("debug at " + path + "#" + source.getStartLine() + ": ");
         }
         consoleHandler.print(state.toString());
-        if (printCurly) {
-            consoleHandler.print("}");
-        }
         consoleHandler.print("\n");
     }
 

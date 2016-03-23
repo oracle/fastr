@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
@@ -191,6 +192,11 @@ public abstract class Parse extends RBuiltinNode {
                 String urlFileName = RRuntime.asString(srcFileEnv.get("filename"));
                 assert urlFileName != null;
                 String fileName = ConnectionSupport.removeFileURLPrefix(urlFileName);
+                /*
+                 * N.B. GnuR compatibility problem: Truffle Source does not handle ~ in pathnames
+                 * but GnuR does not appear to do tilde expansion
+                 */
+                fileName = Utils.tildeExpand(fileName);
                 File fnf = new File(fileName);
                 String path = null;
                 if (!fnf.isAbsolute()) {

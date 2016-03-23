@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.base.FrameFunctions.SysCalls;
 import com.oracle.truffle.r.nodes.builtin.base.FrameFunctionsFactory.SysCallsNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.Quit;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -44,6 +45,9 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * The interactive component of the {@code browser} function.
+ *
+ * TODO GnuR does not allow quit() from the browser. This really needs to be checked in the quit
+ * builtin somehow.
  */
 public abstract class BrowserInteractNode extends RNode {
 
@@ -55,8 +59,18 @@ public abstract class BrowserInteractNode extends RNode {
     private static final String BROWSER_SOURCE = "<browser_input>";
     private static String lastEmptyLineCommand = "n";
 
+    /**
+     * This used by {@link Quit} to prevent a "quit" from the browser (as per GnuR). If we supported
+     * multiple interactive contexts, this would need become context specific.
+     */
+    private static boolean inBrowser;
+
     @Child private SysCalls sysCalls;
     @Child private PrettyPrinterNode printer;
+
+    public static boolean inBrowser() {
+        return inBrowser;
+    }
 
     @Specialization
     protected int interact(VirtualFrame frame) {
@@ -67,9 +81,13 @@ public abstract class BrowserInteractNode extends RNode {
         ch.setPrompt(browserPrompt(RArguments.getDepth(frame)));
         int exitMode = NEXT;
         try {
+            inBrowser = true;
             LW: while (true) {
-                String input = ch.readLine().trim();
-                if (input.length() == 0) {
+                String input = ch.readLine();
+                if (input != null) {
+                    input = input.trim();
+                }
+                if (input == null || input.length() == 0) {
                     RLogicalVector browserNLdisabledVec = (RLogicalVector) RContext.getInstance().stateROptions.getValue("browserNLdisabled");
                     if (!RRuntime.fromLogical(browserNLdisabledVec.getDataAt(0))) {
                         input = lastEmptyLineCommand;
@@ -131,6 +149,7 @@ public abstract class BrowserInteractNode extends RNode {
             }
         } finally {
             ch.setPrompt(savedPrompt);
+            inBrowser = false;
         }
         return exitMode;
     }
