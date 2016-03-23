@@ -33,9 +33,9 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 // transcribed from src/main/objects.c
 public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
 
-    @Child private AccessSlotNode accessSlotVirtual = AccessSlotNodeGen.create(null, null);
-    @Child private AccessSlotNode accessSlotClassName = AccessSlotNodeGen.create(null, null);
-    @Child private AccessSlotNode accessSlotPrototypeName = AccessSlotNodeGen.create(null, null);
+    @Child private AccessSlotNode accessSlotVirtual = AccessSlotNodeGen.create(true, null, null);
+    @Child private AccessSlotNode accessSlotClassName = AccessSlotNodeGen.create(true, null, null);
+    @Child private AccessSlotNode accessSlotPrototypeName = AccessSlotNodeGen.create(true, null, null);
     @Child private CastStringScalarNode castStringScalar;
     @Child private CastLogicalScalarNode castLogicalScalar = CastLogicalScalarNode.create();
     @Child private DuplicateNode duplicate = DuplicateNodeGen.create(true);

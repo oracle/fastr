@@ -33,7 +33,6 @@ import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation.FunctionIdentification;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RPerfStats;
@@ -134,14 +133,12 @@ public class REntryCounters {
 
         public static Counter findCounter(RFunction func) {
             FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-            FunctionStatementsNode fsn = ((FunctionStatementsNode) fdn.getBody());
-            return singleton.getCounter(fsn.getSourceSection());
+            return singleton.getCounter(fdn.getBody().getSourceSection());
         }
 
         @Override
         protected FunctionUID counterCreated(EventContext context) {
-            FunctionStatementsNode fsn = (FunctionStatementsNode) context.getInstrumentedNode();
-            FunctionDefinitionNode fdn = (FunctionDefinitionNode) fsn.getRootNode();
+            FunctionDefinitionNode fdn = (FunctionDefinitionNode) context.getInstrumentedNode().getRootNode();
             return fdn.getUID();
         }
 

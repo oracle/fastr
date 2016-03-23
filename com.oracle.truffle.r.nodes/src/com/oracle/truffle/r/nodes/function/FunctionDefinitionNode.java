@@ -27,7 +27,6 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -47,6 +46,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -129,14 +129,13 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     private final BranchProfile returnProfile = BranchProfile.create();
 
-    public static FunctionDefinitionNode create(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments, RSyntaxNode synBody,
+    public static FunctionDefinitionNode create(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments, RSyntaxNode body,
                     FormalArguments formals, String description,
                     PostProcessArgumentsNode argPostProcess) {
-        FunctionStatementsNode body = new FunctionStatementsNode(synBody.getSourceSection(), synBody);
         return new FunctionDefinitionNode(src, frameDesc, argSourceSections, saveArguments, body, formals, description, argPostProcess, FunctionUIDFactory.get().createUID());
     }
 
-    private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RNode body, FormalArguments formals,
+    private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RSyntaxNode body, FormalArguments formals,
                     String description, PostProcessArgumentsNode argPostProcess, FunctionUID uuid) {
         super(null, formals, frameDesc);
         this.argSourceSections = argSourceSections;
@@ -144,7 +143,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         assert src != null;
         this.sourceSectionR = src;
         this.saveArguments = saveArguments;
-        this.body = body;
+        this.body = body.asRNode();
+        SourceSection sns = body.getSourceSection();
+        if (!sns.hasTag(RSyntaxTags.START_FUNCTION)) {
+            body.setSourceSection(RSyntaxTags.addTags(sns, RSyntaxTags.START_FUNCTION));
+        }
         this.description = description;
         this.onExitSlot = FrameSlotNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
         this.uuid = uuid;
@@ -169,18 +172,17 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return callTarget;
     }
 
-    private static boolean containsAnyDispatch(RNode body) {
+    private static boolean containsAnyDispatch(RSyntaxNode body) {
         NodeCountFilter dispatchingMethodsFilter = node -> {
             if (node instanceof ReadVariableNode) {
                 ReadVariableNode rvn = (ReadVariableNode) node;
                 String identifier = rvn.getIdentifier();
                 // TODO: can we also do this for S4 new?
                 return rvn.getMode() == RType.Function && ("UseMethod".equals(identifier) || "standardGeneric".equals(identifier));
-                /* || "NextMethod".equals(identifier) */
             }
             return false;
         };
-        return NodeUtil.countNodes(body, dispatchingMethodsFilter) > 0;
+        return NodeUtil.countNodes(body.asRNode(), dispatchingMethodsFilter) > 0;
     }
 
     public boolean containsDispatch() {
@@ -426,7 +428,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         FrameDescriptor frameDesc = new FrameDescriptor();
 
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<substituted function>", frameDesc);
-        return new FunctionDefinitionNode(RSyntaxNode.EAGER_DEPARSE, frameDesc, null, saveArguments, body.substitute(env).asRNode(), getFormalArguments(), null,
+        return new FunctionDefinitionNode(RSyntaxNode.EAGER_DEPARSE, frameDesc, null, saveArguments, body.substitute(env), getFormalArguments(), null,
                         argPostProcess, FunctionUIDFactory.get().createUID());
     }
 
@@ -448,11 +450,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public void serializeImpl(RSerialize.State state) {
         serializeFormals(state);
-        boolean hasBraces = checkOpenBrace(state);
-
         serializeBody(state);
-
-        checkCloseBrace(state, hasBraces);
     }
 
     /**
@@ -462,34 +460,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         state.openPairList();
         body.serialize(state);
         state.setCdr(state.closePairList());
-    }
-
-    /**
-     * Also called by {@link FunctionExpressionNode}.
-     */
-    public boolean checkOpenBrace(RSerialize.State state) {
-        boolean hasBraces = hasBraces();
-        if (hasBraces) {
-            state.openBrace();
-            state.openPairList();
-        }
-        return hasBraces;
-    }
-
-    /**
-     * Also called by {@link FunctionExpressionNode}.
-     */
-    public static void checkCloseBrace(RSerialize.State state, boolean hasBraces) {
-        if (hasBraces) {
-            if (state.isNull()) {
-                // special case of empty body "{ }"
-                state.setNull();
-            } else {
-                state.switchCdrToCar();
-            }
-            state.setCdr(state.closePairList());
-            state.setCdr(state.closePairList());
-        }
     }
 
     /**
@@ -522,39 +492,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     public boolean getInstrumented() {
         return instrumented;
-    }
-
-    /**
-     * A workaround for not representing left curly brace as a function call. We have to depend on
-     * the source section and "parse" the start of the function definition.
-     */
-    @TruffleBoundary
-    public boolean hasBraces() {
-        SourceSection src = getSourceSection();
-        if (src == null) {
-            return true; // statistically probable
-        }
-        String s = src.getCode();
-        int ix = s.indexOf('(') + 1;
-        int bdepth = 1;
-        while (ix < s.length() && bdepth > 0) {
-            char ch = s.charAt(ix);
-            if (ch == '(') {
-                bdepth++;
-            } else if (ch == ')') {
-                bdepth--;
-            }
-            ix++;
-        }
-        while (ix < s.length()) {
-            char ch = s.charAt(ix);
-            boolean whitespace = Character.isWhitespace(ch);
-            if (!whitespace) {
-                return ch == '{';
-            }
-            ix++;
-        }
-        return false;
     }
 
     @Override

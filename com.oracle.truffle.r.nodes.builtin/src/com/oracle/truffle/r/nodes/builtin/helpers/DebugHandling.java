@@ -41,7 +41,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.FunctionUID;
@@ -53,6 +52,7 @@ import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 
@@ -65,8 +65,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
  *
  * Three different listener classes are defined:
  * <ul>
- * <li>{@link FunctionStatementsEventListener}: attaches to {@link FunctionStatementsNode} and
- * handles the special behavior on entry/exit</li>
+ * <li>{@link FunctionStatementsEventListener}: attaches to function bodies and handles the special
+ * behavior on entry/exit</li>
  * <li>{@link StatementEventListener}: attaches to all {@link RSyntaxTags#STATEMENT} nodes and
  * handles "n" and "s" browser commands</li>
  * <li>{@link LoopStatementEventListener}: attaches to {@link AbstractLoopNode} instances and
@@ -83,7 +83,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
  * <li>On entry to that listener instrument/enable the function we have entered (if necessary) for
  * one-time (unless already)</li>
  * <li>Dispose the {@link StepIntoInstrumentListener} and continue, which will then stop at the
- * {@link FunctionStatementsNode}.</li>
+ * function body.</li>
  * <li>On return from the function, reset the debug state if necessary.
  * </ol>
  * <p>
@@ -394,9 +394,8 @@ public class DebugHandling {
                  * state should be stacked to match the call stack in the recursive case.
                  */
                 enableChildren();
-                boolean brace = fdn.hasBraces();
-                if (brace) {
-                    printNode(context.getInstrumentedNode(), brace);
+                if (RSyntaxCall.isCallTo(fdn.getBody(), "{")) {
+                    printNode(context.getInstrumentedNode(), true);
                     browserInteract(context.getInstrumentedNode(), frame);
                 }
             }
@@ -556,8 +555,7 @@ public class DebugHandling {
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!globalDisable) {
-                FunctionStatementsNode functionStatementsNode = (FunctionStatementsNode) context.getInstrumentedNode();
-                FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionStatementsNode.getRootNode();
+                FunctionDefinitionNode fdn = (FunctionDefinitionNode) context.getInstrumentedNode().getRootNode();
                 ensureSingleStep(fdn);
                 functionStatementsEventListener.clearStepInstrument();
                 functionStatementsEventListener.onEnter(context, frame);

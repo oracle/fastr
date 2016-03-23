@@ -20,6 +20,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
@@ -50,6 +51,11 @@ public abstract class AccessSlotNode extends RNode {
     @Child private TypeofNode typeofNode;
     private final BranchProfile noSlot = BranchProfile.create();
     private final BranchProfile symbolValue = BranchProfile.create();
+    private final boolean asOperator;
+
+    public AccessSlotNode(boolean asOperator) {
+        this.asOperator = asOperator;
+    }
 
     protected AttributeAccess createAttrAccess(String name) {
         return AttributeAccessNodeGen.create(name);
@@ -100,14 +106,15 @@ public abstract class AccessSlotNode extends RNode {
         throw RError.error(this, RError.Message.SLOT_BASIC_CLASS, name, "NULL");
     }
 
-    @Specialization(guards = {"object.isS4()", "name == cachedName"})
+    @Specialization(guards = {"slotAccessAllowed(object)", "name == cachedName"})
     protected Object getSlotS4Cached(RAttributable object, @SuppressWarnings("unused") String name, @Cached("name") String cachedName,
-                    @Cached("createAttrAccess(cachedName)") AttributeAccess attrAccess) {
-        Object value = attrAccess.execute(object.getAttributes());
+                    @Cached("createAttrAccess(cachedName)") AttributeAccess attrAccess, //
+                    @Cached("create()") InitAttributesNode initAttrNode) {
+        Object value = attrAccess.execute(initAttrNode.execute(object));
         return getSlotS4Internal(object, cachedName, value);
     }
 
-    @Specialization(contains = "getSlotS4Cached", guards = "object.isS4()")
+    @Specialization(contains = "getSlotS4Cached", guards = "slotAccessAllowed(object)")
     protected Object getSlotS4(RAttributable object, String name) {
         String internedName = name.intern();
         Object value = object.getAttr(attrProfiles, internedName);
@@ -120,7 +127,7 @@ public abstract class AccessSlotNode extends RNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!object.isS4()", "isDotData(name)"})
+    @Specialization(guards = {"!slotAccessAllowed(object)", "isDotData(name)"})
     protected Object getSlotNonS4(RAttributable object, String name) {
         // TODO: any way to cache it or use a mechanism similar to overrides?
         REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
@@ -130,7 +137,7 @@ public abstract class AccessSlotNode extends RNode {
 
     // this is really a fallback specialization but @Fallback does not work here (because of the
     // type of "object"?)
-    @Specialization(guards = {"!object.isS4()", "!isDotData(name)"})
+    @Specialization(guards = {"!slotAccessAllowed(object)", "!isDotData(name)"})
     protected Object getSlot(RAttributable object, String name) {
         RStringVector classAttr = object.getClassAttr(attrProfiles);
         if (classAttr == null) {
@@ -146,5 +153,9 @@ public abstract class AccessSlotNode extends RNode {
     protected boolean isDotData(String name) {
         assert name == name.intern();
         return name == RRuntime.DOT_DATA;
+    }
+
+    protected boolean slotAccessAllowed(RAttributable object) {
+        return object.isS4() || !asOperator;
     }
 }

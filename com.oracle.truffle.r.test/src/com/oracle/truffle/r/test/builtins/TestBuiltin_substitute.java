@@ -74,5 +74,7 @@ public class TestBuiltin_substitute extends TestBase {
         // GNU R generates warning here, but the test has been included nevertheless to make sure
         // that FastR does not crash here
         assertEval("f<-function(..., list=character()) { substitute(list(...))[-1L] }; as.character(f(\"config\"))");
+
+        assertEval("{ substitute({class(y) <- x; y}, list(x=42)) }");
     }
 }

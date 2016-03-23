@@ -32,7 +32,6 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
-import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
@@ -131,15 +130,6 @@ public abstract class Lapply extends RBuiltinNode {
         @TruffleBoundary
         protected RCallNode createCallNode(RootCallTarget callTarget, RArgsValuesAndNames additionalArguments) {
             /* TODO: R switches to double if x.getLength() is greater than 2^31-1 */
-            FormalArguments formalArgs = ((RRootNode) callTarget.getRootNode()).getFormalArguments();
-
-            // The first parameter to the function call is named as defined by the function.
-            String readVectorElementName = formalArgs.getSignature().getName(0);
-            if (ArgumentsSignature.VARARG_NAME.equals(readVectorElementName)) {
-                // "..." is no "supplied" name, instead the argument will match by position
-                // right away
-                readVectorElementName = null;
-            }
 
             ReadVariableNode readVector = ReadVariableNode.create(VECTOR_ELEMENT);
 
@@ -151,7 +141,7 @@ public abstract class Lapply extends RBuiltinNode {
                 // varArgs.getValue(0)
                 // == RMissing.instance)) {
                 args = new RSyntaxNode[]{readVector};
-                names = new String[]{readVectorElementName};
+                names = new String[]{null};
             } else {
                 // Insert expressions found inside "..." as arguments
                 args = new RSyntaxNode[additionalArguments.getLength() + 1];
@@ -162,7 +152,7 @@ public abstract class Lapply extends RBuiltinNode {
 
                 }
                 names = new String[additionalArguments.getLength() + 1];
-                names[0] = readVectorElementName;
+                names[0] = null;
                 for (int i = 0; i < additionalArguments.getLength(); i++) {
                     String name = additionalArguments.getSignature().getName(i);
                     if (name != null && !name.isEmpty()) {

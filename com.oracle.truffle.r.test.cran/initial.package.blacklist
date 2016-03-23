@@ -197,9 +197,6 @@ Reason: Bioconductor
 Package: GO.db
 Reason: Bioconductor
 
-Package: AcceptanceSampling
-Reason: S4
-
 Package: mixer
 Reason: C++
 

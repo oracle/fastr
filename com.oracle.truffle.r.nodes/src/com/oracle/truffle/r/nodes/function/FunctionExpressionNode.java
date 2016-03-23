@@ -119,11 +119,7 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
          */
         fdn.serializeFormals(state);
         state.openPairList(SEXPTYPE.LISTSXP);
-        boolean hasBraces = fdn.checkOpenBrace(state);
         fdn.serializeBody(state);
-        if (hasBraces) {
-            FunctionDefinitionNode.checkCloseBrace(state, hasBraces);
-        }
         state.switchCdrToCar();
         state.setCdr(state.closePairList());
         state.setCdr(state.closePairList());

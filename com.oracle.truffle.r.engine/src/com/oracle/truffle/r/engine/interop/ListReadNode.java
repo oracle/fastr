@@ -29,7 +29,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
-import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctions.AccessFieldBuiltin;
+import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessFieldBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 abstract class ListReadNode extends RootNode {

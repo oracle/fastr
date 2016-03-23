@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
@@ -32,25 +33,28 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * A {@link BlockNode} represents a sequence of statements such as the body of a {@code while} loop.
- *
+ * A {@link BlockNode} represents a sequence of statements created by "{ ... }" in source code.
  */
-public class BlockNode extends SequenceNode implements RSyntaxNode, RSyntaxCall, VisibilityController {
+public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall, VisibilityController {
+
     public static final RNode[] EMPTY_BLOCK = new RNode[0];
-    private SourceSection sourceSectionR;
+
+    @Children protected final RNode[] sequence;
 
     public BlockNode(SourceSection src, RNode[] sequence) {
-        super(sequence);
-        assert src != null;
-        this.sourceSectionR = src;
+        super(src);
+        this.sequence = sequence;
         // tag sequence members as statements
         for (int i = 0; i < sequence.length; i++) {
             RNode n = sequence[i];
@@ -66,36 +70,19 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, RSyntaxCall,
         }
     }
 
-    /**
-     * A convenience method where {@code node} may or may not be a a {@link SequenceNode} already.
-     */
-    public BlockNode(SourceSection src, RSyntaxNode node) {
-        this(src, convert(node));
+    public RNode[] getSequence() {
+        return sequence;
     }
 
     @Override
+    @ExplodeLoop
     public Object execute(VirtualFrame frame) {
         controlVisibility();
-        return super.execute(frame);
-    }
-
-    /**
-     * Ensures that {@code node} is a {@link BlockNode}.
-     */
-    public static RSyntaxNode ensureBlock(RSyntaxNode node) {
-        if (node == null || node instanceof BlockNode) {
-            return node;
-        } else {
-            return new BlockNode(node.getSourceSection(), new RNode[]{node.asRNode()});
+        Object lastResult = RNull.instance;
+        for (int i = 0; i < sequence.length; i++) {
+            lastResult = sequence[i].execute(frame);
         }
-    }
-
-    private static RNode[] convert(RSyntaxNode node) {
-        if (node instanceof BlockNode) {
-            return ((SequenceNode) node).sequence;
-        } else {
-            return new RNode[]{node.asRNode()};
-        }
+        return lastResult;
     }
 
     @TruffleBoundary
@@ -103,50 +90,30 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, RSyntaxCall,
     public void deparseImpl(RDeparse.State state) {
         state.startNodeDeparse(this);
         // empty deparses as {}
-        boolean braces = sequence.length != 1 || RASTUtils.hasBraces(this);
-        if (braces) {
-            state.writeOpenCurlyNLIncIndent();
-        }
+        state.writeOpenCurlyNLIncIndent();
         for (int i = 0; i < sequence.length; i++) {
             state.mark();
             sequence[i].deparse(state);
-            if (braces && state.changed()) {
+            if (state.changed()) {
                 // not all nodes will produce output
                 state.writeline();
                 state.mark(); // in case last
             }
         }
-        if (braces) {
-            state.decIndentWriteCloseCurly();
-        }
+        state.decIndentWriteCloseCurly();
         state.endNodeDeparse(this);
     }
 
     @Override
     public void serializeImpl(RSerialize.State state) {
-        /*
-         * In GnuR there are no empty statement sequences, because "{" is really a function in R, so
-         * it is represented as a LANGSXP with symbol "{" and a NULL cdr, representing the empty
-         * sequence. This is an unpleasant special case in FastR that we can only detect by
-         * re-examining the original source.
-         *
-         * A sequence of length 1, i.e. a single statement, is represented as itself, e.g. a SYMSXP
-         * for "x" or a LANGSXP for a function call. Otherwise, the representation is a LISTSXP
-         * pairlist, where the car is the statement and the cdr is either NILSXP or a LISTSXP for
-         * the next statement. Typically the statement (car) is itself a LANGSXP pairlist but it
-         * might be a simple value, e.g. SYMSXP.
-         */
-        if (sequence.length == 0) {
-            state.setNull();
-        } else {
-            for (int i = 0; i < sequence.length; i++) {
-                state.serializeNodeSetCar(sequence[i]);
-                if (i != sequence.length - 1) {
-                    state.openPairList();
-                }
-            }
-            state.linkPairList(sequence.length);
+        state.setAsLangType();
+        state.setCarAsSymbol("{");
+
+        for (int i = 0; i < sequence.length; i++) {
+            state.openPairList(SEXPTYPE.LISTSXP);
+            state.serializeNodeSetCar(sequence[i]);
         }
+        state.linkPairList(sequence.length + 1);
     }
 
     @TruffleBoundary
@@ -157,17 +124,6 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, RSyntaxCall,
             sequenceSubs[i] = sequence[i].substitute(env).asRNode();
         }
         return new BlockNode(RSyntaxNode.EAGER_DEPARSE, sequenceSubs);
-    }
-
-    @Override
-    public void setSourceSection(SourceSection sourceSection) {
-        assert sourceSection != null;
-        this.sourceSectionR = sourceSection;
-    }
-
-    @Override
-    public SourceSection getSourceSection() {
-        return sourceSectionR;
     }
 
     @Override

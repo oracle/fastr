@@ -20,7 +20,6 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -33,8 +32,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 @RBuiltin(name = "inherits", kind = INTERNAL, parameterNames = {"x", "what", "which"})
 // TODO inherits is applicable to every type of object, if only because of "try-error".
 public abstract class Inherits extends RBuiltinNode {
-
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public abstract Object execute(Object x, Object what, Object which);
 

@@ -124,6 +124,9 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
             pos = size++;
             names[pos] = name;
         }
+        // TODO: this assertion should hold in general
+        // assert value == null || !(value instanceof RShareable) || !((RShareable)
+        // value).isTemporary();
         values[pos] = value;
         if (statsProfile.profile(stats != null)) {
             stats.update(this);
@@ -155,12 +158,22 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
         return size;
     }
 
-    public String[] getNames() {
-        return names;
+    public String getNameAtIndex(int i) {
+        return names[i];
     }
 
-    public Object[] getValues() {
-        return values;
+    public Object getValueAtIndex(int i) {
+        return values[i];
+    }
+
+    public void setNameAtIndex(int i, String v) {
+        names[i] = v;
+    }
+
+    public void setValueAtIndex(int i, Object v) {
+        // TODO: this assertion should hold in general
+        // assert v == null || !(v instanceof RShareable) || !((RShareable) v).isTemporary();
+        values[i] = v;
     }
 
     public boolean isEmpty() {

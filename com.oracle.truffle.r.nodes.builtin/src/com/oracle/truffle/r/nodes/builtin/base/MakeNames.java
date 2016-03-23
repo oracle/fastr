@@ -61,47 +61,47 @@ public abstract class MakeNames extends RBuiltinNode {
     }
 
     private static String getKeyword(String s, boolean allowUnderscore) {
-        // verbose but avoids String concatenation on the slow path
-        if (s.equals("if")) {
-            return "if.";
-        } else if (s.equals("else")) {
-            return "else.";
-        } else if (s.equals("repeat")) {
-            return "repeat.";
-        } else if (s.equals("while")) {
-            return "while.";
-        } else if (s.equals("function")) {
-            return "function.";
-        } else if (s.equals("for")) {
-            return "for.";
-        } else if (s.equals("in")) {
-            return "in.";
-        } else if (s.equals("next")) {
-            return "next.";
-        } else if (s.equals("break")) {
-            return "break.";
-        } else if (s.equals("TRUE")) {
-            return "TRUE.";
-        } else if (s.equals("FALSE")) {
-            return "FALSE.";
-        } else if (s.equals("NULL")) {
-            return "NULL.";
-        } else if (s.equals("Inf")) {
-            return "Inf.";
-        } else if (s.equals("NaN")) {
-            return "NaN.";
-        } else if (s.equals("NA")) {
-            return "NA.";
-        } else if (s.equals("NA_integer_")) {
-            return allowUnderscore ? "NA_integer_." : "NA.integer.";
-        } else if (s.equals("NA_real_")) {
-            return allowUnderscore ? "NA_real_." : "NA.real.";
-        } else if (s.equals("NA_complex_")) {
-            return allowUnderscore ? "NA_complex_." : "NA.complex.";
-        } else if (s.equals("NA_character_")) {
-            return allowUnderscore ? "NA_character_." : "NA.character.";
-        } else {
-            return null;
+        switch (s) {
+            case "if":
+                return "if.";
+            case "else":
+                return "else.";
+            case "repeat":
+                return "repeat.";
+            case "while":
+                return "while.";
+            case "function":
+                return "function.";
+            case "for":
+                return "for.";
+            case "in":
+                return "in.";
+            case "next":
+                return "next.";
+            case "break":
+                return "break.";
+            case "TRUE":
+                return "TRUE.";
+            case "FALSE":
+                return "FALSE.";
+            case "NULL":
+                return "NULL.";
+            case "Inf":
+                return "Inf.";
+            case "NaN":
+                return "NaN.";
+            case "NA":
+                return "NA.";
+            case "NA_integer_":
+                return allowUnderscore ? "NA_integer_." : "NA.integer.";
+            case "NA_real_":
+                return allowUnderscore ? "NA_real_." : "NA.real.";
+            case "NA_complex_":
+                return allowUnderscore ? "NA_complex_." : "NA.complex.";
+            case "NA_character_":
+                return allowUnderscore ? "NA_character_." : "NA.character.";
+            default:
+                return null;
         }
     }
 

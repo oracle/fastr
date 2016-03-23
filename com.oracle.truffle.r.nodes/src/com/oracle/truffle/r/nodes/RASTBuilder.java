@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.control.BreakNode;
 import com.oracle.truffle.r.nodes.control.ForNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.NextNode;
+import com.oracle.truffle.r.nodes.control.ParNode;
 import com.oracle.truffle.r.nodes.control.ReplacementNode;
 import com.oracle.truffle.r.nodes.control.WhileNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
@@ -137,9 +138,9 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 }
                 switch (symbol) {
                     case "repeat":
-                        return WhileNode.create(source, ConstantNode.create(RRuntime.LOGICAL_TRUE), BlockNode.ensureBlock(args.get(0).value), true);
+                        return WhileNode.create(source, ConstantNode.create(RRuntime.LOGICAL_TRUE), args.get(0).value, true);
                     case "(":
-                        return args.get(0).value;
+                        return new ParNode(source, args.get(0).value.asRNode());
                 }
             } else if (args.size() == 2) {
                 // handle binary arithmetics, for the time being
@@ -148,9 +149,9 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 }
                 switch (symbol) {
                     case "while":
-                        return WhileNode.create(source, args.get(0).value, BlockNode.ensureBlock(args.get(1).value), false);
+                        return WhileNode.create(source, args.get(0).value, args.get(1).value, false);
                     case "if":
-                        return IfNode.create(source, args.get(0).value, BlockNode.ensureBlock(args.get(1).value), null);
+                        return IfNode.create(source, args.get(0).value, args.get(1).value, null);
                     case "=":
                     case "<-":
                     case ":=":
@@ -167,11 +168,11 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                         if (args.get(0).value instanceof RSyntaxLookup) {
                             String name = ((RSyntaxLookup) args.get(0).value).getIdentifier();
                             WriteVariableNode cvar = WriteVariableNode.create(source, name, null, false);
-                            return ForNode.create(source, cvar, args.get(1).value, new BlockNode(args.get(2).value.getSourceSection(), args.get(2).value));
+                            return ForNode.create(source, cvar, args.get(1).value, args.get(2).value);
                         }
                         break;
                     case "if":
-                        return IfNode.create(source, args.get(0).value, BlockNode.ensureBlock(args.get(1).value), BlockNode.ensureBlock(args.get(2).value));
+                        return IfNode.create(source, args.get(0).value, args.get(1).value, args.get(2).value);
                 }
             }
             switch (symbol) {

@@ -34,7 +34,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.control.SequenceNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -232,12 +231,6 @@ public abstract class Identical extends RBuiltinNode {
         }
         RSyntaxNode xNode = x.getRep().asRSyntaxNode();
         RSyntaxNode yNode = y.getRep().asRSyntaxNode();
-        if (xNode instanceof SequenceNode && ((SequenceNode) xNode).getSequence().length == 1) {
-            xNode = ((SequenceNode) xNode).getSequence()[0].asRSyntaxNode();
-        }
-        if (yNode instanceof SequenceNode && ((SequenceNode) yNode).getSequence().length == 1) {
-            yNode = ((SequenceNode) yNode).getSequence()[0].asRSyntaxNode();
-        }
         if (!new IdenticalVisitor().accept(xNode, yNode)) {
             return RRuntime.LOGICAL_FALSE;
         }

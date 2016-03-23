@@ -12,6 +12,7 @@
 package com.oracle.truffle.r.library.methods;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -20,6 +21,8 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.GetGenericInternalNodeGen;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
+import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
@@ -43,6 +46,7 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -88,16 +92,32 @@ public class MethodsListDispatch {
 
     public abstract static class R_getClassFromCache extends RExternalBuiltinNode.Arg2 {
 
+        protected AttributeAccess createPckgAttrAccess() {
+            return AttributeAccessNodeGen.create(RRuntime.PCKG_ATTR_KEY);
+        }
+
         @Specialization
         @TruffleBoundary
-        protected Object callGetClassFromCache(RAbstractStringVector klass, REnvironment table) {
+        protected Object callGetClassFromCache(RAbstractStringVector klass, REnvironment table, //
+                        @Cached("createPckgAttrAccess()") AttributeAccess klassPckgAttrAccess, //
+                        @Cached("createPckgAttrAccess()") AttributeAccess valPckgAttrAccess) {
             String klassString = klass.getLength() == 0 ? RRuntime.STRING_NA : klass.getDataAt(0);
 
             Object value = table.get(klassString);
             if (value == null) {
                 return RNull.instance;
             } else {
-                // TODO check PACKAGE equality
+                Object pckgAttrObj = klass.getAttributes() == null ? null : klassPckgAttrAccess.execute(klass.getAttributes());
+                String pckgAttr = RRuntime.asStringLengthOne(pckgAttrObj);
+                if (pckgAttr != null && value instanceof RAttributable) {
+                    RAttributable attributableValue = (RAttributable) value;
+                    Object valAttrObj = attributableValue.getAttributes() == null ? null : valPckgAttrAccess.execute(attributableValue.getAttributes());
+                    String valAttr = RRuntime.asStringLengthOne(valAttrObj);
+                    // GNUR uses == to compare strings here
+                    if (valAttr != null && valAttr != pckgAttr) {
+                        return RNull.instance;
+                    }
+                }
                 return value;
             }
         }
@@ -272,6 +292,7 @@ public class MethodsListDispatch {
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
         @Child private CastToVectorNode castToVector = CastToVectorNodeGen.create(false);
         @Child private ClassHierarchyScalarNode classHierarchyNode = ClassHierarchyScalarNodeGen.create();
+        @Child private PromiseHelperNode promiseHelper;
 
         @Specialization
         protected Object getGeneric(String name, REnvironment env, String pckg) {
@@ -286,9 +307,6 @@ public class MethodsListDispatch {
                 FrameDescriptor currentFrameDesc = currentFrame.getFrameDescriptor();
                 Object o = slotRead(currentFrame, currentFrameDesc, name);
                 if (o != null) {
-                    if (o instanceof RPromise) {
-                        o = PromiseHelperNode.evaluateSlowPath(null, (RPromise) o);
-                    }
                     RAttributable vl = (RAttributable) o;
                     boolean ok = false;
                     if (vl instanceof RFunction && vl.getAttr(attrProfiles, RRuntime.GENERIC_ATTR_KEY) != null) {
@@ -321,7 +339,13 @@ public class MethodsListDispatch {
         private static Object slotRead(MaterializedFrame currentFrame, FrameDescriptor desc, String name) {
             FrameSlot slot = desc.findFrameSlot(name);
             if (slot != null) {
-                return currentFrame.getValue(slot);
+                Object res = currentFrame.getValue(slot);
+                if (res != null) {
+                    if (res instanceof RPromise) {
+                        res = PromiseHelperNode.evaluateSlowPath(null, (RPromise) res);
+                    }
+                }
+                return res;
             } else {
                 return null;
             }

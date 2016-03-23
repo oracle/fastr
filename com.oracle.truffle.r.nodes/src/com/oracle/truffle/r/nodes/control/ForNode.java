@@ -120,9 +120,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         state.serializeNodeSetCar(getRange());
         // body
         state.openPairList(SEXPTYPE.LISTSXP);
-        state.openBrace();
-        state.serializeNodeSetCdr(getBody(), SEXPTYPE.LISTSXP);
-        state.closeBrace();
+        state.serializeNodeSetCar(getBody());
         state.linkPairList(3);
         state.setCdr(state.closePairList());
     }

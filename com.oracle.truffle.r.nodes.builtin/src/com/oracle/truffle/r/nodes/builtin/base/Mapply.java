@@ -36,7 +36,7 @@ import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctions.AccessArraySubscriptBuiltin;
+import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessArraySubscriptBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.MapplyNodeGen.MapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode;
@@ -71,7 +71,7 @@ public abstract class Mapply extends RBuiltinNode {
         private ElementNode(String vectorElementName) {
             this.vectorElementName = AnonymousFrameVariable.create(vectorElementName);
             this.lengthNode = insert(LengthNodeGen.create(null, null, null));
-            this.indexedLoadNode = insert(InfixEmulationFunctionsFactory.AccessArraySubscriptBuiltinNodeGen.create(null, null, null));
+            this.indexedLoadNode = insert(InfixFunctionsFactory.AccessArraySubscriptBuiltinNodeGen.create(null, null, null));
             this.writeVectorElementNode = insert(WriteVariableNode.createAnonymous(this.vectorElementName, null, Mode.REGULAR));
         }
     }

@@ -24,7 +24,7 @@ public class TestBuiltin_body extends TestBase {
 
     @Test
     public void testbody2() {
-        assertEval(Ignored.Unknown, "argv <- list(function (object) TRUE); .Internal(body(argv[[1]]))");
+        assertEval("argv <- list(function (object) TRUE); .Internal(body(argv[[1]]))");
     }
 
     @Test

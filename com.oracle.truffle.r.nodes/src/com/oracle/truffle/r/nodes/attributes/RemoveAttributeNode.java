@@ -61,7 +61,7 @@ public abstract class RemoveAttributeNode extends RBaseNode {
          * The length check is against names.length instead of size, so that the check folds into
          * the array bounds check.
          */
-        return index != -1 && attr.getNames().length > index && attr.getNames()[index] == name;
+        return index != -1 && attr.size() > index && attr.getNameAtIndex(index) == name;
     }
 
     @Specialization(limit = "1", guards = "nameMatches(attr, index)")
@@ -70,13 +70,11 @@ public abstract class RemoveAttributeNode extends RBaseNode {
                     @Cached("attr.find(name)") int index, //
                     @Cached("attr.size()") int cachedSize) {
         attr.setSize(cachedSize - 1);
-        String[] names = attr.getNames();
-        Object[] values = attr.getValues();
         for (int i = index + 1; i < cachedSize; i++) {
-            names[i - 1] = names[i];
-            values[i - 1] = values[i];
+            attr.setNameAtIndex(i - 1, attr.getNameAtIndex(i));
+            attr.setValueAtIndex(i - 1, attr.getValueAtIndex(i));
         }
-        values[cachedSize - 1] = null;
+        attr.setValueAtIndex(cachedSize - 1, null);
     }
 
     @Specialization(limit = "1", guards = "cachedSize == attr.size()")
@@ -85,9 +83,8 @@ public abstract class RemoveAttributeNode extends RBaseNode {
                     @Cached("attr.size()") int cachedSize, //
                     @Cached("create()") BranchProfile foundProfile, //
                     @Cached("create()") BranchProfile notFoundProfile) {
-        String[] names = attr.getNames();
         for (int i = 0; i < cachedSize; i++) {
-            if (names[i] == name) {
+            if (attr.getNameAtIndex(i) == name) {
                 foundProfile.enter();
                 removeAt(attr, i, cachedSize);
                 return;
@@ -97,13 +94,11 @@ public abstract class RemoveAttributeNode extends RBaseNode {
     }
 
     private static void removeAt(RAttributes attr, int index, int cachedSize) {
-        String[] names = attr.getNames();
-        Object[] values = attr.getValues();
         for (int i = index + 1; i < cachedSize; i++) {
-            names[i - 1] = names[i];
-            values[i - 1] = values[i];
+            attr.setNameAtIndex(i - 1, attr.getNameAtIndex(i));
+            attr.setValueAtIndex(i - 1, attr.getValueAtIndex(i));
         }
-        values[cachedSize - 1] = null;
+        attr.setValueAtIndex(cachedSize - 1, null);
     }
 
     @Specialization(contains = {"accessCached", "accessCachedSize"})
