@@ -1526,8 +1526,14 @@ public class RSerialize {
                             break;
                         }
 
+                        case EXPRSXP:
                         case VECSXP: {
-                            RList list = (RList) obj;
+                            RList list;
+                            if (type == SEXPTYPE.EXPRSXP) {
+                                list = ((RExpression) obj).getList();
+                            } else {
+                                list = (RList) obj;
+                            }
                             stream.writeInt(list.getLength());
                             for (int i = 0; i < list.getLength(); i++) {
                                 Object listObj = list.getDataAt(i);
