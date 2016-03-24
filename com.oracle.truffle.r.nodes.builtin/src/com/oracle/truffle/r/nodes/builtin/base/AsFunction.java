@@ -125,7 +125,8 @@ public abstract class AsFunction extends RBuiltinNode {
         } else if (bodyObject instanceof RSymbol) {
             body = ReadVariableNode.create(((RSymbol) bodyObject).getName());
         } else {
-            throw RInternalError.unimplemented();
+            assert bodyObject instanceof Integer || bodyObject instanceof Double || bodyObject instanceof Byte || bodyObject instanceof String;
+            body = ConstantNode.create(bodyObject);
         }
         if (!RBaseNode.isRSyntaxNode(body)) {
             throw RInternalError.unimplemented();
