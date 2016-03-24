@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFrame;
+import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -448,6 +449,14 @@ public abstract class Identical extends RBuiltinNode {
     @Specialization(guards = "argConnections(x, y)")
     protected byte doInternalIdenticalConnections(Object x, Object y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
         return RRuntime.asLogical(((RConnection) x).getDescriptor() == ((RConnection) y).getDescriptor());
+    }
+
+    @Specialization
+    protected byte doInternalIdenticalGeneric(RExpression x, RExpression y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
+        if (!recursive) {
+            controlVisibility();
+        }
+        return doInternalIdenticalGeneric(x.getList(), y.getList(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
     @SuppressWarnings("unused")
