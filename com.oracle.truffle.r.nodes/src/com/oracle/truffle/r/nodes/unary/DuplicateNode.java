@@ -28,6 +28,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -66,6 +67,11 @@ public abstract class DuplicateNode extends RBaseNode {
     @Specialization
     protected RExpression duplicate(RExpression e) {
         return e.copy();
+    }
+
+    @Specialization
+    protected RLanguage duplicate(RLanguage l) {
+        return l.copy();
     }
 
     // TODO: support more types when required
