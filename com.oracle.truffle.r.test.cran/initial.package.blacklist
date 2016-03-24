@@ -4,9 +4,6 @@ Reason: parser
 Package: ABCoptim
 Reason: corebug
 
-Package: anfis
-Reason: S4
-
 Package: beadarray
 Reason: Bioconductor
 
@@ -105,9 +102,6 @@ Reason: C++
 
 Package: DNAcopy
 Reason: Bioconductor
-
-Package: biglm
-Reason: S4
 
 Package: RedeR
 Reason: Bioconductor
