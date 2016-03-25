@@ -66,7 +66,6 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -134,8 +133,7 @@ public class RSerialize {
 
         public static int packFlags(SEXPTYPE type, int gpbits, boolean isObj, boolean hasAttr, boolean hasTag) {
             int val = type.code;
-            int levs = gpbits;
-            levs = gpbits & (~(CACHED_MASK | HASHASH_MASK));
+            int levs = gpbits & (~(CACHED_MASK | HASHASH_MASK));
             val = type.code | (levs << 12);
 
             if (isObj) {
@@ -1373,8 +1371,8 @@ public class RSerialize {
         private static final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         private static boolean isObject(Object obj) {
-            if (obj instanceof RAbstractContainer) {
-                return ((RAbstractContainer) obj).isObject(attrProfiles);
+            if (obj instanceof RAttributable) {
+                return ((RAttributable) obj).isObject(attrProfiles);
             } else {
                 return false;
             }
@@ -1779,7 +1777,7 @@ public class RSerialize {
         }
 
         private void writePairListEntry(String name, Object value) throws IOException {
-            stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, getGPBits(value), isObject(value), false, true));
+            stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, 0, false, false, true));
             RSymbol sym = state.findSymbol(name);
             int refIndex;
             if ((refIndex = getRefIndex(sym)) != -1) {
