@@ -344,6 +344,10 @@ Rboolean Rf_isObject(SEXP s) {
 	return FALSE;
 }
 
+void Rf_PrintValue(SEXP x) {
+	unimplemented("Rf_PrintValue");
+}
+
 SEXP Rf_install(const char *name) {
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, name);

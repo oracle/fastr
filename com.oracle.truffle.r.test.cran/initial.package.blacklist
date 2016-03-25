@@ -267,9 +267,6 @@ Reason: Bioconductor
 Package: genefilter
 Reason: Bioconductor
 
-Package: XML
-Reason: corebug
-
 Package: DESeq
 Reason: Bioconductor
 
