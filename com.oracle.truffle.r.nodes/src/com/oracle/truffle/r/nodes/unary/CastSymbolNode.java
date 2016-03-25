@@ -50,17 +50,17 @@ public abstract class CastSymbolNode extends CastBaseNode {
 
     @Specialization
     protected RSymbol doInteger(int value) {
-        return backQuote(toString(value));
+        return asSymbol(toString(value));
     }
 
     @Specialization
     protected RSymbol doDouble(double value) {
-        return backQuote(toString(value));
+        return asSymbol(toString(value));
     }
 
     @Specialization
     protected RSymbol doLogical(byte value) {
-        return backQuote(toString(value));
+        return asSymbol(toString(value));
     }
 
     @Specialization
@@ -92,8 +92,8 @@ public abstract class CastSymbolNode extends CastBaseNode {
     }
 
     @TruffleBoundary
-    private static RSymbol backQuote(String s) {
-        return RDataFactory.createSymbolInterned("`" + s + "`");
+    private static RSymbol asSymbol(String s) {
+        return RDataFactory.createSymbolInterned(s);
     }
 
     public static CastSymbolNode createNonPreserving() {
