@@ -67,9 +67,6 @@ Reason: Bioconductor
 Package: fmcsR
 Reason: Bioconductor
 
-Package: RCurl
-Reason: S4
-
 Package: MergeMaid
 Reason: Bioconductor
 
@@ -377,9 +374,6 @@ Reason: Bioconductor
 Package: affy
 Reason: Bioconductor
 
-Package: ascii
-Reason: S4
-
 Package: ssize
 Reason: Bioconductor
 
@@ -403,9 +397,6 @@ Reason: Bioconductor
 
 Package: oligo
 Reason: Bioconductor
-
-Package: aod
-Reason: S4
 
 Package: IRanges
 Reason: Bioconductor
