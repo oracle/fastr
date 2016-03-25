@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -121,6 +122,10 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
         state.openPairList(SEXPTYPE.LISTSXP);
         fdn.serializeBody(state);
         state.switchCdrToCar();
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.setCar(RNull.instance);
+        state.setCdr(RNull.instance);
+        state.setCdr(state.closePairList());
         state.setCdr(state.closePairList());
         state.setCdr(state.closePairList());
     }
