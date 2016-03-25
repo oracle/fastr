@@ -252,6 +252,7 @@ public class EnvFunctions {
             return doTopEnv(target, env);
         }
 
+        @TruffleBoundary
         private static REnvironment doTopEnv(REnvironment target, final REnvironment envArg) {
             REnvironment env = envArg;
             while (env != REnvironment.emptyEnv()) {
