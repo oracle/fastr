@@ -39,8 +39,9 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "diag<-", kind = SUBSTITUTE, parameterNames = {"x", "value"})
-// TODO Implement in R
+@RBuiltin(name = "diaginternal<-", kind = SUBSTITUTE, parameterNames = {"x", "value"})
+// TODO Implement in R (to get S4 method creation to work we need R function for diag<- which, for
+// now, calls diaginternal<-)
 public abstract class UpdateDiag extends RInvisibleBuiltinNode {
 
     private final NACheck naCheck = NACheck.create();
