@@ -117,6 +117,10 @@ public interface RAttributable extends RTypedValue {
         return (RStringVector) getAttr(profiles, RRuntime.CLASS_ATTR_KEY);
     }
 
+    /**
+     * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
+     * When {@code true}, it is possible to call {@link RAttributable#getClassHierarchy()}.
+     */
     default boolean isObject(RAttributeProfiles profiles) {
         return getClassAttr(profiles) != null ? true : false;
     }

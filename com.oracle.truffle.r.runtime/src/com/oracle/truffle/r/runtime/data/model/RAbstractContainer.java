@@ -70,11 +70,4 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
     Object getRowNames(RAttributeProfiles attrProfiles);
 
     void setRowNames(RAbstractVector rowNames);
-
-    /**
-     * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
-     * When {@code true}, it is possible to call {@link RAttributable#getClassHierarchy()}.
-     */
-    @Override
-    boolean isObject(RAttributeProfiles attrProfiles);
 }
