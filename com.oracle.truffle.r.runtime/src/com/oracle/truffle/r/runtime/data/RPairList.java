@@ -193,7 +193,7 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
 
     @Override
     public boolean isComplete() {
-        RInternalError.shouldNotReachHere();
+        // TODO: is it important to get more precise information here?
         return false;
     }
 
