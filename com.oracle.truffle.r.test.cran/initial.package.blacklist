@@ -239,10 +239,6 @@ Reason: Bioconductor
 Package: BiocGenerics
 Reason: Bioconductor
 
-Package: spam
-Reason: S4
-Analysis: fdef@package in setMethod, fdef is NULL
-
 Package: synchronicity
 Reason: C++
 
