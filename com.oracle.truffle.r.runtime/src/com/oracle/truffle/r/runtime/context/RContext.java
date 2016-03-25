@@ -334,20 +334,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         }
     }
 
-    /**
-     * Waits for the associated EvalThread to finish.
-     *
-     * @throws InterruptedException
-     */
-    private void joinThread() throws InterruptedException {
-        EvalThread t = this.evalThread;
-        if (t == null) {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "no eval thread in a given context");
-        }
-        this.evalThread = null;
-        t.join();
-    }
-
     private static final Assumption singleContextAssumption = Truffle.getRuntime().createAssumption("single RContext");
     @CompilationFinal private static RContext singleContext;
 
