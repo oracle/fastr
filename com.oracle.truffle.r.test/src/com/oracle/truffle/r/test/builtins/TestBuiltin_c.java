@@ -541,6 +541,8 @@ public class TestBuiltin_c extends TestBase {
         assertEval("{ e1 <- new.env(), c(e1, 3) }");
 
         assertEval("{ setClass(\"foo\", representation(d=\"numeric\")); x<-new(\"foo\", d=42); y<-c(x, 7); y[[1]] }");
+
+        assertEval("{ typeof(c(as.symbol(\"foo\"), 42)) }");
     }
 
     @Test
