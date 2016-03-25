@@ -58,6 +58,5 @@ public class RS4Object extends RSharingAttributeStorage {
         }
         resultS4.gpbits = gpbits;
         return resultS4;
-
     }
 }
