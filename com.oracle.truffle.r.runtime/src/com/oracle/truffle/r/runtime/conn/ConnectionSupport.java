@@ -78,6 +78,7 @@ public class ConnectionSupport {
             }
         }
 
+        @TruffleBoundary
         public BaseRConnection getConnection(int index) {
             if (index >= 0 && index <= hwm) {
                 WeakReference<BaseRConnection> ref = allConnections.get(index);
