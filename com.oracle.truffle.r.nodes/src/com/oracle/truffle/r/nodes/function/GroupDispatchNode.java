@@ -114,7 +114,7 @@ public final class GroupDispatchNode extends RSourceSectionNode implements RSynt
     public void serializeImpl(RSerialize.State state) {
         String name = getGenericName();
         state.setAsBuiltin(name);
-        RCallNode.serializeArguments(state, callArgsNode.getSyntaxArguments(), callArgsNode.signature);
+        RCallNode.serializeArguments(state, callArgsNode.getSyntaxArguments(), callArgsNode.signature, false);
     }
 
     @Override
