@@ -28,8 +28,17 @@ public class TestBuiltin_sysparent extends TestBase {
         assertEval("{ f <- function() sys.parent() ; f() }");
         assertEval("{ f <- function() sys.parent() ; g <- function() f() ; g() }");
         assertEval("{ f <- function() sys.parent() ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function(x) sys.parent(x); f(0) }");
+        assertEval("{ f <- function(x) sys.parent(x); f(4) }");
+        assertEval(Ignored.ImplementationError, "{ f <- function(x) sys.parent(x); f(-4) }");
+    }
+
+    @Test
+    public void testSysParentPromises() {
+        assertEval("{ f <- function(x) x; g <- function() f(sys.parent()); h <- function() g(); h() }");
         assertEval("{ f <- function(x=sys.parent()) x ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.parent()) g(z) ; h() }");
         assertEval("{ u <- function() sys.parent() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
     }
+
 }

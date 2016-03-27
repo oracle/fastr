@@ -626,6 +626,10 @@ com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_Sys
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_Sysglob.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_sysonexit.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_sysparent.java,purdue.copyright
+com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_sysparents.java,purdue.copyright
+com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_sysnframe.java,purdue.copyright
+com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_syscall.java,purdue.copyright
+com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_syscalls.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_Sysreadlink.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_Syssetenv.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_Syssetlocale.java,purdue.copyright

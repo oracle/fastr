@@ -592,9 +592,9 @@ public class FrameFunctions {
         @Specialization
         protected REnvironment parentFrame(VirtualFrame frame, int n) {
             controlVisibility();
-            if (n == 0) {
+            if (n <= 0) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, RRuntime.intToString(n));
+                throw RError.error(this, RError.Message.INVALID_VALUE, "n");
             }
             Frame callerFrame = Utils.iterateRFrames(frameAccess(), new Function<Frame, Frame>() {
                 int parentDepth = RArguments.getDepth(frame) - n - 1;
