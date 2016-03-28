@@ -246,7 +246,7 @@ public abstract class Identical extends RBuiltinNode {
                 return false;
             }
             RSyntaxCall other = (RSyntaxCall) arg;
-            if (element.getSyntaxSignature() != other.getSyntaxSignature() || !accept(element.getSyntaxLHS(), other.getSyntaxLHS())) {
+            if (!element.getSyntaxSignature().equals(other.getSyntaxSignature()) || !accept(element.getSyntaxLHS(), other.getSyntaxLHS())) {
                 return false;
             }
             return compareArguments(element.getSyntaxArguments(), other.getSyntaxArguments());
