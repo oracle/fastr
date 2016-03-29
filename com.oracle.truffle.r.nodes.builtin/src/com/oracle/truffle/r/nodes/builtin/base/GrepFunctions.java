@@ -583,7 +583,7 @@ public class GrepFunctions {
 
         protected static List<Integer> findIndex(String pattern, String text, boolean ignoreCase, boolean fixed) {
             List<Integer> list = new ArrayList<>();
-            if (!fixed) {
+            if (fixed) {
                 int index;
                 if (ignoreCase) {
                     index = text.toLowerCase().indexOf(pattern.toLowerCase());
