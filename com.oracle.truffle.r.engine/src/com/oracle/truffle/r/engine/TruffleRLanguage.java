@@ -31,10 +31,12 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrument.Visualizer;
 import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
+import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RError;
@@ -55,6 +57,7 @@ import com.oracle.truffle.r.runtime.instrument.RPackageSource;
  * integrate the R startup in {@code RCommand} with this API.
  */
 @TruffleLanguage.Registration(name = "R", version = "0.1", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME})
+@ProvidedTags({RSyntaxTags.CALL, RSyntaxTags.STATEMENT, RSyntaxTags.START_FUNCTION, RSyntaxTags.LOOP, RSyntaxTags.DEBUG_CALL, RSyntaxTags.DEBUG_HALT})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     /**

@@ -46,7 +46,6 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
-import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -144,10 +143,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.sourceSectionR = src;
         this.saveArguments = saveArguments;
         this.body = body.asRNode();
-        SourceSection sns = body.getSourceSection();
-        if (!sns.hasTag(RSyntaxTags.START_FUNCTION)) {
-            body.setSourceSection(RSyntaxTags.addTags(sns, RSyntaxTags.START_FUNCTION));
-        }
         this.description = description;
         this.onExitSlot = FrameSlotNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
         this.uuid = uuid;

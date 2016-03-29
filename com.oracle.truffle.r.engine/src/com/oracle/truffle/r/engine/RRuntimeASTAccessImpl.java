@@ -42,6 +42,8 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
+import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
+import com.oracle.truffle.r.nodes.control.BlockNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
@@ -49,6 +51,7 @@ import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -80,6 +83,7 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
+import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -595,6 +599,41 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public void enableDebug(RFunction func) {
         DebugHandling.enableDebug(func, "", RNull.instance, false);
-
     }
+
+    public boolean isTaggedWith(Node node, String tag) {
+        switch (tag) {
+            case RSyntaxTags.CALL:
+            case RSyntaxTags.DEBUG_CALL:
+                return node instanceof RCallNode || node instanceof GroupDispatchNode;
+
+            case RSyntaxTags.STATEMENT:
+            case RSyntaxTags.DEBUG_HALT: {
+                Node parent = ((RInstrumentableNode) node).unwrapParent();
+                if (node instanceof BlockNode) {
+                    // TODO we may reconsider this
+                    return false;
+                }
+                // Most likely
+                if (parent instanceof BlockNode) {
+                    return true;
+                } else {
+                    // single statement block, variable parent
+                    return parent instanceof FunctionDefinitionNode || parent instanceof IfNode || parent instanceof AbstractLoopNode;
+                }
+            }
+
+            case RSyntaxTags.START_FUNCTION: {
+                Node parent = ((RInstrumentableNode) node).unwrapParent();
+                return parent instanceof FunctionDefinitionNode;
+            }
+
+            case RSyntaxTags.LOOP:
+                return node instanceof AbstractLoopNode;
+
+            default:
+                return false;
+        }
+    }
+
 }

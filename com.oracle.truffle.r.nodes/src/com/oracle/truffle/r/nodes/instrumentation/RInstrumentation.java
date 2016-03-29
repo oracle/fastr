@@ -40,8 +40,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 
 /**
  * Handles the initialization of the (NEW) instrumentation system which sets up various instruments
@@ -136,7 +134,6 @@ public class RInstrumentation {
      * @param fdn
      */
     public static void registerFunctionDefinition(FunctionDefinitionNode fdn) {
-        fixupTags(fdn);
         // For PerfStats we need to record the info on fdn for the report
         if (functionMap != null) {
             FunctionUID uid = fdn.getUID();
@@ -148,49 +145,6 @@ public class RInstrumentation {
             assert fd == null;
             functionMap.put(uid, new FunctionData(uid, fdn));
         }
-    }
-
-    /**
-     * (Temporary) support for the repl debugger.
-     *
-     * @param fdn
-     */
-    private static void fixupTags(FunctionDefinitionNode fdn) {
-        RSyntaxNode.accept(fdn, 0, new RSyntaxNodeVisitor() {
-
-            @Override
-            public boolean visit(RSyntaxNode node, int depth) {
-                SourceSection ss = node.getSourceSection();
-                assert ss != null;
-                String[] tags = RSyntaxTags.getTags(ss);
-                if (tags != null) {
-                    finesseDebuggerTags(node, tags);
-                }
-                return true;
-            }
-
-        }, false);
-
-    }
-
-    private static void finesseDebuggerTags(RSyntaxNode node, String[] tags) {
-        boolean isStatement = RSyntaxTags.containsTag(tags, RSyntaxTags.STATEMENT);
-        // TODO this causes Truffle debugger to fail on next command
-        boolean isCall = RSyntaxTags.containsTag(tags, RSyntaxTags.CALL);
-        // boolean isCall = false;
-        if (!(isStatement || isCall)) {
-            return;
-        }
-        String[] updatedTags = new String[tags.length + (isStatement && isCall ? 2 : 1)];
-        System.arraycopy(tags, 0, updatedTags, 0, tags.length);
-        int ix = tags.length;
-        if (isStatement) {
-            updatedTags[ix++] = RSyntaxTags.DEBUG_HALT;
-        }
-        if (isCall) {
-            updatedTags[ix++] = RSyntaxTags.DEBUG_CALL;
-        }
-        node.setSourceSection(node.getSourceSection().withTags(updatedTags));
     }
 
     static FunctionIdentification getFunctionIdentification(FunctionUID uid) {

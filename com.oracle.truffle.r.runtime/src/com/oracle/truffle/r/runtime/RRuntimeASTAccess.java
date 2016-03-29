@@ -186,4 +186,9 @@ public interface RRuntimeASTAccess {
      */
     void enableDebug(RFunction func);
 
+    /**
+     * cf. {@code Node.isTaggedWith(tag)}.
+     */
+    boolean isTaggedWith(Node node, String tag);
+
 }

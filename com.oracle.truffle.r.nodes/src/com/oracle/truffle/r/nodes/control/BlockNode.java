@@ -27,10 +27,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -55,19 +53,6 @@ public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, 
     public BlockNode(SourceSection src, RNode[] sequence) {
         super(src);
         this.sequence = sequence;
-        // tag sequence members as statements
-        for (int i = 0; i < sequence.length; i++) {
-            RNode n = sequence[i];
-            if (n instanceof RSyntaxNode) {
-                RSyntaxNode sn = (RSyntaxNode) n;
-                SourceSection sns = sn.getSourceSection();
-                if (!sns.hasTag(RSyntaxTags.STATEMENT)) {
-                    sn.setSourceSection(RSyntaxTags.addTags(sns, RSyntaxTags.STATEMENT));
-                }
-            } else {
-                throw RInternalError.shouldNotReachHere();
-            }
-        }
     }
 
     public RNode[] getSequence() {

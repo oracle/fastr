@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -94,8 +95,7 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
                     public boolean visit(RSyntaxNode node, int depth) {
                         printIndent(depth);
                         writeString(node.getClass().getSimpleName(), false);
-                        SourceSection ss = ((Node) node).getSourceSection();
-                        processSourceSection(ss, printSource, printTags);
+                        processRSyntaxNode(node, printSource, printTags);
                         printnl();
                         return true;
                     }
@@ -172,6 +172,22 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
         }
     }
 
+    private static void processRSyntaxNode(RSyntaxNode node, boolean printSource, boolean printTags) {
+        SourceSection ss = node.getSourceSection();
+        if (ss == null) {
+            writeString(" *** null source section", false);
+        } else {
+            if (printSource) {
+                printSourceCode(ss);
+            }
+            if (printTags) {
+                if (node instanceof RNode) {
+                    printTags(node.asRNode());
+                }
+            }
+        }
+    }
+
     private static void processSourceSection(SourceSection ss, boolean printSource, boolean printTags) {
         // All syntax nodes should have source sections
         if (ss == null) {
@@ -194,6 +210,18 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
         code = code.replace("\n", "\\n ");
         writeString(" # ", false);
         writeString(code.length() == 0 ? "<EMPTY>" : code, false);
+    }
+
+    private static void printTags(RNode node) {
+        writeString(" # tags [ ", false);
+        for (int i = 0; i < RSyntaxTags.ALL_TAGS.length; i++) {
+            String tag = RSyntaxTags.ALL_TAGS[i];
+            if (node.isTaggedWith(tag)) {
+                writeString(tag, false);
+                writeString(" ", false);
+            }
+        }
+        writeString("]", false);
     }
 
     private static void printTags(SourceSection ss) {
