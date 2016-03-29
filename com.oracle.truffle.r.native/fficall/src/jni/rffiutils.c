@@ -35,6 +35,7 @@
 jclass CallRFFIHelperClass;
 jclass RDataFactoryClass;
 jclass RRuntimeClass;
+jclass CharSXPWrapperClass;
 
 static jclass RInternalErrorClass;
 static jmethodID unimplementedMethodID;
@@ -292,4 +293,20 @@ jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const ch
 		(*env)->FatalError(env, buf);
 	}
 	return methodID;
+}
+
+jfieldID checkGetFieldID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic) {
+	jfieldID fieldID = isStatic ? (*env)->GetStaticFieldID(env, klass, name, sig) : (*env)->GetFieldID(env, klass, name, sig);
+	if (fieldID == NULL) {
+		char buf[1024];
+		strcpy(buf, "failed to find ");
+		strcat(buf, isStatic ? "static" : "instance");
+		strcat(buf, " field ");
+		strcat(buf, name);
+		strcat(buf, "(");
+		strcat(buf, sig);
+		strcat(buf, ")");
+		(*env)->FatalError(env, buf);
+	}
+	return fieldID;
 }

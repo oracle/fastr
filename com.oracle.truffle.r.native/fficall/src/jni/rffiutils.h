@@ -37,6 +37,7 @@ void setEnv(JNIEnv *env);
 
 jclass checkFindClass(JNIEnv *env, const char *name);
 jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic);
+jfieldID checkGetFieldID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic);
 extern jmethodID createSymbolMethodID;
 
 // use for an unimplemented API function
