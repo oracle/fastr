@@ -163,6 +163,9 @@ fastr.trace <- function(what, tracer, exit, at, print, signature, where, edit) {
 	 if (is.character(what)) {
 		 what <- get(what, envir=where, mode="function")
 	 }
+	 if (nargs() == 1L) {
+		 return(.primTrace(what))
+     }
      .FastR(.NAME="fastr.trace", what, tracer, exit, at, print, signature, where, edit)#, from, untrace, classMethod)
 }
 
