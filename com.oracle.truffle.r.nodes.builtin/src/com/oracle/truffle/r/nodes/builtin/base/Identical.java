@@ -56,13 +56,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.IdenticalVisitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxArgVisitor;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -236,59 +231,6 @@ public abstract class Identical extends RBuiltinNode {
             return RRuntime.LOGICAL_FALSE;
         }
         return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
-    }
-
-    private final class IdenticalVisitor extends RSyntaxArgVisitor<Boolean, RSyntaxElement> {
-
-        @Override
-        protected Boolean visit(RSyntaxCall element, RSyntaxElement arg) {
-            if (!(arg instanceof RSyntaxCall)) {
-                return false;
-            }
-            RSyntaxCall other = (RSyntaxCall) arg;
-            if (!element.getSyntaxSignature().equals(other.getSyntaxSignature()) || !accept(element.getSyntaxLHS(), other.getSyntaxLHS())) {
-                return false;
-            }
-            return compareArguments(element.getSyntaxArguments(), other.getSyntaxArguments());
-        }
-
-        @Override
-        protected Boolean visit(RSyntaxConstant element, RSyntaxElement arg) {
-            if (!(arg instanceof RSyntaxConstant)) {
-                return false;
-            }
-            return element.getValue().equals(((RSyntaxConstant) arg).getValue());
-        }
-
-        @Override
-        protected Boolean visit(RSyntaxLookup element, RSyntaxElement arg) {
-            if (!(arg instanceof RSyntaxLookup)) {
-                return false;
-            }
-            return element.getIdentifier().equals(((RSyntaxLookup) arg).getIdentifier());
-        }
-
-        @Override
-        protected Boolean visit(RSyntaxFunction element, RSyntaxElement arg) {
-            if (!(arg instanceof RSyntaxFunction)) {
-                return false;
-            }
-            RSyntaxFunction other = (RSyntaxFunction) arg;
-            if (element.getSyntaxSignature() != other.getSyntaxSignature() || !accept(element.getSyntaxBody(), other.getSyntaxBody())) {
-                return false;
-            }
-            return compareArguments(element.getSyntaxArgumentDefaults(), other.getSyntaxArgumentDefaults());
-        }
-
-        private Boolean compareArguments(RSyntaxElement[] arguments1, RSyntaxElement[] arguments2) {
-            assert arguments1.length == arguments2.length;
-            for (int i = 0; i < arguments1.length; i++) {
-                if (!accept(arguments1[i], arguments2[i])) {
-                    return false;
-                }
-            }
-            return true;
-        }
     }
 
     @SuppressWarnings("unused")
