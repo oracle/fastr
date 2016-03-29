@@ -98,6 +98,6 @@ public class TestBuiltin_regexpr extends TestBase {
         assertEval("{ x<-regexpr(\"aaa\", c(\"bbbaaaccc\", \"haaah\"), fixed=TRUE); c(x[1], x[2]) }");
         assertEval("{ x<-regexpr(\"aaa\", c(\"bbbaaaccc\", \"hah\"), fixed=TRUE); c(x[1], x[2]) }");
 
-        assertEval("{ pos <- regexpr(\"\\\\.([[:alnum:]]+)$\", \"methods.html\"); pos }");
+        assertEval("{ x <- \"methods.html\"; pos <- regexpr(\"\\\\.([[:alnum:]]+)$\", x); substring(x, pos + 1L) }");
     }
 }
