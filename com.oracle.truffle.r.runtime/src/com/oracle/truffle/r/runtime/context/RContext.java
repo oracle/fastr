@@ -338,8 +338,12 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     @CompilationFinal private static RContext singleContext;
 
     private final Env env;
-    @CompilationFinal private final Instrumenter instrumenter;
+    private final Instrumenter instrumenter;
     private final HashMap<String, TruffleObject> exportedSymbols = new HashMap<>();
+    /**
+     * State that is used to support interposing on loadNamespace() for overrides.
+     */
+    @CompilationFinal private String nameSpaceName;
 
     /**
      * The set of classes for which the context manages context-specific state, and their state. We
@@ -654,6 +658,14 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public TimeZone getSystemTimeZone() {
         return info.getSystemTimeZone();
+    }
+
+    public String getNamespaceName() {
+        return nameSpaceName;
+    }
+
+    public void setNamespaceName(String name) {
+        nameSpaceName = name;
     }
 
     @Override

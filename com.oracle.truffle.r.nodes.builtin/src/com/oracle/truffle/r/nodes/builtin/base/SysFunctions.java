@@ -31,9 +31,14 @@ import java.util.Map;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
@@ -41,6 +46,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -109,12 +115,45 @@ public class SysFunctions {
         }
     }
 
+    /**
+     * HACK ALERT: To interpose on the end of namespace loading to support overriding some of the R
+     * code, we check for the symbol _R_NS_LOAD_, see attachNamespace in namespace.R. Evidently this
+     * code depends critically in the current implementation which sets/unsets this environment
+     * variable around a call to loadNamespace/attachNamespace.
+     */
+    protected abstract static class LoadNamespaceAdapter extends RInvisibleBuiltinNode {
+        private static final String NS_LOAD = "_R_NS_LOAD_";
+        private static final String LOADNAMESPACE = "loadNamespace";
+
+        protected void checkNSLoad(VirtualFrame frame, RAbstractStringVector names, RAbstractStringVector values, boolean setting) {
+            if (names.getLength() == 1 && names.getDataAt(0).equals(NS_LOAD)) {
+                Frame caller = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
+                RFunction func = RArguments.getFunction(caller);
+                if (func.toString().equals(LOADNAMESPACE)) {
+                    if (setting) {
+                        RContext.getInstance().setNamespaceName(values.getDataAt(0));
+                    } else {
+                        // Now we can run the overrides
+                        RBuiltinPackages.loadDefaultPackageOverrides(RContext.getInstance().getNamespaceName());
+                    }
+                    System.console();
+                }
+            }
+
+        }
+    }
+
     @RBuiltin(name = "Sys.setenv", kind = INTERNAL, parameterNames = {"nm", "values"})
-    public abstract static class SysSetEnv extends RInvisibleBuiltinNode {
+    public abstract static class SysSetEnv extends LoadNamespaceAdapter {
 
         @Specialization
+        protected RLogicalVector doSysSetEnv(VirtualFrame frame, RAbstractStringVector names, RAbstractStringVector values) {
+            checkNSLoad(frame, names, values, true);
+            return doSysSetEnv(names, values);
+        }
+
         @TruffleBoundary
-        protected RLogicalVector doSysSetEnv(RStringVector names, RStringVector values) {
+        private static RLogicalVector doSysSetEnv(RAbstractStringVector names, RAbstractStringVector values) {
             byte[] data = new byte[names.getLength()];
             REnvVars stateREnvVars = RContext.getInstance().stateREnvVars;
             for (int i = 0; i < data.length; i++) {
@@ -126,17 +165,23 @@ public class SysFunctions {
     }
 
     @RBuiltin(name = "Sys.unsetenv", kind = INTERNAL, parameterNames = {"x"})
-    public abstract static class SysUnSetEnv extends RInvisibleBuiltinNode {
+    public abstract static class SysUnSetEnv extends LoadNamespaceAdapter {
 
         @Specialization
+        protected RLogicalVector doSysUnSetEnv(VirtualFrame frame, RAbstractStringVector names) {
+            checkNSLoad(frame, names, null, false);
+            return doSysUnSetEnv(names);
+        }
+
         @TruffleBoundary
-        protected RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
-            byte[] data = new byte[argVec.getLength()];
+        protected static RLogicalVector doSysUnSetEnv(RAbstractStringVector names) {
+            byte[] data = new byte[names.getLength()];
             REnvVars stateREnvVars = RContext.getInstance().stateREnvVars;
             for (int i = 0; i < data.length; i++) {
-                data[i] = RRuntime.asLogical(stateREnvVars.unset(argVec.getDataAt(i)));
+                data[i] = RRuntime.asLogical(stateREnvVars.unset(names.getDataAt(i)));
             }
-            return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
+            RLogicalVector result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
+            return result;
         }
     }
 

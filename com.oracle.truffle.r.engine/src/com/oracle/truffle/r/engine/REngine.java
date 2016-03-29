@@ -196,7 +196,6 @@ final class REngine implements Engine, Engine.Timings {
         }
         checkAndRunStartupShutdownFunction(".First");
         checkAndRunStartupShutdownFunction(".First.sys");
-        RBuiltinPackages.loadDefaultPackageOverrides();
     }
 
     @Override
