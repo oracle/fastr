@@ -57,7 +57,7 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
     /**
      * This is just the left hand side of the assignment and only used for {@link #deparseImpl} etc.
      */
-    @CompilationFinal private RSyntaxNode syntaxLhs;
+    private final RSyntaxNode syntaxLhs;
     private final boolean isSuper;
 
     /**
