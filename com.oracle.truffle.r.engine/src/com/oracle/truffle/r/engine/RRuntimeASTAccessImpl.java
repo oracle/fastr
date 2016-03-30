@@ -51,7 +51,6 @@ import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -601,14 +600,13 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         DebugHandling.enableDebug(func, "", RNull.instance, false);
     }
 
-    public boolean isTaggedWith(Node node, String tag) {
-        switch (tag) {
-            case RSyntaxTags.CALL:
-            case RSyntaxTags.DEBUG_CALL:
+    public boolean isTaggedWith(Node node, Class<?> tag) {
+        String className = tag.getSimpleName();
+        switch (className) {
+            case "CallTag":
                 return node instanceof RCallNode || node instanceof GroupDispatchNode;
 
-            case RSyntaxTags.STATEMENT:
-            case RSyntaxTags.DEBUG_HALT: {
+            case "StatementTag": {
                 Node parent = ((RInstrumentableNode) node).unwrapParent();
                 if (node instanceof BlockNode) {
                     // TODO we may reconsider this
@@ -623,12 +621,12 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 }
             }
 
-            case RSyntaxTags.START_FUNCTION: {
+            case "RootTag": {
                 Node parent = ((RInstrumentableNode) node).unwrapParent();
                 return parent instanceof FunctionDefinitionNode;
             }
 
-            case RSyntaxTags.LOOP:
+            case "LoopTag":
                 return node instanceof AbstractLoopNode;
 
             default:

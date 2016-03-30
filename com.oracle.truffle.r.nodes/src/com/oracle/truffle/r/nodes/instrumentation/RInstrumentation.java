@@ -28,6 +28,7 @@ import java.util.Map;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -160,19 +161,19 @@ public class RInstrumentation {
      * Create a filter that matches all the statement nodes in {@code func}.
      */
     static SourceSectionFilter.Builder createFunctionStatementFilter(RFunction func) {
-        return createFunctionFilter(func, RSyntaxTags.STATEMENT);
+        return createFunctionFilter(func, StandardTags.StatementTag.class);
     }
 
     public static SourceSectionFilter.Builder createFunctionStatementFilter(FunctionDefinitionNode fdn) {
-        return createFunctionFilter(fdn, RSyntaxTags.STATEMENT);
+        return createFunctionFilter(fdn, StandardTags.StatementTag.class);
     }
 
-    static SourceSectionFilter.Builder createFunctionFilter(RFunction func, String tag) {
+    static SourceSectionFilter.Builder createFunctionFilter(RFunction func, Class<?> tag) {
         FunctionDefinitionNode fdn = getFunctionDefinitionNode(func);
         return createFunctionFilter(fdn, tag);
     }
 
-    public static SourceSectionFilter.Builder createFunctionFilter(FunctionDefinitionNode fdn, String tag) {
+    public static SourceSectionFilter.Builder createFunctionFilter(FunctionDefinitionNode fdn, Class<?> tag) {
         /* Filter needs to check for statement tags in the range of the function in the Source */
         SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
         builder.tagIs(tag);
@@ -190,7 +191,7 @@ public class RInstrumentation {
     public static SourceSectionFilter.Builder createFunctionStartFilter(RFunction func) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
         SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
-        builder.tagIs(RSyntaxTags.START_FUNCTION);
+        builder.tagIs(StandardTags.RootTag.class);
         builder.sourceSectionEquals(fdn.getBody().getSourceSection());
         return builder;
     }

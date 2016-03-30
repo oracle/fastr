@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
-import com.oracle.truffle.api.instrumentation.InstrumentableFactory;
+import com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode;
 import com.oracle.truffle.api.nodes.Node;
 
 /**
@@ -36,10 +36,8 @@ public interface RInstrumentableNode {
      * of a node.
      */
     default RNode unwrap() {
-        if (this instanceof com.oracle.truffle.api.instrument.WrapperNode) {
-            return (RNode) ((com.oracle.truffle.api.instrument.WrapperNode) this).getChild();
-        } else if (this instanceof InstrumentableFactory.WrapperNode) {
-            return (RNode) ((InstrumentableFactory.WrapperNode) this).getDelegateNode();
+        if (this instanceof WrapperNode) {
+            return (RNode) ((WrapperNode) this).getDelegateNode();
         } else {
             return (RNode) this;
         }
@@ -47,7 +45,7 @@ public interface RInstrumentableNode {
 
     default Node unwrapParent() {
         Node p = ((Node) this).getParent();
-        if (p instanceof com.oracle.truffle.api.instrument.WrapperNode || p instanceof InstrumentableFactory.WrapperNode) {
+        if (p instanceof WrapperNode) {
             return p.getParent();
         } else {
             return p;

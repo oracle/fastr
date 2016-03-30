@@ -188,16 +188,13 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    private static void processSourceSection(SourceSection ss, boolean printSource, boolean printTags) {
+    private static void processSourceSection(SourceSection ss, boolean printSource, @SuppressWarnings("unused") boolean printTags) {
         // All syntax nodes should have source sections
         if (ss == null) {
             writeString(" *** null source section", false);
         } else {
             if (printSource) {
                 printSourceCode(ss);
-            }
-            if (printTags) {
-                printTags(ss);
             }
         }
     }
@@ -215,21 +212,9 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
     private static void printTags(RNode node) {
         writeString(" # tags [ ", false);
         for (int i = 0; i < RSyntaxTags.ALL_TAGS.length; i++) {
-            String tag = RSyntaxTags.ALL_TAGS[i];
+            Class<?> tag = RSyntaxTags.ALL_TAGS[i];
             if (node.isTaggedWith(tag)) {
-                writeString(tag, false);
-                writeString(" ", false);
-            }
-        }
-        writeString("]", false);
-    }
-
-    private static void printTags(SourceSection ss) {
-        writeString(" # tags [ ", false);
-        for (int i = 0; i < RSyntaxTags.ALL_TAGS.length; i++) {
-            String tag = RSyntaxTags.ALL_TAGS[i];
-            if (ss.hasTag(tag)) {
-                writeString(tag, false);
+                writeString(tag.getSimpleName(), false);
                 writeString(" ", false);
             }
         }

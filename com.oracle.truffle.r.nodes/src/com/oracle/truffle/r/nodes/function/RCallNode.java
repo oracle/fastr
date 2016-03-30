@@ -61,7 +61,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
-import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -135,12 +134,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -153,11 +152,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -165,7 +164,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -177,7 +176,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    DGV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -267,7 +266,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     @Child private CallArgumentsNode foreignCallArguments;
 
     public RCallNode(SourceSection sourceSection, RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
-        super(sourceSection.withTags(RSyntaxTags.CALL));
+        super(sourceSection);
         this.functionNode = function;
         this.arguments = new SyntaxArguments(arguments);
         this.signature = signature;

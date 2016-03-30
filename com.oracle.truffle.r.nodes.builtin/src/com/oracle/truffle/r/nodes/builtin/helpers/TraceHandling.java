@@ -30,10 +30,10 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.EventContext;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
-import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -87,7 +87,7 @@ public class TraceHandling {
         if (FastROptions.TraceCalls.getBooleanValue()) {
             TraceFunctionEventListener fser = new TraceFunctionEventListener();
             SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
-            builder.tagIs(RSyntaxTags.START_FUNCTION);
+            builder.tagIs(StandardTags.RootTag.class);
             SourceSectionFilter filter = builder.build();
             RInstrumentation.getInstrumenter().attachListener(filter, fser);
             setOutputHandler();

@@ -22,34 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.instrumentation;
 
-import com.oracle.truffle.api.debug.Debugger;
-import com.oracle.truffle.r.nodes.control.BlockNode;
-import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 
 public class RSyntaxTags {
-    /**
-     * Applied to all nodes in a {@link BlockNode}.
-     */
-    public static final String STATEMENT = "r-statement";
-    /**
-     * Applied to function bodies.
-     */
-    public static final String START_FUNCTION = "r-start_function";
-    /**
-     * All {@link RCallNode}s.
-     */
-    public static final String CALL = "r-call";
-    /**
-     * Applied to all loop nodes.
-     */
-    public static final String LOOP = "r-loop";
 
-    /*
-     * Hopefully Temporary if can agree on lang-call syntax.
-     */
-    public static final String DEBUG_CALL = Debugger.CALL_TAG;
-    public static final String DEBUG_HALT = Debugger.HALT_TAG;
+    public final class LoopTag {
+        private LoopTag() {
 
-    public static final String[] ALL_TAGS = new String[]{CALL, STATEMENT, START_FUNCTION, LOOP, DEBUG_CALL, DEBUG_HALT};
+        }
+    }
 
+    public static final Class<?>[] ALL_TAGS = new Class<?>[]{StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class};
 }

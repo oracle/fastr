@@ -189,6 +189,6 @@ public interface RRuntimeASTAccess {
     /**
      * cf. {@code Node.isTaggedWith(tag)}.
      */
-    boolean isTaggedWith(Node node, String tag);
+    boolean isTaggedWith(Node node, Class<?> tag);
 
 }

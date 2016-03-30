@@ -177,7 +177,7 @@ public abstract class RBaseNode extends Node {
     }
 
     @Override
-    public boolean isTaggedWith(String tag) {
+    public boolean isTaggedWith(Class<?> tag) {
         return RContext.getRRuntimeASTAccess().isTaggedWith(this, tag);
     }
 

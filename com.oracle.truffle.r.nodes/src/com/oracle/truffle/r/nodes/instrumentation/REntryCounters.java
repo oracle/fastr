@@ -31,6 +31,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.EventContext;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation.FunctionIdentification;
@@ -121,7 +122,7 @@ public class REntryCounters {
         static void installCounters() {
             if (enabled()) {
                 SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
-                builder.tagIs(RSyntaxTags.START_FUNCTION);
+                builder.tagIs(StandardTags.RootTag.class);
                 SourceSectionFilter filter = builder.build();
                 RInstrumentation.getInstrumenter().attachListener(filter, singleton);
             }
