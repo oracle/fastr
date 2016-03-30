@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,36 +93,58 @@ jmp_buf *getErrorJmpBuf() {
 	return callErrorJmpBuf;
 }
 
+void releaseCopiedVector(JNIEnv *env, CopiedVector cv) {
+    if (cv.obj != NULL) {
+	switch (cv.type) {
+	    case INTSXP: case LGLSXP: {
+		    jintArray intArray = (jintArray) cv.jArray;
+		    (*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
+		    break;
+	    }
+
+	    case REALSXP: {
+		    jdoubleArray doubleArray = (jdoubleArray) cv.jArray;
+		    (*env)->ReleaseDoubleArrayElements(env, doubleArray, (jdouble *)cv.data, 0);
+		    break;
+
+	    }
+
+	    case RAWSXP: {
+		    jbyteArray byteArray = (jbyteArray) cv.jArray;
+		    (*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, 0);
+		    break;
+
+	    }
+	    default:
+		fatalError("copiedVector type");
+	}
+    }
+}
+
 void callExit(JNIEnv *env) {
 //	printf("callExit\n");
 	int i;
 	for (i = 0; i < copiedVectorsIndex; i++) {
-		CopiedVector cv = copiedVectors[i];
-		switch (cv.type) {
-		    case INTSXP: case LGLSXP: {
-			    jintArray intArray = (jintArray) cv.jArray;
-			    (*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
-			    break;
-		    }
-
-		    case REALSXP: {
-			    jdoubleArray doubleArray = (jdoubleArray) cv.jArray;
-			    (*env)->ReleaseDoubleArrayElements(env, doubleArray, (jdouble *)cv.data, 0);
-			    break;
-
-		    }
-
-		    case RAWSXP: {
-			    jbyteArray byteArray = (jbyteArray) cv.jArray;
-			    (*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, 0);
-			    break;
-
-		    }
-		    default:
-		    	fatalError("copiedVector type");
-		}
+		releaseCopiedVector(env, copiedVectors[i]);
 	}
 	copiedVectorsIndex = 0;
+}
+
+void invalidateCopiedObject(JNIEnv *env, SEXP oldObj) {
+	int i;
+	for (i = 0; i < copiedVectorsIndex; i++) {
+		CopiedVector cv = copiedVectors[i];
+		if ((*env)->IsSameObject(env, cv.obj, oldObj)) {
+#if TRACE_COPIES
+			printf("invalidateCopiedObject(%p): found\n", x);
+#endif
+			releaseCopiedVector(env, cv);
+			copiedVectors[i].obj = NULL;
+		}
+	}
+#if TRACE_COPIES
+	printf("invalidateCopiedObject(%p): not found\n", x);
+#endif
 }
 
 void *findCopiedObject(JNIEnv *env, SEXP x) {

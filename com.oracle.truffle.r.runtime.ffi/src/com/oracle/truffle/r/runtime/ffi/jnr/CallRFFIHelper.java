@@ -232,10 +232,6 @@ public class CallRFFIHelper {
     public static void Rf_setAttrib(Object obj, Object name, Object val) {
         if (obj instanceof RAttributable) {
             RAttributable attrObj = (RAttributable) obj;
-            RAttributes attrs = attrObj.getAttributes();
-            if (attrs == null) {
-                attrs = attrObj.initAttributes();
-            }
             String nameAsString;
             if (name instanceof RSymbol) {
                 nameAsString = ((RSymbol) name).getName();
@@ -244,7 +240,11 @@ public class CallRFFIHelper {
                 assert nameAsString != null;
             }
             nameAsString = nameAsString.intern();
-            attrs.put(nameAsString, val);
+            if ("class" == nameAsString) {
+                attrObj.initAttributes().put(nameAsString, val);
+            } else {
+                attrObj.setAttr(nameAsString, val);
+            }
         }
     }
 
@@ -277,6 +277,11 @@ public class CallRFFIHelper {
             }
         }
         return 0;
+    }
+
+    public static Object Rf_lengthgets(Object x, int newSize) {
+        RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
+        return vec.resize(newSize);
     }
 
     public static int Rf_isString(Object x) {

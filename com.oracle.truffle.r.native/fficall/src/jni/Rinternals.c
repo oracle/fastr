@@ -54,6 +54,7 @@ static jmethodID R_FindNamespaceMethodID;
 static jmethodID Rf_GetOption1MethodID;
 static jmethodID Rf_gsetVarMethodID;
 static jmethodID Rf_inheritsMethodID;
+static jmethodID Rf_lengthgetsMethodID;
 static jmethodID CADR_MethodID;
 static jmethodID TAG_MethodID;
 static jmethodID PRINTNAME_MethodID;
@@ -118,6 +119,7 @@ void init_internals(JNIEnv *env) {
 	Rf_GetOption1MethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_GetOption1", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_gsetVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_gsetVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	Rf_inheritsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_inherits", "(Ljava/lang/Object;Ljava/lang/String;)I", 1);
+	Rf_lengthgetsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_lengthgets", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
 //	Rf_rPsortMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_rPsort", "(Lcom/oracle/truffle/r/runtime/data/RDoubleVector;II)", 1);
 //	Rf_iPsortMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_iPsort", "(Lcom/oracle/truffle/r/runtime/data/RIntVector;II)", 1);
     CADR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CADR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
@@ -395,7 +397,7 @@ SEXP Rf_mkCharCE(const char *x, cetype_t y) {
 }
 
 SEXP Rf_mkCharLen(const char *x, int y) {
-	return unimplemented("Rf_mkCharLen");
+	return Rf_mkCharLenCE(x, y, CE_NATIVE);
 }
 
 SEXP Rf_mkCharLenCE(const char *x, int len, cetype_t enc) {
@@ -593,7 +595,11 @@ SEXP R_FindNamespace(SEXP info) {
 }
 
 SEXP Rf_lengthgets(SEXP x, R_len_t y) {
-	return unimplemented("Rf_lengthgets");
+	TRACE("%s(%p)", x);
+	JNIEnv *thisenv = getEnv();
+	invalidateCopiedObject(thisenv, x);
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_lengthgetsMethodID, x, y);
+	return checkRef(thisenv, result);
 }
 
 SEXP Rf_xlengthgets(SEXP x, R_xlen_t y) {
@@ -1186,6 +1192,7 @@ const char *R_CHAR(SEXP string) {
 	char *copyChars = malloc(len + 1);
 	memcpy(copyChars, stringChars, len);
 	copyChars[len] = 0;
+	TRACE("%s(%s)", copyChars);
 	return copyChars;
 }
 
