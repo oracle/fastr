@@ -262,7 +262,7 @@ public class HiddenInternalFunctions {
                     @Override
                     public Object eval(Object arg) {
                         Object[] callArgs = RArguments.create(envhook, caller, null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
-                        return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
+                        return callCache.execute(SubstituteVirtualFrame.create(frame), envhook.getTarget(), callArgs);
                     }
                 };
                 String functionName = ReadVariableNode.getSlowPathEvaluationName();
@@ -388,7 +388,7 @@ public class HiddenInternalFunctions {
                 @Override
                 public Object eval(Object arg) {
                     Object[] callArgs = RArguments.create(hook, caller, null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
-                    return callCache.execute(new SubstituteVirtualFrame(frame), hook.getTarget(), callArgs);
+                    return callCache.execute(SubstituteVirtualFrame.create(frame), hook.getTarget(), callArgs);
                 }
             };
 
@@ -478,7 +478,7 @@ public class HiddenInternalFunctions {
 
     /*
      * Created as primitive function to avoid incrementing reference count for the argument.
-     * 
+     *
      * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
      * SHARED_PERMANENT_VAL for permanent shared
      */

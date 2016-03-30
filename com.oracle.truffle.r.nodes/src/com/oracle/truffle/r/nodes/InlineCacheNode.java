@@ -69,7 +69,7 @@ public abstract class InlineCacheNode extends RBaseNode {
         if (isVirtualFrameProfile.profile(frame instanceof VirtualFrame)) {
             vf = (VirtualFrame) frame;
         } else {
-            vf = new SubstituteVirtualFrame(frame.materialize());
+            vf = SubstituteVirtualFrame.create(frame.materialize());
         }
         return reified.execute(vf);
     }

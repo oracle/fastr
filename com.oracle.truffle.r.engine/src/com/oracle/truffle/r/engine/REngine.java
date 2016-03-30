@@ -504,7 +504,7 @@ final class REngine implements Engine, Engine.Timings {
         @Override
         public Object execute(VirtualFrame frame) {
             assert frame.getArguments().length == 1;
-            SubstituteVirtualFrame vf = new SubstituteVirtualFrame((MaterializedFrame) frameTypeProfile.profile(frame.getArguments()[0]));
+            VirtualFrame vf = SubstituteVirtualFrame.create((MaterializedFrame) frameTypeProfile.profile(frame.getArguments()[0]));
             Object result = null;
             try {
                 result = body.execute(vf);
