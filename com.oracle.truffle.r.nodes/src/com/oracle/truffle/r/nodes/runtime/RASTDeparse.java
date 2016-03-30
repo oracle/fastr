@@ -77,7 +77,7 @@ public class RASTDeparse {
         return null;
     }
 
-    private static Func isInfixOperatorNode(Node node) {
+    private static Func isInfixOperatorNode(RBaseNode node) {
         if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
             Object fname = RASTUtils.findFunctionName(node);
             return isInfixOperator(fname);
@@ -186,7 +186,7 @@ public class RASTDeparse {
     }
 
     private static boolean needsParens(PPInfo mainop, RSyntaxNode arg, boolean isLeft) {
-        Node node = RASTUtils.unwrap(arg);
+        RBaseNode node = RASTUtils.unwrap(arg);
         Func func = isInfixOperatorNode(node);
         if (func != null) {
             Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);

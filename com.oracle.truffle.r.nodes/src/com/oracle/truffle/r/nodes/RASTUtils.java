@@ -259,7 +259,7 @@ public class RASTUtils {
      * Returns the name (as an {@link RSymbol} of the function associated with an {@link RCallNode}
      * or {@link GroupDispatchNode}.
      */
-    public static Object findFunctionName(Node node) {
+    public static Object findFunctionName(RBaseNode node) {
         CompilerAsserts.neverPartOfCompilation(); // for string interning
         RNode child = (RNode) unwrap(getFunctionNode(node));
         if (child instanceof ConstantNode && ConstantNode.isFunction(child)) {
@@ -318,6 +318,8 @@ public class RASTUtils {
             return (RSyntaxNode) RASTUtils.cloneNode(RASTUtils.unwrap(((RPromise) val).getRep()));
         } else if (val instanceof RLanguage) {
             return (RSyntaxNode) RASTUtils.cloneNode(((RLanguage) val).getRep());
+        } else if (val instanceof RSymbol) {
+            return RASTUtils.createReadVariableNode(((RSymbol) val).getName());
         } else if (val instanceof RArgsValuesAndNames) {
             // this is '...'
             RArgsValuesAndNames rva = (RArgsValuesAndNames) val;
