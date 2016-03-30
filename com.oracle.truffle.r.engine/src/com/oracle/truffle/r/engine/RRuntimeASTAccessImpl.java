@@ -40,6 +40,9 @@ import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
+import com.oracle.truffle.r.nodes.builtin.base.DoCall;
+import com.oracle.truffle.r.nodes.builtin.base.Lapply;
+import com.oracle.truffle.r.nodes.builtin.base.Mapply;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
@@ -79,6 +82,7 @@ import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
@@ -601,6 +605,12 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     public boolean isTaggedWith(Node node, Class<?> tag) {
+        if (!(node instanceof RSyntaxNode)) {
+            return false;
+        }
+        if (isInternalChild(node)) {
+            return false;
+        }
         String className = tag.getSimpleName();
         switch (className) {
             case "CallTag":
@@ -632,6 +642,17 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             default:
                 return false;
         }
+    }
+
+    private static boolean isInternalChild(Node node) {
+        Node parent = node.getParent();
+        while (parent != null) {
+            if (parent instanceof InternalRSyntaxNodeChildren) {
+                return true;
+            }
+            parent = parent.getParent();
+        }
+        return false;
     }
 
 }

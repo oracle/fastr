@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -73,7 +74,7 @@ public abstract class Lapply extends RBuiltinNode {
     }
 
     @NodeChildren({@NodeChild(type = RNode.class), @NodeChild(type = RNode.class), @NodeChild(type = RNode.class)})
-    protected abstract static class LapplyInternalNode extends RNode {
+    public abstract static class LapplyInternalNode extends RNode implements InternalRSyntaxNodeChildren {
 
         private static final String INDEX_NAME = AnonymousFrameVariable.create("LAPPLY_ITER_INDEX");
         private static final String VECTOR_ELEMENT = AnonymousFrameVariable.create("LAPPLY_VEC_ELEM");

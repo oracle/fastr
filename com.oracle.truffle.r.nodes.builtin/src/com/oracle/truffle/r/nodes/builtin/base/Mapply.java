@@ -52,6 +52,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -95,7 +96,7 @@ public abstract class Mapply extends RBuiltinNode {
         return mApply(frame, fun, dots, RDataFactory.createList());
     }
 
-    protected abstract static class MapplyInternalNode extends Node {
+    public abstract static class MapplyInternalNode extends Node implements InternalRSyntaxNodeChildren {
 
         private static final String VECTOR_ELEMENT_PREFIX = "MAPPLY_VEC_ELEM_";
         private static final RLogicalVector DROP = RDataFactory.createLogicalVectorFromScalar(true);

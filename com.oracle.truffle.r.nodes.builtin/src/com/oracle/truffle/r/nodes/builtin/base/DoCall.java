@@ -72,11 +72,12 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 // TODO Implement properly, this is a simple implementation that works when the environment doesn't matter
 @RBuiltin(name = "do.call", kind = INTERNAL, parameterNames = {"what", "args", "envir"})
-public abstract class DoCall extends RBuiltinNode {
+public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNodeChildren {
 
     @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
     @Child private GetFunctions.Get getNode;
