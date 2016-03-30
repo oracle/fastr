@@ -879,4 +879,11 @@ public class RRuntime {
     public static boolean isForeignObject(Object obj) {
         return obj instanceof TruffleObject && !(obj instanceof RTypedValue);
     }
+
+    /**
+     * Normalize -0.0 to +0.0, mainly used for printing.
+     */
+    public static double normalizeZero(double value) {
+        return value == 0.0 ? 0.0 : value;
+    }
 }
