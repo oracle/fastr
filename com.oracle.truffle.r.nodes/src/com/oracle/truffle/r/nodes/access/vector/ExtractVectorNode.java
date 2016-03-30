@@ -123,7 +123,7 @@ public abstract class ExtractVectorNode extends Node {
                 throw RError.error(this, RError.Message.GENERIC, "invalid index during foreign access");
             }
         } catch (InteropException e) {
-            throw RError.interopError(RError.findParentRBase(this), e);
+            throw RError.interopError(RError.findParentRBase(this), e, object);
         }
     }
 

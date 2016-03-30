@@ -126,16 +126,25 @@ public abstract class RLengthNode extends RNode {
         return Message.GET_SIZE.createNode();
     }
 
+    protected static Node createHasSize() {
+        return Message.HAS_SIZE.createNode();
+    }
+
     protected static boolean isForeignObject(TruffleObject object) {
         return RRuntime.isForeignObject(object);
     }
 
     @Specialization(guards = "isForeignObject(object)")
-    protected int getForeignSize(VirtualFrame frame, TruffleObject object, @Cached("createGetSize()") Node foreignNode) {
+    protected int getForeignSize(VirtualFrame frame, TruffleObject object, //
+                    @Cached("createHasSize()") Node hasSizeNode, //
+                    @Cached("createGetSize()") Node getSizeNode) {
         try {
-            return (int) ForeignAccess.send(foreignNode, frame, object);
+            if (!(boolean) ForeignAccess.send(hasSizeNode, frame, object)) {
+                return 1;
+            }
+            return (int) ForeignAccess.send(getSizeNode, frame, object);
         } catch (InteropException e) {
-            throw RError.interopError(this, e);
+            throw RError.interopError(this, e, object);
         }
     }
 }
