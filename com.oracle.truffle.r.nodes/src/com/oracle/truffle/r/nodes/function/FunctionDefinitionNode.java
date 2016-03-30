@@ -46,6 +46,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -71,9 +72,11 @@ import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.instrument.FunctionUIDFactory;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, WithFunctionUID {
+public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, WithFunctionUID, RSyntaxFunction {
 
     @Child private RNode body; // typed as RNode to avoid custom instrument wrapper
     /**
@@ -498,5 +501,17 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public SourceSection getSourceSection() {
         return sourceSectionR;
+    }
+
+    public ArgumentsSignature getSyntaxSignature() {
+        return getFormalArguments().getSignature();
+    }
+
+    public RSyntaxElement[] getSyntaxArgumentDefaults() {
+        return RASTUtils.asSyntaxNodes(getFormalArguments().getArguments());
+    }
+
+    public RSyntaxElement getSyntaxBody() {
+        return getBody();
     }
 }
