@@ -130,11 +130,11 @@ public class TestMiscBuiltins extends TestBase {
 
     @Test
     public void testLowerTriangular() {
-        assertEval(Ignored.Unknown, "{ m <- matrix(1:6, nrow=2) ;  lower.tri(m, diag=TRUE) }");
-        assertEval(Ignored.Unknown, "{ m <- matrix(1:6, nrow=2) ;  lower.tri(m, diag=FALSE) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ;  lower.tri(m, diag=TRUE) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ;  lower.tri(m, diag=FALSE) }");
 
-        assertEval(Ignored.Unknown, "{ lower.tri(1:3, diag=TRUE) }");
-        assertEval(Ignored.Unknown, "{ lower.tri(1:3, diag=FALSE) }");
+        assertEval("{ lower.tri(1:3, diag=TRUE) }");
+        assertEval("{ lower.tri(1:3, diag=FALSE) }");
     }
 
     @Test
