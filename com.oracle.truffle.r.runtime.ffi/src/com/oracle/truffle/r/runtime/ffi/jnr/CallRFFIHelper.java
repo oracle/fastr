@@ -56,6 +56,8 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -100,12 +102,23 @@ public class CallRFFIHelper {
         }
     }
 
-    private static void guaranteeInstanceOf(Object x, Class<?> clazz) {
+    private static <T> T guaranteeInstanceOf(Object x, Class<T> clazz) {
         if (x == null) {
             guarantee(false, "unexpected type: null instead of " + clazz.getSimpleName());
         } else if (!clazz.isInstance(x)) {
             guarantee(false, "unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of " + clazz.getSimpleName());
         }
+        return clazz.cast(x);
+    }
+
+    private static <T> T guaranteeInstanceOfOrNull(Object x, Class<T> clazz) {
+        if (x == null) {
+            return null;
+        }
+        if (!clazz.isInstance(x)) {
+            guarantee(false, "unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of " + clazz.getSimpleName());
+        }
+        return clazz.cast(x);
     }
 
     // Checkstyle: stop method name check
@@ -395,8 +408,7 @@ public class CallRFFIHelper {
     }
 
     public static void SET_VECTOR_ELT(Object x, int i, Object v) {
-        // TODO error checks
-        RList list = (RList) x;
+        RList list = guaranteeInstanceOf(x, RList.class);
         list.setElement(i, v);
     }
 
@@ -473,11 +485,8 @@ public class CallRFFIHelper {
     }
 
     public static Object VECTOR_ELT(Object x, int i) {
-        if (x instanceof RList) {
-            return ((RList) x).getDataAt(i);
-        } else {
-            throw unimplemented();
-        }
+        RAbstractListVector list = guaranteeInstanceOf(RRuntime.asAbstractVector(x), RAbstractListVector.class);
+        return list.getDataAt(i);
     }
 
     public static int NAMED(Object x) {

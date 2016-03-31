@@ -385,15 +385,11 @@ cetype_t Rf_getCharCE(SEXP x) {
 }
 
 SEXP Rf_mkChar(const char *x) {
-	JNIEnv *thisenv = getEnv();
-	// TODO encoding, assume UTF for now
-	SEXP result = (*thisenv)->NewStringUTF(thisenv, x);
-	return checkRef(thisenv, result);
+	return Rf_mkCharLenCE(x, strlen(x), CE_NATIVE);
 }
 
 SEXP Rf_mkCharCE(const char *x, cetype_t y) {
-	unimplemented("Rf_mkCharCE");
-	return NULL;
+	return Rf_mkCharLenCE(x, strlen(x), y);
 }
 
 SEXP Rf_mkCharLen(const char *x, int y) {
@@ -416,9 +412,7 @@ const char *Rf_reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst) 
 }
 
 SEXP Rf_mkString(const char *s) {
-	JNIEnv *thisenv = getEnv();
-	jstring string = (*thisenv)->NewStringUTF(thisenv, s);
-	return ScalarString(string);
+	return ScalarString(Rf_mkChar(s));
 }
 
 int Rf_ncols(SEXP x) {

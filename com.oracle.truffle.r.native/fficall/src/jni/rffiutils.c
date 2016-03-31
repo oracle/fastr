@@ -231,7 +231,9 @@ static SEXP checkCachedGlobalRef(JNIEnv *env, SEXP obj) {
 void validateRef(JNIEnv *env, SEXP x, const char *msg) {
 	jobjectRefType t = (*env)->GetObjectRefType(env, x);
 	if (t == JNIInvalidRefType) {
-		fatalError(msg);
+		char buf[1000];
+		sprintf(buf, "%s %p", msg,x);
+		fatalError(buf);
 	}
 }
 
