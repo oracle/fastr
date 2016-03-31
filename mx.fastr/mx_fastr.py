@@ -277,6 +277,10 @@ def gate(args):
     # exclude findbugs until compliant
     mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj'])
 
+def original_gate(args):
+    '''Run the R gate (without filtering gate tasks)'''
+    mx_gate.gate(args)
+
 def _test_harness_body_install_new(args, vmArgs):
     '''the callback from mx.test'''
     libinstall = abspath("lib.install.cran")
@@ -605,6 +609,7 @@ _commands = {
     'rscript' : [rscript, '[options]'],
     'Rscript' : [rscript, '[options]'],
     'rtestgen' : [testgen, ''],
+    'originalgate' : [original_gate, '[options]'],
     # core overrides
     'bench' : [bench, ''],
     'rbench' : [rbench, ''],
