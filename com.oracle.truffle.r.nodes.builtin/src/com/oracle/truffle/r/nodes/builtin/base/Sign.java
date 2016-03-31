@@ -39,11 +39,9 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 @RBuiltin(name = "sign", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
 public abstract class Sign extends RBuiltinNode {
 
-    @Child
-    private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child
-    private UnaryArithmeticNode signNode = UnaryArithmeticNodeGen.create(SignArithmetic::new, RType.Logical,
-            RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
+    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+    @Child private UnaryArithmeticNode signNode = UnaryArithmeticNodeGen.create(SignArithmetic::new, RType.Logical,
+                    RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
 
     @Specialization
     protected Object sign(Object x) {
