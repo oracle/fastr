@@ -45,6 +45,11 @@ final class RAbstactVectorToListClosure extends RToVectorClosure implements RAbs
     }
 
     @Override
+    public Object getDataAt(int index) {
+        return vector.getDataAtAsObject(index);
+    }
+
+    @Override
     public RList materialize() {
         int length = getLength();
         Object[] result = new Object[length];
