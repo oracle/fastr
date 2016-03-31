@@ -251,8 +251,9 @@ def _fastr_gate_runner(args, tasks):
                 t.abort('copyright errors')
 
     # build the native projects (GnuR/VM)
-    with mx_gate.Task('BuildNative', tasks):
-        build([])
+    with mx_gate.Task('BuildNative', tasks) as t:
+        if t:
+            build([])
 
     # check that the expected test output file is up to date
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks) as t:
