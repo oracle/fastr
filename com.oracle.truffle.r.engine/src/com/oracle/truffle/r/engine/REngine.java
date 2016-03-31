@@ -457,7 +457,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public Object evalPromise(Closure closure, MaterializedFrame frame) {
-        return closure.getCallTarget().call(frame);
+        return closure.deepCopy().getCallTarget().call(frame);
     }
 
     @Override
