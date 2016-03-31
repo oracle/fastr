@@ -31,17 +31,19 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -384,6 +386,10 @@ public class RDeparse {
             return (opts & SHOWATTRIBUTES) != 0;
         }
 
+        boolean quoteExpressions() {
+            return (opts & QUOTEEXPRESSIONS) != 0;
+        }
+
         private int dIndent = 0;
 
         private void dIndent() {
@@ -523,11 +529,17 @@ public class RDeparse {
                 break;
 
             case SYMSXP: {
+                if (state.quoteExpressions()) {
+                    state.append("quote(");
+                }
                 String name = ((RSymbol) obj).getName();
                 if (state.backtick) {
                     name = quotify(name, BACKTICK);
                 }
                 state.append(name);
+                if (state.quoteExpressions()) {
+                    state.append(')');
+                }
                 break;
             }
 
@@ -959,8 +971,39 @@ public class RDeparse {
                 state.append("NULL");
                 break;
 
+            case S4SXP: {
+                RS4Object s4Obj = (RS4Object) obj;
+                state.append("new(\"");
+                Object clazz = s4Obj.getAttribute("class");
+                state.append(clazz == null ? "S4" : RRuntime.toString(RRuntime.asStringLengthOne(clazz)));
+                state.append('\"');
+                state.incIndent();
+                state.writeline();
+                if (s4Obj.getAttributes() != null) {
+                    for (RAttribute att : s4Obj.getAttributes()) {
+                        if (!"class".equals(att.getName())) {
+                            state.append(", ");
+                            state.append(att.getName());
+                            state.append(" = ");
+                            deparse2buff(state, att.getValue());
+                            state.writeline();
+                        }
+                    }
+                }
+                state.decIndent();
+                state.append(')');
+                break;
+            }
+            case EXTPTRSXP: {
+                RExternalPtr ext = (RExternalPtr) obj;
+                state.append("<pointer: 0x");
+                state.append(Long.toHexString(ext.getAddr()));
+                state.append('>');
+                break;
+            }
+
             default:
-                assert false;
+                throw RInternalError.shouldNotReachHere("unexpected SEXPTYPE: " + type);
         }
         return state;
     }
@@ -1236,7 +1279,7 @@ public class RDeparse {
                 state.append("c(");
                 surround = true;
             }
-            RIntVector intVec = (RIntVector) vec;
+            RAbstractIntVector intVec = (RAbstractIntVector) vec;
             for (int i = 0; i < len; i++) {
                 int val = intVec.getDataAt(i);
                 if (RRuntime.isNA(val)) {

@@ -166,6 +166,8 @@ public class OptionsFunctions {
 
     @RBuiltin(name = "getOption", kind = INTERNAL, parameterNames = "x")
     public abstract static class GetOption extends RBuiltinNode {
+
+        @TruffleBoundary
         @Specialization
         protected Object getOption(RAbstractStringVector x) {
             if (x.getLength() != 1) {

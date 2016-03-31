@@ -779,6 +779,19 @@ public class RRuntime {
     }
 
     /**
+     * Same {@call asString} but checks if vector is of length one.
+     */
+    public static String asStringLengthOne(Object obj) {
+        if (obj instanceof String) {
+            return (String) obj;
+        } else if (obj instanceof RStringVector && ((RStringVector) obj).getLength() == 1) {
+            return ((RStringVector) obj).getDataAt(0);
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Java equivalent of GnuR asInteger fur use outside Truffle boundary. TODO support for warnings
      */
     public static int asInteger(Object objArg) {
@@ -865,5 +878,12 @@ public class RRuntime {
 
     public static boolean isForeignObject(Object obj) {
         return obj instanceof TruffleObject && !(obj instanceof RTypedValue);
+    }
+
+    /**
+     * Normalize -0.0 to +0.0, mainly used for printing.
+     */
+    public static double normalizeZero(double value) {
+        return value == 0.0 ? 0.0 : value;
     }
 }

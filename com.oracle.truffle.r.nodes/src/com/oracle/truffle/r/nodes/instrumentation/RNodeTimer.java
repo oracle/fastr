@@ -32,6 +32,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.EventContext;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.control.BlockNode;
@@ -51,9 +52,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
  * using {@link System#nanoTime()}.
  *
  */
-class RNodeTimer {
+public class RNodeTimer {
 
-    private static final class TimeInfo {
+    public static final class TimeInfo {
         private final Object ident;
         protected long enterTime;
         protected long cumulativeTime;
@@ -115,10 +116,10 @@ class RNodeTimer {
 
     }
 
-    static class StatementListener extends BasicListener {
+    public static class StatementListener extends BasicListener {
         private static final StatementListener singleton = new StatementListener();
 
-        static long findTimer(RFunction func) {
+        public static long findTimer(RFunction func) {
             FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
             FunctionUID uid = fdn.getUID();
             long cumTime = 0;
@@ -138,13 +139,13 @@ class RNodeTimer {
         static void installTimers() {
             if (enabled()) {
                 SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
-                builder.tagIs(RSyntaxTags.STATEMENT);
+                builder.tagIs(StandardTags.StatementTag.class);
                 SourceSectionFilter filter = builder.build();
                 RInstrumentation.getInstrumenter().attachListener(filter, singleton);
             }
         }
 
-        static void installTimer(RFunction func) {
+        public static void installTimer(RFunction func) {
             RInstrumentation.getInstrumenter().attachListener(RInstrumentation.createFunctionStatementFilter(func).build(), singleton);
         }
 
@@ -281,7 +282,7 @@ class RNodeTimer {
         }
 
         private abstract static class StatementVisitor implements RSyntaxNodeVisitor {
-            protected final FunctionUID uid;
+            @SuppressWarnings("unused") protected final FunctionUID uid;
 
             StatementVisitor(FunctionUID uid) {
                 this.uid = uid;

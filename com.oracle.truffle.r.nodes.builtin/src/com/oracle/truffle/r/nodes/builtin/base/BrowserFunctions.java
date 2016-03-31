@@ -30,16 +30,17 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
+import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNodeGen;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.instrument.Browser;
 
 public class BrowserFunctions {
 
@@ -59,6 +60,8 @@ public class BrowserFunctions {
     @RBuiltin(name = "browser", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"})
     public abstract static class BrowserNode extends RInvisibleBuiltinNode {
 
+        @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
+
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{"", RNull.instance, RRuntime.LOGICAL_TRUE, 0};
@@ -67,18 +70,24 @@ public class BrowserFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull browser(VirtualFrame frame, String text, RNull condition, byte expr, int skipCalls) {
-            controlVisibility();
             if (RRuntime.fromLogical(expr)) {
                 try {
                     helperState.add(new HelperState(text, condition));
                     MaterializedFrame mFrame = frame.materialize();
-                    String callString = RContext.getRRuntimeASTAccess().getCallerSource(RArguments.getCall(mFrame));
-                    RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", REnvironment.isGlobalEnvFrame(frame) ? "top level" : callString);
-                    Browser.interact(mFrame);
+                    RCaller caller = RArguments.getCall(mFrame);
+                    String callerString;
+                    if (caller == null) {
+                        callerString = "top level";
+                    } else {
+                        callerString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
+                    }
+                    RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", callerString);
+                    browserInteractNode.execute(frame);
                 } finally {
                     helperState.remove(helperState.size() - 1);
                 }
             }
+            forceVisibility(false);
             return RNull.instance;
         }
     }

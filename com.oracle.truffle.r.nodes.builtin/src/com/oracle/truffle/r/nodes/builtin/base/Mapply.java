@@ -36,7 +36,7 @@ import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctions.AccessArraySubscriptBuiltin;
+import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessArraySubscriptBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.MapplyNodeGen.MapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode;
@@ -52,6 +52,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -71,7 +72,7 @@ public abstract class Mapply extends RBuiltinNode {
         private ElementNode(String vectorElementName) {
             this.vectorElementName = AnonymousFrameVariable.create(vectorElementName);
             this.lengthNode = insert(LengthNodeGen.create(null, null, null));
-            this.indexedLoadNode = insert(InfixEmulationFunctionsFactory.AccessArraySubscriptBuiltinNodeGen.create(null, null, null));
+            this.indexedLoadNode = insert(InfixFunctionsFactory.AccessArraySubscriptBuiltinNodeGen.create(null, null, null));
             this.writeVectorElementNode = insert(WriteVariableNode.createAnonymous(this.vectorElementName, null, Mode.REGULAR));
         }
     }
@@ -95,7 +96,7 @@ public abstract class Mapply extends RBuiltinNode {
         return mApply(frame, fun, dots, RDataFactory.createList());
     }
 
-    protected abstract static class MapplyInternalNode extends Node {
+    public abstract static class MapplyInternalNode extends Node implements InternalRSyntaxNodeChildren {
 
         private static final String VECTOR_ELEMENT_PREFIX = "MAPPLY_VEC_ELEM_";
         private static final RLogicalVector DROP = RDataFactory.createLogicalVectorFromScalar(true);

@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -131,8 +132,8 @@ public final class RError extends RuntimeException {
     }
 
     @TruffleBoundary
-    public static RError interopError(RBaseNode node, InteropException e) {
-        throw error0(node, RError.Message.GENERIC, "Foreign function failed: " + e.getMessage() != null ? e.getMessage() : e.toString());
+    public static RError interopError(RBaseNode node, InteropException e, TruffleObject o) {
+        throw error0(node, RError.Message.GENERIC, "Foreign function failed: " + (e.getMessage() != null ? e.getMessage() : e.toString()) + " on object " + o);
     }
 
     public static RBaseNode findParentRBase(Node node) {
@@ -667,7 +668,8 @@ public final class RError extends RuntimeException {
         NON_LANG_ASSIGNMENT_TARGET("target of assignment expands to non-language object"),
         INVALID_LARGE_NA_VALUE("invalid '%s' value (too large or NA)"),
         INVALID_NEGATIVE_VALUE("invalid '%s' value (< 0)"),
-        POSITIVE_LENGTH("'%s' must have positive length");
+        POSITIVE_LENGTH("'%s' must have positive length"),
+        BROWSER_QUIT("cannot quit from browser");
 
         public final String message;
         final boolean hasArgs;

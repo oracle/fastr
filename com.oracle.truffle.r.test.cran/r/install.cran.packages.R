@@ -57,9 +57,12 @@
 #   context: run in separate FastR context
 
 # By default dependents are installed implicitly by the utils::install.packages function.
-# However, if --install.dependents is set, the dependents of a package P are installed explicitly
+# However, if --install-dependents is set, the dependents of a package P are installed explicitly
 # in (transitive) dependency order and, if any install fails, the install for P (and any remaining
 # dependents) is aborted.
+
+# If --use-installed is set the lib install directory is analyzed for existing (correctly) installed packages
+# and these are not re-installed.
 
 # test output goes to a directory derived from the '--testdir dir' option (default 'test'). Each package's test output is
 # stored in a subdirectory named after the package.
@@ -79,6 +82,7 @@ usage <- function() {
 					  "[--pkg-list-installed]",
 					  "[--print-ok-installs]",
 					  "[--list-versions]",
+					  "[--use-installed",
                       "[package-pattern] \n"))
 	quit(status=1)
 }
@@ -242,26 +246,28 @@ set.initial.package.blacklist <- function() {
 
 }
 
-get.installed.pkgs <- function() {
-	pkg.filelist <- character();
-	pkg.excludes <- character()
+get.installed.pkgs <- function(ok=T) {
+	pkgs.ok <- character();
+	pkgs.failed <- character()
 	pkgdirs <- list.files(lib.install, no..=T)
-	# check for failed installs
+	# find failed installs
 	for (pkgname in pkgdirs) {
 		if (grepl("00LOCK-", pkgname)) {
-			pkg.exclude <- gsub("00LOCK-", "", pkgname)
-			pkg.excludes <- append(pkg.excludes, pkg.exclude)
-			if (verbose) {
-				cat("excluding package with failed install:", pkg.exclude, "\n")
-			}
+			pkg.failed <- gsub("00LOCK-", "", pkgname)
+			pkgs.failed <- append(pkgs.failed, pkg.failed)
 		}
 	}
+	# calculate ok installs
 	for (pkgname in pkgdirs) {
-		if (!grepl("00LOCK-", pkgname) && !pkgname %in% pkg.excludes) {
-			pkg.filelist <- append(pkg.filelist, pkgname)
+		if (!grepl("00LOCK-", pkgname) && !pkgname %in% pkgs.failed) {
+			pkgs.ok <- append(pkgs.ok, pkgname)
 		}
 	}
-	pkg.filelist
+	return(if (ok) pkgs.ok else pkgs.failed)
+}
+
+get.pkgdir <- function(pkgname) {
+	return(file.path(lib.install, pkgname))
 }
 
 installed.ok <- function(pkgname, initial_error_log_size) {
@@ -269,10 +275,11 @@ installed.ok <- function(pkgname, initial_error_log_size) {
 	# 1. There must be a directory lib.install/pkgname
 	# 2. There must not be a directory lib.install/00LOCK-pkgname
 	# 3. The FastR error log must be the same size
-	if (!file.exists(file.path(lib.install, pkgname))) {
+	pkgdir <- get.pkgdir(pkgname)
+	if (!file.exists(pkgdir)) {
 		return(FALSE)
 	}
-	if (file.exists(file.path("00LOCK-", pkgname))) {
+	if (file.exists(get.pkgdir(paste0("00LOCK-", pkgname)))) {
 		return(FALSE)
 	}
 	if (fastr_error_log_size() != initial_error_log_size) {
@@ -281,10 +288,20 @@ installed.ok <- function(pkgname, initial_error_log_size) {
 		# install code and leaves no LOCK file nor does it remove
 		# the faulty package, so it looks like it succeeded.
 		# We delete the package dir here to reflect the failure.
-		unlink(file.path(lib.install, pkgname), recursive=T)
+		unlink(pkgdir, recursive=T)
 		return(FALSE)
 	}
 	return(TRUE)
+}
+
+check.use.installed <- function() {
+	pkgs.ok <- get.installed.pkgs(T)
+	pkgs.failed <- get.installed.pkgs(F)
+	ok <- rep_len(TRUE, length(pkgs.ok))
+	failed <- rep_len(FALSE, length(pkgs.failed))
+	names(ok) <- pkgs.ok
+	names(failed) <- pkgs.failed
+	install.status <<- c(ok, failed)
 }
 
 # find the available packages from contriburl and match those against pkg.pattern
@@ -324,11 +341,12 @@ install.pkgs <- function(pkgnames, blacklist, dependents.install=F) {
 	install.total = length(pkgnames)
 	result <- TRUE
 	for (pkgname in pkgnames) {
+		cat("processing:", pkgname, "\n")
 		dependent.install.ok <- T
 		if (pkgname %in% blacklist) {
 			cat("not installing:", pkgname, " - blacklisted\n")
 		} else {
-			if (!dependents.install && install.dependents) {
+			if (install.dependents && !dependents.install) {
 				dependents <- install.order(avail.pkgs, avail.pkgs[pkgname, ])
 				if (length(dependents) > 0) {
 					# not a leaf package
@@ -344,25 +362,36 @@ install.pkgs <- function(pkgnames, blacklist, dependents.install=F) {
 					} else {
 						if (anyNA(dep.status)) {
 							# case 3
-				            cat("installing dependents of:", pkgname, "\n")
-				            dependent.install.ok <- install.pkgs(dependents, dependents.install=T, blacklist)
-					    } else {
+							cat("installing dependents of:", pkgname, "\n")
+							dependent.install.ok <- install.pkgs(dependents, dependents.install=T, blacklist)
+						} else {
 							# case 1
 						}
 					}
-			    }
+				}
 			}
+
 			if (dry.run) {
 				cat("would install:", pkgname, "\n")
 			} else {
-				if (dependent.install.ok) {
+				if (!dependent.install.ok) {
+					cat("not installing:", pkgname, "dependent install failure","\n")
+				} else {
+					should.install <- T
 					if (pkgname %in% names(install.status)) {
+						should.install <- F
 						# already attempted
 						if (!install.status[pkgname]) {
-							# abort this (nested) install
-							return(FALSE)
+							# failed earlier
+							if (dependents.install) {
+								# abort this (nested) install
+								return(FALSE)
+							} else {
+								# continue on top-level install loop
+							}
 						}
-					} else {
+					}
+					if (should.install) {
 						cat("installing:", pkgname, "(", install.count, "of", install.total, ")", "\n")
 						this.result <- install.package(pkgname)
 						result <- result && this.result
@@ -370,6 +399,9 @@ install.pkgs <- function(pkgnames, blacklist, dependents.install=F) {
 							cat("aborting dependents install\n")
 							return(FALSE)
 						}
+				    } else {
+						msg <- if (install.status[pkgname]) "already installed" else "failed earlier"
+						cat("not installing:", pkgname, "(", install.count, "of", install.total, ")", msg, "\n")
 					}
 				}
 			}
@@ -378,6 +410,7 @@ install.pkgs <- function(pkgnames, blacklist, dependents.install=F) {
 	}
 	return(result)
 }
+
 
 # performs the installation, or logs what it would install if dry.run = T
 # either creates the blacklist or reads it from a file
@@ -425,9 +458,10 @@ do.it <- function() {
 		install.pkgs(test.pkgnames, blacklist)
 		cat("END package installation\n")
 		if (print.ok.installs) {
-			pkgnames.i <- get.installed.pkgs()
-			for (pkgname.i in pkgnames.i) {
-				cat(pkgname.i, "\n")
+			for (pkgname.i in names(install.status)) {
+				if (install.status[pkgname.i]) {
+					cat(pkgname.i, "\n")
+				}
 			}
 		}
 	}
@@ -544,7 +578,7 @@ get.argvalue <- function() {
 	}
 }
 
-# parse the command line arguments when run as a script
+# parse the (command line) arguments
 parse.args <- function() {
 	while (length(args)) {
 		a <- args[1L]
@@ -599,6 +633,8 @@ parse.args <- function() {
 			list.versions <<- TRUE
 		} else if (a == "--install-dependents") {
 			install.dependents <<- TRUE
+		} else if (a == "--use-installed") {
+			use.installed <<- TRUE
 		} else {
 			if (grepl("^-.*", a)) {
 				usage()
@@ -630,6 +666,10 @@ cat.args <- function() {
 		cat("run.tests:", run.tests, "\n")
 		cat("pkg.list.installed:", pkg.list.installed, "\n")
 		cat("print.ok.installs:", print.ok.installs, "\n")
+		cat("use.installed:", use.installed, "\n")
+		if (use.installed && length(install.status) > 0) {
+			cat("using installed packages: ", names(install.status), "\n")
+		}
 		cat("testdir.path", testdir, "\n")
 	}
 }
@@ -680,6 +720,7 @@ run <- function() {
 	set.initial.package.blacklist()
 	set.package.blacklist()
 	lib.install <<- normalizePath(lib.install)
+	check.use.installed()
 	cat.args()
     do.it()
 }
@@ -698,6 +739,7 @@ ok.pkg.filelist <- character()
 ok.pkg.filelistfile <- NA
 pkg.list.installed <- F
 print.ok.installs <- F
+use.installed <- F
 verbose <- F
 very.verbose <- F
 install <- T

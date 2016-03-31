@@ -34,13 +34,14 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
+import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -93,7 +94,7 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
         }
         boolean containsDispatch = ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch();
         RFunction func = RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, matFrame, fastPath, containsDispatch);
-        RContext.getInstance().getInstrumentFactory().checkDebugRequested(func);
+        RInstrumentation.checkDebugRequested(func);
         return func;
     }
 
@@ -119,12 +120,12 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
          */
         fdn.serializeFormals(state);
         state.openPairList(SEXPTYPE.LISTSXP);
-        boolean hasBraces = fdn.checkOpenBrace(state);
         fdn.serializeBody(state);
-        if (hasBraces) {
-            FunctionDefinitionNode.checkCloseBrace(state, hasBraces);
-        }
         state.switchCdrToCar();
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.setCar(RNull.instance);
+        state.setCdr(RNull.instance);
+        state.setCdr(state.closePairList());
         state.setCdr(state.closePairList());
         state.setCdr(state.closePairList());
     }

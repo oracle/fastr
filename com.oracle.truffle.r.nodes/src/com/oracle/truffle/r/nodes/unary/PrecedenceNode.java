@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -199,6 +200,11 @@ public abstract class PrecedenceNode extends RBaseNode {
 
     @Specialization
     protected int doS4Object(RS4Object o, byte recursive) {
+        return LIST_PRECEDENCE;
+    }
+
+    @Specialization
+    protected int doS4Object(RSymbol o, byte recursive) {
         return LIST_PRECEDENCE;
     }
 

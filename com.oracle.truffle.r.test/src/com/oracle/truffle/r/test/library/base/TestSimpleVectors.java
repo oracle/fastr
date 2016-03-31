@@ -356,7 +356,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-c(a=1, b=2); x[1] }");
         assertEval("{ x<-c(a=1, b=2); x[[1]] }");
         // GnuR says "attempt to select less than one element", FastR says "... more ..."
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); x[[-3, 1, 1]] }");
+        assertEval(Output.ContainsAmbiguousError, "{ x<-1:8; dim(x)<-c(2,2,2); x[[-3, 1, 1]] }");
 
         assertEval("{ x<-list(1); x[\"y\"] }");
         assertEval("{ x<-list(1); x[[\"y\"]] }");
@@ -2065,11 +2065,10 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ l <- list(a=1,b=2,cd=list(c=3,d=4)) ; x <- list(l,xy=list(x=l,y=l)) ; x[[c(2,2,3,2)]] <- 10 ; l }");
         assertEval("{ l <- list(a=1,b=2,cd=list(c=3,d=4)) ; x <- list(l,xy=list(x=l,y=l)) ; x[[c(\"xy\",\"y\",\"cd\",\"d\")]] <- 10 ; l }");
 
-        // FIXME print format
         assertEval("{ l <- matrix(list(1,2)) ; l[[3]] <- NULL ; l }");
         assertEval("{ l <- matrix(list(1,2)) ; l[[4]] <- NULL ; l }");
 
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(c(1,2,3), 2L, NULL) }");
+        assertEval("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(c(1,2,3), 2L, NULL) }");
     }
 
     @Test

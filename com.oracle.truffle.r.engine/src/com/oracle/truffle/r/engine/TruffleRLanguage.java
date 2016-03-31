@@ -28,17 +28,17 @@ import java.util.Locale;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.instrument.Visualizer;
-import com.oracle.truffle.api.instrument.WrapperNode;
+import com.oracle.truffle.api.instrumentation.Instrumenter;
+import com.oracle.truffle.api.instrumentation.ProvidedTags;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
-import com.oracle.truffle.r.nodes.instrumentation.NewInstrumentFactory;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVersionInfo;
@@ -48,18 +48,20 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.instrument.RPackageSource;
 
 /**
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
  * integrate the R startup in {@code RCommand} with this API.
  */
 @TruffleLanguage.Registration(name = "R", version = "0.1", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME})
+@ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     /**
      * The choice of {@link RFFIFactory} is made statically so that it is bound into an AOT-compiled
-     * VM. The decision is node made directly in {@link RFFIFactory} to avoid some project
-     * dependencies that cause build problems.
+     * VM. The decision is made directly in {@link RFFIFactory} to avoid some project dependencies
+     * that cause build problems.
      */
     private static void initialize() {
         try {
@@ -69,6 +71,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             RAccuracyInfo.initialize();
             RVersionInfo.initialize();
             TempPathName.initialize();
+            RPackageSource.initialize();
             RContext.initialize(new RASTBuilder(), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance());
         } catch (Throwable t) {
             System.out.println("error during engine initialization:");
@@ -93,14 +96,13 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected RContext createContext(Env env) {
-        // Currently using env.instrumenter as "initialized" flag
         boolean initialContext = !initialized;
         if (!initialized) {
             FastROptions.initialize();
             initialize();
             initialized = true;
         }
-        RContext result = RContext.create(env, new NewInstrumentFactory(env), initialContext);
+        RContext result = RContext.create(env, env.lookup(Instrumenter.class), initialContext);
         return result;
     }
 
@@ -150,22 +152,6 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     // TODO: why isn't the original method public?
     Node actuallyCreateFindContextNode() {
         return createFindContextNode();
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    protected Visualizer getVisualizer() {
-        return null;
-    }
-
-    @Override
-    protected boolean isInstrumentable(Node node) {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    protected WrapperNode createWrapperNode(Node node) {
-        throw RInternalError.shouldNotReachHere();
     }
 
     @Override

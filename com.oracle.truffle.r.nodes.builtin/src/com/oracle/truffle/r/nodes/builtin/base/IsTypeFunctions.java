@@ -560,7 +560,7 @@ public class IsTypeFunctions {
             }
         }
 
-        private boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
+        private static boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
             return RType.Any.getName().equals(mode) || (x instanceof RList && mode.equals("list")) || (x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode)) ||
                             RRuntime.classToString(x.getElementClass()).equals(mode);
         }

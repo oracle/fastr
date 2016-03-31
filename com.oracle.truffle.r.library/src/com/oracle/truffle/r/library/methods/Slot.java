@@ -30,7 +30,7 @@ public class Slot {
 
     public abstract static class R_getSlot extends RExternalBuiltinNode.Arg2 {
 
-        @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(null, null);
+        @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(false, null, null);
         @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
         protected static String getInternedName(RAbstractStringVector nameVec) {

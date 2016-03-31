@@ -171,4 +171,24 @@ public interface RRuntimeASTAccess {
      */
     boolean isFunctionDefinitionNode(Node node);
 
+    /**
+     * Project circularity workaround.
+     */
+    void traceAllFunctions();
+
+    /**
+     * Project circularity workaround.
+     */
+    void enableStatementTrace(RFunction func, RSyntaxNode tracerNode);
+
+    /**
+     * Project circularity workaround.
+     */
+    void enableDebug(RFunction func);
+
+    /**
+     * cf. {@code Node.isTaggedWith(tag)}.
+     */
+    boolean isTaggedWith(Node node, Class<?> tag);
+
 }

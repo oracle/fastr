@@ -41,8 +41,8 @@ fastr.compile <- function(func, background=TRUE) .FastR(.NAME="compile", func, b
 
 fastr.dumptrees <- function(func, igvDump=FALSE, verbose=FALSE) .FastR(.NAME="dumptrees", func, igvDump, verbose)
 
-fastr.syntaxtree <- function(func, printSource=FALSE, visitMode=c("node", "syntaxnode", "syntaxelement"), printTags=FALSE) {
-	invisible(.FastR(.NAME="syntaxtree", func, printSource, match.arg(visitMode), printTags))
+fastr.syntaxtree <- function(func, visitMode=c("rsyntaxnode", "syntaxelement", "node"), printSource=FALSE, printTags=FALSE) {
+	invisible(.FastR(.NAME="syntaxtree", func, match.arg(visitMode), printSource, printTags))
 }
 
 fastr.tree <- function(func, verbose=FALSE) invisible(.FastR(.NAME="tree", func, verbose))
@@ -163,6 +163,9 @@ fastr.trace <- function(what, tracer, exit, at, print, signature, where, edit) {
 	 if (is.character(what)) {
 		 what <- get(what, envir=where, mode="function")
 	 }
+	 if (nargs() == 1L) {
+		 return(.primTrace(what))
+     }
      .FastR(.NAME="fastr.trace", what, tracer, exit, at, print, signature, where, edit)#, from, untrace, classMethod)
 }
 

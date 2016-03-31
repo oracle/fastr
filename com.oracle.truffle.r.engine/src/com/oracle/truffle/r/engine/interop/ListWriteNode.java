@@ -29,7 +29,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
-import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctions.UpdateFieldBuiltin;
+import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.UpdateFieldBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 abstract class ListWriteNode extends RootNode {

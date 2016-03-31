@@ -67,9 +67,10 @@ def mx_jvm():
         return _mx_jvmci.extensions
 
 _r_command_project = 'com.oracle.truffle.r.engine'
+_repl_command = 'com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient'
 _command_class_dict = {'r': _r_command_project + ".shell.RCommand",
                        'rscript': _r_command_project + ".shell.RscriptCommand",
-                        'rrepl': _r_command_project + ".repl.RREPL"}
+                        'rrepl': _repl_command}
 
 def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True):
     '''
@@ -224,7 +225,7 @@ def rscript(args):
 
 def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
-    return run_r(args, "rrepl", extraVmArgs=['-DR:+Instrument'])
+    run_r(args, 'rrepl')
 
 def build(args):
     '''FastR build'''
@@ -408,7 +409,8 @@ def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
 def _simple_unit_tests():
-    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'tck', 'parser', 'S4']))
+#    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'tck', 'parser', 'S4']))
+    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'parser', 'S4']))
 
 def _package_unit_tests():
     return ','.join(map(_test_subpackage, ['rffi', 'rpackages']))

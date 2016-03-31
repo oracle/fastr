@@ -62,7 +62,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     protected static final boolean onlyDimAttribute(RAbstractVector source) {
         RAttributes attributes = source.getAttributes();
-        return attributes != null && attributes.size() == 1 && attributes.getNames()[0] == RRuntime.DIM_ATTR_KEY;
+        return attributes != null && attributes.size() == 1 && attributes.getNameAtIndex(0) == RRuntime.DIM_ATTR_KEY;
     }
 
     @SuppressWarnings("unused")
@@ -73,7 +73,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     protected static final boolean onlyNamesAttribute(RAbstractVector source) {
         RAttributes attributes = source.getAttributes();
-        return attributes != null && attributes.size() == 1 && attributes.getNames()[0] == RRuntime.NAMES_ATTR_KEY;
+        return attributes != null && attributes.size() == 1 && attributes.getNameAtIndex(0) == RRuntime.NAMES_ATTR_KEY;
     }
 
     @SuppressWarnings("unused")
@@ -84,12 +84,12 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     protected static final boolean onlyClassAttribute(RAbstractVector source) {
         RAttributes attributes = source.getAttributes();
-        return attributes != null && attributes.size() == 1 && attributes.getNames()[0] == RRuntime.CLASS_ATTR_KEY;
+        return attributes != null && attributes.size() == 1 && attributes.getNameAtIndex(0) == RRuntime.CLASS_ATTR_KEY;
     }
 
     @Specialization(guards = "onlyClassAttribute(source)")
     protected void copyClassOnly(RAbstractVector source, RVector target) {
-        target.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.CLASS_ATTR_KEY}, new Object[]{source.getAttributes().getValues()[0]}));
+        target.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.CLASS_ATTR_KEY}, new Object[]{source.getAttributes().getValueAtIndex(0)}));
     }
 
     @Specialization

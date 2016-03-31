@@ -34,5 +34,11 @@ public class TestBuiltin_asfunction extends TestBase {
         assertEval("f <- function() a+foo(c)*b; as.function(c(alist(a=1+14, b=foo(x),c=), body(f)))");
         assertEval("foo <- function(x) x*2; as.function(c(alist(a=1+14, b=foo(x),c=), quote(a+foo(c)*b)))(c=3,b=1)");
         assertEval("foo <- function(x) x*2; f <- function() a+foo(c)*b; as.function(c(alist(a=1+14, b=foo(x),c=), body(f)))(c=3,b=1)");
+        assertEval("{ as.function(alist(42))() }");
+        assertEval("{ as.function(alist(42L))() }");
+        assertEval("{ as.function(alist(TRUE))() }");
+        assertEval("{ as.function(alist(\"foo\"))() }");
+        assertEval("{ as.function(alist(7+42i))() }");
+        assertEval("{ as.function(alist(as.raw(7)))() }");
     }
 }

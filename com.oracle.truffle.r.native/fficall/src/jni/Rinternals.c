@@ -344,6 +344,10 @@ Rboolean Rf_isObject(SEXP s) {
 	return FALSE;
 }
 
+void Rf_PrintValue(SEXP x) {
+	unimplemented("Rf_PrintValue");
+}
+
 SEXP Rf_install(const char *name) {
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, name);
@@ -1340,5 +1344,13 @@ int R_check_class_and_super(SEXP x, const char **valid, SEXP rho) {
 
 int R_check_class_etc (SEXP x, const char **valid) {
 	return (int) unimplemented("R_check_class_etc");
+}
+
+void R_PreserveObject(SEXP x) {
+	// Not applicable
+}
+
+void R_ReleaseObject(SEXP x) {
+	// Not applicable
 }
 

@@ -28,24 +28,19 @@ import java.util.Map;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
-import com.oracle.truffle.r.nodes.instrumentation.debug.DebugHandling;
-import com.oracle.truffle.r.nodes.instrumentation.trace.TraceHandling;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RPerfStats;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.instrument.RPackageSource;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 
 /**
  * Handles the initialization of the (NEW) instrumentation system which sets up various instruments
@@ -127,11 +122,9 @@ public class RInstrumentation {
         }
     }
 
-    @CompilationFinal private static Instrumenter instrumenter;
-
     /**
      * The function names that were requested to be used in implicit {@code debug(f)} calls, when
-     * those functions are defined.
+     * those functions are defined. Global to all contexts.
      */
     @CompilationFinal private static String[] debugFunctionNames;
 
@@ -141,8 +134,7 @@ public class RInstrumentation {
      *
      * @param fdn
      */
-    static void registerFunctionDefinition(FunctionDefinitionNode fdn) {
-        fixupTags(fdn);
+    public static void registerFunctionDefinition(FunctionDefinitionNode fdn) {
         // For PerfStats we need to record the info on fdn for the report
         if (functionMap != null) {
             FunctionUID uid = fdn.getUID();
@@ -154,49 +146,6 @@ public class RInstrumentation {
             assert fd == null;
             functionMap.put(uid, new FunctionData(uid, fdn));
         }
-    }
-
-    /**
-     * (Temporary) support for the repl debugger.
-     *
-     * @param fdn
-     */
-    private static void fixupTags(FunctionDefinitionNode fdn) {
-        RSyntaxNode.accept(fdn, 0, new RSyntaxNodeVisitor() {
-
-            @Override
-            public boolean visit(RSyntaxNode node, int depth) {
-                SourceSection ss = node.getSourceSection();
-                assert ss != null;
-                String[] tags = RSyntaxTags.getTags(ss);
-                if (tags != null) {
-                    finesseDebuggerTags(node, tags);
-                }
-                return true;
-            }
-
-        }, false);
-
-    }
-
-    private static void finesseDebuggerTags(RSyntaxNode node, String[] tags) {
-        boolean isStatement = RSyntaxTags.containsTag(tags, RSyntaxTags.STATEMENT);
-        // TODO this causes Truffle debugger to fail on next command
-        boolean isCall = RSyntaxTags.containsTag(tags, RSyntaxTags.CALL);
-        // boolean isCall = false;
-        if (!(isStatement || isCall)) {
-            return;
-        }
-        String[] updatedTags = new String[tags.length + (isStatement && isCall ? 2 : 1)];
-        System.arraycopy(tags, 0, updatedTags, 0, tags.length);
-        int ix = tags.length;
-        if (isStatement) {
-            updatedTags[ix++] = RSyntaxTags.DEBUG_HALT;
-        }
-        if (isCall) {
-            updatedTags[ix++] = RSyntaxTags.DEBUG_CALL;
-        }
-        node.setSourceSection(node.getSourceSection().withTags(updatedTags));
     }
 
     static FunctionIdentification getFunctionIdentification(FunctionUID uid) {
@@ -212,19 +161,19 @@ public class RInstrumentation {
      * Create a filter that matches all the statement nodes in {@code func}.
      */
     static SourceSectionFilter.Builder createFunctionStatementFilter(RFunction func) {
-        return createFunctionFilter(func, RSyntaxTags.STATEMENT);
+        return createFunctionFilter(func, StandardTags.StatementTag.class);
     }
 
     public static SourceSectionFilter.Builder createFunctionStatementFilter(FunctionDefinitionNode fdn) {
-        return createFunctionFilter(fdn, RSyntaxTags.STATEMENT);
+        return createFunctionFilter(fdn, StandardTags.StatementTag.class);
     }
 
-    static SourceSectionFilter.Builder createFunctionFilter(RFunction func, String tag) {
+    static SourceSectionFilter.Builder createFunctionFilter(RFunction func, Class<?> tag) {
         FunctionDefinitionNode fdn = getFunctionDefinitionNode(func);
         return createFunctionFilter(fdn, tag);
     }
 
-    public static SourceSectionFilter.Builder createFunctionFilter(FunctionDefinitionNode fdn, String tag) {
+    public static SourceSectionFilter.Builder createFunctionFilter(FunctionDefinitionNode fdn, Class<?> tag) {
         /* Filter needs to check for statement tags in the range of the function in the Source */
         SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
         builder.tagIs(tag);
@@ -242,21 +191,16 @@ public class RInstrumentation {
     public static SourceSectionFilter.Builder createFunctionStartFilter(RFunction func) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
         SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
-        builder.tagIs(RSyntaxTags.START_FUNCTION);
-        FunctionStatementsNode fsn = (FunctionStatementsNode) fdn.getBody();
-        builder.sourceSectionEquals(fsn.getSourceSection());
+        builder.tagIs(StandardTags.RootTag.class);
+        builder.sourceSectionEquals(fdn.getBody().getSourceSection());
         return builder;
     }
 
     /**
-     * Initialize the instrumentation system.
-     *
+     * Activate the instrumentation system for {@code context}. Currently this simply checks for the
+     * global (command-line) options for tracing and timing. They are applied to every context.
      */
-    public static void initialize(Instrumenter instrumenterArg) {
-        instrumenter = instrumenterArg;
-        if (FastROptions.LoadPkgSourcesIndex.getBooleanValue()) {
-            RPackageSource.initialize();
-        }
+    public static void activate(@SuppressWarnings("unused") RContext context) {
         String rdebugValue = FastROptions.Rdebug.getStringValue();
         if (rdebugValue != null) {
             debugFunctionNames = rdebugValue.split(",");
@@ -266,19 +210,20 @@ public class RInstrumentation {
             REntryCounters.FunctionListener.installCounters();
             RNodeTimer.StatementListener.installTimers();
         }
-        TraceHandling.traceAllFunctions();
+        // Check for function tracing
+        RContext.getRRuntimeASTAccess().traceAllFunctions();
     }
 
     public static Instrumenter getInstrumenter() {
-        return instrumenter;
+        return RContext.getInstance().getInstrumenter();
     }
 
-    static void checkDebugRequested(RFunction func) {
+    public static void checkDebugRequested(RFunction func) {
         if (debugFunctionNames != null) {
             FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
             for (String debugFunctionName : debugFunctionNames) {
                 if (debugFunctionName.equals(fdn.toString())) {
-                    DebugHandling.enableDebug(func, "", RNull.instance, false);
+                    RContext.getRRuntimeASTAccess().enableDebug(func);
                 }
             }
         }

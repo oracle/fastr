@@ -42,8 +42,13 @@ public class TestS4 extends TestRBase {
         assertEval("{ c(42)@.Data }");
         assertEval("{ x<-42; `@`(x, \".Data\") }");
         assertEval("{ x<-42; `@`(x, .Data) }");
+        assertEval("{ x<-42; slot(x, \".Data\") }");
+        assertEval("{ setClass(\"foo\", contains=\"numeric\"); x<-new(\"foo\"); res<-x@.Data; removeClass(\"foo\"); res }");
+        assertEval("{ setClass(\"foo\", contains=\"numeric\"); x<-new(\"foo\"); res<-slot(x, \".Data\"); removeClass(\"foo\"); res }");
         assertEval(Output.ContainsError, "{ getClass(\"ClassUnionRepresentation\")@foo }");
         assertEval(Output.ContainsError, "{ c(42)@foo }");
+        assertEval(Output.ContainsError, " { x<-42; attr(x, \"foo\")<-7; x@foo }");
+        assertEval("{ x<-42; attr(x, \"foo\")<-7; slot(x, \"foo\") }");
         assertEval(Output.ContainsError, "{ x<-c(42); class(x)<-\"bar\"; x@foo }");
         assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); slot(x, \"virtual\") }");
         assertEval(Output.ContainsError, "{ x<-getClass(\"ClassUnionRepresentation\"); slot(x, virtual) }");
@@ -59,6 +64,8 @@ public class TestS4 extends TestRBase {
         assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); slot(x, \"virtual\", check=TRUE)<-TRUE; x@virtual }");
         assertEval("{ x<-initialize@valueClass; initialize@valueClass<-\"foo\"; initialize@valueClass<-x }");
 
+        assertEval(Output.ContainsError, "{ x<-function() 42; attr(x, \"foo\")<-7; y@foo<-42 }");
+        assertEval(Output.ContainsError, "{ x<-function() 42; attr(x, \"foo\")<-7; slot(y, \"foo\")<-42 }");
         assertEval(Output.ContainsError, "{ x<-function() 42; attr(x, \"foo\")<-7; y<-asS4(x); y@foo<-42 }");
         assertEval(Output.ContainsError, "{ x<-NULL; `@<-`(x, foo, \"bar\") }");
         assertEval(Output.ContainsError, "{ x<-NULL; x@foo<-\"bar\" }");
@@ -100,6 +107,8 @@ public class TestS4 extends TestRBase {
         assertEval("{ setClass(\"foo\", representation(d=\"numeric\")); setClass(\"bar\",  contains=\"foo\"); setGeneric(\"gen\", function(o) standardGeneric(\"gen\")); setMethod(\"gen\", signature(o=\"foo\"), function(o) \"FOO\"); setMethod(\"gen\", signature(o=\"bar\"), function(o) \"BAR\"); res<-print(c(gen(new(\"foo\", d=7)), gen(new(\"bar\", d=42)))); removeGeneric(\"gen\"); res }");
 
         assertEval("{ setGeneric(\"gen\", function(o) standardGeneric(\"gen\")); res<-print(setGeneric(\"gen\", function(o) standardGeneric(\"gen\"))); removeGeneric(\"gen\"); res }");
+
+        assertEval("{ setClass(\"foo\"); setMethod(\"diag<-\", \"foo\", function(x, value) 42); removeMethod(\"diag<-\", \"foo\"); removeGeneric(\"diag<-\"); removeClass(\"foo\") }");
 
     }
 

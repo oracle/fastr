@@ -26,8 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -58,7 +56,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -87,7 +85,7 @@ public abstract class PMinMax extends RBuiltinNode {
     private byte handleString(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data) {
         if (stringHandler == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na, null, null, null, null, null, null, null));
+            stringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na));
         }
         return stringHandler.executeByte(argValues, naRm, offset, ind, maxLength, warning, data);
     }
@@ -385,8 +383,7 @@ public abstract class PMinMax extends RBuiltinNode {
         return precedence;
     }
 
-    @NodeChildren({@NodeChild("argValues"), @NodeChild("naRm"), @NodeChild("offset"), @NodeChild("ind"), @NodeChild("maxLength"), @NodeChild("warning"), @NodeChild("data")})
-    protected abstract static class MultiElemStringHandler extends RNode {
+    protected abstract static class MultiElemStringHandler extends RBaseNode {
 
         public abstract byte executeByte(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data);
 
@@ -407,7 +404,7 @@ public abstract class PMinMax extends RBuiltinNode {
         private byte handleString(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data) {
             if (recursiveStringHandler == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                recursiveStringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na, null, null, null, null, null, null, null));
+                recursiveStringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na));
             }
             return recursiveStringHandler.executeByte(argValues, naRm, offset, ind, maxLength, warning, data);
         }

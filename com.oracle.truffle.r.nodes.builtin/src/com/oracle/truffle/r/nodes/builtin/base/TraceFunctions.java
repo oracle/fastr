@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
@@ -43,8 +44,8 @@ public class TraceFunctions {
         protected RNull primTrace(RFunction func) {
             controlVisibility();
             if (!func.isBuiltin()) {
-                if (!RContext.getInstance().getInstrumentFactory().enableTrace(func)) {
-                    throw RError.error(this, RError.Message.GENERIC, "failed to attach trace handler (not instrumented?)");
+                if (!TraceHandling.enableTrace(func)) {
+                    throw RError.error(this, RError.Message.GENERIC, "failed to attach trace handler");
                 }
             }
             return RNull.instance;
@@ -59,8 +60,8 @@ public class TraceFunctions {
         protected RNull primTrace(RFunction func) {
             controlVisibility();
             if (!func.isBuiltin()) {
-                if (!RContext.getInstance().getInstrumentFactory().disableTrace(func)) {
-                    throw RError.error(this, RError.Message.GENERIC, "failed to detach trace handler (not instrumented?)");
+                if (!TraceHandling.disableTrace(func)) {
+                    throw RError.error(this, RError.Message.GENERIC, "failed to detach trace handler");
                 }
             }
             return RNull.instance;
@@ -76,7 +77,6 @@ public class TraceFunctions {
             boolean newState = RRuntime.fromLogical(state);
             if (newState != prevState) {
                 RContext.getInstance().stateTraceHandling.setTracingState(newState);
-                RContext.getInstance().getInstrumentFactory().setTracingState(newState);
             }
             return RRuntime.asLogical(prevState);
         }

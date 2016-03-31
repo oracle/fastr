@@ -142,14 +142,10 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
         state.serializeNodeSetCar(condition);
         // then, with brace
         state.openPairList(SEXPTYPE.LISTSXP);
-        state.openBrace();
-        state.serializeNodeSetCdr(thenPart, SEXPTYPE.LISTSXP);
-        state.closeBrace();
+        state.serializeNodeSetCar(thenPart);
         if (elsePart != null) {
             state.openPairList(SEXPTYPE.LISTSXP);
-            state.openBrace();
-            state.serializeNodeSetCdr(elsePart, SEXPTYPE.LISTSXP);
-            state.closeBrace();
+            state.serializeNodeSetCar(elsePart);
         }
         state.linkPairList(elsePart == null ? 2 : 3);
         state.setCdr(state.closePairList());

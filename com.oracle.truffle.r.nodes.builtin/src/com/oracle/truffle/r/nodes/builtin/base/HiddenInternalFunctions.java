@@ -154,13 +154,9 @@ public class HiddenInternalFunctions {
                 Object binding = null;
                 // TODO name translation, and a bunch of other special cases
                 for (REnvironment env = expEnv; env != REnvironment.emptyEnv(); env = env.getParent()) {
-                    if (env == REnvironment.baseNamespaceEnv()) {
-                        assert false;
-                    } else {
-                        binding = env.get(expsym);
-                        if (binding != null) {
-                            break;
-                        }
+                    binding = env.get(expsym);
+                    if (binding != null) {
+                        break;
                     }
                 }
                 try {
@@ -482,7 +478,7 @@ public class HiddenInternalFunctions {
 
     /*
      * Created as primitive function to avoid incrementing reference count for the argument.
-     *
+     * 
      * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
      * SHARED_PERMANENT_VAL for permanent shared
      */

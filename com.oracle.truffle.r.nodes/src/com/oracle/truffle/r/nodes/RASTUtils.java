@@ -26,7 +26,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrument.WrapperNode;
+import com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.source.SourceSection;
@@ -259,7 +259,7 @@ public class RASTUtils {
      * Returns the name (as an {@link RSymbol} of the function associated with an {@link RCallNode}
      * or {@link GroupDispatchNode}.
      */
-    public static Object findFunctionName(Node node) {
+    public static Object findFunctionName(RBaseNode node) {
         CompilerAsserts.neverPartOfCompilation(); // for string interning
         RNode child = (RNode) unwrap(getFunctionNode(node));
         if (child instanceof ConstantNode && ConstantNode.isFunction(child)) {
@@ -318,6 +318,8 @@ public class RASTUtils {
             return (RSyntaxNode) RASTUtils.cloneNode(RASTUtils.unwrap(((RPromise) val).getRep()));
         } else if (val instanceof RLanguage) {
             return (RSyntaxNode) RASTUtils.cloneNode(((RLanguage) val).getRep());
+        } else if (val instanceof RSymbol) {
+            return RASTUtils.createReadVariableNode(((RSymbol) val).getName());
         } else if (val instanceof RArgsValuesAndNames) {
             // this is '...'
             RArgsValuesAndNames rva = (RArgsValuesAndNames) val;
@@ -371,16 +373,6 @@ public class RASTUtils {
             return ((ReadVariableNode) node).getIdentifier();
         } else {
             throw RInternalError.unimplemented();
-        }
-    }
-
-    public static boolean hasBraces(RSyntaxNode node) {
-        SourceSection ss = node.getSourceSection();
-        if (ss == null || ss == RSyntaxNode.SOURCE_UNAVAILABLE) {
-            // this is statistical guess
-            return true;
-        } else {
-            return ss.getCode().startsWith("{");
         }
     }
 

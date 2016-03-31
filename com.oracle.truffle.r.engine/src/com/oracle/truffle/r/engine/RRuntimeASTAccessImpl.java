@@ -40,6 +40,13 @@ import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
+import com.oracle.truffle.r.nodes.builtin.base.DoCall;
+import com.oracle.truffle.r.nodes.builtin.base.Lapply;
+import com.oracle.truffle.r.nodes.builtin.base.Mapply;
+import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
+import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
+import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
+import com.oracle.truffle.r.nodes.control.BlockNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
@@ -47,7 +54,6 @@ import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.instrumentation.debug.DebugHandling;
 import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -58,6 +64,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
@@ -75,9 +82,11 @@ import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
+import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -487,7 +496,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         RSyntaxNode sn = (RSyntaxNode) rl.getRep();
         SourceSection ss = sn.getSourceSection();
         if (ss == null) {
-            return "<no source>";
+            return RInternalSourceDescriptions.NO_SOURCE;
         } else {
             String code = ss.getCode();
             int pos = code.indexOf('{');
@@ -579,4 +588,71 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     public boolean isFunctionDefinitionNode(Node node) {
         return node instanceof FunctionDefinitionNode;
     }
+
+    @Override
+    public void traceAllFunctions() {
+        TraceHandling.traceAllFunctions();
+    }
+
+    @Override
+    public void enableStatementTrace(RFunction func, RSyntaxNode tracerNode) {
+        TraceHandling.enableStatementTrace(func, tracerNode);
+    }
+
+    @Override
+    public void enableDebug(RFunction func) {
+        DebugHandling.enableDebug(func, "", RNull.instance, false);
+    }
+
+    public boolean isTaggedWith(Node node, Class<?> tag) {
+        if (!(node instanceof RSyntaxNode)) {
+            return false;
+        }
+        if (isInternalChild(node)) {
+            return false;
+        }
+        String className = tag.getSimpleName();
+        switch (className) {
+            case "CallTag":
+                return node instanceof RCallNode || node instanceof GroupDispatchNode;
+
+            case "StatementTag": {
+                Node parent = ((RInstrumentableNode) node).unwrapParent();
+                if (node instanceof BlockNode) {
+                    // TODO we may reconsider this
+                    return false;
+                }
+                // Most likely
+                if (parent instanceof BlockNode) {
+                    return true;
+                } else {
+                    // single statement block, variable parent
+                    return parent instanceof FunctionDefinitionNode || parent instanceof IfNode || parent instanceof AbstractLoopNode;
+                }
+            }
+
+            case "RootTag": {
+                Node parent = ((RInstrumentableNode) node).unwrapParent();
+                return parent instanceof FunctionDefinitionNode;
+            }
+
+            case "LoopTag":
+                return node instanceof AbstractLoopNode;
+
+            default:
+                return false;
+        }
+    }
+
+    private static boolean isInternalChild(Node node) {
+        Node parent = node.getParent();
+        while (parent != null) {
+            if (parent instanceof InternalRSyntaxNodeChildren) {
+                return true;
+            }
+            parent = parent.getParent();
+        }
+        return false;
+    }
+
 }

@@ -113,9 +113,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
             state.serializeNodeSetCar(getCondition());
         }
         state.openPairList(SEXPTYPE.LISTSXP);
-        state.openBrace();
-        state.serializeNodeSetCdr(getBody(), SEXPTYPE.LISTSXP);
-        state.closeBrace();
+        state.serializeNodeSetCar(getBody());
         state.linkPairList(isRepeat ? 1 : 2);
         state.setCdr(state.closePairList());
     }

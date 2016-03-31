@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 @RBuiltin(name = "@", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = 1)
 public abstract class Slot extends RBuiltinNode {
 
-    @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(null, null);
+    @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(true, null, null);
 
     @Override
     protected void createCasts(CastBuilder casts) {

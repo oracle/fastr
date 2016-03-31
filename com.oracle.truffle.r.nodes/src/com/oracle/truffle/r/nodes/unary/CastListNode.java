@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -135,6 +136,11 @@ public abstract class CastListNode extends CastBaseNode {
     @Specialization
     protected RList doS4Object(RS4Object o) {
         return RDataFactory.createList(new Object[]{o});
+    }
+
+    @Specialization
+    protected RList doRSymbol(RSymbol s) {
+        return RDataFactory.createList(new Object[]{s});
     }
 
     public static CastListNode create() {

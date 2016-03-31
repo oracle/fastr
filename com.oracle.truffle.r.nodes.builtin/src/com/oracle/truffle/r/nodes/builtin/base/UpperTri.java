@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "upper.tri", kind = SUBSTITUTE, parameterNames = {"x", "diag"})
+@RBuiltin(name = "upper.triinternal", kind = SUBSTITUTE, parameterNames = {"x", "diag"})
 // TODO Implement in R
 public abstract class UpperTri extends RBuiltinNode {
 

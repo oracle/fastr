@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.instrumentation.debug;
+package com.oracle.truffle.r.nodes.builtin.helpers;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,25 +34,28 @@ import com.oracle.truffle.api.instrumentation.EventContext;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.instrument.Browser;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 
@@ -65,9 +68,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
  *
  * Three different listener classes are defined:
  * <ul>
- * <li>{@link FunctionStatementsEventListener}: attaches to {@link FunctionStatementsNode} and
- * handles the special behavior on entry/exit</li>
- * <li>{@link StatementEventListener}: attaches to all {@link RSyntaxTags#STATEMENT} nodes and
+ * <li>{@link FunctionStatementsEventListener}: attaches to function bodies and handles the special
+ * behavior on entry/exit</li>
+ * <li>{@link StatementEventListener}: attaches to all {@code StandardTags.StatementTag} nodes and
  * handles "n" and "s" browser commands</li>
  * <li>{@link LoopStatementEventListener}: attaches to {@link AbstractLoopNode} instances and
  * handles special "f" command behavior.
@@ -79,11 +82,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
  * mode and reset it's state on return. This is handled as follows:
  * <ol>
  * <li>On a step-into, attach a {@link StepIntoInstrumentListener} with a filter that matches all
- * functions and the {@link RSyntaxTags#START_FUNCTION} tag</li>
+ * functions and the {@code StandardTags.RootTag} tag</li>
  * <li>On entry to that listener instrument/enable the function we have entered (if necessary) for
  * one-time (unless already)</li>
  * <li>Dispose the {@link StepIntoInstrumentListener} and continue, which will then stop at the
- * {@link FunctionStatementsNode}.</li>
+ * function body.</li>
  * <li>On return from the function, reset the debug state if necessary.
  * </ol>
  * <p>
@@ -160,20 +163,19 @@ public class DebugHandling {
         FunctionStatementsEventListener fser = new FunctionStatementsEventListener(fdn, text, condition, once);
         // First attach the main listener on the START_FUNCTION
         Instrumenter instrumenter = RInstrumentation.getInstrumenter();
-        SourceSectionFilter.Builder functionBuilder = RInstrumentation.createFunctionFilter(fdn, RSyntaxTags.START_FUNCTION);
+        SourceSectionFilter.Builder functionBuilder = RInstrumentation.createFunctionFilter(fdn, StandardTags.RootTag.class);
         instrumenter.attachListener(functionBuilder.build(), fser);
         // Next attach statement handler to all STATEMENTs except LOOPs
         SourceSectionFilter.Builder statementBuilder = RInstrumentation.createFunctionStatementFilter(fdn);
-        statementBuilder.tagIsNot(RSyntaxTags.LOOP);
+        statementBuilder.tagIsNot(RSyntaxTags.LoopTag.class);
         instrumenter.attachListener(statementBuilder.build(), fser.getStatementListener());
         // Finally attach loop listeners to all loop nodes
-        SourceSectionFilter.Builder loopBuilder = RInstrumentation.createFunctionFilter(fdn, RSyntaxTags.LOOP);
+        SourceSectionFilter.Builder loopBuilder = RInstrumentation.createFunctionFilter(fdn, RSyntaxTags.LoopTag.class);
         RSyntaxNode.accept(fdn, 0, new RSyntaxNodeVisitor() {
 
             @Override
             public boolean visit(RSyntaxNode node, int depth) {
-                SourceSection ss = node.getSourceSection();
-                if (ss.hasTag(RSyntaxTags.LOOP)) {
+                if (node instanceof AbstractLoopNode) {
                     instrumenter.attachListener(loopBuilder.build(), fser.getLoopStatementReceiver(node));
                 }
                 return true;
@@ -205,6 +207,8 @@ public class DebugHandling {
         protected EventBinding<StepIntoInstrumentListener> stepIntoInstrument;
         @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("debug event disabled state unchanged");
+
+        @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
 
         protected DebugEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition) {
             this.text = text;
@@ -244,11 +248,11 @@ public class DebugHandling {
         }
 
         protected void browserInteract(Node node, VirtualFrame frame) {
-            Browser.ExitMode exitMode = Browser.interact(frame.materialize());
+            int exitMode = (int) browserInteractNode.execute(frame);
             switch (exitMode) {
-                case NEXT:
+                case BrowserInteractNode.NEXT:
                     break;
-                case STEP:
+                case BrowserInteractNode.STEP:
                     if (this instanceof StatementEventListener) {
                         /*
                          * We have no idea what function will be called but we have to stop there
@@ -257,16 +261,16 @@ public class DebugHandling {
                          * so hopefully only the one function will actually get instrumented - but
                          * will everything get invalidated?
                          */
-                        stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(RSyntaxTags.START_FUNCTION).build(),
+                        stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(StandardTags.RootTag.class).build(),
                                         new StepIntoInstrumentListener(listenerMap.get(functionDefinitionNode.getUID())));
                     }
                     break;
-                case CONTINUE:
+                case BrowserInteractNode.CONTINUE:
                     // Have to disable
                     doContinue();
                     clearStepInstrument();
                     break;
-                case FINISH:
+                case BrowserInteractNode.FINISH:
                     // If in loop, continue to loop end, else act like CONTINUE
                     AbstractLoopNode loopNode = inLoop(node);
                     if (loopNode != null) {
@@ -385,18 +389,14 @@ public class DebugHandling {
             if (!disabled()) {
                 print("debugging in: ", false);
                 printCall(frame);
-                FunctionDefinitionNode fdn = (FunctionDefinitionNode) RArguments.getFunction(frame).getRootNode();
                 /*
                  * If this is a recursive call, then returnCleanup will not have happened, so we
                  * enable our child listeners unconditionally. TODO It is possible that the enabled
                  * state should be stacked to match the call stack in the recursive case.
                  */
                 enableChildren();
-                boolean brace = fdn.hasBraces();
-                if (brace) {
-                    printNode(context.getInstrumentedNode(), brace);
-                    browserInteract(context.getInstrumentedNode(), frame);
-                }
+                printNode(context.getInstrumentedNode(), true);
+                browserInteract(context.getInstrumentedNode(), frame);
             }
         }
 
@@ -434,25 +434,28 @@ public class DebugHandling {
         }
     }
 
-    private static void printNode(Node node, boolean curly) {
+    private static void printNode(Node node, boolean startFunction) {
         ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
+        /*
+         * N.B. It would seem that GnuR does a deparse that because, e.g., a function that ends with
+         * } without a preceding newline prints with one and indentation is standardized.
+         */
         RDeparse.State state = RDeparse.State.createPrintableState();
         RBaseNode rNode = (RBaseNode) node;
         rNode.deparse(state);
-        SourceSection source = rNode.asRSyntaxNode().getSourceSection();
-        if (source == null) {
+        boolean curly = RSyntaxCall.isCallTo((RSyntaxElement) node, "{");
+
+        if (startFunction && !curly) {
             consoleHandler.print("debug: ");
         } else {
-            consoleHandler.print("debug at #" + source.getStartLine() + ": ");
-        }
-        boolean printCurly = curly && !state.toString().startsWith("{");
-        if (printCurly) {
-            consoleHandler.println("{");
+            SourceSection source = ((RBaseNode) node).asRSyntaxNode().getSourceSection();
+            String path = source.getSource().getPath();
+            if (path == null || RInternalSourceDescriptions.isInternal(path)) {
+                path = "";
+            }
+            consoleHandler.print("debug at " + path + "#" + source.getStartLine() + ": ");
         }
         consoleHandler.print(state.toString());
-        if (printCurly) {
-            consoleHandler.print("}");
-        }
         consoleHandler.print("\n");
     }
 
@@ -467,7 +470,12 @@ public class DebugHandling {
             if (!disabled()) {
                 // in case we did a step into that never called a function
                 clearStepInstrument();
-                printNode(context.getInstrumentedNode(), false);
+                RBaseNode node = (RBaseNode) context.getInstrumentedNode();
+                if (node.isTaggedWith(StandardTags.RootTag.class)) {
+                    // already handled
+                    return;
+                }
+                printNode(node, false);
                 browserInteract(context.getInstrumentedNode(), frame);
             }
         }
@@ -554,8 +562,7 @@ public class DebugHandling {
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!globalDisable) {
-                FunctionStatementsNode functionStatementsNode = (FunctionStatementsNode) context.getInstrumentedNode();
-                FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionStatementsNode.getRootNode();
+                FunctionDefinitionNode fdn = (FunctionDefinitionNode) context.getInstrumentedNode().getRootNode();
                 ensureSingleStep(fdn);
                 functionStatementsEventListener.clearStepInstrument();
                 functionStatementsEventListener.onEnter(context, frame);

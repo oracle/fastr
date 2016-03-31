@@ -34,7 +34,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.control.SequenceNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -44,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFrame;
+import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -56,13 +56,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.IdenticalVisitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxArgVisitor;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -232,69 +227,10 @@ public abstract class Identical extends RBuiltinNode {
         }
         RSyntaxNode xNode = x.getRep().asRSyntaxNode();
         RSyntaxNode yNode = y.getRep().asRSyntaxNode();
-        if (xNode instanceof SequenceNode && ((SequenceNode) xNode).getSequence().length == 1) {
-            xNode = ((SequenceNode) xNode).getSequence()[0].asRSyntaxNode();
-        }
-        if (yNode instanceof SequenceNode && ((SequenceNode) yNode).getSequence().length == 1) {
-            yNode = ((SequenceNode) yNode).getSequence()[0].asRSyntaxNode();
-        }
         if (!new IdenticalVisitor().accept(xNode, yNode)) {
             return RRuntime.LOGICAL_FALSE;
         }
         return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
-    }
-
-    private final class IdenticalVisitor extends RSyntaxArgVisitor<Boolean, RSyntaxElement> {
-
-        @Override
-        protected Boolean visit(RSyntaxCall element, RSyntaxElement arg) {
-            if (!(arg instanceof RSyntaxCall)) {
-                return false;
-            }
-            RSyntaxCall other = (RSyntaxCall) arg;
-            if (element.getSyntaxSignature() != other.getSyntaxSignature() || !accept(element.getSyntaxLHS(), other.getSyntaxLHS())) {
-                return false;
-            }
-            return compareArguments(element.getSyntaxArguments(), other.getSyntaxArguments());
-        }
-
-        @Override
-        protected Boolean visit(RSyntaxConstant element, RSyntaxElement arg) {
-            if (!(arg instanceof RSyntaxConstant)) {
-                return false;
-            }
-            return element.getValue().equals(((RSyntaxConstant) arg).getValue());
-        }
-
-        @Override
-        protected Boolean visit(RSyntaxLookup element, RSyntaxElement arg) {
-            if (!(arg instanceof RSyntaxLookup)) {
-                return false;
-            }
-            return element.getIdentifier().equals(((RSyntaxLookup) arg).getIdentifier());
-        }
-
-        @Override
-        protected Boolean visit(RSyntaxFunction element, RSyntaxElement arg) {
-            if (!(arg instanceof RSyntaxFunction)) {
-                return false;
-            }
-            RSyntaxFunction other = (RSyntaxFunction) arg;
-            if (element.getSyntaxSignature() != other.getSyntaxSignature() || !accept(element.getSyntaxBody(), other.getSyntaxBody())) {
-                return false;
-            }
-            return compareArguments(element.getSyntaxArgumentDefaults(), other.getSyntaxArgumentDefaults());
-        }
-
-        private Boolean compareArguments(RSyntaxElement[] arguments1, RSyntaxElement[] arguments2) {
-            assert arguments1.length == arguments2.length;
-            for (int i = 0; i < arguments1.length; i++) {
-                if (!accept(arguments1[i], arguments2[i])) {
-                    return false;
-                }
-            }
-            return true;
-        }
     }
 
     @SuppressWarnings("unused")
@@ -455,6 +391,14 @@ public abstract class Identical extends RBuiltinNode {
     @Specialization(guards = "argConnections(x, y)")
     protected byte doInternalIdenticalConnections(Object x, Object y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
         return RRuntime.asLogical(((RConnection) x).getDescriptor() == ((RConnection) y).getDescriptor());
+    }
+
+    @Specialization
+    protected byte doInternalIdenticalGeneric(RExpression x, RExpression y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
+        if (!recursive) {
+            controlVisibility();
+        }
+        return doInternalIdenticalGeneric(x.getList(), y.getList(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
     @SuppressWarnings("unused")

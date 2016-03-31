@@ -66,6 +66,7 @@ import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
+import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.parser.RParser;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
@@ -78,6 +79,7 @@ import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
@@ -145,6 +147,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public void activate(REnvironment.ContextStateImpl stateREnvironment) {
+        RInstrumentation.activate(context);
         this.globalFrame = stateREnvironment.getGlobalFrame();
         this.startTime = System.nanoTime();
         if (context.getKind() == RContext.ContextKind.SHARE_NOTHING) {
@@ -193,7 +196,6 @@ final class REngine implements Engine, Engine.Timings {
         }
         checkAndRunStartupShutdownFunction(".First");
         checkAndRunStartupShutdownFunction(".First.sys");
-        RBuiltinPackages.loadDefaultPackageOverrides();
     }
 
     @Override
@@ -217,7 +219,7 @@ final class REngine implements Engine, Engine.Timings {
             }
             // Should this print the result?
             try {
-                parseAndEval(Source.fromText(call, "<startup/shutdown>"), globalFrame, false);
+                parseAndEval(Source.fromText(call, RInternalSourceDescriptions.STARTUP_SHUTDOWN), globalFrame, false);
             } catch (ParseException e) {
                 throw new RInternalError(e, "error while parsing startup function");
             }
@@ -250,7 +252,7 @@ final class REngine implements Engine, Engine.Timings {
         try {
             Object lastValue = RNull.instance;
             for (RSyntaxNode node : list) {
-                RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>", printResult, true);
+                RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RInternalSourceDescriptions.REPL_WRAPPER, printResult, true);
                 lastValue = callTarget.call(frame);
             }
             return lastValue;
@@ -338,7 +340,7 @@ final class REngine implements Engine, Engine.Timings {
         @SuppressWarnings("unchecked") @Child private FindContextNode<RContext> findContext = (FindContextNode<RContext>) TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         PolyglotEngineRootNode(List<RSyntaxNode> statements) {
-            super(TruffleRLanguage.class, SourceSection.createUnavailable("repl", "<repl wrapper>"), new FrameDescriptor());
+            super(TruffleRLanguage.class, SourceSection.createUnavailable("repl", RInternalSourceDescriptions.REPL_WRAPPER), new FrameDescriptor());
             this.statements = statements;
         }
 
@@ -355,7 +357,7 @@ final class REngine implements Engine, Engine.Timings {
             try {
                 Object lastValue = RNull.instance;
                 for (RSyntaxNode node : statements) {
-                    RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>", true, true);
+                    RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RInternalSourceDescriptions.REPL_WRAPPER, true, true);
                     lastValue = callTarget.call(newContext.stateREnvironment.getGlobalFrame());
                 }
                 return lastValue;

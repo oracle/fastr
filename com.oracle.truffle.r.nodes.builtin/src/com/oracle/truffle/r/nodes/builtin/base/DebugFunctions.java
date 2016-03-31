@@ -26,11 +26,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -45,7 +45,7 @@ public class DebugFunctions {
         protected void doDebug(RFunction fun, Object text, Object condition, boolean once) throws RError {
             // GnuR does not generate an error for builtins, but debug (obviously) has no effect
             if (!fun.isBuiltin()) {
-                if (!RContext.getInstance().getInstrumentFactory().enableDebug(fun, text, condition, once)) {
+                if (!DebugHandling.enableDebug(fun, text, condition, once)) {
                     throw RError.error(this, RError.Message.GENERIC, "failed to attach debug handler (not instrumented?)");
                 }
             }
@@ -104,7 +104,7 @@ public class DebugFunctions {
         @TruffleBoundary
         protected RNull undebug(RFunction func) {
             controlVisibility();
-            if (!RContext.getInstance().getInstrumentFactory().undebug(func)) {
+            if (!DebugHandling.undebug(func)) {
                 throw RError.error(this, RError.Message.NOT_DEBUGGED);
             }
             return RNull.instance;
@@ -124,7 +124,7 @@ public class DebugFunctions {
         @TruffleBoundary
         protected byte isDebugged(RFunction func) {
             forceVisibility(true);
-            return RRuntime.asLogical(RContext.getInstance().getInstrumentFactory().isDebugged(func));
+            return RRuntime.asLogical(DebugHandling.isDebugged(func));
         }
     }
 }

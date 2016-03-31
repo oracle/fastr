@@ -63,4 +63,15 @@ public interface RSyntaxCall extends RSyntaxElement {
             }
         };
     }
+
+    static boolean isCallTo(RSyntaxElement element, String functionName) {
+        if (element instanceof RSyntaxCall) {
+            RSyntaxCall call = (RSyntaxCall) element;
+            if (call.getSyntaxLHS() instanceof RSyntaxLookup) {
+                RSyntaxLookup lookup = (RSyntaxLookup) call.getSyntaxLHS();
+                return functionName.equals(lookup.getIdentifier());
+            }
+        }
+        return false;
+    }
 }

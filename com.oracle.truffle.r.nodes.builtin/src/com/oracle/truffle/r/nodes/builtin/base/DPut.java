@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 
 /**
- * The {@code cat .Internal}.
+ * The {@code dput .Internal}.
  */
 @RBuiltin(name = "dput", kind = INTERNAL, parameterNames = {"x", "file", "opts"})
 public abstract class DPut extends RInvisibleBuiltinNode {

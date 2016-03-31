@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,16 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.repl;
+package com.oracle.truffle.r.runtime.nodes;
 
-import com.oracle.truffle.tools.debug.shell.server.REPLServer;
+import com.oracle.truffle.api.nodes.Node;
 
-public final class RREPL {
-    public static void main(String[] args) {
-        final REPLServer server = new REPLServer("application/x-r");
-        server.start();
-    }
+/**
+ * A tagging interface denoting that an internal, i.e. no syntax {@link Node} uses
+ * {@link RSyntaxNode}s in its children.
+ */
+public interface InternalRSyntaxNodeChildren {
 
-    private RREPL() {
-    }
 }

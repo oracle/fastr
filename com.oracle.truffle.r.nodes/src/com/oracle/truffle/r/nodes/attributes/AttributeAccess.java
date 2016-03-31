@@ -54,13 +54,13 @@ public abstract class AttributeAccess extends RBaseNode {
          * The length check is against names.length instead of size, so that the check folds into
          * the array bounds check.
          */
-        return index != -1 && attr.getNames().length > index && attr.getNames()[index] == name;
+        return index != -1 && attr.size() > index && attr.getNameAtIndex(index) == name;
     }
 
     @Specialization(limit = "1", guards = "nameMatches(attr, index)")
     protected Object accessCached(RAttributes attr, //
                     @Cached("attr.find(name)") int index) {
-        return attr.getValues()[index];
+        return attr.getValueAtIndex(index);
     }
 
     @Specialization(limit = "1", guards = "cachedSize == attr.size()", contains = "accessCached")
@@ -69,11 +69,10 @@ public abstract class AttributeAccess extends RBaseNode {
                     @Cached("attr.size()") int cachedSize, //
                     @Cached("create()") BranchProfile foundProfile, //
                     @Cached("create()") BranchProfile notFoundProfile) {
-        String[] names = attr.getNames();
         for (int i = 0; i < cachedSize; i++) {
-            if (names[i] == name) {
+            if (attr.getNameAtIndex(i) == name) {
                 foundProfile.enter();
-                return attr.getValues()[i];
+                return attr.getValueAtIndex(i);
             }
         }
         notFoundProfile.enter();
@@ -93,14 +92,13 @@ public abstract class AttributeAccess extends RBaseNode {
             }
             maximumSize = size;
         }
-        String[] names = attr.getNames();
         for (int i = 0; i < maximumSize; i++) {
             if (i >= size) {
                 break;
             }
-            if (names[i] == name) {
+            if (attr.getNameAtIndex(i) == name) {
                 foundProfile.enter();
-                return attr.getValues()[i];
+                return attr.getValueAtIndex(i);
             }
         }
         notFoundProfile.enter();

@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -117,27 +116,18 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         pkg.loadOverrides(baseFrame);
     }
 
-    public static void loadDefaultPackageOverrides() {
-        Object defaultPackages = RContext.getInstance().stateROptions.getValue("defaultPackages");
-        if (defaultPackages instanceof RAbstractStringVector) {
-            RAbstractStringVector defPkgs = (RAbstractStringVector) defaultPackages;
-            for (int i = 0; i < defPkgs.getLength(); i++) {
-                String pkgName = defPkgs.getDataAt(i);
-                ArrayList<Source> componentList = RBuiltinPackage.getRFiles(pkgName);
-                if (componentList.size() == 0) {
-                    continue;
-                }
-                /*
-                 * Only the overriding code can know which environment to update, package or
-                 * namespace.
-                 */
-                REnvironment env = REnvironment.baseEnv();
-                for (Source source : componentList) {
-                    try {
-                        RContext.getEngine().parseAndEval(source, env.getFrame(), false);
-                    } catch (ParseException e) {
-                        throw new RInternalError(e, "error while parsing default package override from %s", source.getName());
-                    }
+    public static void loadDefaultPackageOverrides(String pkgName) {
+        ArrayList<Source> componentList = RBuiltinPackage.getRFiles(pkgName);
+        if (componentList.size() > 0) {
+            /*
+             * Only the overriding code can know which environment to update, package or namespace.
+             */
+            REnvironment env = REnvironment.baseEnv();
+            for (Source source : componentList) {
+                try {
+                    RContext.getEngine().parseAndEval(source, env.getFrame(), false);
+                } catch (ParseException e) {
+                    throw new RInternalError(e, "error while parsing default package override from %s", source.getName());
                 }
             }
         }

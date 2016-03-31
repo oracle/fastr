@@ -267,58 +267,6 @@ public class TestMiscBuiltins extends TestBase {
     }
 
     @Test
-    public void testSysCall() {
-        assertEval("{ f <- function() sys.call() ; f() }");
-        assertEval("{ f <- function(x) sys.call() ; f(x = 2) }");
-        assertEval("{ f <- function() sys.call(1) ; g <- function() f() ; g() }");
-        assertEval("{ f <- function() sys.call(2) ; g <- function() f() ; h <- function() g() ; h() }");
-        assertEval("{ f <- function() sys.call(1) ; g <- function() f() ; h <- function() g() ; h() }");
-        assertEval("{ f <- function() sys.call(-1) ; g <- function() f() ; h <- function() g() ; h() }");
-        assertEval("{ f <- function() sys.call(-2) ; g <- function() f() ; h <- function() g() ; h() }");
-        assertEval("{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }");
-
-        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
-        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
-        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
-
-        assertEval("{ f <- function(x) sys.call() ; f(2) }");
-        assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
-
-        assertEval("{ f <- function(x, y) sys.call() ; f(1, 2) }");
-        assertEval("{ f <- function(x, y) sys.call() ; f(x=1, 2) }");
-        assertEval("{ f <- function(x, y) sys.call() ; f(1, y=2) }");
-        assertEval("{ f <- function(x, y) sys.call() ; f(y=1, 2) }");
-        assertEval("{ f <- function(x, y) sys.call() ; f(y=1, x=2) }");
-
-        // fails because can't parse out the "name"
-        assertEval(Ignored.Unknown, "{ (function() sys.call())() }");
-    }
-
-    @Test
-    public void testSysParents() {
-        assertEval("{ sys.parents() }");
-        assertEval("{ f <- function() sys.parents() ; f() }");
-        assertEval("{ f <- function() sys.parents() ; g <- function() f() ; g() }");
-        assertEval("{ f <- function() sys.parents() ; g <- function() f() ; h <- function() g() ; h() }");
-        assertEval("{ f <- function(x=sys.parents()) x ; g <- function() f() ; h <- function() g() ; h() }");
-        assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.parents()) g(z) ; h() }");
-
-        assertEval(Ignored.Unknown, "{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
-    }
-
-    @Test
-    public void testSysNFrame() {
-        assertEval("{ sys.nframe() }");
-        assertEval("{ f <- function() sys.nframe() ; f() }");
-        assertEval("{ f <- function() sys.nframe() ; g <- function() f() ; g() }");
-        assertEval("{ f <- function() sys.nframe() ; g <- function() f() ; h <- function() g() ; h() }");
-        assertEval("{ f <- function(x=sys.nframe()) x ; g <- function() f() ; h <- function() g() ; h() }");
-        assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.nframe()) g(z) ; h() }");
-
-        assertEval(Ignored.Unknown, "{ u <- function() sys.nframe() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
-    }
-
-    @Test
     public void testSimpleRm() {
         assertEval("{ x <- 200 ; rm(\"x\") ; x }");
         assertEval(Output.ContainsWarning, "{ rm(\"ieps\") }");

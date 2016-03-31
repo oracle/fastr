@@ -29,6 +29,7 @@ import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -174,4 +175,10 @@ public abstract class RBaseNode extends Node {
     public SourceSection getEncapsulatingSourceSection() {
         return getRSyntaxNode().getSourceSection();
     }
+
+    @Override
+    public boolean isTaggedWith(Class<?> tag) {
+        return RContext.getRRuntimeASTAccess().isTaggedWith(this, tag);
+    }
+
 }

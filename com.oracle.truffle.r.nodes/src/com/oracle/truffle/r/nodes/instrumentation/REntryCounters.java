@@ -31,9 +31,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.EventContext;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation.FunctionIdentification;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RPerfStats;
@@ -44,8 +44,8 @@ import com.oracle.truffle.r.runtime.data.RFunction;
  * used to retrieve the counter associated with a node.
  *
  */
-class REntryCounters {
-    static final class Counter {
+public class REntryCounters {
+    public static final class Counter {
         private final Object ident;
         private int enterCount;
         private int exitCount;
@@ -116,32 +116,30 @@ class REntryCounters {
     /**
      * A counter that is specialized for function entry, tagged with the {@link FunctionUID}.
      */
-    static class FunctionListener extends BasicListener {
+    public static class FunctionListener extends BasicListener {
         private static final FunctionListener singleton = new FunctionListener();
 
         static void installCounters() {
             if (enabled()) {
                 SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
-                builder.tagIs(RSyntaxTags.START_FUNCTION);
+                builder.tagIs(StandardTags.RootTag.class);
                 SourceSectionFilter filter = builder.build();
                 RInstrumentation.getInstrumenter().attachListener(filter, singleton);
             }
         }
 
-        static void installCounter(RFunction func) {
+        public static void installCounter(RFunction func) {
             RInstrumentation.getInstrumenter().attachListener(RInstrumentation.createFunctionStartFilter(func).build(), singleton);
         }
 
-        static Counter findCounter(RFunction func) {
+        public static Counter findCounter(RFunction func) {
             FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-            FunctionStatementsNode fsn = ((FunctionStatementsNode) fdn.getBody());
-            return singleton.getCounter(fsn.getSourceSection());
+            return singleton.getCounter(fdn.getBody().getSourceSection());
         }
 
         @Override
         protected FunctionUID counterCreated(EventContext context) {
-            FunctionStatementsNode fsn = (FunctionStatementsNode) context.getInstrumentedNode();
-            FunctionDefinitionNode fdn = (FunctionDefinitionNode) fsn.getRootNode();
+            FunctionDefinitionNode fdn = (FunctionDefinitionNode) context.getInstrumentedNode().getRootNode();
             return fdn.getUID();
         }
 

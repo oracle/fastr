@@ -56,6 +56,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -286,7 +287,7 @@ public abstract class PromiseNode extends RNode {
      * an argument in a {@link RCallNode} where the arguments are statically typed as
      * {@link RSyntaxNode}.
      */
-    public static final class VarArgNode extends RNode implements RSyntaxNode {
+    public static final class VarArgNode extends RNode implements RSyntaxNode, RSyntaxLookup {
 
         @Child private ReadVariableNode lookupVarArgs;
 
@@ -350,6 +351,15 @@ public abstract class PromiseNode extends RNode {
              * tree, so must not return null
              */
             return RSyntaxNode.INTERNAL;
+        }
+
+        public String getIdentifier() {
+            int num = index + 1;
+            return (num < 10 ? ".." : ".") + num;
+        }
+
+        public boolean isFunctionLookup() {
+            return false;
         }
     }
 

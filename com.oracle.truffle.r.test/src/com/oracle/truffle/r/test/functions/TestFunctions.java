@@ -24,18 +24,18 @@ public class TestFunctions extends TestBase {
         assertEval("{ 'foo'() }");
         // these errors will be fixed by proper handling of "("
         assertEval("{ (foo)() }");
-        assertEval(Output.ContainsError, "{ ('foo')() }");
+        assertEval("{ ('foo')() }");
         assertEval("{ foo <- function() 1; foo() }");
         assertEval("{ foo <- function() 1; 'foo'() }");
         assertEval("{ foo <- function() 1; `foo`() }");
         assertEval("{ foo <- function() 1; (foo)() }");
-        assertEval(Output.ContainsError, "{ foo <- function() 1; ('foo')() }");
+        assertEval("{ foo <- function() 1; ('foo')() }");
         assertEval("{ foo <- function() 1; (`foo`)() }");
         assertEval("{ sum <- 1; sum(1,2) }");
         assertEval("{ sum <- 1; `sum`(1,2) }");
         assertEval("{ sum <- 1; 'sum'(1,2) }");
         assertEval(Ignored.ImplementationError, "{ sum <- 1; (sum)(1,2) }");
-        assertEval(Output.ContainsError, "{ sum <- 1; ('sum')(1,2) }");
+        assertEval("{ sum <- 1; ('sum')(1,2) }");
         assertEval(Ignored.ImplementationError, "{ sum <- 1; (`sum`)(1,2) }");
     }
 

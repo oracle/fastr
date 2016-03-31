@@ -252,6 +252,7 @@ public class EnvFunctions {
             return doTopEnv(target, env);
         }
 
+        @TruffleBoundary
         private static REnvironment doTopEnv(REnvironment target, final REnvironment envArg) {
             REnvironment env = envArg;
             while (env != REnvironment.emptyEnv()) {
@@ -604,7 +605,7 @@ public class EnvFunctions {
 
         @Specialization
         RFunction copy(RFunction f) {
-            return RDataFactory.createFunction(f.getName(), f.getTarget(), f.getRBuiltin(), f.getEnclosingFrame(), f.getFastPath(), f.containsDispatch());
+            return f.copy();
         }
 
         @Specialization

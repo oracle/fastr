@@ -61,7 +61,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
-import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -74,6 +73,7 @@ import com.oracle.truffle.r.runtime.RDeparse.Func;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -92,7 +92,9 @@ import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -132,12 +134,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -150,11 +152,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -162,7 +164,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -174,7 +176,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    DGV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -264,7 +266,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     @Child private CallArgumentsNode foreignCallArguments;
 
     public RCallNode(SourceSection sourceSection, RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
-        super(sourceSection.withTags(RSyntaxTags.CALL));
+        super(sourceSection);
         this.functionNode = function;
         this.arguments = new SyntaxArguments(arguments);
         this.signature = signature;
@@ -324,7 +326,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             }
         } else {
             errorProfile.enter();
-            throw RError.error(this, RError.Message.APPLY_NON_FUNCTION);
+            throw RError.error(RError.SHOW_CALLER, RError.Message.APPLY_NON_FUNCTION);
         }
 
         if (!signature.isEmpty() && function.getRBuiltin() != null) {
@@ -511,11 +513,17 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             state.linkPairList(2);
             state.setCdr(state.closePairList());
         } else {
-            serializeArguments(state, arguments.v, signature);
+            RSyntaxNode f = functionNode.asRSyntaxNode();
+            boolean infixFieldAccess = false;
+            if (f instanceof RSyntaxLookup) {
+                RSyntaxLookup lookup = (RSyntaxLookup) f;
+                infixFieldAccess = "$".equals(lookup.getIdentifier()) || "@".equals(lookup.getIdentifier());
+            }
+            serializeArguments(state, arguments.v, signature, infixFieldAccess);
         }
     }
 
-    static void serializeArguments(RSerialize.State state, RSyntaxNode[] arguments, ArgumentsSignature signature) {
+    static void serializeArguments(RSerialize.State state, RSyntaxNode[] arguments, ArgumentsSignature signature, boolean infixFieldAccess) {
         state.openPairList(SEXPTYPE.LISTSXP);
         if (arguments.length == 0) {
             state.setNull();
@@ -529,7 +537,14 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
                 if (argument == null) {
                     state.setCarMissing();
                 } else {
-                    state.serializeNodeSetCar(argument);
+                    if (infixFieldAccess && i == 1 && argument instanceof RSyntaxConstant) {
+                        RSyntaxConstant c = (RSyntaxConstant) argument;
+                        String identifier = RRuntime.asStringLengthOne(c.getValue());
+                        assert identifier != null;
+                        state.setCarAsSymbol(identifier);
+                    } else {
+                        state.serializeNodeSetCar(argument);
+                    }
                 }
                 if (i != arguments.length - 1) {
                     state.openPairList();

@@ -157,9 +157,9 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
         /*
          * F Format: use "F" format WHENEVER we use not more space than 'E' and still satisfy
          * 'R_print.digits' {but as if nsmall==0 !}
-         *
+         * 
          * E Format has the form [S]X[.XXX]E+XX[X]
-         *
+         * 
          * This is indicated by setting *e to non-zero (usually 1) If the additional exponent digit
          * is required *e is set to 2
          */
@@ -247,7 +247,7 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
          * for a number x , determine sgn = 1_{x < 0} {0/1} kpower = Exponent of 10; nsig =
          * min(R_print.digits, #{significant digits of alpha}) roundingwidens = 1 if rounding causes
          * x to increase in width, 0 otherwise
-         *
+         * 
          * where |x| = alpha * 10^kpower and 1 <= alpha < 10
          */
         double alpha;
@@ -359,10 +359,8 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
         String fmt;
 
         /* IEEE allows signed zeros (yuck!) */
-        double x = initialX;
-        if (x == 0.0) {
-            x = 0.0;
-        }
+        double x = RRuntime.normalizeZero(initialX);
+
         if (!RRuntime.isFinite(x)) {
             int numBlanks = Math.min(w, (NB - 1));
             String naFmt = "%" + Utils.asBlankArg(numBlanks) + "s";
