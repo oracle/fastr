@@ -39,9 +39,11 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 @RBuiltin(name = "sign", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
 public abstract class Sign extends RBuiltinNode {
 
-    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode signNode = UnaryArithmeticNodeGen.create(SignArithmetic::new, RType.Logical,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
+    @Child
+    private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+    @Child
+    private UnaryArithmeticNode signNode = UnaryArithmeticNodeGen.create(SignArithmetic::new, RType.Logical,
+            RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
 
     @Specialization
     protected Object sign(Object x) {
@@ -50,24 +52,24 @@ public abstract class Sign extends RBuiltinNode {
 
     static final class SignArithmetic extends UnaryArithmetic {
 
-            @Override
-            public int op(byte op) {
-                return op == RRuntime.LOGICAL_TRUE ? 1 : 0;
-            }
+        @Override
+        public int op(byte op) {
+            return op == RRuntime.LOGICAL_TRUE ? 1 : 0;
+        }
 
-            @Override
-            public int op(int op) {
-                return op == 0 ? 0 : (op > 0 ? 1 : -1);
-            }
+        @Override
+        public int op(int op) {
+            return op == 0 ? 0 : (op > 0 ? 1 : -1);
+        }
 
-            @Override
-            public double op(double op) {
-                return Math.signum(op);
-            }
+        @Override
+        public double op(double op) {
+            return Math.signum(op);
+        }
 
-            @Override
-            public RComplex op(double re, double im) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public RComplex op(double re, double im) {
+            throw new UnsupportedOperationException();
+        }
     }
 }
