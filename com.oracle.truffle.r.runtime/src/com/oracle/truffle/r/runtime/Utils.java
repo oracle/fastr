@@ -31,7 +31,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Function;
@@ -50,13 +49,17 @@ import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.nodes.GraphPrintVisitor;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -293,8 +296,13 @@ public final class Utils {
     }
 
     /**
-     * Retrieve a frame from the call stack. N.B. This method cannot not be used to get the current
-     * frame, use {@link #getActualCurrentFrame()} for that.
+     * Retrieve a frame from the call stack. N.B. To avoid the iterator overhead use
+     * {@link #getActualCurrentFrame()} for the current frame.
+     *
+     * TODO The check for {@code first} seems bogus. It assumes that {@code depth} never equals that
+     * associated with {@link #getActualCurrentFrame()}, i.e. all requests for the top frame use
+     * {@link #getActualCurrentFrame()} as suggested. But if they don't, then this will incorrectly
+     * return {@code null}.
      *
      * @param fa kind of access required to the frame
      * @param depth identifies which frame is required (> 0)
@@ -350,16 +358,6 @@ public final class Utils {
     }
 
     /**
-     * TODO provide a better way of determining promise evaluation nature of frames than using
-     * {@code toString()} on the call target.
-     */
-    @TruffleBoundary
-    private static boolean isPromiseEvaluationFrame(FrameInstance frameInstance) {
-        String desc = frameInstance.getCallTarget().toString();
-        return desc == RPromise.CLOSURE_WRAPPER_NAME;
-    }
-
-    /**
      * Retrieve the caller frame of the current frame.
      */
     public static Frame getCallerFrame(Frame frame, FrameAccess fa) {
@@ -383,35 +381,67 @@ public final class Utils {
         return RArguments.unwrap(frameInstance.getFrame(FrameAccess.MATERIALIZE, true));
     }
 
-    /**
-     * Generate a stack trace as a string.
-     */
-    @TruffleBoundary
-    public static String[] createTraceback() {
-        ArrayList<String> strings = new ArrayList<>();
-        FrameInstance current = Truffle.getRuntime().getCurrentFrame();
-        if (current != null) {
-            strings.add(traceback(current.getFrame(FrameAccess.READ_ONLY, true)));
-            Truffle.getRuntime().iterateFrames(frameInstance -> {
-                strings.add(traceback(frameInstance.getFrame(FrameAccess.READ_ONLY, true)));
-                return null;
-            });
+    private static final class TracebackVisitor implements FrameInstanceVisitor<Frame> {
+        private int skip;
+        private RPairList head;
+        private RPairList prev;
+
+        private TracebackVisitor(int skip) {
+            this.skip = skip;
         }
-        return strings.toArray(new String[strings.size()]);
+
+        @Override
+        public Frame visitFrame(FrameInstance frameInstance) {
+            Frame f = RArguments.unwrap(frameInstance.getFrame(FrameAccess.READ_ONLY, false));
+            if (RArguments.isRFrame(f) && RArguments.getFunction(f) != null) {
+                if (skip > 0) {
+                    skip--;
+                } else {
+                    RCaller call = RArguments.getCall(f);
+                    assert call != null;
+                    RLanguage rl = RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
+                    RSyntaxNode sn = (RSyntaxNode) rl.getRep();
+                    SourceSection ss = sn.getSourceSection();
+                    // fabricate a srcref attribute from ss
+                    String path = ss.getSource().getPath();
+                    if (path != null && RInternalSourceDescriptions.isInternal(path)) {
+                        path = null;
+                    }
+                    RStringVector callerSource = RDataFactory.createStringVectorFromScalar(RContext.getRRuntimeASTAccess().getCallerSource(call));
+                    if (path != null) {
+                        callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(ss, path));
+                    }
+                    RPairList pl = RDataFactory.createPairList(callerSource);
+                    if (prev != null) {
+                        prev.setCdr(pl);
+                    } else {
+                        head = pl;
+                    }
+                    prev = pl;
+                }
+            }
+            return null;
+        }
+
     }
 
-    private static String traceback(Frame frame) {
-        Frame unwrapped = RArguments.unwrap(frame);
-        if (RArguments.isRFrame(frame)) {
-            RCaller call = RArguments.getCall(unwrapped);
-            if (call != null) {
-                RRuntimeASTAccess rASTAccess = RContext.getRRuntimeASTAccess();
-                RLanguage caller = rASTAccess.getSyntaxCaller(call);
-                RSyntaxNode sn = (RSyntaxNode) caller.getRep();
-                return sn.getSourceSection().getCode() + " (" + sn.getSourceSection().getShortDescription() + ")";
-            }
+    /**
+     * Return a top down stack traceback as a pairlist of character vectors possibly attributed with
+     * srcref information.
+     *
+     * @param skip number of frame to skip
+     * @return {@link RNull#instance} if no trace else a {@link RPairList}.
+     */
+    @TruffleBoundary
+    public static Object createTraceback(int skip) {
+        FrameInstance current = Truffle.getRuntime().getCurrentFrame();
+        if (current != null) {
+            TracebackVisitor fiv = new TracebackVisitor(skip);
+            Truffle.getRuntime().iterateFrames(fiv);
+            return fiv.head == null ? RNull.instance : fiv.head;
+        } else {
+            return RNull.instance;
         }
-        return "<unknown>";
     }
 
     /**
@@ -424,14 +454,12 @@ public final class Utils {
             return "no R stack trace available\n";
         } else {
             StringBuilder str = new StringBuilder();
-            dumpFrame(str, current.getCallTarget(), current.getFrame(FrameAccess.READ_ONLY, true), false, current.isVirtualFrame());
             Truffle.getRuntime().iterateFrames(frameInstance -> {
                 dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY, true), false, frameInstance.isVirtualFrame());
                 return null;
             });
             if (printFrameSlots) {
                 str.append("\n\nwith frame slot contents:\n");
-                dumpFrame(str, current.getCallTarget(), current.getFrame(FrameAccess.READ_ONLY, true), true, current.isVirtualFrame());
                 Truffle.getRuntime().iterateFrames(frameInstance -> {
                     dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY, true), true, frameInstance.isVirtualFrame());
                     return null;
@@ -446,14 +474,13 @@ public final class Utils {
         if (str.length() > 0) {
             str.append("\n");
         }
-        Frame unwrapped = RArguments.unwrap(frame);
         if (!RArguments.isRFrame(frame)) {
             str.append("<unknown frame>");
         } else {
+            Frame unwrapped = RArguments.unwrap(frame);
             RCaller call = RArguments.getCall(unwrapped);
             if (call != null) {
-                RRuntimeASTAccess rASTAccess = RContext.getRRuntimeASTAccess();
-                String callSrc = rASTAccess.getCallerSource(rASTAccess.getSyntaxCaller(call));
+                String callSrc = RContext.getRRuntimeASTAccess().getCallerSource(call);
                 str.append("Frame(d=").append(RArguments.getDepth(unwrapped)).append("): ").append(callTarget).append(isVirtual ? " (virtual)" : "");
                 str.append(" (called as: ").append(callSrc).append(')');
             }

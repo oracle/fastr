@@ -22,23 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
-
-import java.io.IOException;
-import java.util.Arrays;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 
-@RBuiltin(name = "traceback", kind = PRIMITIVE, parameterNames = {"x"})
+@RBuiltin(name = "traceback", kind = INTERNAL, parameterNames = {"x"})
 public abstract class Traceback extends RBuiltinNode {
 
     @Override
@@ -48,16 +41,8 @@ public abstract class Traceback extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector traceback(int x) {
-        String[] traceback = Utils.createTraceback();
-        try {
-            for (String s : traceback) {
-                StdConnections.getStdout().writeString(":: " + s, true);
-            }
-        } catch (IOException ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
-        }
-        traceback = Arrays.copyOfRange(traceback, x, traceback.length);
-        return RDataFactory.createStringVector(traceback, true);
+    protected Object traceback(int x) {
+        return Utils.createTraceback(x);
     }
+
 }

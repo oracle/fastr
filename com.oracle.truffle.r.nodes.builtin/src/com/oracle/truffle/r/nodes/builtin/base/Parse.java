@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.RConnection;
@@ -51,7 +52,6 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -233,31 +233,12 @@ public abstract class Parse extends RBuiltinNode {
         }
     }
 
-    private static final RStringVector SRCREF_CLASS = RDataFactory.createStringVectorFromScalar("srcref");
-
     private static void addAttributes(RExpression exprs, Source source, REnvironment srcFile) {
         Object[] srcrefData = new Object[exprs.getLength()];
         for (int i = 0; i < srcrefData.length; i++) {
             RBaseNode node = ((RLanguage) exprs.getDataAt(i)).getRep();
             SourceSection ss = node.asRSyntaxNode().getSourceSection();
-            int[] llocData = new int[8];
-            int startLine = ss.getStartLine();
-            int startColumn = ss.getStartColumn();
-            int lastLine = ss.getEndLine();
-            int lastColumn = ss.getEndColumn();
-            // no multi-byte support, so byte==line
-            llocData[0] = startLine;
-            llocData[1] = startColumn;
-            llocData[2] = lastLine;
-            llocData[3] = lastColumn;
-            llocData[4] = startColumn;
-            llocData[5] = lastColumn;
-            llocData[6] = startLine;
-            llocData[7] = lastLine;
-            RIntVector lloc = RDataFactory.createIntVector(llocData, RDataFactory.COMPLETE_VECTOR);
-            lloc.setClassAttr(SRCREF_CLASS, false);
-            lloc.setAttr("srcfile", srcFile);
-            srcrefData[i] = lloc;
+            srcrefData[i] = RSrcref.createLloc(ss, srcFile);
         }
         exprs.setAttr("srcref", RDataFactory.createList(srcrefData));
         int[] wholeSrcrefData = new int[8];
