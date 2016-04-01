@@ -17,7 +17,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -42,12 +41,8 @@ public abstract class UnClass extends RBuiltinNode {
             RVector resultVector = arg.materialize();
             if (!resultVector.isTemporary()) {
                 resultVector = resultVector.copy();
-                if (FastROptions.NewStateTransition.getBooleanValue()) {
-                    assert resultVector.isTemporary();
-                    resultVector.incRefCount();
-                } else {
-                    resultVector.markNonTemporary();
-                }
+                assert resultVector.isTemporary();
+                resultVector.incRefCount();
             }
             return RVector.setVectorClassAttr(resultVector, null, null, null);
         }
@@ -61,12 +56,8 @@ public abstract class UnClass extends RBuiltinNode {
         RDataFrame resultFrame = arg;
         if (!resultFrame.isTemporary()) {
             resultFrame = resultFrame.copy();
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                assert resultFrame.isTemporary();
-                resultFrame.incRefCount();
-            } else {
-                resultFrame.markNonTemporary();
-            }
+            assert resultFrame.isTemporary();
+            resultFrame.incRefCount();
         }
         return RVector.setVectorClassAttr(resultFrame.getVector(), null, arg, null);
     }
@@ -78,12 +69,8 @@ public abstract class UnClass extends RBuiltinNode {
         RFactor resultFactor = arg;
         if (!resultFactor.isTemporary()) {
             resultFactor = resultFactor.copy();
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                assert resultFactor.isTemporary();
-                resultFactor.incRefCount();
-            } else {
-                resultFactor.markNonTemporary();
-            }
+            assert resultFactor.isTemporary();
+            resultFactor.incRefCount();
         }
         return RVector.setVectorClassAttr(resultFactor.getVector(), null, null, arg);
     }
@@ -96,12 +83,8 @@ public abstract class UnClass extends RBuiltinNode {
             RLanguage resultLang = arg;
             if (!resultLang.isTemporary()) {
                 resultLang = resultLang.copy();
-                if (FastROptions.NewStateTransition.getBooleanValue()) {
-                    resultLang.isTemporary();
-                    resultLang.incRefCount();
-                } else {
-                    resultLang.markNonTemporary();
-                }
+                resultLang.isTemporary();
+                resultLang.incRefCount();
             }
             resultLang.removeAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
             return resultLang;
@@ -117,12 +100,8 @@ public abstract class UnClass extends RBuiltinNode {
             RS4Object resultS4 = arg;
             if (!resultS4.isTemporary()) {
                 resultS4 = resultS4.copy();
-                if (FastROptions.NewStateTransition.getBooleanValue()) {
-                    resultS4.isTemporary();
-                    resultS4.incRefCount();
-                } else {
-                    resultS4.markNonTemporary();
-                }
+                resultS4.isTemporary();
+                resultS4.incRefCount();
             }
             resultS4.removeAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
             return resultS4;

@@ -29,7 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RPerfStats;
@@ -735,12 +734,8 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         RStringVector oldNames = res.names;
         res = copyResized(size, true);
         if (this.isShared()) {
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                assert res.isTemporary();
-                res.incRefCount();
-            } else {
-                res.markNonTemporary();
-            }
+            assert res.isTemporary();
+            res.incRefCount();
         }
         if (resetAll) {
             resetAllAttributes(oldNames == null);

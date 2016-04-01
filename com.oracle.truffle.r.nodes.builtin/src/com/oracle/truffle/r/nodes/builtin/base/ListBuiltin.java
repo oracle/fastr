@@ -34,7 +34,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -72,13 +71,9 @@ public abstract class ListBuiltin extends RBuiltinNode {
     private void shareListElement(Object value) {
         if (value instanceof RShareable) {
             shareable.enter();
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                if (((RShareable) value).isTemporary()) {
-                    temporary.enter();
-                    ((RShareable) value).incRefCount();
-                }
-            } else {
-                ((RShareable) value).makeShared();
+            if (((RShareable) value).isTemporary()) {
+                temporary.enter();
+                ((RShareable) value).incRefCount();
             }
         }
     }

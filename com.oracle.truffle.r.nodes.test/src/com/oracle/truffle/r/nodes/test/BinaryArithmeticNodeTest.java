@@ -64,7 +64,6 @@ import org.junit.runner.RunWith;
 
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNode;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -239,20 +238,12 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         RAbstractVector a = aOrig.copy();
         RAbstractVector b = bOrig.copy();
         if (a instanceof RShareable) {
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                assert ((RShareable) a).isTemporary();
-                ((RShareable) a).incRefCount();
-            } else {
-                ((RShareable) a).markNonTemporary();
-            }
+            assert ((RShareable) a).isTemporary();
+            ((RShareable) a).incRefCount();
         }
         if (b instanceof RShareable) {
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                assert ((RShareable) b).isTemporary();
-                ((RShareable) b).incRefCount();
-            } else {
-                ((RShareable) b).markNonTemporary();
-            }
+            assert ((RShareable) b).isTemporary();
+            ((RShareable) b).incRefCount();
         }
 
         RVector aMaterialized = a.copy().materialize();

@@ -23,10 +23,8 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -38,9 +36,6 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
 
-    private final BranchProfile everSeenShared = BranchProfile.create();
-    private final BranchProfile everSeenTemporary = BranchProfile.create();
-    private final BranchProfile everSeenNonTemporary = BranchProfile.create();
     private final ConditionProfile isShared = ConditionProfile.createBinaryProfile();
 
     private WrapDefaultArgumentNode(RNode operand) {
@@ -58,23 +53,10 @@ public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
         RShareable rShareable = getShareable(result);
         if (rShareable != null) {
             shareable.enter();
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                if (isShared.profile(rShareable.isShared())) {
-                    result = ((RShareable) o).copy();
-                } else {
-                    ((RShareable) o).incRefCount();
-                }
+            if (isShared.profile(rShareable.isShared())) {
+                result = ((RShareable) o).copy();
             } else {
-                if (rShareable.isShared()) {
-                    everSeenShared.enter();
-                    result = ((RShareable) o).copy();
-                } else if (rShareable.isTemporary()) {
-                    everSeenTemporary.enter();
-                    rShareable.markNonTemporary();
-                } else {
-                    everSeenNonTemporary.enter();
-                    rShareable.makeShared();
-                }
+                ((RShareable) o).incRefCount();
             }
         }
         return result;

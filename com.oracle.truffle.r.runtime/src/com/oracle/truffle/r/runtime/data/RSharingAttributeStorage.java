@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.FastROptions;
-
 /**
  * An adaptor class for the several R types that are both attributable and shareable.
  */
@@ -35,38 +33,28 @@ public abstract class RSharingAttributeStorage extends RAttributeStorage impleme
     private static final int SHARED = 0x2;
 
     protected RSharingAttributeStorage() {
-        if (!FastROptions.NewStateTransition.getBooleanValue()) {
-            refCount = TEMPORARY;
-        }
+        // empty
     }
 
     @Override
     public final void markNonTemporary() {
-        assert !FastROptions.NewStateTransition.getBooleanValue();
+        assert !true;
         refCount &= ~TEMPORARY;
     }
 
     @Override
     public final boolean isTemporary() {
-        if (FastROptions.NewStateTransition.getBooleanValue()) {
-            return refCount == 0;
-        } else {
-            return (refCount & TEMPORARY) != 0;
-        }
+        return refCount == 0;
     }
 
     @Override
     public final boolean isShared() {
-        if (FastROptions.NewStateTransition.getBooleanValue()) {
-            return refCount > 1;
-        } else {
-            return (refCount & SHARED) != 0;
-        }
+        return refCount > 1;
     }
 
     @Override
     public final RSharingAttributeStorage makeShared() {
-        assert !FastROptions.NewStateTransition.getBooleanValue();
+        assert !true;
         refCount = SHARED;
         return this;
     }
@@ -89,35 +77,19 @@ public abstract class RSharingAttributeStorage extends RAttributeStorage impleme
 
     @Override
     public void makeSharedPermanent() {
-        if (FastROptions.NewStateTransition.getBooleanValue()) {
-            refCount = SHARED_PERMANENT_VAL;
-        } else {
-            // old scheme never reverts states
-            makeShared();
-        }
+        refCount = SHARED_PERMANENT_VAL;
     }
 
     @Override
     public RShareable getNonShared() {
         if (this.isShared()) {
             RShareable res = this.copy();
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                assert res.isTemporary();
-                res.incRefCount();
-            } else {
-                res.markNonTemporary();
-            }
+            assert res.isTemporary();
+            res.incRefCount();
             return res;
         }
         if (this.isTemporary()) {
-            // this is needed for primitive value coercion - they need to be marked as
-            // non-temp, otherwise the following code will not work:
-            // x<-1; attributes(x) <- list(my = 1); y<-x; attributes(y)<-list(his = 2); x
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                this.incRefCount();
-            } else {
-                this.markNonTemporary();
-            }
+            this.incRefCount();
         }
         return this;
     }
