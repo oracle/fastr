@@ -35,14 +35,13 @@ import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctions.Cos.CosArithmetic;
-import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctions.Sin.SinArithmetic;
-import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctions.Tan.TanArithmetic;
 import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.AcosNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.AsinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.AtanNodeGen;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.CosNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.SinNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.TanNodeGen;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
@@ -58,7 +57,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Pow.CHypot;
-import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class TrigExpFunctions {
@@ -108,7 +106,8 @@ public class TrigExpFunctions {
         }
 
         protected double op(@SuppressWarnings("unused") double x) {
-            // not abstract because this would confuse the DSL annotation processor
+            // not abstract because this would confuse the DSL annotation
+            // processor
             throw RInternalError.shouldNotReachHere("this method needs to be implemented in subclasses");
         }
 
@@ -179,703 +178,602 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "exp", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Exp extends TrigExpFunctionNode {
+    public abstract static class Exp extends UnaryArithmeticBuiltinNode {
 
-        @Child private BinaryArithmetic calculatePowNode;
-        @Child private UnaryArithmeticNode expNode = UnaryArithmeticNodeGen.create(ExpArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        @Override
-        protected Object calculate(Object value) {
-            return expNode.execute(value);
+        public Exp() {
+            super(RType.Double);
         }
 
-        private final class ExpArithmetic extends UnaryArithmetic {
+        @Child private BinaryArithmetic calculatePowNode;
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public double op(double op) {
-                return Math.exp(op);
-            }
+        @Override
+        public double op(double op) {
+            return Math.exp(op);
+        }
 
-            @Override
-            public RComplex op(double re, double im) {
-                if (calculatePowNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    calculatePowNode = insert(BinaryArithmetic.POW.create());
-                }
-                return calculatePowNode.op(Math.E, 0, re, im);
+        @Override
+        public RComplex op(double re, double im) {
+            if (calculatePowNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                calculatePowNode = insert(BinaryArithmetic.POW.create());
             }
+            return calculatePowNode.op(Math.E, 0, re, im);
         }
     }
 
     @RBuiltin(name = "expm1", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class ExpM1 extends TrigExpFunctionNode {
+    public abstract static class ExpM1 extends UnaryArithmeticBuiltinNode {
 
-        @Child private BinaryArithmetic calculatePowNode;
-        @Child private UnaryArithmeticNode expm1Node = UnaryArithmeticNodeGen.create(ExpM1Arithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        @Override
-        protected Object calculate(Object value) {
-            return expm1Node.execute(value);
+        public ExpM1() {
+            super(RType.Double);
         }
 
-        private final class ExpM1Arithmetic extends UnaryArithmetic {
+        @Child private BinaryArithmetic calculatePowNode;
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public double op(double op) {
-                return Math.expm1(op);
-            }
+        @Override
+        public double op(double op) {
+            return Math.expm1(op);
+        }
 
-            @Override
-            public RComplex op(double re, double im) {
-                if (calculatePowNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    calculatePowNode = insert(BinaryArithmetic.POW.create());
-                }
-                RComplex x = calculatePowNode.op(Math.E, 0, re, im);
-                return RDataFactory.createComplex(x.getRealPart() - 1d, x.getImaginaryPart());
+        @Override
+        public RComplex op(double re, double im) {
+            if (calculatePowNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                calculatePowNode = insert(BinaryArithmetic.POW.create());
             }
+            RComplex x = calculatePowNode.op(Math.E, 0, re, im);
+            return RDataFactory.createComplex(x.getRealPart() - 1d, x.getImaginaryPart());
         }
     }
 
     @com.oracle.truffle.r.runtime.RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Sin extends TrigExpFunctionNode {
+    public abstract static class Sin extends UnaryArithmeticBuiltinNode {
 
-        @Child private UnaryArithmeticNode sinNode = UnaryArithmeticNodeGen.create(SinArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        @Override
-        protected Object calculate(Object value) {
-            return sinNode.execute(value);
+        public Sin() {
+            super(RType.Double);
         }
 
-        static final class SinArithmetic extends UnaryArithmetic {
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public double op(double op) {
+            return Math.sin(op);
+        }
 
-            @Override
-            public double op(double op) {
-                return Math.sin(op);
-            }
-
-            @Override
-            public RComplex op(double re, double im) {
-                double sinRe = Math.sin(re) * Math.cosh(im);
-                double sinIm = Math.cos(re) * Math.sinh(im);
-                return RDataFactory.createComplex(sinRe, sinIm);
-            }
+        @Override
+        public RComplex op(double re, double im) {
+            double sinRe = Math.sin(re) * Math.cosh(im);
+            double sinIm = Math.cos(re) * Math.sinh(im);
+            return RDataFactory.createComplex(sinRe, sinIm);
         }
     }
 
     @RBuiltin(name = "sinh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Sinh extends TrigExpFunctionNode {
+    public abstract static class Sinh extends UnaryArithmeticBuiltinNode {
 
-        @Child private UnaryArithmeticNode sinhNode = UnaryArithmeticNodeGen.create(SinhArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        @Override
-        protected Object calculate(Object value) {
-            return sinhNode.execute(value);
+        public Sinh() {
+            super(RType.Double);
         }
 
-        private static class SinhArithmetic extends UnaryArithmetic {
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public double op(double op) {
+            return Math.sinh(op);
+        }
 
-            @Override
-            public double op(double op) {
-                return Math.sinh(op);
-            }
-
-            @Override
-            public RComplex op(double re, double im) {
-                double sinhRe = Math.sinh(re) * Math.cos(im);
-                double sinhIm = Math.cosh(re) * Math.sin(im);
-                return RDataFactory.createComplex(sinhRe, sinhIm);
-            }
+        @Override
+        public RComplex op(double re, double im) {
+            double sinhRe = Math.sinh(re) * Math.cos(im);
+            double sinhIm = Math.cosh(re) * Math.sin(im);
+            return RDataFactory.createComplex(sinhRe, sinhIm);
         }
     }
 
     @RBuiltin(name = "sinpi", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Sinpi extends TrigExpFunctionNode {
+    public abstract static class Sinpi extends UnaryArithmeticBuiltinNode {
 
-        @Child private UnaryArithmeticNode sinpiNode = UnaryArithmeticNodeGen.create(SinpiArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        @Override
-        protected Object calculate(Object value) {
-            return sinpiNode.execute(value);
+        public Sinpi() {
+            super(RType.Double);
         }
 
-        private final class SinpiArithmetic extends UnaryArithmetic {
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
+        @Override
+        public double op(double op) {
+            double norm = op % 2d;
+            if (norm == 0d || norm == 1d || norm == -1d) {
+                return 0d;
             }
+            if (norm == -1.5d || norm == 0.5d) {
+                return 1d;
+            }
+            if (norm == -0.5d || norm == 1.5d) {
+                return -1d;
+            }
+            return Math.sin(norm * Math.PI);
+        }
 
-            @Override
-            public double op(double op) {
-                double norm = op % 2d;
-                if (norm == 0d || norm == 1d || norm == -1d) {
-                    return 0d;
-                }
-                if (norm == -1.5d || norm == 0.5d) {
-                    return 1d;
-                }
-                if (norm == -0.5d || norm == 1.5d) {
-                    return -1d;
-                }
-                return Math.sin(norm * Math.PI);
-            }
-
-            @Override
-            public RComplex op(double re, double im) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public RComplex op(double re, double im) {
+            throw new UnsupportedOperationException();
         }
     }
 
-    @com.oracle.truffle.r.runtime.RBuiltin(name = "cos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Cos extends TrigExpFunctionNode {
+    @RBuiltin(name = "cos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class Cos extends UnaryArithmeticBuiltinNode {
 
-        @Child private UnaryArithmeticNode cosNode = UnaryArithmeticNodeGen.create(CosArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        @Override
-        protected Object calculate(Object value) {
-            return cosNode.execute(value);
+        public Cos() {
+            super(RType.Double);
         }
 
-        static final class CosArithmetic extends UnaryArithmetic {
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public double op(double op) {
+            return Math.cos(op);
+        }
 
-            @Override
-            public double op(double op) {
-                return Math.cos(op);
-            }
-
-            @Override
-            public RComplex op(double re, double im) {
-                double cosRe = Math.cos(re) * Math.cosh(im);
-                double cosIm = -Math.sin(re) * Math.sinh(im);
-                return RDataFactory.createComplex(cosRe, cosIm);
-            }
+        @Override
+        public RComplex op(double re, double im) {
+            double cosRe = Math.cos(re) * Math.cosh(im);
+            double cosIm = -Math.sin(re) * Math.sinh(im);
+            return RDataFactory.createComplex(cosRe, cosIm);
         }
     }
 
     @RBuiltin(name = "cosh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Cosh extends TrigExpFunctionNode {
+    public abstract static class Cosh extends UnaryArithmeticBuiltinNode {
 
-        @Child private UnaryArithmeticNode coshNode = UnaryArithmeticNodeGen.create(CoshArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        @Override
-        protected Object calculate(Object value) {
-            return coshNode.execute(value);
+        public Cosh() {
+            super(RType.Double);
         }
 
-        private static final class CoshArithmetic extends UnaryArithmetic {
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public double op(double op) {
+            return Math.cosh(op);
+        }
 
-            @Override
-            public double op(double op) {
-                return Math.cosh(op);
-            }
-
-            @Override
-            public RComplex op(double re, double im) {
-                double cosRe = Math.cosh(re) * Math.cos(im);
-                double cosIm = -Math.sinh(re) * Math.sin(im);
-                return RDataFactory.createComplex(cosRe, cosIm);
-            }
+        @Override
+        public RComplex op(double re, double im) {
+            double cosRe = Math.cosh(re) * Math.cos(im);
+            double cosIm = -Math.sinh(re) * Math.sin(im);
+            return RDataFactory.createComplex(cosRe, cosIm);
         }
     }
 
     @RBuiltin(name = "cospi", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Cospi extends TrigExpFunctionNode {
+    public abstract static class Cospi extends UnaryArithmeticBuiltinNode {
 
-        @Child private UnaryArithmeticNode cospiNode = UnaryArithmeticNodeGen.create(CospiArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        @Override
-        protected Object calculate(Object value) {
-            return cospiNode.execute(value);
+        public Cospi() {
+            super(RType.Double);
         }
 
-        private static final class CospiArithmetic extends UnaryArithmetic {
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
+        @Override
+        public double op(double op) {
+            double norm = op % 2d;
+            if (norm == 0d) {
+                return 1d;
             }
+            if (norm == -1d || norm == 1d) {
+                return -1d;
+            }
+            if (norm == -1.5d || norm == -0.5d || norm == 0.5d || norm == 1.5d) {
+                return 0d;
+            }
+            return Math.cos(norm * Math.PI);
+        }
 
-            @Override
-            public double op(double op) {
-                double norm = op % 2d;
-                if (norm == 0d) {
-                    return 1d;
-                }
-                if (norm == -1d || norm == 1d) {
-                    return -1d;
-                }
-                if (norm == -1.5d || norm == -0.5d || norm == 0.5d || norm == 1.5d) {
-                    return 0d;
-                }
-                return Math.cos(norm * Math.PI);
-            }
-
-            @Override
-            public RComplex op(double re, double im) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public RComplex op(double re, double im) {
+            throw new UnsupportedOperationException();
         }
     }
 
     @com.oracle.truffle.r.runtime.RBuiltin(name = "tan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Tan extends TrigExpFunctionNode {
+    public abstract static class Tan extends UnaryArithmeticBuiltinNode {
 
-        @Child private UnaryArithmeticNode tanNode = UnaryArithmeticNodeGen.create(TanArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        private static final SinArithmetic SIN = new SinArithmetic();
-        private static final CosArithmetic COS = new CosArithmetic();
-
-        @Override
-        protected Object calculate(Object value) {
-            return tanNode.execute(value);
+        public Tan() {
+            super(RType.Double);
         }
 
-        static final class TanArithmetic extends UnaryArithmetic {
+        @Child private Sin sinNode = SinNodeGen.create(null, null, null);
+        @Child private Cos cosNode = CosNodeGen.create(null, null, null);
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public double op(double op) {
-                return Math.tan(op);
-            }
+        @Override
+        public double op(double op) {
+            return Math.tan(op);
+        }
 
-            @Override
-            public RComplex op(double re, double im) {
-                RComplex sin = SIN.op(re, im);
-                RComplex cos = COS.op(re, im);
-                double denom = cos.getRealPart() * cos.getRealPart() + cos.getImaginaryPart() * cos.getImaginaryPart();
-                double numRe = sin.getRealPart() * cos.getRealPart() + sin.getImaginaryPart() * cos.getImaginaryPart();
-                double numIm = sin.getImaginaryPart() * cos.getRealPart() - sin.getRealPart() * cos.getImaginaryPart();
-                return RDataFactory.createComplex(numRe / denom, numIm / denom);
-            }
+        @Override
+        public RComplex op(double re, double im) {
+            RComplex sin = sinNode.op(re, im);
+            RComplex cos = cosNode.op(re, im);
+            double denom = cos.getRealPart() * cos.getRealPart() + cos.getImaginaryPart() * cos.getImaginaryPart();
+            double numRe = sin.getRealPart() * cos.getRealPart() + sin.getImaginaryPart() * cos.getImaginaryPart();
+            double numIm = sin.getImaginaryPart() * cos.getRealPart() - sin.getRealPart() * cos.getImaginaryPart();
+            return RDataFactory.createComplex(numRe / denom, numIm / denom);
         }
     }
 
     @RBuiltin(name = "tanh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Tanh extends TrigExpFunctionNode {
+    public abstract static class Tanh extends UnaryArithmeticBuiltinNode {
 
-        @Child private UnaryArithmeticNode tanhNode = UnaryArithmeticNodeGen.create(TanhArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        private static final TanArithmetic TAN = new TanArithmetic();
-
-        @Override
-        protected Object calculate(Object value) {
-            return tanhNode.execute(value);
+        public Tanh() {
+            super(RType.Double);
         }
 
-        private static final class TanhArithmetic extends UnaryArithmetic {
+        @Child private Tan tanNode = TanNodeGen.create(null, null, null);
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public double op(double op) {
-                return Math.tanh(op);
-            }
+        @Override
+        public double op(double op) {
+            return Math.tanh(op);
+        }
 
-            @Override
-            public RComplex op(double re, double im) {
-                // tanh(z) = i.tan(PI - i.z)
-                RComplex tan = TAN.op(Math.PI + im, -re);
-                return RDataFactory.createComplex(-tan.getImaginaryPart(), tan.getRealPart());
-            }
+        @Override
+        public RComplex op(double re, double im) {
+            RComplex tan = tanNode.op(Math.PI + im, -re);
+            return RDataFactory.createComplex(-tan.getImaginaryPart(), tan.getRealPart());
         }
     }
 
     @RBuiltin(name = "tanpi", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Tanpi extends TrigExpFunctionNode {
+    public abstract static class Tanpi extends UnaryArithmeticBuiltinNode {
 
-        @Child private UnaryArithmeticNode tanpiNode = UnaryArithmeticNodeGen.create(TanpiArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        @Override
-        protected Object calculate(Object value) {
-            return tanpiNode.execute(value);
+        public Tanpi() {
+            super(RType.Double);
         }
 
-        private static final class TanpiArithmetic extends UnaryArithmetic {
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
+        @Override
+        public double op(double op) {
+            double norm = op % 1d;
+            if (norm == 0d) {
+                return 0d;
             }
+            if (norm == -0.5d || norm == 0.5d) {
+                return Double.NaN;
+            }
+            return Math.tan(norm * Math.PI);
+        }
 
-            @Override
-            public double op(double op) {
-                double norm = op % 1d;
-                if (norm == 0d) {
-                    return 0d;
-                }
-                if (norm == -0.5d || norm == 0.5d) {
-                    return Double.NaN;
-                }
-                return Math.tan(norm * Math.PI);
-            }
-
-            @Override
-            public RComplex op(double re, double im) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public RComplex op(double re, double im) {
+            throw new UnsupportedOperationException();
         }
     }
 
     @RBuiltin(name = "asin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Asin extends TrigExpFunctionNode {
+    public abstract static class Asin extends UnaryArithmeticBuiltinNode {
 
-        @Child private UnaryArithmeticNode asinNode = UnaryArithmeticNodeGen.create(AsinArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
+        @Child private CHypot chypot;
 
-        @Override
-        protected Object calculate(Object value) {
-            return asinNode.execute(value);
+        public Asin() {
+            super(RType.Double);
         }
 
-        private final class AsinArithmetic extends UnaryArithmetic {
-
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
+        private void ensureChypot() {
+            if (chypot == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                chypot = insert(new CHypot());
             }
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        protected double hypot(double re, double im) {
+            ensureChypot();
+            return chypot.chypot(re, im);
+        }
 
-            @Override
-            public double op(double op) {
-                return Math.asin(op);
-            }
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            // The code for complex asin is transcribed from FastR complex.c
-            @Override
-            public RComplex op(double x, double y) {
-                if (y == 0 && Math.abs(x) > 1) {
-                    double t1 = 0.5 * Math.abs(x + 1);
-                    double t2 = 0.5 * Math.abs(x - 1);
-                    double alpha = t1 + t2;
-                    double ri = Math.log(alpha + Math.sqrt(alpha * alpha - 1));
-                    if (x > 1) {
-                        ri *= -1;
-                    }
-                    return RDataFactory.createComplex(Math.asin(t1 - t2), ri);
-                } else {
-                    return casin(x, y);
-                }
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            private RComplex casin(double x, double y) {
-                double t1 = 0.5 * hypot(x + 1, y);
-                double t2 = 0.5 * hypot(x - 1, y);
+        @Override
+        public double op(double op) {
+            return Math.asin(op);
+        }
+
+        // The code for complex asin is transcribed from FastR complex.c
+        @Override
+        public RComplex op(double x, double y) {
+            if (y == 0 && Math.abs(x) > 1) {
+                double t1 = 0.5 * Math.abs(x + 1);
+                double t2 = 0.5 * Math.abs(x - 1);
                 double alpha = t1 + t2;
                 double ri = Math.log(alpha + Math.sqrt(alpha * alpha - 1));
-                /*
-                 * This comes from 'z_asin() is continuous from below if x >= 1 and continuous from
-                 * above if x <= -1.'
-                 */
-                if (y < 0 || (y == 0 && x > 1)) {
+                if (x > 1) {
                     ri *= -1;
                 }
                 return RDataFactory.createComplex(Math.asin(t1 - t2), ri);
+            } else {
+                return casin(x, y);
             }
+        }
+
+        private RComplex casin(double x, double y) {
+            double t1 = 0.5 * hypot(x + 1, y);
+            double t2 = 0.5 * hypot(x - 1, y);
+            double alpha = t1 + t2;
+            double ri = Math.log(alpha + Math.sqrt(alpha * alpha - 1));
+            /*
+             * This comes from 'z_asin() is continuous from below if x >= 1 and continuous from
+             * above if x <= -1.'
+             */
+            if (y < 0 || (y == 0 && x > 1)) {
+                ri *= -1;
+            }
+            return RDataFactory.createComplex(Math.asin(t1 - t2), ri);
         }
     }
 
     @RBuiltin(name = "asinh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Asinh extends TrigExpFunctionNode {
+    public abstract static class Asinh extends UnaryArithmeticBuiltinNode {
 
         @Child private Asin asinNode = AsinNodeGen.create(null, null, null);
-        @Child private UnaryArithmeticNode asinhNode = UnaryArithmeticNodeGen.create(AsinhArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
 
-        @Override
-        protected Object calculate(Object value) {
-            return asinhNode.execute(value);
+        public Asinh() {
+            super(RType.Double);
         }
 
-        private final class AsinhArithmetic extends UnaryArithmetic {
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public double op(double x) {
+            return Math.log(x + Math.sqrt(x * x + 1d));
+        }
 
-            @Override
-            public double op(double x) {
-                return Math.log(x + Math.sqrt(x * x + 1d));
-            }
-
-            @Override
-            public RComplex op(double re, double im) {
-                RComplex asin = (RComplex) asinNode.calculate(RDataFactory.createComplex(-im, re));
-                return RDataFactory.createComplex(asin.getImaginaryPart(), -asin.getRealPart());
-            }
+        @Override
+        public RComplex op(double re, double im) {
+            RComplex asin = asinNode.op(-im, re);
+            return RDataFactory.createComplex(asin.getImaginaryPart(), -asin.getRealPart());
         }
     }
 
     @RBuiltin(name = "acos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Acos extends TrigExpFunctionNode {
+    public abstract static class Acos extends UnaryArithmeticBuiltinNode {
 
-        @Child private Asin asinNode = AsinNodeGen.create(null, null, null);
-        @Child private UnaryArithmeticNode acosNode = UnaryArithmeticNodeGen.create(AcosArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        @Override
-        protected Object calculate(Object value) {
-            return acosNode.execute(value);
+        public Acos() {
+            super(RType.Double);
         }
 
-        private final class AcosArithmetic extends UnaryArithmetic {
+        @Child private Asin asinNode = AsinNodeGen.create(null, null, null);
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public double op(double op) {
-                return Math.acos(op);
-            }
+        @Override
+        public double op(double op) {
+            return Math.acos(op);
+        }
 
-            @Override
-            public RComplex op(double re, double im) {
-                RComplex asin = (RComplex) asinNode.calculate(RDataFactory.createComplex(re, im));
-                return RDataFactory.createComplex(Math.PI / 2 - asin.getRealPart(), -asin.getImaginaryPart());
-            }
+        @Override
+        public RComplex op(double re, double im) {
+            RComplex asin = asinNode.op(re, im);
+            return RDataFactory.createComplex(Math.PI / 2 - asin.getRealPart(), -asin.getImaginaryPart());
         }
     }
 
     @RBuiltin(name = "acosh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Acosh extends TrigExpFunctionNode {
+    public abstract static class Acosh extends UnaryArithmeticBuiltinNode {
 
-        @Child private Acos acosNode = AcosNodeGen.create(null, null, null);
-        @Child private UnaryArithmeticNode acoshNode = UnaryArithmeticNodeGen.create(AcoshArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        @Override
-        protected Object calculate(Object value) {
-            return acoshNode.execute(value);
+        public Acosh() {
+            super(RType.Double);
         }
 
-        private final class AcoshArithmetic extends UnaryArithmetic {
+        @Child private Acos acosNode = AcosNodeGen.create(null, null, null);
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public double op(double x) {
-                return Math.log(x + Math.sqrt(x * x - 1d));
-            }
+        @Override
+        public double op(double x) {
+            return Math.log(x + Math.sqrt(x * x - 1d));
+        }
 
-            @Override
-            public RComplex op(double re, double im) {
-                RComplex acos = (RComplex) acosNode.calculate(RDataFactory.createComplex(re, im));
-                return RDataFactory.createComplex(-acos.getImaginaryPart(), acos.getRealPart());
-            }
+        @Override
+        public RComplex op(double re, double im) {
+            RComplex acos = acosNode.op(re, im);
+            return RDataFactory.createComplex(-acos.getImaginaryPart(), acos.getRealPart());
         }
     }
 
     @RBuiltin(name = "atan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Atan extends TrigExpFunctionNode {
+    public abstract static class Atan extends UnaryArithmeticBuiltinNode {
 
-        @Child private UnaryArithmeticNode atanNode = UnaryArithmeticNodeGen.create(AtanArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        @Override
-        protected Object calculate(Object value) {
-            return atanNode.execute(value);
+        public Atan() {
+            super(RType.Double);
         }
 
-        private final class AtanArithmetic extends UnaryArithmetic {
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public double op(double x) {
+            return Math.atan(x);
+        }
 
-            @Override
-            public double op(double x) {
-                return Math.atan(x);
-            }
-
-            @Override
-            public RComplex op(double x, double y) {
-                if (x == 0 && Math.abs(y) > 1) {
-                    double rr = (y > 0) ? Math.PI / 2 : -Math.PI / 2;
-                    double ri = 0.25 * Math.log(((y + 1) * (y + 1)) / ((y - 1) * (y - 1)));
-                    return RDataFactory.createComplex(rr, ri);
-                } else {
-                    return catan(x, y);
-                }
-            }
-
-            private RComplex catan(double x, double y) {
-                double rr = 0.5 * Math.atan2(2 * x, (1 - x * x - y * y));
-                double ri = 0.25 * Math.log((x * x + (y + 1) * (y + 1)) /
-                                (x * x + (y - 1) * (y - 1)));
+        @Override
+        public RComplex op(double x, double y) {
+            if (x == 0 && Math.abs(y) > 1) {
+                double rr = (y > 0) ? Math.PI / 2 : -Math.PI / 2;
+                double ri = 0.25 * Math.log(((y + 1) * (y + 1)) / ((y - 1) * (y - 1)));
                 return RDataFactory.createComplex(rr, ri);
+            } else {
+                return catan(x, y);
             }
+        }
+
+        private RComplex catan(double x, double y) {
+            double rr = 0.5 * Math.atan2(2 * x, (1 - x * x - y * y));
+            double ri = 0.25 * Math.log((x * x + (y + 1) * (y + 1)) / (x * x + (y - 1) * (y - 1)));
+            return RDataFactory.createComplex(rr, ri);
         }
     }
 
     @RBuiltin(name = "atanh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Atanh extends TrigExpFunctionNode {
+    public abstract static class Atanh extends UnaryArithmeticBuiltinNode {
 
-        @Child private Atan atanNode = AtanNodeGen.create(null, null, null);
-        @Child private UnaryArithmeticNode atanhNode = UnaryArithmeticNodeGen.create(AtanArithmetic::new, RType.Double,
-                        RError.Message.ARGUMENTS_PASSED_0_1, new Object[]{getRBuiltin().name()});
-
-        @Override
-        protected Object calculate(Object value) {
-            return atanhNode.execute(value);
+        public Atanh() {
+            super(RType.Double);
         }
 
-        private final class AtanArithmetic extends UnaryArithmetic {
+        @Child private Atan atanNode = AtanNodeGen.create(null, null, null);
 
-            @Override
-            public int op(byte op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(byte op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public int op(int op) {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public int op(int op) {
+            throw new UnsupportedOperationException();
+        }
 
-            @Override
-            public double op(double x) {
-                return 0.5 * Math.log((x + 1d) / (x - 1d));
-            }
+        @Override
+        public double op(double x) {
+            return 0.5 * Math.log((x + 1d) / (x - 1d));
+        }
 
-            @Override
-            public RComplex op(double x, double y) {
-                RComplex atan = (RComplex) atanNode.calculate(RDataFactory.createComplex(y, -x));
-                return RDataFactory.createComplex(-atan.getImaginaryPart(), atan.getRealPart());
-            }
+        @Override
+        public RComplex op(double x, double y) {
+            RComplex atan = atanNode.op(y, -x);
+            return RDataFactory.createComplex(-atan.getImaginaryPart(), atan.getRealPart());
         }
     }
 
@@ -904,10 +802,12 @@ public class TrigExpFunctions {
 
         @FunctionalInterface
         private interface IntDoubleFunction {
+
             double apply(int i);
         }
 
-        private RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun, LoopConditionProfile profile) {
+        private RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun,
+                        LoopConditionProfile profile) {
             controlVisibility();
             double[] resultVector = new double[length];
             reportWork(length);
@@ -955,7 +855,8 @@ public class TrigExpFunctions {
             int yLength = y.getLength();
             xNACheck.enable(x);
             yNACheck.enable(y);
-            return doFun(Math.max(yLength, xLength), i -> y.getDataAt(i % yLength), i -> x.getDataAt(i % xLength), profile);
+            return doFun(Math.max(yLength, xLength), i -> y.getDataAt(i % yLength), i -> x.getDataAt(i % xLength),
+                            profile);
         }
 
         @Fallback
