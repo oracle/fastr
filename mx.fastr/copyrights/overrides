@@ -179,7 +179,6 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/objects/ExecuteMethod.
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/objects/GetS4DataSlot.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/objects/LoadMethod.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/objects/NewObject.java,gnu_r_gentleman_ihaka.copyright
-com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/runtime/RASTDeparse.java,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/InheritsNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/IsFactorNode.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/R.g,purdue.copyright

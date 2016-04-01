@@ -76,7 +76,7 @@ final class FunctionPrinter extends AbstractValuePrinter<RFunction> {
             final boolean useSource = printCtx.parameters().getUseSource();
             String source = ((RRootNode) operand.getTarget().getRootNode()).getSourceCode();
             if (source == null || !useSource) {
-                source = RDeparse.deparseForPrint(operand);
+                source = RDeparse.deparse(operand);
             }
             REnvironment env = RArguments.getEnvironment(operand.getEnclosingFrame());
             if (env != null && env.isNamespaceEnv()) {

@@ -29,7 +29,7 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNodeGen;
-import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -48,7 +48,7 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
             RSyntaxNode snode = lang.getRep().asRSyntaxNode();
             RSyntaxNode subRNode = snode.substituteImpl(env);
             // create source for entire tree
-            RASTDeparse.ensureSourceSection(subRNode);
+            RDeparse.ensureSourceSection(subRNode);
             return RASTUtils.createLanguageElement(subRNode.asRNode());
         } else {
             return object;

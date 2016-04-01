@@ -68,7 +68,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
         for (int i = 0; i < operand.getLength(); i++) {
             Object o = operand.getDataAtAsObject(i);
             if (o instanceof RLanguage) {
-                sdata[i] = RDeparse.deparseForPrint(o);
+                sdata[i] = RDeparse.deparse(o);
             } else {
                 sdata[i] = toString(o);
             }

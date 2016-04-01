@@ -33,7 +33,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.unary.ConvertBooleanNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
@@ -88,20 +87,6 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
 
     public boolean isRepeat() {
         return isRepeat;
-    }
-
-    @Override
-    public void deparseImpl(RDeparse.State state) {
-        state.startNodeDeparse(this);
-        if (isRepeat) {
-            state.append("repeat ");
-        } else {
-            state.append("while (");
-            getCondition().deparse(state);
-            state.append(") ");
-        }
-        getBody().deparse(state);
-        state.endNodeDeparse(this);
     }
 
     @Override

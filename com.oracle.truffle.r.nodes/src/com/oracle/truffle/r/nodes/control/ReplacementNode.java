@@ -32,7 +32,6 @@ import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -54,7 +53,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public final class ReplacementNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
     /**
-     * This is just the left hand side of the assignment and only used for {@link #deparseImpl} etc.
+     * This is just the left hand side of the assignment and only used when looking at the original
+     * structure of this replacement.
      */
     private final RSyntaxNode syntaxLhs;
     private final boolean isSuper;
@@ -108,17 +108,6 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
         }
         removeTemp.execute(frame);
         return removeRhs.execute(frame);
-    }
-
-    @Override
-    public void deparseImpl(RDeparse.State state) {
-        state.startNodeDeparse(this);
-        syntaxLhs.deparseImpl(state);
-        state.append(' ');
-        state.append(getSymbol());
-        state.append(' ');
-        storeRhs.getRhs().asRSyntaxNode().deparseImpl(state);
-        state.endNodeDeparse(this);
     }
 
     @Override

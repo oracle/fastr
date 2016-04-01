@@ -36,8 +36,8 @@ import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.Node.Child;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
@@ -440,9 +440,7 @@ public class DebugHandling {
          * N.B. It would seem that GnuR does a deparse that because, e.g., a function that ends with
          * } without a preceding newline prints with one and indentation is standardized.
          */
-        RDeparse.State state = RDeparse.State.createPrintableState();
         RBaseNode rNode = (RBaseNode) node;
-        rNode.deparse(state);
         boolean curly = RSyntaxCall.isCallTo((RSyntaxElement) node, "{");
 
         if (startFunction && !curly) {
@@ -455,7 +453,7 @@ public class DebugHandling {
             }
             consoleHandler.print("debug at " + path + "#" + source.getStartLine() + ": ");
         }
-        consoleHandler.print(state.toString());
+        consoleHandler.print(RDeparse.deparseSyntaxElement(rNode.asRSyntaxNode()));
         consoleHandler.print("\n");
     }
 

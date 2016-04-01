@@ -37,8 +37,6 @@ final class SymbolPrinter extends AbstractValuePrinter<RSymbol> {
 
     @Override
     protected void printValue(RSymbol value, PrintContext printCtx) throws IOException {
-        String[] dp = RDeparse.deparse(value, RDeparse.DEFAULT_Cutoff, false,
-                        RDeparse.SIMPLEDEPARSE, -1);
-        printCtx.output().print(dp[0]);
+        printCtx.output().print(RDeparse.deparse(value, RDeparse.DEFAULT_Cutoff, true, RDeparse.SIMPLEDEPARSE, -1));
     }
 }

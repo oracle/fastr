@@ -28,7 +28,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -68,25 +67,6 @@ public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, 
             lastResult = sequence[i].execute(frame);
         }
         return lastResult;
-    }
-
-    @TruffleBoundary
-    @Override
-    public void deparseImpl(RDeparse.State state) {
-        state.startNodeDeparse(this);
-        // empty deparses as {}
-        state.writeOpenCurlyNLIncIndent();
-        for (int i = 0; i < sequence.length; i++) {
-            state.mark();
-            sequence[i].deparse(state);
-            if (state.changed()) {
-                // not all nodes will produce output
-                state.writeline();
-                state.mark(); // in case last
-            }
-        }
-        state.decIndentWriteCloseCurly();
-        state.endNodeDeparse(this);
     }
 
     @Override

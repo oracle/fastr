@@ -53,7 +53,6 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S4Args;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -390,35 +389,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public String toString() {
         return description == null ? "<no source>" : description;
-    }
-
-    /*
-     * TODO Decide whether we really care about the braces/no-braces issue for deparse and
-     * serialize, since we do not distinguish them in other nodes at the present time.
-     */
-
-    @Override
-    public void deparseImpl(RDeparse.State state) {
-        // TODO linebreaks
-        state.startNodeDeparse(this);
-        state.append("function (");
-        FormalArguments formals = getFormalArguments();
-        int formalsLength = formals.getSignature().getLength();
-        for (int i = 0; i < formalsLength; i++) {
-            RNode defaultArg = formals.getDefaultArgument(i);
-            state.append(formals.getSignature().getName(i));
-            if (defaultArg != null) {
-                state.append(" = ");
-                defaultArg.deparse(state);
-            }
-            if (i != formalsLength - 1) {
-                state.append(", ");
-            }
-        }
-        state.append(") ");
-        state.writeline();
-        body.deparse(state);
-        state.endNodeDeparse(this);
     }
 
     @Override

@@ -35,9 +35,9 @@ import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
-import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -87,7 +87,7 @@ public abstract class Args extends RBuiltinNode {
         String newDesc = "args(" + rootNode.getDescription() + ")";
         FunctionDefinitionNode newNode = FunctionDefinitionNode.create(RSyntaxNode.EAGER_DEPARSE, rootNode.getFrameDescriptor(), null, SaveArgumentsNode.NO_ARGS,
                         ConstantNode.create(RSyntaxNode.EAGER_DEPARSE, RNull.instance), formals, newDesc, null);
-        RASTDeparse.ensureSourceSection(newNode);
+        RDeparse.ensureSourceSection(newNode);
         return RDataFactory.createFunction(newDesc, Truffle.getRuntime().createCallTarget(newNode), null, REnvironment.globalEnv().getFrame(), null, false);
     }
 

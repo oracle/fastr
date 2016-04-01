@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -38,19 +37,6 @@ final class LanguagePrinter extends AbstractValuePrinter<RLanguage> {
 
     @Override
     protected void printValue(RLanguage language, PrintContext printCtx) throws IOException {
-        final PrintWriter out = printCtx.output();
-
-        String[] lines = RDeparse.deparse(language, 60, false, 0, -1);
-        if (lines.length == 1) {
-            out.print(lines[0]);
-        } else {
-            for (int i = 0; i < lines.length; i++) {
-                out.print(lines[i]);
-                if (i == lines.length - 1) {
-                    continue;
-                }
-                out.println();
-            }
-        }
+        printCtx.output().print(RDeparse.deparse(language, RDeparse.DEFAULT_Cutoff, false, 0, -1));
     }
 }

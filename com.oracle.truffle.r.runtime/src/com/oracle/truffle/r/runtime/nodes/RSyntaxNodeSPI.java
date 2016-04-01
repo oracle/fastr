@@ -22,9 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
-import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RSerialize.State;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -34,11 +33,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  *
  */
 interface RSyntaxNodeSPI {
-    /**
-     * Support for the {@code deparse} builtin function. The source representation should be
-     * appended to the {@link State}.
-     */
-    void deparseImpl(RDeparse.State state);
 
     /**
      * Support for the {@code substitute} builtin function. Assert: {this.isSyntax() == true}. N.B.

@@ -44,7 +44,6 @@ import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -278,9 +277,7 @@ public class RASTUtils {
         } else {
             // TODO This should really fail in some way as (clearly) this is not a "name"
             // some more complicated expression, just deparse it
-            RDeparse.State state = RDeparse.State.createPrintableState();
-            child.deparse(state);
-            return RDataFactory.createSymbolInterned(state.toString());
+            return RDataFactory.createSymbolInterned(RDeparse.deparse(child));
         }
     }
 
@@ -380,10 +377,6 @@ public class RASTUtils {
      * Marker class for special '...' handling.
      */
     private abstract static class DotsNode extends RNode implements RSyntaxNode {
-        @Override
-        public void deparseImpl(State state) {
-            throw RInternalError.unimplemented();
-        }
 
         @Override
         public RSyntaxNode substituteImpl(REnvironment env) {

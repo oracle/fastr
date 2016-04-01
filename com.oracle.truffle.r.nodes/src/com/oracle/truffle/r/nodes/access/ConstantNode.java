@@ -23,12 +23,8 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
@@ -73,14 +69,6 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
     public final Object execute(VirtualFrame frame) {
         controlVisibility();
         return getValue();
-    }
-
-    @Override
-    @TruffleBoundary
-    public void deparseImpl(RDeparse.State state) {
-        state.startNodeDeparse(this);
-        RDeparse.deparse2buff(state, getValue());
-        state.endNodeDeparse(this);
     }
 
     @Override
@@ -199,41 +187,6 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
         @Override
         public Object getValue() {
             return value;
-        }
-
-        @Override
-        @TruffleBoundary
-        public void deparseImpl(RDeparse.State state) {
-            if (value == RMissing.instance || value instanceof RArgsValuesAndNames) {
-                state.startNodeDeparse(this);
-                if (value == RMissing.instance) {
-                    // nothing to do
-                } else if (value instanceof RArgsValuesAndNames) {
-                    RArgsValuesAndNames args = (RArgsValuesAndNames) value;
-                    Object[] values = args.getArguments();
-                    for (int i = 0; i < values.length; i++) {
-                        String name = args.getSignature().getName(i);
-                        if (name != null) {
-                            state.append(name);
-                            state.append(" = ");
-                        }
-                        Object argValue = values[i];
-                        if (argValue instanceof RSyntaxNode) {
-                            ((RSyntaxNode) argValue).deparseImpl(state);
-                        } else if (argValue instanceof RPromise) {
-                            RASTUtils.unwrap(((RPromise) argValue).getRep()).deparse(state);
-                        } else {
-                            RInternalError.shouldNotReachHere();
-                        }
-                        if (i < values.length - 1) {
-                            state.append(", ");
-                        }
-                    }
-                }
-                state.endNodeDeparse(this);
-            } else {
-                super.deparseImpl(state);
-            }
         }
 
         @Override
