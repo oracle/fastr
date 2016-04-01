@@ -259,10 +259,20 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     @CompilationFinal private int foreignCallArgCount;
     @Child private CallArgumentsNode foreignCallArguments;
 
-    public RCallNode(SourceSection sourceSection, RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
+    private RCallNode(SourceSection sourceSection, RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
         super(sourceSection);
         this.functionNode = function;
         this.arguments = new SyntaxArguments(arguments);
+
+        for (String name : signature) {
+            if (name != null && name.isEmpty()) {
+                /*
+                 * In GnuR this is evidently output by the parser, so very early, and never with a
+                 * caller in the message.
+                 */
+                throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
+            }
+        }
         this.signature = signature;
     }
 
@@ -639,16 +649,6 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
 
         private static LeafCallNode createCacheNode(VirtualFrame frame, CallArgumentsNode args, RCallNode creator, RFunction function) {
             CompilerDirectives.transferToInterpreter();
-
-            for (String name : args.getSignature()) {
-                if (name != null && name.isEmpty()) {
-                    /*
-                     * In GnuR this is, evidently output by the parser, so very early, and never
-                     * with a caller in the message.
-                     */
-                    throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
-                }
-            }
 
             LeafCallNode callNode = null;
             // Check implementation: If written in Java, handle differently!
