@@ -392,7 +392,7 @@ public final class Utils {
 
         @Override
         public Frame visitFrame(FrameInstance frameInstance) {
-            Frame f = RArguments.unwrap(frameInstance.getFrame(FrameAccess.READ_ONLY, false));
+            Frame f = RArguments.unwrap(frameInstance.getFrame(FrameAccess.READ_ONLY, true));
             if (RArguments.isRFrame(f) && RArguments.getFunction(f) != null) {
                 if (skip > 0) {
                     skip--;
