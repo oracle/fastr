@@ -211,14 +211,12 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     private static final int FUNCTION_INLINE_CACHE_SIZE = 4;
     private static final int VARARGS_INLINE_CACHE_SIZE = 4;
 
-    private static final Object[] defaultTempIdentifiers = new Object[]{new Object(), new Object(), new Object(), new Object()};
-
     @Child private RNode functionNode;
     @Child private PromiseHelperNode promiseHelper;
     @Child private RootCallNode call;
     @Child private RootCallNode internalDispatchCall;
-    @Child private FrameSlotNode dispatchTempSlot;
     @Child private RNode dispatchArgument;
+    @Child private TemporarySlotNode dispatchTempSlot;
     @Child private S3FunctionLookupNode dispatchLookup;
     @Child private ClassHierarchyNode classHierarchyNode;
     @Child private GroupDispatchNode groupDispatchNode;
@@ -256,8 +254,6 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     private final BranchProfile normalDispatchProfile = BranchProfile.create();
     private final BranchProfile errorProfile = BranchProfile.create();
     private final ConditionProfile isRFunctionProfile = ConditionProfile.createBinaryProfile();
-
-    private int tempIdentifier;
 
     @Child private Node foreignCall;
     @CompilationFinal private int foreignCallArgCount;
@@ -329,35 +325,21 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
 
         if (!signature.isEmpty() && function.getRBuiltin() != null) {
             RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
-            if (builtin.getDispatch() == RDispatch.INTERNAL_GENERIC) {
+            RDispatch dispatch = builtin.getDispatch();
+            if (dispatch == RDispatch.DEFAULT) {
+                // fallthrough
+            } else if (dispatch == RDispatch.INTERNAL_GENERIC) {
                 if (internalDispatchCall == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    dispatchTempSlot = insert(FrameSlotNode.createInitialized(frame.getFrameDescriptor(), defaultTempIdentifiers[0], true));
-                    internalDispatchCall = insert(new UninitializedCallNode(this, defaultTempIdentifiers[0]));
+                    dispatchTempSlot = insert(new TemporarySlotNode());
                     dispatchArgument = insert(RASTUtils.cloneNode(arguments.v[0].asRNode()));
                     dispatchLookup = insert(S3FunctionLookupNode.create(true, false));
                     classHierarchyNode = insert(ClassHierarchyNodeGen.create(false, true));
                 }
-                FrameSlot slot = dispatchTempSlot.executeFrameSlot(frame);
+                Object dispatchObject = dispatchArgument.execute(frame);
+                FrameSlot slot = dispatchTempSlot.initialize(frame, dispatchObject, identifier -> internalDispatchCall = insert(new UninitializedCallNode(this, identifier)));
                 try {
-                    if (frame.isObject(slot) && frame.getObject(slot) != null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        // keep the complete loop in the slow path
-                        do {
-                            tempIdentifier++;
-                            Object identifier = tempIdentifier < defaultTempIdentifiers.length ? defaultTempIdentifiers[tempIdentifier] : new Object();
-                            dispatchTempSlot.replace(FrameSlotNode.createInitialized(frame.getFrameDescriptor(), identifier, true));
-                            internalDispatchCall.replace(new UninitializedCallNode(this, identifier));
-                            slot = dispatchTempSlot.executeFrameSlot(frame);
-                        } while (frame.isObject(slot) && frame.getObject(slot) != null);
-                    }
-                } catch (FrameSlotTypeException e) {
-                    throw RInternalError.shouldNotReachHere();
-                }
-                try {
-                    Object dispatch = dispatchArgument.execute(frame);
-                    frame.setObject(slot, dispatch);
-                    RStringVector type = classHierarchyNode.execute(dispatch);
+                    RStringVector type = classHierarchyNode.execute(dispatchObject);
                     S3Args s3Args;
                     RFunction resultFunction;
                     if (implicitTypeProfile.profile(type != null)) {
@@ -374,8 +356,10 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
                     }
                     return internalDispatchCall.execute(frame, resultFunction, s3Args);
                 } finally {
-                    frame.setObject(slot, null);
+                    dispatchTempSlot.cleanup(frame, slot);
                 }
+            } else {
+                assert dispatch.isGeneric();
             }
         }
         normalDispatchProfile.enter();
