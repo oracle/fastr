@@ -555,7 +555,6 @@ public class BasePackage extends RBuiltinPackage {
         add(UpdateSlot.class, UpdateSlotNodeGen::create);
         add(UpdateStorageMode.class, UpdateStorageModeNodeGen::create);
         add(UpdateSubstr.class, UpdateSubstrNodeGen::create);
-        add(UpperTri.class, UpperTriNodeGen::create);
         add(VApply.class, VApplyNodeGen::create);
         add(Vector.class, VectorNodeGen::create);
         add(Warning.class, WarningNodeGen::create);
