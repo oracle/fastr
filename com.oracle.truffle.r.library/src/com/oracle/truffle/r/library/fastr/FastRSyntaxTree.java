@@ -190,7 +190,7 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    private static void processNode(Node node, boolean printSource, @SuppressWarnings("unused") boolean printTags) {
+    private static void processNode(Node node, boolean printSource, boolean printTags) {
         if (node instanceof RSyntaxNode) {
             processRSyntaxNode((RSyntaxNode) node, printSource, printTags);
         }

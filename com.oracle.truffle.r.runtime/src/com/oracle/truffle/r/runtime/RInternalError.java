@@ -128,7 +128,8 @@ public final class RInternalError extends Error {
     }
 
     @TruffleBoundary
-    public static void reportError(Throwable t) {
+    public static void reportError(Throwable throwable) {
+        Throwable t = throwable;
         if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue() || FastROptions.PrintErrorStacktraces.getBooleanValue()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             t.printStackTrace(new PrintStream(out));
