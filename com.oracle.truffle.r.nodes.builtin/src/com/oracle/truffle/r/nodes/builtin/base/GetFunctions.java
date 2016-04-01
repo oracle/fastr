@@ -41,11 +41,13 @@ import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -293,7 +295,8 @@ public class GetFunctions {
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
             FormalArguments formals = ((RRootNode) ifnFunc.getRootNode()).getFormalArguments();
-            Object[] callArgs = argsNode.execute(ifnFunc, new RCallerHelper.Representation(ifnFunc, new Object[]{x}), callerFrame, RArguments.getDepth(frame) + 1,
+            RArgsValuesAndNames args = new RArgsValuesAndNames(new Object[]{x}, ArgumentsSignature.empty(1));
+            Object[] callArgs = argsNode.execute(ifnFunc, new RCallerHelper.Representation(ifnFunc, args), callerFrame, RArguments.getDepth(frame) + 1,
                             RArguments.getPromiseFrame(frame), new Object[]{x}, formals.getSignature(), null);
             return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
         }

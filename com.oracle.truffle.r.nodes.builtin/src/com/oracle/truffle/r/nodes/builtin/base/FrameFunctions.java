@@ -47,16 +47,15 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
 import com.oracle.truffle.r.nodes.function.CallArgumentsNode;
-import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
-import com.oracle.truffle.r.nodes.function.MatchedArguments;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.function.UnrolledVariadicArguments;
+import com.oracle.truffle.r.nodes.function.UnmatchedArguments;
 import com.oracle.truffle.r.nodes.function.signature.FrameDepthNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.HasSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -260,10 +259,10 @@ public class FrameFunctions {
              */
             RCallNode callNode = (RCallNode) RASTUtils.unwrap(call.getRep());
             CallArgumentsNode callArgs = callNode.createArguments(null, false, false);
-            UnrolledVariadicArguments executeFlatten = callArgs.executeFlatten(cframe);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(definition, executeFlatten, null, true);
-            ArgumentsSignature sig = matchedArgs.getSignature();
-            RNode[] matchedArgNodes = matchedArgs.getArguments();
+            ArgumentsSignature inputVarArgSignature = callArgs.containsVarArgsSymbol() ? CallArgumentsNode.getVarargsAndNames(cframe).getSignature() : null;
+            UnmatchedArguments executeFlatten = callArgs.unrollArguments(inputVarArgSignature);
+            RNode[] matchedArgNodes = ArgumentMatcher.matchArguments(definition, executeFlatten, null, true);
+            ArgumentsSignature sig = ((HasSignature) definition.getRootNode()).getSignature();
             // expand any varargs
             ArrayList<RNode> nodes = new ArrayList<>();
             ArrayList<String> names = new ArrayList<>();
@@ -406,7 +405,7 @@ public class FrameFunctions {
             if (callObj instanceof RLanguage) {
                 RLanguage call = (RLanguage) callObj;
                 RNode node = (RNode) RASTUtils.unwrap(call.getRep());
-                if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
+                if (node instanceof RCallNode) {
                     return call;
                 }
             }

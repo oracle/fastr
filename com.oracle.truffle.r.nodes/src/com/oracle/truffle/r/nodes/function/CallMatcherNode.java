@@ -24,7 +24,6 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -200,8 +199,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             this.next = next;
             this.formals = ((RRootNode) cachedFunction.getRootNode()).getFormalArguments();
             if (function.isBuiltin()) {
-                RBuiltinRootNode builtinRoot = RCallNode.findBuiltinRootNode(function.getTarget());
-                this.builtin = builtinRoot.inline(null);
+                this.builtin = RBuiltinNode.inline(function.getRBuiltin(), null);
                 this.builtinArgumentCasts = builtin.getCasts();
             } else {
                 this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
@@ -218,7 +216,8 @@ public abstract class CallMatcherNode extends RBaseNode {
                 Object[] reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(permutation, preparedArguments, formals);
                 evaluatePromises(frame, cachedFunction, reorderedArgs, formals.getSignature().getVarArgIndex());
                 if (call != null) {
-                    RCaller caller = functionName == null ? RCallerHelper.InvalidRepresentation.instance : new RCallerHelper.Representation(functionName, reorderedArgs);
+                    RCaller caller = functionName == null ? RCallerHelper.InvalidRepresentation.instance
+                                    : new RCallerHelper.Representation(functionName, new RArgsValuesAndNames(reorderedArgs, ArgumentsSignature.empty(reorderedArgs.length)));
                     Object[] arguments = prepareArguments(frame, reorderedArgs, formals.getSignature(), cachedFunction, dispatchArgs, caller);
                     return call.call(frame, arguments);
                 } else {
@@ -297,10 +296,11 @@ public abstract class CallMatcherNode extends RBaseNode {
 
         @Override
         public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
-            EvaluatedArguments reorderedArgs = reorderArguments(suppliedArguments, function, suppliedSignature);
+            RArgsValuesAndNames reorderedArgs = reorderArguments(suppliedArguments, function, suppliedSignature);
             evaluatePromises(frame, function, reorderedArgs.getArguments(), reorderedArgs.getSignature().getVarArgIndex());
 
-            RCaller caller = functionName == null ? RCallerHelper.InvalidRepresentation.instance : new RCallerHelper.Representation(functionName, reorderedArgs.getArguments());
+            RCaller caller = functionName == null ? RCallerHelper.InvalidRepresentation.instance
+                            : new RCallerHelper.Representation(functionName, new RArgsValuesAndNames(reorderedArgs.getArguments(), ArgumentsSignature.empty(reorderedArgs.getLength())));
             Object[] arguments = prepareArguments(frame, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function, dispatchArgs, caller);
             return call.call(frame, function.getTarget(), arguments);
         }
@@ -317,7 +317,7 @@ public abstract class CallMatcherNode extends RBaseNode {
         }
 
         @TruffleBoundary
-        protected EvaluatedArguments reorderArguments(Object[] args, RFunction function, ArgumentsSignature paramSignature) {
+        protected RArgsValuesAndNames reorderArguments(Object[] args, RFunction function, ArgumentsSignature paramSignature) {
             assert paramSignature.getLength() == args.length;
 
             int argCount = args.length;
@@ -362,10 +362,10 @@ public abstract class CallMatcherNode extends RBaseNode {
             }
 
             // ...and use them as 'supplied' arguments...
-            EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
+            RArgsValuesAndNames evaledArgs = new RArgsValuesAndNames(argValues, signature);
 
             // ...to match them against the chosen function's formal arguments
-            EvaluatedArguments evaluated = ArgumentMatcher.matchArgumentsEvaluated(function, evaledArgs, this, forNextMethod);
+            RArgsValuesAndNames evaluated = ArgumentMatcher.matchArgumentsEvaluated(function, evaledArgs, this, forNextMethod);
             return evaluated;
         }
 

@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -34,15 +33,11 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
 import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.function.CallArgumentsNode;
-import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentBaseNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
-import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -67,6 +62,7 @@ public class RASTUtils {
      * .
      */
     public static <T extends RBaseNode> T cloneNode(T node) {
+        // TODO: use RASTBuilder here as well?
         return NodeUtil.cloneNode(node);
     }
 
@@ -126,6 +122,9 @@ public class RASTUtils {
             return value;
         } else if (argNode instanceof ReadVariableNode) {
             return RASTUtils.createRSymbol(argNode);
+        } else if (argNode instanceof VarArgNode) {
+            VarArgNode varArgNode = (VarArgNode) argNode;
+            return RDataFactory.createSymbolInterned(varArgNode.getIdentifier());
         } else {
             assert !(argNode instanceof VarArgNode);
             return RDataFactory.createLanguage((RNode) argNode);
@@ -224,9 +223,6 @@ public class RASTUtils {
             return RCallNode.createCall(sourceSection, (ReadVariableNode) fn, signature, arguments);
         } else if (fn instanceof NamedRNode) {
             return RCallNode.createCall(RSyntaxNode.SOURCE_UNAVAILABLE, (NamedRNode) fn, signature, arguments);
-        } else if (fn instanceof GroupDispatchNode) {
-            GroupDispatchNode gdcn = (GroupDispatchNode) fn;
-            return GroupDispatchNode.create(gdcn.getGenericName(), gdcn.getCallSrc(), signature, arguments);
         } else if (fn instanceof RFunction) {
             RFunction rfn = (RFunction) fn;
             return RCallNode.createCall(sourceSection, ConstantNode.create(rfn), signature, arguments);
@@ -238,55 +234,6 @@ public class RASTUtils {
             // f<-function(x,y) sys.call(); x<-f(7, 42); x[c(2,3)]
             return RCallNode.createCall(sourceSection, ConstantNode.create(fn), signature, arguments);
         }
-    }
-
-    /**
-     * Find the {@link CallArgumentsNode} that is the child of {@code node}. N.B. Does not copy.
-     */
-    public static Arguments<RSyntaxNode> findCallArguments(Node node) {
-        if (node instanceof RCallNode) {
-            return ((RCallNode) node).getArguments();
-        } else if (node instanceof GroupDispatchNode) {
-            return ((GroupDispatchNode) node).getArguments();
-        }
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    /**
-     * Returns the name (as an {@link RSymbol} of the function associated with an {@link RCallNode}
-     * or {@link GroupDispatchNode}.
-     */
-    public static Object findFunctionName(RBaseNode node) {
-        CompilerAsserts.neverPartOfCompilation(); // for string interning
-        RNode child = (RNode) unwrap(getFunctionNode(node));
-        if (child instanceof ConstantNode && ConstantNode.isFunction(child)) {
-            return ((ConstantNode) child).getValue();
-        } else if (child instanceof ReadVariableNode) {
-            String name = ((ReadVariableNode) child).getIdentifier();
-            assert name == name.intern();
-            return RDataFactory.createSymbol(name);
-        } else if (child instanceof GroupDispatchNode) {
-            GroupDispatchNode groupDispatchNode = (GroupDispatchNode) child;
-            String gname = groupDispatchNode.getGenericName();
-            return RDataFactory.createSymbolInterned(gname);
-        } else {
-            // TODO This should really fail in some way as (clearly) this is not a "name"
-            // some more complicated expression, just deparse it
-            return RDataFactory.createSymbolInterned(RDeparse.deparse(child));
-        }
-    }
-
-    /**
-     * Unifies {@link RCallNode} and {@link GroupDispatchNode} for accessing (likely) function name.
-     */
-    public static RNode getFunctionNode(Node node) {
-        if (node instanceof RCallNode) {
-            return ((RCallNode) node).getFunctionNode();
-        } else if (node instanceof GroupDispatchNode) {
-            return (RNode) node;
-        }
-        assert false;
-        return null;
     }
 
     @TruffleBoundary
