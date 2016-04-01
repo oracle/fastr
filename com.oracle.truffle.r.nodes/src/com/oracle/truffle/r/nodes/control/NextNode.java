@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -45,13 +44,6 @@ public final class NextNode extends RSourceSectionNode implements RSyntaxNode, R
     public Object execute(VirtualFrame frame) {
         forceVisibility(false);
         throw NextException.instance;
-    }
-
-    @Override
-    public void deparseImpl(RDeparse.State state) {
-        state.startNodeDeparse(this);
-        state.append("next");
-        state.endNodeDeparse(this);
     }
 
     @Override

@@ -38,7 +38,6 @@ import com.oracle.truffle.r.nodes.builtin.base.EvalFunctions.Eval;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
-import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -47,6 +46,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCompression;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -115,7 +115,7 @@ public class HiddenInternalFunctions {
                 RCallNode expr0 = RCallNode.createCloneReplacingArgs(callNode, vecNode);
                 try {
                     // We want this call to have a SourceSection
-                    RASTDeparse.ensureSourceSection(expr0);
+                    RDeparse.ensureSourceSection(expr0);
                     aenv.put(name, RDataFactory.createPromise(expr0, eenv));
                 } catch (PutException ex) {
                     /*
@@ -262,7 +262,7 @@ public class HiddenInternalFunctions {
                     @Override
                     public Object eval(Object arg) {
                         Object[] callArgs = RArguments.create(envhook, caller, null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
-                        return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
+                        return callCache.execute(SubstituteVirtualFrame.create(frame), envhook.getTarget(), callArgs);
                     }
                 };
                 String functionName = ReadVariableNode.getSlowPathEvaluationName();
@@ -388,7 +388,7 @@ public class HiddenInternalFunctions {
                 @Override
                 public Object eval(Object arg) {
                     Object[] callArgs = RArguments.create(hook, caller, null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
-                    return callCache.execute(new SubstituteVirtualFrame(frame), hook.getTarget(), callArgs);
+                    return callCache.execute(SubstituteVirtualFrame.create(frame), hook.getTarget(), callArgs);
                 }
             };
 
@@ -478,7 +478,7 @@ public class HiddenInternalFunctions {
 
     /*
      * Created as primitive function to avoid incrementing reference count for the argument.
-     * 
+     *
      * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
      * SHARED_PERMANENT_VAL for permanent shared
      */

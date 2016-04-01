@@ -54,6 +54,8 @@ public class RChannel {
     private static int[] keys = new int[INITIAL_CHANNEL_NUM];
     private static RChannel[] channels = new RChannel[INITIAL_CHANNEL_NUM];
 
+    private static final int CLOSED_CHANNEL_KEY = -1;
+
     /*
      * Used to mediate access to the semaphore instances
      */
@@ -63,8 +65,8 @@ public class RChannel {
     private final ArrayBlockingQueue<Object> clientToMaster = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
 
     public static int createChannel(int key) {
-        if (key == 0) {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "channel's key must be non-zero");
+        if (key <= 0) {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "channel's key must be positive");
         }
         try {
             create.acquire();
@@ -124,9 +126,13 @@ public class RChannel {
         try {
             create.acquire();
             if (actualId == 0 || actualId >= channels.length || channels[actualId] == null) {
-                throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "channel with specified id does not exist");
+                // closing an already closed channel does not necessarily have to be an error (and
+                // makes parallell package's worker script work unchanged)
+                if (keys[actualId] != CLOSED_CHANNEL_KEY) {
+                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "channel with specified id does not exist");
+                }
             }
-            keys[actualId] = 0;
+            keys[actualId] = CLOSED_CHANNEL_KEY;
             channels[actualId] = null;
         } catch (InterruptedException x) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error closing channel");

@@ -291,7 +291,7 @@ public abstract class PrettyPrinterNode extends RNode {
         } else {
             String source = ((RRootNode) operand.getTarget().getRootNode()).getSourceCode();
             if (source == null || !useSource) {
-                source = RDeparse.deparseForPrint(operand);
+                source = RDeparse.deparse(operand);
             }
             REnvironment env = RArguments.getEnvironment(operand.getEnclosingFrame());
             if (env != null && env.isNamespaceEnv()) {
@@ -358,21 +358,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     private static String prettyPrintLanguageInternal(RLanguage language) {
-        String[] lines = RDeparse.deparse(language, 60, false, 0, -1);
-        if (lines.length == 1) {
-            return lines[0];
-        } else {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < lines.length; i++) {
-                sb.append(lines[i]);
-                if (i == lines.length - 1) {
-                    continue;
-                }
-                sb.append('\n');
-            }
-            return sb.toString();
-
-        }
+        return RDeparse.deparse(language, 60, false, 0, -1);
     }
 
     private static String prettyPrintPromise(RPromise promise) {

@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.nodes;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
@@ -122,11 +121,6 @@ public abstract class RBaseNode extends Node {
             current = current.getParent();
         }
         return null;
-    }
-
-    public void deparse(State state) {
-        RSyntaxNode syntaxNode = getRSyntaxNode();
-        syntaxNode.deparseImpl(state);
     }
 
     public RSyntaxNode substitute(REnvironment env) {

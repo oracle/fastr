@@ -28,12 +28,17 @@ import com.oracle.truffle.r.test.TestBase;
 
 public class TestInteractiveDebug extends TestBase {
     @Test
-    public void simple() {
+    public void testSimple() {
         assertEval("f <- function(x) {\n  t <- x + 1\n  print(t)\n  t}\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn");
     }
 
     @Test
-    public void noBracket() {
+    public void testInvalidName() {
+        assertEval("f <- function(x) {\n  `123t` <- x + 1\n  print(`123t`)\n  `123t`}\ndebug(f)\nf(5)\nx\nn\nn\n`123t`\nn\nn");
+    }
+
+    @Test
+    public void testNoBracket() {
         assertEval("f <- function(x) print(x)\ndebug(f)\nf(5)\nx\nn\n");
     }
 }

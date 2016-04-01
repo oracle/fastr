@@ -33,8 +33,8 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
-import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -126,7 +126,8 @@ public abstract class Substitute extends RBuiltinNode {
         RSyntaxNode rNode = (RSyntaxNode) RASTUtils.cloneNode(node);
         RSyntaxNode subRNode = rNode.substituteImpl(env);
         // create source for entire tree
-        RASTDeparse.ensureSourceSection(subRNode);
+        subRNode.setSourceSection(RSyntaxNode.EAGER_DEPARSE);
+        RDeparse.ensureSourceSection(subRNode);
         return RASTUtils.createLanguageElement(subRNode.asRNode());
     }
 }

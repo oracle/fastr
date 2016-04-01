@@ -40,9 +40,6 @@ import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
-import com.oracle.truffle.r.nodes.builtin.base.DoCall;
-import com.oracle.truffle.r.nodes.builtin.base.Lapply;
-import com.oracle.truffle.r.nodes.builtin.base.Mapply;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
@@ -54,17 +51,15 @@ import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
@@ -367,16 +362,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public void deparse(State state, RLanguage rl) {
-        RASTDeparse.deparse(state, rl);
-    }
-
-    @Override
-    public void deparse(State state, RFunction f) {
-        RASTDeparse.deparse(state, f);
-    }
-
-    @Override
     public Object callback(RFunction f, Object[] args) {
         boolean gd = DebugHandling.globalDisable(true);
         try {
@@ -546,6 +531,10 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 return findCallerFromFrame(frame);
             }
         }
+    }
+
+    public RSyntaxFunction getSyntaxFunction(RFunction f) {
+        return (FunctionDefinitionNode) f.getTarget().getRootNode();
     }
 
     private static Object getCallerFromFrame(Frame frame) {

@@ -141,7 +141,7 @@ public abstract class AsCharacter extends RBuiltinNode {
             } else if (elem instanceof RStringVector && ((RStringVector) elem).getLength() == 1) {
                 data[i] = ((RStringVector) elem).getDataAt(0);
             } else {
-                data[i] = RDeparse.deparse1Line(elem, false);
+                data[i] = RDeparse.deparse(elem, RDeparse.MAX_Cutoff, true, 0, -1);
             }
             if (RRuntime.isNA(data[i])) {
                 complete = RDataFactory.INCOMPLETE_VECTOR;

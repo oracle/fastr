@@ -30,15 +30,12 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessArraySubscriptBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.MapplyNodeGen.MapplyInternalNodeGen;
-import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -116,7 +113,7 @@ public abstract class Mapply extends RBuiltinNode {
         @Specialization(limit = "5", guards = {"function.getTarget() == cachedTarget"})
         protected Object[] cachedMApply(VirtualFrame frame, RList dots, RFunction function, RList moreArgs, @Cached("function.getTarget()") RootCallTarget cachedTarget,
                         @Cached("createElementNodeArray(dots.getLength())") ElementNode[] cachedElementNodeArray,
-                        @Cached("createCallNode(cachedTarget, cachedElementNodeArray, moreArgs)") RCallNode callNode) {
+                        @Cached("createCallNode(cachedElementNodeArray, moreArgs)") RCallNode callNode) {
 
             int dotsLength = dots.getLength();
             int[] lengths = new int[dotsLength];
@@ -171,18 +168,14 @@ public abstract class Mapply extends RBuiltinNode {
          * TODO names and moreArgs
          *
          */
-        protected RCallNode createCallNode(RootCallTarget callTarget, ElementNode[] elementNodeArray, @SuppressWarnings("unused") RList moreArgs) {
-            @SuppressWarnings("unused")
-            FormalArguments formalArgs = ((RRootNode) callTarget.getRootNode()).getFormalArguments();
-
+        protected RCallNode createCallNode(ElementNode[] elementNodeArray, @SuppressWarnings("unused") RList moreArgs) {
             RSyntaxNode[] readVectorElementNodes = new RSyntaxNode[elementNodeArray.length];
             for (int i = 0; i < readVectorElementNodes.length; i++) {
                 readVectorElementNodes[i] = ReadVariableNode.create(elementNodeArray[i].vectorElementName);
             }
             ArgumentsSignature argsSig = ArgumentsSignature.empty(readVectorElementNodes.length);
             // Errors can be thrown from the modified call so a SourceSection is required
-            SourceSection ss = Lapply.createCallSourceSection(callTarget, argsSig, readVectorElementNodes);
-            return RCallNode.createCall(ss, null, argsSig, readVectorElementNodes);
+            return RCallNode.createCall(Lapply.createCallSourceSection(), null, argsSig, readVectorElementNodes);
         }
 
         protected ElementNode[] createElementNodeArray(int length) {

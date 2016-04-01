@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@
 jclass CallRFFIHelperClass;
 jclass RDataFactoryClass;
 jclass RRuntimeClass;
+jclass CharSXPWrapperClass;
 
 static jclass RInternalErrorClass;
 static jmethodID unimplementedMethodID;
@@ -93,36 +94,58 @@ jmp_buf *getErrorJmpBuf() {
 	return callErrorJmpBuf;
 }
 
+void releaseCopiedVector(JNIEnv *env, CopiedVector cv) {
+    if (cv.obj != NULL) {
+	switch (cv.type) {
+	    case INTSXP: case LGLSXP: {
+		    jintArray intArray = (jintArray) cv.jArray;
+		    (*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
+		    break;
+	    }
+
+	    case REALSXP: {
+		    jdoubleArray doubleArray = (jdoubleArray) cv.jArray;
+		    (*env)->ReleaseDoubleArrayElements(env, doubleArray, (jdouble *)cv.data, 0);
+		    break;
+
+	    }
+
+	    case RAWSXP: {
+		    jbyteArray byteArray = (jbyteArray) cv.jArray;
+		    (*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, 0);
+		    break;
+
+	    }
+	    default:
+		fatalError("copiedVector type");
+	}
+    }
+}
+
 void callExit(JNIEnv *env) {
 //	printf("callExit\n");
 	int i;
 	for (i = 0; i < copiedVectorsIndex; i++) {
-		CopiedVector cv = copiedVectors[i];
-		switch (cv.type) {
-		    case INTSXP: case LGLSXP: {
-			    jintArray intArray = (jintArray) cv.jArray;
-			    (*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
-			    break;
-		    }
-
-		    case REALSXP: {
-			    jdoubleArray doubleArray = (jdoubleArray) cv.jArray;
-			    (*env)->ReleaseDoubleArrayElements(env, doubleArray, (jdouble *)cv.data, 0);
-			    break;
-
-		    }
-
-		    case RAWSXP: {
-			    jbyteArray byteArray = (jbyteArray) cv.jArray;
-			    (*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, 0);
-			    break;
-
-		    }
-		    default:
-		    	fatalError("copiedVector type");
-		}
+		releaseCopiedVector(env, copiedVectors[i]);
 	}
 	copiedVectorsIndex = 0;
+}
+
+void invalidateCopiedObject(JNIEnv *env, SEXP oldObj) {
+	int i;
+	for (i = 0; i < copiedVectorsIndex; i++) {
+		CopiedVector cv = copiedVectors[i];
+		if ((*env)->IsSameObject(env, cv.obj, oldObj)) {
+#if TRACE_COPIES
+			printf("invalidateCopiedObject(%p): found\n", x);
+#endif
+			releaseCopiedVector(env, cv);
+			copiedVectors[i].obj = NULL;
+		}
+	}
+#if TRACE_COPIES
+	printf("invalidateCopiedObject(%p): not found\n", x);
+#endif
 }
 
 void *findCopiedObject(JNIEnv *env, SEXP x) {
@@ -209,7 +232,9 @@ static SEXP checkCachedGlobalRef(JNIEnv *env, SEXP obj) {
 void validateRef(JNIEnv *env, SEXP x, const char *msg) {
 	jobjectRefType t = (*env)->GetObjectRefType(env, x);
 	if (t == JNIInvalidRefType) {
-		fatalError(msg);
+		char buf[1000];
+		sprintf(buf, "%s %p", msg,x);
+		fatalError(buf);
 	}
 }
 
@@ -268,4 +293,20 @@ jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const ch
 		(*env)->FatalError(env, buf);
 	}
 	return methodID;
+}
+
+jfieldID checkGetFieldID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic) {
+	jfieldID fieldID = isStatic ? (*env)->GetStaticFieldID(env, klass, name, sig) : (*env)->GetFieldID(env, klass, name, sig);
+	if (fieldID == NULL) {
+		char buf[1024];
+		strcpy(buf, "failed to find ");
+		strcat(buf, isStatic ? "static" : "instance");
+		strcat(buf, " field ");
+		strcat(buf, name);
+		strcat(buf, "(");
+		strcat(buf, sig);
+		strcat(buf, ")");
+		(*env)->FatalError(env, buf);
+	}
+	return fieldID;
 }

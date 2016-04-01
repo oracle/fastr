@@ -26,10 +26,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.unary.ConvertBooleanNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
@@ -106,32 +104,6 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
 
     public RNode getElsePart() {
         return elsePart;
-    }
-
-    @Override
-    public void deparseImpl(RDeparse.State state) {
-        state.startNodeDeparse(this);
-        state.append("if (");
-        condition.deparse(state);
-        state.append(") ");
-        if (RASTUtils.unwrap(thenPart) instanceof BlockNode && ((BlockNode) RASTUtils.unwrap(thenPart)).getSequence().length > 1) {
-            thenPart.deparse(state);
-            if (elsePart != null) {
-                state.writeline();
-                state.append("else ");
-                elsePart.deparse(state);
-            }
-        } else {
-            state.writeline();
-            state.incIndent();
-            thenPart.deparse(state);
-            state.decIndent();
-            if (elsePart != null) {
-                state.append(" else ");
-                elsePart.deparse(state);
-            }
-        }
-        state.endNodeDeparse(this);
     }
 
     @Override

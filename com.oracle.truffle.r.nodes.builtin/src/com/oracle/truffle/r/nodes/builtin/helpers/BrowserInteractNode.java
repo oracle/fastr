@@ -27,20 +27,22 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.nodes.builtin.base.FrameFunctions.SysCalls;
-import com.oracle.truffle.r.nodes.builtin.base.FrameFunctionsFactory.SysCallsNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
-import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.Quit;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -64,9 +66,6 @@ public abstract class BrowserInteractNode extends RNode {
      * multiple interactive contexts, this would need become context specific.
      */
     private static boolean inBrowser;
-
-    @Child private SysCalls sysCalls;
-    @Child private PrettyPrinterNode printer;
 
     public static boolean inBrowser() {
         return inBrowser;
@@ -112,23 +111,16 @@ public abstract class BrowserInteractNode extends RNode {
                     case "Q":
                         throw new BrowserQuitException();
                     case "where": {
-                        /*
-                         * This is experimental and perhaps too indirect, but by using syscalls and
-                         * the printer we avoid repeating the logic for stack traversal and
-                         * printing. TODO print source info where available as per GnuR
-                         */
-                        if (sysCalls == null) {
-                            sysCalls = insert(SysCallsNodeGen.create(new RNode[0], null, null));
-                            sysCalls.setIncludeTop();
-                            printer = insert(PrettyPrinterNodeGen.create(null, null, null, null, false));
-                        }
                         if (RArguments.getDepth(mFrame) > 1) {
-                            RPairList stack = (RPairList) sysCalls.execute(frame);
-                            int length = stack.getLength();
-                            for (int i = length - 1; i >= 0; i--) {
-                                Object element = stack.getDataAtAsObject(i);
-                                String call = (String) printer.executeString(element, null, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE);
-                                ch.printf("where %d: %s%n", length - i, call);
+                            Object stack = Utils.createTraceback(0);
+                            // browser inverts frame depth
+                            int idepth = 1;
+                            while (stack != RNull.instance) {
+                                RPairList pl = (RPairList) stack;
+                                RStringVector element = (RStringVector) pl.car();
+                                ch.printf("where %d%s: %s%n", idepth, getSrcinfo(element), element.getDataAt(0));
+                                idepth++;
+                                stack = pl.cdr();
                             }
                         }
                         ch.println("");
@@ -152,6 +144,19 @@ public abstract class BrowserInteractNode extends RNode {
             inBrowser = false;
         }
         return exitMode;
+    }
+
+    private static String getSrcinfo(RStringVector element) {
+        Object srcref = element.getAttribute(RRuntime.R_SRCREF);
+        if (srcref != null) {
+            RIntVector lloc = (RIntVector) srcref;
+            Object srcfile = lloc.getAttribute(RRuntime.R_SRCFILE);
+            if (srcfile != null) {
+                REnvironment env = (REnvironment) srcfile;
+                return " at " + RRuntime.asString(env.get(RSrcref.SrcrefFields.filename.name())) + "#" + lloc.getDataAt(0);
+            }
+        }
+        return "";
     }
 
     private static String browserPrompt(int depth) {

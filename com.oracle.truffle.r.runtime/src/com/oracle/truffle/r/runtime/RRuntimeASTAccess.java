@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -79,15 +80,7 @@ public interface RRuntimeASTAccess {
      */
     void setNames(RLanguage rl, RStringVector names);
 
-    /**
-     * Deparse {@code rl}.
-     */
-    void deparse(RDeparse.State state, RLanguage rl);
-
-    /**
-     * Deparse non-builtin function.
-     */
-    void deparse(RDeparse.State state, RFunction f);
+    RSyntaxFunction getSyntaxFunction(RFunction f);
 
     /**
      * Serialize a runtime value that requires non-standard treatment.

@@ -28,7 +28,6 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -75,13 +74,6 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
     @Override
     public void execute(VirtualFrame frame, Object value) {
         writeLocalFrameVariableNode.execute(frame, value);
-    }
-
-    @Override
-    public void deparseImpl(State state) {
-        state.startNodeDeparse(this);
-        deparseHelper(state, " <- ");
-        state.endNodeDeparse(this);
     }
 
     @Override

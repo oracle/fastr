@@ -71,7 +71,7 @@ public class Generic_Tools implements ToolsRFFI {
             SymbolInfo parseRd = ToolsProvider.toolsProvider().getParseRd();
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(parseRd.address, parseRd.symbol, new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
         } catch (Throwable ex) {
-            throw RInternalError.shouldNotReachHere();
+            throw RInternalError.shouldNotReachHere(ex, "error during Rd parsing");
         } finally {
             parseRdCritical.release();
         }

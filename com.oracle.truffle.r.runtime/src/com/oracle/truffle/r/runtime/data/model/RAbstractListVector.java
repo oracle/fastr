@@ -37,6 +37,8 @@ public interface RAbstractListVector extends RAbstractVector {
         return getDataAtAsObject(i);
     }
 
+    Object getDataAt(int index);
+
     @Override
     RList materialize();
 

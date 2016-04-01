@@ -51,7 +51,7 @@ public abstract class DPut extends RInvisibleBuiltinNode {
     protected Object dput(Object x, RConnection file, int opts) {
         controlVisibility();
 
-        String string = RDeparse.deparse1Line(x, false, RDeparse.DEFAULT_Cutoff, opts);
+        String string = RDeparse.deparse(x, RDeparse.DEFAULT_Cutoff, true, opts, -1);
         try (RConnection openConn = file.forceOpen("wt")) {
             openConn.writeString(string, true);
         } catch (IOException ex) {

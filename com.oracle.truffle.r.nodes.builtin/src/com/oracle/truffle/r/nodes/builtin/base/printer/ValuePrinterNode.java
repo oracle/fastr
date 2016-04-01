@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
+import java.io.IOException;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.base.Inherits;
 import com.oracle.truffle.r.nodes.builtin.base.InheritsNodeGen;
@@ -44,7 +45,6 @@ import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import java.io.IOException;
 
 @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "digits", type = RNode.class), @NodeChild(value = "quote", type = RNode.class),
                 @NodeChild(value = "naPrint", type = RNode.class), @NodeChild(value = "printGap", type = RNode.class), @NodeChild(value = "right", type = RNode.class),
@@ -53,14 +53,14 @@ import java.io.IOException;
 })
 public abstract class ValuePrinterNode extends RNode {
 
-    @Child IsArray isArrayBuiltIn = IsArrayNodeGen.create(null, null, null);
-    @Child IsList isListBuiltIn = IsListNodeGen.create(null, null, null);
-    @Child Inherits inheritsBuiltIn = InheritsNodeGen.create(null, null, null);
-    @Child IsS4 isS4BuiltIn = IsS4NodeGen.create(null, null, null);
-    @Child IsObject isObjectBuiltIn = IsObjectNodeGen.create(null, null, null);
-    @Child IsMethodsDispatchOn isMethodDispatchOnBuiltIn = IsMethodsDispatchOnNodeGen.create(null, null, null);
-    @Child CastStringNode castStringNode = CastStringNode.createNonPreserving();
-    @Child BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNode.create();
+    @Child private IsArray isArrayBuiltIn = IsArrayNodeGen.create(null, null, null);
+    @Child private IsList isListBuiltIn = IsListNodeGen.create(null, null, null);
+    @Child private Inherits inheritsBuiltIn = InheritsNodeGen.create(null, null, null);
+    @Child private IsS4 isS4BuiltIn = IsS4NodeGen.create(null, null, null);
+    @Child private IsObject isObjectBuiltIn = IsObjectNodeGen.create(null, null, null);
+    @Child private IsMethodsDispatchOn isMethodDispatchOnBuiltIn = IsMethodsDispatchOnNodeGen.create(null, null, null);
+    @Child private CastStringNode castStringNode = CastStringNode.createNonPreserving();
+    @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNode.create();
 
     public boolean isArray(Object o) {
         return RRuntime.fromLogical(isArrayBuiltIn.execute(o));
@@ -94,7 +94,7 @@ public abstract class ValuePrinterNode extends RNode {
         return boxPrimitiveNode.execute(o);
     }
 
-    public abstract Object executeString(VirtualFrame frame, Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt);
+    public abstract Object executeString(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt);
 
     public Object prettyPrint(Object v, WriterFactory wf) {
         PrintParameters printParams = new PrintParameters();
@@ -112,7 +112,7 @@ public abstract class ValuePrinterNode extends RNode {
     }
 
     @Specialization
-    protected String prettyPrint(VirtualFrame frame, Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
+    protected String prettyPrint(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
         try {
             prettyPrint(o, new PrintParameters(digits, quote, naPrint, printGap,
                             right, max, useSource, noOpt), RWriter::new);

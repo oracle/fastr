@@ -24,13 +24,11 @@ import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTBuilder;
-import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
@@ -38,7 +36,6 @@ import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -59,6 +56,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 @RBuiltin(name = "lapply", kind = INTERNAL, parameterNames = {"X", "FUN"}, splitCaller = true)
 public abstract class Lapply extends RBuiltinNode {
+
+    private static final Source CALL_SOURCE = Source.fromText("FUN(X[[i]], ...)", "lapply");
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -102,7 +101,7 @@ public abstract class Lapply extends RBuiltinNode {
         protected Object[] cachedLApply(VirtualFrame frame, Object vector, RFunction function, RArgsValuesAndNames additionalArguments, //
                         @Cached("function.getTarget()") RootCallTarget cachedTarget, //
                         @Cached("additionalArguments.getSignature()") ArgumentsSignature cachedSignature, //
-                        @Cached("createCallNode(cachedTarget, additionalArguments)") RCallNode callNode) {
+                        @Cached("createCallNode(additionalArguments)") RCallNode callNode) {
             return lApplyInternal(frame, vector, function, callNode);
         }
 
@@ -112,7 +111,7 @@ public abstract class Lapply extends RBuiltinNode {
             // TODO: implement more efficiently (how much does it matter considering that there is
             // cached version?); previous comment here implied that having RCallNode executing with
             // an evaluated RArgsValuesAndNames would help
-            return lApplyInternal(frame, vector, function, createCallNode(function.getTarget(), additionalArguments));
+            return lApplyInternal(frame, vector, function, createCallNode(additionalArguments));
         }
 
         private static RNode createIndexedLoad() {
@@ -129,7 +128,7 @@ public abstract class Lapply extends RBuiltinNode {
          * @param additionalArguments may be {@link RMissing#instance} to indicate empty "..."!
          */
         @TruffleBoundary
-        protected RCallNode createCallNode(RootCallTarget callTarget, RArgsValuesAndNames additionalArguments) {
+        protected RCallNode createCallNode(RArgsValuesAndNames additionalArguments) {
             /* TODO: R switches to double if x.getLength() is greater than 2^31-1 */
 
             ReadVariableNode readVector = ReadVariableNode.create(VECTOR_ELEMENT);
@@ -164,27 +163,12 @@ public abstract class Lapply extends RBuiltinNode {
             }
             ArgumentsSignature argsSig = ArgumentsSignature.get(names);
             // Errors can be thrown from the modified call so a SourceSection is required
-            SourceSection ss = createCallSourceSection(callTarget, argsSig, args);
-            return RCallNode.createCall(ss, null, argsSig, args);
+            return RCallNode.createCall(createCallSourceSection(), null, argsSig, args);
         }
     }
 
-    static SourceSection createCallSourceSection(RootCallTarget callTarget, ArgumentsSignature argsSig, RSyntaxNode[] args) {
-        RDeparse.State state = RDeparse.State.createPrintableState();
-        RCallNode.deparseArguments(state, args, argsSig);
-        // The call is (function)(args)
-        String callName;
-        RRootNode rrn = (RRootNode) callTarget.getRootNode();
-        if (rrn instanceof RBuiltinRootNode) {
-            RBuiltinRootNode rbrn = (RBuiltinRootNode) rrn;
-            callName = rbrn.getBuiltin().getBuiltin().getName();
-        } else {
-            callName = "(" + rrn.getSourceCode() + ")";
-        }
-        String callString = callName + state.toString();
-        Source callSource = Source.fromText(callString, "lapply");
-        SourceSection ss = callSource.createSection("", 0, callString.length());
-        return ss;
+    static SourceSection createCallSourceSection() {
+        return CALL_SOURCE.createSection("", 0, CALL_SOURCE.getLength());
     }
 
     private static RNode wrapVarArgValue(Object varArgValue, int varArgIndex) {

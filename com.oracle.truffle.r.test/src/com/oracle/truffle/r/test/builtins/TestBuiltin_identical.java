@@ -185,7 +185,7 @@ public class TestBuiltin_identical extends TestBase {
 
     @Test
     public void testidentical35() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(x = expression(exp(-0.5 * u^2)), y = expression(exp(-0.5 *     u^2))), .Names = c('x', 'y'));do.call('identical', argv)");
+        assertEval("argv <- structure(list(x = expression(exp(-0.5 * u^2)), y = expression(exp(-0.5 *     u^2))), .Names = c('x', 'y'));do.call('identical', argv)");
     }
 
     @Test

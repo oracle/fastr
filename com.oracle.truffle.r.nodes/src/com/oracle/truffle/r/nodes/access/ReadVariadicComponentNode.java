@@ -29,7 +29,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
@@ -96,13 +95,6 @@ public class ReadVariadicComponentNode extends RSourceSectionNode implements RSy
 
     public String getPrintForm() {
         return ".." + Integer.toString(index + 1);
-    }
-
-    @Override
-    public void deparseImpl(State state) {
-        state.startNodeDeparse(this);
-        state.append(getPrintForm());
-        state.endNodeDeparse(this);
     }
 
     @Override

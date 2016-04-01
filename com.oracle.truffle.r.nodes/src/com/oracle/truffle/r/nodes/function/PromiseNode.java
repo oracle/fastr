@@ -44,7 +44,6 @@ import com.oracle.truffle.r.nodes.function.opt.OptConstantPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptForcedEagerPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize.State;
 import com.oracle.truffle.r.runtime.RType;
@@ -324,14 +323,6 @@ public abstract class PromiseNode extends RNode {
 
         public int getIndex() {
             return index;
-        }
-
-        @Override
-        public void deparseImpl(RDeparse.State state) {
-            int num = index + 1;
-            state.startNodeDeparse(this);
-            state.append((num < 10 ? ".." : ".") + num);
-            state.endNodeDeparse(this);
         }
 
         @Override

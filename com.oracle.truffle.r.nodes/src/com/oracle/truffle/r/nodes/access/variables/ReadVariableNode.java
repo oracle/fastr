@@ -52,7 +52,6 @@ import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -161,13 +160,6 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     public RType getMode() {
         return mode;
-    }
-
-    @Override
-    public void deparseImpl(RDeparse.State state) {
-        state.startNodeDeparse(this);
-        state.append(RDeparse.quotify(identifierAsString, state));
-        state.endNodeDeparse(this);
     }
 
     @Override

@@ -537,7 +537,7 @@ public class RSerialize {
                         if (FastROptions.debugMatches("printUclosure")) {
                             Debug.printClosure(rpl);
                         }
-                        String deparse = RDeparse.deparse(rpl);
+                        String deparse = RDeparse.deparseDeserialize(rpl);
                         try {
                             /*
                              * The tag of result is the enclosing environment (from NAMESPACESEXP)
@@ -563,7 +563,7 @@ public class RSerialize {
                          */
                         if (closureDepth == 0 && langDepth == 0) {
                             RPairList pl = (RPairList) result;
-                            String deparse = RDeparse.deparse(pl);
+                            String deparse = RDeparse.deparseDeserialize(pl);
                             RExpression expr = parse(deparse);
                             assert expr.getLength() == 1;
                             result = expr.getDataAt(0);
@@ -576,7 +576,7 @@ public class RSerialize {
                          * tag: environment for eval (or RNull if evaluated), car: value:
                          * RUnboundValue if not evaluated, cdr: expression
                          */
-                        String deparse = RDeparse.deparse(pl);
+                        String deparse = RDeparse.deparseDeserialize(pl.cdr());
                         RExpression expr = parse(deparse);
                         assert expr.getLength() == 1;
                         RLanguage lang = (RLanguage) expr.getDataAt(0);

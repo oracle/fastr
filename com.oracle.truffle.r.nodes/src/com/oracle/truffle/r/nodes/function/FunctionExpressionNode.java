@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFr
 import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -100,13 +99,6 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
 
     public RootCallTarget getCallTarget() {
         return callTarget;
-    }
-
-    @Override
-    public void deparseImpl(RDeparse.State state) {
-        state.startNodeDeparse(this);
-        ((FunctionDefinitionNode) callTarget.getRootNode()).deparseImpl(state);
-        state.endNodeDeparse(this);
     }
 
     @Override

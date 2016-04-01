@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public class PrintFunctions {
     public abstract static class PrintAdapter extends RInvisibleBuiltinNode {
@@ -79,24 +78,20 @@ public class PrintFunctions {
         }
 
         @Specialization(guards = "!isS4(o)")
-        protected Object printDefault(VirtualFrame frame, Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
-            valuePrinter.executeString(frame, o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+        protected Object printDefault(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
+            valuePrinter.executeString(o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             controlVisibility();
             return o;
         }
 
-        ReadVariableNode createShowFind() {
-            return ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, "show");
-        }
-
-        RFunction createShowFunction(VirtualFrame frame, ReadVariableNode showFind) {
-            return (RFunction) showFind.execute(frame);
+        RFunction createShowFunction(VirtualFrame frame) {
+            return ReadVariableNode.lookupFunction("show", frame, false);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isS4(o)")
         protected Object printDefaultS4(VirtualFrame frame, RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt,
-                        @Cached("createShowFind()") ReadVariableNode showFind, @Cached("createShowFunction(frame, showFind)") RFunction showFunction) {
+                        @Cached("createShowFunction(frame)") RFunction showFunction) {
             RContext.getEngine().evalFunction(showFunction, null, o);
             return null;
         }
@@ -113,9 +108,8 @@ public class PrintFunctions {
     public abstract static class PrintFunction extends PrintAdapter {
         @SuppressWarnings("unused")
         @Specialization
-        protected RFunction printFunction(VirtualFrame frame, RFunction x, byte useSource, RArgsValuesAndNames extra) {
-            valuePrinter.executeString(frame, x, PrintParameters.DEFAULT_DIGITS, true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDeafultMaxPrint(),
-                            true, false);
+        protected RFunction printFunction(RFunction x, byte useSource, RArgsValuesAndNames extra) {
+            valuePrinter.executeString(x, PrintParameters.DEFAULT_DIGITS, true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDeafultMaxPrint(), true, false);
             controlVisibility();
             return x;
         }

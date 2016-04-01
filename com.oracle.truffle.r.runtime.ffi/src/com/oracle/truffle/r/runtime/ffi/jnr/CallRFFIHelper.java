@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import java.nio.charset.StandardCharsets;
+
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
@@ -36,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -56,11 +59,12 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * This class provides methods that match the functionality of the macro/function definitions in the
@@ -69,7 +73,23 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * files. These methods should never be called from normal FastR code.
  */
 public class CallRFFIHelper {
-    @SuppressWarnings("unused") private static final NACheck elementNACheck = NACheck.create();
+
+    private static final class CharSXPWrapper {
+        private final String contents;
+
+        CharSXPWrapper(String contents) {
+            this.contents = contents;
+        }
+
+        public String getContents() {
+            return contents;
+        }
+
+        @Override
+        public String toString() {
+            return "CHARSXP(" + contents + ")";
+        }
+    }
 
     private static RuntimeException unimplemented() {
         return unimplemented("");
@@ -100,12 +120,13 @@ public class CallRFFIHelper {
         }
     }
 
-    private static void guaranteeInstanceOf(Object x, Class<?> clazz) {
+    private static <T> T guaranteeInstanceOf(Object x, Class<T> clazz) {
         if (x == null) {
             guarantee(false, "unexpected type: null instead of " + clazz.getSimpleName());
         } else if (!clazz.isInstance(x)) {
             guarantee(false, "unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of " + clazz.getSimpleName());
         }
+        return clazz.cast(x);
     }
 
     // Checkstyle: stop method name check
@@ -122,8 +143,9 @@ public class CallRFFIHelper {
         return RDataFactory.createDoubleVectorFromScalar(value);
     }
 
-    public static RStringVector Rf_ScalarString(String value) {
-        return RDataFactory.createStringVectorFromScalar(value);
+    public static RStringVector Rf_ScalarString(Object value) {
+        CharSXPWrapper chars = guaranteeInstanceOf(value, CharSXPWrapper.class);
+        return RDataFactory.createStringVectorFromScalar(chars.getContents());
     }
 
     public static int Rf_asInteger(Object x) {
@@ -159,13 +181,31 @@ public class CallRFFIHelper {
         }
     }
 
-    public static String Rf_asChar(Object x) {
-        if (x instanceof String) {
-            return (String) x;
-        } else {
-            guaranteeInstanceOf(x, RStringVector.class);
-            return ((RStringVector) x).getDataAt(0);
+    public static Object Rf_asChar(Object x) {
+        if (x instanceof CharSXPWrapper) {
+            return x;
+        } else if (x instanceof RSymbol) {
+            return new CharSXPWrapper(((RSymbol) x).getName());
         }
+
+        Object obj = RRuntime.asAbstractVector(x);
+        if (obj instanceof RAbstractVector) {
+            RAbstractVector vector = (RAbstractVector) obj;
+            if (vector.getLength() > 0) {
+                if (vector instanceof RAbstractStringVector) {
+                    return new CharSXPWrapper(((RAbstractStringVector) vector).getDataAt(0));
+                } else {
+                    unimplemented("asChar type " + x.getClass());
+                }
+            }
+        }
+
+        return new CharSXPWrapper(RRuntime.STRING_NA);
+    }
+
+    public static Object Rf_mkCharLenCE(byte[] bytes, @SuppressWarnings("unused") int encoding) {
+        // TODO: handle encoding properly
+        return new CharSXPWrapper(new String(bytes, StandardCharsets.UTF_8));
     }
 
     public static Object Rf_cons(Object car, Object cdr) {
@@ -232,10 +272,6 @@ public class CallRFFIHelper {
     public static void Rf_setAttrib(Object obj, Object name, Object val) {
         if (obj instanceof RAttributable) {
             RAttributable attrObj = (RAttributable) obj;
-            RAttributes attrs = attrObj.getAttributes();
-            if (attrs == null) {
-                attrs = attrObj.initAttributes();
-            }
             String nameAsString;
             if (name instanceof RSymbol) {
                 nameAsString = ((RSymbol) name).getName();
@@ -244,7 +280,11 @@ public class CallRFFIHelper {
                 assert nameAsString != null;
             }
             nameAsString = nameAsString.intern();
-            attrs.put(nameAsString, val);
+            if ("class" == nameAsString) {
+                attrObj.initAttributes().put(nameAsString, val);
+            } else {
+                attrObj.setAttr(nameAsString, val);
+            }
         }
     }
 
@@ -277,6 +317,11 @@ public class CallRFFIHelper {
             }
         }
         return 0;
+    }
+
+    public static Object Rf_lengthgets(Object x, int newSize) {
+        RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
+        return vec.resize(newSize);
     }
 
     public static int Rf_isString(Object x) {
@@ -362,7 +407,7 @@ public class CallRFFIHelper {
                 return RDataFactory.createDoubleVector(new double[nrow * ncol], RDataFactory.COMPLETE_VECTOR, dims);
             case LGLSXP:
                 return RDataFactory.createLogicalVector(new byte[nrow * ncol], RDataFactory.COMPLETE_VECTOR, dims);
-            case CHARSXP:
+            case STRSXP:
                 return RDataFactory.createStringVector(new String[nrow * ncol], RDataFactory.COMPLETE_VECTOR, dims);
             case CPLXSXP:
                 return RDataFactory.createComplexVector(new double[2 * (nrow * ncol)], RDataFactory.COMPLETE_VECTOR, dims);
@@ -376,6 +421,8 @@ public class CallRFFIHelper {
             return ((RAbstractContainer) x).getLength();
         } else if (x == RNull.instance) {
             return 0;
+        } else if (x instanceof CharSXPWrapper) {
+            return ((CharSXPWrapper) x).getContents().length();
         } else if (x instanceof Integer || x instanceof Double || x instanceof Byte || x instanceof String) {
             return 1;
         } else {
@@ -384,14 +431,13 @@ public class CallRFFIHelper {
     }
 
     public static void SET_STRING_ELT(Object x, int i, Object v) {
-        // TODO error checks
-        RStringVector xv = (RStringVector) x;
-        xv.setElement(i, v);
+        RStringVector vector = guaranteeInstanceOf(x, RStringVector.class);
+        CharSXPWrapper element = guaranteeInstanceOf(v, CharSXPWrapper.class);
+        vector.setElement(i, element.getContents());
     }
 
     public static void SET_VECTOR_ELT(Object x, int i, Object v) {
-        // TODO error checks
-        RList list = (RList) x;
+        RList list = guaranteeInstanceOf(x, RList.class);
         list.setElement(i, v);
     }
 
@@ -456,23 +502,23 @@ public class CallRFFIHelper {
         }
     }
 
-    public static String STRING_ELT(Object x, int i) {
-        if (x instanceof String) {
-            assert i == 0;
-            return (String) x;
-        } else if (x instanceof RStringVector) {
-            return ((RStringVector) x).getDataAt(i);
-        } else {
-            throw unimplemented();
-        }
+    public static void logObject(Object x) {
+        System.out.println("object " + x);
+        System.out.println("class " + x.getClass());
+    }
+
+    public static Object STRING_ELT(Object x, int i) {
+        RAbstractStringVector vector = guaranteeInstanceOf(RRuntime.asAbstractVector(x), RAbstractStringVector.class);
+        return new CharSXPWrapper(vector.getDataAt(i));
     }
 
     public static Object VECTOR_ELT(Object x, int i) {
-        if (x instanceof RList) {
-            return ((RList) x).getDataAt(i);
-        } else {
-            throw unimplemented();
+        Object vec = x;
+        if (vec instanceof RDataFrame) {
+            vec = ((RDataFrame) vec).getVector();
         }
+        RAbstractListVector list = guaranteeInstanceOf(RRuntime.asAbstractVector(vec), RAbstractListVector.class);
+        return list.getDataAt(i);
     }
 
     public static int NAMED(Object x) {
@@ -483,6 +529,14 @@ public class CallRFFIHelper {
         }
     }
 
+    public static int TYPEOF(Object x) {
+        if (x instanceof CharSXPWrapper) {
+            return SEXPTYPE.CHARSXP.code;
+        } else {
+            return SEXPTYPE.gnuRCodeForObject(x);
+        }
+    }
+
     public static Object Rf_duplicate(Object x) {
         guaranteeInstanceOf(x, RAbstractVector.class);
         return ((RAbstractVector) x).copy();
@@ -490,7 +544,7 @@ public class CallRFFIHelper {
 
     public static Object PRINTNAME(Object x) {
         guaranteeInstanceOf(x, RSymbol.class);
-        return ((RSymbol) x).getName();
+        return new CharSXPWrapper(((RSymbol) x).getName());
     }
 
     public static Object TAG(Object e) {

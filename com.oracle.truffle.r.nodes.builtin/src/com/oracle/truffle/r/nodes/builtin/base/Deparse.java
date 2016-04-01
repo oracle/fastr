@@ -47,7 +47,7 @@ public abstract class Deparse extends RBuiltinNode {
             widthCutoff = RDeparse.DEFAULT_Cutoff;
         }
 
-        String[] data = RDeparse.deparse(expr, widthCutoff, RRuntime.fromLogical(backtick.getDataAt(0)), control, nlines);
+        String[] data = RDeparse.deparse(expr, widthCutoff, RRuntime.fromLogical(backtick.getDataAt(0)), control, nlines).split("\n");
         return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 }

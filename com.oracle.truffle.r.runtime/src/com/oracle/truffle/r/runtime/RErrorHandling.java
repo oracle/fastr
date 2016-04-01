@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -481,6 +482,16 @@ public class RErrorHandling {
                 }
             } finally {
                 errorHandlingState.inError = oldInError;
+            }
+        }
+
+        if (RContext.getInstance().getConsoleHandler().isInteractive() || errorExpr != RNull.instance) {
+            Object trace = Utils.createTraceback(0);
+            try {
+                REnvironment env = RContext.getInstance().stateREnvironment.getBaseEnv();
+                env.put(".Traceback", trace);
+            } catch (PutException x) {
+                throw RInternalError.shouldNotReachHere("cannot write .Traceback");
             }
         }
         throw new RError(errorMessage);

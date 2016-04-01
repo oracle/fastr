@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ void setEnv(JNIEnv *env);
 
 jclass checkFindClass(JNIEnv *env, const char *name);
 jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic);
+jfieldID checkGetFieldID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic);
 extern jmethodID createSymbolMethodID;
 
 // use for an unimplemented API function
@@ -65,6 +66,7 @@ jmp_buf *getErrorJmpBuf();
 void *findCopiedObject(JNIEnv *env, SEXP x);
 // add a new object to the internal rep cache
 void addCopiedObject(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, void *data);
+void invalidateCopiedObject(JNIEnv *env, SEXP oldObj);
 
 void init_rmath(JNIEnv *env);
 void init_variables(JNIEnv *env, jobjectArray initialValues);

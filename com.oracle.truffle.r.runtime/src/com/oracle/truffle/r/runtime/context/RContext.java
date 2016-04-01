@@ -268,11 +268,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     private RContext sharedChild;
 
     /**
-     * Back pointer to the evalThread.
-     */
-    private EvalThread evalThread;
-
-    /**
      * Typically there is a 1-1 relationship between an {@link RContext} and the thread that is
      * performing the evaluation, so we can store the {@link RContext} in a {@link ThreadLocal}.
      *
