@@ -673,6 +673,11 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); y<-list(); y[[1]]<-x; y[[1]]@virtual }");
 
         assertEval("{ sigList<-list(object=c(\"foo\", \"\")); fcall<-do.call(\"call\", c(\"fun\", sigList)); x<-fcall[-1]; x[[1]] }");
+
+        assertEval("{ m <- 1:4; dim(m) <- c(2,2); i <- 1:2; dim(i) <- c(1,2); m[i] }");
+        assertEval("{ m <- 1:4; dim(m) <- c(2,2); i <- 1:2; dim(i) <- c(1,2); m[i] <- 42; m }");
+        assertEval("{ m <- 1:4; dim(m) <- c(2,2); i <- as.double(1:2); dim(i) <- c(1,2); m[i] <- 42; m }");
+        assertEval("{ m <- 1:4; dim(m) <- c(2,2); i <- as.double(1:2); dim(i) <- c(1,2); m[i] }");
     }
 
     @Test
