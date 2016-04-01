@@ -28,6 +28,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -43,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
-@RBuiltin(name = "!", kind = RBuiltinKind.PRIMITIVE, parameterNames = {""})
+@RBuiltin(name = "!", kind = RBuiltinKind.PRIMITIVE, parameterNames = {""}, dispatch = RDispatch.OPS_GROUP_GENERIC)
 public abstract class UnaryNotNode extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();

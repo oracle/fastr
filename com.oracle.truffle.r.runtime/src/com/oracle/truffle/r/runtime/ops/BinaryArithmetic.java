@@ -26,6 +26,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -42,31 +43,31 @@ public abstract class BinaryArithmetic extends Operation {
 
     /* Fake RBuiltins to unify the binary operations */
 
-    @RBuiltin(name = "+", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
+    @RBuiltin(name = "+", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
     public static class AddBuiltin {
     }
 
-    @RBuiltin(name = "-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
+    @RBuiltin(name = "-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
     public static class SubtractBuiltin {
     }
 
-    @RBuiltin(name = "/", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
+    @RBuiltin(name = "/", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
     public static class DivBuiltin {
     }
 
-    @RBuiltin(name = "%/%", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
+    @RBuiltin(name = "%/%", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
     public static class IntegerDivBuiltin {
     }
 
-    @RBuiltin(name = "%%", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
+    @RBuiltin(name = "%%", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
     public static class ModBuiltin {
     }
 
-    @RBuiltin(name = "*", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
+    @RBuiltin(name = "*", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
     public static class MultiplyBuiltin {
     }
 
-    @RBuiltin(name = "^", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
+    @RBuiltin(name = "^", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
     public static class PowBuiltin {
     }
 

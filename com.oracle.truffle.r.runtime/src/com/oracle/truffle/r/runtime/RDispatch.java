@@ -23,7 +23,24 @@
 package com.oracle.truffle.r.runtime;
 
 public enum RDispatch {
-    DEFAULT,
-    INTERNAL_GENERIC,
-    GROUP_GENERIC
+    DEFAULT(null),
+    INTERNAL_GENERIC(null),
+    MATH_GROUP_GENERIC("Math"),
+    OPS_GROUP_GENERIC("Ops"),
+    SUMMARY_GROUP_GENERIC("Summary"),
+    COMPLEX_GROUP_GENERIC("Complex");
+
+    private final String genericName;
+
+    RDispatch(String genericName) {
+        this.genericName = genericName;
+    }
+
+    public boolean isGeneric() {
+        return genericName != null;
+    }
+
+    public String getGenericName() {
+        return genericName;
+    }
 }
