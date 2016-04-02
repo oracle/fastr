@@ -617,7 +617,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                             newNames[resultIndex] = names.getDataAt(i);
                         }
                         resultIndex++;
-                        if (isPreviousResultSpecialized() && resultIndex > resultLength) {
+                        if (isPreviousResultSpecialized() && resultIndex >= resultLength) {
                             // got too many elements
                             CompilerDirectives.transferToInterpreterAndInvalidate();
                             previousResultLength = PREVIOUS_RESULT_GENERIC;
