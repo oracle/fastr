@@ -13,6 +13,7 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
@@ -121,7 +122,8 @@ public abstract class AccessSlotNode extends RNode {
         return getSlotS4Internal(object, internedName, value);
     }
 
-    private RFunction getDataPartFunction(REnvironment methodsNamespace) {
+    @TruffleBoundary
+    private static RFunction getDataPartFunction(REnvironment methodsNamespace) {
         Object f = methodsNamespace.findFunction("getDataPart");
         return (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
     }

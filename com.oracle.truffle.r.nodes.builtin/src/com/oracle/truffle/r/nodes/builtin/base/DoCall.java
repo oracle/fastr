@@ -219,7 +219,8 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
             needsCallerFrame = true;
         }
         callerFrame = needsCallerFrame ? getCallerFrame(frame, callerFrame) : null;
-        Object[] callArgs = argsNode.execute(func, caller, callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getArguments(), reorderedArgs.getSignature(), null);
+        Object[] callArgs = argsNode.execute(func, caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), reorderedArgs.getArguments(), reorderedArgs.getSignature(),
+                        null);
         RArguments.setIsIrregular(callArgs, true);
         return callCache.execute(frame, func.getTarget(), callArgs);
 

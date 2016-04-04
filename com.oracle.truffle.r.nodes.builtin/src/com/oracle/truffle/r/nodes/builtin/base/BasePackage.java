@@ -545,7 +545,6 @@ public class BasePackage extends RBuiltinPackage {
         add(UpdateAttr.class, UpdateAttrNodeGen::create);
         add(UpdateAttributes.class, UpdateAttributesNodeGen::create);
         add(UpdateClass.class, UpdateClassNodeGen::create);
-        add(UpdateDiag.class, UpdateDiagNodeGen::create);
         add(UpdateDim.class, UpdateDimNodeGen::create);
         add(UpdateDimNames.class, UpdateDimNamesNodeGen::create);
         add(EnvFunctions.UpdateEnvironment.class, EnvFunctionsFactory.UpdateEnvironmentNodeGen::create);
@@ -556,7 +555,6 @@ public class BasePackage extends RBuiltinPackage {
         add(UpdateSlot.class, UpdateSlotNodeGen::create);
         add(UpdateStorageMode.class, UpdateStorageModeNodeGen::create);
         add(UpdateSubstr.class, UpdateSubstrNodeGen::create);
-        add(UpperTri.class, UpperTriNodeGen::create);
         add(VApply.class, VApplyNodeGen::create);
         add(Vector.class, VectorNodeGen::create);
         add(Warning.class, WarningNodeGen::create);

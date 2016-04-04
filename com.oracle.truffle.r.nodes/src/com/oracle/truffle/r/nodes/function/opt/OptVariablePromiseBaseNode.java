@@ -31,6 +31,8 @@ import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
+import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
+import com.oracle.truffle.r.runtime.PromiseEvalFrame;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -64,6 +66,9 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
 
     @Override
     public Object execute(VirtualFrame frame) {
+        if (frame instanceof PromiseEvalFrame) {
+            frame = SubstituteVirtualFrame.create(((PromiseEvalFrame) frame).getOriginalFrame());
+        }
         // If the frame slot we're looking for is not present yet, wait for it!
         if (!frameSlotNode.hasValue(frame)) {
             // We don't want to rewrite, as the the frame slot might show up later on (after 1.

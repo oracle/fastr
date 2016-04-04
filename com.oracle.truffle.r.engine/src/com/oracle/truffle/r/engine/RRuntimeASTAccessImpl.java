@@ -588,6 +588,10 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         TraceHandling.enableStatementTrace(func, tracerNode);
     }
 
+    public RSyntaxNode unwrapPromiseRep(RPromise promise) {
+        return RASTUtils.unwrap(promise.getRep()).asRSyntaxNode();
+    }
+
     @Override
     public void enableDebug(RFunction func) {
         DebugHandling.enableDebug(func, "", RNull.instance, false);

@@ -27,8 +27,10 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.runtime.PromiseEvalFrame;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.ReturnException;
@@ -36,8 +38,16 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
+/**
+ * In the normal case, we are returning from the currently executing function, but in the case where
+ * "return" was passed as an argument (promise) (e.g. in tryCatch) to a function, we will be
+ * evaluating that in the context of a PromiseEvalFrame and the frame we need to return to is that
+ * given by the PromiseEvalFrame.
+ */
 @RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"}, nonEvalArgs = {0})
 public abstract class Return extends RBuiltinNode {
+
+    private ConditionProfile isPromiseEvalProfile = ConditionProfile.createBinaryProfile();
 
     @Child private PromiseHelperNode promiseHelper;
 
@@ -66,14 +76,20 @@ public abstract class Return extends RBuiltinNode {
 
     @Specialization
     protected Object returnFunction(VirtualFrame frame, RPromise expr) {
-        controlVisibility();
-        Object value = initPromiseHelper().evaluate(frame, expr);
         /*
-         * The function we want to return from may not be the currently executing function, if
-         * "return(expr)" was passed as an argument; see the implementation of tryCatch. In that
-         * case "frame" identifies the function to return from, so we pass it in the
-         * ReturnException, to be checked in FunctionDefinitionNode.execute.
          */
-        throw new ReturnException(value, RArguments.getDepth(frame));
+        controlVisibility();
+        // Evaluate the result
+        Object value = initPromiseHelper().evaluate(frame, expr);
+
+        int depth;
+        if (isPromiseEvalProfile.profile(frame instanceof PromiseEvalFrame)) {
+            depth = ((PromiseEvalFrame) frame).getPromiseFrameDepth();
+        } else {
+            depth = RArguments.getDepth(frame);
+        }
+
+        throw new ReturnException(value, depth);
     }
+
 }

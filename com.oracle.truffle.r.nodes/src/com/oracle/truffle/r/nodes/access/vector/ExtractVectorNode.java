@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class ExtractVectorNode extends Node {
 
@@ -128,6 +129,12 @@ public abstract class ExtractVectorNode extends Node {
     }
 
     @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})
+    protected Object doReplaceSameDimensions(VirtualFrame frame, RAbstractVector vector, Object[] positions, Object exact, Object dropDimensions,  //
+                    @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
+        return cached.apply(frame, vector, positions, exact, dropDimensions);
+    }
+
+    @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})
     protected Object doReplaceRecursive(VirtualFrame frame, RAbstractListVector vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
         return cached.apply(frame, vector, positions, exact, dropDimensions);
@@ -183,4 +190,5 @@ public abstract class ExtractVectorNode extends Node {
             return cached;
         }
     }
+
 }

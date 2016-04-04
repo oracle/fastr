@@ -90,4 +90,12 @@ public class TestSimpleParsing extends TestBase {
         assertEval("setClass('Foo', representation(x='numeric')); a <- new('Foo'); a@x");
         assertEval("setClass('Foo', representation(x='numeric')); a <- new('Foo'); a@'x'");
     }
+
+    @Test
+    public void testId() {
+        assertEval("{ ..7foo <- 42 }");
+        assertEval("{ ...7foo <- 42 }");
+        assertEval("{ ..77foo <- 42 }");
+    }
+
 }

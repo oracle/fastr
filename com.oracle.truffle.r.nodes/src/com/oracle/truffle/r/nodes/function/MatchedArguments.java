@@ -57,6 +57,9 @@ public final class MatchedArguments extends Arguments<RNode> {
             Object[] result = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
                 result[i] = arguments[i].execute(frame);
+                if (i == 0 && result[i] instanceof String && result[i].equals(".startMsg")) {
+                    System.console();
+                }
             }
             return result;
         }

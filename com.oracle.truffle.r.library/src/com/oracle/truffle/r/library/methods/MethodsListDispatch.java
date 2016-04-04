@@ -369,13 +369,6 @@ public class MethodsListDispatch {
             if (op == null) {
                 throw RError.error(this, RError.Message.GENERIC, "internal error in 'callNextMethod': '.nextMethod' was not assigned in the frame of the method call");
             }
-            boolean dotsDone = readDots.execute(null, ev.getFrame()) == null;
-            if (!dotsDone) {
-                // TODO: in GNUR R there is some special handling of ... which may or may not be
-                // necessary anymore (as per their own comment); let's consider this after we hit
-                // this test case
-                throw RInternalError.unimplemented();
-            }
             boolean primCase = op.isBuiltin();
             if (primCase) {
                 throw RInternalError.unimplemented();

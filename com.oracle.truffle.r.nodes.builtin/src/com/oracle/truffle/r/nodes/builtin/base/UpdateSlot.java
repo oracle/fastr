@@ -102,7 +102,7 @@ public abstract class UpdateSlot extends RBuiltinNode {
         RStringVector valClass = objClassHierarchy.execute(value);
         RFunction currentFunction = (RFunction) checkAtAssignmentFind.execute(frame);
         if (cached.profile(currentFunction == checkSlotAssignFunction)) {
-            Object[] args = argsNode.execute(checkSlotAssignFunction, caller, null, RArguments.getDepth(frame) + 1, new Object[]{objClass, name, valClass},
+            Object[] args = argsNode.execute(checkSlotAssignFunction, caller, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), new Object[]{objClass, name, valClass},
                             ArgumentsSignature.get("cl", "name", "valueClass"), null);
             checkAtAssignmentCall.call(frame, args);
         } else {

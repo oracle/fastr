@@ -21,13 +21,16 @@ public class TestBuiltin_syscalls extends TestBase {
         assertEval("sys.calls()");
         assertEval("{ f <- function(x) sys.calls(); g <- function() f(x); g() }");
         // Avoid deparse issues in the output of the try code by comparing length
-        assertEval(Ignored.ImplementationError, "{ f <- function(x) sys.calls(); g <- function() f(x); length(try(g())) }");
+        assertEval("{ f <- function(x) sys.calls(); g <- function() f(x); length(try(g())) }");
     }
 
     @Test
     public void testSysCallsPromises() {
         assertEval("{ f <- function(x) x; g <- function() f(sys.calls()); g() }");
-        assertEval(Ignored.ImplementationError, "{ f <- function(x) x; g <- function() f(sys.calls()); length(try(g())) }");
+        assertEval("{ f <- function(x) x; g <- function() f(sys.calls()); length(try(g())) }");
+        // f is not on the stack because z=u() is being evaluated eagerly and not inside f
+        assertEval(Ignored.ImplementationError, "{ v <- function() sys.calls() ; u<- function() v(); f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+
     }
 
 }

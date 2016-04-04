@@ -787,7 +787,7 @@ public class RDeparse {
                     RAbstractListVector list = (RAbstractListVector) fun.cddr();
                     body = wrap(list.getDataAtAsObject(0), false);
                 } else if (pl.getType() == SEXPTYPE.LISTSXP) {
-                    assert pl.cadr() == RNull.instance && pl.cddr() == RNull.instance;
+                    assert pl.cdr() == RNull.instance || (pl.cadr() == RNull.instance && pl.cddr() == RNull.instance);
                     body = wrap(pl.car(), false);
                 } else {
                     assert pl.getType() == SEXPTYPE.LANGSXP;

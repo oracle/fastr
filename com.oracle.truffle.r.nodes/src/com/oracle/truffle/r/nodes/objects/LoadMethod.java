@@ -103,7 +103,7 @@ abstract class LoadMethod extends RBaseNode {
         }
 
         writeRMethod.execute(frame, fdef);
-        if (fname.equals(RRuntime.R_LOAD_METHOD_NAME)) {
+        if (fname == RRuntime.R_LOAD_METHOD_NAME) {
             // the loadMethod function contains the following call:
             // standardGeneric("loadMethod")
             // which we are handling here, so == is fine
@@ -125,7 +125,8 @@ abstract class LoadMethod extends RBaseNode {
                 currentFunction = (RFunction) loadMethodFind.execute(frame, methodsEnv.getFrame(methodsFrameAccessProfile));
             }
             if (cached.profile(currentFunction == loadMethodFunction)) {
-                Object[] args = argsNode.execute(loadMethodFunction, caller, null, RArguments.getDepth(frame) + 1, new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())},
+                Object[] args = argsNode.execute(loadMethodFunction, caller, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
+                                new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())},
                                 ArgumentsSignature.get("method", "fname", "envir"), null);
                 ret = (RFunction) loadMethodCall.call(frame, args);
             } else {
