@@ -187,16 +187,6 @@ public class TrigExpFunctions {
         @Child private BinaryArithmetic calculatePowNode;
 
         @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public double op(double op) {
             return Math.exp(op);
         }
@@ -221,16 +211,6 @@ public class TrigExpFunctions {
         @Child private BinaryArithmetic calculatePowNode;
 
         @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public double op(double op) {
             return Math.expm1(op);
         }
@@ -246,21 +226,11 @@ public class TrigExpFunctions {
         }
     }
 
-    @com.oracle.truffle.r.runtime.RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Sin extends UnaryArithmeticBuiltinNode {
 
         public Sin() {
             super(RType.Double);
-        }
-
-        @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -284,16 +254,6 @@ public class TrigExpFunctions {
         }
 
         @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public double op(double op) {
             return Math.sinh(op);
         }
@@ -314,16 +274,6 @@ public class TrigExpFunctions {
         }
 
         @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public double op(double op) {
             double norm = op % 2d;
             if (norm == 0d || norm == 1d || norm == -1d) {
@@ -338,10 +288,6 @@ public class TrigExpFunctions {
             return Math.sin(norm * Math.PI);
         }
 
-        @Override
-        public RComplex op(double re, double im) {
-            throw new UnsupportedOperationException();
-        }
     }
 
     @RBuiltin(name = "cos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
@@ -349,16 +295,6 @@ public class TrigExpFunctions {
 
         public Cos() {
             super(RType.Double);
-        }
-
-        @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -382,16 +318,6 @@ public class TrigExpFunctions {
         }
 
         @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public double op(double op) {
             return Math.cosh(op);
         }
@@ -409,16 +335,6 @@ public class TrigExpFunctions {
 
         public Cospi() {
             super(RType.Double);
-        }
-
-        @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -442,7 +358,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @com.oracle.truffle.r.runtime.RBuiltin(name = "tan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "tan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Tan extends UnaryArithmeticBuiltinNode {
 
         public Tan() {
@@ -451,16 +367,6 @@ public class TrigExpFunctions {
 
         @Child private Sin sinNode = SinNodeGen.create(null, null, null);
         @Child private Cos cosNode = CosNodeGen.create(null, null, null);
-
-        @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
-        }
 
         @Override
         public double op(double op) {
@@ -488,16 +394,6 @@ public class TrigExpFunctions {
         @Child private Tan tanNode = TanNodeGen.create(null, null, null);
 
         @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public double op(double op) {
             return Math.tanh(op);
         }
@@ -514,16 +410,6 @@ public class TrigExpFunctions {
 
         public Tanpi() {
             super(RType.Double);
-        }
-
-        @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -563,16 +449,6 @@ public class TrigExpFunctions {
         protected double hypot(double re, double im) {
             ensureChypot();
             return chypot.chypot(re, im);
-        }
-
-        @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -623,16 +499,6 @@ public class TrigExpFunctions {
         }
 
         @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public double op(double x) {
             return Math.log(x + Math.sqrt(x * x + 1d));
         }
@@ -652,16 +518,6 @@ public class TrigExpFunctions {
         }
 
         @Child private Asin asinNode = AsinNodeGen.create(null, null, null);
-
-        @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
-        }
 
         @Override
         public double op(double op) {
@@ -685,16 +541,6 @@ public class TrigExpFunctions {
         @Child private Acos acosNode = AcosNodeGen.create(null, null, null);
 
         @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public double op(double x) {
             return Math.log(x + Math.sqrt(x * x - 1d));
         }
@@ -711,16 +557,6 @@ public class TrigExpFunctions {
 
         public Atan() {
             super(RType.Double);
-        }
-
-        @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -754,16 +590,6 @@ public class TrigExpFunctions {
         }
 
         @Child private Atan atanNode = AtanNodeGen.create(null, null, null);
-
-        @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
-        }
 
         @Override
         public double op(double x) {

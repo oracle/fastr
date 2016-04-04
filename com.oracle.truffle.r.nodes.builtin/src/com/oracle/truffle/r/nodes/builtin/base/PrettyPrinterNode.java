@@ -92,6 +92,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @SuppressWarnings("unused")
@@ -117,8 +118,8 @@ public abstract class PrettyPrinterNode extends RNode {
     @Child private PrettyPrinterSingleVectorElementNode singleVectorElementPrettyPrinter;
     @Child private PrintVectorMultiDimNode multiDimPrinter;
 
-    @Child private UnaryArithmeticNode re;
-    @Child private UnaryArithmeticNode im;
+    @Child private NumericalFunctions.Re re = NumericalFunctionsFactory.ReNodeGen.create(null, null, null);
+    @Child private NumericalFunctions.Im im = NumericalFunctionsFactory.ImNodeGen.create(null, null, null);
 
     @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 
@@ -925,15 +926,9 @@ public abstract class PrettyPrinterNode extends RNode {
     @TruffleBoundary
     @Specialization(guards = "!twoDimsOrMore(operand)")
     protected String prettyPrint(RAbstractComplexVector operand, Object listElementName, byte quote, byte right) {
-        if (re == null) {
-            // the two are allocated side by side; checking for re is sufficient
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            re = insert(UnaryArithmeticNodeGen.create(Re.RE, RError.Message.NON_NUMERIC_MATH, RType.Double));
-            im = insert(UnaryArithmeticNodeGen.create(Im.IM, RError.Message.NON_NUMERIC_MATH, RType.Double));
-        }
 
-        RAbstractDoubleVector realParts = (RAbstractDoubleVector) re.execute(operand);
-        RAbstractDoubleVector imaginaryParts = (RAbstractDoubleVector) im.execute(operand);
+        RAbstractDoubleVector realParts = (RAbstractDoubleVector) re.calculateUnboxed(operand);
+        RAbstractDoubleVector imaginaryParts = (RAbstractDoubleVector) im.calculateUnboxed(operand);
 
         int length = operand.getLength();
         String[] realValues = new String[length];

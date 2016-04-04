@@ -91,7 +91,7 @@ public class BasePackage extends RBuiltinPackage {
 
         // Now load the rest of the builtins in "base"
         add(APerm.class, APermNodeGen::create);
-        add(Abs.class, AbsNodeGen::create);
+        add(NumericalFunctions.Abs.class, NumericalFunctionsFactory.AbsNodeGen::create);
         add(All.class, AllNodeGen::create);
         add(AllNames.class, AllNamesNodeGen::create);
         add(Any.class, AnyNodeGen::create);
@@ -145,7 +145,7 @@ public class BasePackage extends RBuiltinPackage {
         add(CommandArgs.class, CommandArgsNodeGen::create);
         add(Complex.class, ComplexNodeGen::create);
         add(CompilePKGS.class, CompilePKGSNodeGen::create);
-        add(Conj.class, ConjNodeGen::create);
+        add(NumericalFunctions.Conj.class, NumericalFunctionsFactory.ConjNodeGen::create);
         add(ConditionFunctions.AddCondHands.class, ConditionFunctionsFactory.AddCondHandsNodeGen::create);
         add(ConditionFunctions.AddRestart.class, ConditionFunctionsFactory.AddRestartNodeGen::create);
         add(ConditionFunctions.DfltStop.class, ConditionFunctionsFactory.DfltStopNodeGen::create);
@@ -315,7 +315,7 @@ public class BasePackage extends RBuiltinPackage {
         add(HiddenInternalFunctions.Identity.class, HiddenInternalFunctionsFactory.IdentityNodeGen::create);
         add(IConv.class, IConvNodeGen::create);
         add(Identical.class, Identical::create);
-        add(Im.class, ImNodeGen::create);
+        add(NumericalFunctions.Im.class, NumericalFunctionsFactory.ImNodeGen::create);
         add(InfixFunctions.AccessArraySubscriptBuiltin.class, InfixFunctionsFactory.AccessArraySubscriptBuiltinNodeGen::create);
         add(InfixFunctions.AccessArraySubscriptDefaultBuiltin.class, InfixFunctionsFactory.AccessArraySubscriptBuiltinNodeGen::create);
         add(InfixFunctions.AccessArraySubsetBuiltin.class, InfixFunctionsFactory.AccessArraySubsetBuiltinNodeGen::create);
@@ -410,7 +410,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Merge.class, MergeNodeGen::create);
         add(Min.class, MinNodeGen::create);
         add(Missing.class, MissingNodeGen::create);
-        add(Mod.class, ModNodeGen::create);
+        add(NumericalFunctions.Mod.class, NumericalFunctionsFactory.ModNodeGen::create);
         add(NArgs.class, NArgsNodeGen::create);
         add(NChar.class, NCharNodeGen::create);
         add(NGetText.class, NGetTextNodeGen::create);
@@ -448,7 +448,7 @@ public class BasePackage extends RBuiltinPackage {
         add(RawFunctions.CharToRaw.class, RawFunctionsFactory.CharToRawNodeGen::create);
         add(RawFunctions.RawToChar.class, RawFunctionsFactory.RawToCharNodeGen::create);
         add(RawFunctions.RawShift.class, RawFunctionsFactory.RawShiftNodeGen::create);
-        add(Re.class, ReNodeGen::create);
+        add(NumericalFunctions.Re.class, NumericalFunctionsFactory.ReNodeGen::create);
         add(ReadDCF.class, ReadDCFNodeGen::create);
         add(ReadREnviron.class, ReadREnvironNodeGen::create);
         add(Readline.class, ReadlineNodeGen::create);
@@ -478,7 +478,7 @@ public class BasePackage extends RBuiltinPackage {
         add(SerializeFunctions.UnserializeFromConn.class, SerializeFunctionsFactory.UnserializeFromConnNodeGen::create);
         add(Setwd.class, SetwdNodeGen::create);
         add(ShortRowNames.class, ShortRowNamesNodeGen::create);
-        add(Sign.class, SignNodeGen::create);
+        add(NumericalFunctions.Sign.class, NumericalFunctionsFactory.SignNodeGen::create);
         add(Signif.class, SignifNodeGen::create);
         add(SinkFunctions.Sink.class, SinkFunctionsFactory.SinkNodeGen::create);
         add(SinkFunctions.SinkNumber.class, SinkFunctionsFactory.SinkNumberNodeGen::create);
@@ -489,7 +489,7 @@ public class BasePackage extends RBuiltinPackage {
         add(SortFunctions.Sort.class, SortFunctionsFactory.SortNodeGen::create);
         add(Split.class, SplitNodeGen::create);
         add(Sprintf.class, SprintfNodeGen::create);
-        add(Sqrt.class, SqrtNodeGen::create);
+        add(NumericalFunctions.Sqrt.class, NumericalFunctionsFactory.SqrtNodeGen::create);
         add(StandardGeneric.class, StandardGenericNodeGen::create);
         add(Stop.class, StopNodeGen::create);
         add(Strtoi.class, StrtoiNodeGen::create);

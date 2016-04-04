@@ -47,7 +47,7 @@ public abstract class UnaryArithmeticBuiltinNode extends RBuiltinNode implements
     }
 
     @Specialization
-    protected Object calculateUnboxed(Object value) {
+    public Object calculateUnboxed(Object value) {
         return unaryNode.execute(boxPrimitive.execute(value));
     }
 
