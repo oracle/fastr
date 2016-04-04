@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -178,6 +179,12 @@ public interface RRuntimeASTAccess {
      * Project circularity workaround.
      */
     void enableDebug(RFunction func);
+
+    /**
+     * Project circularity workaround. Equivalent to
+     * RASTUtils.unwrap(promise.getRep()).asRSyntaxNode().
+     */
+    RSyntaxNode unwrapPromiseRep(RPromise promise);
 
     /**
      * cf. {@code Node.isTaggedWith(tag)}.

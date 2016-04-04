@@ -292,7 +292,7 @@ public class GetFunctions {
                 argsNode = insert(RArgumentsNode.create());
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] callArgs = argsNode.execute(ifnFunc, caller, callerFrame, RArguments.getDepth(frame) + 1, new Object[]{x}, ArgumentsSignature.empty(1), null);
+            Object[] callArgs = argsNode.execute(ifnFunc, caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), new Object[]{x}, ArgumentsSignature.empty(1), null);
             return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
         }
     }

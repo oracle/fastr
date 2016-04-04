@@ -38,6 +38,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.PromiseEvalFrameDebug;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -54,6 +55,7 @@ import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.UnrolledVariadicArguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.PromiseEvalFrame;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -76,6 +78,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.IdenticalVisitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -88,7 +91,61 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public class FrameFunctions {
 
-    public abstract static class FrameHelper extends RBuiltinNode {
+    /**
+     * Support for returning the correct frame depth. If no promise evaluation is in progress, then
+     * we simply return the current frame depth. Otherwise, and this is determined by
+     * {@code RArguments.getPromiseFrame(frame) != null}, we need to check if this builtin matches
+     * the promise being evaluated. If the effective frame depth is exactly 1 higher than the
+     * promise frame depth, then it must match. Otherwise, we have to check the caller for a match
+     * to the promise (slow path).
+     *
+     */
+    public abstract static class FrameDepthHelper extends RBuiltinNode {
+        private ConditionProfile isPromiseEvalProfile = ConditionProfile.createBinaryProfile();
+        private ConditionProfile isFastPath = ConditionProfile.createBinaryProfile();
+
+        protected int getEffectiveDepth(VirtualFrame frame) {
+            Frame pfFrame = RArguments.getPromiseFrame(frame);
+            int depth = RArguments.getDepth(frame);
+            if (isPromiseEvalProfile.profile(pfFrame != null)) {
+                PromiseEvalFrame promiseEvalFrame = (PromiseEvalFrame) pfFrame;
+                int effectiveDepth = RArguments.getEffectiveDepth(frame);
+                int pdepth = promiseEvalFrame.getPromiseFrameDepth();
+                boolean match = false;
+                if (isFastPath.profile(effectiveDepth == pdepth + 1)) {
+                    depth = effectiveDepth;
+                    match = true;
+                } else {
+                    /* slow path, as must check if caller matches the promise */
+                    Frame eFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, effectiveDepth);
+                    if (matchPromise(RArguments.getCall(eFrame), RContext.getRRuntimeASTAccess().unwrapPromiseRep(promiseEvalFrame.getPromise()))) {
+                        depth = RArguments.getDepth(eFrame);
+                        match = true;
+                    }
+                }
+                if (PromiseEvalFrameDebug.enabled) {
+                    PromiseEvalFrameDebug.dumpStack("ged" + (match ? "(true)" : "(false)"));
+                    PromiseEvalFrameDebug.match(this, match, promiseEvalFrame, depth);
+                }
+            } else {
+                PromiseEvalFrameDebug.noPromise(this, depth);
+            }
+            return depth;
+        }
+
+        @TruffleBoundary
+        private static boolean matchPromise(RCaller call, RSyntaxNode promiseNode) {
+            if (call == null) {
+                return false;
+            }
+            RSyntaxNode callNode = RASTUtils.unwrap(call.getRep()).asRSyntaxNode();
+            return new IdenticalVisitor().accept(promiseNode, callNode);
+
+        }
+
+    }
+
+    public abstract static class FrameHelper extends FrameDepthHelper {
 
         private final ConditionProfile currentFrameProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile caller1Profile = ConditionProfile.createBinaryProfile();
@@ -107,14 +164,21 @@ public class FrameFunctions {
          */
         protected Frame getFrame(VirtualFrame frame, int n) {
             int actualFrame;
-            int depth = RArguments.getDepth(frame);
+            int depth;
             if (n > 0) {
+                depth = RArguments.getDepth(frame);
                 if (n > depth) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.NOT_THAT_MANY_FRAMES);
                 }
                 actualFrame = n;
             } else {
+                /*
+                 * Negative frame depths require special treatment during promise evaluation. TODO
+                 * should previous arm really be n >= 0? Spec says non-negative values are frame
+                 * numbers and negative numbers are relative to top frame.
+                 */
+                depth = getEffectiveDepth(frame);
                 actualFrame = depth + n - 1;
             }
             Frame result = getNumberedFrame(frame, actualFrame);
@@ -125,7 +189,7 @@ public class FrameFunctions {
             return result;
         }
 
-        protected Frame getNumberedFrame(VirtualFrame frame, int actualFrame) {
+        protected Frame getNumberedFrame(VirtualFrame frame, int actualFrame, boolean skipPromiseEvalFrames) {
             int depth = RArguments.getDepth(frame);
             if (currentFrameProfile.profile(actualFrame == depth)) {
                 return frame;
@@ -142,9 +206,15 @@ public class FrameFunctions {
                         }
                     }
                 }
-                return Utils.getStackFrame(frameAccess(), actualFrame);
+                return Utils.getStackFrame(frameAccess(), actualFrame, skipPromiseEvalFrames);
             }
         }
+
+        protected Frame getNumberedFrame(VirtualFrame frame, int actualFrame) {
+            return getNumberedFrame(frame, actualFrame, false);
+
+        }
+
     }
 
     @RBuiltin(name = "sys.call", kind = INTERNAL, parameterNames = {"which"})
@@ -382,11 +452,11 @@ public class FrameFunctions {
     }
 
     @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {})
-    public abstract static class SysNFrame extends RBuiltinNode {
+    public abstract static class SysNFrame extends FrameDepthHelper {
         @Specialization
         protected int sysNFrame(VirtualFrame frame) {
             controlVisibility();
-            return RArguments.getDepth(frame) - 1;
+            return getEffectiveDepth(frame) - 1;
         }
     }
 
@@ -437,7 +507,7 @@ public class FrameFunctions {
         @Specialization
         protected Object sysFrames(VirtualFrame frame) {
             controlVisibility();
-            int depth = RArguments.getDepth(frame);
+            int depth = getEffectiveDepth(frame);
             if (depth == 1) {
                 return RNull.instance;
             } else {
@@ -473,7 +543,7 @@ public class FrameFunctions {
         @Specialization
         protected Object sysCalls(VirtualFrame frame) {
             controlVisibility();
-            int depth = RArguments.getDepth(frame);
+            int depth = getEffectiveDepth(frame);
             if (depth == 1) {
                 return RNull.instance;
             } else {
@@ -481,7 +551,13 @@ public class FrameFunctions {
                 RPairList next = result;
                 int rdepth = includeTop ? depth + 1 : depth;
                 for (int i = 1; i < rdepth; i++) {
-                    Frame f = getNumberedFrame(frame, i);
+                    /*
+                     * Normally, getNumberedFrame, which calls Utils.getStackFrame, can return a
+                     * PromiseEvalFrame. In other use cases this is important but here it is a
+                     * problem as the function value is wrong. Further down the stack we will find
+                     * the real function that caused the promise frame to come into existence.
+                     */
+                    Frame f = getNumberedFrame(frame, i, true);
                     next.setCar(SysCall.createCall(f));
                     if (i != rdepth - 1) {
                         RPairList pl = RDataFactory.createPairList();
@@ -505,12 +581,12 @@ public class FrameFunctions {
     }
 
     @RBuiltin(name = "sys.parent", kind = INTERNAL, parameterNames = {"n"})
-    public abstract static class SysParent extends RBuiltinNode {
+    public abstract static class SysParent extends FrameDepthHelper {
 
         @Specialization
         protected int sysParent(VirtualFrame frame, int n) {
             controlVisibility();
-            int p = RArguments.getDepth(frame) - n - 1;
+            int p = getEffectiveDepth(frame) - n - 1;
             return p < 0 ? 0 : p;
         }
 
@@ -560,7 +636,7 @@ public class FrameFunctions {
         @Specialization
         protected RIntVector sysParents(VirtualFrame frame) {
             controlVisibility();
-            int d = RArguments.getDepth(frame) - 1;
+            int d = getEffectiveDepth(frame) - 1;
             int[] data = new int[d];
             for (int i = 0; i < d; i++) {
                 data[i] = i;
@@ -597,7 +673,7 @@ public class FrameFunctions {
                 throw RError.error(this, RError.Message.INVALID_VALUE, "n");
             }
             Frame callerFrame = Utils.iterateRFrames(frameAccess(), new Function<Frame, Frame>() {
-                int parentDepth = RArguments.getDepth(frame) - n - 1;
+                int parentDepth = getEffectiveDepth(frame) - n - 1;
 
                 @Override
                 public Frame apply(Frame f) {

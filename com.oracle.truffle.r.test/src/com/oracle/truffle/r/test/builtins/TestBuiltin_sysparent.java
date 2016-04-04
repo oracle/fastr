@@ -39,7 +39,9 @@ public class TestBuiltin_sysparent extends TestBase {
         assertEval("{ f <- function(x=sys.parent()) x ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.parent()) g(z) ; h() }");
         assertEval("{ u <- function() sys.parent() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
-        assertEval(Ignored.ImplementationError, "{ f <- function(x) { print(sys.parent()); x }; g <- function(x) f(x); m <- function() g(g(sys.parent())); callm <- function() m(); callm() }");
+        // f is not on the stack because z=u() is being evaluated eagerly and not inside f
+        assertEval(Ignored.ImplementationError, "{ v <- function() sys.parent() ; u<- function() v(); f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+        assertEval("{ f <- function(x) { print(sys.parent()); x }; g <- function(x) f(x); m <- function() g(g(sys.parent())); callm <- function() m(); callm() }");
     }
 
 }

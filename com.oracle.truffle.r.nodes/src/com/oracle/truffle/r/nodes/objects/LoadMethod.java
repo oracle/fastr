@@ -125,7 +125,8 @@ abstract class LoadMethod extends RBaseNode {
                 currentFunction = (RFunction) loadMethodFind.execute(frame, methodsEnv.getFrame(methodsFrameAccessProfile));
             }
             if (cached.profile(currentFunction == loadMethodFunction)) {
-                Object[] args = argsNode.execute(loadMethodFunction, caller, null, RArguments.getDepth(frame) + 1, new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())},
+                Object[] args = argsNode.execute(loadMethodFunction, caller, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
+                                new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())},
                                 ArgumentsSignature.get("method", "fname", "envir"), null);
                 ret = (RFunction) loadMethodCall.call(frame, args);
             } else {

@@ -309,15 +309,19 @@ public final class Utils {
      * @return {@link Frame} instance or {@code null} if {@code depth} is out of range
      */
     @TruffleBoundary
-    public static Frame getStackFrame(FrameAccess fa, int depth) {
+    public static Frame getStackFrame(FrameAccess fa, int depth, boolean skipPromiseEvalFrames) {
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             boolean first = true;
 
             @Override
             public Frame visitFrame(FrameInstance frameInstance) {
                 if (!first) {
-                    Frame f = RArguments.unwrap(frameInstance.getFrame(fa, false));
+                    Frame pf = frameInstance.getFrame(fa, false);
+                    Frame f = RArguments.unwrap(pf);
                     if (RArguments.isRFrame(f)) {
+                        if (skipPromiseEvalFrames && f instanceof PromiseEvalFrame) {
+                            return null;
+                        }
                         return RArguments.getDepth(f) == depth ? f : null;
                     } else {
                         return null;
@@ -327,6 +331,10 @@ public final class Utils {
                 return null;
             }
         });
+    }
+
+    public static Frame getStackFrame(FrameAccess fa, int depth) {
+        return getStackFrame(fa, depth, false);
     }
 
     /**
@@ -480,8 +488,17 @@ public final class Utils {
             Frame unwrapped = RArguments.unwrap(frame);
             RCaller call = RArguments.getCall(unwrapped);
             if (call != null) {
+                /*
+                 * Log the frame depths as a triple: d,e,p, where 'd' is the actual depth, 'e' is
+                 * the effective depth and 'p' is the promise frame depth, or -1 if no promise
+                 * evaluation in progress.
+                 */
                 String callSrc = RContext.getRRuntimeASTAccess().getCallerSource(call);
-                str.append("Frame(d=").append(RArguments.getDepth(unwrapped)).append("): ").append(callTarget).append(isVirtual ? " (virtual)" : "");
+                int depth = RArguments.getDepth(unwrapped);
+                int effectiveDepth = RArguments.getEffectiveDepth(unwrapped);
+                Frame pf = RArguments.getPromiseFrame(unwrapped);
+                int pfDepth = pf == null ? -1 : ((PromiseEvalFrame) pf).getPromiseFrameDepth();
+                str.append("Frame(d=").append(depth).append(',').append(effectiveDepth).append(',').append(pfDepth).append("): ").append(callTarget).append(isVirtual ? " (virtual)" : "");
                 str.append(" (called as: ").append(callSrc).append(')');
             }
             if (printFrameSlots) {

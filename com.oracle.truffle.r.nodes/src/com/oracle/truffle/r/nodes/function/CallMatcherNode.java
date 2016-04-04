@@ -105,7 +105,7 @@ public abstract class CallMatcherNode extends RBaseNode {
     }
 
     protected Object[] prepareArguments(VirtualFrame frame, Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, DispatchArgs dispatchArgs) {
-        return argsNode.execute(function, caller, null, RArguments.getDepth(frame) + 1, reorderedArgs, reorderedSignature, dispatchArgs);
+        return argsNode.execute(function, caller, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), reorderedArgs, reorderedSignature, dispatchArgs);
     }
 
     protected final void evaluatePromises(VirtualFrame frame, RFunction function, Object[] args, int varArgIndex) {

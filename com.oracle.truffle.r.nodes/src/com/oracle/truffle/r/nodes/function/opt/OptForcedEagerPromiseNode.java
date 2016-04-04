@@ -63,7 +63,7 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
      * Creates a new {@link RPromise} every time.
      */
     @Override
-    public Object execute(VirtualFrame frame) {
+    public Object execute(final VirtualFrame frame) {
         Object value;
         // need to unwrap as re-wrapping happens when the value is retrieved (otherwise ref count
         // update happens twice)

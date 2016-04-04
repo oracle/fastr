@@ -425,8 +425,9 @@ final class REngine implements Engine, Engine.Timings {
     public Object evalFunction(RFunction func, MaterializedFrame frame, Object... args) {
         ArgumentsSignature argsSig = ((RRootNode) func.getRootNode()).getSignature();
         MaterializedFrame actualFrame = frame == null ? Utils.getActualCurrentFrame().materialize() : frame;
-        Object[] rArgs = RArguments.create(func, actualFrame == null ? null : RArguments.getCall(actualFrame), actualFrame, actualFrame == null ? 1 : RArguments.getDepth(actualFrame) + 1, args,
-                        argsSig, null);
+        Object[] rArgs = RArguments.create(func, actualFrame == null ? null : RArguments.getCall(actualFrame), actualFrame, actualFrame == null ? 1 : RArguments.getDepth(actualFrame) + 1,
+                        actualFrame == null ? null : RArguments.getPromiseFrame(actualFrame),
+                        args, argsSig, null);
         return func.getTarget().call(rArgs);
     }
 
@@ -586,7 +587,7 @@ final class REngine implements Engine, Engine.Timings {
             if (FastROptions.NewStateTransition.getBooleanValue() && resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                 ((RShareable) resultValue).incRefCount();
             }
-            function.getTarget().call(RArguments.create(function, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE, null));
+            function.getTarget().call(RArguments.create(function, null, REnvironment.globalEnv().getFrame(), 1, null, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE, null));
             if (FastROptions.NewStateTransition.getBooleanValue() && resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                 ((RShareable) resultValue).decRefCount();
             }

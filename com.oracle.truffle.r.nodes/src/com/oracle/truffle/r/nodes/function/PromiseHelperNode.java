@@ -37,6 +37,9 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
+import com.oracle.truffle.r.nodes.PromiseEvalFrameDebug;
+import com.oracle.truffle.r.runtime.PromiseEvalFrame;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -203,24 +206,44 @@ public class PromiseHelperNode extends RBaseNode {
             } else {
                 Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
                 assert promiseFrame != null;
-                // With this call in, sys.call sometimes gets the wrong call,
-                // without it, at least one unit test reports the wrong caller.
-                // This should be addressed in a complete reworking of how
-                // the caller for errors is determined.
-                // RArguments.setCallSourceSection(promiseFrame, callSrc);
-                // (if this call is re-enabled, the old source section needs to be saved and
-                // restored.)
 
                 if (promiseClosureCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     promiseClosureCache = insert(InlineCacheNode.createPromise(3));
                 }
-
-                return promiseClosureCache.execute(promiseFrame, promise.getClosure());
+                Frame promiseEvalFrame = checkCreatePromiseEvalFrame(frame, promiseFrame, promise);
+                if (PromiseEvalFrameDebug.enabled) {
+                    PromiseEvalFrameDebug.doPromiseEval(true, frame, promiseFrame, promise);
+                }
+                try {
+                    Object result = promiseClosureCache.execute(promiseEvalFrame, promise.getClosure());
+                    return result;
+                } finally {
+                    if (PromiseEvalFrameDebug.enabled) {
+                        PromiseEvalFrameDebug.doPromiseEval(false, frame, promiseFrame, promise);
+                    }
+                }
             }
         } finally {
             promise.setUnderEvaluation(false);
         }
+    }
+
+    /**
+     * Checks to see if we need to create a {@link PromiseEvalFrame}. We cannot always just use
+     * {@code promiseFrame} because it effectively resets the depth, so we wrap it, using the depth
+     * from the current frame. N.B. in certain rare situations {@code frame} may be {@code null}. If
+     * the depth of {@code frame} is the same as the {@code promiseFrame} depth, no depth conflict
+     * can occur so we don't need the {@link PromiseEvalFrame} (even if the frames are different).
+     *
+     */
+    private static Frame checkCreatePromiseEvalFrame(Frame frame, Frame promiseFrame, RPromise promise) {
+        if (frame != null && RArguments.getDepth(frame) != RArguments.getDepth(promiseFrame)) {
+            return PromiseEvalFrame.create(frame, promiseFrame.materialize(), promise);
+        } else {
+            return promiseFrame;
+        }
+
     }
 
     private Object generateValueEager(VirtualFrame frame, OptType optType, EagerPromise promise) {
@@ -290,7 +313,18 @@ public class PromiseHelperNode extends RBaseNode {
             } else {
                 Frame promiseFrame = promise.getFrame();
                 assert promiseFrame != null;
-                return RContext.getEngine().evalPromise(promise.getClosure(), promiseFrame.materialize());
+                try {
+                    Frame promiseEvalFrame = checkCreatePromiseEvalFrame(frame, promiseFrame, promise);
+                    if (PromiseEvalFrameDebug.enabled) {
+                        PromiseEvalFrameDebug.doPromiseEval(true, frame, promiseFrame, promise);
+                    }
+                    return RContext.getEngine().evalPromise(promise.getClosure(), promiseEvalFrame.materialize());
+                } finally {
+                    if (PromiseEvalFrameDebug.enabled) {
+                        PromiseEvalFrameDebug.doPromiseEval(false, frame, promiseFrame, promise);
+                    }
+
+                }
             }
         } finally {
             promise.setUnderEvaluation(false);
