@@ -49,7 +49,7 @@ public class PromiseEvalFrameDebug {
      * For use in calling code to check whether to trace. Set {@code true} for tracing to take
      * effect.
      */
-    @CompilationFinal public static boolean enabled = true;
+    @CompilationFinal public static boolean enabled/* = true */;
 
     private static final String DEBUG_TAG = "pefd";
 
