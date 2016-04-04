@@ -67,5 +67,6 @@ public class TestBuiltin_lengthassign extends TestBase {
         assertEval("{ x <- 1:2 ; z <- (length(x) <- 4) ; z }");
         assertEval("{ x<-c(a=7, b=42); length(x)<-4; x }");
         assertEval("{ x<-c(a=7, b=42); length(x)<-1; x }");
+        assertEval("{ x<-NULL; length(x)<-2; x }");
     }
 }

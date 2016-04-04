@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
@@ -40,6 +41,13 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.toInteger(1, true, false, false);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "isLengthOne(lengthVector)")
+    protected RNull updateLength(RNull value, RAbstractIntVector lengthVector) {
+        controlVisibility();
+        return RNull.instance;
     }
 
     @Specialization(guards = "isLengthOne(lengthVector)")
