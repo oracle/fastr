@@ -493,6 +493,7 @@ public class BasePackage extends RBuiltinPackage {
         add(StandardGeneric.class, StandardGenericNodeGen::create);
         add(Stop.class, StopNodeGen::create);
         add(Strtoi.class, StrtoiNodeGen::create);
+        add(Strtrim.class, StrtrimNodeGen::create);
         add(Substitute.class, SubstituteNodeGen::create);
         add(Substr.class, SubstrNodeGen::create);
         add(Sum.class, SumNodeGen::create);

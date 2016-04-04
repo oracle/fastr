@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
@@ -65,6 +66,11 @@ public class BrowserFunctions {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{"", RNull.instance, RRuntime.LOGICAL_TRUE, 0};
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toInteger(3);
         }
 
         @SuppressWarnings("unused")
