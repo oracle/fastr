@@ -65,6 +65,7 @@ import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -304,8 +305,9 @@ public class ForeignFunctions {
                 case "do_substitute_direct":
                     return SubstituteDirectNodeGen.create();
                 case "Rf_allocS4Object":
-                case "R_get_primname":
                     return new UnimplementedExternal(name);
+                case "R_get_primname":
+                    return GetPrimNameNodeGen.create();
                 case "new_object":
                     return NewObjectNodeGen.create();
 
