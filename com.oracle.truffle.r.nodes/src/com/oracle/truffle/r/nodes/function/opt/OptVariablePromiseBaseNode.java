@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -49,6 +50,8 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
     @Child private LocalReadVariableNode readNode;
     private final int wrapIndex;
 
+    private final ConditionProfile promiseEvalFrameProfile = ConditionProfile.createBinaryProfile();
+
     public OptVariablePromiseBaseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
         super(factory);
         // Should be caught by optimization check
@@ -65,9 +68,12 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
     }
 
     @Override
-    public Object execute(VirtualFrame frame) {
-        if (frame instanceof PromiseEvalFrame) {
-            frame = SubstituteVirtualFrame.create(((PromiseEvalFrame) frame).getOriginalFrame());
+    public Object execute(VirtualFrame initialFrame) {
+        VirtualFrame frame;
+        if (promiseEvalFrameProfile.profile(initialFrame instanceof PromiseEvalFrame)) {
+            frame = SubstituteVirtualFrame.create(((PromiseEvalFrame) initialFrame).getOriginalFrame());
+        } else {
+            frame = initialFrame;
         }
         // If the frame slot we're looking for is not present yet, wait for it!
         if (!frameSlotNode.hasValue(frame)) {
