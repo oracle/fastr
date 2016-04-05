@@ -341,9 +341,7 @@ public class RDeparse {
         public void fixupSources() {
             Source source = Source.fromText(sb, "deparse");
             for (SourceSectionElement s : sources) {
-                SourceSection original = s.element.getSourceSection();
-                SourceSection newSource = source.createSection(null, s.start, s.length);
-                s.element.setSourceSection(newSource);
+                s.element.setSourceSection(source.createSection(null, s.start, s.length));
             }
         }
 
