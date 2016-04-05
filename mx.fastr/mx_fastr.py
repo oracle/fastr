@@ -21,7 +21,7 @@
 # questions.
 #
 import tempfile, platform, subprocess, sys
-from os.path import join, sep, dirname, abspath
+from os.path import join, sep, abspath
 from argparse import ArgumentParser
 import mx
 import mx_gate
@@ -330,7 +330,7 @@ def test(args):
     parser.add_argument('--install-only', action='store_true', help='just install packages, do not test')
     parser.add_argument('--capture-output', action='store_true', help='capture output')
     # sundry options understood by installpkgs R code
-    parser.add_argument('--pkg-count', action='store', help='number of packages to install/test', default=100)
+    parser.add_argument('--pkg-count', action='store', help='number of packages to install/test', default='100')
     parser.add_argument('--ignore-blacklist', action='store_true', help='pass --ignore-blacklist')
     parser.add_argument('--install-dependents', action='store_true', help='pass -install-dependents')
     parser.add_argument('--print-ok-installs', action='store_true', help='pass --print-ok-installs')
