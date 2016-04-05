@@ -89,12 +89,12 @@ $(ICONV):
 iconv_config: $(ICONV)/Makefile
 
 $(ICONV)/Makefile:
-	(cd $(ICONV); ./configure --prefix $(ICONV_INSTALL) $(ICONV_CONFIG_FLAGS) > iconv_configure.log 2>&1)
+	(cd $(ICONV); ./configure --prefix $(ICONV_INSTALL) $(ICONV_CONFIG_FLAGS) > iconv_configure.log 2>&1 || cat iconv_configure.log)
 
 iconv_build: $(ICONV)/lib/libcharset.so
 
 $(ICONV)/lib/libcharset.so:
-	(cd $(ICONV); $(MAKE) MAKE=$(MAKE) && $(MAKE) MAKE=$(MAKE) install > iconv_make.log 2>&1)
+	(cd $(ICONV); $(MAKE) MAKE=$(MAKE) && $(MAKE) MAKE=$(MAKE) install > iconv_make.log 2>&1 || cat iconv_make.log)
 else
     GNUR_CONFIG_FLAGS := CFLAGS=-DLIBICONV_PLUG CPPFLAGS=-DLIBICONV_PLUG CXXFLAGS=-DLIBICONV_PLUG
 iconv:
@@ -116,12 +116,12 @@ endif
 
 $(GNUR_HOME)/Makefile:
 	ed $(GNUR_HOME)/src/extra/xz/Makefile.in < patchXzMakefile
-	(cd $(GNUR_HOME); ./configure --with-x=no --without-recommended-packages $(GNUR_CONFIG_FLAGS) > gnur_configure.log 2>&1)
+	(cd $(GNUR_HOME); ./configure --with-x=no --without-recommended-packages $(GNUR_CONFIG_FLAGS) > gnur_configure.log 2>&1 || cat gnur_configure.log)
 
 build: $(GNUR_HOME)/bin/R
 
 $(GNUR_HOME)/bin/R: $(GNUR_HOME)/Makeconf 
-	(cd $(GNUR_HOME); $(MAKE) MAKE=$(MAKE) -j > gnur_make.log 2>&1)
+	(cd $(GNUR_HOME); $(MAKE) MAKE=$(MAKE) -j > gnur_make.log 2>&1 || cat gnur_make.log)
 
 clean: cleangnur cleaniconv
 	rm -f Makeconf.done

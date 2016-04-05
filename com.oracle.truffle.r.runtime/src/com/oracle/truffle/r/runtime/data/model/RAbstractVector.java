@@ -68,7 +68,7 @@ public interface RAbstractVector extends RAbstractContainer, TruffleObject {
      *
      * @see RType#getPrecedence()
      */
-    default RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    default RAbstractVector castSafe(RType type, @SuppressWarnings("unused") ConditionProfile isNAProfile) {
         if (type == getRType()) {
             return this;
         } else {

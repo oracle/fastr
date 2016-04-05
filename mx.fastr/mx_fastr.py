@@ -251,8 +251,9 @@ def _fastr_gate_runner(args, tasks):
                 t.abort('copyright errors')
 
     # build the native projects (GnuR/VM)
-    with mx_gate.Task('BuildNative', tasks):
-        build([])
+    with mx_gate.Task('BuildNative', tasks) as t:
+        if t:
+            build([])
 
     # check that the expected test output file is up to date
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks) as t:
@@ -276,6 +277,10 @@ def gate(args):
     '''Run the R gate'''
     # exclude findbugs until compliant
     mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj'])
+
+def original_gate(args):
+    '''Run the R gate (without filtering gate tasks)'''
+    mx_gate.gate(args)
 
 def _test_harness_body_install_new(args, vmArgs):
     '''the callback from mx.test'''
@@ -605,6 +610,7 @@ _commands = {
     'rscript' : [rscript, '[options]'],
     'Rscript' : [rscript, '[options]'],
     'rtestgen' : [testgen, ''],
+    'originalgate' : [original_gate, '[options]'],
     # core overrides
     'bench' : [bench, ''],
     'rbench' : [rbench, ''],

@@ -1,0 +1,58 @@
+java7 : {name : oraclejdk, version : "7",    platformspecific: true}
+java8 : {name : oraclejdk, version : "8u66", platformspecific: true}
+
+common : {
+  packages : {
+    git : ">=1.8.3"
+    mercurial : ">=2.2"
+    "pip:astroid" : "==1.1.0"
+    "pip:pylint" : "==1.1.0"
+    make : ">=3.83"
+    gcc-build-essentials : ">=4.9.1" # GCC 4.9.0 fails on cluster
+    readline : "==6.3"
+  }
+  environment : {
+  }
+  timelimit : "30:00"
+}
+
+gateCmd : ["mx", "--strict-compliance", "originalgate", "--strict-mode", "-t"]
+
+java8Downloads : {
+  downloads : {
+    EXTRA_JAVA_HOMES : { pathlist :[
+      ${java7}
+    ]}
+    JAVA_HOME : ${java8}
+  }
+}
+
+gateTest : ${common} ${java8Downloads} {
+  run : [
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,BuildNative,UnitTests: ExpectedTestOutput file check,UnitTests: +EST,UnitTests: -EST"]
+  ]
+}
+
+gateStyle : ${common} {
+  # need pyhocon fix
+  downloads : {
+    JAVA_HOME : ${java8Downloads.downloads.JAVA_HOME}
+    EXTRA_JAVA_HOMES : ${java8Downloads.downloads.EXTRA_JAVA_HOMES}
+    JDT : {name: ecj, version: "4.5.1", platformspecific: false}
+    ECLIPSE : {name: eclipse, version: "4.3.0", platformspecific: true}
+  }
+  environment : ${common.environment} {
+    ECLIPSE_EXE : "$ECLIPSE/eclipse"
+  }
+  run : [
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,IDEConfigCheck,CodeFormatCheck,Checkstyle,Copyright check"]
+  ]
+}
+
+# currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
+
+builds = [
+  ${gateTest}       {capabilities : [linux, amd64, gate],   name: "gate-test-linux-amd64"}
+  ${gateStyle}      {capabilities : [linux, amd64, gate],   name: "gate-style-linux-amd64"}
+#  ${gateTest}       {capabilities : [linux, sparcv9, gate], name: "gate-test-linux-sparcv9"}
+]
