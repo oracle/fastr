@@ -54,7 +54,7 @@ gateStyle : ${common} {
 pkgtest: ${common} ${java8Downloads} {
   timelimit : "3:00:00"
   run : [
-    ["mx", "test"]
+    ["mx", "test", "--capture-output", "--print-ok-installs"]
   ]
 }
 

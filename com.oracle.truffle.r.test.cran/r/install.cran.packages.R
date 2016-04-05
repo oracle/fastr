@@ -73,7 +73,7 @@ usage <- function() {
 	cat(paste("usage: Rscript [--contriburl url] [--cran-mirror url] [--lib] [--verbose | -v] [-V] [--dryrun]",
                       "[--no-install | -n] [--create-blacklist] [--blacklist-file file] [--ignore-blacklist]",
 					  "[--initial-blacklist-file file]",
-					  "[--testcount count]", "[--ok-pkg-filelist file]",
+					  "[--pkg-count count]", "[--ok-pkg-filelist file]",
 					  "[--install-dependents]",
 					  "[--run-mode mode]",
 					  "[--pkg-filelist file]",
@@ -438,17 +438,17 @@ do.it <- function() {
 		}
 	}
 
-	if (is.na(testcount)) {
+	if (is.na(pkg.count)) {
 		# install all non-blacklisted packages in toinstall.pkgs
 		test.pkgnames <- rownames(toinstall.pkgs)
 	} else {
-		# install testcount packages taken at random from toinstall.pkgs
+		# install pkg.count packages taken at random from toinstall.pkgs
 		matched.toinstall.pkgs <- apply(toinstall.pkgs, 1, function(x) include.package(x, blacklist))
 		test.avail.pkgs <- toinstall.pkgs[matched.toinstall.pkgs, , drop=F]
 		test.avail.pkgnames <- rownames(test.avail.pkgs)
 		rands <- sample(1:length(test.avail.pkgnames))
-		test.pkgnames <- character(testcount)
-		for (i in (1:testcount)) {
+		test.pkgnames <- character(pkg.count)
+		for (i in (1:pkg.count)) {
 			test.pkgnames[[i]] <- test.avail.pkgnames[[rands[[i]]]]
 		}
 	}
@@ -471,7 +471,7 @@ do.it <- function() {
 		test.count = 1
 		test.total = length(test.pkgnames)
 		for (pkgname in test.pkgnames) {
-			if (installed.ok(pkgname)) {
+			if (install.status[pkgname]) {
 				if (dry.run) {
 					cat("would test:", pkgname, "\n")
 				} else {
@@ -607,9 +607,9 @@ parse.args <- function() {
 			cran.mirror <<- get.argvalue()
 		} else if (a == "--lib") {
 			lib.install <<- get.argvalue()
-		} else if (a == "--testcount") {
-			testcount <<- as.integer(get.argvalue())
-			if (is.na(testcount)) {
+		} else if (a == "--pkg-count") {
+			pkg.count <<- as.integer(get.argvalue())
+			if (is.na(pkg.count)) {
 				usage()
 			}
 		} else if (a == "--run-mode") {
@@ -661,7 +661,7 @@ cat.args <- function() {
 		cat("ignore.blacklist:", ignore.blacklist, "\n")
 		cat("pkg.pattern:", pkg.pattern, "\n")
 		cat("contriburl:", contriburl, "\n")
-		cat("testcount:", testcount, "\n")
+		cat("pkg.count:", pkg.count, "\n")
 		cat("run.mode:", run.mode, "\n")
 		cat("run.tests:", run.tests, "\n")
 		cat("pkg.list.installed:", pkg.list.installed, "\n")
@@ -751,7 +751,7 @@ avail.pkgs.rownames <- NULL
 toinstall.pkgs <- NULL
 create.blacklist.file <- F
 ignore.blacklist <- F
-testcount <- NA
+pkg.count <- NA
 run.mode <- "system"
 run.tests <- FALSE
 gnur <- FALSE
