@@ -61,5 +61,5 @@ builds = [
   ${gateTest}       {capabilities : [linux, amd64, gate],   name: "gate-test-linux-amd64"}
   ${gateStyle}      {capabilities : [linux, amd64, gate],   name: "gate-style-linux-amd64"}
 #  ${gateTest}       {capabilities : [linux, sparcv9, gate], name: "gate-test-linux-sparcv9"}
-  ${pkgtest}        {capabilities : [linux, amd64, pkgtest], name: "pkg-test-linux-amd64"}
+  ${pkgtest}        {capabilities : [linux, amd64, gate], name: "pkgtest-test-linux-amd64"}
 ]
