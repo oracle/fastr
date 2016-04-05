@@ -51,8 +51,15 @@ gateStyle : ${common} {
 
 # currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
 
+pkgtest: ${common} {
+  run : [
+    ["mx", "test"]
+  ]
+}
+
 builds = [
   ${gateTest}       {capabilities : [linux, amd64, gate],   name: "gate-test-linux-amd64"}
   ${gateStyle}      {capabilities : [linux, amd64, gate],   name: "gate-style-linux-amd64"}
 #  ${gateTest}       {capabilities : [linux, sparcv9, gate], name: "gate-test-linux-sparcv9"}
+  ${pkgtest}        {capabilities : [linux, amd64, pkgtest], name: "pkg-test-linux-amd64"}
 ]
