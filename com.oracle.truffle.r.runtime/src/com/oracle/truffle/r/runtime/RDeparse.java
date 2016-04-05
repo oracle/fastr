@@ -347,6 +347,7 @@ public class RDeparse {
             }
         }
 
+        @SuppressWarnings("try")
         private DeparseVisitor append(String str, RSyntaxElement... context) {
             try (C c = withContext(context)) {
                 append(str);
@@ -354,6 +355,7 @@ public class RDeparse {
             return this;
         }
 
+        @SuppressWarnings("try")
         public DeparseVisitor append(RSyntaxElement element) {
             try (C c = withContext(element)) {
                 visitor.accept(element);
@@ -420,6 +422,7 @@ public class RDeparse {
         private final class Visitor extends RSyntaxVisitor<Void> {
 
             @Override
+            @SuppressWarnings("try")
             protected Void visit(RSyntaxCall call) {
                 RSyntaxElement lhs = call.getSyntaxLHS();
                 RSyntaxElement[] args = call.getSyntaxArguments();
@@ -562,6 +565,7 @@ public class RDeparse {
             }
 
             @Override
+            @SuppressWarnings("try")
             protected Void visit(RSyntaxConstant constant) {
                 // coerce scalar values to vectors and unwrap data frames and factors:
                 Object value = RRuntime.asAbstractVector(constant.getValue());
