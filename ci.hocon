@@ -51,7 +51,8 @@ gateStyle : ${common} {
 
 # currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
 
-pkgtest: ${common} {
+pkgtest: ${common} ${java8Downloads} {
+  timelimit : "180:00"
   run : [
     ["mx", "test"]
   ]
