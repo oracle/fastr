@@ -117,9 +117,9 @@ public class FrameFunctions {
                     match = true;
                 } else {
                     /* slow path, as must check if caller matches the promise */
-                    Frame eFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, effectiveDepth);
+                    Frame eFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, depth - 1);
                     if (matchPromise(RArguments.getCall(eFrame), RContext.getRRuntimeASTAccess().unwrapPromiseRep(promiseEvalFrame.getPromise()))) {
-                        depth = RArguments.getDepth(eFrame);
+                        depth = effectiveDepth;
                         match = true;
                     }
                 }
@@ -128,7 +128,9 @@ public class FrameFunctions {
                     PromiseEvalFrameDebug.match(this, match, promiseEvalFrame, depth);
                 }
             } else {
-                PromiseEvalFrameDebug.noPromise(this, depth);
+                if (PromiseEvalFrameDebug.enabled) {
+                    PromiseEvalFrameDebug.noPromise(this, depth);
+                }
             }
             return depth;
         }
@@ -184,6 +186,7 @@ public class FrameFunctions {
             Frame result = getNumberedFrame(frame, actualFrame);
             if (result == null) {
                 errorProfile.enter();
+                PromiseEvalFrameDebug.dumpStack("getFrame");
                 throw RError.error(this, RError.Message.NOT_THAT_MANY_FRAMES);
             }
             return result;

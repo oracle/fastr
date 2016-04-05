@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Debugging support to trace the evaluation of promises that require a {@link PromiseEvalFrame} and
- * the frame depth analysis. Output, when enabled is sent to "pefd.log".
+ * the frame depth analysis. Output, when enabled is sent to "fastr_pefd.log".
  *
  */
 public class PromiseEvalFrameDebug {
@@ -66,10 +66,14 @@ public class PromiseEvalFrameDebug {
         return pstream;
     }
 
+    private static boolean enabled() {
+        return enabled && FastROptions.debugMatches(DEBUG_TAG);
+    }
+
     private static int level;
 
     public static void doPromiseEval(boolean start, Frame frame, Frame promiseFrame, RPromise promise) {
-        if (FastROptions.debugMatches(DEBUG_TAG)) {
+        if (enabled()) {
             if (!start) {
                 level--;
             }
@@ -83,7 +87,9 @@ public class PromiseEvalFrameDebug {
     }
 
     public static void log(String s) {
-        out().println(s);
+        if (enabled()) {
+            out().println(s);
+        }
     }
 
     private static String getPromiseSrc(RPromise promise) {
@@ -97,20 +103,20 @@ public class PromiseEvalFrameDebug {
     }
 
     public static void dumpStack(String id) {
-        if (FastROptions.debugMatches(DEBUG_TAG)) {
+        if (enabled()) {
             out().printf("%s: %s%n", id, Utils.createStackTrace(false));
         }
 
     }
 
     public static void noPromise(RBuiltinNode node, int depth) {
-        if (FastROptions.debugMatches(DEBUG_TAG)) {
+        if (enabled()) {
             out().printf("getEffectiveDepth[%s](%d): no promise eval in progress%n", getCode(node.getOriginalCall()), depth);
         }
     }
 
     public static void match(RBuiltinNode node, boolean match, PromiseEvalFrame pf, int depth) {
-        if (FastROptions.debugMatches(DEBUG_TAG)) {
+        if (enabled()) {
             out().printf("getEffectiveDepth[%s](%d) match=%b on: %s%n", getCode(node.getOriginalCall()), depth, match, getCode(pf.getPromise().getRep().asRSyntaxNode()));
         }
     }
@@ -119,16 +125,4 @@ public class PromiseEvalFrameDebug {
         return node.getSourceSection().getCode();
     }
 
-    public static int pdepth(Frame frame) {
-        Frame unwrapped = RArguments.unwrap(frame);
-        Frame pf = RArguments.getPromiseFrame(unwrapped);
-        int depth = RArguments.getDepth(unwrapped);
-        PromiseEvalFrame pef = (PromiseEvalFrame) pf;
-
-        int pfDepth = RArguments.getDepth(pef);
-        int pfOrigDepth = RArguments.getDepth(pef.getOriginalFrame());
-        int pdepth = depth - pfDepth + pfOrigDepth;
-        return pdepth;
-
-    }
 }

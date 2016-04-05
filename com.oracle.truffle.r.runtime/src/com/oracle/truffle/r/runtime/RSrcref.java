@@ -93,7 +93,7 @@ public class RSrcref {
         int startColumn = ss.getStartColumn();
         int lastLine = ss.getEndLine();
         int lastColumn = ss.getEndColumn();
-        // no multi-byte support, so byte==line
+        // no multi-byte support, so byte==char
         llocData[0] = startLine;
         llocData[1] = startColumn;
         llocData[2] = lastLine;

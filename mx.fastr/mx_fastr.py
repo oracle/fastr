@@ -589,7 +589,7 @@ def load_optional_suite(name, rev, kind='hg', build=True, url=None):
         mx.build_suite(opt_suite)
     return opt_suite
 
-_r_apptests_rev = 'd769a681cb1b9486305faac2b41dfd8bed1e2541'
+_r_apptests_rev = '0f1a7206c31ebd885bfa6495e7aa5be18838dde7'
 _r_benchmarks_rev = 'ecca4e50c2782a227468274a10d515d4d641e4ad'
 
 def mx_post_parse_cmd_line(opts):
