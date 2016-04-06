@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 @RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"}, nonEvalArgs = {0})
 public abstract class Return extends RBuiltinNode {
 
-    private ConditionProfile isPromiseEvalProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isPromiseEvalProfile = ConditionProfile.createBinaryProfile();
 
     @Child private PromiseHelperNode promiseHelper;
 
@@ -76,8 +76,6 @@ public abstract class Return extends RBuiltinNode {
 
     @Specialization
     protected Object returnFunction(VirtualFrame frame, RPromise expr) {
-        /*
-         */
         controlVisibility();
         // Evaluate the result
         Object value = initPromiseHelper().evaluate(frame, expr);
@@ -91,5 +89,4 @@ public abstract class Return extends RBuiltinNode {
 
         throw new ReturnException(value, depth);
     }
-
 }
