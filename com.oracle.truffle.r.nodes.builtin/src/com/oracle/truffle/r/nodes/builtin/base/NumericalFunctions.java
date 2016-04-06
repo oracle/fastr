@@ -36,6 +36,12 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 
 public class NumericalFunctions {
 
+    /**
+     * This node is only a workaround that makes the annotation processor process the other inner
+     * node classes. These classes would be ignored otherwise, since they do not contain any
+     * specialization, which would trigger the code generation performed by the annotation
+     * processor.
+     */
     public abstract static class DummyNode extends RBuiltinNode {
 
         @Specialization
