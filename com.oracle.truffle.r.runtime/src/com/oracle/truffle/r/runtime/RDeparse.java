@@ -249,6 +249,7 @@ public class RDeparse {
 
     private interface C extends AutoCloseable {
         // this interface is used to get a shorter name and remove the checked exception
+        @Override
         void close();
     }
 
@@ -404,6 +405,7 @@ public class RDeparse {
         private C indent() {
             indent++;
             return new C() {
+                @Override
                 public void close() {
                     indent--;
                 }
@@ -413,6 +415,7 @@ public class RDeparse {
         private C inCurly() {
             inCurly++;
             return new C() {
+                @Override
                 public void close() {
                     inCurly--;
                 }

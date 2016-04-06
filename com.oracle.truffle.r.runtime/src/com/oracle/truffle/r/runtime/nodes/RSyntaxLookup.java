@@ -56,6 +56,7 @@ public interface RSyntaxLookup extends RSyntaxElement {
                 return isFunctionLookup;
             }
 
+            @Override
             public void setSourceSection(SourceSection src) {
                 // ignored
             }

@@ -42,22 +42,27 @@ public interface RSyntaxFunction extends RSyntaxElement {
      */
     static RSyntaxFunction createDummyFunction(SourceSection originalSource, ArgumentsSignature signature, RSyntaxElement[] arguments, RSyntaxElement body) {
         return new RSyntaxFunction() {
+            @Override
             public SourceSection getSourceSection() {
                 return originalSource;
             }
 
+            @Override
             public ArgumentsSignature getSyntaxSignature() {
                 return signature;
             }
 
+            @Override
             public RSyntaxElement[] getSyntaxArgumentDefaults() {
                 return arguments;
             }
 
+            @Override
             public RSyntaxElement getSyntaxBody() {
                 return body;
             }
 
+            @Override
             public void setSourceSection(SourceSection src) {
                 // ignored
             }

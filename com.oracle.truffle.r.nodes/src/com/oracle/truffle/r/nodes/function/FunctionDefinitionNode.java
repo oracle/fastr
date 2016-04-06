@@ -473,14 +473,17 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return sourceSectionR;
     }
 
+    @Override
     public ArgumentsSignature getSyntaxSignature() {
         return getFormalArguments().getSignature();
     }
 
+    @Override
     public RSyntaxElement[] getSyntaxArgumentDefaults() {
         return RASTUtils.asSyntaxNodes(getFormalArguments().getArguments());
     }
 
+    @Override
     public RSyntaxElement getSyntaxBody() {
         return getBody();
     }
