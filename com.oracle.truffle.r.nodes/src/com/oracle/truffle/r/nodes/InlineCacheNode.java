@@ -108,7 +108,7 @@ public abstract class InlineCacheNode extends RBaseNode {
 
     /**
      * Creates an inline cache that will execute promises closures by using a PIC and falling back
-     * to {@link Engine#evalPromise(Closure, MaterializedFrame)}.
+     * to {@link #evalPromise(Frame, Closure)}.
      *
      * @param maxPicDepth maximum number of entries in the polymorphic inline cache
      */
@@ -118,6 +118,6 @@ public abstract class InlineCacheNode extends RBaseNode {
 
     @TruffleBoundary
     private static Object evalPromise(Frame frame, Closure closure) {
-        return RContext.getEngine().evalPromise(closure, frame.materialize());
+        return closure.eval(frame.materialize());
     }
 }

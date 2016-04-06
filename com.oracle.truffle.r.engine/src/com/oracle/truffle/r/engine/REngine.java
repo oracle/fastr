@@ -77,9 +77,9 @@ import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
@@ -96,7 +96,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -455,11 +454,6 @@ final class REngine implements Engine, Engine.Timings {
         // slightly changed arguments array (function and callSrc).
         MaterializedFrame vFrame = VirtualEvalFrame.create(envir.getFrame(), (RFunction) null, call, depth);
         return callTarget.call(vFrame);
-    }
-
-    @Override
-    public Object evalPromise(Closure closure, MaterializedFrame frame) {
-        return closure.deepCopy().getCallTarget().call(frame);
     }
 
     @Override
