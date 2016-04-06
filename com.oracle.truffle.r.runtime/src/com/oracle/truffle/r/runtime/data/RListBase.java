@@ -109,6 +109,7 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
         return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
+    @Override
     public final Object getDataAt(int i) {
         return data[i];
     }

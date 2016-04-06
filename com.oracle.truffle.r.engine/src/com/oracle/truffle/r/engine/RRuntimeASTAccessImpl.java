@@ -533,6 +533,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         }
     }
 
+    @Override
     public RSyntaxFunction getSyntaxFunction(RFunction f) {
         return (FunctionDefinitionNode) f.getTarget().getRootNode();
     }
@@ -588,6 +589,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         TraceHandling.enableStatementTrace(func, tracerNode);
     }
 
+    @Override
     public RSyntaxNode unwrapPromiseRep(RPromise promise) {
         return RASTUtils.unwrap(promise.getRep()).asRSyntaxNode();
     }
@@ -597,6 +599,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         DebugHandling.enableDebug(func, "", RNull.instance, false);
     }
 
+    @Override
     public boolean isTaggedWith(Node node, Class<?> tag) {
         if (!(node instanceof RSyntaxNode)) {
             return false;

@@ -70,6 +70,7 @@ final class RAbstactVectorToListClosure extends RToVectorClosure implements RAbs
         return RDataFactory.createList(new Object[newLength]);
     }
 
+    @Override
     public RStringVector getNames() {
         throw RInternalError.shouldNotReachHere();
     }

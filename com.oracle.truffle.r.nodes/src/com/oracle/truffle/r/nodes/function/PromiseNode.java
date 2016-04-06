@@ -344,11 +344,13 @@ public abstract class PromiseNode extends RNode {
             return RSyntaxNode.INTERNAL;
         }
 
+        @Override
         public String getIdentifier() {
             int num = index + 1;
             return (num < 10 ? ".." : ".") + num;
         }
 
+        @Override
         public boolean isFunctionLookup() {
             return false;
         }
