@@ -457,11 +457,10 @@ do.it <- function() {
 		cat("BEGIN package installation\n")
 		install.pkgs(test.pkgnames, blacklist)
 		cat("END package installation\n")
+
 		if (print.ok.installs) {
 			for (pkgname.i in names(install.status)) {
-				if (install.status[pkgname.i]) {
-					cat(pkgname.i, "\n")
-				}
+				cat(paste0(pkgname.i, ":"), ifelse(install.status[pkgname.i], "OK", "FAILED"), "\n")
 			}
 		}
 	}

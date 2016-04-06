@@ -28,6 +28,8 @@ import mx_gate
 import mx_fastr_pkgtest
 import os
 import shutil
+from threading import Thread
+import time
 
 '''
 This is the launchpad for all the functions available for building/running/testing/analyzing
@@ -314,11 +316,27 @@ def _test_harness_body(args, vmArgs):
         def __call__(self, data):
             self.data += data
 
+    class KeepAlive(Thread):
+        def __init__(self):
+            Thread.__init__(self)
+            self.setDaemon(True)
+            self.running = True
+
+        def run(self):
+            while self.running:
+                time.sleep(30);
+                print "keepalive"
+
     out = OutputCapture() if args.capture_output else None
+    t = KeepAlive() if args.capture_output else None
+    if t:
+        t.start();
 
     rc = _installpkgs(stacktrace_args + install_args, out=out, err=out)
     if args.capture_output:
         print out.data
+        t.running = False
+        t.join()
 
     shutil.rmtree(install_tmp, ignore_errors=True)
     return rc
