@@ -51,10 +51,20 @@ gateStyle : ${common} {
 
 # currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
 
+# tests a (default) number of packages known to install correctly
 pkgtest: ${common} ${java8Downloads} {
   timelimit : "3:00:00"
   run : [
-    ["mx", "test", "--capture-output", "--print-ok-installs"]
+    ["mx", "test", "--print-ok-installs", "--ok-only"]
+  ]
+}
+
+# tries to install a (default) number of packages previously known not to install
+# TODO how to find the path to the ok.packages directory?
+pkginstall: ${common} ${java8Downloads} {
+  timelimit : "3:00:00"
+  run : [
+    ["mx", "test", "--invert.pkgs", "--print-ok-installs", ]
   ]
 }
 
