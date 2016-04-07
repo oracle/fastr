@@ -26,19 +26,37 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.MatchFunNodeGen.MatchFunInternalNodeGen;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.signature.GetCallerFrameNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@RBuiltin(name = "match.fun", kind = SUBSTITUTE, parameterNames = {"fun", "descend"})
-// TODO revert to R
+@RBuiltin(name = "match.fun", kind = SUBSTITUTE, parameterNames = {"fun", "descend"}, nonEvalArgs = 0)
 public abstract class MatchFun extends RBuiltinNode {
 
     @CompilationFinal private String lastFun;
@@ -48,30 +66,138 @@ public abstract class MatchFun extends RBuiltinNode {
         return new Object[]{RMissing.instance, RRuntime.LOGICAL_TRUE};
     }
 
-    // FIXME honor the descend parameter
-    // FIXME implement actual semantics (lookup in caller environment)
-
-    @Specialization
-    protected RFunction matchFun(RFunction fun, @SuppressWarnings("unused") byte descend) {
-        return fun;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.firstBoolean(1, "descend");
     }
 
-    @Child private ReadVariableNode lookup;
-
     @Specialization
-    protected Object matchFun(VirtualFrame frame, String fun, @SuppressWarnings("unused") byte descend) {
-        controlVisibility();
-        if (lookup == null || !fun.equals(lastFun)) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            lastFun = fun;
-            ReadVariableNode rvn = ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, fun);
-            lookup = lookup == null ? insert(rvn) : lookup.replace(rvn);
+    protected static RFunction matchFun(VirtualFrame frame, RPromise funPromise, boolean descend, //
+                    @Cached("new()") PromiseHelperNode promiseHelper, //
+                    @Cached("createInternal()") MatchFunInternal internal) {
+        Object funValue = promiseHelper.evaluate(frame, funPromise);
+        return internal.execute(frame, funPromise, funValue, descend);
+    }
+
+    protected MatchFunInternal createInternal() {
+        return MatchFunInternalNodeGen.create(this);
+    }
+
+    @TypeSystemReference(RTypes.class)
+    abstract static class MatchFunInternal extends RBaseNode {
+
+        protected static final int LIMIT = 3;
+        private final MatchFun outer;
+
+        private final BranchProfile needsMaterialize = BranchProfile.create();
+        @Child private GetCallerFrameNode getCallerFrame = new GetCallerFrameNode();
+
+        MatchFunInternal(MatchFun outer) {
+            this.outer = outer;
         }
-        Object r = lookup.execute(frame);
-        if (r == null) {
-            throw RError.error(this, RError.Message.UNKNOWN_FUNCTION, fun);
-        } else {
-            return r;
+
+        public abstract RFunction execute(VirtualFrame frame, RPromise funPromise, Object funValue, boolean descend);
+
+        @Specialization
+        protected static RFunction matchfun(@SuppressWarnings("unused") RPromise funPromise, RFunction funValue, @SuppressWarnings("unused") boolean descend) {
+            return funValue;
+        }
+
+        protected static ReadVariableNode createLookup(String name, boolean descend) {
+            return descend ? ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, name) : ReadVariableNode.create(RSyntaxNode.INTERNAL, name, false);
+        }
+
+        protected static String firstString(RAbstractStringVector vec) {
+            return vec.getDataAt(0);
+        }
+
+        protected static String firstString(RSymbol symbol) {
+            return symbol.getName();
+        }
+
+        private RFunction checkResult(Object result) {
+            if (result instanceof RFunction) {
+                return (RFunction) result;
+            } else {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(outer, RError.Message.NON_FUNCTION, RDeparse.deparse(result));
+            }
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(limit = "LIMIT", guards = {"funValue.getLength() == 1", "funValue.getDataAt(0) == cachedName"})
+        protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RAbstractStringVector funValue, boolean descend, //
+                        @Cached("firstString(funValue)") String cachedName, //
+                        @Cached("createLookup(cachedName, descend)") ReadVariableNode lookup) {
+            return checkResult(lookup.execute(frame, getCallerFrame.execute(frame)));
+        }
+
+        @Specialization(contains = "matchfunCached", guards = {"funValue.getLength() == 1"})
+        protected RFunction matchfunGeneric(VirtualFrame frame, @SuppressWarnings("unused") RPromise funPromise, RAbstractStringVector funValue, boolean descend) {
+            return checkResult(slowPathLookup(funValue.getDataAt(0), getCallerFrame.execute(frame), descend));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(limit = "LIMIT", guards = {"funValue.getName() == cachedName"})
+        protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RSymbol funValue, boolean descend, //
+                        @Cached("firstString(funValue)") String cachedName, //
+                        @Cached("createLookup(cachedName, descend)") ReadVariableNode lookup) {
+            return checkResult(lookup.execute(frame, getCallerFrame.execute(frame)));
+        }
+
+        @Specialization(contains = "matchfunCached")
+        protected RFunction matchfunGeneric(VirtualFrame frame, @SuppressWarnings("unused") RPromise funPromise, RSymbol funValue, boolean descend) {
+            return checkResult(slowPathLookup(funValue.getName(), getCallerFrame.execute(frame), descend));
+        }
+
+        @TruffleBoundary
+        private static Object slowPathLookup(String name, MaterializedFrame frame, boolean descend) {
+            Object result = descend ? ReadVariableNode.lookupFunction(name, frame, false) : ReadVariableNode.lookupAny(name, frame, false);
+            if (result == null) {
+                throw RError.error(RError.SHOW_CALLER, descend ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, name);
+            }
+            return result;
+        }
+
+        @Fallback
+        protected RFunction matchfunFallback(VirtualFrame frame, RPromise funPromise, @SuppressWarnings("unused") Object funValue, boolean descend) {
+            RSyntaxElement rep = getPromiseRep(funPromise);
+            String lookupName = null;
+            if (rep instanceof RSyntaxLookup) {
+                needsMaterialize.enter();
+                RSyntaxLookup lookup = (RSyntaxLookup) rep;
+                lookupName = lookup.getIdentifier();
+                Object value = lookupLocal(frame.materialize(), lookupName);
+                if (value instanceof RPromise) {
+                    lookupName = null;
+                    rep = getPromiseRep((RPromise) value);
+                    if (rep instanceof RSyntaxLookup) {
+                        lookup = (RSyntaxLookup) rep;
+                        lookupName = lookup.getIdentifier();
+                    }
+                }
+            }
+            if (lookupName != null) {
+                return checkResult(slowPathLookup(lookupName, getCallerFrame.execute(frame), descend));
+            } else {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(outer, RError.Message.NOT_FUNCTION, RDeparse.deparseSyntaxElement(rep));
+            }
+        }
+
+        @TruffleBoundary
+        private static RSyntaxNode getPromiseRep(RPromise funPromise) {
+            return funPromise.getRep().asRSyntaxNode();
+        }
+
+        @TruffleBoundary
+        private static Object lookupLocal(MaterializedFrame frame, String lookupName) {
+            FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(lookupName);
+            if (slot == null) {
+                return null;
+            } else {
+                return frame.getValue(slot);
+            }
         }
     }
 }
