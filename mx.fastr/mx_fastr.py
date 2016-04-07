@@ -83,6 +83,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True, out
       extraVmArgs: additional vm arguments
       jdk: jdk (an mx.JDKConfig instance) to use
       nonZeroIsFatal: whether to terminate the execution run fails
+      out,err possible redirects to collect output
 
     By default a non-zero return code will cause an mx.abort, unless nonZeroIsFatal=False
     The assumption is that the VM is already built and available.
@@ -581,17 +582,18 @@ def rcmplib(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
-_bm_suite = None
+def bm_suite():
+    return mx.suite('r-benchmarks', fatalIfMissing=False)
 
 def bench(args):
-    if _bm_suite:
-        mx.command_function('r_benchmarks:bench')(args)
+    if bm_suite():
+        mx.command_function('r-benchmarks:bench')(args)
     else:
         mx.abort("no benchmarks available")
 
 def rbench(args):
-    if _bm_suite:
-        mx.command_function('r_benchmarks:rbench')(args)
+    if bm_suite():
+        mx.command_function('r-benchmarks:rbench')(args)
     else:
         mx.abort("no benchmarks available")
 
@@ -606,28 +608,6 @@ def _installpkgs(args, out=None, err=None):
     cran_test = _cran_test_project()
     script = join(cran_test, 'r', 'install.cran.packages.R')
     return rscript([script] + args, out=out, err=err)
-
-def load_optional_suite(name, rev, kind='hg', build=True, url=None):
-    if not url:
-        hg_base = mx.get_env('MX_' + kind.upper() + '_BASE')
-        if hg_base is None:
-            url = None
-        else:
-            url = join(hg_base, name)
-    urlinfos = None if url is None else [mx.SuiteImportURLInfo(url, kind, mx.vc_system(kind))]
-    opt_suite = _fastr_suite.import_suite(name, version=rev, urlinfos=urlinfos)
-    if opt_suite and build:
-        mx.build_suite(opt_suite)
-    return opt_suite
-
-_r_apptests_rev = '0f1a7206c31ebd885bfa6495e7aa5be18838dde7'
-_r_benchmarks_rev = 'ecca4e50c2782a227468274a10d515d4d641e4ad'
-
-def mx_post_parse_cmd_line(opts):
-    # load optional suites, r_apptests first so r_benchmarks can find it
-    load_optional_suite('r_apptests', _r_apptests_rev)
-    global _bm_suite
-    _bm_suite = load_optional_suite('r_benchmarks', _r_benchmarks_rev)
 
 _commands = {
     # new commands
