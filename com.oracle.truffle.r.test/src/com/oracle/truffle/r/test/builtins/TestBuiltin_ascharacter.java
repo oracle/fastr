@@ -263,7 +263,7 @@ public class TestBuiltin_ascharacter extends TestBase {
         assertEval("{ as.character(list(1,2,3)) }");
         assertEval("{ as.character(list(c(\"hello\", \"hi\"))) }");
         assertEval("{ as.character(list(list(c(\"hello\", \"hi\")))) }");
-        assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L))) }"); // GnuR returns "2:3"
+        assertEval("{ as.character(list(c(2L, 3L))) }");
         assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L, 5L))) }"); // GnuR prints no L
 
         assertEval("{ x<-as.character(Sys.time()) }");
