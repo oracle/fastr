@@ -733,8 +733,9 @@ public class RDeparse {
         }
 
         private DeparseVisitor process(Object v) {
-            assert RRuntime.asAbstractVector(v) instanceof RTypedValue;
-            assert !(v instanceof RSyntaxElement);
+            assert v != null;
+            assert RRuntime.asAbstractVector(v) instanceof RTypedValue : v.getClass();
+            assert !(v instanceof RSyntaxElement) : v.getClass();
 
             RSyntaxElement element = wrap(v, false);
             if (!quoteExpressions() || element instanceof RSyntaxConstant) {

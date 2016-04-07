@@ -271,7 +271,7 @@ public final class RError extends RuntimeException {
         LINE_ELEMENTS("line %d did not have %d elements"),
         ITEMS_NOT_MULTIPLE("number of items read is not a multiple of the number of columns"),
         // below: GNU R gives also expression for the argument
-        NOT_FUNCTION("argument is not a function, character or symbol"),
+        NOT_FUNCTION("'%s' is not a function, character or symbol"),
         NON_CHARACTER("non-character argument"),
         NON_NUMERIC_MATH("non-numeric argument to mathematical function"),
         NAN_PRODUCED("NaNs produced"),
@@ -397,6 +397,7 @@ public final class RError extends RuntimeException {
         ARGUMENT_NOT_MATCH("supplied argument name '%s' does not match '%s'"),
         ARGUMENT_MISSING("argument \"%s\" is missing, with no default"),
         UNKNOWN_FUNCTION("could not find function \"%s\""),
+        NON_FUNCTION("found non-function '%s'"),
         UNKNOWN_FUNCTION_USE_METHOD("no applicable method for '%s' applied to an object of class '%s'"),
         UNKNOWN_OBJECT("object '%s' not found"),
         INVALID_ARGUMENT("invalid '%s' argument"),
