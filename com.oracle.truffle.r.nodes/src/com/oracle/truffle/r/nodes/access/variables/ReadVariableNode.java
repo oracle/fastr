@@ -176,7 +176,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     public RSyntaxNode substituteImpl(REnvironment env) {
         RSyntaxNode result = RASTUtils.substituteName(identifierAsString, env);
         if (result == null) {
-            result = (RSyntaxNode) RASTUtils.cloneNode(this);
+            result = RASTUtils.cloneNode(this);
         }
         return result;
     }

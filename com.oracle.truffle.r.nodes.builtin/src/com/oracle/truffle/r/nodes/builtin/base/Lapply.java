@@ -16,26 +16,25 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -44,6 +43,8 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -61,19 +62,21 @@ public abstract class Lapply extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Child private LapplyInternalNode lapply = LapplyInternalNodeGen.create(null, null, null);
+    @Child private LapplyInternalNode lapply = LapplyInternalNodeGen.create();
+
+    @Child private PromiseCheckHelperNode promiseCheck;
 
     @Specialization
     protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun) {
         RArgsValuesAndNames optionalArgs = (RArgsValuesAndNames) RArguments.getArgument(frame, 2);
+        // forceVarArgs(frame, optionalArgs);
         Object[] result = lapply.execute(frame, vec, fun, optionalArgs);
         // set here else it gets overridden by the iterator evaluation
         controlVisibility();
         return RDataFactory.createList(result, vec.getNames(attrProfiles));
     }
 
-    @NodeChildren({@NodeChild(type = RNode.class), @NodeChild(type = RNode.class), @NodeChild(type = RNode.class)})
-    public abstract static class LapplyInternalNode extends RNode implements InternalRSyntaxNodeChildren {
+    public abstract static class LapplyInternalNode extends RBaseNode implements InternalRSyntaxNodeChildren {
 
         private static final String INDEX_NAME = AnonymousFrameVariable.create("LAPPLY_ITER_INDEX");
         private static final String VECTOR_ELEMENT = AnonymousFrameVariable.create("LAPPLY_VEC_ELEM");
@@ -86,6 +89,7 @@ public abstract class Lapply extends RBuiltinNode {
         public abstract Object[] execute(VirtualFrame frame, Object vector, RFunction function, RArgsValuesAndNames additionalArguments);
 
         private Object[] lApplyInternal(VirtualFrame frame, Object vector, RFunction function, RCallNode callNode) {
+
             int length = lengthNode.executeInt(frame, vector);
             Object[] result = new Object[length];
             for (int i = 1; i <= length; i++) {
@@ -115,7 +119,7 @@ public abstract class Lapply extends RBuiltinNode {
         }
 
         private static RNode createIndexedLoad() {
-            RASTBuilder builder = new RASTBuilder();
+            RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
             RSyntaxNode receiver = builder.lookup(RSyntaxNode.INTERNAL, "X", false);
             RSyntaxNode index = builder.lookup(RSyntaxNode.INTERNAL, INDEX_NAME, false);
             RSyntaxNode access = builder.lookup(RSyntaxNode.INTERNAL, "[[", true);

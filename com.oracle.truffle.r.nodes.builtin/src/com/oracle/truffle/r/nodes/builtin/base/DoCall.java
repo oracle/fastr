@@ -73,6 +73,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 // TODO Implement properly, this is a simple implementation that works when the environment doesn't matter
@@ -135,7 +136,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
                 containsRLanguageProfile.enter();
                 callerFrame = getCallerFrame(frame, callerFrame);
                 RLanguage lang = (RLanguage) arg;
-                argValues[i] = createArgPromise(callerFrame, RASTUtils.cloneNode((lang.getRep())));
+                argValues[i] = createArgPromise(callerFrame, RASTUtils.cloneNode(lang.getRep()));
             } else if (arg instanceof RSymbol) {
                 containsRSymbolProfile.enter();
                 RSymbol symbol = (RSymbol) arg;
@@ -239,7 +240,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
     }
 
     @TruffleBoundary
-    private static RPromise createArgPromise(MaterializedFrame frame, RNode rep) {
+    private static RPromise createArgPromise(MaterializedFrame frame, RBaseNode rep) {
         return RDataFactory.createPromise(RPromise.PromiseType.ARG_SUPPLIED, frame, RPromise.Closure.create(rep));
     }
 }

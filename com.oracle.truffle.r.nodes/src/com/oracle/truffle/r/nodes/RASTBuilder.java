@@ -53,11 +53,13 @@ import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
 import com.oracle.truffle.r.parser.tools.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RGroupGenerics;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
+import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -132,7 +134,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 }
             } else if (args.size() == 1) {
                 // handle unary arithmetics, for the time being
-                if (RGroupGenerics.getGroup(symbol) == RGroupGenerics.Ops) {
+                RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(symbol);
+                if (builtin != null && builtin.getDispatch() == RDispatch.OPS_GROUP_GENERIC) {
                     return GroupDispatchNode.create(symbol, source, ArgumentsSignature.empty(1), args.get(0).value);
                 }
                 switch (symbol) {
@@ -143,7 +146,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 }
             } else if (args.size() == 2) {
                 // handle binary arithmetics, for the time being
-                if (RGroupGenerics.getGroup(symbol) == RGroupGenerics.Ops) {
+                RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(symbol);
+                if (builtin != null && builtin.getDispatch() == RDispatch.OPS_GROUP_GENERIC) {
                     return GroupDispatchNode.create(symbol, source, ArgumentsSignature.empty(2), args.get(0).value, args.get(1).value);
                 }
                 switch (symbol) {
@@ -188,7 +192,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
         if (lhs instanceof RSyntaxLookup) {
             String symbol = ((RSyntaxLookup) lhs).getIdentifier();
-            if (RGroupGenerics.isGroupGeneric(symbol)) {
+            RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(symbol);
+            if (builtin != null && builtin.getDispatch() == RDispatch.OPS_GROUP_GENERIC) {
                 return GroupDispatchNode.create(symbol, source, signature, nodes);
             }
         }
