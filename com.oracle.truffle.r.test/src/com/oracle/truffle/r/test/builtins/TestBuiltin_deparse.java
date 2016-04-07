@@ -186,7 +186,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse33() {
-        assertEval(Ignored.Unknown, "argv <- list(NA_real_, 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(NA_real_, 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -207,7 +207,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse37() {
-        assertEval(Ignored.Unknown, "argv <- list(0:12, 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(0:12, 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
