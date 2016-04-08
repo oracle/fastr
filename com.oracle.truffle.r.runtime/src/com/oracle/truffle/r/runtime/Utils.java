@@ -367,6 +367,9 @@ public final class Utils {
 
     /**
      * Retrieve the caller frame of the current frame.
+     *
+     * TODO Calls to this method should be validated with respect to whether promise evaluation is
+     * in progress and replaced with use of {@code FrameDepthNode}.
      */
     public static Frame getCallerFrame(Frame frame, FrameAccess fa) {
         return getStackFrame(fa, RArguments.getDepth(frame) - 1);
