@@ -80,7 +80,6 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nodes.IdenticalVisitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -103,16 +102,6 @@ public class FrameFunctions {
             }
             int depth = frameDepthNode.execute(frame);
             return depth;
-        }
-
-        @TruffleBoundary
-        private static boolean matchPromise(RCaller call, RSyntaxNode promiseNode) {
-            if (call == null) {
-                return false;
-            }
-            RSyntaxNode callNode = RASTUtils.unwrap(call.getRep()).asRSyntaxNode();
-            return new IdenticalVisitor().accept(promiseNode, callNode);
-
         }
 
     }
