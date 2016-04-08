@@ -26,10 +26,9 @@ from argparse import ArgumentParser
 import mx
 import mx_gate
 import mx_fastr_pkgtest
-import os
-import shutil
-from threading import Thread
-import time
+import mx_benchmark
+from mx_benchmark import BenchmarkSuite
+import shutil, os
 
 '''
 This is the launchpad for all the functions available for building/running/testing/analyzing
@@ -597,7 +596,6 @@ def rbench(args):
     else:
         mx.abort("no benchmarks available")
 
-
 def _cran_test_project():
     return mx.project('com.oracle.truffle.r.test.cran').dir
 
@@ -608,6 +606,32 @@ def _installpkgs(args, out=None, err=None):
     cran_test = _cran_test_project()
     script = join(cran_test, 'r', 'install.cran.packages.R')
     return rscript([script] + args, out=out, err=err)
+
+class FastRBenchmarkSuite(BenchmarkSuite):
+    """
+    This class is registered with mx_benchmark and provides the connection
+    between "mx benchmark" and "mx bench"
+    """
+
+    def name(self):
+        return "RInternal"
+
+    def group(self):
+        return "fastr"
+
+    def vmArgs(self, bmSuiteArgs):
+        return []
+
+    def runArgs(self, bmSuiteArgs):
+        return []
+
+    def run(self, benchmarks, bmSuiteArgs):
+        if bm_suite():
+            return mx.command_function('r-benchmarks:bench')(bmSuiteArgs)
+        else:
+            mx.abort("no benchmarks available")
+
+mx_benchmark.add_bm_suite(FastRBenchmarkSuite())
 
 _commands = {
     # new commands
