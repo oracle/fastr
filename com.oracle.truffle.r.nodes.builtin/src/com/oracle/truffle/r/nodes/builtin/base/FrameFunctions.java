@@ -59,6 +59,7 @@ import com.oracle.truffle.r.nodes.function.signature.FrameDepthNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.PromiseEvalFrame;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -653,7 +654,7 @@ public class FrameFunctions {
                     if (RArguments.getDepth(f) == parentDepth) {
                         return f;
                     }
-                    if (RArguments.getDispatchArgs(f) != null) {
+                    if (RArguments.getDispatchArgs(f) != null && RArguments.getDispatchArgs(f) instanceof S3Args) {
                         /*
                          * Skip the next frame if this frame has dispatch args, and therefore was
                          * called by UseMethod or NextMethod.
