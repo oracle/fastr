@@ -284,8 +284,18 @@ def original_gate(args):
     '''Run the R gate (without filtering gate tasks)'''
     mx_gate.gate(args)
 
-def _test_harness_body(args, vmArgs):
-    '''the callback from mx.test'''
+def pkgtest(args):
+    '''used for package installation/testing'''
+    parser = ArgumentParser(prog='r test')
+    parser.add_argument('--ok-only', action='store_true', help='only install/test packages from the ok.packages file')
+    parser.add_argument('--install-only', action='store_true', help='just install packages, do not test')
+    # sundry options understood by installpkgs R code
+    parser.add_argument('--pkg-count', action='store', help='number of packages to install/test', default='100')
+    parser.add_argument('--ignore-blacklist', action='store_true', help='pass --ignore-blacklist')
+    parser.add_argument('--install-dependents', action='store_true', help='pass -install-dependents')
+    parser.add_argument('--print-ok-installs', action='store_true', help='pass --print-ok-installs')
+    args = parser.parse_args(args)
+
     libinstall = abspath("lib.install.cran")
     # make sure its empty
     shutil.rmtree(libinstall, ignore_errors=True)
@@ -323,18 +333,6 @@ def _test_harness_body(args, vmArgs):
 
     shutil.rmtree(install_tmp, ignore_errors=True)
     return rc
-
-def test(args):
-    '''used for package installation/testing'''
-    parser = ArgumentParser(prog='r test')
-    parser.add_argument('--ok-only', action='store_true', help='only install/test packages from the ok.packages file')
-    parser.add_argument('--install-only', action='store_true', help='just install packages, do not test')
-    # sundry options understood by installpkgs R code
-    parser.add_argument('--pkg-count', action='store', help='number of packages to install/test', default='100')
-    parser.add_argument('--ignore-blacklist', action='store_true', help='pass --ignore-blacklist')
-    parser.add_argument('--install-dependents', action='store_true', help='pass -install-dependents')
-    parser.add_argument('--print-ok-installs', action='store_true', help='pass --print-ok-installs')
-    return mx.test(args, harness=_test_harness_body, parser=parser)
 
 def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
@@ -681,7 +679,7 @@ _commands = {
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, ['options']],
     'rcmplib' : [rcmplib, ['options']],
-    'test' : [test, ['options']],
+    'pkgtest' : [pkgtest, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'installpkgs' : [installpkgs, '[options]'],
     'installcran' : [installpkgs, '[options]'],
