@@ -581,21 +581,6 @@ def rcmplib(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
-def bm_suite():
-    return mx.suite('r-benchmarks', fatalIfMissing=False)
-
-def bench(args):
-    if bm_suite():
-        mx.command_function('r-benchmarks:bench')(args)
-    else:
-        mx.abort("no benchmarks available")
-
-def rbench(args):
-    if bm_suite():
-        mx.command_function('r-benchmarks:rbench')(args)
-    else:
-        mx.abort("no benchmarks available")
-
 def _cran_test_project():
     return mx.project('com.oracle.truffle.r.test.cran').dir
 
@@ -607,10 +592,22 @@ def _installpkgs(args, out=None, err=None):
     script = join(cran_test, 'r', 'install.cran.packages.R')
     return rscript([script] + args, out=out, err=err)
 
+def bm_suite():
+    return mx.suite('r-benchmarks', fatalIfMissing=False)
+
+# convenience to force RInternal
+def benchmark(args):
+    if bm_suite():
+        return mx_benchmark.benchmark(['RInternal'] + args)
+    else:
+        mx.abort("no benchmarks available")
+
+def _fastr_rhome_dict(vmArgs=None, jdk=None):
+    return {'name': 'FastR', 'suite_name': 'fastr', 'vmArgs': vmArgs, 'jdk': jdk}
+
 class FastRBenchmarkSuite(BenchmarkSuite):
     """
-    This class is registered with mx_benchmark and provides the connection
-    between "mx benchmark" and "mx bench"
+    This class is registered with mx_benchmark.
     """
 
     def name(self):
@@ -620,30 +617,60 @@ class FastRBenchmarkSuite(BenchmarkSuite):
         return "fastr"
 
     def vmArgs(self, bmSuiteArgs):
-        return []
+        return self.vm_args
 
     def runArgs(self, bmSuiteArgs):
-        return []
+        return self.args
 
     def run(self, benchmarks, bmSuiteArgs):
         if bm_suite():
-            return mx.command_function('r-benchmarks:bench')(bmSuiteArgs)
+            self.args = []
+            self.vm_args = []
+            self.jdk = None
+
+            self.vm_args.append('-Xmx6g')
+            # This turns off all visibility support
+            self.vm_args.append('-DR:+IgnoreVisibility')
+            # Evidently these options are specific to Graal but do_run_r filters inappropriate options
+            # if we are running under a different VM
+            self.vm_args.append('-Dgraal.TruffleCompilationExceptionsAreFatal=true')
+            self.vm_args.append('-Dgraal.TraceTruffleCompilation=true')
+            self.vm_args += ['-da', '-dsa']
+
+            i = 0
+            while i < len(bmSuiteArgs):
+                arg = bmSuiteArgs[i]
+                if arg == '--J':
+                    argslist = mx.split_j_args([self.getVmArgValue(arg, bmSuiteArgs, i)])
+                    self.vm_args += argslist
+                    i = i + 1
+                elif arg == '--jdk':
+                    self.jdk = self.getVmArgValue(arg, bmSuiteArgs, i)
+                    i = i + 1
+                else:
+                    self.args.append(arg)
+                i = i + 1
+            return mx.command_function('rbench')(self.args, _fastr_rhome_dict(self.vm_args, self.jdk))
         else:
             mx.abort("no benchmarks available")
+
+    def getVmArgValue(self, key, args, i):
+        if i < len(args) - 1:
+            return args[i + 1]
+        else:
+            mx.abort('value expected after ' + key)
+
 
 mx_benchmark.add_bm_suite(FastRBenchmarkSuite())
 
 _commands = {
-    # new commands
     'r' : [rshell, '[options]'],
     'R' : [rshell, '[options]'],
     'rscript' : [rscript, '[options]'],
     'Rscript' : [rscript, '[options]'],
     'rtestgen' : [testgen, ''],
     'originalgate' : [original_gate, '[options]'],
-    # core overrides
-    'bench' : [bench, ''],
-    'rbench' : [rbench, ''],
+    'benchmark' : [benchmark, ''],
     'build' : [build, ''],
     'gate' : [gate, ''],
     'junit' : [junit, ['options']],
