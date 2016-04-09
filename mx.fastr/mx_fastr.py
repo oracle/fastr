@@ -21,14 +21,14 @@
 # questions.
 #
 import tempfile, platform, subprocess, sys
-from os.path import join, sep, abspath
+from os.path import join, sep
 from argparse import ArgumentParser
 import mx
 import mx_gate
-import mx_fastr_pkgtest
+import mx_fastr_pkgs
 import mx_benchmark
 from mx_benchmark import BenchmarkSuite
-import shutil, os
+import os
 
 '''
 This is the launchpad for all the functions available for building/running/testing/analyzing
@@ -284,56 +284,6 @@ def original_gate(args):
     '''Run the R gate (without filtering gate tasks)'''
     mx_gate.gate(args)
 
-def pkgtest(args):
-    '''used for package installation/testing'''
-    parser = ArgumentParser(prog='r test')
-    parser.add_argument('--ok-only', action='store_true', help='only install/test packages from the ok.packages file')
-    parser.add_argument('--install-only', action='store_true', help='just install packages, do not test')
-    # sundry options understood by installpkgs R code
-    parser.add_argument('--pkg-count', action='store', help='number of packages to install/test', default='100')
-    parser.add_argument('--ignore-blacklist', action='store_true', help='pass --ignore-blacklist')
-    parser.add_argument('--install-dependents', action='store_true', help='pass -install-dependents')
-    parser.add_argument('--print-ok-installs', action='store_true', help='pass --print-ok-installs')
-    args = parser.parse_args(args)
-
-    libinstall = abspath("lib.install.cran")
-    # make sure its empty
-    shutil.rmtree(libinstall, ignore_errors=True)
-    os.mkdir(libinstall)
-    install_tmp = "install.tmp"
-    shutil.rmtree(install_tmp, ignore_errors=True)
-    os.mkdir(install_tmp)
-    os.environ["TMPDIR"] = install_tmp
-    os.environ['R_LIBS_USER'] = libinstall
-    stacktrace_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
-
-    install_args = ['--pkg-count', args.pkg_count]
-    if args.ok_only:
-        # only install/test packages that have been successfully installed
-        install_args += ['--pkg-filelist', join(_cran_test_project(), 'ok.packages')]
-    if not args.install_only:
-        install_args += ['--run-tests']
-    if args.ignore_blacklist:
-        install_args += ['--ignore-blacklist']
-    if args.install_dependents:
-        install_args += ['--install-dependents']
-    if args.print_ok_installs:
-        install_args += ['--print-ok-installs']
-
-    class OutputCapture:
-        def __init__(self):
-            self.data = ""
-        def __call__(self, data):
-            print data,
-            self.data += data
-
-    out = OutputCapture()
-
-    rc = _installpkgs(stacktrace_args + install_args, out=out, err=out)
-
-    shutil.rmtree(install_tmp, ignore_errors=True)
-    return rc
-
 def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
     return join(mx.project(tp).dir, 'src', tp.replace('.', sep))
@@ -582,10 +532,7 @@ def rcmplib(args):
 def _cran_test_project():
     return mx.project('com.oracle.truffle.r.test.cran').dir
 
-def installpkgs(args):
-    _installpkgs(args)
-
-def _installpkgs(args, out=None, err=None):
+def installpkgs(args, out=None, err=None):
     cran_test = _cran_test_project()
     script = join(cran_test, 'r', 'install.cran.packages.R')
     return rscript([script] + args, out=out, err=err)
@@ -679,12 +626,10 @@ _commands = {
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, ['options']],
     'rcmplib' : [rcmplib, ['options']],
-    'pkgtest' : [pkgtest, ['options']],
+    'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'installpkgs' : [installpkgs, '[options]'],
     'installcran' : [installpkgs, '[options]'],
     }
-
-_commands.update(mx_fastr_pkgtest._commands)
 
 mx.update_commands(_fastr_suite, _commands)

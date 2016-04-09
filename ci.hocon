@@ -55,7 +55,8 @@ gateStyle : ${common} {
 pkgtest: ${common} ${java8Downloads} {
   timelimit : "3:00:00"
   run : [
-    ["mx", "test", "--print-ok-installs", "--ok-only"]
+    ["mx", "build"]
+    ["mx", "pkgtest", "--print-ok-installs", "--ok-only"]
   ]
 }
 
@@ -70,7 +71,7 @@ pkginstall: ${common} ${java8Downloads} {
 
 builds = [
 #  ${gateTest}       {capabilities : [linux, amd64, gate],   name: "gate-test-linux-amd64"}
-#  ${gateStyle}      {capabilities : [linux, amd64, gate],   name: "gate-style-linux-amd64"}
+  ${gateStyle}      {capabilities : [linux, amd64, gate],   name: "gate-style-linux-amd64"}
 #  ${gateTest}       {capabilities : [linux, sparcv9, gate], name: "gate-test-linux-sparcv9"}
   ${pkgtest}        {capabilities : [linux, amd64, gate], name: "pkgtest-test-linux-amd64"}
 ]
