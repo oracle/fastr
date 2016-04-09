@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -192,6 +193,20 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Specialization
     protected Object setClass(RExternalPtr arg, @SuppressWarnings("unused") RNull className) {
+        controlVisibility();
+        arg.setClassAttr(null, false);
+        return arg;
+    }
+
+    @Specialization
+    protected Object setClass(RS4Object arg, RAbstractStringVector className) {
+        controlVisibility();
+        arg.setClassAttr(className.materialize(), false);
+        return arg;
+    }
+
+    @Specialization
+    protected Object setClass(RS4Object arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         arg.setClassAttr(null, false);
         return arg;
