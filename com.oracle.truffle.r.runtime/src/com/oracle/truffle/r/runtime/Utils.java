@@ -485,10 +485,18 @@ public final class Utils {
         if (str.length() > 0) {
             str.append("\n");
         }
-        if (!RArguments.isRFrame(frame)) {
-            str.append("<unknown frame>");
+        Frame unwrapped = RArguments.unwrap(frame);
+        if (!RArguments.isRFrame(unwrapped)) {
+            if (unwrapped.getArguments().length == 0) {
+                str.append("<empty frame>");
+            } else {
+                str.append("<unknown frame>");
+            }
         } else {
-            Frame unwrapped = RArguments.unwrap(frame);
+            if (callTarget.toString().equals("<promise>")) {
+                /* these have the same depth as the next frame, and add no useful info. */
+                return;
+            }
             RCaller call = RArguments.getCall(unwrapped);
             if (call != null) {
                 /*
