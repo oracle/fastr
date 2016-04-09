@@ -607,8 +607,11 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 newNames = new String[resultLength];
             }
 
-            int resultIndex = 0;
+            // initialized to -1 to trigger misspeculation for cachedLength == 0; for example:
+            // f<-function(x,i,v) { x[[i]]<-v; x }; y<-list(a=47); f(y,"a",NULL); z<-list(a=47,b=7)
+            int resultIndex = -1;
             if (resultLength > 0) {
+                resultIndex = 0;
                 for (int i = 0; i < vectorLength; i++) {
                     Object element = vector.getDataAtAsObject(i);
                     if (element != DELETE_MARKER) {
