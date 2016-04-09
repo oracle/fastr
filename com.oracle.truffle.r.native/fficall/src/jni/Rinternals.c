@@ -94,6 +94,10 @@ static jmethodID externalPtrSetAddrMethodID;
 static jmethodID externalPtrSetTagMethodID;
 static jmethodID externalPtrSetProtMethodID;
 
+static jmethodID R_computeIdenticalMethodID;
+static jmethodID Rf_copyListMatrixMethodID;
+static jmethodID Rf_copyMatrixMethodID;
+
 static jclass CharSXPWrapperClass;
 static jfieldID CharXSPWrapperContentsFieldID;
 
@@ -168,6 +172,10 @@ void init_internals(JNIEnv *env) {
 
 	CharSXPWrapperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper$CharSXPWrapper");
 	CharXSPWrapperContentsFieldID = checkGetFieldID(env, CharSXPWrapperClass, "contents", "Ljava/lang/String;", 0);
+
+    R_computeIdenticalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_computeIdentical", "(Ljava/lang/Object;Ljava/lang/Object;I)I", 1);
+    Rf_copyListMatrixMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_copyListMatrix", "(Ljava/lang/Object;Ljava/lang/Object;I)V", 1);
+    Rf_copyMatrixMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_copyMatrix", "(Ljava/lang/Object;Ljava/lang/Object;I)V", 1);
 }
 
 static jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp) {
@@ -1207,6 +1215,11 @@ char *dgettext(const char *domainname, const char *msgid) {
 	return (char*) msgid;
 }
 
+char *dngettext(const char *domainname, const char *msgid, const char * msgid_plural, unsigned long int n) {
+    printf("dngettext: singular - '%s' ; plural - '%s'\n", msgid, msgid_plural);
+    return (char*) (n == 1 ? msgid : msgid_plural);
+}
+
 const char *R_CHAR(SEXP charsxp) {
 	TRACE("%s(%p)", charsxp);
 	JNIEnv *thisenv = getEnv();
@@ -1388,3 +1401,17 @@ void R_ReleaseObject(SEXP x) {
 	// Not applicable
 }
 
+Rboolean R_compute_identical(SEXP x, SEXP y, int flags) {
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, R_computeIdenticalMethodID, x, y, flags);
+}
+
+void Rf_copyListMatrix(SEXP s, SEXP t, Rboolean byrow) {
+	JNIEnv *thisenv = getEnv();
+    (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_copyListMatrixMethodID, s, t, byrow);  
+}
+
+void Rf_copyMatrix(SEXP s, SEXP t, Rboolean byrow) {
+	JNIEnv *thisenv = getEnv();
+    (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_copyMatrixMethodID, s, t, byrow);  
+}

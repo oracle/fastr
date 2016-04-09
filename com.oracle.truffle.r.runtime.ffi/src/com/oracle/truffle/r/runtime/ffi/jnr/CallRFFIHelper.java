@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -664,6 +665,23 @@ public class CallRFFIHelper {
         REnvironment env = RDataFactory.createNewEnv(name, hashed, initialSize);
         RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
         return env;
+    }
+
+    public static int R_computeIdentical(Object x, Object y, int flags) {
+        RFunction indenticalBuiltin = RContext.lookupBuiltin("identical");
+        Object res = RContext.getEngine().evalFunction(indenticalBuiltin, null, x, y, RRuntime.asLogical((!((flags & 1) == 0))), RRuntime.asLogical((!((flags & 2) == 0))),
+                        RRuntime.asLogical((!((flags & 4) == 0))), RRuntime.asLogical((!((flags & 8) == 0))), RRuntime.asLogical((!((flags & 16) == 0))));
+        return (int) res;
+    }
+
+    @SuppressWarnings("unused")
+    public static void Rf_copyListMatrix(Object s, Object t, int byrow) {
+        throw unimplemented();
+    }
+
+    @SuppressWarnings("unused")
+    public static void Rf_copyMatrix(Object s, Object t, int byrow) {
+        throw unimplemented();
     }
 
     // Checkstyle: resume method name check
