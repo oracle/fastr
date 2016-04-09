@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -174,11 +173,6 @@ public interface Engine {
      * {@link RSerialize}.
      */
     Object evalFunction(RFunction func, MaterializedFrame frame, Object... args);
-
-    /**
-     * Evaluates an {@link com.oracle.truffle.r.runtime.data.RPromise.Closure} in {@code frame}.
-     */
-    Object evalPromise(RPromise.Closure closure, MaterializedFrame frame);
 
     /**
      * Checks for the existence of (startup/shutdown) function {@code name} and, if present, invokes

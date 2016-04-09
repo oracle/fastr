@@ -51,6 +51,7 @@ public abstract class UnaryArithmeticBuiltinNode extends RBuiltinNode implements
         return unaryNode.execute(boxPrimitive.execute(value));
     }
 
+    @Override
     public UnaryArithmetic create() {
         return new UnaryArithmetic() {
 

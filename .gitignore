@@ -62,6 +62,7 @@
 *.hprof
 \javafilelist.txt
 .hprof.txt
+/compilations-*.cfg
 /graal/.*/build.xml
 /.*/build.xml
 /.*/nbproject/

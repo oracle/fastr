@@ -678,6 +678,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ m <- 1:4; dim(m) <- c(2,2); i <- 1:2; dim(i) <- c(1,2); m[i] <- 42; m }");
         assertEval("{ m <- 1:4; dim(m) <- c(2,2); i <- as.double(1:2); dim(i) <- c(1,2); m[i] <- 42; m }");
         assertEval("{ m <- 1:4; dim(m) <- c(2,2); i <- as.double(1:2); dim(i) <- c(1,2); m[i] }");
+
+        assertEval("{ f<-function(x, i, v) { x[[i]]<-v; x }; y<-list(a=47); f(y, \"a\", NULL); z<-list(a=47, b=7); f(z, \"a\", NULL) }");
     }
 
     @Test

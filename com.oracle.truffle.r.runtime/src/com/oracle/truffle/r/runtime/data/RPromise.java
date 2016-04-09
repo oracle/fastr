@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.HashMap;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -441,7 +444,8 @@ public class RPromise implements RTypedValue {
     }
 
     public static final class Closure {
-        private RootCallTarget callTarget;
+        private HashMap<FrameDescriptor, RootCallTarget> callTargets;
+
         private final RBaseNode expr;
 
         private Closure(RBaseNode expr) {
@@ -452,15 +456,27 @@ public class RPromise implements RTypedValue {
             return new Closure(expr);
         }
 
-        public RootCallTarget getCallTarget() {
-            if (callTarget == null) {
-                // Create lazily, as it is not needed at all for INLINED promises!
-                callTarget = generateCallTarget((RNode) expr);
+        /**
+         * Evaluates an {@link com.oracle.truffle.r.runtime.data.RPromise.Closure} in {@code frame}.
+         */
+        public Object eval(MaterializedFrame frame) {
+            CompilerAsserts.neverPartOfCompilation();
+
+            // Create lazily, as it is not needed at all for INLINED promises!
+            if (callTargets == null) {
+                callTargets = new HashMap<>();
             }
-            return callTarget;
+            FrameDescriptor desc = frame.getFrameDescriptor();
+            RootCallTarget callTarget = callTargets.get(desc);
+
+            if (callTarget == null) {
+                // clone for additional call targets
+                callTarget = generateCallTarget((RNode) (callTargets.isEmpty() ? expr : RContext.getASTBuilder().process(expr.asRSyntaxNode())));
+                callTargets.put(desc, callTarget);
+            }
+            return callTarget.call(frame);
         }
 
-        @TruffleBoundary
         private static RootCallTarget generateCallTarget(RNode expr) {
             return RContext.getEngine().makePromiseCallTarget(expr, CLOSURE_WRAPPER_NAME);
         }

@@ -84,4 +84,26 @@ const char *Rf_EncodeLogical(int x, int w)
 	return NULL;
 }
 
+void R_InitInPStream(R_inpstream_t stream, R_pstream_data_t data, R_pstream_format_t type,
+		int (*inchar)(R_inpstream_t), void (*inbytes)(R_inpstream_t, void *, int), SEXP (*phook)(SEXP, SEXP), SEXP pdata)
+{
+	unimplemented("R_InitInPStream");
+}
 
+void R_InitOutPStream(R_outpstream_t stream, R_pstream_data_t data, R_pstream_format_t type, int version,
+		 void (*outchar)(R_outpstream_t, int), void (*outbytes)(R_outpstream_t, void *, int),
+		 SEXP (*phook)(SEXP, SEXP), SEXP pdata)
+{
+	unimplemented("R_InitOutPStream");
+}
+
+void R_Serialize(SEXP s, R_outpstream_t stream)
+{
+	unimplemented("R_Serialize");
+}
+
+SEXP R_Unserialize(R_inpstream_t stream)
+{
+	unimplemented("R_Unserialize");
+	return NULL;
+}

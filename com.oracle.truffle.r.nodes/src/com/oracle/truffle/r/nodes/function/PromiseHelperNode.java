@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.PromiseEvalFrame;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.OptType;
@@ -309,7 +308,7 @@ public class PromiseHelperNode extends RBaseNode {
             promise.setUnderEvaluation(true);
 
             if (promise.isInOriginFrame(frame)) {
-                return RContext.getEngine().evalPromise(promise.getClosure(), frame.materialize());
+                return promise.getClosure().eval(frame.materialize());
             } else {
                 Frame promiseFrame = promise.getFrame();
                 assert promiseFrame != null;
@@ -318,7 +317,7 @@ public class PromiseHelperNode extends RBaseNode {
                     if (PromiseEvalFrameDebug.enabled) {
                         PromiseEvalFrameDebug.doPromiseEval(true, frame, promiseFrame, promise);
                     }
-                    return RContext.getEngine().evalPromise(promise.getClosure(), promiseEvalFrame.materialize());
+                    return promise.getClosure().eval(promiseEvalFrame.materialize());
                 } finally {
                     if (PromiseEvalFrameDebug.enabled) {
                         PromiseEvalFrameDebug.doPromiseEval(false, frame, promiseFrame, promise);

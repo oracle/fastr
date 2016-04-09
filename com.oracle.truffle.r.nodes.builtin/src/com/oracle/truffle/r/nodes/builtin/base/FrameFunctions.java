@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -54,9 +55,10 @@ import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.UnrolledVariadicArguments;
+import com.oracle.truffle.r.nodes.function.signature.FrameDepthNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.PromiseEvalFrame;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -78,7 +80,6 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nodes.IdenticalVisitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -91,58 +92,16 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public class FrameFunctions {
 
-    /**
-     * Support for returning the correct frame depth. If no promise evaluation is in progress, then
-     * we simply return the current frame depth. Otherwise, and this is determined by
-     * {@code RArguments.getPromiseFrame(frame) != null}, we need to check if this builtin matches
-     * the promise being evaluated. If the effective frame depth is exactly 1 higher than the
-     * promise frame depth, then it must match. Otherwise, we have to check the caller for a match
-     * to the promise (slow path).
-     *
-     */
     public abstract static class FrameDepthHelper extends RBuiltinNode {
-        private ConditionProfile isPromiseEvalProfile = ConditionProfile.createBinaryProfile();
-        private ConditionProfile isFastPath = ConditionProfile.createBinaryProfile();
+        @Child private FrameDepthNode frameDepthNode;
 
         protected int getEffectiveDepth(VirtualFrame frame) {
-            Frame pfFrame = RArguments.getPromiseFrame(frame);
-            int depth = RArguments.getDepth(frame);
-            if (isPromiseEvalProfile.profile(pfFrame != null)) {
-                PromiseEvalFrame promiseEvalFrame = (PromiseEvalFrame) pfFrame;
-                int effectiveDepth = RArguments.getEffectiveDepth(frame);
-                int pdepth = promiseEvalFrame.getPromiseFrameDepth();
-                boolean match = false;
-                if (isFastPath.profile(effectiveDepth == pdepth + 1)) {
-                    depth = effectiveDepth;
-                    match = true;
-                } else {
-                    /* slow path, as must check if caller matches the promise */
-                    Frame eFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, depth - 1);
-                    if (matchPromise(RArguments.getCall(eFrame), RContext.getRRuntimeASTAccess().unwrapPromiseRep(promiseEvalFrame.getPromise()))) {
-                        depth = effectiveDepth;
-                        match = true;
-                    }
-                }
-                if (PromiseEvalFrameDebug.enabled) {
-                    PromiseEvalFrameDebug.dumpStack("ged" + (match ? "(true)" : "(false)"));
-                    PromiseEvalFrameDebug.match(this, match, promiseEvalFrame, depth);
-                }
-            } else {
-                if (PromiseEvalFrameDebug.enabled) {
-                    PromiseEvalFrameDebug.noPromise(this, depth);
-                }
+            if (frameDepthNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                frameDepthNode = new FrameDepthNode();
             }
+            int depth = frameDepthNode.execute(frame);
             return depth;
-        }
-
-        @TruffleBoundary
-        private static boolean matchPromise(RCaller call, RSyntaxNode promiseNode) {
-            if (call == null) {
-                return false;
-            }
-            RSyntaxNode callNode = RASTUtils.unwrap(call.getRep()).asRSyntaxNode();
-            return new IdenticalVisitor().accept(promiseNode, callNode);
-
         }
 
     }
@@ -683,7 +642,7 @@ public class FrameFunctions {
                     if (RArguments.getDepth(f) == parentDepth) {
                         return f;
                     }
-                    if (RArguments.getDispatchArgs(f) != null) {
+                    if (RArguments.getDispatchArgs(f) != null && RArguments.getDispatchArgs(f) instanceof S3Args) {
                         /*
                          * Skip the next frame if this frame has dispatch args, and therefore was
                          * called by UseMethod or NextMethod.

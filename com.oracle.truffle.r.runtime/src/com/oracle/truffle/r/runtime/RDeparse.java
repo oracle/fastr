@@ -249,6 +249,7 @@ public class RDeparse {
 
     private interface C extends AutoCloseable {
         // this interface is used to get a shorter name and remove the checked exception
+        @Override
         void close();
     }
 
@@ -341,9 +342,7 @@ public class RDeparse {
         public void fixupSources() {
             Source source = Source.fromText(sb, "deparse");
             for (SourceSectionElement s : sources) {
-                SourceSection original = s.element.getSourceSection();
-                SourceSection newSource = source.createSection(null, s.start, s.length);
-                s.element.setSourceSection(newSource);
+                s.element.setSourceSection(source.createSection(null, s.start, s.length));
             }
         }
 
@@ -404,6 +403,7 @@ public class RDeparse {
         private C indent() {
             indent++;
             return new C() {
+                @Override
                 public void close() {
                     indent--;
                 }
@@ -413,6 +413,7 @@ public class RDeparse {
         private C inCurly() {
             inCurly++;
             return new C() {
+                @Override
                 public void close() {
                     inCurly--;
                 }
@@ -732,8 +733,9 @@ public class RDeparse {
         }
 
         private DeparseVisitor process(Object v) {
-            assert RRuntime.asAbstractVector(v) instanceof RTypedValue;
-            assert !(v instanceof RSyntaxElement);
+            assert v != null;
+            assert RRuntime.asAbstractVector(v) instanceof RTypedValue : v.getClass();
+            assert !(v instanceof RSyntaxElement) : v.getClass();
 
             RSyntaxElement element = wrap(v, false);
             if (!quoteExpressions() || element instanceof RSyntaxConstant) {

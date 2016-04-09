@@ -128,8 +128,7 @@ public class TestFunctions extends TestBase {
 
         assertEval(Output.ContainsError, "{ foo <- function (x) { x } ; foo(1,2,3) }");
 
-        // function matching, builtins
-        assertEval(Ignored.Unknown, "{ x <- function(a,b) { a^b } ; f <- function() { x <- 211 ; sapply(1, x, 2) } ; f() }");
+        assertEval("{ x <- function(a,b) { a^b } ; f <- function() { x <- 211 ; sapply(1, x, 2) } ; f() }");
     }
 
     @Test
@@ -213,9 +212,9 @@ public class TestFunctions extends TestBase {
 
     @Test
     public void testVarArgPromises() {
-        assertEval("g <- function(e) get(\"ex\", e);f <- function(e, en) {  exports <- g(e);  unlist(lapply(en, get, envir = exports, inherits = FALSE))}; "
-                        + "e1 <- new.env(); e1n <- new.env(); assign(\"a\", \"isa\", e1n); assign(\"ex\", e1n, e1); "
-                        + "e2 <- new.env(); e2n <- new.env(); assign(\"b\", \"isb\", e2n); assign(\"ex\", e2n, e2); ex1 <- c(\"a\"); ex2 <- c(\"b\"); f(e1, ex1); f(e2, ex2) == \"isb\"");
+        assertEval("g <- function(e) get(\"ex\", e);f <- function(e, en) {  exports <- g(e);  unlist(lapply(en, get, envir = exports, inherits = FALSE))}; " +
+                        "e1 <- new.env(); e1n <- new.env(); assign(\"a\", \"isa\", e1n); assign(\"ex\", e1n, e1); " +
+                        "e2 <- new.env(); e2n <- new.env(); assign(\"b\", \"isb\", e2n); assign(\"ex\", e2n, e2); ex1 <- c(\"a\"); ex2 <- c(\"b\"); f(e1, ex1); f(e2, ex2) == \"isb\"");
     }
 
     @Test

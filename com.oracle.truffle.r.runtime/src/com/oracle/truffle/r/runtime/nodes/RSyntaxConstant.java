@@ -37,14 +37,17 @@ public interface RSyntaxConstant extends RSyntaxElement {
      */
     static RSyntaxConstant createDummyConstant(SourceSection originalSource, Object value) {
         return new RSyntaxConstant() {
+            @Override
             public SourceSection getSourceSection() {
                 return originalSource;
             }
 
+            @Override
             public Object getValue() {
                 return value;
             }
 
+            @Override
             public void setSourceSection(SourceSection src) {
                 // ignored
             }

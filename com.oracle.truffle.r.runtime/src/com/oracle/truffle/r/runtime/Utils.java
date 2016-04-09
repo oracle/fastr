@@ -367,6 +367,9 @@ public final class Utils {
 
     /**
      * Retrieve the caller frame of the current frame.
+     *
+     * TODO Calls to this method should be validated with respect to whether promise evaluation is
+     * in progress and replaced with use of {@code FrameDepthNode}.
      */
     public static Frame getCallerFrame(Frame frame, FrameAccess fa) {
         return getStackFrame(fa, RArguments.getDepth(frame) - 1);
@@ -482,10 +485,18 @@ public final class Utils {
         if (str.length() > 0) {
             str.append("\n");
         }
-        if (!RArguments.isRFrame(frame)) {
-            str.append("<unknown frame>");
+        Frame unwrapped = RArguments.unwrap(frame);
+        if (!RArguments.isRFrame(unwrapped)) {
+            if (unwrapped.getArguments().length == 0) {
+                str.append("<empty frame>");
+            } else {
+                str.append("<unknown frame>");
+            }
         } else {
-            Frame unwrapped = RArguments.unwrap(frame);
+            if (callTarget.toString().equals("<promise>")) {
+                /* these have the same depth as the next frame, and add no useful info. */
+                return;
+            }
             RCaller call = RArguments.getCall(unwrapped);
             if (call != null) {
                 /*

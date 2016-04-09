@@ -28,7 +28,6 @@ import java.io.PrintStream;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.PromiseEvalFrame;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -109,15 +108,15 @@ public class PromiseEvalFrameDebug {
 
     }
 
-    public static void noPromise(RBuiltinNode node, int depth) {
+    public static void noPromise(int depth) {
         if (enabled()) {
-            out().printf("getEffectiveDepth[%s](%d): no promise eval in progress%n", getCode(node.getOriginalCall()), depth);
+            out().printf("getEffectiveDepth(%d): no promise eval in progress%n", depth);
         }
     }
 
-    public static void match(RBuiltinNode node, boolean match, PromiseEvalFrame pf, int depth) {
+    public static void match(boolean match, PromiseEvalFrame pf, int depth) {
         if (enabled()) {
-            out().printf("getEffectiveDepth[%s](%d) match=%b on: %s%n", getCode(node.getOriginalCall()), depth, match, getCode(pf.getPromise().getRep().asRSyntaxNode()));
+            out().printf("getEffectiveDepth(%d) match=%b on: %s%n", depth, match, getCode(pf.getPromise().getRep().asRSyntaxNode()));
         }
     }
 
