@@ -63,9 +63,10 @@ pkgtest: ${common} ${java8Downloads} {
 # tries to install a (default) number of packages previously known not to install
 # TODO how to find the path to the ok.packages directory?
 pkginstall: ${common} ${java8Downloads} {
-  timelimit : "3:00:00"
+  timelimit : "6:00:00"
   run : [
-    ["mx", "test", "--invert.pkgs", "--print-ok-installs", ]
+    ["mx", "build"]
+    ["mx", "pkgtest", "--invert.pkgs", "--print-ok-installs", "--install-dependents-first", "--pkg-count", "1000"]
   ]
 }
 
@@ -74,4 +75,5 @@ builds = [
   ${gateStyle}      {capabilities : [linux, amd64, gate],   name: "gate-style-linux-amd64"}
 #  ${gateTest}       {capabilities : [linux, sparcv9, gate], name: "gate-test-linux-sparcv9"}
   ${pkgtest}        {capabilities : [linux, amd64, gate], name: "pkgtest-test-linux-amd64"}
+  ${pkginstall}        {capabilities : [linux, amd64, gate], name: "pkginstall-test-linux-amd64"}
 ]

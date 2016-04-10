@@ -34,7 +34,7 @@ def pkgtest(args):
     # sundry options understood by installpkgs R code
     parser.add_argument('--pkg-count', action='store', help='number of packages to install/test', default='100')
     parser.add_argument('--ignore-blacklist', action='store_true', help='pass --ignore-blacklist')
-    parser.add_argument('--install-dependents', action='store_true', help='pass -install-dependents')
+    parser.add_argument('--install-dependents-first', action='store_true', help='pass -install-dependents-first')
     parser.add_argument('--print-ok-installs', action='store_true', help='pass --print-ok-installs')
     args = parser.parse_args(args)
 
@@ -57,8 +57,8 @@ def pkgtest(args):
         install_args += ['--run-tests']
     if args.ignore_blacklist:
         install_args += ['--ignore-blacklist']
-    if args.install_dependents:
-        install_args += ['--install-dependents']
+    if args.install_dependents_first:
+        install_args += ['--install-dependents-first']
     if args.print_ok_installs:
         install_args += ['--print-ok-installs']
 
