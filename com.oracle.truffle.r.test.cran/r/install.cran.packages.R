@@ -655,8 +655,6 @@ parse.args <- function() {
 			run.tests <<- TRUE
 		} else if (a == "--testdir") {
 			testdir <<- get.argvalue()
-		} else if (a == "--pkg-list-installed") {
-			pkg.list.installed <<- T
 		} else if (a == "--print-ok-installs") {
 			print.ok.installs <<- T
 		} else if (a == "--list-versions") {
@@ -682,7 +680,7 @@ parse.args <- function() {
 		stop("--pkg.pattern and --pkg.filelist are mutually exclusive")
 	}
 	if (is.na(pkg.pattern) && is.na(pkg.filelistfile)) {
-	    pkg.pattern <- "^.*"
+	    pkg.pattern <<- "^.*"
 	}
 }
 
@@ -761,7 +759,6 @@ testdir <- "test"
 pkg.pattern <- NA
 pkg.filelist <- character()
 pkg.filelistfile <- NA
-pkg.list.installed <- F
 print.ok.installs <- F
 use.installed.pkgs <- F
 verbose <- F
