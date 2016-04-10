@@ -36,6 +36,7 @@ def pkgtest(args):
     parser.add_argument('--ignore-blacklist', action='store_true', help='pass --ignore-blacklist')
     parser.add_argument('--install-dependents-first', action='store_true', help='pass -install-dependents-first')
     parser.add_argument('--print-ok-installs', action='store_true', help='pass --print-ok-installs')
+    parser.add_argument('--invert-pkgset', action='store_true', help='pass --invert-pkgset')
     args = parser.parse_args(args)
 
     libinstall = abspath("lib.install.cran")
@@ -61,6 +62,8 @@ def pkgtest(args):
         install_args += ['--install-dependents-first']
     if args.print_ok_installs:
         install_args += ['--print-ok-installs']
+    if args.invert_pkgset:
+        install_args += ['--invert-pkgset']
 
     class OutputCapture:
         def __init__(self):
