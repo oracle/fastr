@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.function.signature;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -38,22 +37,20 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class GetCallerFrameNode extends RBaseNode {
 
-    @CompilationFinal private boolean slowPathSeen;
     private final BranchProfile topLevelProfile = BranchProfile.create();
     @Child FrameDepthNode frameDepthNode;
 
     @Override
     public NodeCost getCost() {
-        return slowPathSeen ? NodeCost.MONOMORPHIC : NodeCost.NONE;
+        return frameDepthNode != null ? NodeCost.MONOMORPHIC : NodeCost.NONE;
     }
 
     public MaterializedFrame execute(VirtualFrame frame) {
         MaterializedFrame funFrame = RArguments.getCallerFrame(frame);
         if (funFrame == null) {
-            if (!slowPathSeen) {
+            if (frameDepthNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 frameDepthNode = insert(new FrameDepthNode());
-                slowPathSeen = true;
             }
             // TODO This does not just occur in UseMethod dispatch
             RError.performanceWarning("slow caller frame access in UseMethod dispatch");
