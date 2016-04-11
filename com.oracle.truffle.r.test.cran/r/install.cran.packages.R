@@ -500,9 +500,18 @@ do.it <- function() {
 	}
 
 	if (run.tests) {
-		if (no.install) {
-			check.installed.packages()
+		if (!install) {
+			# The starting set is just what is installed
+			test.pkgnames = check.installed.pkgs()
+			if (!is.na(pkg.filelistfile)) {
+				match.fun <- function(x)  x %in% pkg.filelist
+			} else {
+				match.fun <- function(x) grepl(pkg.pattern, x)
+			}
+			matched.pkgnames <- sapply(test.pkgnames, match.fun)
+			test.pkgnames <- test.pkgnames[matched.pkgnames]
 		}
+
 		cat("BEGIN package tests\n")
 		test.count = 1
 		test.total = length(test.pkgnames)
