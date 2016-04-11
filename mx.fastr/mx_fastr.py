@@ -246,8 +246,7 @@ def process_bm_args(args):
 
     non_rhome_args = []
     rhome_args = []
-    # Non-interactively we don't want exceptions going to fastr_errors.log
-    error_args = ['-DR:+PrintErrorStacktraces', '-DR:-PrintErrorStacktracesToFile']
+    error_args = []
     i = 0
     jdk = None
     while i < len(args):
@@ -259,9 +258,9 @@ def process_bm_args(args):
         elif arg == '--jdk':
             jdk = getVmArgValue(arg, args, i)
             i = i + 1
-        elif args == '--log-internal-errors':
-            # revert to default
-            error_args = []
+        elif args == '--print-internal-errors':
+            # Non-interactively we don't want exceptions going to fastr_errors.log
+            error_args = ['-DR:+PrintErrorStacktraces', '-DR:-PrintErrorStacktracesToFile']
         else:
             non_rhome_args.append(arg)
         i = i + 1
