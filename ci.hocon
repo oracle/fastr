@@ -59,7 +59,7 @@ benchRun: ${common} ${java8Downloads} {
     ["git", "clone", "ssh://git@ol-bitbucket.us.oracle.com:7999/g/r-benchmarks.git",  "../r-benchmarks"]
     ["git", "clone", "ssh://git@ol-bitbucket.us.oracle.com:7999/g/graal-core.git",  "../graal-core"]
     [mx, --vm, server, --vmbuild, product, --dynamicimport, graal-core, --strict-compliance, build, -p, --force-javac]
-    [mx, --vm, server, --dynamicimport, r-benchmarks,r-apptests,graal-core, benchmark, --results-file, results.json]
+    ["mx", "--vm", "server", "--dynamicimport", "r-benchmarks,r-apptests,graal-core", "benchmark", "--results-file", "results.json"]
     ["bench-uploader.py", "--url", "$BENCH_SERVER_URL", "results.json"]
   ]
   timelimit : "3:00:00"
