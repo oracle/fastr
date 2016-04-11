@@ -26,8 +26,6 @@ from argparse import ArgumentParser
 import mx
 import mx_gate
 import mx_fastr_pkgtest
-import mx_benchmark
-from mx_benchmark import BenchmarkSuite
 import shutil, os
 
 '''
@@ -228,6 +226,52 @@ def rscript(args, parser=None, out=None, err=None):
 def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
     run_r(args, 'rrepl')
+
+def process_bm_args(args):
+    '''
+    Analyze args for those specific to the rhome of this suite for benchmarks.
+    Return a dict with keys:
+      'suite': this suite
+      'printname': print name for suite
+      'args': non-rhome-specific args
+      'rhome_args: rhome-specific-args
+      'executor': function to execute a command using the rhome
+    Other keys can be stored based on the analysis
+    '''
+    def getVmArgValue(key, args, i):
+        if i < len(args) - 1:
+            return args[i + 1]
+        else:
+            mx.abort('value expected after ' + key)
+
+    non_rhome_args = []
+    rhome_args = []
+    # Non-interactively we don't want exceptions going to fastr_errors.log
+    error_args = ['-DR:+PrintErrorStacktraces', '-DR:-PrintErrorStacktracesToFile']
+    i = 0
+    jdk = None
+    while i < len(args):
+        arg = args[i]
+        if arg == '--J':
+            argslist = mx.split_j_args([getVmArgValue(arg, args, i)])
+            rhome_args += argslist
+            i = i + 1
+        elif arg == '--jdk':
+            jdk = getVmArgValue(arg, args, i)
+            i = i + 1
+        elif args == '--log-internal-errors':
+            # revert to default
+            error_args = []
+        else:
+            non_rhome_args.append(arg)
+        i = i + 1
+    return {'suite': _fastr_suite, 'printname': 'FastR',
+            'args': non_rhome_args, 'rhome-args': rhome_args + error_args,
+            'executor': _bm_runner,
+            'jdk': jdk}
+
+def _bm_runner(command, rhome_dict, out, err, nonZeroIsFatal=False):
+    return do_run_r(command, 'R', nonZeroIsFatal=False, extraVmArgs=rhome_dict['rhome-args'], jdk=rhome_dict['jdk'], out=out, err=out)
 
 def build(args):
     '''FastR build'''
@@ -581,19 +625,6 @@ def rcmplib(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
-def bm_suite():
-    return mx.suite('r-benchmarks', fatalIfMissing=False)
-
-# convenience to force RInternal
-def benchmark(args):
-    if bm_suite():
-        return mx_benchmark.benchmark(['RInternal'] + args)
-    else:
-        mx.abort("no benchmarks available")
-
-def _fastr_rhome_dict(vmArgs=None, jdk=None):
-    return {'name': 'FastR', 'suite_name': 'fastr', 'vmArgs': vmArgs, 'jdk': jdk}
-
 def _cran_test_project():
     return mx.project('com.oracle.truffle.r.test.cran').dir
 
@@ -605,64 +636,6 @@ def _installpkgs(args, out=None, err=None):
     script = join(cran_test, 'r', 'install.cran.packages.R')
     return rscript([script] + args, out=out, err=err)
 
-class FastRBenchmarkSuite(BenchmarkSuite):
-    """
-    This class is registered with mx_benchmark.
-    """
-
-    def name(self):
-        return "RInternal"
-
-    def group(self):
-        return "fastr"
-
-    def vmArgs(self, bmSuiteArgs):
-        return self.vm_args
-
-    def runArgs(self, bmSuiteArgs):
-        return self.args
-
-    def run(self, benchmarks, bmSuiteArgs):
-        if bm_suite():
-            self.args = []
-            self.vm_args = []
-            self.jdk = None
-
-            self.vm_args.append('-Xmx6g')
-            # This turns off all visibility support
-            self.vm_args.append('-DR:+IgnoreVisibility')
-            # Evidently these options are specific to Graal but do_run_r filters inappropriate options
-            # if we are running under a different VM
-            self.vm_args.append('-Dgraal.TruffleCompilationExceptionsAreFatal=true')
-            self.vm_args.append('-Dgraal.TraceTruffleCompilation=true')
-            self.vm_args += ['-da', '-dsa']
-
-            i = 0
-            while i < len(bmSuiteArgs):
-                arg = bmSuiteArgs[i]
-                if arg == '--J':
-                    argslist = mx.split_j_args([self.getVmArgValue(arg, bmSuiteArgs, i)])
-                    self.vm_args += argslist
-                    i = i + 1
-                elif arg == '--jdk':
-                    self.jdk = self.getVmArgValue(arg, bmSuiteArgs, i)
-                    i = i + 1
-                else:
-                    self.args.append(arg)
-                i = i + 1
-            return mx.command_function('rbench')(self.args, _fastr_rhome_dict(self.vm_args, self.jdk))
-        else:
-            mx.abort("no benchmarks available")
-
-    def getVmArgValue(self, key, args, i):
-        if i < len(args) - 1:
-            return args[i + 1]
-        else:
-            mx.abort('value expected after ' + key)
-
-
-mx_benchmark.add_bm_suite(FastRBenchmarkSuite())
-
 _commands = {
     'r' : [rshell, '[options]'],
     'R' : [rshell, '[options]'],
@@ -670,7 +643,6 @@ _commands = {
     'Rscript' : [rscript, '[options]'],
     'rtestgen' : [testgen, ''],
     'originalgate' : [original_gate, '[options]'],
-    'benchmark' : [benchmark, ''],
     'build' : [build, ''],
     'gate' : [gate, ''],
     'junit' : [junit, ['options']],
