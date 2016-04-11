@@ -246,6 +246,14 @@ def process_bm_args(args):
 
     non_rhome_args = []
     rhome_args = []
+    rhome_args.append('-Xmx6g')
+    # This turns off all visibility support
+    rhome_args.append('-DR:+IgnoreVisibility')
+    # Evidently these options are specific to Graal but do_run_r filters inappropriate options
+    # if we are running under a different VM
+#    rhome_args.append('-Dgraal.TruffleCompilationExceptionsAreFatal=true')
+    rhome_args.append('-Dgraal.TraceTruffleCompilation=true')
+    rhome_args += ['-da', '-dsa']
     error_args = []
     i = 0
     jdk = None
