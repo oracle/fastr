@@ -23,7 +23,8 @@
 
 from argparse import ArgumentParser
 from os.path import join, abspath
-import shutil, os
+import shutil, os, re
+import mx
 import mx_fastr
 
 def pkgtest(args):
@@ -65,12 +66,62 @@ def pkgtest(args):
     if args.invert_pkgset:
         install_args += ['--invert-pkgset']
 
+    class TestStatus:
+        def __init__(self):
+            self.status = "unknown"
+            self.filelist = []
+
     class OutputCapture:
         def __init__(self):
-            self.data = ""
+            self.install_data = None
+            self.pkg = None
+            self.mode = None
+            self.start_install_pattern = re.compile(r"^BEGIN processing: (?P<package>[a-zA-Z0-9\.\-]+) .*")
+            self.test_pattern = re.compile(r"^(?P<status>BEGIN|END) testing: (?P<package>[a-zA-Z0-9\.\-]+) .*")
+            self.status_pattern = re.compile(r"^(?P<package>[a-zA-Z0-9\.\-]+): (?P<status>OK|FAILED).*")
+            self.install_data = dict()
+            self.install_status = dict()
+            self.test_info = dict()
+
         def __call__(self, data):
             print data,
-            self.data += data
+            if data == "BEGIN package installation\n":
+                self.mode = "install"
+                return
+            elif data == "BEGIN install status\n":
+                self.mode = "install_status"
+                return
+            elif data == "BEGIN package tests\n":
+                self.mode = "test"
+                return
+
+            if self.mode == "install":
+                start_install = re.match(self.start_install_pattern, data)
+                if start_install:
+                    pkg_name = start_install.group(1)
+                    self.pkg = pkg_name
+                    self.install_data[self.pkg] = ""
+                if self.pkg:
+                    self.install_data[self.pkg] += data
+            elif self.mode == "install_status":
+                if data == "END install status\n":
+                    self.mode = None
+                    return
+                status = re.match(self.status_pattern, data)
+                pkg_name = status.group(1)
+                self.install_status[pkg_name] = status.group(2) == "OK"
+            elif self.mode == "test":
+                test_match = re.match(self.test_pattern, data)
+                if test_match:
+                    begin_end = test_match.group(1)
+                    pkg_name = test_match.group(2)
+                    if begin_end == "END":
+                        pkg_testdir = join(mx.suite('fastr').dir, 'test', pkg_name)
+                        for root, _, files in os.walk(pkg_testdir):
+                            if not self.test_info.has_key(pkg_name):
+                                self.test_info[pkg_name] = TestStatus()
+                            for f in files:
+                                self.test_info[pkg_name].filelist.append(join(root, f))
 
     out = OutputCapture()
 

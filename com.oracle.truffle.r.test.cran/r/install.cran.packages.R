@@ -378,7 +378,7 @@ install.pkgs <- function(pkgnames, dependents.install=F) {
 	install.total <- length(pkgnames)
 	result <- TRUE
 	for (pkgname in pkgnames) {
-		cat("processing:", pkgname, "\n")
+		cat("BEGIN processing:", pkgname, "\n")
 		dependent.install.ok <- T
 		if (install.dependents.first && !dependents.install) {
 			dependents <- install.order(avail.pkgs, avail.pkgs[pkgname, ])
@@ -439,6 +439,8 @@ install.pkgs <- function(pkgnames, dependents.install=F) {
 				}
 			}
 		}
+		cat("END processing:", pkgname, "\n")
+
 		install.count = install.count + 1
 	}
 	return(result)
@@ -489,13 +491,18 @@ do.it <- function() {
 		cat("END package installation\n")
 
 		if (print.ok.installs) {
+			cat("BEGIN install status\n")
 			for (pkgname.i in names(install.status)) {
 				cat(paste0(pkgname.i, ":"), ifelse(install.status[pkgname.i], "OK", "FAILED"), "\n")
 			}
+			cat("END install status\n")
 		}
 	}
 
 	if (run.tests) {
+		if (no.install) {
+			check.installed.packages()
+		}
 		cat("BEGIN package tests\n")
 		test.count = 1
 		test.total = length(test.pkgnames)
@@ -504,8 +511,10 @@ do.it <- function() {
 				if (dry.run) {
 					cat("would test:", pkgname, "\n")
 				} else {
-					cat("testing:", pkgname, "(", test.count, "of", test.total, ")", "\n")
+
+					cat("BEGIN testing:", pkgname, "(", test.count, "of", test.total, ")", "\n")
 					test.package(pkgname)
+					cat("END testing:", pkgname, "\n")
 				}
 			} else {
 				cat("install failed, not testing:", pkgname, "\n")
