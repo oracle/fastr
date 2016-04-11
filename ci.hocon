@@ -49,10 +49,28 @@ gateStyle : ${common} {
   ]
 }
 
+benchRun: ${common} ${java8Downloads} {
+# workaround mx bug
+  environment: ${common.environment} {
+    MX_IDE : "eclipse"
+  }
+  run : [
+    ["git", "clone", "ssh://git@ol-bitbucket.us.oracle.com:7999/g/r-apptests.git",  "../r-apptests"]
+    ["git", "clone", "ssh://git@ol-bitbucket.us.oracle.com:7999/g/r-benchmarks.git",  "../r-benchmarks"]
+    ["git", "clone", "ssh://git@ol-bitbucket.us.oracle.com:7999/g/graal-core.git",  "../graal-core"]
+    ["mx", "build"]
+    ["mx", "--dynamicimport", "r-benchmarks,r-apptests,graal-core", "benchmark", "--results-file", "results.json"]
+    ["bench-uploader.py", "--url", "$BENCH_SERVER_URL", "results.json"]
+  ]
+  timelimit : "3:00:00"
+}
+
+
 # currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
 
 builds = [
   ${gateTest}       {capabilities : [linux, amd64, gate],   name: "gate-test-linux-amd64"}
   ${gateStyle}      {capabilities : [linux, amd64, gate],   name: "gate-style-linux-amd64"}
+  ${benchRun}       {capabilities : [linux, amd64, gate],   name: "bench-test-linux-amd64"}
 #  ${gateTest}       {capabilities : [linux, sparcv9, gate], name: "gate-test-linux-sparcv9"}
 ]
