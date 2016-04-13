@@ -34,7 +34,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -45,19 +44,29 @@ public abstract class ColSums extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
 
-    private final ConditionProfile removeNA = ConditionProfile.createBinaryProfile();
-
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
-        casts.toInteger(2);
+        casts.arg("X").isNumeric(RError.Message.X_NUMERIC);
+
+        casts.arg("m").asInteger().
+                        findFirst().
+                        noNA().
+                        orElseThrow();
+
+        casts.arg("n").asInteger().
+                        findFirst().
+                        noNA().
+                        orElseThrow();
+
+        casts.arg("na.rm").asLogical().
+                        findFirstBoolean().
+                        orElseThrow();
     }
 
     @Specialization
-    protected RDoubleVector colSums(RDoubleVector x, int rowNum, int colNum, byte naRm) {
+    protected RDoubleVector colSums(RDoubleVector x, int rowNum, int colNum, boolean rna) {
         double[] result = new double[colNum];
         boolean isComplete = true;
-        final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(x);
         double[] data = x.getDataWithoutCopying();
         int pos = 0;
@@ -90,10 +99,9 @@ public abstract class ColSums extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector colSums(RLogicalVector x, int rowNum, int colNum, byte naRm) {
+    protected RDoubleVector colSums(RLogicalVector x, int rowNum, int colNum, boolean rna) {
         double[] result = new double[colNum];
         boolean isComplete = true;
-        final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(x);
         byte[] data = x.getDataWithoutCopying();
         int pos = 0;
@@ -121,10 +129,9 @@ public abstract class ColSums extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector colSums(RIntVector x, int rowNum, int colNum, byte naRm) {
+    protected RDoubleVector colSums(RIntVector x, int rowNum, int colNum, boolean rna) {
         double[] result = new double[colNum];
         boolean isComplete = true;
-        final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(x);
         int[] data = x.getDataWithoutCopying();
         int pos = 0;
@@ -151,9 +158,4 @@ public abstract class ColSums extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, isComplete);
     }
 
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RDoubleVector colSums(RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
-        throw RError.error(this, RError.Message.X_NUMERIC);
-    }
 }

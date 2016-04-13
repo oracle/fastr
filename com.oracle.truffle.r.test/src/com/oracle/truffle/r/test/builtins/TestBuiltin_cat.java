@@ -10,8 +10,15 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.IS_LOGICAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.IS_NUMERIC;
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
 
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
@@ -87,4 +94,5 @@ public class TestBuiltin_cat extends TestBase {
         assertEval("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\", \"b\") }");
         assertEval("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\", \"b\") }");
     }
+
 }

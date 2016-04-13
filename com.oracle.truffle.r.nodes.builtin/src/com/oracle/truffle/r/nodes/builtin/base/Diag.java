@@ -20,10 +20,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
+import com.oracle.truffle.r.runtime.MessagePredicate;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -36,27 +36,14 @@ public abstract class Diag extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstIntegerWithError(1, Message.INVALID_LARGE_NA_VALUE, "nrow");
-        casts.firstIntegerWithError(2, Message.INVALID_LARGE_NA_VALUE, "ncol");
-    }
-
-    private static void checkParams(int nrow, int ncol) {
-        if (RRuntime.isNA(nrow)) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(RError.SHOW_CALLER2, Message.INVALID_LARGE_NA_VALUE, "nrow");
-        }
-        if (nrow < 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(RError.SHOW_CALLER2, Message.INVALID_NEGATIVE_VALUE, "nrow");
-        }
-        if (RRuntime.isNA(ncol)) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(RError.SHOW_CALLER2, Message.INVALID_LARGE_NA_VALUE, "ncol");
-        }
-        if (ncol < 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(RError.SHOW_CALLER2, Message.INVALID_NEGATIVE_VALUE, "ncol");
-        }
+        casts.arg("nrow").asInteger().
+                        findFirst().
+                        error(MessagePredicate.MUST_NOT_BE_NA_VALUE, "nrow").
+                        error(MessagePredicate.MUST_BE_GT_ZERO, "nrow");
+        casts.arg("ncol").asInteger().
+                        findFirst().
+                        error(MessagePredicate.MUST_NOT_BE_NA_VALUE, "ncol").
+                        error(MessagePredicate.MUST_BE_GT_ZERO, "ncol");
     }
 
     private static int checkX(RAbstractVector x, int nrow, int ncol) {
@@ -70,7 +57,6 @@ public abstract class Diag extends RBuiltinNode {
 
     @Specialization
     protected Object diag(@SuppressWarnings("unused") RNull x, int nrow, int ncol) {
-        checkParams(nrow, ncol);
         if (nrow == 0 && ncol == 0) {
             return RDataFactory.createDoubleVector(new double[]{}, true, new int[]{0, 0});
         } else {
@@ -80,7 +66,6 @@ public abstract class Diag extends RBuiltinNode {
 
     @Specialization
     protected Object diag(RAbstractComplexVector x, int nrow, int ncol) {
-        checkParams(nrow, ncol);
         int mn = checkX(x, nrow, ncol);
 
         double[] data = new double[nrow * ncol * 2];
@@ -97,7 +82,6 @@ public abstract class Diag extends RBuiltinNode {
     @Specialization(guards = "!isRAbstractComplexVector(x)")
     protected Object diag(RAbstractVector x, int nrow, int ncol, //
                     @Cached("create()") CastDoubleNode cast) {
-        checkParams(nrow, ncol);
         int mn = checkX(x, nrow, ncol);
 
         RAbstractDoubleVector source = (RAbstractDoubleVector) cast.execute(x);

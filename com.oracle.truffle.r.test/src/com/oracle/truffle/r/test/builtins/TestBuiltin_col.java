@@ -34,4 +34,9 @@ public class TestBuiltin_col extends TestBase {
 
         assertEval(Output.IgnoreErrorContext, "{ col(c(1,2,3)) }");
     }
+
+    @Test
+    public void testCasts0() {
+        assertEval(Output.ContainsError, "col(NULL)");
+    }
 }

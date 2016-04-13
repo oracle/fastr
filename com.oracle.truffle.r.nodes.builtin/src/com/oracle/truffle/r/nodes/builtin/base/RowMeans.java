@@ -36,12 +36,24 @@ public abstract class RowMeans extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1).toInteger(2);
+        casts.arg("m").asInteger().
+                        findFirst().
+                        noNA().
+                        orElseThrow();
+
+        casts.arg("n").asInteger().
+                        findFirst().
+                        noNA().
+                        orElseThrow();
+
+        casts.arg("na.rm").asLogical().
+                        findFirstBoolean().
+                        orElseThrow();
     }
 
-    @Specialization(guards = "!isNaRm(naRm)")
+    @Specialization(guards = "!naRm")
     @TruffleBoundary
-    protected RDoubleVector rowMeansNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowMeansNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         double[] result = new double[rowNum];
         boolean isComplete = true;
         na.enable(x);
@@ -65,9 +77,9 @@ public abstract class RowMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA() && isComplete);
     }
 
-    @Specialization(guards = "isNaRm(naRm)")
+    @Specialization(guards = "naRm")
     @TruffleBoundary
-    protected RDoubleVector rowMeansNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowMeansNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         double[] result = new double[rowNum];
         boolean isComplete = true;
         na.enable(x);
@@ -91,9 +103,9 @@ public abstract class RowMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, isComplete);
     }
 
-    @Specialization(guards = "!isNaRm(naRm)")
+    @Specialization(guards = "!naRm")
     @TruffleBoundary
-    protected RDoubleVector rowMeansNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowMeansNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         double[] result = new double[rowNum];
         na.enable(x);
         nextRow: for (int i = 0; i < rowNum; i++) {
@@ -111,9 +123,9 @@ public abstract class RowMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
-    @Specialization(guards = "isNaRm(naRm)")
+    @Specialization(guards = "naRm")
     @TruffleBoundary
-    protected RDoubleVector rowMeansNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowMeansNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         double[] result = new double[rowNum];
         boolean isComplete = true;
         na.enable(x);
@@ -137,9 +149,9 @@ public abstract class RowMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, isComplete);
     }
 
-    @Specialization(guards = "!isNaRm(naRm)")
+    @Specialization(guards = "!naRm")
     @TruffleBoundary
-    protected RDoubleVector rowMeansNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowMeansNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         double[] result = new double[rowNum];
         na.enable(x);
         nextRow: for (int i = 0; i < rowNum; i++) {
@@ -157,9 +169,9 @@ public abstract class RowMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
-    @Specialization(guards = "isNaRm(naRm)")
+    @Specialization(guards = "naRm")
     @TruffleBoundary
-    protected RDoubleVector rowMeansNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowMeansNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         double[] result = new double[rowNum];
         boolean isComplete = true;
         na.enable(x);
@@ -185,12 +197,9 @@ public abstract class RowMeans extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RDoubleVector rowMeans(RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
+    protected RDoubleVector rowMeans(RAbstractStringVector x, int rowNum, int colNum, boolean naRm) {
         CompilerDirectives.transferToInterpreter();
         throw RError.error(this, RError.Message.X_NUMERIC);
     }
 
-    protected boolean isNaRm(byte naRm) {
-        return naRm == RRuntime.LOGICAL_TRUE;
-    }
 }

@@ -120,22 +120,44 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "raw"})
     public abstract static class File extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("description").isString().
+                            asString().
+                            emptyError().
+                            sizeWarning(RError.Message.ARGUMENT_ONLY_FIRST_1, "description").
+                            findFirst().
+                            noNA();
+
+            casts.arg("open").isString().
+                            asString().
+                            sizeError().
+                            emptyError().
+                            findFirst().
+                            noNA();
+
+            casts.arg("blocking").asLogical().
+                            findFirstBoolean().
+                            orElseThrow().
+                            error(x -> x, RError.Message.NYI, "non-blocking mode not supported");
+
+            casts.arg("encoding").asString().
+                            findFirst().
+                            orElseThrow();
+
+            casts.arg("raw").asLogical().
+                            findFirstBoolean().
+                            orElseThrow();
+        }
+
         @Specialization
         @TruffleBoundary
         @SuppressWarnings("unused")
-        protected Object file(RAbstractStringVector description, RAbstractStringVector openVec, byte blocking, RAbstractStringVector encoding, byte raw) {
-            if (!RRuntime.fromLogical(blocking)) {
-                throw RError.nyi(this, "non-blocking mode not supported");
-            }
-            if (description.getLength() > 1) {
-                RError.warning(this, RError.Message.ARGUMENT_ONLY_FIRST_1, "description");
-            }
-            if (openVec.getLength() > 1) {
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "open");
-            }
+        protected Object file(String description, String openArg, boolean blocking, String encoding, boolean raw) {
+            String open = openArg;
             // TODO handle http/ftp prefixes and redirect
-            String path = removeFileURLPrefix(description.getDataAt(0));
-            String open = openVec.getDataAt(0);
+            String path = removeFileURLPrefix(description);
             if (path.length() == 0) {
                 // special case, temp file opened in "w+" or "w+b" only
                 if (open.length() == 0) {
@@ -150,7 +172,7 @@ public abstract class ConnectionFunctions {
             try {
                 return new FileRConnection(path, open);
             } catch (IOException ex) {
-                RError.warning(this, RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
+                RError.warning(this, RError.Message.CANNOT_OPEN_FILE, description, ex.getMessage());
                 throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }

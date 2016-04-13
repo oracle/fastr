@@ -28,6 +28,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
@@ -38,6 +39,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "col", kind = INTERNAL, parameterNames = {"dims"})
 public abstract class Col extends RBuiltinNode {
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("dims").notNull(RError.Message.MATRIX_LIKE_REQUIRED, "col");
+    }
 
     @Specialization
     protected RIntVector col(RAbstractIntVector x) {
@@ -51,9 +57,4 @@ public abstract class Col extends RBuiltinNode {
         return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR, new int[]{nrows, ncols});
     }
 
-    @Specialization
-    @TruffleBoundary
-    protected RIntVector col(@SuppressWarnings("unused") RNull x) {
-        throw RError.error(this, RError.Message.MATRIX_LIKE_REQUIRED, "col");
-    }
 }

@@ -16,28 +16,29 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = ".cache_class", kind = PRIMITIVE, parameterNames = {"class", "extends"})
 public abstract class CacheClass extends RBuiltinNode {
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("class").defaultError(RError.Message.GENERIC, "invalid class argument to internal .class_cache").
+                        isString().
+                        asString().
+                        findFirst().
+                        orElseThrow();
+    }
+
     @TruffleBoundary
     @Specialization
-    protected RAbstractStringVector getClass(Object cl, RAbstractStringVector ext) {
-        String clString;
-        if (cl instanceof String) {
-            clString = (String) cl;
-        } else if (cl instanceof RStringVector && ((RStringVector) cl).getLength() == 1) {
-            clString = ((RStringVector) cl).getDataAt(0);
-        } else {
-            throw RError.error(this, RError.Message.GENERIC, "invalid class argument to internal .class_cache");
-        }
-        RContext.getInstance().putS4Extends(clString, ext.materialize());
+    protected RAbstractStringVector getClass(String cl, RAbstractStringVector ext) {
+        RContext.getInstance().putS4Extends(cl, ext.materialize());
         return null;
     }
 }

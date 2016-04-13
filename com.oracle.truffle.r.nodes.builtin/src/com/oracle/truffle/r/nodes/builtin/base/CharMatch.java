@@ -16,6 +16,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -27,12 +28,13 @@ public abstract class CharMatch extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(2);
+        casts.arg("noMatch").asInteger().
+                        findFirst().
+                        orElse(RRuntime.INT_NA);
     }
 
     @Specialization
-    protected RIntVector doCharMatch(RAbstractStringVector x, RAbstractStringVector table, RAbstractIntVector noMatch) {
-        int noMatchValue = noMatch.getDataAt(0);
+    protected RIntVector doCharMatch(RAbstractStringVector x, RAbstractStringVector table, int noMatchValue) {
         int[] ans = new int[x.getLength()];
         for (int i = 0; i < x.getLength(); i++) {
             int matchIndex = RRuntime.INT_NA;
