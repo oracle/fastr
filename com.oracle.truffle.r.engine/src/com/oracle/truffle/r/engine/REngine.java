@@ -160,41 +160,43 @@ final class REngine implements Engine, Engine.Timings {
         REnvironment.baseInitialize(baseFrame, globalFrame);
         RBuiltinPackages.loadBase(baseFrame);
         RGraphics.initialize();
-        /*
-         * eval the system/site/user profiles. Experimentally GnuR does not report warnings during
-         * system profile evaluation, but does for the site/user profiles.
-         */
-        try {
-            parseAndEval(RProfile.systemProfile(), baseFrame, false);
-        } catch (ParseException e) {
-            throw new RInternalError(e, "error while parsing system profile from %s", RProfile.systemProfile().getName());
-        }
-        checkAndRunStartupShutdownFunction(".OptRequireMethods");
+        if (FastROptions.LoadBase.getBooleanValue()) {
+            /*
+             * eval the system/site/user profiles. Experimentally GnuR does not report warnings
+             * during system profile evaluation, but does for the site/user profiles.
+             */
+            try {
+                parseAndEval(RProfile.systemProfile(), baseFrame, false);
+            } catch (ParseException e) {
+                throw new RInternalError(e, "error while parsing system profile from %s", RProfile.systemProfile().getName());
+            }
+            checkAndRunStartupShutdownFunction(".OptRequireMethods");
 
-        suppressWarnings = false;
-        Source siteProfile = context.stateRProfile.siteProfile();
-        if (siteProfile != null) {
-            try {
-                parseAndEval(siteProfile, baseFrame, false);
-            } catch (ParseException e) {
-                throw new RInternalError(e, "error while parsing site profile from %s", siteProfile.getName());
+            suppressWarnings = false;
+            Source siteProfile = context.stateRProfile.siteProfile();
+            if (siteProfile != null) {
+                try {
+                    parseAndEval(siteProfile, baseFrame, false);
+                } catch (ParseException e) {
+                    throw new RInternalError(e, "error while parsing site profile from %s", siteProfile.getName());
+                }
             }
-        }
-        Source userProfile = context.stateRProfile.userProfile();
-        if (userProfile != null) {
-            try {
-                parseAndEval(userProfile, globalFrame, false);
-            } catch (ParseException e) {
-                throw new RInternalError(e, "error while parsing user profile from %s", userProfile.getName());
+            Source userProfile = context.stateRProfile.userProfile();
+            if (userProfile != null) {
+                try {
+                    parseAndEval(userProfile, globalFrame, false);
+                } catch (ParseException e) {
+                    throw new RInternalError(e, "error while parsing user profile from %s", userProfile.getName());
+                }
             }
+            if (!(context.getOptions().getBoolean(RCmdOption.NO_RESTORE) || context.getOptions().getBoolean(RCmdOption.NO_RESTORE_DATA))) {
+                // call sys.load.image(".RData", RCmdOption.QUIET
+                checkAndRunStartupShutdownFunction("sys.load.image", new String[]{"\".RData\"", context.getOptions().getBoolean(RCmdOption.QUIET) ? "TRUE" : "FALSE"});
+                context.getConsoleHandler().setHistoryFrom(new File("./.Rhistory"));
+            }
+            checkAndRunStartupShutdownFunction(".First");
+            checkAndRunStartupShutdownFunction(".First.sys");
         }
-        if (!(context.getOptions().getBoolean(RCmdOption.NO_RESTORE) || context.getOptions().getBoolean(RCmdOption.NO_RESTORE_DATA))) {
-            // call sys.load.image(".RData", RCmdOption.QUIET
-            checkAndRunStartupShutdownFunction("sys.load.image", new String[]{"\".RData\"", context.getOptions().getBoolean(RCmdOption.QUIET) ? "TRUE" : "FALSE"});
-            context.getConsoleHandler().setHistoryFrom(new File("./.Rhistory"));
-        }
-        checkAndRunStartupShutdownFunction(".First");
-        checkAndRunStartupShutdownFunction(".First.sys");
     }
 
     @Override

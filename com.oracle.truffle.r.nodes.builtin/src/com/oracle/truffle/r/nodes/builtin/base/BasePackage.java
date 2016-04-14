@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.r.library.fastr.FastRContext;
+import com.oracle.truffle.r.library.fastr.FastRContextFactory;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNodeGen;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanNodeGen;
@@ -58,6 +60,8 @@ public class BasePackage extends RBuiltinPackage {
 
     public BasePackage() {
         super("base");
+
+        add(FastRContext.GetBuiltin.class, FastRContextFactory.GetBuiltinNodeGen::create);
 
         /*
          * Primitive operations (these are really builtins, but not currently defined that way, so

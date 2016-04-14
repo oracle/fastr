@@ -140,7 +140,7 @@ public final class FastRSession implements RSession {
         return singleton;
     }
 
-    private static final Source GET_CONTEXT = Source.fromText("invisible(fastr.context.get())", "<get_context>").withMimeType(TruffleRLanguage.MIME);
+    private static final Source GET_CONTEXT = Source.fromText("invisible(__fastr_get_context())", "<get_context>").withMimeType(TruffleRLanguage.MIME);
 
     public PolyglotEngine createTestContext(ContextInfo contextInfoArg) {
         create();

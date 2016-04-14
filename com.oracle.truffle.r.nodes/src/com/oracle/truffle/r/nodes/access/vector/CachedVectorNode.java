@@ -80,7 +80,7 @@ abstract class CachedVectorNode extends RBaseNode {
         }
     }
 
-    private int initializeFilteredPositionsCount(Object[] positions) {
+    private static int initializeFilteredPositionsCount(Object[] positions) {
         int dimensions = 0;
         for (int i = 0; i < positions.length; i++) {
             // for cases like RMissing the position does not contribute to the number of dimensions
