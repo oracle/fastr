@@ -44,7 +44,7 @@ suite = {
       "url" : "http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html"
     },
   },
-   
+
   "defaultLicense" : "GPLv2",
 
   # libraries that we depend on
