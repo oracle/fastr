@@ -21,13 +21,12 @@
 # questions.
 #
 import tempfile, platform, subprocess, sys
-from os.path import join, sep, dirname, abspath
+from os.path import join, sep, abspath
 from argparse import ArgumentParser
 import mx
 import mx_gate
 import mx_fastr_pkgtest
-import os
-import shutil
+import shutil, os
 
 '''
 This is the launchpad for all the functions available for building/running/testing/analyzing
@@ -72,7 +71,7 @@ _command_class_dict = {'r': _r_command_project + ".shell.RCommand",
                        'rscript': _r_command_project + ".shell.RscriptCommand",
                         'rrepl': _repl_command}
 
-def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True):
+def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True, out=None, err=None):
     '''
     This is the basic function that runs a FastR process, where args have already been parsed.
     Args:
@@ -81,6 +80,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True):
       extraVmArgs: additional vm arguments
       jdk: jdk (an mx.JDKConfig instance) to use
       nonZeroIsFatal: whether to terminate the execution run fails
+      out,err possible redirects to collect output
 
     By default a non-zero return code will cause an mx.abort, unless nonZeroIsFatal=False
     The assumption is that the VM is already built and available.
@@ -103,7 +103,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True):
     vmArgs = _sanitize_vmArgs(jdk, vmArgs)
     if command:
         vmArgs.append(_command_class_dict[command.lower()])
-    return mx.run_java(vmArgs + args, nonZeroIsFatal=nonZeroIsFatal, jdk=jdk)
+    return mx.run_java(vmArgs + args, nonZeroIsFatal=nonZeroIsFatal, jdk=jdk, out=out, err=err)
 
 def _sanitize_vmArgs(jdk, vmArgs):
     '''
@@ -185,7 +185,7 @@ def get_default_jdk():
     '''
     return mx_jvm().get_jvmci_jdk()
 
-def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, nonZeroIsFatal=True):
+def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, nonZeroIsFatal=True, out=None, err=None):
     '''
     Common function for running either R, Rscript (or rrepl).
     args are a list of strings that came after 'command' on the command line
@@ -213,15 +213,15 @@ def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, nonZeroIsFatal
             print 'CMD not implemented via mx, use: bin/R CMD ...'
             sys.exit(1)
 
-    return do_run_r(rargs, command, extraVmArgs=extraVmArgs, jdk=jdk, nonZeroIsFatal=nonZeroIsFatal)
+    return do_run_r(rargs, command, extraVmArgs=extraVmArgs, jdk=jdk, nonZeroIsFatal=nonZeroIsFatal, out=out, err=err)
 
 def rshell(args):
     '''run R shell'''
     return run_r(args, 'r')
 
-def rscript(args):
+def rscript(args, parser=None, out=None, err=None):
     '''run Rscript'''
-    return run_r(args, 'rscript')
+    return run_r(args, 'rscript', parser=parser, out=out, err=err)
 
 def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
@@ -282,7 +282,7 @@ def original_gate(args):
     '''Run the R gate (without filtering gate tasks)'''
     mx_gate.gate(args)
 
-def _test_harness_body_install_new(args, vmArgs):
+def _test_harness_body(args, vmArgs):
     '''the callback from mx.test'''
     libinstall = abspath("lib.install.cran")
     # make sure its empty
@@ -293,25 +293,46 @@ def _test_harness_body_install_new(args, vmArgs):
     os.mkdir(install_tmp)
     os.environ["TMPDIR"] = install_tmp
     os.environ['R_LIBS_USER'] = libinstall
-    stack_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
-    cran_args = []
-    local_cran = mx.get_env('MX_HG_BASE')
-    if local_cran:
-        cran_args = ['--cran-mirror', join(dirname(local_cran), 'cran')]
-    # the following is used to test the installation of packages that are not in the
-    # --ok-pkg-filelist file, i.e. those that have never been successfully installed
-    # extra_args = ['--ok-pkg-filelist', join(_cran_test_project(), 'ok.packages')]
+    stacktrace_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
 
-    # the following line is used to test packages that have been successfully installed
-    extra_args = ['--pkg-filelist', join(_cran_test_project(), 'ok.packages'), '--run-tests']
-    rc = installcran(stack_args + cran_args + ['--testcount', '100'] + extra_args)
+    install_args = ['--pkg-count', args.pkg_count]
+    if args.ok_only:
+        # only install/test packages that have been successfully installed
+        install_args += ['--pkg-filelist', join(_cran_test_project(), 'ok.packages')]
+    if not args.install_only:
+        install_args += ['--run-tests']
+    if args.ignore_blacklist:
+        install_args += ['--ignore-blacklist']
+    if args.install_dependents:
+        install_args += ['--install-dependents']
+    if args.print_ok_installs:
+        install_args += ['--print-ok-installs']
+
+    class OutputCapture:
+        def __init__(self):
+            self.data = ""
+        def __call__(self, data):
+            print data,
+            self.data += data
+
+    out = OutputCapture()
+
+    rc = _installpkgs(stacktrace_args + install_args, out=out, err=out)
+
     shutil.rmtree(install_tmp, ignore_errors=True)
     return rc
 
 def test(args):
     '''used for package installation/testing'''
     parser = ArgumentParser(prog='r test')
-    return mx.test(args, harness=_test_harness_body_install_new, parser=parser)
+    parser.add_argument('--ok-only', action='store_true', help='only install/test packages from the ok.packages file')
+    parser.add_argument('--install-only', action='store_true', help='just install packages, do not test')
+    # sundry options understood by installpkgs R code
+    parser.add_argument('--pkg-count', action='store', help='number of packages to install/test', default='100')
+    parser.add_argument('--ignore-blacklist', action='store_true', help='pass --ignore-blacklist')
+    parser.add_argument('--install-dependents', action='store_true', help='pass -install-dependents')
+    parser.add_argument('--print-ok-installs', action='store_true', help='pass --print-ok-installs')
+    return mx.test(args, harness=_test_harness_body, parser=parser)
 
 def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
@@ -558,40 +579,24 @@ def rcmplib(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
-_bm_suite = None
-
-def bench(args):
-    if _bm_suite:
-        mx.command_function('r_benchmarks:bench')(args)
-    else:
-        mx.abort("no benchmarks available")
-
-def rbench(args):
-    if _bm_suite:
-        mx.command_function('r_benchmarks:rbench')(args)
-    else:
-        mx.abort("no benchmarks available")
-
-
 def _cran_test_project():
     return mx.project('com.oracle.truffle.r.test.cran').dir
 
-def installcran(args):
+def installpkgs(args):
+    _installpkgs(args)
+
+def _installpkgs(args, out=None, err=None):
     cran_test = _cran_test_project()
     script = join(cran_test, 'r', 'install.cran.packages.R')
-    return rscript([script] + args)
+    return rscript([script] + args, out=out, err=err)
 
 _commands = {
-    # new commands
     'r' : [rshell, '[options]'],
     'R' : [rshell, '[options]'],
     'rscript' : [rscript, '[options]'],
     'Rscript' : [rscript, '[options]'],
     'rtestgen' : [testgen, ''],
     'originalgate' : [original_gate, '[options]'],
-    # core overrides
-    'bench' : [bench, ''],
-    'rbench' : [rbench, ''],
     'build' : [build, ''],
     'gate' : [gate, ''],
     'junit' : [junit, ['options']],
@@ -604,7 +609,8 @@ _commands = {
     'rcmplib' : [rcmplib, ['options']],
     'test' : [test, ['options']],
     'rrepl' : [rrepl, '[options]'],
-    'installcran' : [installcran, '[options]'],
+    'installpkgs' : [installpkgs, '[options]'],
+    'installcran' : [installpkgs, '[options]'],
     }
 
 _commands.update(mx_fastr_pkgtest._commands)
