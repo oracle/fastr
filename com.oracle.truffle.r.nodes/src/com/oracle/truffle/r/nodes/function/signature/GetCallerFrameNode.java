@@ -30,7 +30,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.PromiseEvalFrameDebug;
+import com.oracle.truffle.r.nodes.function.RCallNode.CallWithCallerFrame;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -38,7 +40,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 public final class GetCallerFrameNode extends RBaseNode {
 
     private final BranchProfile topLevelProfile = BranchProfile.create();
-    @Child FrameDepthNode frameDepthNode;
+    @Child private FrameDepthNode frameDepthNode;
 
     @Override
     public NodeCost getCost() {
@@ -48,21 +50,34 @@ public final class GetCallerFrameNode extends RBaseNode {
     public MaterializedFrame execute(VirtualFrame frame) {
         MaterializedFrame funFrame = RArguments.getCallerFrame(frame);
         if (funFrame == null) {
+            boolean reset = false;
             if (frameDepthNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
+                RCaller call = RArguments.getCall(frame);
+                if (call != null && call.getRep() instanceof CallWithCallerFrame) {
+                    if (!((CallWithCallerFrame) call.getRep()).setNeedsCallerFrame()) {
+                        reset = true;
+                    }
+                }
                 frameDepthNode = insert(new FrameDepthNode());
             }
-            // TODO This does not just occur in UseMethod dispatch
-            RError.performanceWarning("slow caller frame access in UseMethod dispatch");
-            PromiseEvalFrameDebug.log("GetCallerFrameNode");
-            int depth = frameDepthNode.execute(frame);
-            Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, depth - 1);
-            if (callerFrame != null) {
-                return callerFrame.materialize();
-            } else {
-                topLevelProfile.enter();
-                // S3 method can be dispatched from top-level where there is no caller frame
-                return frame.materialize();
+            try {
+                // TODO This does not just occur in UseMethod dispatch
+                RError.performanceWarning("slow caller frame access in UseMethod dispatch");
+                PromiseEvalFrameDebug.log("GetCallerFrameNode");
+                int depth = frameDepthNode.execute(frame);
+                Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, depth - 1);
+                if (callerFrame != null) {
+                    return callerFrame.materialize();
+                } else {
+                    topLevelProfile.enter();
+                    // S3 method can be dispatched from top-level where there is no caller frame
+                    return frame.materialize();
+                }
+            } finally {
+                if (reset) {
+                    frameDepthNode = null;
+                }
             }
         }
         return funFrame;

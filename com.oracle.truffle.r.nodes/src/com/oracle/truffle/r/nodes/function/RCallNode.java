@@ -790,13 +790,17 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         }
     }
 
+    public interface CallWithCallerFrame {
+        boolean setNeedsCallerFrame();
+    }
+
     /**
      * [D] A {@link RCallNode} for calls to fixed {@link RFunction}s with fixed arguments (no
      * varargs).
      *
      * @see RCallNode
      */
-    private static final class DispatchedCallNode extends LeafCallNode {
+    private static final class DispatchedCallNode extends LeafCallNode implements CallWithCallerFrame {
 
         @Child private DirectCallNode call;
         @Child private MatchedArgumentsNode matchedArgs;
@@ -804,7 +808,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         @Child private RFastPathNode fastPath;
 
         private final RCaller caller = RDataFactory.createCaller(this);
-        private final boolean needsCallerFrame;
+        @CompilationFinal private boolean needsCallerFrame;
         private final RootCallTarget callTarget;
         @CompilationFinal private boolean needsSplitting;
 
@@ -844,6 +848,15 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             Object[] argsObject = argsNode.execute(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), matchedArgs.executeArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
+        }
+
+        @Override
+        public boolean setNeedsCallerFrame() {
+            try {
+                return needsCallerFrame;
+            } finally {
+                needsCallerFrame = true;
+            }
         }
     }
 
@@ -922,7 +935,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
      *
      * @see RCallNode
      */
-    private static final class DispatchedVarArgsCallNode extends VarArgsCacheCallNode {
+    private static final class DispatchedVarArgsCallNode extends VarArgsCacheCallNode implements CallWithCallerFrame {
         @Child private DirectCallNode call;
         @Child private CallArgumentsNode args;
         @Child private VarArgsCacheCallNode next;
@@ -931,7 +944,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
 
         private final RCaller caller = RDataFactory.createCaller(this);
         private final ArgumentsSignature cachedSignature;
-        private final boolean needsCallerFrame;
+        @CompilationFinal private boolean needsCallerFrame;
         @CompilationFinal private boolean needsSplitting;
 
         protected DispatchedVarArgsCallNode(CallArgumentsNode args, VarArgsCacheCallNode next, RFunction function, ArgumentsSignature varArgsSignature, MatchedArguments matchedArgs,
@@ -986,6 +999,15 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             Object[] argsObject = argsNode.execute(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), matchedArgs.executeArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
+        }
+
+        @Override
+        public boolean setNeedsCallerFrame() {
+            try {
+                return needsCallerFrame;
+            } finally {
+                needsCallerFrame = true;
+            }
         }
     }
 
