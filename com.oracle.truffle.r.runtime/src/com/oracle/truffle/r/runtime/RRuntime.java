@@ -120,6 +120,7 @@ public class RRuntime {
     public static final String ROWNAMES_ATTR_KEY = "row.names";
 
     public static final String FORMULA_CLASS = "formula";
+    public static final String DATA_FRAME_CLASS = "data.frame";
     public static final String DOT_ENVIRONMENT = ".Environment";
 
     public static final String DOT_DATA = ".Data";

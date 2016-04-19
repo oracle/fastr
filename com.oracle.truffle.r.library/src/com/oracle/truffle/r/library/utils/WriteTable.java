@@ -16,6 +16,7 @@ import java.io.OutputStream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.RClass;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -23,7 +24,6 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -48,61 +48,8 @@ public final class WriteTable extends RExternalBuiltinNode {
                     throws IOException, IllegalArgumentException {
         OutputStream os = con.getOutputStream();
         String tmp = null;
-        if (xx instanceof RDataFrame) { /* A data frame */
-            RVector x = ((RDataFrame) xx).getVector();
-
-            /* handle factors internally, check integrity */
-            RStringVector[] levels = new RStringVector[nc];
-            for (int j = 0; j < nc; j++) {
-                Object xjObj = x.getDataAtAsObject(j);
-                if (xjObj instanceof RAbstractContainer) {
-                    RAbstractContainer xj = (RAbstractContainer) xjObj;
-                    if (xj.getLength() != nr) {
-                        throw new IllegalArgumentException("corrupt data frame -- length of column " + (j + 1) + " does not not match nrows");
-                    }
-                    if (isFactor(xj)) {
-                        levels[j] = (RStringVector) xj.getAttributes().get("levels");
-                    }
-                } else {
-                    if (nr != 1) {
-                        throw new IllegalArgumentException("corrupt data frame -- length of column " + (j + 1) + " does not not match nrows");
-                    }
-                }
-            }
-
-            for (int i = 0; i < nr; i++) {
-                // if (i % 1000 == 999)
-                // R_CheckUserInterrupt();
-                if (!(rnames instanceof RNull)) {
-                    tmp = new StringBuffer(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec)).append(csep).toString();
-                    os.write(tmp.getBytes());
-                }
-                for (int j = 0; j < nc; j++) {
-                    Object xjObj = x.getDataAtAsObject(j);
-                    if (j > 0) {
-                        os.write(csep.getBytes());
-                    }
-                    if (xjObj instanceof RAbstractContainer) {
-                        RAbstractContainer xj = (RAbstractContainer) xjObj;
-                        if (isna(xj, i)) {
-                            tmp = cna;
-                        } else {
-                            if (levels[j] != null) {
-                                tmp = encodeElement2(levels[j], (int) xj.getDataAtAsObject(i) - 1, quoteCol[j], qmethod, cdec);
-                            } else {
-                                tmp = encodeElement2((RAbstractVector) xj, i, quoteCol[j], qmethod, cdec);
-                            }
-                            /* if(cdec) change_dec(tmp, cdec, TYPEOF(xj)); */
-                        }
-                    } else {
-                        tmp = encodePrimitiveElement(xjObj, cna, quoteRn, qmethod);
-                        /* if(cdec) change_dec(tmp, cdec, TYPEOF(xj)); */
-                    }
-                    os.write(tmp.getBytes());
-                }
-                os.write(ceol.getBytes());
-            }
-
+        if (RClass.DataFrame.isInstanceOf(xx)) {
+            executeDataFrame(os, (RVector) xx, nr, nc, rnames, csep, ceol, cna, cdec, qmethod, quoteCol, quoteRn);
         } else { /* A matrix */
 
             // if (!isVectorAtomic(x))
@@ -137,6 +84,64 @@ public final class WriteTable extends RExternalBuiltinNode {
 
         }
         return RNull.instance;
+    }
+
+    private static void executeDataFrame(OutputStream os, RVector x, int nr, int nc, Object rnames, String csep, String ceol, String cna, char cdec, boolean qmethod, boolean[] quoteCol,
+                    boolean quoteRn)
+                    throws IOException {
+        String tmp;
+
+        /* handle factors internally, check integrity */
+        RStringVector[] levels = new RStringVector[nc];
+        for (int j = 0; j < nc; j++) {
+            Object xjObj = x.getDataAtAsObject(j);
+            if (xjObj instanceof RAbstractContainer) {
+                RAbstractContainer xj = (RAbstractContainer) xjObj;
+                if (xj.getLength() != nr) {
+                    throw new IllegalArgumentException("corrupt data frame -- length of column " + (j + 1) + " does not not match nrows");
+                }
+                if (isFactor(xj)) {
+                    levels[j] = (RStringVector) xj.getAttributes().get("levels");
+                }
+            } else {
+                if (nr != 1) {
+                    throw new IllegalArgumentException("corrupt data frame -- length of column " + (j + 1) + " does not not match nrows");
+                }
+            }
+        }
+
+        for (int i = 0; i < nr; i++) {
+            // if (i % 1000 == 999)
+            // R_CheckUserInterrupt();
+            if (!(rnames instanceof RNull)) {
+                tmp = new StringBuffer(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec)).append(csep).toString();
+                os.write(tmp.getBytes());
+            }
+            for (int j = 0; j < nc; j++) {
+                Object xjObj = x.getDataAtAsObject(j);
+                if (j > 0) {
+                    os.write(csep.getBytes());
+                }
+                if (xjObj instanceof RAbstractContainer) {
+                    RAbstractContainer xj = (RAbstractContainer) xjObj;
+                    if (isna(xj, i)) {
+                        tmp = cna;
+                    } else {
+                        if (levels[j] != null) {
+                            tmp = encodeElement2(levels[j], (int) xj.getDataAtAsObject(i) - 1, quoteCol[j], qmethod, cdec);
+                        } else {
+                            tmp = encodeElement2((RAbstractVector) xj, i, quoteCol[j], qmethod, cdec);
+                        }
+                        /* if(cdec) change_dec(tmp, cdec, TYPEOF(xj)); */
+                    }
+                } else {
+                    tmp = encodePrimitiveElement(xjObj, cna, quoteRn, qmethod);
+                    /* if(cdec) change_dec(tmp, cdec, TYPEOF(xj)); */
+                }
+                os.write(tmp.getBytes());
+            }
+            os.write(ceol.getBytes());
+        }
     }
 
     private static String encodeStringElement(String p0, boolean quote, boolean qmethod) {

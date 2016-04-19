@@ -511,16 +511,12 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
                     // check only before encountering the "factor"
                     ordered = true;
                 }
-                if (RType.DataFrame.getName().equals(attr)) {
-                    vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
-                    if (enclosingDataFrame != null) {
-                        // was a frame and still is a frame
-                        return enclosingDataFrame;
-                    } else {
-                        // it's a data frame now
-                        return RDataFactory.createDataFrame(vector);
-                    }
-                } else if (RType.Factor.getName().equals(attr)) {
+                /*
+                 * if (RType.DataFrame.getName().equals(attr)) {
+                 * vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr); if (enclosingDataFrame
+                 * != null) { // was a frame and still is a frame return enclosingDataFrame; } else
+                 * { // it's a data frame now return RDataFactory.createDataFrame(vector); } } else
+                 */ if (RType.Factor.getName().equals(attr)) {
                     vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
                     if (enclosingFactor != null) {
                         // was a factor and still is a factor

@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RClass;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -405,10 +406,11 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
 
     protected boolean isDataFrame(RArgsValuesAndNames args) {
         for (int i = 0; i < args.getLength(); i++) {
-            if (args.getArgument(i) instanceof RDataFrame) {
+            if (RClass.DataFrame.isInstanceOf(args.getArgument(i))) {
                 return true;
             }
         }
+
         return false;
     }
 
