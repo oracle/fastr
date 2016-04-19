@@ -30,9 +30,12 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class CastIntegerBaseNode extends CastBaseNode {
@@ -106,5 +109,15 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
     @Specialization
     protected int doRaw(RRaw operand) {
         return RRuntime.raw2int(operand);
+    }
+
+    @Specialization
+    protected Object doEnvironment(@SuppressWarnings("unused") REnvironment value) {
+        throw RError.error(RError.SHOW_CALLER, RError.Message.ENVIRONMENTS_COERCE);
+    }
+
+    @Specialization
+    protected Object doFunction(@SuppressWarnings("unused") RFunction value) {
+        throw RError.error(RError.SHOW_CALLER, RError.Message.CLOSURE_COERCE);
     }
 }

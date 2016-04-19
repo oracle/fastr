@@ -670,7 +670,9 @@ public final class RError extends RuntimeException {
         INVALID_LARGE_NA_VALUE("invalid '%s' value (too large or NA)"),
         INVALID_NEGATIVE_VALUE("invalid '%s' value (< 0)"),
         POSITIVE_LENGTH("'%s' must have positive length"),
-        BROWSER_QUIT("cannot quit from browser");
+        BROWSER_QUIT("cannot quit from browser"),
+        ENVIRONMENTS_COERCE("environments cannot be coerced to other types"),
+        CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'");
 
         public final String message;
         final boolean hasArgs;
