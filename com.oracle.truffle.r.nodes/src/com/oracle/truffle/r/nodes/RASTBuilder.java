@@ -159,7 +159,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                     case "->>":
                         boolean isSuper = "<<-".equals(symbol) || "->>".equals(symbol);
                         boolean switchArgs = "->".equals(symbol) || "->>".equals(symbol);
-                        return createReplacement(source, isSuper, args.get(switchArgs ? 1 : 0).value, args.get(switchArgs ? 0 : 1).value);
+                        String operator = "=".equals(symbol) ? "=" : isSuper ? "<<-" : "<-";
+                        return createReplacement(source, operator, isSuper, args.get(switchArgs ? 1 : 0).value, args.get(switchArgs ? 0 : 1).value);
                 }
             } else if (args.size() == 3) {
                 switch (symbol) {
@@ -194,9 +195,9 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         return RCallNode.createCall(source, lhs.asRNode(), signature, nodes);
     }
 
-    private RSyntaxNode createReplacement(SourceSection source, boolean isSuper, RSyntaxNode replacementLhs, RSyntaxNode replacementRhs) {
+    private RSyntaxNode createReplacement(SourceSection source, String operator, boolean isSuper, RSyntaxNode replacementLhs, RSyntaxNode replacementRhs) {
         if (replacementLhs instanceof RSyntaxCall) {
-            return createReplacement(source, replacementLhs, replacementRhs, isSuper);
+            return createReplacement(source, replacementLhs, replacementRhs, operator, isSuper);
         } else {
             String name;
             if (replacementLhs instanceof RSyntaxLookup) {
@@ -289,7 +290,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
      * x <- `c<-`(t3, tt2) // x with c replaced
      * </pre>
      */
-    private RSyntaxNode createReplacement(SourceSection source, RSyntaxNode lhs, RSyntaxNode rhs, boolean isSuper) {
+    private RSyntaxNode createReplacement(SourceSection source, RSyntaxNode lhs, RSyntaxNode rhs, String operator, boolean isSuper) {
         /*
          * Collect all the function calls in this replacement. For "a(b(x)) <- z", this would be
          * "a(...)" and "b(...)".
@@ -337,7 +338,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
 
         ReadVariableNode variableValue = createReplacementForVariableUsing(variable, isSuper);
-        ReplacementNode newReplacementNode = new ReplacementNode(source, isSuper, lhs, rhs, "*tmpr*" + (tempNamesIndex - 1),
+        ReplacementNode newReplacementNode = new ReplacementNode(source, operator, lhs, rhs, "*tmpr*" + (tempNamesIndex - 1),
                         variableValue, "*tmp*" + (tempNamesIndex + calls.size()), instructions);
 
         tempNamesCount -= calls.size() + 1;

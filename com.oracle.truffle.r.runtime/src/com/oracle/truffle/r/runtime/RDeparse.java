@@ -165,9 +165,9 @@ public class RDeparse {
                     new Func("*", null, new PPInfo(PP.BINARY, PREC_PROD, false)),
                     new Func("/", null, new PPInfo(PP.BINARY, PREC_PROD, false)),
                     new Func("^", null, new PPInfo(PP.BINARY2, PREC_POWER, false)),
-                    new Func("%%", null, new PPInfo(PP.BINARY2, PREC_PERCENT, false)),
-                    new Func("%/%", null, new PPInfo(PP.BINARY2, PREC_PERCENT, false)),
-                    new Func("%*%", null, new PPInfo(PP.BINARY2, PREC_PERCENT, false)),
+                    new Func("%%", null, new PPInfo(PP.BINARY, PREC_PERCENT, false)),
+                    new Func("%/%", null, new PPInfo(PP.BINARY, PREC_PERCENT, false)),
+                    new Func("%*%", null, new PPInfo(PP.BINARY, PREC_PERCENT, false)),
                     new Func("==", null, new PPInfo(PP.BINARY, PREC_COMPARE, false)),
                     new Func("!=", null, new PPInfo(PP.BINARY, PREC_COMPARE, false)),
                     new Func("<", null, new PPInfo(PP.BINARY, PREC_COMPARE, false)),
@@ -201,7 +201,7 @@ public class RDeparse {
                     new Func("@", null, new PPInfo(PP.DOLLAR, PREC_DOLLAR, false)),
     };
 
-    private static final PPInfo USERBINOP = new PPInfo(PP.BINARY2, PREC_PERCENT, false);
+    private static final PPInfo USERBINOP = new PPInfo(PP.BINARY, PREC_PERCENT, false);
 
     private static Func getFunc(String op) {
         for (Func func : FUNCTAB) {
@@ -700,7 +700,9 @@ public class RDeparse {
         }
 
         private DeparseVisitor appendArgs(ArgumentsSignature signature, RSyntaxElement[] args, int start, boolean formals) {
+            boolean lbreak = false;
             for (int i = start; i < args.length; i++) {
+                lbreak = linebreak(lbreak);
                 RSyntaxElement argument = args[i];
                 if (argument instanceof RSyntaxLookup && ((RSyntaxLookup) argument).getIdentifier().isEmpty()) {
                     argument = null;
@@ -728,6 +730,9 @@ public class RDeparse {
                 if (i != args.length - 1) {
                     append(", ");
                 }
+            }
+            if (lbreak) {
+                indent--;
             }
             return this;
         }

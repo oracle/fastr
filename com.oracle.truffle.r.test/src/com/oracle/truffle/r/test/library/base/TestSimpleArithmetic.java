@@ -463,9 +463,9 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ m<-matrix(1:3, ncol=1) ; m %*% 1:2 }");
         assertEval("{ a<-matrix(1:6, ncol=2) ; b<-matrix(11:16, nrow=2) ; a %*% b }");
         assertEval("{ a <- array(1:9, dim=c(3,1,3)) ;  a %*% 1:9 }");
-        assertEval(Output.ContainsError, "{ matrix(2,nrow=2,ncol=3) %*% matrix(4,nrow=1,ncol=5) }");
-        assertEval(Output.ContainsError, "{ 1:3 %*% matrix(4,nrow=2,ncol=5) }");
-        assertEval(Output.ContainsError, "{ matrix(4,nrow=2,ncol=5) %*% 1:4 }");
+        assertEval("{ matrix(2,nrow=2,ncol=3) %*% matrix(4,nrow=1,ncol=5) }");
+        assertEval("{ 1:3 %*% matrix(4,nrow=2,ncol=5) }");
+        assertEval("{ matrix(4,nrow=2,ncol=5) %*% 1:4 }");
         assertEval("{ m <- matrix(c(1,2,3,0/0), nrow=4) ; m %*% 1:4 }");
         assertEval("{ m <- matrix(c(NA,1,0/0,2), nrow=2) ; 1:2 %*% m }");
         assertEval("{ m <- double() ; dim(m) <- c(0,0) ; m %*% m }");
@@ -483,9 +483,9 @@ public class TestSimpleArithmetic extends TestBase {
     public void testMatricesOuterProduct() {
         assertEval("{ 1:3 %o% 1:2 }");
         assertEval("{ 1:4 %*% 1:3 }");
-        assertEval(Output.ContainsError, "{ 1:3 %*% as.raw(c(1,2,3)) }");
+        assertEval("{ 1:3 %*% as.raw(c(1,2,3)) }");
         assertEval("{ 1:3 %*% c(TRUE,FALSE,TRUE) }");
-        assertEval(Output.ContainsError, "{ as.raw(1:3) %o% 1:3 }");
+        assertEval("{ as.raw(1:3) %o% 1:3 }");
     }
 
     @Test

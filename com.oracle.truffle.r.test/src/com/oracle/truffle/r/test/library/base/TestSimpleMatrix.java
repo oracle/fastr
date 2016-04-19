@@ -65,8 +65,8 @@ public class TestSimpleMatrix extends TestBase {
         assertEval("{ x<-c(FALSE, TRUE, TRUE, FALSE); dim(x)<-c(2, 2); x[1, 1] }");
         assertEval("{ x<-c(\"a\", \"b\", \"c\", \"d\"); dim(x)<-c(2, 2); x[1, 1] }");
 
-        assertEval(Output.ContainsError, "{ x<-1:4; dim(x)<-c(2,2); x[1,3] }");
-        assertEval(Output.ContainsError, "{ x<-1:8; dim(x)<-c(2, 4); x[c(-1, -2),c(5)] }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[1,3] }");
+        assertEval("{ x<-1:8; dim(x)<-c(2, 4); x[c(-1, -2),c(5)] }");
 
         assertEval(template("{ x<-%0; dim(x)<-c(2,2); x[0,] }", TESTED_4L_VECTORS));
         assertEval(template("{ x<-%0; dim(x)<-c(2,2); x[,0] }", TESTED_4L_VECTORS));

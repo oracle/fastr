@@ -57,7 +57,7 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
      * structure of this replacement.
      */
     private final RSyntaxNode syntaxLhs;
-    private final boolean isSuper;
+    private final String operator;
 
     /**
      * The original right hand side in the source can be found by {@code storeRhs.getRhs()}.
@@ -68,9 +68,10 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
     @Child private RemoveAndAnswerNode removeTemp;
     @Child private RemoveAndAnswerNode removeRhs;
 
-    public ReplacementNode(SourceSection src, boolean isSuper, RSyntaxNode syntaxLhs, RSyntaxNode rhs, String rhsSymbol, RNode v, String tmpSymbol, List<RNode> updates) {
+    public ReplacementNode(SourceSection src, String operator, RSyntaxNode syntaxLhs, RSyntaxNode rhs, String rhsSymbol, RNode v, String tmpSymbol, List<RNode> updates) {
         super(src);
-        this.isSuper = isSuper;
+        assert "<-".equals(operator) || "<<-".equals(operator) || "=".equals(operator);
+        this.operator = operator;
         this.syntaxLhs = syntaxLhs;
         this.storeRhs = WriteVariableNode.createAnonymous(rhsSymbol, rhs.asRNode(), WriteVariableNode.Mode.INVISIBLE);
         this.storeValue = WriteVariableNode.createAnonymous(tmpSymbol, v, WriteVariableNode.Mode.INVISIBLE);
@@ -94,10 +95,6 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
         return storeRhs.getRhs().asRSyntaxNode();
     }
 
-    private String getSymbol() {
-        return isSuper ? "<<-" : "<-";
-    }
-
     @Override
     @ExplodeLoop
     public Object execute(VirtualFrame frame) {
@@ -113,7 +110,7 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
     @Override
     public void serializeImpl(RSerialize.State state) {
         state.setAsLangType();
-        state.setCarAsSymbol(getSymbol());
+        state.setCarAsSymbol(operator);
         state.openPairList();
         state.serializeNodeSetCar(syntaxLhs);
         state.openPairList(SEXPTYPE.LISTSXP);
@@ -128,12 +125,12 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
         argsList.add(RCodeBuilder.argument(syntaxLhs.substituteImpl(env)));
         argsList.add(RCodeBuilder.argument(storeRhs.getRhs().substitute(env)));
         // use "fake" read variable node to trigger the right behavior of the AST builder
-        return RContext.getASTBuilder().call(RSyntaxNode.LAZY_DEPARSE, ReadVariableNode.create(isSuper ? "<<-" : "<-"), argsList);
+        return RContext.getASTBuilder().call(RSyntaxNode.LAZY_DEPARSE, ReadVariableNode.create(operator), argsList);
     }
 
     @Override
     public RSyntaxElement getSyntaxLHS() {
-        return RSyntaxLookup.createDummyLookup(null, isSuper ? "<<-" : "<-", true);
+        return RSyntaxLookup.createDummyLookup(null, operator, true);
     }
 
     @Override
