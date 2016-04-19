@@ -177,11 +177,6 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public void markNonTemporary() {
-        data.markNonTemporary();
-    }
-
-    @Override
     public boolean isTemporary() {
         return data.isTemporary();
     }
@@ -189,11 +184,6 @@ public class RExpression implements RShareable, RAbstractContainer {
     @Override
     public boolean isShared() {
         return data.isShared();
-    }
-
-    @Override
-    public RSharingAttributeStorage makeShared() {
-        return data.makeShared();
     }
 
     @Override

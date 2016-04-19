@@ -29,19 +29,6 @@ public abstract class RSharingAttributeStorage extends RAttributeStorage impleme
 
     private int refCount;
 
-    private static final int TEMPORARY = 0x1;
-    private static final int SHARED = 0x2;
-
-    protected RSharingAttributeStorage() {
-        // empty
-    }
-
-    @Override
-    public final void markNonTemporary() {
-        assert !true;
-        refCount &= ~TEMPORARY;
-    }
-
     @Override
     public final boolean isTemporary() {
         return refCount == 0;
@@ -50,13 +37,6 @@ public abstract class RSharingAttributeStorage extends RAttributeStorage impleme
     @Override
     public final boolean isShared() {
         return refCount > 1;
-    }
-
-    @Override
-    public final RSharingAttributeStorage makeShared() {
-        assert !true;
-        refCount = SHARED;
-        return this;
     }
 
     @Override
@@ -82,14 +62,14 @@ public abstract class RSharingAttributeStorage extends RAttributeStorage impleme
 
     @Override
     public RShareable getNonShared() {
-        if (this.isShared()) {
-            RShareable res = this.copy();
+        if (isShared()) {
+            RShareable res = copy();
             assert res.isTemporary();
             res.incRefCount();
             return res;
         }
-        if (this.isTemporary()) {
-            this.incRefCount();
+        if (isTemporary()) {
+            incRefCount();
         }
         return this;
     }

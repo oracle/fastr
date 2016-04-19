@@ -30,13 +30,9 @@ public interface RShareable {
     // TODO: a better placement for this constant?
     int SHARED_PERMANENT_VAL = Integer.MAX_VALUE;
 
-    void markNonTemporary();
-
     boolean isTemporary();
 
     boolean isShared();
-
-    RShareable makeShared();
 
     RShareable copy();
 
