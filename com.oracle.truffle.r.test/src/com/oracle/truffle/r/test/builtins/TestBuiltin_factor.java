@@ -65,7 +65,7 @@ public class TestBuiltin_factor extends TestBase {
         assertEval(Output.ContainsWarning, "{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[1]<-x; y }");
         assertEval(Output.ContainsWarning, "{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[1]<-x; y }");
         assertEval("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[[1]]<-x; y }");
-        assertEval(Output.ContainsError, "{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[[1]]<-x; y }");
+        assertEval("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[[1]]<-x; y }");
 
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[1] }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[[1]] }");

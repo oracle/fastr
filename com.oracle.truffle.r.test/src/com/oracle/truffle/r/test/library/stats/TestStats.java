@@ -88,7 +88,7 @@ public class TestStats extends TestBase {
         assertEval("qbinom(0.66,20,0.1)");
         assertEval("qbinom(0,20,0.1)");
         assertEval("qbinom(0,20,c(0.1,0.9))");
-        assertEval(Output.ContainsWarning, "qbinom(0,20,c(0.1,1.9))");
+        assertEval("qbinom(0,20,c(0.1,1.9))");
         assertEval("qbinom(0,integer(),c(0.1,0.9))");
     }
 
@@ -105,7 +105,7 @@ public class TestStats extends TestBase {
     public void testDbinom() {
         assertEval("round(dbinom(81,c(10,12,14),c(0.3,0.4,0.3,0.1,0.33)),digits=9)");
         assertEval("round(dbinom(c(81,2,4,9),c(10,12,14),c(0.3,0.4,0.3,0.1,0.33)),digits=9)");
-        assertEval(Output.ContainsWarning, "round(dbinom(0.9,c(10,12,14),c(0.3,0.4,0.3,0.1,0.33)),digits=9)");
+        assertEval("round(dbinom(0.9,c(10,12,14),c(0.3,0.4,0.3,0.1,0.33)),digits=9)");
         assertEval("round(dbinom(2,14,0.33),digits=9)");
     }
 
@@ -121,7 +121,7 @@ public class TestStats extends TestBase {
     @Test
     public void testQnorm() {
         assertEval("qnorm(c(0.1,0.9,0.5,0.00001,0.99999), 100, c(20,1))");
-        assertEval(Output.ContainsWarning, "round(qnorm(c(0.1,0.9,0.5,1.00001,0.99999), 100, c(20,1)), digits=5)");
+        assertEval("round(qnorm(c(0.1,0.9,0.5,1.00001,0.99999), 100, c(20,1)), digits=5)");
     }
 
     @Test

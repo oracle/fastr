@@ -19,7 +19,7 @@ public class TestSimpleArrays extends TestBase {
     @Test
     public void testAccess() {
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[1, 1, 1, 1] }");
-        assertEval(Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); x[42,1,1] }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[42,1,1] }");
         assertEval("{ x<-1:8; dim(x)<-c(1,2,4); dim(x[1,0,3]) }");
         assertEval("{ x<-1:8; dim(x)<-c(1,2,4); dim(x[1,0,-1]) }");
         assertEval("{ x<-1:8; dim(x)<-c(1,2,4); dim(x[0,1,-1]) }");
@@ -140,7 +140,7 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ a = array(1:27, c(3,3,3)); c(a[1],a[27],a[22],a[6]) }");
 
         // error when different dimensions given
-        assertEval(Output.ContainsError, "{ a = array(1,c(3,3,3)); a[2,2]; }");
+        assertEval("{ a = array(1,c(3,3,3)); a[2,2]; }");
 
         // calculating result dimensions
         assertEval("{ m <- array(c(1,2,3), dim=c(3,1,1)) ; x <- m[1:2,1,1] ; c(x[1],x[2]) }");
@@ -160,7 +160,7 @@ public class TestSimpleArrays extends TestBase {
         // second "drop" argument is considered an index
         assertEval("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,drop=FALSE, 1, drop=TRUE, -1]) }");
         // cannot specify multiple drop arguments if overall exceeding number of dimensions
-        assertEval(Output.ContainsError, "{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,1, drop=FALSE, 0, drop=TRUE, -1]) }");
+        assertEval("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,1, drop=FALSE, 0, drop=TRUE, -1]) }");
     }
 
     @Test
@@ -172,10 +172,10 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ array(1,c(3,3,3))[[1,1,1]] }");
 
         // selection on multiple elements fails in arrays
-        assertEval(Output.ContainsError, "{ array(1,c(3,3,3))[[,,]]; }");
+        assertEval("{ array(1,c(3,3,3))[[,,]]; }");
 
         // selection on multiple elements fails in arrays
-        assertEval(Output.ContainsError, "{ array(1,c(3,3,3))[[c(1,2),1,1]]; }");
+        assertEval("{ array(1,c(3,3,3))[[c(1,2),1,1]]; }");
 
         // last column
         assertEval("{ m <- array(1:24, dim=c(2,3,4)) ; m[,,2] }");
@@ -193,10 +193,10 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ matrix(1,3,3)[[1,1]] }");
 
         // selection on multiple elements fails in matrices with empty selector
-        assertEval(Output.ContainsError, "{ matrix(1,3,3)[[,]]; }");
+        assertEval("{ matrix(1,3,3)[[,]]; }");
 
         // selection on multiple elements fails in matrices
-        assertEval(Output.ContainsError, "{ matrix(1,3,3)[[c(1,2),1]]; }");
+        assertEval("{ matrix(1,3,3)[[c(1,2),1]]; }");
 
         assertEval("{  m <- matrix(1:6, nrow=2) ;  m[1,NULL] }");
     }

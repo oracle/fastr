@@ -46,7 +46,7 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn6() {
-        assertEval("argv <- list('NaNs produced', quote(log(ifelse(y == 0, 1, y/mu)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval(Output.ContainsWarning, "argv <- list('NaNs produced', quote(log(ifelse(y == 0, 1, y/mu)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test

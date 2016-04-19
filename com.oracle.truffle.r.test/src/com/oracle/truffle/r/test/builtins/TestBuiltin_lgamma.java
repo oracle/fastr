@@ -56,7 +56,7 @@ public class TestBuiltin_lgamma extends TestBase {
 
     @Test
     public void testlgamma9() {
-        assertEval(Output.ContainsWarning, "argv <- list(Inf);do.call('lgamma', argv)");
+        assertEval("argv <- list(Inf);do.call('lgamma', argv)");
     }
 
     @Test
