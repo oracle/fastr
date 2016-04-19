@@ -29,7 +29,7 @@ java8Downloads : {
 
 gateTest : ${common} ${java8Downloads} {
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,BuildNative,UnitTests: ExpectedTestOutput file check,UnitTests: +EST,UnitTests: -EST"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,BuildNative,UnitTests: ExpectedTestOutput file check,UnitTests"]
   ]
 }
 
