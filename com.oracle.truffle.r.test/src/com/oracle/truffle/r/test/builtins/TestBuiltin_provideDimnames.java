@@ -25,7 +25,7 @@ public class TestBuiltin_provideDimnames extends TestBase {
 
     @Test
     public void testprovideDimnames2() {
-        assertEval("argv <- structure(list(x = structure(integer(0), .Dim = 0L, .Dimnames = structure(list(NULL),     .Names = ''), class = 'table')), .Names = 'x');"
-                        + "do.call('provideDimnames', argv)");
+        assertEval("argv <- structure(list(x = structure(integer(0), .Dim = 0L, .Dimnames = structure(list(NULL),     .Names = ''), class = 'table')), .Names = 'x');" +
+                        "do.call('provideDimnames', argv)");
     }
 }

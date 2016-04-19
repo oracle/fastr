@@ -464,7 +464,8 @@ public class TOMS708 {
                             w = bup(b0, a0, y0, x0, n, eps, false);
 
                             debugPrintf(" L140: *w := bup(b0=%g,..) = %.15f; ", b0, w);
-                            if (w < DBL_MIN && logP) { /* do not believe it; try bpser() : */
+                            if (w < DBL_MIN && logP) {
+                                /* do not believe it; try bpser() : */
                                 /* revert: */b0 += n;
                                 /* which is only valid if b0 <= 1 || b0*x0 <= 0.7 */
                                 state = States.L_w_bpser;
@@ -497,7 +498,7 @@ public class TOMS708 {
                             state = States.L_end_from_w;
                             continue;
 
-                            /* TERMINATION OF THE PROCEDURE */
+                        /* TERMINATION OF THE PROCEDURE */
 
                         case L_end_from_w:
                             if (logP) {
@@ -608,7 +609,7 @@ public class TOMS708 {
 
             boolean u0 = (u == 0.); // underflow --> do work with log(u) == log_u !
             double l = // := *w/u .. but with care: such that it also works when u underflows to 0:
-            logW ? ((w == Double.NEGATIVE_INFINITY) ? 0. : Math.exp(w - logU)) : ((w == 0.) ? 0. : Math.exp(Math.log(w) - logU));
+                            logW ? ((w == Double.NEGATIVE_INFINITY) ? 0. : Math.exp(w - logU)) : ((w == 0.) ? 0. : Math.exp(Math.log(w) - logU));
 
             debugPrintf(" bgrat(a=%f, b=%f, x=%f, *)\n -> u=%f, l='w/u'=%f, ", a, b, x, u, l);
 

@@ -222,7 +222,8 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "lookupBuiltin(symbol) == null")
-        protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") RMissing rPackage, @SuppressWarnings("unused") RMissing encoding) {
+        protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") RMissing rPackage,
+                        @SuppressWarnings("unused") RMissing encoding) {
             controlVisibility();
             return DotC.dispatch(this, getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), naok, dup, args.getArguments());
         }
@@ -264,7 +265,7 @@ public class ForeignFunctions {
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             String name = lookupName(f);
             switch (name) {
-            // methods
+                // methods
                 case "R_initMethodDispatch":
                     return R_initMethodDispatchNodeGen.create();
                 case "R_methodsPackageMetaName":
@@ -311,7 +312,7 @@ public class ForeignFunctions {
                 case "new_object":
                     return NewObjectNodeGen.create();
 
-                    // stats
+                // stats
 
                 case "fft":
                     return new Fft();
@@ -422,7 +423,7 @@ public class ForeignFunctions {
                 case "d2x2xk":
                     return new UnimplementedExternal(name);
 
-                    // tools
+                // tools
                 case "doTabExpand":
                     return DoTabExpandNodeGen.create();
                 case "codeFilesAppend":
@@ -443,7 +444,7 @@ public class ForeignFunctions {
                 case "C_deparseRd":
                     return new UnimplementedExternal(name);
 
-                    // utils
+                // utils
                 case "crc64":
                     return Crc64NodeGen.create();
                 case "flushconsole":
@@ -462,17 +463,17 @@ public class ForeignFunctions {
                 case "sockwrite":
                     return new UnimplementedExternal(name);
 
-                    // grDevices
+                // grDevices
                 case "cairoProps":
                     return CairoPropsNodeGen.create();
                 case "makeQuartzDefault":
                     return new MakeQuartzDefault();
 
-                    // grid
+                // grid
                 case "L_initGrid":
                     return InitGridNodeGen.create();
 
-                    // parallel
+                // parallel
                 case "mc_is_child":
                     return MCIsChildNodeGen.create();
                 default:
@@ -538,7 +539,7 @@ public class ForeignFunctions {
             switch (name) {
                 case "compcases":
                     return new CompleteCases();
-                    // utils
+                // utils
                 case "countfields":
                     return new CountFields();
                 case "readtablehead":
@@ -619,7 +620,7 @@ public class ForeignFunctions {
             }
             String name = lookupName(f);
             switch (name) {
-            // tools
+                // tools
                 case "writetable":
                     return new WriteTable();
                 case "typeconvert":

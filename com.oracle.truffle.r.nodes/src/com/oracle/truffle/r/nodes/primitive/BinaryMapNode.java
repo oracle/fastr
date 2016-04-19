@@ -306,59 +306,59 @@ public final class BinaryMapNode extends RBaseNode {
     protected abstract static class VectorMapBinaryInternalNode extends RBaseNode {
 
         private static final MapBinaryIndexedAction<byte[], RAbstractLogicalVector> LOGICAL_LOGICAL = //
-        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
-            result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+                            result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+                        };
         private static final MapBinaryIndexedAction<byte[], RAbstractIntVector> LOGICAL_INTEGER = //
-        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
-            result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+                            result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+                        };
         private static final MapBinaryIndexedAction<byte[], RAbstractDoubleVector> LOGICAL_DOUBLE = //
-        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
-            result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+                            result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+                        };
         private static final MapBinaryIndexedAction<byte[], RAbstractComplexVector> LOGICAL_COMPLEX = //
-        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
-            result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+                            result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+                        };
         private static final MapBinaryIndexedAction<byte[], RAbstractStringVector> LOGICAL_CHARACTER = //
-        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
-            result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+                            result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+                        };
         private static final MapBinaryIndexedAction<byte[], RAbstractRawVector> LOGICAL_RAW = //
-        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
-            result[resultIndex] = arithmetic.applyLogical(RRuntime.raw2int(left.getRawDataAt(leftIndex)), RRuntime.raw2int(right.getRawDataAt(rightIndex)));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+                            result[resultIndex] = arithmetic.applyLogical(RRuntime.raw2int(left.getRawDataAt(leftIndex)), RRuntime.raw2int(right.getRawDataAt(rightIndex)));
+                        };
         private static final MapBinaryIndexedAction<byte[], RAbstractRawVector> RAW_RAW = //
-        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
-            result[resultIndex] = arithmetic.applyRaw(left.getRawDataAt(leftIndex), right.getRawDataAt(rightIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+                            result[resultIndex] = arithmetic.applyRaw(left.getRawDataAt(leftIndex), right.getRawDataAt(rightIndex));
+                        };
 
         private static final MapBinaryIndexedAction<int[], RAbstractIntVector> INTEGER_INTEGER = //
-        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
-            result[resultIndex] = arithmetic.applyInteger(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+                            result[resultIndex] = arithmetic.applyInteger(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+                        };
 
         private static final MapBinaryIndexedAction<double[], RAbstractIntVector> DOUBLE_INTEGER = //
-        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
-            result[resultIndex] = arithmetic.applyDouble(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+                            result[resultIndex] = arithmetic.applyDouble(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+                        };
 
         private static final MapBinaryIndexedAction<double[], RAbstractDoubleVector> DOUBLE = //
-        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
-            result[resultIndex] = arithmetic.applyDouble(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+                            result[resultIndex] = arithmetic.applyDouble(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+                        };
 
         private static final MapBinaryIndexedAction<double[], RAbstractComplexVector> COMPLEX = //
-        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
-            RComplex value = arithmetic.applyComplex(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
-            result[resultIndex << 1] = value.getRealPart();
-            result[(resultIndex << 1) + 1] = value.getImaginaryPart();
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+                            RComplex value = arithmetic.applyComplex(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+                            result[resultIndex << 1] = value.getRealPart();
+                            result[(resultIndex << 1) + 1] = value.getImaginaryPart();
+                        };
         private static final MapBinaryIndexedAction<String[], RAbstractStringVector> CHARACTER = //
-        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
-            result[resultIndex] = arithmetic.applyCharacter(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+                            result[resultIndex] = arithmetic.applyCharacter(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+                        };
 
         private final MapBinaryIndexedAction<Object, RAbstractVector> indexedAction;
 

@@ -116,7 +116,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * Problem 1 can be tackled by a the use of an {@link IndirectCallNode} instead of a
  * {@link DirectCallNode} which is not as performant as the latter but has no further disadvantages.
  * But as the function changed its formal parameters changed, too, so a re-match has to be done as
- * well, which involves the creation of nodes and thus must happen on the {@link TruffleBoundary}.<br/>
+ * well, which involves the creation of nodes and thus must happen on the {@link TruffleBoundary}.
+ * <br/>
  * Problem 2 is not that easy, too: It is solved by reading the values associated with "..." (which
  * are Promises) and wrapping them in newly created {@link RNode}s. These nodes get inserted into
  * the arguments list ({@link CallArgumentsNode#executeFlatten(Frame)}) - which needs to be be
