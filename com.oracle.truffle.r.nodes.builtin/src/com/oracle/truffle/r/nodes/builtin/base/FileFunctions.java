@@ -580,7 +580,8 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doListFiles(RAbstractStringVector vec, RAbstractStringVector patternVec, byte allFiles, byte fullNames, byte recursive, byte ignoreCase, byte includeDirs, byte noDotDot) {
+        protected RStringVector doListFiles(RAbstractStringVector vec, RAbstractStringVector patternVec, byte allFiles, byte fullNames, byte recursive, byte ignoreCase, byte includeDirs,
+                        byte noDotDot) {
             /*
              * Pattern in first element of vector, remaining elements are ignored (as per GnuR).
              * N.B. The pattern matches file names not paths, which means we cannot just use the

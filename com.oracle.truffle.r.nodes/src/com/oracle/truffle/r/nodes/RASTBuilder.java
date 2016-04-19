@@ -183,7 +183,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         ArgumentsSignature signature = createSignature(args);
         RSyntaxNode[] nodes = args.stream().map(
                         arg -> (arg.value == null && arg.name == null) ? ConstantNode.create(arg.source == null ? RSyntaxNode.SOURCE_UNAVAILABLE : arg.source, REmpty.instance) : arg.value).toArray(
-                        RSyntaxNode[]::new);
+                                        RSyntaxNode[]::new);
 
         if (lhs instanceof RSyntaxLookup) {
             String symbol = ((RSyntaxLookup) lhs).getIdentifier();

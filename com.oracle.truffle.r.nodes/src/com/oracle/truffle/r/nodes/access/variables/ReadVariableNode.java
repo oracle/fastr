@@ -770,7 +770,8 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
      * <ul>
      * <li>throw an {@link RError}: if 'objArg' is a missing argument and this is not allowed</li>
      * <li>return {@code true}: if the type of 'objArg' matches the description in 'type'</li>
-     * <li>return {@code false}: if the type of 'objArg' does not match the description in 'type'</li>
+     * <li>return {@code false}: if the type of 'objArg' does not match the description in 'type'
+     * </li>
      * </ul>
      * However, there is the special case of 'objArg' being a {@link RPromise}: Normally, it is
      * expected to match type and simply returns {@code true}. But in case of 'forcePromise' ==

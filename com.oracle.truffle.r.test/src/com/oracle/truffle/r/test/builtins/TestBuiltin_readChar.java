@@ -20,7 +20,7 @@ public class TestBuiltin_readChar extends TestBase {
 
     @Test
     public void testreadChar1() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(con = as.raw(c(65, 66, 67, 68, 69, 70,     71, 72, 73, 74)), nchars = c(3, 3, 0, 3, 3, 3)), .Names = c('con',     'nchars'));"
-                        + "do.call('readChar', argv)");
+        assertEval(Ignored.Unknown, "argv <- structure(list(con = as.raw(c(65, 66, 67, 68, 69, 70,     71, 72, 73, 74)), nchars = c(3, 3, 0, 3, 3, 3)), .Names = c('con',     'nchars'));" +
+                        "do.call('readChar', argv)");
     }
 }

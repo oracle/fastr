@@ -21,13 +21,11 @@
  * questions.
  */
 /**
- * This "package" contains R sources that override some of the R functions
- * in the "base" package. They are loaded using the {@link java.lang.Class#getResource}
- * mechanism on system startup, after the "base" package has been loaded.
+ * This "package" contains R sources that override some of the R functions in the "base" package.
+ * They are loaded using the {@link java.lang.Class#getResource} mechanism on system startup, after
+ * the "base" package has been loaded.
  *
- * The convention is that the file has the same name as that in GnuR, but only
- * contains the function that FastR overrides. Currently all the overrides
- * are related to bugs in FastR.
+ * The convention is that the file has the same name as that in GnuR, but only contains the function
+ * that FastR overrides. Currently all the overrides are related to bugs in FastR.
  */
 package com.oracle.truffle.r.nodes.builtin.base.R;
-

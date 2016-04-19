@@ -38,8 +38,8 @@ public final class RCmdOptions {
         R {
             @Override
             public String usage() {
-                return "\nUsage: R [options] [< infile] [> outfile]\n" + "   or: R CMD command [arguments]\n\n" + "Start R, a system for statistical computation and graphics, with the\n"
-                                + "specified options, or invoke an R tool via the 'R CMD' interface.\n";
+                return "\nUsage: R [options] [< infile] [> outfile]\n" + "   or: R CMD command [arguments]\n\n" + "Start R, a system for statistical computation and graphics, with the\n" +
+                                "specified options, or invoke an R tool via the 'R CMD' interface.\n";
             }
         },
 

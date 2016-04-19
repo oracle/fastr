@@ -21,11 +21,12 @@
  * questions.
  */
 /**
- * This package contains all the code related to the "frame" access aspect of an {@link com.oracle.truffle.r.runtime.env.REnvironment}.
- * The basic interface assumed by {@link com.oracle.truffle.r.runtime.env.REnvironment} is defined in
- * {@link com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess}, which provides default implementations, most of which fail.
- * The subclass  {@link com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess} handles Truffle
- * frames and locking/unlocking bindings.
+ * This package contains all the code related to the "frame" access aspect of an
+ * {@link com.oracle.truffle.r.runtime.env.REnvironment}. The basic interface assumed by
+ * {@link com.oracle.truffle.r.runtime.env.REnvironment} is defined in
+ * {@link com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess}, which provides default
+ * implementations, most of which fail. The subclass
+ * {@link com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess} handles Truffle frames and
+ * locking/unlocking bindings.
  */
 package com.oracle.truffle.r.runtime.env.frame;
-
