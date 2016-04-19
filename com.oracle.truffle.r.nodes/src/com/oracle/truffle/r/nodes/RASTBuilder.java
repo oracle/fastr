@@ -399,7 +399,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
 
         saveArguments = new SaveArgumentsNode(init);
-        if (!params.isEmpty() && FastROptions.NewStateTransition.getBooleanValue() && !FastROptions.RefCountIncrementOnly.getBooleanValue()) {
+        if (!params.isEmpty() && true && !FastROptions.RefCountIncrementOnly.getBooleanValue()) {
             argPostProcess = PostProcessArgumentsNode.create(params.size());
         } else {
             argPostProcess = null;

@@ -52,7 +52,6 @@ public enum FastROptions {
     IgnoreVisibility("Ignore setting of the visibility flag", false),
     LoadPkgSourcesIndex("Load R package sources index", true),
     InvisibleArgs("Argument writes do not trigger state transitions", true),
-    NewStateTransition("Experimental state transition implementation", true),
     RefCountIncrementOnly("Disable reference count decrements for experimental state transition implementation", false),
     UseInternalGraphics("Whether the internal (Java) graphics subsystem should be used", false),
 

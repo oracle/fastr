@@ -883,11 +883,7 @@ public class RSerialize {
                 // this may convert a plain vector to a data.frame or factor
                 Object attrValue = pl.car();
                 if (attrValue instanceof RShareable && ((RShareable) attrValue).isTemporary()) {
-                    if (FastROptions.NewStateTransition.getBooleanValue()) {
-                        ((RShareable) attrValue).incRefCount();
-                    } else {
-                        ((RShareable) attrValue).markNonTemporary();
-                    }
+                    ((RShareable) attrValue).incRefCount();
                 }
                 if (result instanceof RVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
                     RStringVector classes = (RStringVector) attrValue;

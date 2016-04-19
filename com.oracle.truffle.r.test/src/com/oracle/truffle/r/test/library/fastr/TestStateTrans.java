@@ -24,7 +24,6 @@ package com.oracle.truffle.r.test.library.fastr;
 
 import org.junit.Test;
 
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
@@ -37,16 +36,9 @@ public class TestStateTrans extends TestBase {
         assertEvalFastR("{ x<-c(1,2); f<-function(x) fastr.refcountinfo(x); f(x) }", "2");
         assertEvalFastR("{ f<-function(x) { xi1<-fastr.identity(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }; f(c(1,2)) }", "TRUE");
         assertEvalFastR("{ f<-function(y) { x<-y; xi1<-fastr.identity(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }; f(c(1,2)) }", "FALSE");
-        if (FastROptions.NewStateTransition.getBooleanValue()) {
-            // after returning from read-only functions, vector should be modifiable without
-            // creating a copy
-            assertEvalFastR("{ x<-rep(1, 100); xi1<-fastr.identity(x); f<-function(x) { x }; f(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }", "TRUE");
-            assertEvalFastR("{ x<-rep(1, 100); xi1<-fastr.identity(x); f<-function(x) { y<-x; y }; f(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }", "TRUE");
-        }
-        // Need to get both alternatives into the expected output
-        if (!FastROptions.NewStateTransition.getBooleanValue() || generatingExpected()) {
-            assertEvalFastR("{ x<-rep(1, 100); xi1<-fastr.identity(x); f<-function(x) { x }; f(x); x[1]<-7; xi2<-fastr.identity(x); xi1 != xi2 }", "TRUE");
-            assertEvalFastR("{ x<-rep(1, 100); xi1<-fastr.identity(x); f<-function(x) { y<-x; y }; f(x); x[1]<-7; xi2<-fastr.identity(x); xi1 != xi2 }", "TRUE");
-        }
+        // after returning from read-only functions, vector should be modifiable without
+        // creating a copy
+        assertEvalFastR("{ x<-rep(1, 100); xi1<-fastr.identity(x); f<-function(x) { x }; f(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }", "TRUE");
+        assertEvalFastR("{ x<-rep(1, 100); xi1<-fastr.identity(x); f<-function(x) { y<-x; y }; f(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }", "TRUE");
     }
 }

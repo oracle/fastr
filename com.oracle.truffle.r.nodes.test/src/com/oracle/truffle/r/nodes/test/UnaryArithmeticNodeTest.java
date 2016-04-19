@@ -22,29 +22,47 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
-import static com.oracle.truffle.r.nodes.test.TestUtilities.*;
-import static com.oracle.truffle.r.runtime.data.RDataFactory.*;
-import static com.oracle.truffle.r.runtime.ops.UnaryArithmetic.*;
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.MatcherAssert.*;
-import static org.junit.Assume.*;
+import static com.oracle.truffle.r.nodes.test.TestUtilities.createHandle;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createDoubleSequence;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createIntSequence;
+import static com.oracle.truffle.r.runtime.ops.UnaryArithmetic.NEGATE;
+import static com.oracle.truffle.r.runtime.ops.UnaryArithmetic.PLUS;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assume.assumeThat;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
-import org.junit.*;
-import org.junit.experimental.theories.*;
-import org.junit.runner.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.experimental.theories.DataPoints;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.runner.RunWith;
 
 import com.oracle.truffle.r.nodes.builtin.base.Ceiling;
 import com.oracle.truffle.r.nodes.builtin.base.Floor;
 import com.oracle.truffle.r.nodes.builtin.base.Round;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.*;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RScalarVector;
+import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 /**
  * This test verifies white box assumptions for the arithmetic node. Please note that this node
@@ -125,11 +143,7 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
         // we have to e careful not to change mutable vectors
         RAbstractVector a = operand.copy();
         if (a instanceof RShareable) {
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                ((RShareable) a).incRefCount();
-            } else {
-                ((RShareable) a).markNonTemporary();
-            }
+            ((RShareable) a).incRefCount();
         }
 
         RVector aMaterialized = a.copy().materialize();
