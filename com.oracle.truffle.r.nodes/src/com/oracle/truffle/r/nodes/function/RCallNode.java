@@ -900,7 +900,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
 
             // Extend cache
             this.depth += 1;
-            CallArgumentsNode clonedArgs = (CallArgumentsNode) RASTUtils.cloneNode(args);
+            CallArgumentsNode clonedArgs = RASTUtils.cloneNode(args);
             VarArgsCacheCallNode next = createNextNode(function);
             DispatchedVarArgsCallNode newCallNode = DispatchedVarArgsCallNode.create(frame, clonedArgs, next, this, function, varArgsSignature);
             return replace(newCallNode).execute(frame, function, varArgsSignature, s3Args);
@@ -910,7 +910,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             if (depth < VARARGS_INLINE_CACHE_SIZE) {
                 return this;
             } else {
-                CallArgumentsNode clonedArgs = (CallArgumentsNode) RASTUtils.cloneNode(args);
+                CallArgumentsNode clonedArgs = RASTUtils.cloneNode(args);
                 return new DispatchedGenericVarArgsCallNode(function, clonedArgs, originalCall);
             }
         }

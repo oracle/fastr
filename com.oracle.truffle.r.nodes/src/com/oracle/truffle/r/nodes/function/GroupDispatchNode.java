@@ -25,8 +25,8 @@ import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RGroupGenerics;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
@@ -54,7 +54,7 @@ public final class GroupDispatchNode extends RSourceSectionNode implements RSynt
     @Child private ReadVariableNode lookupVarArgs;
 
     private final String fixedGenericName;
-    private final RGroupGenerics fixedGroup;
+    private final RDispatch fixedDispatch;
     private final RFunction fixedBuiltinFunction;
 
     private final ConditionProfile mismatchProfile = ConditionProfile.createBinaryProfile();
@@ -65,7 +65,7 @@ public final class GroupDispatchNode extends RSourceSectionNode implements RSynt
     private GroupDispatchNode(SourceSection sourceSection, String genericName, CallArgumentsNode callArgNode, RFunction builtinFunction) {
         super(sourceSection);
         this.fixedGenericName = genericName.intern();
-        this.fixedGroup = RGroupGenerics.getGroup(genericName);
+        this.fixedDispatch = builtinFunction.getRBuiltin().getDispatch();
         this.callArgsNode = callArgNode;
         this.fixedBuiltinFunction = builtinFunction;
     }
@@ -122,21 +122,22 @@ public final class GroupDispatchNode extends RSourceSectionNode implements RSynt
             }
         }
         RArgsValuesAndNames argAndNames = callArgsNode.evaluateFlatten(frame, varArgs);
-        return executeInternal(frame, argAndNames, fixedGenericName, fixedGroup, fixedBuiltinFunction);
+        return executeInternal(frame, argAndNames, fixedGenericName, fixedDispatch, fixedBuiltinFunction);
     }
 
-    public Object executeDynamic(VirtualFrame frame, RArgsValuesAndNames argAndNames, String genericName, RGroupGenerics group, RFunction builtinFunction) {
+    public Object executeDynamic(VirtualFrame frame, RArgsValuesAndNames argAndNames, String genericName, RDispatch dispatch, RFunction builtinFunction) {
         if (!dynamicLookup) {
             if (builtinFunction == fixedBuiltinFunction && (exactEqualsProfile.profile(fixedGenericName == genericName) || fixedGenericName.equals(genericName))) {
-                return executeInternal(frame, argAndNames, fixedGenericName, fixedGroup, fixedBuiltinFunction);
+                return executeInternal(frame, argAndNames, fixedGenericName, fixedDispatch, fixedBuiltinFunction);
             }
             CompilerDirectives.transferToInterpreterAndInvalidate();
             dynamicLookup = true;
         }
-        return executeInternal(frame, argAndNames, genericName, group, builtinFunction);
+        return executeInternal(frame, argAndNames, genericName, dispatch, builtinFunction);
     }
 
-    private Object executeInternal(VirtualFrame frame, RArgsValuesAndNames argAndNames, String genericName, RGroupGenerics group, RFunction builtinFunction) {
+    private Object executeInternal(VirtualFrame frame, RArgsValuesAndNames argAndNames, String genericName, RDispatch dispatch, RFunction builtinFunction) {
+        assert dispatch.isGroupGeneric();
         Object[] evaluatedArgs = argAndNames.getArguments();
 
         if (classHierarchyL == null) {
@@ -152,13 +153,13 @@ public final class GroupDispatchNode extends RSourceSectionNode implements RSynt
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     functionLookupL = insert(S3FunctionLookupNode.create(false, false));
                 }
-                resultL = functionLookupL.execute(frame, genericName, typeL, group.getName(), frame.materialize(), null);
+                resultL = functionLookupL.execute(frame, genericName, typeL, dispatch.getGroupGenericName(), frame.materialize(), null);
             } catch (NoGenericMethodException e) {
                 // fall-through
             }
         }
         Result resultR = null;
-        if (group == RGroupGenerics.Ops && argAndNames.getSignature().getLength() >= 2) {
+        if (dispatch == RDispatch.OPS_GROUP_GENERIC && argAndNames.getSignature().getLength() >= 2) {
             if (classHierarchyR == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 classHierarchyR = insert(ClassHierarchyNodeGen.create(false, true));
@@ -170,7 +171,7 @@ public final class GroupDispatchNode extends RSourceSectionNode implements RSynt
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         functionLookupR = insert(S3FunctionLookupNode.create(false, false));
                     }
-                    resultR = functionLookupR.execute(frame, genericName, typeR, group.getName(), frame.materialize(), null);
+                    resultR = functionLookupR.execute(frame, genericName, typeR, dispatch.getGroupGenericName(), frame.materialize(), null);
                 } catch (NoGenericMethodException e) {
                     // fall-through
                 }
@@ -209,7 +210,7 @@ public final class GroupDispatchNode extends RSourceSectionNode implements RSynt
             s3Args = null;
             function = builtinFunction;
         } else {
-            s3Args = new S3Args(genericName, result.clazz, dotMethod, frame.materialize(), null, result.groupMatch ? group.getName() : null);
+            s3Args = new S3Args(genericName, result.clazz, dotMethod, frame.materialize(), null, result.groupMatch ? dispatch.getGroupGenericName() : null);
             function = result.function;
         }
         if (function == null) {

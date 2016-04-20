@@ -193,7 +193,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         if (lhs instanceof RSyntaxLookup) {
             String symbol = ((RSyntaxLookup) lhs).getIdentifier();
             RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(symbol);
-            if (builtin != null && builtin.getDispatch() == RDispatch.OPS_GROUP_GENERIC) {
+            if (builtin != null && builtin.getDispatch().isGroupGeneric()) {
                 return GroupDispatchNode.create(symbol, source, signature, nodes);
             }
         }
