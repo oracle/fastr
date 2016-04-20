@@ -127,8 +127,17 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
          */
         Object[] argValues = argsAsList.getDataCopy();
         RStringVector n = argsAsList.getNames(attrProfiles);
-        String[] argNames = n == null ? new String[argValues.length] : n.getDataNonShared();
-        ArgumentsSignature signature = ArgumentsSignature.get(argNames);
+        ArgumentsSignature signature;
+        if (n == null) {
+            signature = ArgumentsSignature.empty(argValues.length);
+        } else {
+            String[] argNames = new String[argValues.length];
+            for (int i = 0; i < argValues.length; i++) {
+                String name = n.getDataAt(i);
+                argNames[i] = name == null ? null : name.isEmpty() ? null : name;
+            }
+            signature = ArgumentsSignature.get(argNames);
+        }
         MaterializedFrame callerFrame = null;
         for (int i = 0; i < argValues.length; i++) {
             Object arg = argValues[i];
@@ -176,7 +185,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
                 func = result.function;
             }
         }
-        if (func.isBuiltin() && builtin.getGroup() != null) {
+        if (func.isBuiltin() && builtin.getDispatch() != null && builtin.getDispatch().isGroupGeneric()) {
             if (groupDispatch == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 /* This child is not being used in a syntax context so remove tags */
@@ -188,7 +197,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
                     argValues[i] = promiseHelper.evaluate(frame, (RPromise) arg);
                 }
             }
-            return groupDispatch.executeDynamic(frame, new RArgsValuesAndNames(argValues, signature), builtin.getName().intern(), builtin.getGroup(), func);
+            return groupDispatch.executeDynamic(frame, new RArgsValuesAndNames(argValues, signature), builtin.getName().intern(), builtin.getDispatch(), func);
         }
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(func, evaledArgs, this, false);
