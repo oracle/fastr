@@ -34,17 +34,16 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -56,7 +55,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * {@link RootCallTarget} for every argument.
  * </p>
  */
-public final class CallArgumentsNode extends RNode implements UnmatchedArguments {
+public final class CallArgumentsNode extends RBaseNode implements UnmatchedArguments {
     /**
      * A list of arguments. Single arguments may be <code>null</code>; semantics have to be
      * specified by implementing classes
@@ -126,16 +125,6 @@ public final class CallArgumentsNode extends RNode implements UnmatchedArguments
             varArgsSymbolIndicesArr[i] = varArgsSymbolIndices.get(i);
         }
         return new CallArgumentsNode(wrappedArgs, signature, varArgsSymbolIndicesArr);
-    }
-
-    @Override
-    public Object execute(VirtualFrame frame) {
-        throw RInternalError.shouldNotReachHere("Execute has not semantic meaning for CallArgumentsNode");
-    }
-
-    @Override
-    public Object[] executeArray(VirtualFrame frame) throws UnexpectedResultException {
-        throw RInternalError.shouldNotReachHere("Execute has not semantic meaning for CallArgumentsNode");
     }
 
     public static RArgsValuesAndNames getVarargsAndNames(Frame frame) {
