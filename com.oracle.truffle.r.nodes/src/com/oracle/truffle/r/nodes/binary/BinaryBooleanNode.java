@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNode;
@@ -202,8 +201,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"(isRMissing(left) || isRMissing(right))"})
     protected Object doOneArg(Object left, Object right) {
-        RBuiltinFactory builtin = getBuiltin();
-        throw RError.error(this, RError.Message.IS_OF_WRONG_ARITY, 1, builtin.getName(), 2);
+        throw RError.error(this, RError.Message.IS_OF_WRONG_ARITY, 1, factory.create().opName(), 2);
     }
 
     protected static boolean isRNullOrEmptyAndNotMissing(Object left, Object right) {

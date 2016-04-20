@@ -37,17 +37,19 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 public final class RBuiltinRootNode extends RRootNode {
 
     @Child private RBuiltinNode builtin;
+    private final RBuiltinFactory factory;
 
-    RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
+    RBuiltinRootNode(RBuiltinFactory factory, RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
         super(null, formalArguments, frameDescriptor);
+        this.factory = factory;
         this.builtin = builtin;
     }
 
     @Override
     public RootCallTarget duplicateWithNewFrameDescriptor() {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getBuiltin().getName(), frameDescriptor);
-        return Truffle.getRuntime().createCallTarget(new RBuiltinRootNode((RBuiltinNode) builtin.deepCopy(), getFormalArguments(), frameDescriptor));
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("builtin", frameDescriptor);
+        return Truffle.getRuntime().createCallTarget(new RBuiltinRootNode(factory, (RBuiltinNode) builtin.deepCopy(), getFormalArguments(), frameDescriptor));
     }
 
     @Override
@@ -72,12 +74,11 @@ public final class RBuiltinRootNode extends RRootNode {
 
     @Override
     public boolean needsSplitting() {
-        return builtin.getBuiltin().isAlwaysSplit();
+        return factory.isAlwaysSplit();
     }
 
     public RBuiltinNode inline(ArgumentsSignature signature, RNode[] args) {
-        assert builtin.getSuppliedSignature() != null : this;
-        return builtin.inline(signature, args);
+        return RBuiltinNode.inline(factory, signature, args);
     }
 
     @Override
