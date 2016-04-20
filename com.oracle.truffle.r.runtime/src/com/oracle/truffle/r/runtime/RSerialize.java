@@ -1450,12 +1450,6 @@ public class RSerialize {
                             writeItem(RNull.instance);
                         }
                     }
-                } else if (type == SEXPTYPE.FASTR_DATAFRAME) {
-                    RDataFrame dataFrame = (RDataFrame) obj;
-                    // In GnuR this is an object
-                    RVector vec = dataFrame.getVector();
-                    writeItem(vec);
-                    return;
                 } else if (type == SEXPTYPE.FASTR_FACTOR) {
                     RFactor factor = (RFactor) obj;
                     writeItem(factor.getVector());
