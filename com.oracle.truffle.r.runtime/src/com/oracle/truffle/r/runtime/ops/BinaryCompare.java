@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ops;
 
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RComplex;
 
@@ -33,27 +34,27 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 public abstract class BinaryCompare extends BooleanOperation {
 
     /* Fake RBuiltins to unify the compare operations */
-    @RBuiltin(name = "==", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
+    @RBuiltin(name = "==", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
     public static class EqualBuiltin {
     }
 
-    @RBuiltin(name = "!=", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
+    @RBuiltin(name = "!=", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
     public static class NotEqualBuiltin {
     }
 
-    @RBuiltin(name = ">=", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
+    @RBuiltin(name = ">=", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
     public static class GreaterEqualBuiltin {
     }
 
-    @RBuiltin(name = ">", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
+    @RBuiltin(name = ">", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
     public static class GreaterBuiltin {
     }
 
-    @RBuiltin(name = "<=", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
+    @RBuiltin(name = "<=", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
     public static class LessEqualBuiltin {
     }
 
-    @RBuiltin(name = "<", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
+    @RBuiltin(name = "<", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
     public static class LessBuiltin {
     }
 

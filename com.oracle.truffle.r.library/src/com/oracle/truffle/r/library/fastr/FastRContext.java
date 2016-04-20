@@ -29,7 +29,10 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RChannel;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
@@ -58,6 +61,14 @@ public class FastRContext {
             RContext.ContextKind kind = RContext.ContextKind.VALUES[kindVec.getDataAt(0) - 1];
             RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, args.materialize().getDataCopy());
             return ContextInfo.createDeferred(options, kind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
+        }
+    }
+
+    @RBuiltin(name = "__fastr_get_context", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
+    public abstract static class GetBuiltin extends RBuiltinNode {
+        @Specialization
+        protected Object get() {
+            return RContext.getInstance();
         }
     }
 

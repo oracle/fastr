@@ -30,11 +30,12 @@ import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
-@RBuiltin(name = "trunc", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+@RBuiltin(name = "trunc", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
 public abstract class Trunc extends RBuiltinNode {
 
     private static final UnaryArithmeticFactory TRUNC = TruncArithmetic::new;
