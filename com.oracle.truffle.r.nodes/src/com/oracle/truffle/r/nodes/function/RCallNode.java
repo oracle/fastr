@@ -369,7 +369,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
                     dispatchTempSlot.cleanup(frame, slot);
                 }
             } else {
-                assert dispatch.isGeneric();
+                assert dispatch.isGroupGeneric();
             }
         }
         normalDispatchProfile.enter();

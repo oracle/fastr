@@ -30,17 +30,17 @@ public enum RDispatch {
     SUMMARY_GROUP_GENERIC("Summary"),
     COMPLEX_GROUP_GENERIC("Complex");
 
-    private final String genericName;
+    private final String groupGenericName;
 
-    RDispatch(String genericName) {
-        this.genericName = genericName;
+    RDispatch(String groupGenericName) {
+        this.groupGenericName = groupGenericName;
     }
 
-    public boolean isGeneric() {
-        return genericName != null;
+    public boolean isGroupGeneric() {
+        return groupGenericName != null;
     }
 
-    public String getGenericName() {
-        return genericName;
+    public String getGroupGenericName() {
+        return groupGenericName;
     }
 }
