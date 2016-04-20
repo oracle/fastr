@@ -346,7 +346,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRList(value)", "!isRDataFrame(value)", "!isRPairList(value)"})
+        @Specialization(guards = {"!isRMissing(value)", "!isRList(value)", "!isRPairList(value)"})
         protected byte isType(Object value) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;

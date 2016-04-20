@@ -290,10 +290,6 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
         return value instanceof RList;
     }
 
-    protected static boolean isRDataFrame(Object value) {
-        return value instanceof RDataFrame;
-    }
-
     protected static boolean isRFactor(Object value) {
         return value instanceof RFactor;
     }

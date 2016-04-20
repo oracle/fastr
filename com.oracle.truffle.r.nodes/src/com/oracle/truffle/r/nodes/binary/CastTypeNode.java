@@ -25,7 +25,6 @@ import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class CastTypeNode extends BinaryNode {
@@ -48,12 +47,6 @@ public abstract class CastTypeNode extends BinaryNode {
                     @Cached("type") RType cachedType, //
                     @Cached("createCast(cachedType)") CastNode cast) {
         return cast.execute(value);
-    }
-
-    @Specialization
-    protected static Object doCastDataFrame(RDataFrame value, RType type, //
-                    @Cached("create()") CastTypeNode castRecursive) {
-        return castRecursive.execute(value.getVector(), type);
     }
 
     @SuppressWarnings("unused")

@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -69,11 +68,6 @@ public abstract class CastToVectorNode extends CastNode {
     @Specialization
     protected RList cast(RExpression expression) {
         return expression.getList();
-    }
-
-    @Specialization
-    protected RAbstractVector cast(RDataFrame dataFrame) {
-        return dataFrame.getVector();
     }
 
     public static CastToVectorNode create() {

@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.unary;
 
 import java.util.Iterator;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -32,7 +31,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -50,14 +48,6 @@ public abstract class CastListNode extends CastBaseNode {
     @Child private CastListNode castListRecursive;
 
     public abstract RList executeList(Object o);
-
-    private RList castList(Object operand) {
-        if (castListRecursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castListRecursive = insert(CastListNodeGen.create(false, false, false));
-        }
-        return castListRecursive.executeList(operand);
-    }
 
     @Specialization
     protected RList doNull(@SuppressWarnings("unused") RNull operand) {
@@ -110,11 +100,6 @@ public abstract class CastListNode extends CastBaseNode {
             }
         }
         return result;
-    }
-
-    @Specialization
-    protected RList doDataFrame(RDataFrame operand) {
-        return castList(operand.getVector());
     }
 
     @Specialization

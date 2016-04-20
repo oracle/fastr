@@ -29,7 +29,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -175,11 +174,6 @@ public abstract class PrecedenceNode extends RBaseNode {
 
     @Specialization(guards = "recursive != LOGICAL_TRUE")
     protected int doPairList(RPairList val, byte recursive) {
-        return LIST_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doDataFrame(RDataFrame val, byte recursive) {
         return LIST_PRECEDENCE;
     }
 
