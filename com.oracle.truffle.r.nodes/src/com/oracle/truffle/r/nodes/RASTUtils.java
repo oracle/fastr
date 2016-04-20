@@ -67,9 +67,8 @@ public class RASTUtils {
      * Central location for all node cloning operations, in preference to {@link NodeUtil#cloneNode}
      * .
      */
-    public static RNode cloneNode(Node node) {
-        RNode result = (RNode) NodeUtil.cloneNode(node);
-        return result;
+    public static <T extends RBaseNode> T cloneNode(T node) {
+        return NodeUtil.cloneNode(node);
     }
 
     /**
@@ -168,7 +167,7 @@ public class RASTUtils {
      * Create an {@link RNode} from a runtime value.
      */
     @TruffleBoundary
-    public static RNode createNodeForValue(Object value) {
+    public static RBaseNode createNodeForValue(Object value) {
         if (value instanceof RNode) {
             return (RNode) value;
         } else if (value instanceof RSymbol) {

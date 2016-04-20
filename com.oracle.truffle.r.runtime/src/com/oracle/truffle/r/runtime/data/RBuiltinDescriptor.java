@@ -29,7 +29,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RDispatch;
-import com.oracle.truffle.r.runtime.RGroupGenerics;
 
 public abstract class RBuiltinDescriptor {
 
@@ -43,7 +42,6 @@ public abstract class RBuiltinDescriptor {
     private final boolean splitCaller;
     private final boolean alwaysSplit;
     private final RDispatch dispatch;
-    private final RGroupGenerics group;
     private final int primitiveMethodIndex;
     @CompilationFinal private final boolean[] evaluatesArgument;
 
@@ -56,7 +54,6 @@ public abstract class RBuiltinDescriptor {
         this.splitCaller = splitCaller;
         this.alwaysSplit = alwaysSplit;
         this.dispatch = dispatch;
-        this.group = RGroupGenerics.getGroup(name);
 
         evaluatesArgument = new boolean[signature.getLength()];
         Arrays.fill(evaluatesArgument, true);
@@ -105,10 +102,6 @@ public abstract class RBuiltinDescriptor {
 
     public RDispatch getDispatch() {
         return dispatch;
-    }
-
-    public RGroupGenerics getGroup() {
-        return group;
     }
 
     public boolean evaluatesArg(int index) {
