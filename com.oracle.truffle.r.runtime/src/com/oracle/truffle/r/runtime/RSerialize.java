@@ -296,10 +296,8 @@ public class RSerialize {
         try {
             return new Input(new ByteArrayInputStream(buffer)).unserialize();
         } catch (IOException e) {
-            assert false : "ByteArrayInputStream should not throw IOExceptiopn";
+            throw RInternalError.shouldNotReachHere("ByteArrayInputStream should not throw IOExceptiopn");
         }
-
-        return RNull.instance;
     }
 
     /**

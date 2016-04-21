@@ -28,40 +28,19 @@ import org.junit.Test;
 import com.oracle.truffle.r.test.TestBase;
 
 public class TestBuiltin_unserialize extends TestBase {
-    @Test
-    public void testserializeAndUnserializeDataFrame() {
-        test("data.frame(col1=c(9,8,7), col2=1:3)");
-    }
+    private static final String[] BASIC_TYPE_VALUES = new String[]{
+                    "c(1,2,3,4)", "3L", "42", "\"Hello world\"", "3+2i", "TRUE", "head(mtcars)",
+                    "data.frame(col1=c(9,8,7), col2=1:3)", "expression(x+1)", "list(1,2)", "NULL"
+    };
 
     @Test
-    public void testserializeAndUnserializeVector() {
-        test("c(1, 2, 3, 4)");
-    }
-
-    @Test
-    public void testserializeAndUnserializeScalars() {
-        test("3L");
-        test("42");
-        test("\"Hello world\"");
-        test("3+2i");
-        test("TRUE");
-    }
-
-    @Test
-    public void testserializeAndUnserializeMtcars() {
-        test("head(mtcars)");
+    public void tests() {
+        assertEval(template("unserialize(serialize(%0, NULL))", BASIC_TYPE_VALUES));
     }
 
     @Test
     public void testserializeAndUnserializeClosure() {
         // N.B.: FastR does not preserve code formatting like GNU R does
         assertEval(Ignored.OutputFormatting, "unserialize(serialize(function (x) { x }, NULL))");
-    }
-
-    /**
-     * Runs serialize and unserialize with given expression.
-     */
-    private void test(String expr) {
-        assertEval("unserialize(serialize(" + expr + ", NULL))");
     }
 }
