@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "forceAndCall", kind = PRIMITIVE, parameterNames = {"n", "FUN", "..."}, nonEvalArgs = 2)
 public abstract class ForceAndCall extends RBuiltinNode {
@@ -62,7 +61,7 @@ public abstract class ForceAndCall extends RBuiltinNode {
 
     private DoCall getDoCallNode() {
         if (doCallNode == null) {
-            doCallNode = insert(DoCallNodeGen.create(new RNode[3], null, null));
+            doCallNode = insert(DoCallNodeGen.create(null));
         }
         return doCallNode;
     }

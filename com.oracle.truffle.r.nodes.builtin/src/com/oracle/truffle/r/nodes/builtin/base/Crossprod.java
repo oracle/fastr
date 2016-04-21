@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "crossprod", kind = INTERNAL, parameterNames = {"x", "y"})
 public abstract class Crossprod extends RBuiltinNode {
@@ -43,7 +42,7 @@ public abstract class Crossprod extends RBuiltinNode {
     private void ensureMatMult() {
         if (matMult == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            matMult = insert(MatMultNodeGen.create(new RNode[2], null, null));
+            matMult = insert(MatMultNodeGen.create(null));
         }
     }
 
@@ -55,7 +54,7 @@ public abstract class Crossprod extends RBuiltinNode {
     private Object transpose(Object value) {
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            transpose = insert(TransposeNodeGen.create(new RNode[1], null, null));
+            transpose = insert(TransposeNodeGen.create(null));
         }
         return transpose.execute(value);
     }

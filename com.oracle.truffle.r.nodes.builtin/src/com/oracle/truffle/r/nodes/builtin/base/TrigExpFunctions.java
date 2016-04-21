@@ -366,8 +366,8 @@ public class TrigExpFunctions {
             super(RType.Double);
         }
 
-        @Child private Sin sinNode = SinNodeGen.create(null, null, null);
-        @Child private Cos cosNode = CosNodeGen.create(null, null, null);
+        @Child private Sin sinNode = SinNodeGen.create(null);
+        @Child private Cos cosNode = CosNodeGen.create(null);
 
         @Override
         public double op(double op) {
@@ -392,7 +392,7 @@ public class TrigExpFunctions {
             super(RType.Double);
         }
 
-        @Child private Tan tanNode = TanNodeGen.create(null, null, null);
+        @Child private Tan tanNode = TanNodeGen.create(null);
 
         @Override
         public double op(double op) {
@@ -493,7 +493,7 @@ public class TrigExpFunctions {
     @RBuiltin(name = "asinh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
     public abstract static class Asinh extends UnaryArithmeticBuiltinNode {
 
-        @Child private Asin asinNode = AsinNodeGen.create(null, null, null);
+        @Child private Asin asinNode = AsinNodeGen.create(null);
 
         public Asinh() {
             super(RType.Double);
@@ -518,7 +518,7 @@ public class TrigExpFunctions {
             super(RType.Double);
         }
 
-        @Child private Asin asinNode = AsinNodeGen.create(null, null, null);
+        @Child private Asin asinNode = AsinNodeGen.create(null);
 
         @Override
         public double op(double op) {
@@ -539,7 +539,7 @@ public class TrigExpFunctions {
             super(RType.Double);
         }
 
-        @Child private Acos acosNode = AcosNodeGen.create(null, null, null);
+        @Child private Acos acosNode = AcosNodeGen.create(null);
 
         @Override
         public double op(double x) {
@@ -590,7 +590,7 @@ public class TrigExpFunctions {
             super(RType.Double);
         }
 
-        @Child private Atan atanNode = AtanNodeGen.create(null, null, null);
+        @Child private Atan atanNode = AtanNodeGen.create(null);
 
         @Override
         public double op(double x) {

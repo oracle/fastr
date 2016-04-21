@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -68,8 +67,8 @@ public abstract class Args extends RBuiltinNode {
         }
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNode = insert(GetNodeGen.create(new RNode[4], null, null));
-            parentFrameNode = insert(ParentFrameNodeGen.create(new RNode[1], null, null));
+            getNode = insert(GetNodeGen.create(null));
+            parentFrameNode = insert(ParentFrameNodeGen.create(null));
 
         }
         return args((RFunction) getNode.execute(frame, funName, (REnvironment) parentFrameNode.execute(frame, 1), RType.Function.getName(), RRuntime.LOGICAL_TRUE));

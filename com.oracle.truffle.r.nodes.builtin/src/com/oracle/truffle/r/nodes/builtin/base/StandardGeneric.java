@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 // transcribed from src/main/objects.c
 @RBuiltin(name = "standardGeneric", kind = PRIMITIVE, parameterNames = {"f", "fdef"})
@@ -148,7 +147,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
         }
         if (sysFunction == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            sysFunction = insert(FrameFunctionsFactory.SysFunctionNodeGen.create(new RNode[1], null, null));
+            sysFunction = insert(FrameFunctionsFactory.SysFunctionNodeGen.create(null));
             RError.performanceWarning("sys.frame usage in standardGeneric");
         }
         // TODO: GNU R counts to (i < n) - does their equivalent of getDepth return a different

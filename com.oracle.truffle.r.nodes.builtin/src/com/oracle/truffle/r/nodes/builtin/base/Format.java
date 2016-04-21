@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Format extends RBuiltinNode {
 
     @Child private CastIntegerNode castInteger;
-    @Child protected ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create(null, null, null, null, null, null, null, null, null);
+    @Child protected ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create();
 
     protected final BranchProfile errorProfile = BranchProfile.create();
 

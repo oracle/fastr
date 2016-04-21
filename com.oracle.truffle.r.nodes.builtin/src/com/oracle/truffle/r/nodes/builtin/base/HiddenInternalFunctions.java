@@ -69,7 +69,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Private, undocumented, {@code .Internal} and {@code .Primitive} functions transcribed from GnuR,
@@ -87,7 +86,7 @@ public class HiddenInternalFunctions {
         private void initEval() {
             if (eval == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                eval = insert(EvalFunctionsFactory.EvalNodeGen.create(new RNode[3], null, null));
+                eval = insert(EvalFunctionsFactory.EvalNodeGen.create(null));
             }
         }
 
@@ -478,7 +477,7 @@ public class HiddenInternalFunctions {
 
     /*
      * Created as primitive function to avoid incrementing reference count for the argument.
-     * 
+     *
      * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
      * SHARED_PERMANENT_VAL for permanent shared
      */

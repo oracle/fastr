@@ -44,7 +44,7 @@ public abstract class MatrixFastPath extends RFastPathNode {
     }
 
     protected static Matrix createMatrix() {
-        return MatrixNodeGen.create(null, null, null);
+        return MatrixNodeGen.create(null);
     }
 
     @Specialization

@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
@@ -72,7 +71,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     public static BinaryArithmeticNode create(BinaryArithmeticFactory binary, UnaryArithmeticFactory unary) {
-        return BinaryArithmeticNodeGen.create(binary, unary, new RNode[]{null, null}, null, null);
+        return BinaryArithmeticNodeGen.create(binary, unary, null);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})

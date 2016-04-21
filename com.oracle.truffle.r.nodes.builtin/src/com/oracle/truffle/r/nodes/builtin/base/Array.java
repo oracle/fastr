@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * The {@code} .Internal part of the {@code array} function. The R code may alter the arguments
@@ -68,7 +67,7 @@ public abstract class Array extends RBuiltinNode {
     private void updateDimNames(RAbstractContainer container, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateDimNames = insert(UpdateDimNamesNodeGen.create(new RNode[2], null, null));
+            updateDimNames = insert(UpdateDimNamesNodeGen.create(null));
         }
         updateDimNames.executeRAbstractContainer(container, o);
     }

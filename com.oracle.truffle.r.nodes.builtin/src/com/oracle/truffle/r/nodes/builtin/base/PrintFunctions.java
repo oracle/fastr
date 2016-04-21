@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 public class PrintFunctions {
     public abstract static class PrintAdapter extends RInvisibleBuiltinNode {
 
-        @Child protected ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create(null, null, null, null, null, null, null, null, null);
+        @Child protected ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create();
 
         @TruffleBoundary
         protected void printHelper(String string) {

@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BinaryCompare;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.And;
@@ -83,7 +82,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     public abstract Object execute(VirtualFrame frame, Object left, Object right);
 
     public static BinaryBooleanNode create(BooleanOperationFactory factory) {
-        return BinaryBooleanNodeGen.create(factory, new RNode[]{null, null}, null, null);
+        return BinaryBooleanNodeGen.create(factory, null);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})

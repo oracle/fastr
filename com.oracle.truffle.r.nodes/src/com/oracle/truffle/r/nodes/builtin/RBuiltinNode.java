@@ -30,8 +30,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.CreateCast;
 import com.oracle.truffle.api.dsl.GeneratedBy;
 import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeField;
-import com.oracle.truffle.api.dsl.NodeFields;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -53,7 +51,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@NodeFields(value = {@NodeField(name = "builtin", type = RBuiltinFactory.class), @NodeField(name = "suppliedSignature", type = ArgumentsSignature.class)})
 @NodeChild(value = "arguments", type = RNode[].class)
 public abstract class RBuiltinNode extends RNode implements VisibilityController {
 
@@ -108,7 +105,7 @@ public abstract class RBuiltinNode extends RNode implements VisibilityController
 
         // Create function initialization
         RNode[] argAccessNodes = createAccessArgumentsNodes(builtin);
-        RBuiltinNode node = builtin.getConstructor().get(argAccessNodes.clone(), builtin, ArgumentsSignature.empty(argAccessNodes.length));
+        RBuiltinNode node = builtin.getConstructor().apply(argAccessNodes.clone());
 
         assert builtin.getKind() != RBuiltinKind.INTERNAL || node.getDefaultParameterValues().length == 0 : "INTERNAL builtins do not need default values";
         FormalArguments formals = FormalArguments.createForBuiltin(node.getDefaultParameterValues(), builtin.getSignature());
@@ -126,7 +123,7 @@ public abstract class RBuiltinNode extends RNode implements VisibilityController
     final static RBuiltinNode inline(RBuiltinFactory factory, ArgumentsSignature signature, RNode[] args) {
         // static number of arguments
         assert signature != null : factory + " " + Arrays.toString(args);
-        return factory.getConstructor().get(args, factory, signature);
+        return factory.getConstructor().apply(args);
     }
 
     protected final RBuiltin getRBuiltin() {

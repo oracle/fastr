@@ -78,7 +78,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class Combine extends RBuiltinNode {
 
     public static Combine create() {
-        return CombineNodeGen.create(null, null, null);
+        return CombineNodeGen.create(null);
     }
 
     private static final ArgumentsSignature EMPTY_SIGNATURE = ArgumentsSignature.empty(1);
@@ -324,7 +324,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     protected Combine createRecursive() {
-        return CombineNodeGen.create(null, null, null);
+        return CombineNodeGen.create(null);
     }
 
     private static RVector createResultVector(int precedence, int size, RStringVector names) {
