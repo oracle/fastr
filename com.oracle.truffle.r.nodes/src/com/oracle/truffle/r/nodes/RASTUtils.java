@@ -34,7 +34,6 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
 import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.CallArgumentsNode;
 import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
@@ -270,9 +269,6 @@ public class RASTUtils {
             GroupDispatchNode groupDispatchNode = (GroupDispatchNode) child;
             String gname = groupDispatchNode.getGenericName();
             return RDataFactory.createSymbolInterned(gname);
-        } else if (child instanceof RBuiltinNode) {
-            RBuiltinNode builtinNode = (RBuiltinNode) child;
-            return RDataFactory.createSymbolInterned((builtinNode.getBuiltin().getName()));
         } else {
             // TODO This should really fail in some way as (clearly) this is not a "name"
             // some more complicated expression, just deparse it

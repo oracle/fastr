@@ -88,7 +88,7 @@ public abstract class TestRPackages extends TestBase {
             cmds[cmds.length - 1] = packagePath.toString();
             ProcessBuilder pb = new ProcessBuilder(cmds);
             Map<String, String> env = pb.environment();
-            env.put("R_LIBS_USER", installDir().toString());
+            env.put("R_LIBS", installDir().toString());
             if (!generatingExpected()) {
                 env.put("R_INSTALL_TAR", RContext.getInstance().stateREnvVars.get("TAR"));
             }

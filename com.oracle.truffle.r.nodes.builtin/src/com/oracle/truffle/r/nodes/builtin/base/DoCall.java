@@ -74,7 +74,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 // TODO Implement properly, this is a simple implementation that works when the environment doesn't matter
 @RBuiltin(name = "do.call", kind = INTERNAL, parameterNames = {"what", "args", "envir"})
@@ -113,7 +112,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
         } else if (what instanceof String || (what instanceof RAbstractStringVector && ((RAbstractStringVector) what).getLength() == 1)) {
             if (getNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getNode = insert(GetNodeGen.create(new RNode[4], null, null));
+                getNode = insert(GetNodeGen.create(null));
             }
             func = (RFunction) getNode.execute(frame, what, env, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
         } else {

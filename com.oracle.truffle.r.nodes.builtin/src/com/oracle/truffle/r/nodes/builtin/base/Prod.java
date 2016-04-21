@@ -23,7 +23,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 @RBuiltin(name = "prod", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = RDispatch.SUMMARY_GROUP_GENERIC)
@@ -44,7 +43,7 @@ public abstract class Prod extends RBuiltinNode {
     protected Object prod(RArgsValuesAndNames args) {
         if (prodRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            prodRecursive = insert(ProdNodeGen.create(new RNode[1], null, null));
+            prodRecursive = insert(ProdNodeGen.create(null));
         }
         // TODO: eventually handle multiple vectors properly
         return prodRecursive.executeObject(args.getArgument(0));

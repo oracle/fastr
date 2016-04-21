@@ -44,7 +44,6 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "lengths", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "use.names"})
 public abstract class Lengths extends RBuiltinNode {
@@ -62,7 +61,7 @@ public abstract class Lengths extends RBuiltinNode {
     private void initLengthNode() {
         if (lengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lengthNode = insert(LengthNodeGen.create(new RNode[1], null, null));
+            lengthNode = insert(LengthNodeGen.create(null));
         }
     }
 
@@ -90,7 +89,7 @@ public abstract class Lengths extends RBuiltinNode {
     @Fallback
     protected RIntVector doObject(VirtualFrame frame, Object x, Object useNames) {
         if (isAtomicNode == null) {
-            isAtomicNode = insert(IsAtomicNodeGen.create(new RNode[1], null, null));
+            isAtomicNode = insert(IsAtomicNodeGen.create(null));
         }
         byte isAtomic = (byte) isAtomicNode.execute(frame, x);
         if (!RRuntime.fromLogical(isAtomic)) {

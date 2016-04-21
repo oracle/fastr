@@ -130,7 +130,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
         shareListElement(value);
         if (suppliedSignatureArgNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            suppliedSignatureArgNames = argNameVector(getSuppliedSignature());
+            suppliedSignatureArgNames = argNameVector(ArgumentsSignature.empty(1));
         }
         return RDataFactory.createList(new Object[]{value}, suppliedSignatureArgNames);
     }

@@ -225,7 +225,7 @@ public class ForeignFunctions {
         protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") RMissing rPackage,
                         @SuppressWarnings("unused") RMissing encoding) {
             controlVisibility();
-            return DotC.dispatch(this, getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), naok, dup, args.getArguments());
+            return DotC.dispatch(this, getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), naok, dup, args);
         }
 
         @Specialization
@@ -237,7 +237,7 @@ public class ForeignFunctions {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
             }
-            return DotC.dispatch(this, symbolInfo.address, symbolInfo.symbol, naok, dup, args.getArguments());
+            return DotC.dispatch(this, symbolInfo.address, symbolInfo.symbol, naok, dup, args);
         }
 
         @SuppressWarnings("unused")

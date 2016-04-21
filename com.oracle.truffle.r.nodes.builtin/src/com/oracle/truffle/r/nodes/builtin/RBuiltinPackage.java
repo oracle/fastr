@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,10 +30,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory.NodeGenFactory;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Denotes an R package that is (partially) built-in to the implementation. Historically, several of
@@ -154,7 +155,7 @@ public abstract class RBuiltinPackage {
         }
     }
 
-    protected void add(Class<?> builtinClass, NodeGenFactory constructor) {
+    protected void add(Class<?> builtinClass, Function<RNode[], RBuiltinNode> constructor) {
         RBuiltin annotation = builtinClass.getAnnotation(RBuiltin.class);
         String[] parameterNames = annotation.parameterNames();
         parameterNames = Arrays.stream(parameterNames).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);

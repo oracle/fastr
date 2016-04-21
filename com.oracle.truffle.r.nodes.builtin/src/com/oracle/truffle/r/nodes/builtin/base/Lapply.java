@@ -81,7 +81,7 @@ public abstract class Lapply extends RBuiltinNode {
         private static final String INDEX_NAME = AnonymousFrameVariable.create("LAPPLY_ITER_INDEX");
         private static final String VECTOR_ELEMENT = AnonymousFrameVariable.create("LAPPLY_VEC_ELEM");
 
-        @Child private Length lengthNode = LengthNodeGen.create(null, null, null);
+        @Child private Length lengthNode = LengthNodeGen.create(null);
         @Child private WriteVariableNode writeVectorElement = WriteVariableNode.createAnonymous(VECTOR_ELEMENT, null, Mode.REGULAR);
         @Child private WriteVariableNode writeIndex = WriteVariableNode.createAnonymous(INDEX_NAME, null, Mode.REGULAR);
         @Child private RNode indexedLoadNode = createIndexedLoad();

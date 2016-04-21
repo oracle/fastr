@@ -29,9 +29,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -51,12 +49,12 @@ public abstract class ToLowerOrUpper extends RBuiltinNode {
     public static final class ToUpper {
     }
 
-    public static ToLowerOrUpper createToLower(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
-        return ToLowerOrUpperNodeGen.create(true, arguments, builtin, suppliedSignature);
+    public static ToLowerOrUpper createToLower(RNode[] arguments) {
+        return ToLowerOrUpperNodeGen.create(true, arguments);
     }
 
-    public static ToLowerOrUpper createToUpper(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
-        return ToLowerOrUpperNodeGen.create(false, arguments, builtin, suppliedSignature);
+    public static ToLowerOrUpper createToUpper(RNode[] arguments) {
+        return ToLowerOrUpperNodeGen.create(false, arguments);
     }
 
     private final boolean lower;

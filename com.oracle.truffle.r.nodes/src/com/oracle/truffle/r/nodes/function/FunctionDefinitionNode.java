@@ -222,7 +222,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             return false;
         };
         return NodeUtil.countNodes(this, findAlwaysSplitInternal) > 0;
-
     }
 
     @Override

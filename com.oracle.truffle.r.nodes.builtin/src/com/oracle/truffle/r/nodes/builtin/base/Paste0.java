@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * A straightforward implementation in terms of {@code paste} that doesn't attempt to be more
@@ -43,7 +42,7 @@ public abstract class Paste0 extends RBuiltinNode {
     private Object paste(RList values, Object collapse) {
         if (pasteNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            pasteNode = insert(PasteNodeGen.create(new RNode[3], null, null));
+            pasteNode = insert(PasteNodeGen.create(null));
         }
         return pasteNode.executeList(values, "", collapse);
     }

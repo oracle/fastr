@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "sprintf", kind = INTERNAL, parameterNames = {"fmt", "..."})
 public abstract class Sprintf extends RBuiltinNode {
@@ -229,7 +228,7 @@ public abstract class Sprintf extends RBuiltinNode {
         controlVisibility();
         if (sprintfRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            sprintfRecursive = insert(SprintfNodeGen.create(new RNode[2], null, null));
+            sprintfRecursive = insert(SprintfNodeGen.create(null));
         }
         return sprintfRecursive.executeObject(frame, fmt, args.getArgument(0));
     }

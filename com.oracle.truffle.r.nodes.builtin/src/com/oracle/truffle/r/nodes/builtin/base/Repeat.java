@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * The {@code rep} builtin works as follows.
@@ -83,7 +82,7 @@ public abstract class Repeat extends RBuiltinNode {
     private Object repeatRecursive(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
         if (repeatRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            repeatRecursive = insert(RepeatNodeGen.create(new RNode[4], null, null));
+            repeatRecursive = insert(RepeatNodeGen.create(null));
         }
         return repeatRecursive.execute(x, times, lengthOut, each);
     }

@@ -29,7 +29,6 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -37,17 +36,19 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 public final class RBuiltinRootNode extends RRootNode {
 
     @Child private RBuiltinNode builtin;
+    private final RBuiltinFactory factory;
 
-    RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
+    RBuiltinRootNode(RBuiltinFactory factory, RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
         super(null, formalArguments, frameDescriptor);
+        this.factory = factory;
         this.builtin = builtin;
     }
 
     @Override
     public RootCallTarget duplicateWithNewFrameDescriptor() {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getBuiltin().getName(), frameDescriptor);
-        return Truffle.getRuntime().createCallTarget(new RBuiltinRootNode((RBuiltinNode) builtin.deepCopy(), getFormalArguments(), frameDescriptor));
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("builtin", frameDescriptor);
+        return Truffle.getRuntime().createCallTarget(new RBuiltinRootNode(factory, (RBuiltinNode) builtin.deepCopy(), getFormalArguments(), frameDescriptor));
     }
 
     @Override
@@ -72,12 +73,11 @@ public final class RBuiltinRootNode extends RRootNode {
 
     @Override
     public boolean needsSplitting() {
-        return builtin.getBuiltin().isAlwaysSplit();
+        return factory.isAlwaysSplit();
     }
 
-    public RBuiltinNode inline(ArgumentsSignature signature, RNode[] args) {
-        assert builtin.getSuppliedSignature() != null : this;
-        return builtin.inline(signature, args);
+    public RBuiltinNode inline(RNode[] args) {
+        return RBuiltinNode.inline(factory, args);
     }
 
     @Override

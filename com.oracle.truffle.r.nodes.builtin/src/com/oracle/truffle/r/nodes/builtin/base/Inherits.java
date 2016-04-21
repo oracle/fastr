@@ -80,7 +80,7 @@ public abstract class Inherits extends RBuiltinNode {
     protected Object doesInherit(RArgsValuesAndNames x, RAbstractStringVector what, byte which) {
         assert x.getLength() == 1;
         if (recursiveInherits == null) {
-            recursiveInherits = insert(com.oracle.truffle.r.nodes.builtin.base.InheritsNodeGen.create(null, null, null));
+            recursiveInherits = insert(com.oracle.truffle.r.nodes.builtin.base.InheritsNodeGen.create(null));
         }
         return recursiveInherits.execute(x.getArgument(0), what, which);
     }
