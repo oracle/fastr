@@ -285,14 +285,7 @@ public class RSerialize {
 
     @TruffleBoundary
     public static Object unserialize(RAbstractRawVector data) {
-        byte[] buffer = (byte[]) data.getInternalStore();
-        if (buffer == null) {
-            buffer = new byte[data.getLength()];
-            for (int i = 0; i < data.getLength(); ++i) {
-                buffer[i] = data.getRawDataAt(i);
-            }
-        }
-
+        byte[] buffer = data.materialize().getDataWithoutCopying();
         try {
             return new Input(new ByteArrayInputStream(buffer)).unserialize();
         } catch (IOException e) {

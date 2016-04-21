@@ -117,15 +117,13 @@ public class SerializeFunctions {
 
     @RBuiltin(name = "unserialize", kind = INTERNAL, parameterNames = {"conn", "refhook"})
     public abstract static class Unserialize extends Adapter {
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object unSerialize(RConnection conn, RNull refhook) {
+        protected Object unSerialize(RConnection conn, @SuppressWarnings("unused") RNull refhook) {
             return doUnserializeFromConnBase(conn, null);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object unSerialize(RAbstractRawVector data, RNull refhook) {
+        protected Object unSerialize(RAbstractRawVector data, @SuppressWarnings("unused") RNull refhook) {
             return doUnserializeFromRaw(data, null);
         }
     }
