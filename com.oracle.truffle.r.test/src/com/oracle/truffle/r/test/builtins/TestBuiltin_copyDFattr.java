@@ -140,4 +140,12 @@ public class TestBuiltin_copyDFattr extends TestBase {
         assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); y<-7; attr(y, \"foo\")<-\"foo\"; z<-.Internal(copyDFattr(y, x)); attributes(z) }");
         assertEval("{ x<-data.frame(c(1,2), c(11,12)); attr(x, \"dim\")<-c(1,2); attr(x, \"dimnames\")<-list(\"a\", c(\"b\", \"c\")); y<-c(7, 42); z<-.Internal(copyDFattr(x, y)); attributes(z) }");
     }
+
+    @Test
+    public void testCopyDDFattrAltersItsSecondArg() {
+        // N.B.: the FastR implementation uses RVector.materiaze, which sometimes
+        // returns copy/sometimes ref (scalar vs. real vector). Original copyDFattr
+        // always alters attributes of its second argument
+        assertEval(Ignored.ImplementationError, "{ x<-7; attr(x, \"foo\")<-\"foo\"; y<-42; .Internal(copyDFattr(x, y)); y }");
+    }
 }

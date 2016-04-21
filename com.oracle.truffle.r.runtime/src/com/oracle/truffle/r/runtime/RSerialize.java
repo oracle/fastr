@@ -68,6 +68,7 @@ import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.instrument.RPackageSource;
@@ -282,6 +283,16 @@ public class RSerialize {
         return result;
     }
 
+    @TruffleBoundary
+    public static Object unserialize(RAbstractRawVector data) {
+        byte[] buffer = data.materialize().getDataWithoutCopying();
+        try {
+            return new Input(new ByteArrayInputStream(buffer)).unserialize();
+        } catch (IOException e) {
+            throw RInternalError.shouldNotReachHere("ByteArrayInputStream should not throw IOExceptiopn");
+        }
+    }
+
     /**
      * This variant exists for the {@code lazyLoadDBFetch} function. In certain cases, when
      * {@link Input#persistentRestore} is called, an R function needs to be evaluated with an
@@ -326,6 +337,10 @@ public class RSerialize {
 
         private Input(RConnection conn) throws IOException {
             this(conn.getInputStream(), null, null, null);
+        }
+
+        private Input(InputStream input) throws IOException {
+            this(input, null, null, null);
         }
 
         private Input(InputStream is, CallHook hook, String packageName, String functionName) throws IOException {

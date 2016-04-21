@@ -19,11 +19,37 @@ public class TestBuiltin_intToBits extends TestBase {
 
     @Test
     public void testintToBits1() {
-        assertEval(Ignored.Unknown, "argv <- list(list()); .Internal(intToBits(argv[[1]]))");
+        assertEval("argv <- list(list()); .Internal(intToBits(argv[[1]]))");
     }
 
     @Test
     public void testintToBits2() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL); .Internal(intToBits(argv[[1]]))");
+        assertEval("argv <- list(NULL); .Internal(intToBits(argv[[1]]))");
+    }
+
+    @Test
+    public void testintToBits() {
+        assertEval("intToBits()");
+        assertEval("intToBits(-1)");
+        assertEval("intToBits(-99L)");
+        assertEval("intToBits(6543L)");
+        assertEval("intToBits(2345234.77)");
+        assertEval("intToBits(1.22)");
+        assertEval("intToBits(-1.56)");
+        assertEval("intToBits(-0.3)");
+        assertEval("intToBits('123')");
+        assertEval(Output.ContainsWarning, "intToBits(5+7i)");
+        assertEval("intToBits(NULL)");
+        assertEval("intToBits(c(1,2,3))");
+        assertEval("intToBits(c(5L,99L))");
+        assertEval("intToBits(integer(0))");
+        assertEval("intToBits(double(0))");
+        assertEval("intToBits(6:9)");
+        assertEval(Output.ContainsWarning, "intToBits('23rrff')");
+        assertEval("intToBits(new.env())");
+        assertEval("intToBits(environment)");
+        assertEval(Ignored.ImplementationError, "intToBits(stdout())");
+        assertEval(Output.ContainsError, "intToBits(list(c(5,5,7,8),88,6L))");
+        assertEval("intToBits(list(5,5,7,8))");
     }
 }

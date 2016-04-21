@@ -27,4 +27,14 @@ public class TestBuiltin_parse extends TestBase {
         assertEval(Ignored.Unknown, "{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=FALSE) ; x } ; c(f(), x) }");
         assertEval(Ignored.Unknown, "{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=TRUE) ; x } ; c(f(), x) }");
     }
+
+    @Test
+    public void testParseVector() {
+        assertEval("parse(text=deparse(c(1, 2, 3)))");
+    }
+
+    @Test
+    public void testParseDataFrame() {
+        assertEval(Ignored.ImplementationError, "eval(parse(text=deparse(data.frame(x=c(1)))))");
+    }
 }

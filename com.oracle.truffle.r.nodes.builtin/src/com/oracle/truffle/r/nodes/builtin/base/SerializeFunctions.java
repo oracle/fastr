@@ -29,6 +29,7 @@ import java.io.IOException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
@@ -37,11 +38,13 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class SerializeFunctions {
 
-    public abstract static class Adapter extends RInvisibleBuiltinNode {
+    public abstract static class Adapter extends RBuiltinNode {
         @TruffleBoundary
         protected Object doUnserializeFromConnBase(RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
             controlVisibility();
@@ -54,6 +57,12 @@ public class SerializeFunctions {
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
+        }
+
+        @TruffleBoundary
+        protected Object doUnserializeFromRaw(RAbstractRawVector data, @SuppressWarnings("unused") REnvironment refhook) {
+            controlVisibility();
+            return RSerialize.unserialize(data);
         }
 
         @TruffleBoundary
@@ -108,10 +117,14 @@ public class SerializeFunctions {
 
     @RBuiltin(name = "unserialize", kind = INTERNAL, parameterNames = {"conn", "refhook"})
     public abstract static class Unserialize extends Adapter {
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object unSerialize(RConnection conn, RNull refhook) {
+        protected Object unSerialize(RConnection conn, @SuppressWarnings("unused") RNull refhook) {
             return doUnserializeFromConnBase(conn, null);
+        }
+
+        @Specialization
+        protected Object unSerialize(RAbstractRawVector data, @SuppressWarnings("unused") RNull refhook) {
+            return doUnserializeFromRaw(data, null);
         }
     }
 
