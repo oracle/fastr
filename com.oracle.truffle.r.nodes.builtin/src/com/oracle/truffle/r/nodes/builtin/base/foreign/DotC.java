@@ -133,7 +133,7 @@ public abstract class DotC extends RBuiltinNode {
     private static RStringVector validateArgNames(int argsLength, ArgumentsSignature signature) {
         String[] listArgNames = new String[argsLength];
         for (int i = 0; i < argsLength; i++) {
-            String name = signature.getName(i + 1);
+            String name = signature.getName(i);
             if (name == null) {
                 name = RRuntime.NAMES_ATTR_EMPTY_VALUE;
             }
