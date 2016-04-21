@@ -29,7 +29,6 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -77,8 +76,8 @@ public final class RBuiltinRootNode extends RRootNode {
         return factory.isAlwaysSplit();
     }
 
-    public RBuiltinNode inline(ArgumentsSignature signature, RNode[] args) {
-        return RBuiltinNode.inline(factory, signature, args);
+    public RBuiltinNode inline(RNode[] args) {
+        return RBuiltinNode.inline(factory, args);
     }
 
     @Override

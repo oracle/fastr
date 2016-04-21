@@ -660,7 +660,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
                 // We inline the given arguments here, as builtins are executed inside the same
                 // frame as they are called.
                 RNode[] inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, creator);
-                callNode = new BuiltinCallNode(root.inline(args.getSignature(), inlinedArgs), creator);
+                callNode = new BuiltinCallNode(root.inline(inlinedArgs), creator);
             } else {
                 // Now we need to distinguish: Do supplied arguments vary between calls?
                 if (args.containsVarArgsSymbol()) {

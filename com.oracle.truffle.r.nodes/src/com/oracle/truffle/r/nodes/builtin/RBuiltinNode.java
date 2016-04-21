@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
@@ -38,7 +36,6 @@ import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.unary.ApplyCastNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.VisibilityController;
@@ -120,9 +117,8 @@ public abstract class RBuiltinNode extends RNode implements VisibilityController
         return Truffle.getRuntime().createCallTarget(root);
     }
 
-    final static RBuiltinNode inline(RBuiltinFactory factory, ArgumentsSignature signature, RNode[] args) {
+    static final RBuiltinNode inline(RBuiltinFactory factory, RNode[] args) {
         // static number of arguments
-        assert signature != null : factory + " " + Arrays.toString(args);
         return factory.getConstructor().apply(args);
     }
 
