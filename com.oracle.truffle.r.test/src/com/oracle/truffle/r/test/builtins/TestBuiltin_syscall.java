@@ -44,6 +44,12 @@ public class TestBuiltin_syscall extends TestBase {
 
         assertEval("{ foo<-function(x, z) UseMethod(\"foo\"); foo.baz<-function(x, z) NextMethod(); y<-1; class(y)<-c(\"baz\", \"bar\"); foo.bar<-function(x, z) sys.call(0); foo(y, 42) }");
         assertEval("{ foo<-function(x, ...) UseMethod(\"foo\"); foo.baz<-function(x, ...) NextMethod(); y<-1; class(y)<-c(\"baz\", \"bar\"); foo.bar<-function(x, ...) sys.call(0); foo(y, 42) }");
+
+        // these tests look a little weird as we seem to have some printing problems with language
+        // objects (we should be able to simply print x, but the outputs don't quite match)
+        assertEval("{ x<-do.call(function() sys.call(0), list()); x[[1]] }");
+        assertEval("{ x<-do.call(function() sys.call(1), list()); list(x[[1]], x[[2]][[1]], x[[2]][[2]], x[[2]][[3]]) }");
+
     }
 
 }
