@@ -16,7 +16,6 @@ import java.io.OutputStream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.RClass;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -48,7 +47,7 @@ public final class WriteTable extends RExternalBuiltinNode {
                     throws IOException, IllegalArgumentException {
         OutputStream os = con.getOutputStream();
         String tmp = null;
-        if (RClass.DataFrame.isInstanceOf(xx)) {
+        if (RRuntime.hasRClass(xx, RRuntime.CLASS_DATA_FRAME)) {
             executeDataFrame(os, (RVector) xx, nr, nc, rnames, csep, ceol, cna, cdec, qmethod, quoteCol, quoteRn);
         } else { /* A matrix */
 

@@ -22,6 +22,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -120,14 +121,13 @@ public class RRuntime {
     public static final String ROWNAMES_ATTR_KEY = "row.names";
 
     public static final String FORMULA_CLASS = "formula";
-    public static final String DATA_FRAME_CLASS = "data.frame";
     public static final String DOT_ENVIRONMENT = ".Environment";
 
     public static final String DOT_DATA = ".Data";
     public static final String DOT_XDATA = ".xData";
 
     public static final String DOT_S3_CLASS = ".S3Class";
-
+    public static final String CLASS_DATA_FRAME = "data.frame";
     public static final String CLASS_ORDERED = "ordered";
 
     public static final String RS3MethodsTable = ".__S3MethodsTable__.";
@@ -830,6 +830,14 @@ public class RRuntime {
         } else {
             return INT_NA;
         }
+    }
+
+    /**
+     * Returns {@code true} if the given object is R object and its class attribute contains given
+     * class.
+     */
+    public static boolean hasRClass(Object obj, String rclassName) {
+        return obj instanceof RAttributable && ((RAttributable) obj).hasClass(rclassName);
     }
 
     public static boolean checkType(Object obj, RType type) {
