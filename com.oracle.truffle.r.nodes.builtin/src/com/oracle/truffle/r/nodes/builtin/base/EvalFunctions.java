@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -91,16 +90,6 @@ public class EvalFunctions {
         @Specialization
         protected REnvironment cast(RPairList list, REnvironment enclos) {
             return REnvironment.createFromList(attributeProfiles, list.toRList(), enclos);
-        }
-
-        @Specialization
-        protected REnvironment cast(RDataFrame dataFrame, REnvironment enclos) {
-            RVector vector = dataFrame.getVector();
-            if (vector instanceof RList) {
-                return REnvironment.createFromList(attributeProfiles, (RList) vector, enclos);
-            } else {
-                throw RError.nyi(this, "eval on non-list dataframe");
-            }
         }
 
         @Fallback

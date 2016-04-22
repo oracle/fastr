@@ -353,10 +353,6 @@ public final class RDataFactory {
         return traceDataCreated(new RList(data, newDimensions, names));
     }
 
-    public static RDataFrame createDataFrame(RVector vector) {
-        return traceDataCreated(new RDataFrame(vector));
-    }
-
     public static RExpression createExpression(RList list) {
         return traceDataCreated(new RExpression(list));
     }

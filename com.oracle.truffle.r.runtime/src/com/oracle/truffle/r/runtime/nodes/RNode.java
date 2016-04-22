@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -192,10 +191,6 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
 
     public RExpression executeRExpression(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.expectRExpression(execute(frame));
-    }
-
-    public RDataFrame executeRDataFrame(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRDataFrame(execute(frame));
     }
 
     public RFactor executeRFactor(VirtualFrame frame) throws UnexpectedResultException {

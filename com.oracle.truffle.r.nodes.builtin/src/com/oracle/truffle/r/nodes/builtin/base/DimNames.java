@@ -31,7 +31,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -56,10 +55,7 @@ public abstract class DimNames extends RBuiltinNode {
     protected Object getDimNames(RAbstractContainer container) {
         controlVisibility();
         RList names;
-        if (container instanceof RDataFrame) {
-            dataframeProfile.enter();
-            names = ((RDataFrame) container).getVector().getDimNames();
-        } else if (container instanceof RFactor) {
+        if (container instanceof RFactor) {
             factorProfile.enter();
             names = ((RFactor) container).getVector().getDimNames();
         } else {

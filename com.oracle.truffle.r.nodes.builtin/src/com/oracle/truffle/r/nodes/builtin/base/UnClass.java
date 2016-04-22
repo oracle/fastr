@@ -20,7 +20,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RS4Object;
@@ -47,19 +46,6 @@ public abstract class UnClass extends RBuiltinNode {
             return RVector.setVectorClassAttr(resultVector, null, null, null);
         }
         return arg;
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected Object unClass(RDataFrame arg) {
-        controlVisibility();
-        RDataFrame resultFrame = arg;
-        if (!resultFrame.isTemporary()) {
-            resultFrame = resultFrame.copy();
-            assert resultFrame.isTemporary();
-            resultFrame.incRefCount();
-        }
-        return RVector.setVectorClassAttr(resultFrame.getVector(), null, arg, null);
     }
 
     @Specialization

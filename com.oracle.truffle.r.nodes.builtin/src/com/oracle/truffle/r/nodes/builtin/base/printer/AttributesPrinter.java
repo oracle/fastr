@@ -20,7 +20,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 
 //Transcribed from GnuR, src/main/print.c
 
@@ -59,7 +58,7 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
                     continue;
                 }
             }
-            if (value instanceof RDataFrame) {
+            if (value.hasClass(RRuntime.CLASS_DATA_FRAME)) {
                 if (RRuntime.ROWNAMES_ATTR_KEY.equals(a.getName())) {
                     continue;
                 }

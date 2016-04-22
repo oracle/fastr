@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFactor;
@@ -332,12 +331,6 @@ public class IsTypeFunctions {
         protected byte isType(RList value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
-        }
-
-        @Specialization
-        protected byte isType(RDataFrame value) {
-            controlVisibility();
-            return RRuntime.asLogical(isListProfile.profile(value.getVector() instanceof RList));
         }
 
         @Specialization
