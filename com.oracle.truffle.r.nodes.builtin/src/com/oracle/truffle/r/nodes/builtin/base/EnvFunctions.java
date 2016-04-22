@@ -170,7 +170,7 @@ public class EnvFunctions {
         @Specialization
         protected Object asEnvironment(RS4Object obj) {
             // generic dispatch tried already
-            Object xData = obj.getAttribute(RRuntime.DOT_XDATA);
+            Object xData = obj.getAttr(RRuntime.DOT_XDATA);
             if (xData == null || !(xData instanceof REnvironment)) {
                 throw RError.error(this, RError.Message.S4OBJECT_NX_ENVIRONMENT);
             } else {
