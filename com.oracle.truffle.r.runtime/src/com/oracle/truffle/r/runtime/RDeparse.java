@@ -603,7 +603,7 @@ public class RDeparse {
                     append(')');
                 } else if (value instanceof RS4Object) {
                     RS4Object s4Obj = (RS4Object) value;
-                    Object clazz = s4Obj.getAttribute("class");
+                    Object clazz = s4Obj.getAttr("class");
                     String className = clazz == null ? "S4" : RRuntime.toString(RRuntime.asStringLengthOne(clazz));
                     append("new(\"").append(className).append('\"');
                     try (C c = indent()) {
