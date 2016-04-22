@@ -34,8 +34,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  */
 public interface RAttributable extends RTypedValue {
 
-    static final RStringVector EMPTY_CLASS_HIERARCHY = new RStringVector(new String[0], true, null, null);
-
     /**
      * If the attribute set is not initialized, then initialize it.
      *
@@ -58,7 +56,7 @@ public interface RAttributable extends RTypedValue {
     default RStringVector getClassHierarchy() {
         Object v = getAttr(RRuntime.CLASS_ATTR_KEY);
         RStringVector result = v instanceof RStringVector ? (RStringVector) v : getImplicitClass();
-        return result != null ? result : EMPTY_CLASS_HIERARCHY;
+        return result != null ? result : RDataFactory.createEmptyStringVector();
     }
 
     RStringVector getImplicitClass();
