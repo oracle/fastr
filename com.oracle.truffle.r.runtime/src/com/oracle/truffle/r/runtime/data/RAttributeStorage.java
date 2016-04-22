@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.r.runtime.RRuntime;
+
 /**
  * An adaptor class for the several R types that are attributable. Only useful for classes that
  * don't already inherit from another class, otherwise just cut and paste this code.
@@ -48,6 +50,21 @@ public abstract class RAttributeStorage extends RBaseObject implements RAttribut
         this.attributes = newAttributes;
     }
 
+    public final Object getAttribute(String name) {
+        RAttributes attr = attributes;
+        return attr == null ? null : attr.get(name);
+    }
+
     @Override
     public abstract RStringVector getImplicitClass();
+
+    @Override
+    public final RStringVector getClassHierarchy() {
+        RStringVector v = (RStringVector) getAttribute(RRuntime.CLASS_ATTR_KEY);
+        if (v == null) {
+            return getImplicitClass();
+        } else {
+            return v;
+        }
+    }
 }

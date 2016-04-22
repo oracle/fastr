@@ -206,18 +206,21 @@ public final class GroupDispatchNode extends RSourceSectionNode implements RSynt
         ArgumentsSignature signature = argAndNames.getSignature();
         S3Args s3Args;
         RFunction function;
+        String functionName;
         if (result == null) {
             s3Args = null;
             function = builtinFunction;
+            functionName = function.getName();
         } else {
             s3Args = new S3Args(genericName, result.clazz, dotMethod, frame.materialize(), null, result.groupMatch ? dispatch.getGroupGenericName() : null);
             function = result.function;
+            functionName = result.targetFunctionName;
         }
         if (function == null) {
             CompilerDirectives.transferToInterpreter();
             throw RError.nyi(this, "missing builtin function '" + genericName + "'");
         }
-        return callMatcher.execute(frame, signature, evaluatedArgs, function, s3Args);
+        return callMatcher.execute(frame, signature, evaluatedArgs, function, functionName, s3Args);
     }
 
     @Override

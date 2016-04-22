@@ -50,7 +50,7 @@ public final class UseMethodInternalNode extends RNode implements VisibilityCont
             argPreProcess.execute(frame, arguments);
         }
         S3Args s3Args = new S3Args(generic, lookupResult.clazz, lookupResult.targetFunctionName, frame.materialize(), null, null);
-        return callMatcher.execute(frame, signature, arguments, lookupResult.function, s3Args);
+        return callMatcher.execute(frame, signature, arguments, lookupResult.function, lookupResult.targetFunctionName, s3Args);
     }
 
     @Override

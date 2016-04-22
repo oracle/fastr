@@ -41,6 +41,9 @@ public class TestBuiltin_syscall extends TestBase {
 
         // fails because can't parse out the "name"
         assertEval(Ignored.Unknown, "{ (function() sys.call())() }");
+
+        assertEval("{ foo<-function(x, z) UseMethod(\"foo\"); foo.baz<-function(x, z) NextMethod(); y<-1; class(y)<-c(\"baz\", \"bar\"); foo.bar<-function(x, z) sys.call(0); foo(y, 42) }");
+        assertEval("{ foo<-function(x, ...) UseMethod(\"foo\"); foo.baz<-function(x, ...) NextMethod(); y<-1; class(y)<-c(\"baz\", \"bar\"); foo.bar<-function(x, ...) sys.call(0); foo(y, 42) }");
     }
 
 }
