@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EvalFunctions.Eval;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -178,7 +179,7 @@ public class HiddenInternalFunctions {
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
         @Child private CastIntegerNode castIntNode;
 
-        private final RCaller caller = RDataFactory.createCaller(this);
+        private final RCaller caller = RDataFactory.createCaller(new RCallerHelper.InvalidRepresentation());
 
         private void initCast() {
             if (castIntNode == null) {
@@ -365,7 +366,7 @@ public class HiddenInternalFunctions {
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("e");
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
 
-        private final RCaller caller = RDataFactory.createCaller(this);
+        private final RCaller caller = RDataFactory.createCaller(new RCallerHelper.InvalidRepresentation());
 
         @Override
         protected void createCasts(CastBuilder casts) {

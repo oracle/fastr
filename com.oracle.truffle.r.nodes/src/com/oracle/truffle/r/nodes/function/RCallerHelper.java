@@ -49,6 +49,7 @@ public class RCallerHelper {
 
         private final Object func;
         private final Object[] arguments;
+        private RSyntaxNode syntaxNode = null;
 
         public Representation(Object func, Object[] arguments) {
             this.func = func;
@@ -57,53 +58,58 @@ public class RCallerHelper {
 
         @Override
         public RSyntaxNode getSyntaxNode() {
-            RSyntaxNode[] syntaxArguments = new RSyntaxNode[arguments.length];
-            int index = 0;
-            // arguments are already ordered - once one is missing, all the remaining ones must be
-            // missing
-            boolean missing = false;
-            for (int i = 0; i < arguments.length; i++) {
-                Object arg = arguments[i];
-                if (arg instanceof RPromise) {
-                    assert !missing;
-                    RPromise p = (RPromise) arg;
-                    syntaxArguments[index] = p.getRep().asRSyntaxNode();
-                    index++;
-                } else if (arg instanceof RArgsValuesAndNames) {
-                    RArgsValuesAndNames vararg = (RArgsValuesAndNames) arg;
-                    if (vararg.getLength() == 0) {
-                        // no var arg arguments
-                        syntaxArguments = Arrays.copyOf(syntaxArguments, syntaxArguments.length - 1);
-
-                    } else {
+            if (syntaxNode == null) {
+                RSyntaxNode[] syntaxArguments = new RSyntaxNode[arguments.length];
+                int index = 0;
+                // arguments are already ordered - once one is missing, all the remaining ones must
+                // be
+                // missing
+                boolean missing = false;
+                for (int i = 0; i < arguments.length; i++) {
+                    Object arg = arguments[i];
+                    if (arg instanceof RPromise) {
                         assert !missing;
-                        Object[] additionalArgs = vararg.getArguments();
-                        syntaxArguments = Arrays.copyOf(syntaxArguments, syntaxArguments.length + additionalArgs.length - 1);
-                        for (int j = 0; j < additionalArgs.length; j++) {
-                            if (additionalArgs[j] instanceof RPromise) {
-                                RPromise p = (RPromise) additionalArgs[j];
-                                syntaxArguments[index] = p.getRep().asRSyntaxNode();
-                            } else {
-                                assert additionalArgs[j] != RMissing.instance;
-                                syntaxArguments[index] = ConstantNode.create(additionalArgs[j]);
+                        RPromise p = (RPromise) arg;
+                        syntaxArguments[index] = p.getRep().asRSyntaxNode();
+                        index++;
+                    } else if (arg instanceof RArgsValuesAndNames) {
+                        RArgsValuesAndNames vararg = (RArgsValuesAndNames) arg;
+                        if (vararg.getLength() == 0) {
+                            // no var arg arguments
+                            syntaxArguments = Arrays.copyOf(syntaxArguments, syntaxArguments.length - 1);
+
+                        } else {
+                            assert !missing;
+                            Object[] additionalArgs = vararg.getArguments();
+                            syntaxArguments = Arrays.copyOf(syntaxArguments, syntaxArguments.length + additionalArgs.length - 1);
+                            for (int j = 0; j < additionalArgs.length; j++) {
+                                if (additionalArgs[j] instanceof RPromise) {
+                                    RPromise p = (RPromise) additionalArgs[j];
+                                    syntaxArguments[index] = p.getRep().asRSyntaxNode();
+                                } else {
+                                    assert additionalArgs[j] != RMissing.instance;
+                                    syntaxArguments[index] = ConstantNode.create(additionalArgs[j]);
+                                }
+                                index++;
                             }
+                        }
+                    } else {
+                        if (arg instanceof RMissing) {
+                            syntaxArguments = Arrays.copyOf(syntaxArguments, syntaxArguments.length - 1);
+                        } else {
+                            assert !missing;
+                            syntaxArguments[index] = ConstantNode.create(arg);
                             index++;
                         }
                     }
-                } else {
-                    if (arg instanceof RMissing) {
-                        syntaxArguments = Arrays.copyOf(syntaxArguments, syntaxArguments.length - 1);
-                    } else {
-                        assert !missing;
-                        syntaxArguments[index] = ConstantNode.create(arg);
-                        index++;
-                    }
-                }
 
+                }
+                // for some reason GNU R does not use argument names - hence empty signature even
+                // though
+                // an actual one is available
+                syntaxNode = RASTUtils.createCall(func, true, ArgumentsSignature.empty(syntaxArguments.length), syntaxArguments);
             }
-            // for some reason GNU R does not use argument names - hence empty signature even though
-            // an actual one is available
-            return RASTUtils.createCall(func, true, ArgumentsSignature.empty(syntaxArguments.length), syntaxArguments);
+            return syntaxNode;
         }
 
     }

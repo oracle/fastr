@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeWrapper;
 
 public final class RDataFactory {
 
@@ -382,7 +383,7 @@ public final class RDataFactory {
         return traceDataCreated(new RLanguage(rep));
     }
 
-    public static RCaller createCaller(Object rep) {
+    public static RCaller createCaller(RSyntaxNodeWrapper rep) {
         return traceDataCreated(new RCaller(rep));
     }
 

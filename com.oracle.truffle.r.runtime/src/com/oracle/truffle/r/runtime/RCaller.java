@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeWrapper;
+
 /**
  * Represents the caller of a function and stored in {@link RArguments}. The {@code rep} may not be
  * a syntax node and determining the associated syntax node is handled lazily, as it is only needed
@@ -29,13 +31,13 @@ package com.oracle.truffle.r.runtime;
  *
  */
 public final class RCaller {
-    private final Object rep;
+    private final RSyntaxNodeWrapper rep;
 
-    public RCaller(Object rep) {
+    public RCaller(RSyntaxNodeWrapper rep) {
         this.rep = rep;
     }
 
-    public Object getRep() {
+    public RSyntaxNodeWrapper getRep() {
         return rep;
     }
 }

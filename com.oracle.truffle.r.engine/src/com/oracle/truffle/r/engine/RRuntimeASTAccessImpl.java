@@ -456,16 +456,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public RLanguage getSyntaxCaller(RCaller rl) {
-        Object callerRep = rl.getRep();
-        RSyntaxNode syntaxNode;
-        // TODO: conditional should be temporary until all caller representations are syntax node
-        // wrappers
-        if (callerRep instanceof RSyntaxNodeWrapper) {
-            syntaxNode = ((RSyntaxNodeWrapper) callerRep).getSyntaxNode();
-        } else {
-            RBaseNode bn = RASTUtils.unwrap(rl.getRep());
-            syntaxNode = checkBuiltin(bn).asRSyntaxNode();
-        }
+        RSyntaxNodeWrapper callerRep = rl.getRep();
+        RSyntaxNode syntaxNode = callerRep.getSyntaxNode();
         return RDataFactory.createLanguage(syntaxNode.asRNode());
     }
 

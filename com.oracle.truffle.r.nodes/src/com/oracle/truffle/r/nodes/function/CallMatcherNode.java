@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeWrapper;
 
 public abstract class CallMatcherNode extends RBaseNode {
 
@@ -103,7 +104,7 @@ public abstract class CallMatcherNode extends RBaseNode {
     }
 
     protected Object[] prepareArguments(VirtualFrame frame, Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, DispatchArgs dispatchArgs,
-                    Object callerRep) {
+                    RSyntaxNodeWrapper callerRep) {
         return argsNode.execute(function, RDataFactory.createCaller(callerRep), null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), reorderedArgs, reorderedSignature,
                         dispatchArgs);
     }
@@ -218,7 +219,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                 Object[] reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(permutation, preparedArguments, formals);
                 evaluatePromises(frame, cachedFunction, reorderedArgs, formals.getSignature().getVarArgIndex());
                 if (call != null) {
-                    Object callerRep = functionName == null ? new RCallerHelper.InvalidRepresentation() : new RCallerHelper.Representation(functionName, reorderedArgs);
+                    RSyntaxNodeWrapper callerRep = functionName == null ? new RCallerHelper.InvalidRepresentation() : new RCallerHelper.Representation(functionName, reorderedArgs);
                     Object[] arguments = prepareArguments(frame, reorderedArgs, formals.getSignature(), cachedFunction, dispatchArgs, callerRep);
                     return call.call(frame, arguments);
                 } else {
@@ -300,7 +301,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             EvaluatedArguments reorderedArgs = reorderArguments(suppliedArguments, function, suppliedSignature);
             evaluatePromises(frame, function, reorderedArgs.getArguments(), reorderedArgs.getSignature().getVarArgIndex());
 
-            Object callerRep = functionName == null ? new RCallerHelper.InvalidRepresentation() : new RCallerHelper.Representation(functionName, reorderedArgs.getArguments());
+            RSyntaxNodeWrapper callerRep = functionName == null ? new RCallerHelper.InvalidRepresentation() : new RCallerHelper.Representation(functionName, reorderedArgs.getArguments());
             Object[] arguments = prepareArguments(frame, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function, dispatchArgs, callerRep);
             return call.call(frame, function.getTarget(), arguments);
         }

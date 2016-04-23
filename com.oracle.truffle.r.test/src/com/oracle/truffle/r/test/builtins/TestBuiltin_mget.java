@@ -28,5 +28,9 @@ public class TestBuiltin_mget extends TestBase {
         assertEval("{ a<- 1; b <- \"2\"; mget(c(\"a\", \"b\"), mode=c(\"numeric\", \"character\")) }");
 
         assertEval("{ mget(\"_foo_\", ifnotfound=list(function(x) \"bar\")) }");
+        // these tests look a little weird as we seem to have some printing problems with language
+        // objects (we should be able to simply print x, but the outputs don't quite match)
+        assertEval("{ x<-mget(\"_foo_\", ifnotfound=list(function(x) sys.call(0))); print(x[[1]][[1]]); print(x[[1]][[2]]) }");
+        assertEval("{ x<-mget(\"_foo_\", ifnotfound=list(function(x) sys.call(1))); list(x[[1]][[1]], x[[1]][[2]], x[[1]][[3]][[1]], x[[1]][[3]][[2]][[1]], x[[1]][[3]][[2]][[2]], x[[1]][[3]][[2]][[3]]) }");
     }
 }

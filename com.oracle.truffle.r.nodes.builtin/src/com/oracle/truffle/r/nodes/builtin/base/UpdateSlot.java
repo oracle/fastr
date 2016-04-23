@@ -29,6 +29,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -56,7 +57,9 @@ public abstract class UpdateSlot extends RBuiltinNode {
     @Child private DirectCallNode checkAtAssignmentCall;
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
     private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
-    private final RCaller caller = RDataFactory.createCaller(this);
+    // TODO: technically, someone could override checkAtAssignment function and access the caller,
+    // but it's rather unlikely
+    private final RCaller caller = RDataFactory.createCaller(new RCallerHelper.InvalidRepresentation());
 
     @Override
     protected void createCasts(CastBuilder casts) {
