@@ -33,9 +33,11 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.CallInlineCacheNode;
 import com.oracle.truffle.r.nodes.CallInlineCacheNodeGen;
+import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -292,7 +294,8 @@ public class GetFunctions {
                 argsNode = insert(RArgumentsNode.create());
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] callArgs = argsNode.execute(ifnFunc, caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), new Object[]{x}, ArgumentsSignature.empty(1), null);
+            FormalArguments formals = ((RRootNode) ifnFunc.getRootNode()).getFormalArguments();
+            Object[] callArgs = argsNode.execute(ifnFunc, caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), new Object[]{x}, formals.getSignature(), null);
             return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
         }
     }

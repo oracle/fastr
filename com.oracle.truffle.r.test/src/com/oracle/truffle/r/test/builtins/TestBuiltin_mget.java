@@ -26,5 +26,7 @@ public class TestBuiltin_mget extends TestBase {
         assertEval("{ mget(c(\"a\", \"b\"), ifnotfound=list(100, 200)) }");
         assertEval("{ a<- 1; b <- 2; mget(c(\"a\", \"b\"), mode=\"numeric\") }");
         assertEval("{ a<- 1; b <- \"2\"; mget(c(\"a\", \"b\"), mode=c(\"numeric\", \"character\")) }");
+
+        assertEval("{ mget(\"_foo_\", ifnotfound=list(function(x) \"bar\")) }");
     }
 }
