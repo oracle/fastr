@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.function.IntToDoubleFunction;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -43,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -54,6 +57,11 @@ public abstract class CastDoubleNode extends CastBaseNode {
     private final NACheck naCheck = NACheck.create();
     private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile warningBranch = BranchProfile.create();
+
+    @Override
+    protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
+        return Collections.singleton(RAbstractDoubleVector.class);
+    }
 
     public abstract Object executeDouble(int o);
 
@@ -275,6 +283,11 @@ public abstract class CastDoubleNode extends CastBaseNode {
     @TruffleBoundary
     protected double doOther(Object operand) {
         throw new ConversionFailedException(operand.getClass().getName());
+    }
+
+    @Override
+    protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
+        return downStreamSamples;
     }
 
     public static CastDoubleNode create() {

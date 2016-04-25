@@ -13,6 +13,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -20,7 +21,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
-import com.oracle.truffle.r.runtime.MessagePredicate;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -36,14 +36,15 @@ public abstract class Diag extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("nrow").asInteger().
+        casts.arg("nrow").asIntegerVector().
                         findFirst().
-                        error(MessagePredicate.MUST_NOT_BE_NA_VALUE, "nrow").
-                        error(MessagePredicate.MUST_BE_GT_ZERO, "nrow");
-        casts.arg("ncol").asInteger().
+                        mustBe(notIntNA, Message.INVALID_LARGE_NA_VALUE, "nrow").
+                        mustBe(gte0, Message.INVALID_NEGATIVE_VALUE, "nrow");
+
+        casts.arg("ncol").asIntegerVector().
                         findFirst().
-                        error(MessagePredicate.MUST_NOT_BE_NA_VALUE, "ncol").
-                        error(MessagePredicate.MUST_BE_GT_ZERO, "ncol");
+                        mustBe(notIntNA, Message.INVALID_LARGE_NA_VALUE, "ncol").
+                        mustBe(gte0, Message.INVALID_NEGATIVE_VALUE, "ncol");
     }
 
     private static int checkX(RAbstractVector x, int nrow, int ncol) {

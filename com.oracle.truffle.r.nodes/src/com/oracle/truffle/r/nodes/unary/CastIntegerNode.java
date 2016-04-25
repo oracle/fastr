@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -59,6 +62,11 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     public abstract Object executeInt(Object o);
 
     @Child private CastIntegerNode recursiveCastInteger;
+
+    @Override
+    protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
+        return Collections.singleton(RAbstractIntVector.class);
+    }
 
     @Specialization
     protected RAbstractIntVector doIntVector(RAbstractIntVector operand) {
@@ -222,6 +230,11 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     protected static boolean isIntVector(Object arg) {
         return arg instanceof RIntVector;
+    }
+
+    @Override
+    protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
+        return downStreamSamples;
     }
 
     @Fallback

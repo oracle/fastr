@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
@@ -33,14 +34,17 @@ public abstract class Bincode extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").asDouble();
-        casts.arg("breaks").asDouble();
-        casts.arg("right").asLogical().
-                        findFirstBoolean().
-                        orElseThrow();
-        casts.arg("include.lowest").asLogical().
-                        findFirstBoolean().
-                        orElseThrow();
+        casts.arg("x").asDoubleVector();
+
+        casts.arg("breaks").asDoubleVector();
+
+        casts.arg("right").asLogicalVector().
+                        findFirst().
+                        map(toBoolean);
+
+        casts.arg("include.lowest").asLogicalVector().
+                        findFirst().
+                        map(toBoolean);
     }
 
     @Specialization

@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -31,10 +34,16 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
 public abstract class CastStringNode extends CastStringBaseNode {
+
+    @Override
+    protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
+        return Collections.singleton(RAbstractStringVector.class);
+    }
 
     public abstract Object executeString(int o);
 
@@ -84,6 +93,11 @@ public abstract class CastStringNode extends CastStringBaseNode {
     @Specialization
     protected String doRSymbol(RSymbol s) {
         return s.getName();
+    }
+
+    @Override
+    protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
+        return downStreamSamples;
     }
 
     public static CastStringNode create() {

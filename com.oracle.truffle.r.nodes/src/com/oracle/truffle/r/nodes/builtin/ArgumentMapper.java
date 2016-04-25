@@ -20,37 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.unary;
+package com.oracle.truffle.r.nodes.builtin;
 
 import java.util.Set;
 
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.r.nodes.unary.CastNode.Samples;
 
-@NodeInfo(cost = NodeCost.NONE)
-public final class ChainedCastNode extends CastNode {
+public interface ArgumentMapper<T, R> {
 
-    @Child private CastNode firstCast;
-    @Child private CastNode secondCast;
+    R map(T arg);
 
-    public ChainedCastNode(CastNode firstCast, CastNode secondCast) {
-        this.firstCast = firstCast;
-        this.secondCast = secondCast;
-    }
+    Set<Class<?>> resultTypes();
 
-    @Override
-    public Object execute(Object value) {
-        return secondCast.execute(firstCast.execute(value));
-    }
-
-    @Override
-    protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
-        return secondCast.resultTypes(firstCast.resultTypes(inputTypes));
-    }
-
-    @Override
-    protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
-        return firstCast.collectSamples(secondCast.collectSamples(downStreamSamples));
-    }
+    Samples<T> collectSamples(Samples<R> downStreamSamples);
 
 }

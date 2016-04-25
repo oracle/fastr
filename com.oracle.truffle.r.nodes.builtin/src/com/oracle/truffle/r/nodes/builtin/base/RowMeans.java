@@ -10,6 +10,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -36,19 +38,17 @@ public abstract class RowMeans extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("m").asInteger().
+        casts.arg("m").asIntegerVector().
                         findFirst().
-                        noNA().
-                        orElseThrow();
+                        notNA();
 
-        casts.arg("n").asInteger().
+        casts.arg("n").asIntegerVector().
                         findFirst().
-                        noNA().
-                        orElseThrow();
+                        notNA();
 
-        casts.arg("na.rm").asLogical().
-                        findFirstBoolean().
-                        orElseThrow();
+        casts.arg("na.rm").asLogicalVector().
+                        findFirst().
+                        map(toBoolean);
     }
 
     @Specialization(guards = "!naRm")

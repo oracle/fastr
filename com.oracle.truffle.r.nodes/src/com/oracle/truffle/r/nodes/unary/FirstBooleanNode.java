@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.util.List;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;

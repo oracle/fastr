@@ -12,6 +12,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -29,10 +30,9 @@ public abstract class CacheClass extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("class").defaultError(RError.Message.GENERIC, "invalid class argument to internal .class_cache").
-                        isString().
-                        asString().
-                        findFirst().
-                        orElseThrow();
+                        mustBe(stringValue()).
+                        asStringVector().
+                        findFirst();
     }
 
     @TruffleBoundary

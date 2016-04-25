@@ -22,7 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
@@ -33,13 +38,15 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentFilter;
 import com.oracle.truffle.r.nodes.unary.ToStringNode;
 import com.oracle.truffle.r.nodes.unary.ToStringNodeGen;
-import com.oracle.truffle.r.runtime.MessagePredicate;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -67,24 +74,23 @@ public abstract class Cat extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("sep").isString(RError.Message.INVALID_SEP);
+        casts.arg("sep").mustBe(stringValue(), RError.Message.INVALID_SEP);
 
-        casts.arg("fill").is(IS_NUMERIC.or(IS_LOGICAL)).
+        casts.arg("fill").mustBe(numericValue).
                         asVector().
-                        sizeError().
+                        mustBe(singleElement()).
                         findFirst().
-                        orElseThrow().
-                        warning(MessagePredicate.FILL_SHOULD_BE_POSITIVE).
-                        mapIf(IS_SCALAR_LOGICAL, x -> RRuntime.fromLogical(x));
+                        shouldBe(ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Object.class), Message.NON_POSITIVE_FILL).
+                        mapIf(scalarLogicalValue, toBoolean);
 
-        casts.arg("labels").map(x -> x == null ? RDataFactory.createStringVector(0) : x).
-                        isString().
-                        asString();
+        casts.arg("labels").map(defaultValue(RDataFactory.createStringVector(0))).
+                        mustBe(stringValue()).
+                        asStringVector();
 
         // append is interpreted in the calling closure, but GnuR still checks for NA
-        casts.arg("append").asLogical().
-                        findFirstBoolean().
-                        orElseThrow();
+        casts.arg("append").asLogicalVector().
+                        findFirst().
+                        map(toBoolean);
     }
 
     @Specialization

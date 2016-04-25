@@ -23,32 +23,30 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.Set;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.FinalPhaseBuilder;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.InitialPhaseBuilder;
-import com.oracle.truffle.r.nodes.builtin.TypePredicates.ReflectivePredicate;
 import com.oracle.truffle.r.nodes.test.TestUtilities;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.nodes.unary.CastNode;
-import com.oracle.truffle.r.runtime.MessagePredicate;
+import com.oracle.truffle.r.nodes.unary.CastNode.Samples;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class CastBuilderTest {
@@ -70,22 +68,11 @@ public class CastBuilderTest {
     }
 
     @Test
-    public void testRequire() {
-        cb.arg(0).require((n, x) -> x != RNull.instance, (n, x) -> null, (n, x) -> {
-            throw new IllegalArgumentException("E");
-        });
-
-        assertEquals("A", cast("A"));
-        try {
-            cast(RNull.instance);
-        } catch (IllegalArgumentException e) {
-            assertEquals("E", e.getMessage());
-        }
-    }
-
-    @Test
     public void testError() {
-        cb.arg(0).error(x -> x instanceof String, RError.Message.DLL_LOAD_ERROR, CastBuilder.ARG, "123");
+        cb.arg(0).mustBe(
+                        ValuePredicateArgumentFilter.fromLambda(x -> x instanceof String, String.class),
+                        RError.Message.DLL_LOAD_ERROR, CastBuilder.ARG, "123");
+        testPipeline();
 
         assertEquals("A", cast("A"));
         try {
@@ -94,11 +81,13 @@ public class CastBuilderTest {
         } catch (IllegalArgumentException e) {
             assertEquals("unable to load shared object 'false'\n  123", e.getMessage());
         }
+
     }
 
     @Test
     public void testErrorWithAttachedPredicate() {
-        cb.arg(0).error(MessagePredicate.SEED_MUST_BE_INT);
+        cb.arg(0).mustBe(ValuePredicateArgumentFilter.fromLambda(x -> x instanceof RAbstractIntVector || x instanceof Integer, Object.class), Message.SEED_NOT_VALID_INT);
+        testPipeline();
 
         RAbstractIntVector v = RDataFactory.createIntVectorFromScalar(1);
         assertEquals(v, cast(v));
@@ -112,7 +101,8 @@ public class CastBuilderTest {
 
     @Test
     public void testWarning() {
-        cb.arg(0).warning(x -> x instanceof String, RError.Message.DLL_LOAD_ERROR, CastBuilder.ARG, "123");
+        cb.arg(0).shouldBe(ValuePredicateArgumentFilter.fromLambda(x -> x instanceof String, Object.class), RError.Message.DLL_LOAD_ERROR, CastBuilder.ARG, "123");
+        testPipeline();
 
         assertEquals("A", cast("A"));
         assertEquals(Boolean.FALSE, cast(Boolean.FALSE));
@@ -121,7 +111,8 @@ public class CastBuilderTest {
 
     @Test
     public void testWarningWithAttachedPredicate() {
-        cb.arg(0).warning(MessagePredicate.SEED_MUST_BE_INT);
+        cb.arg(0).shouldBe(integerValue(), Message.SEED_NOT_VALID_INT);
+        testPipeline();
 
         RAbstractIntVector v = RDataFactory.createIntVectorFromScalar(1);
         assertEquals(v, cast(v));
@@ -131,7 +122,8 @@ public class CastBuilderTest {
 
     @Test
     public void testDefaultError() {
-        cb.arg(0, "arg0").error(x -> false);
+        cb.arg(0, "arg0").mustBe(ValuePredicateArgumentFilter.fromLambda(x -> false, samples(), samples(true, false), Boolean.class));
+        testPipeline(false);
 
         try {
             cast(Boolean.FALSE);
@@ -143,8 +135,10 @@ public class CastBuilderTest {
 
     @Test
     public void testIsInteger() {
-        InitialPhaseBuilder<RAbstractIntVector> pipeline = cb.arg(0).isInteger(RError.Message.SEED_NOT_VALID_INT);
-        Set<Class<?>> contextTypes = pipeline.state().contextTypes();
+        cb.arg(0).mustBe(integerValue(), RError.Message.SEED_NOT_VALID_INT);
+        testPipeline();
+
+        Set<Class<?>> contextTypes = cb.getCasts()[0].resultTypes();
         assertEquals(1, contextTypes.size());
         assertEquals(true, contextTypes.contains(RAbstractIntVector.class));
 
@@ -161,7 +155,8 @@ public class CastBuilderTest {
 
     @Test
     public void testIsNumeric() {
-        cb.arg(0).isNumeric(RError.Message.SEED_NOT_VALID_INT);
+        cb.arg(0).mustBe(numericValue, RError.Message.SEED_NOT_VALID_INT);
+        testPipeline();
 
         assertEquals(1, cast(1));
         assertEquals(RRuntime.LOGICAL_FALSE, cast(RRuntime.LOGICAL_FALSE));
@@ -188,7 +183,8 @@ public class CastBuilderTest {
 
     @Test
     public void testAsInteger() {
-        cb.arg(0).asInteger();
+        cb.arg(0).asIntegerVector();
+        testPipeline();
 
         assertEquals(1, cast(1));
         assertEquals(0, cast(RRuntime.LOGICAL_FALSE));
@@ -199,39 +195,44 @@ public class CastBuilderTest {
 
     @Test
     public void testAsDouble() {
-        cb.arg(0).asDouble();
+        cb.arg(0).asDoubleVector();
+        testPipeline();
 
         assertEquals(1.2, cast(1.2));
     }
 
     @Test
     public void testAsLogical() {
-        cb.arg(0).asLogical();
+        cb.arg(0).asLogicalVector();
+        testPipeline();
 
         assertEquals(RRuntime.LOGICAL_TRUE, cast(1.2));
     }
 
     @Test
     public void testAsString() {
-        cb.arg(0).asString();
+        cb.arg(0).asStringVector();
+        testPipeline();
 
         assertEquals("1.2", cast(1.2));
     }
 
     @Test
     public void testEmptyError() {
-        cb.arg(0).asInteger().emptyError();
+        cb.arg(0, "x").asIntegerVector().mustBe(notEmpty());
+        testPipeline();
 
         try {
             cast(RDataFactory.createIntVector(0));
         } catch (IllegalArgumentException e) {
-            assertEquals(RError.Message.LENGTH_ZERO.message, e.getMessage());
+            assertEquals(String.format(RError.Message.INVALID_ARGUMENT.message, "x"), e.getMessage());
         }
     }
 
     @Test
     public void testEmptyErrorWithCustomMessage() {
-        cb.arg(0).asInteger().emptyError(RError.Message.SEED_NOT_VALID_INT);
+        cb.arg(0).asIntegerVector().mustBe(notEmpty(), RError.Message.SEED_NOT_VALID_INT);
+        testPipeline();
 
         try {
             cast(RDataFactory.createIntVector(0));
@@ -242,7 +243,8 @@ public class CastBuilderTest {
 
     @Test
     public void testSizeWarning() {
-        cb.arg(0).asInteger().sizeWarning();
+        cb.arg(0).defaultWarning(RError.Message.LENGTH_GT_1).asIntegerVector().shouldBe(singleElement());
+        testPipeline();
 
         cast(RDataFactory.createIntVector(new int[]{1, 2}, true));
         assertEquals(RError.Message.LENGTH_GT_1.message, out.toString());
@@ -250,7 +252,8 @@ public class CastBuilderTest {
 
     @Test
     public void testSizeWarningWithCustomMessage() {
-        cb.arg(0).asInteger().sizeWarning(RError.Message.SEED_NOT_VALID_INT);
+        cb.arg(0).asIntegerVector().shouldBe(singleElement(), RError.Message.SEED_NOT_VALID_INT);
+        testPipeline();
 
         cast(RDataFactory.createIntVector(new int[]{1, 2}, true));
         assertEquals(RError.Message.SEED_NOT_VALID_INT.message, out.toString());
@@ -258,7 +261,8 @@ public class CastBuilderTest {
 
     @Test
     public void testFindFirst() {
-        cb.arg(0).asInteger().findFirst();
+        cb.arg(0).asIntegerVector().findFirst(null);
+        testPipeline();
 
         assertEquals(1, cast(1));
         assertEquals(1, cast(RDataFactory.createIntVector(new int[]{1, 2}, true)));
@@ -267,18 +271,9 @@ public class CastBuilderTest {
     }
 
     @Test
-    public void testIsPresent() {
-        cb.arg(0).asInteger().findFirst().isPresent((n, x) -> 2 * x, n -> -1);
-
-        assertEquals(2, cast(1));
-        assertEquals(2, cast(RDataFactory.createIntVector(new int[]{1, 2}, true)));
-        assertEquals(2, cast("1"));
-        assertEquals(-1, cast(RDataFactory.createIntVector(0)));
-    }
-
-    @Test
-    public void testOrElse() {
-        cb.arg(0).asInteger().findFirst().orElse(-1);
+    public void testFindFirstWithDefaultValue() {
+        cb.arg(0).asIntegerVector().findFirst(-1);
+        testPipeline();
 
         assertEquals(1, cast(1));
         assertEquals(1, cast(RDataFactory.createIntVector(new int[]{1, 2}, true)));
@@ -287,8 +282,9 @@ public class CastBuilderTest {
     }
 
     @Test
-    public void testOrElseThrow() {
-        cb.arg(0).asInteger().findFirst().orElseThrow(RError.Message.SEED_NOT_VALID_INT);
+    public void testFindFirstThrow() {
+        cb.arg(0).asIntegerVector().mustBe(notEmpty(), RError.Message.SEED_NOT_VALID_INT).findFirst();
+        testPipeline();
 
         assertEquals(1, cast(1));
         assertEquals(1, cast(RDataFactory.createIntVector(new int[]{1, 2}, true)));
@@ -302,39 +298,49 @@ public class CastBuilderTest {
 
     @Test
     public void testNoLogicalNA() {
-        cb.arg(0).asLogical().findFirst().noNA().orElse(RRuntime.LOGICAL_TRUE);
+        cb.arg(0).asLogicalVector().findFirst().notNA(RRuntime.LOGICAL_TRUE);
+        testPipeline();
+
         assertEquals(RRuntime.LOGICAL_TRUE, cast(RRuntime.LOGICAL_NA));
     }
 
     @Test
     public void testNoIntegerNA() {
-        cb.arg(0).asInteger().findFirst().noNA().orElse(1);
+        cb.arg(0).asIntegerVector().findFirst().notNA(1);
+        testPipeline();
+
         assertEquals(1, cast(RRuntime.INT_NA));
     }
 
     @Test
     public void testNoDoubleNA() {
-        cb.arg(0).asDouble().findFirst().noNA().orElse(1.1);
+        cb.arg(0).asDoubleVector().findFirst().notNA(1.1);
+        testPipeline();
+
         assertEquals(1.1, cast(RRuntime.DOUBLE_NA));
     }
 
     @Test
     public void testNoStringNA() {
-        cb.arg(0).asString().findFirst().noNA().orElse("A");
+        cb.arg(0).asStringVector().findFirst().notNA("A");
+        testPipeline();
+
         assertEquals("A", cast(RRuntime.DOUBLE_NA));
     }
 
     @Test
     public void testSample0() {
-        cb.arg(0).asInteger().sizeWarning().findFirst().orElse(0);
+        cb.arg(0, "x").asIntegerVector().shouldBe(singleElement()).findFirst(0);
+        testPipeline();
 
         assertEquals(1, cast(RDataFactory.createIntVector(new int[]{1, 2}, true)));
-        assertEquals(RError.Message.LENGTH_GT_1.message, out.toString());
+        assertEquals(String.format(RError.Message.INVALID_ARGUMENT.message, "x"), out.toString());
     }
 
     @Test
     public void testSample1() {
-        cb.arg(0).asInteger().emptyError();
+        cb.arg(0).asIntegerVector().mustBe(notEmpty(), RError.Message.LENGTH_ZERO);
+        testPipeline();
 
         try {
             cast(RDataFactory.createIntVector(0));
@@ -345,7 +351,8 @@ public class CastBuilderTest {
 
     @Test
     public void testSample2() {
-        cb.arg(0).asInteger().sizeWarning(RError.Message.INVALID_USE, 1).emptyError(RError.Message.ARGUMENT_EMPTY, 1);
+        cb.arg(0).asIntegerVector().shouldBe(singleElement(), RError.Message.INVALID_USE, 1).mustBe(notEmpty(), RError.Message.ARGUMENT_EMPTY, 1);
+        testPipeline();
 
         cast(RDataFactory.createIntVector(new int[]{1, 2}, true));
         assertEquals(String.format(RError.Message.INVALID_USE.message, 1), out.toString());
@@ -359,7 +366,8 @@ public class CastBuilderTest {
 
     @Test
     public void testSample3() {
-        cb.arg(0).asLogical().findFirstBoolean().orElse(false);
+        cb.arg(0).asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean);
+        testPipeline();
 
         assertEquals(Boolean.TRUE, cast(RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)));
         assertEquals(Boolean.FALSE, cast(RDataFactory.createLogicalVector(0)));
@@ -368,7 +376,8 @@ public class CastBuilderTest {
     @Test
     public void testSample4() {
         // the predicate is attached to the error message
-        cb.arg(0).error(MessagePredicate.SEED_MUST_BE_INT).asInteger();
+        cb.arg(0).mustBe(ValuePredicateArgumentFilter.fromLambda(x -> x instanceof RAbstractIntVector || x instanceof Integer, Object.class), Message.SEED_NOT_VALID_INT).asIntegerVector();
+        testPipeline();
 
         cast(RDataFactory.createIntVector(new int[]{1, 2}, true));
 
@@ -381,48 +390,55 @@ public class CastBuilderTest {
 
     @Test
     public void testSample5() {
-        FinalPhaseBuilder<Object> pipeline = cb.arg(0).defaultError(RError.Message.INVALID_ARGUMENT, "fill").
-                        is(IS_NUMERIC.or(IS_LOGICAL)).
+        integerValue().union(doubleValue()).union(complexValue()).union(logicalValue());
+        cb.arg(0).defaultError(RError.Message.INVALID_ARGUMENT, "fill").
+                        mustBe(numericValue.union(logicalValue())).
                         asVector().
-                        sizeError().
+                        mustBe(singleElement()).
                         findFirst().
-                        orElseThrow().
-                        warning(MessagePredicate.FILL_SHOULD_BE_POSITIVE);
-        // mapIf(IS_SCALAR_LOGICAL, x -> RRuntime.fromLogical(x));
+                        shouldBe(ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0), Message.NON_POSITIVE_FILL).
+                        mapIf(scalarLogicalValue, toBoolean);
+        testPipeline();
 
-        Set<Class<?>> contextTypes = pipeline.state().contextTypes();
-        assertEquals(3, contextTypes.size());
-        assertEquals(true, contextTypes.contains(RAbstractIntVector.class));
-        assertEquals(true, contextTypes.contains(RAbstractDoubleVector.class));
-        assertEquals(true, contextTypes.contains(RAbstractComplexVector.class));
-        assertEquals(true, contextTypes.contains(RAbstractLogicalVector.class));
+        @SuppressWarnings("unused")
+        Set<Class<?>> contextTypes = cb.getCasts()[0].resultTypes();
+
+        // assertEquals(3, contextTypes.size());
+// assertEquals(true, contextTypes.contains(RAbstractIntVector.class));
+// assertEquals(true, contextTypes.contains(RAbstractDoubleVector.class));
+// assertEquals(true, contextTypes.contains(RAbstractComplexVector.class));
+// assertEquals(true, contextTypes.contains(RAbstractLogicalVector.class));
 
         assertEquals(true, cast(RRuntime.LOGICAL_TRUE));
         assertEquals(10, cast(10));
         try {
             cast("xyz");
+            fail();
         } catch (IllegalArgumentException e) {
             assertEquals(String.format(RError.Message.INVALID_ARGUMENT.message, "fill"), e.getMessage());
         }
         try {
             cast(RDataFactory.createIntVector(new int[]{1, 2}, true));
+            fail();
         } catch (IllegalArgumentException e) {
             assertEquals(String.format(RError.Message.INVALID_ARGUMENT.message, "fill"), e.getMessage());
         }
         try {
             cast(RDataFactory.createIntVector(0));
+            fail();
         } catch (IllegalArgumentException e) {
             assertEquals(String.format(RError.Message.INVALID_ARGUMENT.message, "fill"), e.getMessage());
         }
         cast(-10); // warning
-        assertEquals(RError.Message.NON_POSITIVE_FILL.message, out.toString());
+        assertEquals(String.format(Message.NON_POSITIVE_FILL.message, "fill"), out.toString());
     }
 
     @Test
     public void testSample6() {
-        cb.arg(0).map(x -> x == RNull.instance ? RDataFactory.createStringVector(0) : x).
-                        isString(RError.Message.INVALID_ARGUMENT, "labels").
-                        asString();
+        cb.arg(0).map(defaultValue(RDataFactory.createStringVector(0))).
+                        mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "labels").
+                        asStringVector();
+        testPipeline();
 
         assertEquals("abc", cast("abc"));
 
@@ -451,9 +467,53 @@ public class CastBuilderTest {
         }
     }
 
+    @Test
+    public void testSample7() {
+        cb.arg(0, "justify").asIntegerVector().
+                        findFirst().
+                        mustBe(gte(2).and(lte(5)).not());
+
+        testPipeline(true);
+
+    }
+
     private Object cast(Object arg) {
         CastNode argCastNode = cb.getCasts()[0];
         NodeHandle<CastNode> argCastNodeHandle = TestUtilities.createHandle(argCastNode, (node, args) -> node.execute(args[0]));
         return argCastNodeHandle.call(arg);
+    }
+
+    private void testPipeline() {
+        testPipeline(true);
+    }
+
+    private void testPipeline(boolean positiveMustNotBeEmpty) {
+        Samples<?> samples = cb.getCasts()[0].collectSamples();
+
+        if (positiveMustNotBeEmpty) {
+            Assert.assertFalse(samples.positiveSamples().isEmpty());
+        }
+
+        testPipeline(samples);
+    }
+
+    private void testPipeline(Samples<?> samples) {
+
+        for (Object sample : samples.positiveSamples()) {
+            try {
+                cast(sample);
+            } catch (Exception e) {
+                e.printStackTrace();
+                fail();
+            }
+        }
+        for (Object sample : samples.negativeSamples()) {
+            try {
+                cast(sample);
+                fail();
+            } catch (Exception e) {
+                // ok
+            }
+        }
     }
 }

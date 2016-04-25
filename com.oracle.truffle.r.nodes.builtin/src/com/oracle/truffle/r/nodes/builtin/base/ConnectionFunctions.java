@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.trueValue;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.getBaseConnection;
 import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.removeFileURLPrefix;
@@ -123,32 +127,28 @@ public abstract class ConnectionFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("description").isString().
-                            asString().
-                            emptyError().
-                            sizeWarning(RError.Message.ARGUMENT_ONLY_FIRST_1, "description").
+            casts.arg("description").mustBe(stringValue()).
+                            asStringVector().
+                            shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").
                             findFirst().
-                            noNA();
+                            notNA();
 
-            casts.arg("open").isString().
-                            asString().
-                            sizeError().
-                            emptyError().
+            casts.arg("open").mustBe(stringValue()).
+                            asStringVector().
                             findFirst().
-                            noNA();
+                            notNA();
 
-            casts.arg("blocking").asLogical().
-                            findFirstBoolean().
-                            orElseThrow().
-                            error(x -> x, RError.Message.NYI, "non-blocking mode not supported");
-
-            casts.arg("encoding").asString().
+            casts.arg("blocking").asLogicalVector().
                             findFirst().
-                            orElseThrow();
+                            map(toBoolean).
+                            mustBe(trueValue, RError.Message.NYI, "non-blocking mode not supported");
 
-            casts.arg("raw").asLogical().
-                            findFirstBoolean().
-                            orElseThrow();
+            casts.arg("encoding").asStringVector().
+                            findFirst();
+
+            casts.arg("raw").asLogicalVector().
+                            findFirst().
+                            map(toBoolean);
         }
 
         @Specialization

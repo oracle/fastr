@@ -22,12 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -36,10 +42,29 @@ public abstract class CastToVectorNode extends CastNode {
 
     public abstract boolean isNonVectorPreserved();
 
+    @Override
+    protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
+        HashSet<Class<?>> newTypes = inputTypes.stream().filter(x -> RAbstractVector.class.isAssignableFrom(x)).collect(Collectors.toCollection(HashSet::new));
+        if (newTypes.isEmpty()) {
+            return Collections.singleton(RAbstractVector.class);
+        } else {
+            return newTypes;
+        }
+    }
+
     @Specialization
     protected Object castNull(@SuppressWarnings("unused") RNull rnull) {
         if (isNonVectorPreserved()) {
             return RNull.instance;
+        } else {
+            return RDataFactory.createList();
+        }
+    }
+
+    @Specialization
+    protected Object castMissing(@SuppressWarnings("unused") RMissing missing) {
+        if (isNonVectorPreserved()) {
+            return RMissing.instance;
         } else {
             return RDataFactory.createList();
         }
@@ -62,6 +87,11 @@ public abstract class CastToVectorNode extends CastNode {
     @Specialization
     protected RList cast(RExpression expression) {
         return expression.getList();
+    }
+
+    @Override
+    protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
+        return downStreamSamples;
     }
 
     public static CastToVectorNode create() {

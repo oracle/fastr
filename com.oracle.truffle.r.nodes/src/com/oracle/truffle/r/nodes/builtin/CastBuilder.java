@@ -22,27 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import static com.oracle.truffle.r.nodes.builtin.TypePredicates.is;
-
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
-import com.oracle.truffle.r.nodes.builtin.TypePredicates.ReflectiveFunction;
-import com.oracle.truffle.r.nodes.builtin.TypePredicates.ReflectivePredicate;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastFunctionsFactory;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalScalarNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.nodes.unary.CastNode.Samples;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
@@ -51,12 +46,12 @@ import com.oracle.truffle.r.nodes.unary.ConvertIntNodeGen;
 import com.oracle.truffle.r.nodes.unary.FirstBooleanNodeGen;
 import com.oracle.truffle.r.nodes.unary.FirstIntNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.MessagePredicate;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -199,17 +194,7 @@ public final class CastBuilder {
             }
         }
 
-        throw RError.error(builtinNode, RError.Message.GENERIC, String.format("No %s argument found in builtin %s", argumentName, builtinNode.getBuiltin().getName()));
-    }
-
-    @FunctionalInterface
-    public static interface CastFunction0<R> {
-        R apply(CastNode node);
-    }
-
-    @FunctionalInterface
-    public static interface CastFunction<T, R> {
-        R apply(CastNode node, T arg);
+        throw RInternalError.shouldNotReachHere(String.format("Argument %s not found in builtin %s", argumentName, builtinNode.getRBuiltin().name()));
     }
 
     /**
@@ -223,7 +208,7 @@ public final class CastBuilder {
         return this;
     }
 
-    private static Object[] substituteArgPlaceholder(Object arg, Object... messageArgs) {
+    public static Object[] substituteArgPlaceholder(Object arg, Object[] messageArgs) {
         int argPlaceholderIndex = -1;
         for (int i = 0; i < messageArgs.length; i++) {
             if (messageArgs[i] == ARG) {
@@ -243,8 +228,217 @@ public final class CastBuilder {
         return newMsgArgs;
     }
 
+    @SafeVarargs
+    public static <T> Set<? extends T> samples(T samplesHead, T... samplesTail) {
+        HashSet<T> sampleSet = new HashSet<>(Arrays.asList(samplesTail));
+        sampleSet.add(samplesHead);
+        return sampleSet;
+    }
+
+    public static <T> Set<? extends T> samples(T s) {
+        return Collections.singleton(s);
+    }
+
+    public static <T> Set<? extends T> samples() {
+        return Collections.emptySet();
+    }
+
+    public static final class Predef {
+
+        public static <T, R extends T> ValuePredicateArgumentFilter<T, R> sameAs(R x) {
+            return ValuePredicateArgumentFilter.fromLambda(arg -> arg == x, samples(x), CastBuilder.<R> samples());
+        }
+
+        public static <T, R extends T> ValuePredicateArgumentFilter<T, R> equalTo(R x) {
+            return ValuePredicateArgumentFilter.fromLambda(arg -> Objects.equals(arg, x), samples(x), CastBuilder.<R> samples());
+        }
+
+        public static <T, R extends T> ValuePredicateArgumentFilter<T, R> nullValue() {
+            return ValuePredicateArgumentFilter.fromLambda(x -> x == RNull.instance || x == null, CastBuilder.<R> samples(null), CastBuilder.<R> samples());
+        }
+
+        public static <T, R extends T> ValuePredicateArgumentFilter<T, R> notNull() {
+            return ValuePredicateArgumentFilter.fromLambda(x -> x != RNull.instance && x != null, CastBuilder.<R> samples(), CastBuilder.<R> samples(null));
+        }
+
+        public static <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilter<T, R> notEmpty() {
+            return new VectorPredicateArgumentFilter<>(x -> x.getLength() > 0, false);
+        }
+
+        public static <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilter<T, R> singleElement() {
+            return new VectorPredicateArgumentFilter<>(x -> x.getLength() == 1, false);
+        }
+
+        public static final ValuePredicateArgumentFilter<Boolean, Boolean> trueValue = ValuePredicateArgumentFilter.fromLambda(x -> x, CastBuilder.<Boolean> samples(), samples(Boolean.FALSE));
+        public static final ValuePredicateArgumentFilter<Boolean, Boolean> falseValue = ValuePredicateArgumentFilter.fromLambda(x -> x, CastBuilder.<Boolean> samples(), samples(Boolean.FALSE));
+        public static final ValuePredicateArgumentFilter<Integer, Integer> intNA = ValuePredicateArgumentFilter.fromLambda((Integer x) -> RRuntime.isNA(x), samples(RRuntime.INT_NA), samples(0));
+        public static final ValuePredicateArgumentFilter<Integer, Integer> notIntNA = ValuePredicateArgumentFilter.fromLambda((Integer x) -> !RRuntime.isNA(x), CastBuilder.<Integer> samples(),
+                        samples(RRuntime.INT_NA));
+        public static final ValuePredicateArgumentFilter<Byte, Byte> logicalNA = ValuePredicateArgumentFilter.fromLambda((Byte x) -> RRuntime.isNA(x), samples(RRuntime.LOGICAL_NA),
+                        samples(RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE));
+        public static final ValuePredicateArgumentFilter<Byte, Byte> notLogicalNA = ValuePredicateArgumentFilter.fromLambda((Byte x) -> !RRuntime.isNA(x), CastBuilder.<Byte> samples(),
+                        samples(RRuntime.LOGICAL_NA));
+        public static final ValuePredicateArgumentFilter<Double, Double> doubleNA = ValuePredicateArgumentFilter.fromLambda((Double x) -> RRuntime.isNA(x), samples(RRuntime.DOUBLE_NA), samples(0.0));
+        public static final ValuePredicateArgumentFilter<Double, Double> notDoubleNA = ValuePredicateArgumentFilter.fromLambda((Double x) -> !RRuntime.isNA(x), CastBuilder.<Double> samples(),
+                        samples(RRuntime.DOUBLE_NA));
+        public static final ValuePredicateArgumentFilter<String, String> stringNA = ValuePredicateArgumentFilter.fromLambda((String x) -> RRuntime.isNA(x), samples(RRuntime.STRING_NA), samples(""));
+        public static final ValuePredicateArgumentFilter<String, String> notStringNA = ValuePredicateArgumentFilter.fromLambda((String x) -> !RRuntime.isNA(x), CastBuilder.<String> samples(),
+                        samples(RRuntime.STRING_NA));
+
+        public static ValuePredicateArgumentFilter<Integer, Integer> gt(int x) {
+            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg > x, samples(x + 1), samples(x));
+        }
+
+        public static ValuePredicateArgumentFilter<Double, Double> gt(double x) {
+            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg > x, samples(x + 0.00001), samples(x));
+        }
+
+        public static ValuePredicateArgumentFilter<Integer, Integer> gte(int x) {
+            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg >= x, samples(x), samples(x - 1));
+        }
+
+        public static ValuePredicateArgumentFilter<Double, Double> gte(double x) {
+            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg >= x, samples(x), samples(x - 0.00001));
+        }
+
+        public static ValuePredicateArgumentFilter<Integer, Integer> lt(int x) {
+            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg < x, samples(x - 1), samples(x));
+        }
+
+        public static ValuePredicateArgumentFilter<Double, Double> lt(double x) {
+            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg < x, samples(x - 0.00001), samples(x));
+        }
+
+        public static ValuePredicateArgumentFilter<Integer, Integer> lte(int x) {
+            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg <= x, samples(x), samples(x + 1));
+        }
+
+        public static ValuePredicateArgumentFilter<Double, Double> lte(double x) {
+            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg <= x, samples(x), samples(x + 0.00001));
+        }
+
+        public static ValuePredicateArgumentFilter<String, String> length(int l) {
+            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() == l);
+        }
+
+        public static ValuePredicateArgumentFilter<String, String> isEmpty() {
+            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.isEmpty());
+        }
+
+        public static ValuePredicateArgumentFilter<String, String> lengthGt(int l) {
+            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() > l);
+        }
+
+        public static ValuePredicateArgumentFilter<String, String> lengthGte(int l) {
+            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() >= l);
+        }
+
+        public static ValuePredicateArgumentFilter<String, String> lengthLt(int l) {
+            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() < l);
+        }
+
+        public static ValuePredicateArgumentFilter<String, String> lengthLte(int l) {
+            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() <= l);
+        }
+
+        public static final ValuePredicateArgumentFilter<Integer, Integer> gt0 = ValuePredicateArgumentFilter.fromLambda((Integer x) -> x > 0, CastBuilder.<Integer> samples(), samples(-1, 0),
+                        Integer.class);
+        public static final ValuePredicateArgumentFilter<Integer, Integer> gte0 = ValuePredicateArgumentFilter.fromLambda((Integer x) -> x >= 0, CastBuilder.<Integer> samples(), samples(-1),
+                        Integer.class);
+        public static final ValuePredicateArgumentFilter<Integer, Integer> gt1 = ValuePredicateArgumentFilter.fromLambda((Integer x) -> x > 1, CastBuilder.<Integer> samples(), samples(-1, 0, 1),
+                        Integer.class);
+        public static final ValuePredicateArgumentFilter<Integer, Integer> gte1 = ValuePredicateArgumentFilter.fromLambda((Integer x) -> x >= 1, CastBuilder.<Integer> samples(), samples(-1, 0),
+                        Integer.class);
+
+        public static <R extends RAbstractIntVector> ValuePredicateArgumentFilter<Object, R> integerValue() {
+            return ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Integer || x instanceof RAbstractIntVector, RAbstractIntVector.class);
+        }
+
+        public static <R extends RAbstractStringVector> ValuePredicateArgumentFilter<Object, R> stringValue() {
+            return ValuePredicateArgumentFilter.fromLambda(x -> x instanceof String ||
+                            x instanceof RAbstractStringVector, RAbstractStringVector.class);
+        }
+
+        public static <R extends RAbstractDoubleVector> ValuePredicateArgumentFilter<Object, R> doubleValue() {
+            return ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Double ||
+                            x instanceof RAbstractDoubleVector, RAbstractDoubleVector.class);
+        }
+
+        public static <R extends RAbstractLogicalVector> ValuePredicateArgumentFilter<Object, R> logicalValue() {
+            return ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Byte ||
+                            x instanceof RAbstractLogicalVector, RAbstractLogicalVector.class);
+        }
+
+        public static <R extends RAbstractComplexVector> ValuePredicateArgumentFilter<Object, R> complexValue() {
+            return ValuePredicateArgumentFilter.fromLambda(x -> x instanceof RComplex ||
+                            x instanceof RAbstractComplexVector, RAbstractComplexVector.class);
+        }
+
+        public static final ArgumentFilter<Object, ?> numericValue = integerValue().union(doubleValue()).union(complexValue()).union(logicalValue());
+
+        public static final ValuePredicateArgumentFilter<Object, String> scalarStringValue = ValuePredicateArgumentFilter.fromLambda(x -> x instanceof String, String.class);
+
+        public static final ValuePredicateArgumentFilter<Object, Integer> scalarIntegerValue = ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Integer, Integer.class);
+
+        public static final ValuePredicateArgumentFilter<Object, Double> scalarDoubleValue = ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Double, Double.class);
+
+        public static final ValuePredicateArgumentFilter<Object, Byte> scalarLogicalValue = ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Byte, Byte.class);
+
+        public static final ValuePredicateArgumentFilter<Object, RComplex> scalarComplexValue = ValuePredicateArgumentFilter.fromLambda(x -> x instanceof RComplex, RComplex.class);
+
+        public static final ValuePredicateArgumentFilter<Object, RMissing> missingValue = ValuePredicateArgumentFilter.fromLambda(x -> RMissing.instance == x, RMissing.class);
+
+        public static final ValuePredicateArgumentMapper<Byte, Boolean> toBoolean = ValuePredicateArgumentMapper.fromLambda(x -> RRuntime.fromLogical(x), x -> RRuntime.asLogical(x), Boolean.class);
+
+        public static ValuePredicateArgumentMapper<String, Integer> charAt0(int defaultValue) {
+            return ValuePredicateArgumentMapper.fromLambda(x -> x == null || x.isEmpty() ? defaultValue : (int) x.charAt(0),
+                            x -> x == null ? "" + (char) defaultValue : "" + (char) x.intValue(), Integer.class);
+        }
+
+        public static ValuePredicateArgumentMapper<String, String> constant(String s) {
+            return ValuePredicateArgumentMapper.<String, String> fromLambda((String x) -> s, (String x) -> (String) null, samples(s), CastBuilder.<String> samples(), String.class);
+        }
+
+        public static ValuePredicateArgumentMapper<Integer, Integer> constant(int i) {
+            return ValuePredicateArgumentMapper.fromLambda(x -> i, x -> null, samples(i), CastBuilder.<Integer> samples(), Integer.class);
+        }
+
+        public static ValuePredicateArgumentMapper<Double, Double> constant(double d) {
+            return ValuePredicateArgumentMapper.fromLambda(x -> d, x -> null, samples(d), CastBuilder.<Double> samples(), Double.class);
+        }
+
+        public static ValuePredicateArgumentMapper<Byte, Byte> constant(byte l) {
+            return ValuePredicateArgumentMapper.fromLambda(x -> l, x -> null, samples(l), CastBuilder.<Byte> samples(), Byte.class);
+        }
+
+        public static <T> ArgumentMapper<T, T> defaultValue(T defVal) {
+
+            assert (defVal != null);
+
+            final Set<Class<?>> defCls = Collections.singleton(defVal.getClass());
+
+            return new ArgumentMapper<T, T>() {
+
+                public T map(T arg) {
+                    return arg == RNull.instance || arg == null ? defVal : arg;
+                }
+
+                public Set<Class<?>> resultTypes() {
+                    return defCls;
+                }
+
+                public Samples<T> collectSamples(Samples<T> downStreamSamples) {
+                    HashSet<T> posSamples = new HashSet<>(downStreamSamples.positiveSamples());
+                    posSamples.add(defVal);
+                    return new Samples<>(posSamples, downStreamSamples.negativeSamples());
+                }
+            };
+        }
+
+    }
+
     @SuppressWarnings("unchecked")
-    interface ArgCastBuilder<THIS> {
+    interface ArgCastBuilder<T, THIS> {
 
         ArgCastBuilderState state();
 
@@ -258,21 +452,26 @@ public final class CastBuilder {
             return (THIS) this;
         }
 
+        default THIS shouldBe(ArgumentFilter<? super T, ? extends T> argFilter, RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.ArgumentValueConditionNodeGen.create(argFilter, true, message, messageArgs, state().boxPrimitives, state().cb.out));
+            return (THIS) this;
+        }
+
+        default THIS shouldBe(ArgumentFilter<? super T, ? extends T> argFilter) {
+            return shouldBe(argFilter, state().defaultWarning().message, state().defaultWarning().args);
+        }
+
     }
 
     interface ArgCastBuilderFactory {
 
         InitialPhaseBuilder<Object> newInitialPhaseBuilder();
 
-        <T> InitialPhaseBuilder<T> newInitialPhaseBuilder(ArgCastBuilder<?> currentBuilder, Set<Class<?>> possibleTypes);
+        <T> InitialPhaseBuilder<T> newInitialPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder);
 
-        <T extends RAbstractVector, S> CoercedPhaseBuilder<T, S> newCoercedPhaseBuilder(ArgCastBuilder<?> currentBuilder, Set<Class<?>> possibleTypes);
+        <T extends RAbstractVector, S> CoercedPhaseBuilder<T, S> newCoercedPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder, Class<?> elementClass);
 
-        LogicalCoercedPhaseBuilder newLogicalCoercedPhaseBuilder(ArgCastBuilder<?> currentBuilder, Set<Class<?>> possibleTypes);
-
-        <T> HeadPhaseBuilder<T> newHeadPhaseBuilder(ArgCastBuilder<?> currentBuilder, Set<Class<?>> possibleTypes);
-
-        <T> FinalPhaseBuilder<T> newFinalPhaseBuilder(ArgCastBuilder<?> currentBuilder, Set<Class<?>> possibleTypes);
+        <T> HeadPhaseBuilder<T> newHeadPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder);
 
     }
 
@@ -297,19 +496,17 @@ public final class CastBuilder {
         final boolean boxPrimitives;
         private DefaultError defError;
         private DefaultError defWarning;
-        private final Set<Class<?>> possibleTypes;
 
-        ArgCastBuilderState(int argumentIndex, String argumentName, ArgCastBuilderFactory fact, CastBuilder cb, Set<Class<?>> possibleTypes, boolean boxPrimitives) {
+        ArgCastBuilderState(int argumentIndex, String argumentName, ArgCastBuilderFactory fact, CastBuilder cb, boolean boxPrimitives) {
             this.argumentIndex = argumentIndex;
             this.argumentName = argumentName;
             this.factory = fact;
             this.cb = cb;
             this.boxPrimitives = boxPrimitives;
-            this.possibleTypes = Collections.unmodifiableSet(new HashSet<>(possibleTypes));
             this.defaultDefaultError = new DefaultError(RError.Message.INVALID_ARGUMENT, argumentName);
         }
 
-        ArgCastBuilderState(ArgCastBuilderState prevState, boolean boxPrimitives, Set<Class<?>> possibleTypes) {
+        ArgCastBuilderState(ArgCastBuilderState prevState, boolean boxPrimitives) {
             this.argumentIndex = prevState.argumentIndex;
             this.argumentName = prevState.argumentName;
             this.factory = prevState.factory;
@@ -317,7 +514,6 @@ public final class CastBuilder {
             this.boxPrimitives = boxPrimitives;
             this.defError = prevState.defError;
             this.defWarning = prevState.defWarning;
-            this.possibleTypes = Collections.unmodifiableSet(new HashSet<>(possibleTypes));
             this.defaultDefaultError = new DefaultError(RError.Message.INVALID_ARGUMENT, argumentName);
         }
 
@@ -329,12 +525,16 @@ public final class CastBuilder {
             return argumentName;
         }
 
-        public Set<Class<?>> contextTypes() {
-            return possibleTypes;
-        }
-
         public CastBuilder castBuilder() {
             return cb;
+        }
+
+        boolean isDefaultErrorDefined() {
+            return defError != null;
+        }
+
+        boolean isDefaultWarningDefined() {
+            return defWarning != null;
         }
 
         void setDefaultError(RError.Message message, Object... args) {
@@ -360,9 +560,26 @@ public final class CastBuilder {
         DefaultError defaultWarning(RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
             return defWarning == null ? new DefaultError(defaultDefaultMessage, defaultDefaultArgs) : defWarning;
         }
+
+        void mustBe(ArgumentFilter<?, ?> argFilter, RError.Message message, Object... messageArgs) {
+            castBuilder().insert(index(), CastFunctionsFactory.ArgumentValueConditionNodeGen.create(argFilter, false, message, messageArgs, boxPrimitives, cb.out));
+        }
+
+        void mustBe(ArgumentFilter<?, ?> argFilter) {
+            mustBe(argFilter, defaultError().message, defaultError().args);
+        }
+
+        void shouldBe(ArgumentFilter<?, ?> argFilter, RError.Message message, Object... messageArgs) {
+            castBuilder().insert(index(), CastFunctionsFactory.ArgumentValueConditionNodeGen.create(argFilter, true, message, messageArgs, boxPrimitives, cb.out));
+        }
+
+        void shouldBe(ArgumentFilter<?, ?> argFilter) {
+            shouldBe(argFilter, defaultWarning().message, defaultWarning().args);
+        }
+
     }
 
-    abstract class ArgCastBuilderBase<THIS> implements ArgCastBuilder<THIS> {
+    abstract class ArgCastBuilderBase<T, THIS> implements ArgCastBuilder<T, THIS> {
 
         private final ArgCastBuilderState st;
 
@@ -375,337 +592,201 @@ public final class CastBuilder {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public interface ValidationBuilder<T, THIS> extends ArgCastBuilder<THIS> {
+    public interface InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilder<T>> {
 
-        default THIS require(CastFunction<? super T, Boolean> condition, CastFunction<? super T, Void> success, CastFunction<? super T, Void> failure) {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.ArgumentConditionNodeGen.create(condition, success, failure, state().boxPrimitives));
-            return (THIS) this;
+        default <S extends T> InitialPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
+            state().mustBe(argFilter, message, messageArgs);
+            return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default THIS error(Predicate<? super T> validator, RError.Message message, Object... messageArgs) {
-            require((n, x) -> validator.test(x),
-                            (n, x) -> null,
-                            (n, x) -> {
-                                if (RContext.getRRuntimeASTAccess() == null) {
-                                    throw new IllegalArgumentException(String.format(message.message, substituteArgPlaceholder(x, messageArgs)));
-                                } else {
-                                    throw RError.error(n, message, substituteArgPlaceholder(x, messageArgs));
-                                }
-                            });
-            return (THIS) this;
+        default <S extends T> InitialPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter) {
+            return mustBe(argFilter, state().defaultError().message, state().defaultError().args);
         }
 
-        default THIS error(MessagePredicate messagePred, Object... messageArgs) {
-            return error((Predicate<T>) messagePred.getPredicate(), messagePred.getMessage(), messageArgs);
+        default <S> InitialPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
+            mustBe(ValuePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x), cls), message, messageArgs);
+            return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default THIS error(Predicate<? super T> validator) {
-            DefaultError defaultError = state().defaultError();
-            return error(validator, defaultError.message, defaultError.args);
+        default <S> InitialPhaseBuilder<S> mustBe(Class<S> cls) {
+            mustBe(ValuePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x), cls));
+            return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default THIS warning(Predicate<? super T> validator, RError.Message message, Object... messageArgs) {
-            require((n, x) -> validator.test(x),
-                            (n, x) -> null,
-                            (n, x) -> {
-                                if (state().castBuilder().out != null) {
-                                    state().castBuilder().out.printf(message.message, substituteArgPlaceholder(x, messageArgs));
-                                } else if (RContext.getRRuntimeASTAccess() == null) {
-                                    System.err.println(String.format(message.message, substituteArgPlaceholder(x, messageArgs)));
-                                } else {
-                                    RError.warning(n, message, substituteArgPlaceholder(x, messageArgs));
-                                }
-                                return null;
-                            });
-            return (THIS) this;
+        default <S> InitialPhaseBuilder<S> map(ArgumentMapper<T, S> mapFn) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.MapNodeGen.create(mapFn));
+            return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default THIS warning(MessagePredicate messagePred, Object... messageArgs) {
-            return warning((Predicate<T>) messagePred.getPredicate(), messagePred.getMessage(), messageArgs);
+        default <S extends T, R> InitialPhaseBuilder<S> mapIf(ArgumentFilter<? super T, ? extends S> argFilter, ArgumentMapper<S, R> mapFn) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.ConditionalMapNodeGen.create(argFilter, mapFn));
+            return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default THIS warning(Predicate<? super T> validator) {
-            DefaultError defaultWarning = state().defaultWarning();
-            return error(validator, defaultWarning.message, defaultWarning.args);
-        }
-    }
-
-    interface CommonValidationBuilderUtils<T, THIS> extends ValidationBuilder<T, THIS> {
-
-        default THIS notNull(RError.Message message, Object... messageArgs) {
-            return error(x -> x != RNull.instance && x != null, message, messageArgs);
+        default InitialPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(message, messageArgs, state().cb.out, null));
+            return this;
         }
 
-        default THIS notNull() {
-            return error(x -> x != RNull.instance && x != null);
+        default InitialPhaseBuilder<T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(message, messageArgs, state().cb.out, naReplacement));
+            return this;
         }
 
-        default THIS instanceOf(Class<?> cls, RError.Message message, Object... messageArgs) {
-            return error(x -> cls.isInstance(x), message, messageArgs);
+        default InitialPhaseBuilder<T> notNA() {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(state().defaultError().message, state().defaultError().args, state().cb.out, RNull.instance));
+            return this;
         }
 
-        default THIS instanceOf(Class<?> cls) {
-            return error(x -> cls.isInstance(x));
-        }
-    }
-
-    public static final ReflectivePredicate<Integer> IS_SCALAR_INTEGER = x -> is(x instanceof Integer);
-    public static final ReflectivePredicate<RAbstractIntVector> IS_INTEGER = x -> is(x instanceof Integer || x instanceof RAbstractIntVector);
-    public static final ReflectivePredicate<String> IS_SCALAR_STRING = x -> is(x instanceof String);
-    public static final ReflectivePredicate<RAbstractStringVector> IS_STRING = x -> is(x instanceof String || x instanceof RAbstractStringVector);
-    public static final ReflectivePredicate<Double> IS_SCALAR_DOUBLE = x -> is(x instanceof Double);
-    public static final ReflectivePredicate<RAbstractDoubleVector> IS_DOUBLE = x -> is(x instanceof Double || x instanceof RAbstractDoubleVector);
-    public static final ReflectivePredicate<Byte> IS_SCALAR_LOGICAL = x -> is(x instanceof Byte);
-    public static final ReflectivePredicate<Byte> IS_SCALAR_BOOLEAN = x -> is(x instanceof Boolean);
-    public static final ReflectivePredicate<RAbstractLogicalVector> IS_LOGICAL = x -> is(x instanceof Byte || x instanceof RAbstractLogicalVector);
-    public static final ReflectivePredicate<RComplex> IS_SCALAR_COMPLEX = x -> is(x instanceof RComplex);
-    public static final ReflectivePredicate<RAbstractComplexVector> IS_COMPLEX = x -> is(x instanceof RComplex || x instanceof RAbstractComplexVector);
-    public static final ReflectivePredicate<? extends RAbstractVector> IS_NUMERIC = IS_INTEGER.or(IS_DOUBLE).or(IS_COMPLEX).or(IS_LOGICAL);
-
-    public interface InitialValidationBuilderUtils<T, THIS> extends CommonValidationBuilderUtils<T, THIS> {
-
-        default <S> InitialPhaseBuilder<S> is(ReflectivePredicate<S> typePredicate, RError.Message message, Object... messageArgs) {
-            error(typePredicate.predicate(), message, messageArgs);
-            return state().factory.newInitialPhaseBuilder(this, typePredicate.returnTypes());
+        default InitialPhaseBuilder<T> notNA(T naReplacement) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(naReplacement));
+            return this;
         }
 
-        default <S> InitialPhaseBuilder<S> is(ReflectivePredicate<S> typePredicate) {
-            error(typePredicate.predicate());
-            return state().factory.newInitialPhaseBuilder(this, typePredicate.returnTypes());
-        }
-
-        default InitialPhaseBuilder<RAbstractIntVector> isInteger(RError.Message message, Object... messageArgs) {
-            return is(IS_INTEGER, message, messageArgs);
-        }
-
-        default InitialPhaseBuilder<RAbstractIntVector> isInteger() {
-            return is(IS_INTEGER);
-        }
-
-        default InitialPhaseBuilder<RAbstractStringVector> isString(RError.Message message, Object... messageArgs) {
-            return is(IS_STRING, message, messageArgs);
-        }
-
-        default InitialPhaseBuilder<RAbstractStringVector> isString() {
-            return is(IS_STRING);
-        }
-
-        default InitialPhaseBuilder<RAbstractDoubleVector> isDouble(RError.Message message, Object... messageArgs) {
-            return is(IS_DOUBLE, message, messageArgs);
-        }
-
-        default InitialPhaseBuilder<RAbstractDoubleVector> isDouble() {
-            return is(IS_DOUBLE);
-        }
-
-        default InitialPhaseBuilder<RAbstractLogicalVector> isLogical(RError.Message message, Object... messageArgs) {
-            return is(IS_LOGICAL, message, messageArgs);
-        }
-
-        default InitialPhaseBuilder<RAbstractLogicalVector> isLogical() {
-            return is(IS_LOGICAL);
-        }
-
-        default InitialPhaseBuilder<RAbstractComplexVector> isComplex(RError.Message message, Object... messageArgs) {
-            return is(IS_COMPLEX, message, messageArgs);
-        }
-
-        default InitialPhaseBuilder<RAbstractComplexVector> isComplex() {
-            return is(IS_COMPLEX);
-        }
-
-        default InitialPhaseBuilder<? extends RAbstractVector> isNumeric(RError.Message message, Object... messageArgs) {
-            return is(IS_NUMERIC, message, messageArgs);
-        }
-
-        default InitialPhaseBuilder<? extends RAbstractVector> isNumeric() {
-            return is(IS_NUMERIC);
-        }
-    }
-
-    public interface VectorValidationBuilderUtils<T extends RAbstractVector, THIS> extends CommonValidationBuilderUtils<T, THIS> {
-
-        default THIS emptyError(RError.Message message, Object... messageArgs) {
-            return error(x -> x.getLength() > 0, message, messageArgs);
-        }
-
-        default THIS emptyError() {
-            DefaultError defaultError = state().defaultError(RError.Message.LENGTH_ZERO);
-            return emptyError(defaultError.message, defaultError.args);
-        }
-
-        default THIS emptyWarning(RError.Message message, Object... messageArgs) {
-            return warning(x -> x.getLength() > 0, message, messageArgs);
-        }
-
-        default THIS emptyWarning() {
-            DefaultError defaultError = state().defaultError(RError.Message.LENGTH_ZERO);
-            return emptyWarning(defaultError.message, defaultError.args);
-        }
-
-        default THIS sizeError(RError.Message message, Object... messageArgs) {
-            return error(x -> x.getLength() <= 1, message, messageArgs);
-        }
-
-        default THIS sizeError() {
-            DefaultError defaultError = state().defaultError(RError.Message.LENGTH_GT_1);
-            return sizeError(defaultError.message, defaultError.args);
-        }
-
-        default THIS sizeWarning(RError.Message message, Object... messageArgs) {
-            return warning(x -> x.getLength() <= 1, message, messageArgs);
-        }
-
-        default THIS sizeWarning() {
-            DefaultError defaultWarning = state().defaultWarning(RError.Message.LENGTH_GT_1);
-            return sizeWarning(defaultWarning.message, defaultWarning.args);
-        }
-    }
-
-    public interface Coercions<THIS> extends ArgCastBuilder<THIS> {
-
-        default CoercedPhaseBuilder<RAbstractIntVector, Integer> asInteger(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+        default CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
             state().castBuilder().toInteger(state().index(), preserveNames, dimensionsPreservation, attrPreservation);
-            return state().factory.newCoercedPhaseBuilder(this, Collections.singleton(RAbstractIntVector.class));
+            return state().factory.newCoercedPhaseBuilder(this, Integer.class);
         }
 
-        default CoercedPhaseBuilder<RAbstractIntVector, Integer> asInteger() {
-            return asInteger(false, false, false);
+        default CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector() {
+            return asIntegerVector(false, false, false);
         }
 
-        default CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDouble(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+        default CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
             state().castBuilder().toDouble(state().index(), preserveNames, dimensionsPreservation, attrPreservation);
-            return state().factory.newCoercedPhaseBuilder(this, Collections.singleton(RAbstractDoubleVector.class));
+            return state().factory.newCoercedPhaseBuilder(this, Double.class);
         }
 
-        default CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDouble() {
-            return asDouble(false, false, false);
+        default CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector() {
+            return asDoubleVector(false, false, false);
         }
 
-        default LogicalCoercedPhaseBuilder asLogical() {
+        default CoercedPhaseBuilder<RAbstractLogicalVector, Byte> asLogicalVector() {
             state().castBuilder().toLogical(state().index());
-            return state().factory.newLogicalCoercedPhaseBuilder(this, Collections.singleton(RAbstractLogicalVector.class));
+            return state().factory.newCoercedPhaseBuilder(this, Byte.class);
         }
 
-        default CoercedPhaseBuilder<RAbstractStringVector, String> asString() {
+        default CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector() {
             state().castBuilder().toCharacter(state().index());
-            return state().factory.newCoercedPhaseBuilder(this, Collections.singleton(RAbstractStringVector.class));
+            return state().factory.newCoercedPhaseBuilder(this, String.class);
         }
 
         default CoercedPhaseBuilder<RAbstractVector, Object> asVector() {
             state().castBuilder().toVector(state().index());
-            HashSet<Class<?>> newTypes = state().possibleTypes.stream().filter(x -> RAbstractVector.class.isAssignableFrom(x)).collect(Collectors.toCollection(HashSet::new));
-            if (newTypes.isEmpty()) {
-                return state().factory.newCoercedPhaseBuilder(this, Collections.singleton(RAbstractVector.class));
-            } else {
-                return state().factory.newCoercedPhaseBuilder(this, newTypes);
-            }
+            return state().factory.newCoercedPhaseBuilder(this, Object.class);
         }
 
         default HeadPhaseBuilder<RAttributable> asAttributable(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
             state().castBuilder().toAttributable(state().index(), preserveNames, dimensionsPreservation, attrPreservation);
-            return state().factory.newHeadPhaseBuilder(this, Collections.singleton(RAttributable.class));
-        }
-    }
-
-    public interface InitialPhaseBuilder<T> extends Coercions<InitialPhaseBuilder<T>>, ValidationBuilder<Object, InitialPhaseBuilder<T>>, InitialValidationBuilderUtils<Object, InitialPhaseBuilder<T>> {
-
-        default <S> InitialPhaseBuilder<S> map(ReflectiveFunction<T, S> mapFn) {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.MapNodeGen.create(mapFn));
-            return state().factory.newInitialPhaseBuilder(this, Collections.singleton(mapFn.returnType()));
+            return state().factory.newHeadPhaseBuilder(this);
         }
 
     }
 
-    public interface FindFirstBuilder<T extends RAbstractVector, S, THIS> extends ArgCastBuilder<THIS> {
+    public interface CoercedPhaseBuilder<T extends RAbstractVector, S> extends ArgCastBuilder<T, CoercedPhaseBuilder<T, S>> {
 
+        /**
+         * The inserted cast node returns the default value if the input vector is empty. It also
+         * reports the warning message.
+         */
+        default HeadPhaseBuilder<S> findFirst(S defaultValue, RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.FindFirstNodeGen.create(elementClass(), message, messageArgs, state().cb.out, defaultValue));
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
+        /**
+         * The inserted cast node raises an error if the input vector is empty.
+         */
+        default HeadPhaseBuilder<S> findFirst(RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.FindFirstNodeGen.create(elementClass(), message, messageArgs, state().cb.out, null));
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
+        /**
+         * The inserted cast node raises the default error, if defined, or
+         * RError.Message.LENGTH_ZERO error if the input vector is empty.
+         */
         default HeadPhaseBuilder<S> findFirst() {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.FindFirstNodeGen.create());
-            HashSet<Class<?>> elementTypes = state().possibleTypes.stream().map(x -> elementType(x)).collect(Collectors.toCollection(HashSet::new));
-            return state().factory.newHeadPhaseBuilder(this, elementTypes);
+            DefaultError err = state().isDefaultErrorDefined() ? state().defaultError() : new DefaultError(RError.Message.LENGTH_ZERO);
+            state().castBuilder().insert(state().index(),
+                            CastFunctionsFactory.FindFirstNodeGen.create(elementClass(), err.message, err.args, state().cb.out, null));
+            return state().factory.newHeadPhaseBuilder(this);
         }
+
+        /**
+         * The inserted cast node returns the default value if the input vector is empty. It reports
+         * no warning message.
+         */
+        default HeadPhaseBuilder<S> findFirst(S defaultValue) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.FindFirstNodeGen.create(elementClass(), defaultValue));
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
+        Class<?> elementClass();
+
+        default CoercedPhaseBuilder<T, S> mustBe(ArgumentFilter<? super T, ? extends T> argFilter, RError.Message message, Object... messageArgs) {
+            state().mustBe(argFilter, message, messageArgs);
+            return state().factory.newCoercedPhaseBuilder(this, elementClass());
+        }
+
+        default CoercedPhaseBuilder<T, S> mustBe(ArgumentFilter<? super T, ? extends T> argFilter) {
+            return mustBe(argFilter, state().defaultError().message, state().defaultError().args);
+        }
+
     }
 
-    public interface CoercedPhaseBuilder<T extends RAbstractVector, S> extends FindFirstBuilder<T, S, CoercedPhaseBuilder<T, S>>,
-                    ValidationBuilder<T, CoercedPhaseBuilder<T, S>>, VectorValidationBuilderUtils<T, CoercedPhaseBuilder<T, S>> {
+    public interface HeadPhaseBuilder<T> extends ArgCastBuilder<T, HeadPhaseBuilder<T>> {
 
-    }
-
-    public interface LogicalCoercedPhaseBuilder extends FindFirstBuilder<RAbstractLogicalVector, Byte, LogicalCoercedPhaseBuilder>,
-                    ValidationBuilder<RAbstractLogicalVector, LogicalCoercedPhaseBuilder>, VectorValidationBuilderUtils<RAbstractLogicalVector, LogicalCoercedPhaseBuilder> {
-
-        default HeadPhaseBuilder<Boolean> findFirstBoolean() {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.FindFirstBooleanNodeGen.create());
-            HashSet<Class<?>> elementTypes = state().possibleTypes.stream().map(x -> elementType(x)).collect(Collectors.toCollection(HashSet::new));
-            return state().factory.newHeadPhaseBuilder(this, elementTypes);
-        }
-
-    }
-
-    @SuppressWarnings("unchecked")
-    public interface HeadOperations<T, THIS> extends ArgCastBuilder<THIS> {
-
-        default FinalPhaseBuilder<T> isPresent(CastFunction<T, T> present, CastFunction0<T> missing) {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.OptionalElementNodeGen.create(present, missing));
-            return state().factory.newFinalPhaseBuilder(this, state().possibleTypes);
-        }
-
-        default FinalPhaseBuilder<T> orElse(T other) {
-            return isPresent((n, x) -> x, (n) -> other);
-        }
-
-        default FinalPhaseBuilder<T> orElseThrow(RError.Message message, Object... messageArgs) {
-            return isPresent((n, x) -> x,
-                            (n) -> {
-                                if (RContext.getRRuntimeASTAccess() == null) {
-                                    throw new IllegalArgumentException(String.format(message.message, messageArgs));
-                                } else {
-                                    throw RError.error(n, message, messageArgs);
-                                }
-                            });
-        }
-
-        default FinalPhaseBuilder<T> orElseThrow() {
-            DefaultError defaultError = state().defaultError();
-            return orElseThrow(defaultError.message, defaultError.args);
-        }
-
-        default THIS noNA() {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create());
-            return (THIS) this;
-        }
-    }
-
-    public interface HeadPhaseBuilder<T> extends HeadOperations<T, HeadPhaseBuilder<T>>, ValidationBuilder<T, HeadPhaseBuilder<T>> {
-
-        default <S> HeadPhaseBuilder<S> map(ReflectiveFunction<T, S> mapFn) {
+        default <S> HeadPhaseBuilder<S> map(ArgumentMapper<T, S> mapFn) {
             state().castBuilder().insert(state().index(), CastFunctionsFactory.MapNodeGen.create(mapFn));
-            return state().factory.newHeadPhaseBuilder(this, Collections.singleton(mapFn.returnType()));
+            return state().factory.newHeadPhaseBuilder(this);
         }
 
-    }
+        default <S extends T, R> HeadPhaseBuilder<S> mapIf(ArgumentFilter<? super T, ? extends S> argFilter, ArgumentMapper<S, R> mapFn) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.ConditionalMapNodeGen.create(argFilter, mapFn));
 
-    public interface FinalMapper<T> extends ArgCastBuilder<FinalPhaseBuilder<T>> {
-
-        default <S, R> FinalPhaseBuilder<R> mapIf(ReflectivePredicate<S> typePredicate, Function<S, R> mapFn) {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.ConditionalMapNodeGen.create(typePredicate.predicate(), mapFn));
-
-            Set<Class<?>> typesToRemove = typePredicate.returnTypes();
-            Set<Class<?>> newTypes = new HashSet<>(state().possibleTypes);
-            newTypes.removeIf(x -> typesToRemove.contains(x));
-
-            return state().factory.newFinalPhaseBuilder(this, newTypes);
+            return state().factory.newHeadPhaseBuilder(this);
         }
 
-        default <S> FinalPhaseBuilder<S> map(ReflectiveFunction<T, S> mapFn) {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.MapNodeGen.create(mapFn));
-            return state().factory.newFinalPhaseBuilder(this, Collections.singleton(mapFn.returnType()));
+        default <S extends T> HeadPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
+            state().mustBe(argFilter, message, messageArgs);
+            return state().factory.newHeadPhaseBuilder(this);
         }
 
-    }
+        default <S extends T> HeadPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter) {
+            return mustBe(argFilter, state().defaultError().message, state().defaultError().args);
+        }
 
-    public interface FinalPhaseBuilder<T> extends ArgCastBuilder<FinalPhaseBuilder<T>>, FinalMapper<T>, ValidationBuilder<T, FinalPhaseBuilder<T>> {
+        default <S> InitialPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
+            mustBe(ValuePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x), cls), message, messageArgs);
+            return state().factory.newInitialPhaseBuilder(this);
+        }
+
+        default <S> InitialPhaseBuilder<S> mustBe(Class<S> cls) {
+            mustBe(ValuePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x), cls));
+            return state().factory.newInitialPhaseBuilder(this);
+        }
+
+        default HeadPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(message, messageArgs, state().cb.out, null));
+            return this;
+        }
+
+        default HeadPhaseBuilder<T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(message, messageArgs, state().cb.out, naReplacement));
+            return this;
+        }
+
+        default HeadPhaseBuilder<T> notNA() {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(state().defaultError().message, state().defaultError().args, state().cb.out, RNull.instance));
+            return this;
+        }
+
+        default HeadPhaseBuilder<T> notNA(T naReplacement) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(naReplacement));
+            return this;
+        }
+
     }
 
     final class ArgCastBuilderFactoryImpl implements ArgCastBuilderFactory {
@@ -722,81 +803,49 @@ public final class CastBuilder {
             return new InitialPhaseBuilderImpl<>();
         }
 
-        public <T> InitialPhaseBuilderImpl<T> newInitialPhaseBuilder(ArgCastBuilder<?> currentBuilder, Set<Class<?>> possibleTypes) {
-            return new InitialPhaseBuilderImpl<>(currentBuilder.state(), possibleTypes);
+        public <T> InitialPhaseBuilderImpl<T> newInitialPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder) {
+            return new InitialPhaseBuilderImpl<>(currentBuilder.state());
         }
 
-        public <T extends RAbstractVector, S> CoercedPhaseBuilderImpl<T, S> newCoercedPhaseBuilder(ArgCastBuilder<?> currentBuilder, Set<Class<?>> possibleTypes) {
-            return new CoercedPhaseBuilderImpl<>(currentBuilder.state(), possibleTypes);
+        public <T extends RAbstractVector, S> CoercedPhaseBuilderImpl<T, S> newCoercedPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder, Class<?> elementClass) {
+            return new CoercedPhaseBuilderImpl<>(currentBuilder.state(), elementClass);
         }
 
-        public LogicalCoercedPhaseBuilderImpl newLogicalCoercedPhaseBuilder(ArgCastBuilder<?> currentBuilder, Set<Class<?>> possibleTypes) {
-            return new LogicalCoercedPhaseBuilderImpl(currentBuilder.state(), possibleTypes);
+        public <T> HeadPhaseBuilderImpl<T> newHeadPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder) {
+            return new HeadPhaseBuilderImpl<>(currentBuilder.state());
         }
 
-        public <T> HeadPhaseBuilderImpl<T> newHeadPhaseBuilder(ArgCastBuilder<?> currentBuilder, Set<Class<?>> possibleTypes) {
-            return new HeadPhaseBuilderImpl<>(currentBuilder.state(), possibleTypes);
-        }
-
-        public <T> FinalPhaseBuilderImpl<T> newFinalPhaseBuilder(ArgCastBuilder<?> currentBuilder, Set<Class<?>> possibleTypes) {
-            return new FinalPhaseBuilderImpl<>(currentBuilder.state(), possibleTypes);
-        }
-
-        public final class InitialPhaseBuilderImpl<T> extends ArgCastBuilderBase<InitialPhaseBuilder<T>> implements InitialPhaseBuilder<T> {
-            InitialPhaseBuilderImpl(ArgCastBuilderState state, Set<Class<?>> possibleTypes) {
-                super(new ArgCastBuilderState(state, true, possibleTypes));
+        public final class InitialPhaseBuilderImpl<T> extends ArgCastBuilderBase<T, InitialPhaseBuilder<T>> implements InitialPhaseBuilder<T> {
+            InitialPhaseBuilderImpl(ArgCastBuilderState state) {
+                super(new ArgCastBuilderState(state, true));
             }
 
             InitialPhaseBuilderImpl() {
-                super(new ArgCastBuilderState(argumentIndex, argumentName, ArgCastBuilderFactoryImpl.this, CastBuilder.this, Collections.singleton(Object.class), false));
+                super(new ArgCastBuilderState(argumentIndex, argumentName, ArgCastBuilderFactoryImpl.this, CastBuilder.this, false));
             }
         }
 
-        public final class CoercedPhaseBuilderImpl<T extends RAbstractVector, S> extends ArgCastBuilderBase<CoercedPhaseBuilder<T, S>> implements CoercedPhaseBuilder<T, S> {
+        public final class CoercedPhaseBuilderImpl<T extends RAbstractVector, S> extends ArgCastBuilderBase<T, CoercedPhaseBuilder<T, S>> implements CoercedPhaseBuilder<T, S> {
 
-            CoercedPhaseBuilderImpl(ArgCastBuilderState state, Set<Class<?>> possibleTypes) {
-                super(new ArgCastBuilderState(state, true, possibleTypes));
+            private final Class<?> elementClass;
+
+            CoercedPhaseBuilderImpl(ArgCastBuilderState state, Class<?> elementClass) {
+                super(new ArgCastBuilderState(state, true));
+                this.elementClass = elementClass;
             }
 
-        }
-
-        public final class LogicalCoercedPhaseBuilderImpl extends ArgCastBuilderBase<LogicalCoercedPhaseBuilder> implements LogicalCoercedPhaseBuilder {
-            LogicalCoercedPhaseBuilderImpl(ArgCastBuilderState state, Set<Class<?>> possibleTypes) {
-                super(new ArgCastBuilderState(state, true, possibleTypes));
-            }
-        }
-
-        public final class HeadPhaseBuilderImpl<T> extends ArgCastBuilderBase<HeadPhaseBuilder<T>> implements HeadPhaseBuilder<T> {
-            HeadPhaseBuilderImpl(ArgCastBuilderState state, Set<Class<?>> possibleTypes) {
-                super(new ArgCastBuilderState(state, false, possibleTypes));
+            @Override
+            public Class<?> elementClass() {
+                return elementClass;
             }
         }
 
-        public final class FinalPhaseBuilderImpl<T> extends ArgCastBuilderBase<FinalPhaseBuilder<T>> implements FinalPhaseBuilder<T> {
-            FinalPhaseBuilderImpl(ArgCastBuilderState state, Set<Class<?>> possibleTypes) {
-                super(new ArgCastBuilderState(state, false, possibleTypes));
+        public final class HeadPhaseBuilderImpl<T> extends ArgCastBuilderBase<T, HeadPhaseBuilder<T>> implements HeadPhaseBuilder<T> {
+            HeadPhaseBuilderImpl(ArgCastBuilderState state) {
+                super(new ArgCastBuilderState(state, false));
             }
         }
 
-    }
-
-    private static Class<?> elementType(Class<?> vectorType) {
-        if (RAbstractIntVector.class.isAssignableFrom(vectorType)) {
-            return Integer.class;
-        }
-        if (RAbstractDoubleVector.class.isAssignableFrom(vectorType)) {
-            return Double.class;
-        }
-        if (RAbstractLogicalVector.class.isAssignableFrom(vectorType)) {
-            return Byte.class;
-        }
-        if (RAbstractStringVector.class.isAssignableFrom(vectorType)) {
-            return String.class;
-        }
-        if (RAbstractComplexVector.class.isAssignableFrom(vectorType)) {
-            return RComplex.class;
-        }
-        throw new IllegalArgumentException("Unsupported vector type " + vectorType);
     }
 
 }

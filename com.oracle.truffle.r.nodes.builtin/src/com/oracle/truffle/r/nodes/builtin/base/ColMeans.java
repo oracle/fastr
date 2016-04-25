@@ -10,6 +10,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -21,7 +24,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -34,21 +36,19 @@ public abstract class ColMeans extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("X").isNumeric(RError.Message.X_NUMERIC);
+        casts.arg("X").mustBe(numericValue, RError.Message.X_NUMERIC);
 
-        casts.arg("m").asInteger().
+        casts.arg("m").asIntegerVector().
                         findFirst().
-                        noNA().
-                        orElseThrow();
+                        notNA();
 
-        casts.arg("n").asInteger().
+        casts.arg("n").asIntegerVector().
                         findFirst().
-                        noNA().
-                        orElseThrow();
+                        notNA();
 
-        casts.arg("na.rm").asLogical().
-                        findFirstBoolean().
-                        orElseThrow();
+        casts.arg("na.rm").asLogicalVector().
+                        findFirst().
+                        map(toBoolean);
     }
 
     @Specialization(guards = "!naRm")

@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notNull;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -76,16 +78,18 @@ public abstract class Assign extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").asString().
-                        emptyError(RError.Message.INVALID_FIRST_ARGUMENT).
-                        sizeWarning(RError.Message.ONLY_FIRST_VARIABLE_NAME).
-                        findFirst();
-        casts.arg("envir").notNull(RError.Message.USE_NULL_ENV_DEFUNCT).
-                        instanceOf(REnvironment.class, RError.Message.INVALID_ARGUMENT, "envir");
-        casts.arg("inherits").asLogical().
+       casts.arg("x").asStringVector().
+                        shouldBe(singleElement(), RError.Message.ONLY_FIRST_VARIABLE_NAME).
+                        findFirst(RError.Message.INVALID_FIRST_ARGUMENT);
+
+        casts.arg("envir").mustBe(notNull(), RError.Message.USE_NULL_ENV_DEFUNCT).
+                        mustBe(REnvironment.class, RError.Message.INVALID_ARGUMENT, "envir");
+
+// this argument could be made Boolean unless there were AssignFastPath relying upon the
+// byte argument
+        casts.arg("inherits").asLogicalVector().
                         findFirst().
-                        noNA().
-                        orElseThrow();
+                        notNA();
     }
 
     /**
@@ -96,7 +100,7 @@ public abstract class Assign extends RBuiltinNode {
                     @Cached("createBinaryProfile()") ConditionProfile inheritsProfile) {
         String x = checkVariable(xVec);
         REnvironment env = envir;
-        if (inheritsProfile.profile(inherits == RRuntime.LOGICAL_TRUE)) {
+        if (inheritsProfile.profile(RRuntime.fromLogical(inherits))) {
             while (env != REnvironment.emptyEnv()) {
                 if (env.get(x) != null) {
                     break;
