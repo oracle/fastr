@@ -33,15 +33,16 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.CallInlineCacheNode;
 import com.oracle.truffle.r.nodes.CallInlineCacheNodeGen;
+import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -168,7 +169,6 @@ public class GetFunctions {
     @RBuiltin(name = "mget", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "ifnotfound", "inherits"})
     public abstract static class MGet extends Adapter {
 
-        private final RCaller caller = RDataFactory.createCaller(this);
         private final BranchProfile wrongLengthErrorProfile = BranchProfile.create();
 
         @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
@@ -292,7 +292,9 @@ public class GetFunctions {
                 argsNode = insert(RArgumentsNode.create());
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] callArgs = argsNode.execute(ifnFunc, caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), new Object[]{x}, ArgumentsSignature.empty(1), null);
+            FormalArguments formals = ((RRootNode) ifnFunc.getRootNode()).getFormalArguments();
+            Object[] callArgs = argsNode.execute(ifnFunc, new RCallerHelper.Representation(ifnFunc, new Object[]{x}), callerFrame, RArguments.getDepth(frame) + 1,
+                            RArguments.getPromiseFrame(frame), new Object[]{x}, formals.getSignature(), null);
             return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
         }
     }

@@ -81,7 +81,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         Result lookupResult = methodLookup.execute(frame, generic, type, group, callerFrame, genericDefFrame);
 
         S3Args s3Args = new S3Args(lookupResult.generic, lookupResult.clazz, lookupResult.targetFunctionName, callerFrame, genericDefFrame, group);
-        Object result = callMatcher.execute(frame, suppliedSignature, suppliedArguments, lookupResult.function, s3Args);
+        Object result = callMatcher.execute(frame, suppliedSignature, suppliedArguments, lookupResult.function, lookupResult.targetFunctionName, s3Args);
         return result;
     }
 

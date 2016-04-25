@@ -45,6 +45,7 @@ import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode.RootCallNode;
+import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.signature.GetCallerFrameNode;
@@ -52,7 +53,6 @@ import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -94,7 +94,6 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
 
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
 
-    private final RCaller caller = RDataFactory.createCaller(this);
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile errorProfile = BranchProfile.create();
     private final BranchProfile containsRLanguageProfile = BranchProfile.create();
@@ -228,7 +227,9 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
             needsCallerFrame = true;
         }
         callerFrame = needsCallerFrame ? getCallerFrame(frame, callerFrame) : null;
-        Object[] callArgs = argsNode.execute(func, caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), reorderedArgs.getArguments(), reorderedArgs.getSignature(),
+        Object[] callArgs = argsNode.execute(func, new RCallerHelper.Representation(func, argValues), callerFrame, RArguments.getDepth(frame) + 1,
+                        RArguments.getPromiseFrame(frame),
+                        reorderedArgs.getArguments(), reorderedArgs.getSignature(),
                         null);
         RArguments.setIsIrregular(callArgs, true);
         return callCache.execute(frame, func.getTarget(), callArgs);

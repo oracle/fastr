@@ -56,6 +56,6 @@ class RInteropExecuteNode extends RootNode {
         Object[] dummyFrameArgs = RArguments.createUnitialized();
         VirtualFrame dummyFrame = Truffle.getRuntime().createVirtualFrame(dummyFrameArgs, emptyFrameDescriptor);
 
-        return callMatcher.execute(dummyFrame, suppliedSignature, arguments.toArray(), function, null);
+        return callMatcher.execute(dummyFrame, suppliedSignature, arguments.toArray(), function, null, null);
     }
 }

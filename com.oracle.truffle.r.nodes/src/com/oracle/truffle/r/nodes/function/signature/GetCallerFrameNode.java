@@ -54,8 +54,8 @@ public final class GetCallerFrameNode extends RBaseNode {
             if (frameDepthNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 RCaller call = RArguments.getCall(frame);
-                if (call != null && call.getRep() instanceof CallWithCallerFrame) {
-                    if (!((CallWithCallerFrame) call.getRep()).setNeedsCallerFrame()) {
+                if (call != null && call.getSyntaxNode() instanceof CallWithCallerFrame) {
+                    if (!((CallWithCallerFrame) call.getSyntaxNode()).setNeedsCallerFrame()) {
                         reset = true;
                     }
                 }

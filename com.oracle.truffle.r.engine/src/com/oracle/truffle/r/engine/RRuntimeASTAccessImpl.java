@@ -455,8 +455,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public RLanguage getSyntaxCaller(RCaller rl) {
-        RBaseNode bn = RASTUtils.unwrap(rl.getRep());
-        return RDataFactory.createLanguage(checkBuiltin(bn).asRSyntaxNode().asRNode());
+        RSyntaxNode syntaxNode = rl.getSyntaxNode();
+        return RDataFactory.createLanguage(syntaxNode.asRNode());
     }
 
     private static RBaseNode checkBuiltin(RBaseNode bn) {
