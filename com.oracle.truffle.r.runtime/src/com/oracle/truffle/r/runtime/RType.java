@@ -36,7 +36,6 @@ public enum RType {
     Closure("closure", -1),
     Builtin("builtin", -1),
     Special("special", -1),
-    DataFrame("data.frame", -1),
     Factor("factor", -1),
     Symbol("symbol", -1),
     Environment("environment", -1),
@@ -144,8 +143,6 @@ public enum RType {
                 return Builtin;
             case "special":
                 return Special;
-            case "data.frame":
-                return DataFrame;
             case "factor":
                 return Factor;
             case "symbol":
