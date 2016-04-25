@@ -59,7 +59,7 @@ public abstract class UpdateSlot extends RBuiltinNode {
     private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
     // TODO: technically, someone could override checkAtAssignment function and access the caller,
     // but it's rather unlikely
-    private final RCaller caller = RDataFactory.createCaller(new RCallerHelper.InvalidRepresentation());
+    private final RCaller caller = RDataFactory.createCaller(RCallerHelper.InvalidRepresentation.instance);
 
     @Override
     protected void createCasts(CastBuilder casts) {

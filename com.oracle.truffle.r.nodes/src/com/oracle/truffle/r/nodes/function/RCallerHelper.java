@@ -120,6 +120,11 @@ public class RCallerHelper {
      */
     public static final class InvalidRepresentation implements RSyntaxNodeWrapper {
 
+        public static final InvalidRepresentation instance = new InvalidRepresentation();
+
+        private InvalidRepresentation() {
+        }
+
         @Override
         public RSyntaxNode getSyntaxNode() {
             throw RInternalError.shouldNotReachHere();

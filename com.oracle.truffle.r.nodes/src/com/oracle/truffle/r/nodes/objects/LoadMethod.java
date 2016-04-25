@@ -69,7 +69,7 @@ abstract class LoadMethod extends RBaseNode {
     private final BranchProfile noSourceAttr = BranchProfile.create();
     // TODO: technically, someone could override loadMethod function and access the caller, but it's
     // rather unlikely
-    private final RCaller caller = RDataFactory.createCaller(new RCallerHelper.InvalidRepresentation());
+    private final RCaller caller = RDataFactory.createCaller(RCallerHelper.InvalidRepresentation.instance);
 
     @Specialization
     protected RFunction loadMethod(VirtualFrame frame, RFunction fdef, String fname, //

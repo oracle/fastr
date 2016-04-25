@@ -179,7 +179,7 @@ public class HiddenInternalFunctions {
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
         @Child private CastIntegerNode castIntNode;
 
-        private final RCaller caller = RDataFactory.createCaller(new RCallerHelper.InvalidRepresentation());
+        private final RCaller caller = RDataFactory.createCaller(RCallerHelper.InvalidRepresentation.instance);
 
         private void initCast() {
             if (castIntNode == null) {
@@ -366,7 +366,7 @@ public class HiddenInternalFunctions {
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("e");
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
 
-        private final RCaller caller = RDataFactory.createCaller(new RCallerHelper.InvalidRepresentation());
+        private final RCaller caller = RDataFactory.createCaller(RCallerHelper.InvalidRepresentation.instance);
 
         @Override
         protected void createCasts(CastBuilder casts) {
