@@ -89,7 +89,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeWrapper;
 
 /**
  * Implementation of {@link RRuntimeASTAccess}.
@@ -456,8 +455,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public RLanguage getSyntaxCaller(RCaller rl) {
-        RSyntaxNodeWrapper callerRep = rl.getRep();
-        RSyntaxNode syntaxNode = callerRep.getSyntaxNode();
+        RSyntaxNode syntaxNode = rl.getSyntaxNode();
         return RDataFactory.createLanguage(syntaxNode.asRNode());
     }
 

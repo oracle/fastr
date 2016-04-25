@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeWrapper;
 
 /**
  * It's a helper for constructing {@link RCaller} representations (placed here due to inter-package
@@ -45,7 +44,7 @@ public class RCallerHelper {
      * function called by the CallMatcherNode is available (e.g. when CallMatcherNode is used by
      * S3/S4 dispatch), and that can then be used to retrieve correct syntax nodes.
      */
-    public static final class Representation implements RSyntaxNodeWrapper {
+    public static final class Representation implements RCaller {
 
         private final Object func;
         private final Object[] arguments;
@@ -118,7 +117,7 @@ public class RCallerHelper {
      * This class represents an invalid RCaller that is never meant to be used to retrieve syntax
      * nodes.
      */
-    public static final class InvalidRepresentation implements RSyntaxNodeWrapper {
+    public static final class InvalidRepresentation implements RCaller {
 
         public static final InvalidRepresentation instance = new InvalidRepresentation();
 

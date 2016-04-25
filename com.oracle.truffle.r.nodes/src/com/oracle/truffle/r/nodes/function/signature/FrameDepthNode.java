@@ -87,7 +87,7 @@ public final class FrameDepthNode extends RBaseNode {
         if (call == null) {
             return false;
         }
-        RSyntaxNode callNode = RASTUtils.unwrap(call.getRep()).asRSyntaxNode();
+        RSyntaxNode callNode = RASTUtils.unwrap(call.getSyntaxNode()).asRSyntaxNode();
         return new IdenticalVisitor().accept(promiseNode, callNode);
 
     }

@@ -76,7 +76,6 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -93,7 +92,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeWrapper;
 
 /**
  * This class denotes a call site to a function,e.g.:
@@ -207,7 +205,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeWrapper;
  *
  */
 @NodeInfo(cost = NodeCost.NONE)
-public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall, RSyntaxNodeWrapper {
+public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall, RCaller {
 
     private static final int FUNCTION_INLINE_CACHE_SIZE = 4;
     private static final int VARARGS_INLINE_CACHE_SIZE = 4;
@@ -221,8 +219,6 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     @Child private S3FunctionLookupNode dispatchLookup;
     @Child private ClassHierarchyNode classHierarchyNode;
     @Child private GroupDispatchNode groupDispatchNode;
-
-    protected final RCaller caller = RDataFactory.createCaller(this);
 
     /**
      * The {@link #arguments} field must be cloned by {@link NodeUtil#cloneNode(Node)}.
@@ -641,7 +637,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         public Object execute(VirtualFrame frame, RFunction function, S3Args s3Args) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             depth++;
-            RootCallNode next = depth < FUNCTION_INLINE_CACHE_SIZE ? this : new GenericCallNode(call.createArguments(dispatchTempIdentifier, true, true), call.caller);
+            RootCallNode next = depth < FUNCTION_INLINE_CACHE_SIZE ? this : new GenericCallNode(call.createArguments(dispatchTempIdentifier, true, true), call);
 
             RBuiltinDescriptor builtin = function.getRBuiltin();
             boolean modeChange = true;
@@ -723,12 +719,12 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
         @Child private CallArgumentsNode arguments;
 
-        private final RCaller caller;
+        private final RCallNode call;
 
-        GenericCallNode(CallArgumentsNode arguments, RCaller caller) {
+        GenericCallNode(CallArgumentsNode arguments, RCallNode call) {
             // here, it's safe to reuse the arguments - it's the final use
             this.arguments = arguments;
-            this.caller = caller;
+            this.call = call;
         }
 
         @Override
@@ -738,7 +734,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             UnrolledVariadicArguments argsValuesAndNames = arguments.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, RError.ROOTNODE, true);
 
-            Object[] argsObject = RArguments.create(currentFunction, caller, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), matchedArgs.doExecuteArray(frame),
+            Object[] argsObject = RArguments.create(currentFunction, call, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), matchedArgs.doExecuteArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
@@ -839,7 +835,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
 
-            Object[] argsObject = argsNode.execute(currentFunction, originalCall.caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
+            Object[] argsObject = argsNode.execute(currentFunction, originalCall, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
                             matchedArgs.executeArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
@@ -990,7 +986,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
                 call.cloneCallTarget();
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = argsNode.execute(currentFunction, originalCall.caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
+            Object[] argsObject = argsNode.execute(currentFunction, originalCall, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
                             matchedArgs.executeArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
@@ -1038,7 +1034,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
                 needsCallerFrame = true;
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = RArguments.create(currentFunction, originalCall.caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
+            Object[] argsObject = RArguments.create(currentFunction, originalCall, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
                             matchedArgs.doExecuteArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);

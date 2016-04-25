@@ -22,22 +22,15 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeWrapper;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * Represents the caller of a function and stored in {@link RArguments}. The {@code rep} may not be
- * a syntax node and determining the associated syntax node is handled lazily, as it is only needed
- * in case or error or warning. A value of this type never appears in a Truffle execution.
+ * Represents the caller of a function and stored in {@link RArguments}. A value of this type never
+ * appears in a Truffle execution.
  *
  */
-public final class RCaller {
-    private final RSyntaxNodeWrapper rep;
+public interface RCaller {
 
-    public RCaller(RSyntaxNodeWrapper rep) {
-        this.rep = rep;
-    }
+    RSyntaxNode getSyntaxNode();
 
-    public RSyntaxNodeWrapper getRep() {
-        return rep;
-    }
 }

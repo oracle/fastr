@@ -31,15 +31,14 @@ import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeWrapper;
 
 public abstract class CallMatcherNode extends RBaseNode {
 
@@ -104,8 +103,8 @@ public abstract class CallMatcherNode extends RBaseNode {
     }
 
     protected Object[] prepareArguments(VirtualFrame frame, Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, DispatchArgs dispatchArgs,
-                    RSyntaxNodeWrapper callerRep) {
-        return argsNode.execute(function, RDataFactory.createCaller(callerRep), null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), reorderedArgs, reorderedSignature,
+                    RCaller caller) {
+        return argsNode.execute(function, caller, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), reorderedArgs, reorderedSignature,
                         dispatchArgs);
     }
 
@@ -219,8 +218,8 @@ public abstract class CallMatcherNode extends RBaseNode {
                 Object[] reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(permutation, preparedArguments, formals);
                 evaluatePromises(frame, cachedFunction, reorderedArgs, formals.getSignature().getVarArgIndex());
                 if (call != null) {
-                    RSyntaxNodeWrapper callerRep = functionName == null ? RCallerHelper.InvalidRepresentation.instance : new RCallerHelper.Representation(functionName, reorderedArgs);
-                    Object[] arguments = prepareArguments(frame, reorderedArgs, formals.getSignature(), cachedFunction, dispatchArgs, callerRep);
+                    RCaller caller = functionName == null ? RCallerHelper.InvalidRepresentation.instance : new RCallerHelper.Representation(functionName, reorderedArgs);
+                    Object[] arguments = prepareArguments(frame, reorderedArgs, formals.getSignature(), cachedFunction, dispatchArgs, caller);
                     return call.call(frame, arguments);
                 } else {
                     applyCasts(reorderedArgs);
@@ -301,8 +300,8 @@ public abstract class CallMatcherNode extends RBaseNode {
             EvaluatedArguments reorderedArgs = reorderArguments(suppliedArguments, function, suppliedSignature);
             evaluatePromises(frame, function, reorderedArgs.getArguments(), reorderedArgs.getSignature().getVarArgIndex());
 
-            RSyntaxNodeWrapper callerRep = functionName == null ? RCallerHelper.InvalidRepresentation.instance : new RCallerHelper.Representation(functionName, reorderedArgs.getArguments());
-            Object[] arguments = prepareArguments(frame, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function, dispatchArgs, callerRep);
+            RCaller caller = functionName == null ? RCallerHelper.InvalidRepresentation.instance : new RCallerHelper.Representation(functionName, reorderedArgs.getArguments());
+            Object[] arguments = prepareArguments(frame, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function, dispatchArgs, caller);
             return call.call(frame, function.getTarget(), arguments);
         }
 

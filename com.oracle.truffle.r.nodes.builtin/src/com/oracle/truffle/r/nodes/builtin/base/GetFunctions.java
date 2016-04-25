@@ -293,7 +293,7 @@ public class GetFunctions {
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
             FormalArguments formals = ((RRootNode) ifnFunc.getRootNode()).getFormalArguments();
-            Object[] callArgs = argsNode.execute(ifnFunc, RDataFactory.createCaller(new RCallerHelper.Representation(ifnFunc, new Object[]{x})), callerFrame, RArguments.getDepth(frame) + 1,
+            Object[] callArgs = argsNode.execute(ifnFunc, new RCallerHelper.Representation(ifnFunc, new Object[]{x}), callerFrame, RArguments.getDepth(frame) + 1,
                             RArguments.getPromiseFrame(frame), new Object[]{x}, formals.getSignature(), null);
             return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
         }
