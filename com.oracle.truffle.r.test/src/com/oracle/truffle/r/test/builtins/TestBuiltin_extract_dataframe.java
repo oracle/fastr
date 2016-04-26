@@ -40,8 +40,13 @@ public class TestBuiltin_extract_dataframe extends TestBase {
 
     @Test
     public void extractNormalDataFrame() {
-        String[] args = new String[]{"" /* empty */, "'cyl'", "42", "c(1,2,10,5)", "matrix(c(1,2,10,5),nrow=2,ncol=2)", "1,2", "1,2,drop=0"};
-        assertEval(template("matcars[%0]", args));
+        String[] args = new String[]{"" /* empty */, "'cyl'", "4", "c(1,2,10,5)", "matrix(c(1,2,10,5),nrow=2,ncol=2)", "1,2", "1,2,drop=0", "-3", "1:4,'cyl'"};
+        assertEval(template("mtcars[%0]", args));
+    }
+
+    @Test
+    public void undefinedColumnGivesError() {
+        assertEval(Output.ContainsError, "mtcars[42]");
     }
 
     @Test
