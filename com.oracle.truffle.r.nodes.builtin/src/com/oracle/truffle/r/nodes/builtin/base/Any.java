@@ -35,13 +35,14 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "any", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
+@RBuiltin(name = "any", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = RDispatch.SUMMARY_GROUP_GENERIC)
 public abstract class Any extends RBuiltinNode {
 
     protected static final int MAX_CACHED_LENGTH = 10;

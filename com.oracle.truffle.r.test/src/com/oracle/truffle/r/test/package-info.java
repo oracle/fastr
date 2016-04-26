@@ -21,13 +21,12 @@
  * questions.
  */
 /**
- * The root of sub-packages that contain unit tests.
- * Currently there are two main sub-packages:
+ * The root of sub-packages that contain unit tests. Currently there are two main sub-packages:
  * <ul>
  * <li>simple: simple units tests
- * <li>benchmark: units tests that are in fact based on benchmarks, typically cut down to run in a short time.
- * The tests are contained in sub-packages named after the benchmark, e.g. b25, shootout.
+ * <li>benchmark: units tests that are in fact based on benchmarks, typically cut down to run in a
+ * short time. The tests are contained in sub-packages named after the benchmark, e.g. b25,
+ * shootout.
  * </ul>
  */
 package com.oracle.truffle.r.test;
-

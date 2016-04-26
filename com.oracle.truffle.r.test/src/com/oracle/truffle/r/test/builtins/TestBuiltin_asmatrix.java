@@ -19,36 +19,24 @@ import com.oracle.truffle.r.test.TestBase;
 
 public class TestBuiltin_asmatrix extends TestBase {
 
-    private final String expectedOut1 = ""
-                    + "      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]\n"
-                    + " [1,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + " [2,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + " [3,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + " [4,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + " [5,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + " [6,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + " [7,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + " [8,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + " [9,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + "[10,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n";
+    private final String expectedOut1 = "" + "      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]\n" + " [1,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" +
+                    " [2,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" + " [3,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" +
+                    " [4,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" + " [5,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" +
+                    " [6,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" + " [7,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" +
+                    " [8,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" + " [9,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" +
+                    "[10,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n";
 
-    private final String expectedOut2 = ""
-                    + "      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]\n"
-                    + " [1,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + " [2,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA\n"
-                    + " [3,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + " [4,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA\n"
-                    + " [5,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + " [6,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA\n"
-                    + " [7,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + " [8,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA\n"
-                    + " [9,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n"
-                    + "[10,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA\n";
+    private final String expectedOut2 = "" + "      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]\n" + " [1,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" +
+                    " [2,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA\n" + " [3,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" +
+                    " [4,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA\n" + " [5,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" +
+                    " [6,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA\n" + " [7,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" +
+                    " [8,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA\n" + " [9,] 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i 0+1i  0+1i\n" +
+                    "[10,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA\n";
 
     @Test
     public void testasmatrix1() {
-        assertEval("argv <- structure(list(x = structure(c(9L, 27L, 27L, 27L, 27L,     3L, 3L, 3L, 3L, 9L, 9L, 9L, 9L, 9L, 9L), .Names = c('Blocks',     'A', 'B', 'C', 'D', 'Blocks:A', 'Blocks:B', 'Blocks:C', 'Blocks:D',     'A:B', 'A:C', 'A:D', 'B:C', 'B:D', 'C:D'))), .Names = 'x');"
-                        + "do.call('as.matrix', argv)");
+        assertEval("argv <- structure(list(x = structure(c(9L, 27L, 27L, 27L, 27L,     3L, 3L, 3L, 3L, 9L, 9L, 9L, 9L, 9L, 9L), .Names = c('Blocks',     'A', 'B', 'C', 'D', 'Blocks:A', 'Blocks:B', 'Blocks:C', 'Blocks:D',     'A:B', 'A:C', 'A:D', 'B:C', 'B:D', 'C:D'))), .Names = 'x');" +
+                        "do.call('as.matrix', argv)");
     }
 
     @Test

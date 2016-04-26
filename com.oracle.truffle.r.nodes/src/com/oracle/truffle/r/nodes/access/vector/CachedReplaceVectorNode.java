@@ -37,7 +37,6 @@ import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
@@ -77,8 +76,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final RAttributeProfiles positionNamesProfile = RAttributeProfiles.create();
     private final ConditionProfile rightIsShared = ConditionProfile.createBinaryProfile();
     private final ConditionProfile valueIsNA = ConditionProfile.createBinaryProfile();
-    private final BranchProfile rightIsNonTemp = BranchProfile.create();
-    private final BranchProfile rightIsTemp = BranchProfile.create();
     private final BranchProfile resizeProfile = BranchProfile.create();
     private final BranchProfile sharedProfile = BranchProfile.create();
 
@@ -257,11 +254,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             RShareable shareable = (RShareable) vector;
             // we created a new object, and this needs to be non-temporary
             if (shareable.isTemporary()) {
-                if (FastROptions.NewStateTransition.getBooleanValue()) {
-                    shareable.incRefCount();
-                } else {
-                    shareable.markNonTemporary();
-                }
+                shareable.incRefCount();
             }
         }
 
@@ -359,7 +352,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         // convert type for list like values
         switch (this.vectorType) {
             case Language:
-            case DataFrame:
             case Expression:
             case PairList:
                 vector = RType.List;
@@ -491,12 +483,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 sharedProfile.enter();
                 shareable = (RShareable) returnVector.copy();
                 returnVector = (RAbstractVector) shareable;
-                if (FastROptions.NewStateTransition.getBooleanValue()) {
-                    assert shareable.isTemporary();
-                    shareable.incRefCount();
-                } else if (shareable.isTemporary()) {
-                    shareable.markNonTemporary();
-                }
+                assert shareable.isTemporary();
+                shareable.incRefCount();
             }
         }
         returnVector = sharedClassProfile.profile(returnVector);
@@ -509,23 +497,10 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private RTypedValue copyValueOnAssignment(RTypedValue value) {
         if (value instanceof RShareable && value instanceof RAbstractVector) {
             RShareable val = (RShareable) value;
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                if (rightIsShared.profile(val.isShared())) {
-                    val = val.copy();
-                } else {
-                    val.incRefCount();
-                }
+            if (rightIsShared.profile(val.isShared())) {
+                val = val.copy();
             } else {
-                if (rightIsShared.profile(val.isShared())) {
-                    val = val.copy();
-                } else if (!val.isTemporary()) {
-                    rightIsNonTemp.enter();
-                    val.makeShared();
-                } else {
-                    assert val.isTemporary();
-                    rightIsTemp.enter();
-                    val.markNonTemporary();
-                }
+                val.incRefCount();
             }
             return (RTypedValue) val;
         }

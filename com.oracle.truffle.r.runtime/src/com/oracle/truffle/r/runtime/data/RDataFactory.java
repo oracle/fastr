@@ -33,7 +33,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -353,10 +352,6 @@ public final class RDataFactory {
         return traceDataCreated(new RList(data, newDimensions, names));
     }
 
-    public static RDataFrame createDataFrame(RVector vector) {
-        return traceDataCreated(new RDataFrame(vector));
-    }
-
     public static RExpression createExpression(RList list) {
         return traceDataCreated(new RExpression(list));
     }
@@ -380,10 +375,6 @@ public final class RDataFactory {
 
     public static RLanguage createLanguage(RNode rep) {
         return traceDataCreated(new RLanguage(rep));
-    }
-
-    public static RCaller createCaller(Object rep) {
-        return traceDataCreated(new RCaller(rep));
     }
 
     public static RPromise createPromise(PromiseType type, MaterializedFrame execFrame, Closure closure) {

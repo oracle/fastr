@@ -34,7 +34,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -42,8 +41,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 @NodeChild(value = "rhs", type = RNode.class)
 @NodeFields({@NodeField(name = "name", type = Object.class)})
 /**
- * Common code/state for all the variants of {@code WriteVariableNode}.
- * At this level, we just have a {@code name} for the variable and expression {@code rhs} to be assigned to.
+ * Common code/state for all the variants of {@code WriteVariableNode}. At this level, we just have
+ * a {@code name} for the variable and expression {@code rhs} to be assigned to.
  *
  * There are no create methods as this class is truly abstract.
  */
@@ -51,9 +50,8 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
 
     private final ConditionProfile isCurrentProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isShareableProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isTemporaryProfile = FastROptions.NewStateTransition.getBooleanValue() ? null : ConditionProfile.createBinaryProfile();
     private final ConditionProfile isSharedProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isRefCountUpdateable = FastROptions.NewStateTransition.getBooleanValue() ? ConditionProfile.createBinaryProfile() : null;
+    private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
     private final BranchProfile initialSetKindProfile = BranchProfile.create();
 
@@ -72,9 +70,8 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * variable and then, again, to the original variable (which would cause the vector to be copied
      * each time); (non-Javadoc)
      * 
-     * @see
-     * com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode#shareObjectValue(com.oracle.truffle
-     * .api.frame.Frame, com.oracle.truffle.api.frame.FrameSlot, java.lang.Object,
+     * @see com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode#shareObjectValue(com.oracle.
+     * truffle .api.frame.Frame, com.oracle.truffle.api.frame.FrameSlot, java.lang.Object,
      * com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode.Mode, boolean)
      */
     protected final Object shareObjectValue(Frame frame, FrameSlot frameSlot, Object value, Mode mode, boolean isSuper) {
@@ -94,24 +91,14 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
                 if (mode == Mode.COPY) {
                     newValue = rShareable.copy();
                 } else {
-                    if (FastROptions.NewStateTransition.getBooleanValue()) {
-                        if (isRefCountUpdateable.profile(!rShareable.isSharedPermanent())) {
-                            if (isSuper) {
-                                // if non-local assignment, increment conservatively
-                                rShareable.incRefCount();
-                            } else if (isSharedProfile.profile(!rShareable.isShared())) {
-                                // don't increment if already shared - will not get "unshared" until
-                                // this function exits anyway
-                                rShareable.incRefCount();
-                            }
-                        }
-                    } else {
-                        if (isTemporaryProfile.profile(rShareable.isTemporary())) {
-                            rShareable.markNonTemporary();
-                        } else if (isSharedProfile.profile(rShareable.isShared())) {
-                            rShareable.markNonTemporary();
-                        } else {
-                            rShareable.makeShared();
+                    if (isRefCountUpdateable.profile(!rShareable.isSharedPermanent())) {
+                        if (isSuper) {
+                            // if non-local assignment, increment conservatively
+                            rShareable.incRefCount();
+                        } else if (isSharedProfile.profile(!rShareable.isShared())) {
+                            // don't increment if already shared - will not get "unshared" until
+                            // this function exits anyway
+                            rShareable.incRefCount();
                         }
                     }
                 }

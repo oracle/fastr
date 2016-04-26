@@ -72,11 +72,6 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public void markNonTemporary() {
-        vector.markNonTemporary();
-    }
-
-    @Override
     public boolean isTemporary() {
         return vector.isTemporary();
     }
@@ -84,11 +79,6 @@ public final class RFactor implements RShareable, RAbstractContainer {
     @Override
     public boolean isShared() {
         return vector.isShared();
-    }
-
-    @Override
-    public RSharingAttributeStorage makeShared() {
-        return vector.makeShared();
     }
 
     @Override

@@ -190,36 +190,36 @@ public final class UnaryMapNode extends RBaseNode {
     protected abstract static class MapUnaryVectorInternalNode extends RBaseNode {
 
         private static final MapIndexedAction<byte[], RAbstractLogicalVector> LOGICAL = //
-        (arithmetic, result, resultIndex, left, leftIndex) -> {
-            result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex) -> {
+                            result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex));
+                        };
 
         private static final MapIndexedAction<int[], RAbstractIntVector> INTEGER = //
-        (arithmetic, result, resultIndex, left, leftIndex) -> {
-            result[resultIndex] = arithmetic.applyInteger(left.getDataAt(leftIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex) -> {
+                            result[resultIndex] = arithmetic.applyInteger(left.getDataAt(leftIndex));
+                        };
 
         private static final MapIndexedAction<double[], RAbstractDoubleVector> DOUBLE = //
-        (arithmetic, result, resultIndex, left, leftIndex) -> {
-            result[resultIndex] = arithmetic.applyDouble(left.getDataAt(leftIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex) -> {
+                            result[resultIndex] = arithmetic.applyDouble(left.getDataAt(leftIndex));
+                        };
 
         private static final MapIndexedAction<double[], RAbstractComplexVector> COMPLEX = //
-        (arithmetic, result, resultIndex, left, leftIndex) -> {
-            RComplex value = arithmetic.applyComplex(left.getDataAt(leftIndex));
-            result[resultIndex << 1] = value.getRealPart();
-            result[(resultIndex << 1) + 1] = value.getImaginaryPart();
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex) -> {
+                            RComplex value = arithmetic.applyComplex(left.getDataAt(leftIndex));
+                            result[resultIndex << 1] = value.getRealPart();
+                            result[(resultIndex << 1) + 1] = value.getImaginaryPart();
+                        };
 
         private static final MapIndexedAction<double[], RAbstractComplexVector> DOUBLE_COMPLEX = //
-        (arithmetic, result, resultIndex, left, leftIndex) -> {
-            result[resultIndex] = arithmetic.applyDouble(left.getDataAt(leftIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex) -> {
+                            result[resultIndex] = arithmetic.applyDouble(left.getDataAt(leftIndex));
+                        };
 
         private static final MapIndexedAction<String[], RAbstractStringVector> CHARACTER = //
-        (arithmetic, result, resultIndex, left, leftIndex) -> {
-            result[resultIndex] = arithmetic.applyCharacter(left.getDataAt(leftIndex));
-        };
+                        (arithmetic, result, resultIndex, left, leftIndex) -> {
+                            result[resultIndex] = arithmetic.applyCharacter(left.getDataAt(leftIndex));
+                        };
 
         private final MapIndexedAction<Object, RAbstractVector> indexedAction;
         private final RType argumentType;

@@ -49,7 +49,7 @@ public abstract class AsCharacter extends RBuiltinNode {
     public abstract Object execute(Object obj);
 
     public static AsCharacter create() {
-        return AsCharacterNodeGen.create(null, null, null);
+        return AsCharacterNodeGen.create(null);
     }
 
     private void initCast() {

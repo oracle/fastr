@@ -28,7 +28,6 @@ import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -165,9 +164,9 @@ public class RDeparse {
                     new Func("*", null, new PPInfo(PP.BINARY, PREC_PROD, false)),
                     new Func("/", null, new PPInfo(PP.BINARY, PREC_PROD, false)),
                     new Func("^", null, new PPInfo(PP.BINARY2, PREC_POWER, false)),
-                    new Func("%%", null, new PPInfo(PP.BINARY2, PREC_PERCENT, false)),
-                    new Func("%/%", null, new PPInfo(PP.BINARY2, PREC_PERCENT, false)),
-                    new Func("%*%", null, new PPInfo(PP.BINARY2, PREC_PERCENT, false)),
+                    new Func("%%", null, new PPInfo(PP.BINARY, PREC_PERCENT, false)),
+                    new Func("%/%", null, new PPInfo(PP.BINARY, PREC_PERCENT, false)),
+                    new Func("%*%", null, new PPInfo(PP.BINARY, PREC_PERCENT, false)),
                     new Func("==", null, new PPInfo(PP.BINARY, PREC_COMPARE, false)),
                     new Func("!=", null, new PPInfo(PP.BINARY, PREC_COMPARE, false)),
                     new Func("<", null, new PPInfo(PP.BINARY, PREC_COMPARE, false)),
@@ -201,7 +200,7 @@ public class RDeparse {
                     new Func("@", null, new PPInfo(PP.DOLLAR, PREC_DOLLAR, false)),
     };
 
-    private static final PPInfo USERBINOP = new PPInfo(PP.BINARY2, PREC_PERCENT, false);
+    private static final PPInfo USERBINOP = new PPInfo(PP.BINARY, PREC_PERCENT, false);
 
     private static Func getFunc(String op) {
         for (Func func : FUNCTAB) {
@@ -570,9 +569,7 @@ public class RDeparse {
             protected Void visit(RSyntaxConstant constant) {
                 // coerce scalar values to vectors and unwrap data frames and factors:
                 Object value = RRuntime.asAbstractVector(constant.getValue());
-                if (value instanceof RDataFrame) {
-                    value = ((RDataFrame) value).getVector();
-                } else if (value instanceof RFactor) {
+                if (value instanceof RFactor) {
                     value = ((RFactor) value).getVector();
                 }
 
@@ -700,7 +697,9 @@ public class RDeparse {
         }
 
         private DeparseVisitor appendArgs(ArgumentsSignature signature, RSyntaxElement[] args, int start, boolean formals) {
+            boolean lbreak = false;
             for (int i = start; i < args.length; i++) {
+                lbreak = linebreak(lbreak);
                 RSyntaxElement argument = args[i];
                 if (argument instanceof RSyntaxLookup && ((RSyntaxLookup) argument).getIdentifier().isEmpty()) {
                     argument = null;
@@ -728,6 +727,9 @@ public class RDeparse {
                 if (i != args.length - 1) {
                     append(", ");
                 }
+            }
+            if (lbreak) {
+                indent--;
             }
             return this;
         }
@@ -924,8 +926,8 @@ public class RDeparse {
         }
 
         /**
-         * Handles {@link RList}, (@link RExpression}, {@link RDataFrame} and {@link RFactor}.
-         * Method name same as GnuR.
+         * Handles {@link RList}, (@link RExpression}, and {@link RFactor}. Method name same as
+         * GnuR.
          */
         private DeparseVisitor appendListContents(RAbstractListVector v) {
             int n = v.getLength();

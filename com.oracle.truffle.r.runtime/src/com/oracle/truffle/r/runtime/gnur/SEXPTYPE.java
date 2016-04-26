@@ -20,7 +20,6 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -59,7 +58,6 @@ public enum SEXPTYPE {
     FASTR_BYTE(302, Byte.class),
     FASTR_COMPLEX(303, RComplex.class),
     // FastR special "vector" types
-    FASTR_DATAFRAME(304, RDataFrame.class),
     FASTR_FACTOR(305, RFactor.class),
     // very special case
     FASTR_SOURCESECTION(306, SourceSection.class),
@@ -198,7 +196,6 @@ public enum SEXPTYPE {
                 return SEXPTYPE.LGLSXP;
             case FASTR_COMPLEX:
                 return SEXPTYPE.CPLXSXP;
-            case FASTR_DATAFRAME:
             case FASTR_FACTOR:
                 return SEXPTYPE.VECSXP;
             case FASTR_CONNECTION:

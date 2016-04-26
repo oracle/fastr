@@ -146,7 +146,7 @@ public abstract class AnyNA extends RBuiltinNode {
     }
 
     protected AnyNA createRecursive() {
-        return AnyNANodeGen.create(null, null, null);
+        return AnyNANodeGen.create(null);
     }
 
     @Specialization

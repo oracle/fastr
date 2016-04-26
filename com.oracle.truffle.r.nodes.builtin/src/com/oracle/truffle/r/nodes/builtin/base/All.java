@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -43,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.RVector;
  * TODO: Added primitive {@code na.rm} support, but this code needs rewriting in the same manner as
  * {@link Any} and there is opportunity to share code.
  */
-@RBuiltin(name = "all", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
+@RBuiltin(name = "all", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = RDispatch.SUMMARY_GROUP_GENERIC)
 public abstract class All extends RBuiltinNode {
 
     @Child private CastLogicalNode castLogicalNode;

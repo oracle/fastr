@@ -45,6 +45,7 @@ import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode.RootCallNode;
+import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.signature.GetCallerFrameNode;
@@ -52,7 +53,6 @@ import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -73,7 +73,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 // TODO Implement properly, this is a simple implementation that works when the environment doesn't matter
 @RBuiltin(name = "do.call", kind = INTERNAL, parameterNames = {"what", "args", "envir"})
@@ -94,7 +94,6 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
 
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
 
-    private final RCaller caller = RDataFactory.createCaller(this);
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile errorProfile = BranchProfile.create();
     private final BranchProfile containsRLanguageProfile = BranchProfile.create();
@@ -112,7 +111,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
         } else if (what instanceof String || (what instanceof RAbstractStringVector && ((RAbstractStringVector) what).getLength() == 1)) {
             if (getNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getNode = insert(GetNodeGen.create(new RNode[4], null, null));
+                getNode = insert(GetNodeGen.create(null));
             }
             func = (RFunction) getNode.execute(frame, what, env, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
         } else {
@@ -126,8 +125,17 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
          */
         Object[] argValues = argsAsList.getDataCopy();
         RStringVector n = argsAsList.getNames(attrProfiles);
-        String[] argNames = n == null ? new String[argValues.length] : n.getDataNonShared();
-        ArgumentsSignature signature = ArgumentsSignature.get(argNames);
+        ArgumentsSignature signature;
+        if (n == null) {
+            signature = ArgumentsSignature.empty(argValues.length);
+        } else {
+            String[] argNames = new String[argValues.length];
+            for (int i = 0; i < argValues.length; i++) {
+                String name = n.getDataAt(i);
+                argNames[i] = name == null ? null : name.isEmpty() ? null : name;
+            }
+            signature = ArgumentsSignature.get(argNames);
+        }
         MaterializedFrame callerFrame = null;
         for (int i = 0; i < argValues.length; i++) {
             Object arg = argValues[i];
@@ -135,7 +143,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
                 containsRLanguageProfile.enter();
                 callerFrame = getCallerFrame(frame, callerFrame);
                 RLanguage lang = (RLanguage) arg;
-                argValues[i] = createArgPromise(callerFrame, RASTUtils.cloneNode((lang.getRep())));
+                argValues[i] = createArgPromise(callerFrame, RASTUtils.cloneNode(lang.getRep()));
             } else if (arg instanceof RSymbol) {
                 containsRSymbolProfile.enter();
                 RSymbol symbol = (RSymbol) arg;
@@ -175,7 +183,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
                 func = result.function;
             }
         }
-        if (func.isBuiltin() && builtin.getGroup() != null) {
+        if (func.isBuiltin() && builtin.getDispatch() != null && builtin.getDispatch().isGroupGeneric()) {
             if (groupDispatch == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 /* This child is not being used in a syntax context so remove tags */
@@ -187,7 +195,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
                     argValues[i] = promiseHelper.evaluate(frame, (RPromise) arg);
                 }
             }
-            return groupDispatch.executeDynamic(frame, new RArgsValuesAndNames(argValues, signature), builtin.getName().intern(), builtin.getGroup(), func);
+            return groupDispatch.executeDynamic(frame, new RArgsValuesAndNames(argValues, signature), builtin.getName().intern(), builtin.getDispatch(), func);
         }
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(func, evaledArgs, this, false);
@@ -219,7 +227,9 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
             needsCallerFrame = true;
         }
         callerFrame = needsCallerFrame ? getCallerFrame(frame, callerFrame) : null;
-        Object[] callArgs = argsNode.execute(func, caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), reorderedArgs.getArguments(), reorderedArgs.getSignature(),
+        Object[] callArgs = argsNode.execute(func, new RCallerHelper.Representation(func, argValues), callerFrame, RArguments.getDepth(frame) + 1,
+                        RArguments.getPromiseFrame(frame),
+                        reorderedArgs.getArguments(), reorderedArgs.getSignature(),
                         null);
         RArguments.setIsIrregular(callArgs, true);
         return callCache.execute(frame, func.getTarget(), callArgs);
@@ -239,7 +249,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
     }
 
     @TruffleBoundary
-    private static RPromise createArgPromise(MaterializedFrame frame, RNode rep) {
+    private static RPromise createArgPromise(MaterializedFrame frame, RBaseNode rep) {
         return RDataFactory.createPromise(RPromise.PromiseType.ARG_SUPPLIED, frame, RPromise.Closure.create(rep));
     }
 }

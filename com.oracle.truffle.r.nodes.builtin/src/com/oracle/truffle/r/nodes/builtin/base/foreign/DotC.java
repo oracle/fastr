@@ -77,7 +77,7 @@ public abstract class DotC extends RBuiltinNode {
         controlVisibility();
         long address = getAddressFromSymbolInfo(frame, symbol);
         String name = getNameFromSymbolInfo(frame, symbol);
-        return dispatch(this, address, name, naok, dup, args.getArguments());
+        return dispatch(this, address, name, naok, dup, args);
     }
 
     @SuppressWarnings("unused")
@@ -91,7 +91,7 @@ public abstract class DotC extends RBuiltinNode {
             errorProfile.enter();
             throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
         }
-        return dispatch(this, symbolInfo.address, symbolInfo.symbol, naok, dup, args.getArguments());
+        return dispatch(this, symbolInfo.address, symbolInfo.symbol, naok, dup, args);
     }
 
     private String getNameFromSymbolInfo(VirtualFrame frame, RList symbol) {
@@ -133,7 +133,7 @@ public abstract class DotC extends RBuiltinNode {
     private static RStringVector validateArgNames(int argsLength, ArgumentsSignature signature) {
         String[] listArgNames = new String[argsLength];
         for (int i = 0; i < argsLength; i++) {
-            String name = signature.getName(i + 1);
+            String name = signature.getName(i);
             if (name == null) {
                 name = RRuntime.NAMES_ATTR_EMPTY_VALUE;
             }
@@ -143,16 +143,17 @@ public abstract class DotC extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    protected static RList dispatch(RBuiltinNode node, long address, String name, byte naok, byte dup, Object[] argValues) {
+    protected static RList dispatch(RBuiltinNode node, long address, String name, byte naok, byte dup, RArgsValuesAndNames args) {
         @SuppressWarnings("unused")
         boolean dupArgs = RRuntime.fromLogical(dup);
         @SuppressWarnings("unused")
         boolean checkNA = RRuntime.fromLogical(naok);
         // Analyze the args, making copies (ignoring dup for now)
-        int[] argTypes = new int[argValues.length];
-        Object[] nativeArgs = new Object[argValues.length];
-        for (int i = 0; i < argValues.length; i++) {
-            Object arg = argValues[i];
+        Object[] array = args.getArguments();
+        int[] argTypes = new int[array.length];
+        Object[] nativeArgs = new Object[array.length];
+        for (int i = 0; i < array.length; i++) {
+            Object arg = array[i];
             if (arg instanceof RAbstractDoubleVector) {
                 argTypes[i] = VECTOR_DOUBLE;
                 nativeArgs[i] = checkNAs(node, i + 1, ((RAbstractDoubleVector) arg).materialize().getDataCopy());
@@ -187,9 +188,9 @@ public abstract class DotC extends RBuiltinNode {
         }
         RFFIFactory.getRFFI().getCRFFI().invoke(address, nativeArgs);
         // we have to assume that the native method updated everything
-        RStringVector listNames = validateArgNames(argValues.length, node.getSuppliedSignature());
-        Object[] results = new Object[argValues.length];
-        for (int i = 0; i < argValues.length; i++) {
+        RStringVector listNames = validateArgNames(array.length, args.getSignature());
+        Object[] results = new Object[array.length];
+        for (int i = 0; i < array.length; i++) {
             switch (argTypes[i]) {
                 case SCALAR_DOUBLE:
                     results[i] = RDataFactory.createDoubleVector((double[]) nativeArgs[i], RDataFactory.COMPLETE_VECTOR);
@@ -201,10 +202,10 @@ public abstract class DotC extends RBuiltinNode {
                     results[i] = RDataFactory.createLogicalVector((byte[]) nativeArgs[i], RDataFactory.COMPLETE_VECTOR);
                     break;
                 case VECTOR_DOUBLE:
-                    results[i] = ((RAbstractDoubleVector) argValues[i]).materialize().copyResetData((double[]) nativeArgs[i]);
+                    results[i] = ((RAbstractDoubleVector) array[i]).materialize().copyResetData((double[]) nativeArgs[i]);
                     break;
                 case VECTOR_INT:
-                    results[i] = ((RAbstractIntVector) argValues[i]).materialize().copyResetData((int[]) nativeArgs[i]);
+                    results[i] = ((RAbstractIntVector) array[i]).materialize().copyResetData((int[]) nativeArgs[i]);
                     break;
                 case VECTOR_LOGICAL: {
                     int[] intData = (int[]) nativeArgs[i];
@@ -212,7 +213,7 @@ public abstract class DotC extends RBuiltinNode {
                     for (int j = 0; j < intData.length; j++) {
                         byteData[j] = RRuntime.isNA(intData[j]) ? RRuntime.LOGICAL_NA : RRuntime.asLogical(intData[j] != 0);
                     }
-                    results[i] = ((RAbstractLogicalVector) argValues[i]).materialize().copyResetData(byteData);
+                    results[i] = ((RAbstractLogicalVector) array[i]).materialize().copyResetData(byteData);
                     break;
                 }
             }

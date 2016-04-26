@@ -31,11 +31,12 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
-@RBuiltin(name = "floor", kind = PRIMITIVE, parameterNames = {"x"})
+@RBuiltin(name = "floor", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
 public abstract class Floor extends RBuiltinNode {
 
     public static final UnaryArithmeticFactory FLOOR = FloorArithmetic::new;

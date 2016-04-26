@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -515,9 +514,6 @@ public class CallRFFIHelper {
 
     public static Object VECTOR_ELT(Object x, int i) {
         Object vec = x;
-        if (vec instanceof RDataFrame) {
-            vec = ((RDataFrame) vec).getVector();
-        }
         RAbstractListVector list = guaranteeInstanceOf(RRuntime.asAbstractVector(vec), RAbstractListVector.class);
         return list.getDataAt(i);
     }

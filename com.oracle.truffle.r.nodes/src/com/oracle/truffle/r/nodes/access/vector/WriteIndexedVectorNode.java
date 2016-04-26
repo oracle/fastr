@@ -390,7 +390,6 @@ abstract class WriteIndexedVectorNode extends Node {
             case Raw:
                 return new WriteRawAction();
             case Language:
-            case DataFrame:
             case Expression:
             case PairList:
             case List:

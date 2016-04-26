@@ -384,7 +384,7 @@ public class MethodsListDispatch {
             for (int i = 0; i < args.length; i++) {
                 args[i] = ReadVariableNode.create(sig.getName(i));
             }
-            RLanguage newCall = RDataFactory.createLanguage(new RCallNode(RSyntaxNode.SOURCE_UNAVAILABLE, f, args, sig));
+            RLanguage newCall = RDataFactory.createLanguage(RCallNode.createCall(RSyntaxNode.SOURCE_UNAVAILABLE, f, sig, args));
             Object res = RContext.getEngine().eval(newCall, ev.getFrame());
             return res;
         }

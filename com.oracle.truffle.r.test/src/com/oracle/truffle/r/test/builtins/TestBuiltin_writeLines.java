@@ -20,6 +20,8 @@ public class TestBuiltin_writeLines extends TestBase {
 
     @Test
     public void testwriteLines1() {
-        assertEval("argv <- structure(list(text = ' \\'  A  \\'; \\'B\\' ;\\'C\\';\\' D \\';\\'E \\';  F  ;G  ',     con = 'foo'), .Names = c('text', 'con'));do.call('writeLines', argv)");
+        // this test writes to a file
+        assertEval(Ignored.SideEffects,
+                        "argv <- structure(list(text = ' \\'  A  \\'; \\'B\\' ;\\'C\\';\\' D \\';\\'E \\';  F  ;G  ',     con = 'foo'), .Names = c('text', 'con'));do.call('writeLines', argv)");
     }
 }

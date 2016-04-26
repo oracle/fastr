@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -39,7 +40,7 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 /**
  * Sum has combine semantics (TBD: exactly?) and uses a reduce operation on the resulting array.
  */
-@RBuiltin(name = "sum", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
+@RBuiltin(name = "sum", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = RDispatch.SUMMARY_GROUP_GENERIC)
 public abstract class Sum extends RBuiltinNode {
 
     private static final ReduceSemantics semantics = new ReduceSemantics(0, 0.0, true, null, null, true, false);

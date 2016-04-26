@@ -29,7 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
@@ -43,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "substitute", kind = PRIMITIVE, parameterNames = {"expr", "env"}, nonEvalArgs = 0)
@@ -57,7 +56,7 @@ public abstract class Substitute extends RBuiltinNode {
     private Quote checkQuote() {
         if (quote == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            quote = insert(QuoteNodeGen.create(new RNode[1], null, null));
+            quote = insert(QuoteNodeGen.create(null));
         }
         return quote;
     }
@@ -121,7 +120,7 @@ public abstract class Substitute extends RBuiltinNode {
 
         // The "expr" promise comes from the no-evalarg aspect of the builtin,
         // so get the actual expression (AST) from that
-        Node node = RASTUtils.unwrap(expr.getRep());
+        RBaseNode node = RASTUtils.unwrap(expr.getRep());
         // substitution is destructive so clone the tree
         RSyntaxNode rNode = (RSyntaxNode) RASTUtils.cloneNode(node);
         RSyntaxNode subRNode = rNode.substituteImpl(env);

@@ -79,7 +79,7 @@ public class TestBuiltin_min extends TestBase {
 
     @Test
     public void testmin13() {
-        assertEval(Output.ContainsWarning, "min( );");
+        assertEval("min( );");
     }
 
     @Test

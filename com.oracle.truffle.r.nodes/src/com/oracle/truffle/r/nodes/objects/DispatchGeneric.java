@@ -75,7 +75,7 @@ public abstract class DispatchGeneric extends RBaseNode {
             method = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), classes, fdef, mtable);
         }
         method = loadMethod.executeRFunction(frame, method, fname);
-        Object ret = executeMethod.executeObject(frame, method);
+        Object ret = executeMethod.executeObject(frame, method, fname);
         return ret;
     }
 

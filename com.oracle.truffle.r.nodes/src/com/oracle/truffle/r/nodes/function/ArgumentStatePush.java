@@ -27,7 +27,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -47,9 +46,6 @@ public abstract class ArgumentStatePush extends RNode {
 
     public abstract Object executeObject(VirtualFrame frame, Object shareable);
 
-    private final BranchProfile everSeenShared = BranchProfile.create();
-    private final BranchProfile everSeenTemporary = BranchProfile.create();
-    private final BranchProfile everSeenNonTemporary = BranchProfile.create();
     private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
     private final int index;
@@ -120,19 +116,7 @@ public abstract class ArgumentStatePush extends RNode {
 
     @Specialization
     public RNull transitionState(VirtualFrame frame, RShareable shareable) {
-        if (FastROptions.NewStateTransition.getBooleanValue()) {
-            transitionStateExp(frame, shareable);
-        } else {
-            if (shareable.isShared()) {
-                everSeenShared.enter();
-            } else if (shareable.isTemporary()) {
-                everSeenTemporary.enter();
-                shareable.markNonTemporary();
-            } else {
-                everSeenNonTemporary.enter();
-                shareable.makeShared();
-            }
-        }
+        transitionStateExp(frame, shareable);
         return RNull.instance;
     }
 
@@ -160,17 +144,9 @@ public abstract class ArgumentStatePush extends RNode {
         // this is expected to be used in rare cases where no RNode is easily available
         if (o instanceof RShareable) {
             RShareable shareable = (RShareable) o;
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                // it's never decremented so no point in incrementing past shared state
-                if (!shareable.isShared()) {
-                    shareable.incRefCount();
-                }
-            } else {
-                if (shareable.isTemporary()) {
-                    shareable.markNonTemporary();
-                } else if (!shareable.isShared()) {
-                    shareable.makeShared();
-                }
+            // it's never decremented so no point in incrementing past shared state
+            if (!shareable.isShared()) {
+                shareable.incRefCount();
             }
         }
     }

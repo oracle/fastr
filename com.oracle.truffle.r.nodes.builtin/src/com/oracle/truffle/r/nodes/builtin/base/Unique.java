@@ -56,7 +56,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 // Implements default S3 method
 @RBuiltin(name = "unique", kind = INTERNAL, parameterNames = {"x", "incomparables", "fromLast", "nmax", "..."})
@@ -76,7 +75,7 @@ public abstract class Unique extends RBuiltinNode {
     private RVector uniqueRecursive(VirtualFrame frame, RVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
         if (uniqueRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            uniqueRecursive = insert(UniqueNodeGen.create(new RNode[5], null, null));
+            uniqueRecursive = insert(UniqueNodeGen.create(null));
         }
         return (RVector) uniqueRecursive.execute(frame, vec, incomparables, fromLast, nmax, vararg);
     }
@@ -288,7 +287,7 @@ public abstract class Unique extends RBuiltinNode {
     private boolean identical(Object x, Object y) {
         if (identical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            identical = insert(IdenticalNodeGen.create(true, new RNode[7], null, null));
+            identical = insert(IdenticalNodeGen.create(true, null));
         }
         return RRuntime.fromLogical(identical.executeByte(x, y, true, true, true, true, false));
     }

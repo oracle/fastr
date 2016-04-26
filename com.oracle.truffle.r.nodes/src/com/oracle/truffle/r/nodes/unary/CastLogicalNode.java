@@ -31,7 +31,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -153,11 +152,6 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     @Specialization
     protected RMissing doMissing(RMissing missing) {
         return missing;
-    }
-
-    @Specialization
-    protected Object asLogical(RDataFrame dataFrame) {
-        return castLogicalRecursive(dataFrame.getVector());
     }
 
     @Specialization

@@ -45,14 +45,11 @@ import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintVectorM
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.conn.SocketConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -92,7 +89,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @SuppressWarnings("unused")
@@ -118,8 +114,8 @@ public abstract class PrettyPrinterNode extends RNode {
     @Child private PrettyPrinterSingleVectorElementNode singleVectorElementPrettyPrinter;
     @Child private PrintVectorMultiDimNode multiDimPrinter;
 
-    @Child private NumericalFunctions.Re re = NumericalFunctionsFactory.ReNodeGen.create(null, null, null);
-    @Child private NumericalFunctions.Im im = NumericalFunctionsFactory.ImNodeGen.create(null, null, null);
+    @Child private NumericalFunctions.Re re = NumericalFunctionsFactory.ReNodeGen.create(null);
+    @Child private NumericalFunctions.Im im = NumericalFunctionsFactory.ImNodeGen.create(null);
 
     @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 

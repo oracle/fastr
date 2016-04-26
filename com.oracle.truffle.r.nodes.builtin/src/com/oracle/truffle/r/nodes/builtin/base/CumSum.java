@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -45,7 +46,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "cumsum", kind = PRIMITIVE, parameterNames = {"x"})
+@RBuiltin(name = "cumsum", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
 public abstract class CumSum extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();

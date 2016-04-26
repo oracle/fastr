@@ -39,7 +39,7 @@ public class TestBuiltin_max extends TestBase {
 
     @Test
     public void testmax5() {
-        assertEval(Output.ContainsWarning, "max( );");
+        assertEval("max( );");
     }
 
     @Test

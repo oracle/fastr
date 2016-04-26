@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "is.na", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class IsNA extends RBuiltinNode {
@@ -58,7 +57,7 @@ public abstract class IsNA extends RBuiltinNode {
     private Object isNARecursive(Object o) {
         if (recursiveIsNA == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveIsNA = insert(IsNANodeGen.create(new RNode[1], null, null));
+            recursiveIsNA = insert(IsNANodeGen.create(null));
         }
         return recursiveIsNA.execute(o);
     }

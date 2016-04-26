@@ -29,7 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RPerfStats;
@@ -488,14 +487,14 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
 
     @Override
     public RAbstractContainer setClassAttr(RStringVector classAttr, boolean convertToInt) {
-        return setClassAttrInternal(this, classAttr, null, null, convertToInt);
+        return setClassAttrInternal(this, classAttr, null, convertToInt);
     }
 
-    public static RAbstractContainer setVectorClassAttr(RVector vector, RStringVector classAttr, RAbstractContainer enclosingDataFrame, RAbstractContainer enclosingFactor) {
-        return setClassAttrInternal(vector, classAttr, enclosingDataFrame, enclosingFactor, false);
+    public static RAbstractContainer setVectorClassAttr(RVector vector, RStringVector classAttr, RAbstractContainer enclosingFactor) {
+        return setClassAttrInternal(vector, classAttr, enclosingFactor, false);
     }
 
-    private static RAbstractContainer setClassAttrInternal(RVector vector, RStringVector classAttr, RAbstractContainer enclosingDataFrame, RAbstractContainer enclosingFactor, boolean convertToInt) {
+    private static RAbstractContainer setClassAttrInternal(RVector vector, RStringVector classAttr, RAbstractContainer enclosingFactor, boolean convertToInt) {
         if (vector.attributes == null && classAttr != null && classAttr.getLength() != 0) {
             vector.initAttributes();
         }
@@ -512,16 +511,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
                     // check only before encountering the "factor"
                     ordered = true;
                 }
-                if (RType.DataFrame.getName().equals(attr)) {
-                    vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
-                    if (enclosingDataFrame != null) {
-                        // was a frame and still is a frame
-                        return enclosingDataFrame;
-                    } else {
-                        // it's a data frame now
-                        return RDataFactory.createDataFrame(vector);
-                    }
-                } else if (RType.Factor.getName().equals(attr)) {
+                if (RType.Factor.getName().equals(attr)) {
                     vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
                     if (enclosingFactor != null) {
                         // was a factor and still is a factor
@@ -735,12 +725,8 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         RStringVector oldNames = res.names;
         res = copyResized(size, true);
         if (this.isShared()) {
-            if (FastROptions.NewStateTransition.getBooleanValue()) {
-                assert res.isTemporary();
-                res.incRefCount();
-            } else {
-                res.markNonTemporary();
-            }
+            assert res.isTemporary();
+            res.incRefCount();
         }
         if (resetAll) {
             resetAllAttributes(oldNames == null);

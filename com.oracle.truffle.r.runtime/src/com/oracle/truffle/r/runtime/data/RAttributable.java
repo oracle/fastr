@@ -52,6 +52,20 @@ public interface RAttributable extends RTypedValue {
      */
     RStringVector getClassHierarchy();
 
+    /**
+     * Returns {@code true} if the {@code class} attribute is set to {@link RStringVector} whose
+     * first element equals to the given className.
+     */
+    default boolean hasClass(String className) {
+        RAbstractStringVector v = getClassHierarchy();
+        for (int i = 0; i < v.getLength(); ++i) {
+            if (v.getDataAt(i).equals(className)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     RStringVector getImplicitClass();
 
     /**

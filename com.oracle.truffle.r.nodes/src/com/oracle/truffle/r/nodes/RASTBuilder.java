@@ -53,11 +53,13 @@ import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
 import com.oracle.truffle.r.parser.tools.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RGroupGenerics;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
+import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -132,7 +134,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 }
             } else if (args.size() == 1) {
                 // handle unary arithmetics, for the time being
-                if (RGroupGenerics.getGroup(symbol) == RGroupGenerics.Ops) {
+                RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(symbol);
+                if (builtin != null && builtin.getDispatch() == RDispatch.OPS_GROUP_GENERIC) {
                     return GroupDispatchNode.create(symbol, source, ArgumentsSignature.empty(1), args.get(0).value);
                 }
                 switch (symbol) {
@@ -143,7 +146,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 }
             } else if (args.size() == 2) {
                 // handle binary arithmetics, for the time being
-                if (RGroupGenerics.getGroup(symbol) == RGroupGenerics.Ops) {
+                RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(symbol);
+                if (builtin != null && builtin.getDispatch() == RDispatch.OPS_GROUP_GENERIC) {
                     return GroupDispatchNode.create(symbol, source, ArgumentsSignature.empty(2), args.get(0).value, args.get(1).value);
                 }
                 switch (symbol) {
@@ -159,7 +163,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                     case "->>":
                         boolean isSuper = "<<-".equals(symbol) || "->>".equals(symbol);
                         boolean switchArgs = "->".equals(symbol) || "->>".equals(symbol);
-                        return createReplacement(source, isSuper, args.get(switchArgs ? 1 : 0).value, args.get(switchArgs ? 0 : 1).value);
+                        String operator = "=".equals(symbol) ? "=" : isSuper ? "<<-" : "<-";
+                        return createReplacement(source, operator, isSuper, args.get(switchArgs ? 1 : 0).value, args.get(switchArgs ? 0 : 1).value);
                 }
             } else if (args.size() == 3) {
                 switch (symbol) {
@@ -183,20 +188,21 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         ArgumentsSignature signature = createSignature(args);
         RSyntaxNode[] nodes = args.stream().map(
                         arg -> (arg.value == null && arg.name == null) ? ConstantNode.create(arg.source == null ? RSyntaxNode.SOURCE_UNAVAILABLE : arg.source, REmpty.instance) : arg.value).toArray(
-                        RSyntaxNode[]::new);
+                                        RSyntaxNode[]::new);
 
         if (lhs instanceof RSyntaxLookup) {
             String symbol = ((RSyntaxLookup) lhs).getIdentifier();
-            if (RGroupGenerics.isGroupGeneric(symbol)) {
+            RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(symbol);
+            if (builtin != null && builtin.getDispatch().isGroupGeneric()) {
                 return GroupDispatchNode.create(symbol, source, signature, nodes);
             }
         }
         return RCallNode.createCall(source, lhs.asRNode(), signature, nodes);
     }
 
-    private RSyntaxNode createReplacement(SourceSection source, boolean isSuper, RSyntaxNode replacementLhs, RSyntaxNode replacementRhs) {
+    private RSyntaxNode createReplacement(SourceSection source, String operator, boolean isSuper, RSyntaxNode replacementLhs, RSyntaxNode replacementRhs) {
         if (replacementLhs instanceof RSyntaxCall) {
-            return createReplacement(source, replacementLhs, replacementRhs, isSuper);
+            return createReplacement(source, replacementLhs, replacementRhs, operator, isSuper);
         } else {
             String name;
             if (replacementLhs instanceof RSyntaxLookup) {
@@ -289,7 +295,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
      * x <- `c<-`(t3, tt2) // x with c replaced
      * </pre>
      */
-    private RSyntaxNode createReplacement(SourceSection source, RSyntaxNode lhs, RSyntaxNode rhs, boolean isSuper) {
+    private RSyntaxNode createReplacement(SourceSection source, RSyntaxNode lhs, RSyntaxNode rhs, String operator, boolean isSuper) {
         /*
          * Collect all the function calls in this replacement. For "a(b(x)) <- z", this would be
          * "a(...)" and "b(...)".
@@ -337,7 +343,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
 
         ReadVariableNode variableValue = createReplacementForVariableUsing(variable, isSuper);
-        ReplacementNode newReplacementNode = new ReplacementNode(source, isSuper, lhs, rhs, "*tmpr*" + (tempNamesIndex - 1),
+        ReplacementNode newReplacementNode = new ReplacementNode(source, operator, lhs, rhs, "*tmpr*" + (tempNamesIndex - 1),
                         variableValue, "*tmp*" + (tempNamesIndex + calls.size()), instructions);
 
         tempNamesCount -= calls.size() + 1;
@@ -398,7 +404,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
 
         saveArguments = new SaveArgumentsNode(init);
-        if (!params.isEmpty() && FastROptions.NewStateTransition.getBooleanValue() && !FastROptions.RefCountIncrementOnly.getBooleanValue()) {
+        if (!params.isEmpty() && true && !FastROptions.RefCountIncrementOnly.getBooleanValue()) {
             argPostProcess = PostProcessArgumentsNode.create(params.size());
         } else {
             argPostProcess = null;

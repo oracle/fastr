@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,24 @@
 package com.oracle.truffle.r.runtime;
 
 public enum RDispatch {
-    DEFAULT,
-    INTERNAL_GENERIC,
-    GROUP_GENERIC
+    DEFAULT(null),
+    INTERNAL_GENERIC(null),
+    MATH_GROUP_GENERIC("Math"),
+    OPS_GROUP_GENERIC("Ops"),
+    SUMMARY_GROUP_GENERIC("Summary"),
+    COMPLEX_GROUP_GENERIC("Complex");
+
+    private final String groupGenericName;
+
+    RDispatch(String groupGenericName) {
+        this.groupGenericName = groupGenericName;
+    }
+
+    public boolean isGroupGeneric() {
+        return groupGenericName != null;
+    }
+
+    public String getGroupGenericName() {
+        return groupGenericName;
+    }
 }

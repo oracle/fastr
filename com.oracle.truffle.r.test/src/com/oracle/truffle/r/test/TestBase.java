@@ -712,6 +712,10 @@ public class TestBase {
         return expectedOutputManager.genTestResult(testElementName, input, localDiagnosticHandler, expectedOutputManager.checkOnly, keepTrailingWhiteSpace);
     }
 
+    /**
+     * Creates array with all the combinations of parameters substituted in template. Substitution
+     * is done via '%NUMBER', i.e. '%0' is replaced with all the values from the first array.
+     */
     protected static String[] template(String template, String[]... parameters) {
         return TestOutputManager.template(template, parameters);
     }

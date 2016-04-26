@@ -32,10 +32,10 @@ public class TestBuiltin_matchfun extends TestBase {
     public void testmatchfun() {
         assertEval("min <- 1; match.fun('min')");
         assertEval("min <- 1; match.fun('min', descend=T)");
-        assertEval(Output.ContainsError, "min <- 1; match.fun('min', descend=F)");
+        assertEval("min <- 1; match.fun('min', descend=F)");
         assertEval("min <- 1; match.fun(min)");
         assertEval("min <- 1; match.fun(min, descend=T)");
-        assertEval(Output.ContainsError, "min <- 1; match.fun(min, descend=F)");
+        assertEval("min <- 1; match.fun(min, descend=F)");
         assertEval("f <- function() { min <- 1; match.fun('min')}; f()");
         assertEval("f <- function() { min <- 1; match.fun('min', descend=T)}; f()");
         assertEval("f <- function() { min <- 1; match.fun('min', descend=F)}; f()");
@@ -50,20 +50,20 @@ public class TestBuiltin_matchfun extends TestBase {
         assertEval("f <- function(x) { min <- 1; match.fun(x, descend=F)}; f(min)");
         assertEval("min <- 1; f <- function() { match.fun('min')}; f()");
         assertEval("min <- 1; f <- function() { match.fun('min', descend=T)}; f()");
-        assertEval(Output.ContainsError, "min <- 1; f <- function() { match.fun('min', descend=F)}; f()");
+        assertEval("min <- 1; f <- function() { match.fun('min', descend=F)}; f()");
         assertEval("min <- 1; f <- function() { match.fun(as.symbol('min'))}; f()");
         assertEval("min <- 1; f <- function() { match.fun(as.symbol('min'), descend=T)}; f()");
-        assertEval(Output.ContainsError, "min <- 1; f <- function() { match.fun(as.symbol('min'), descend=F)}; f()");
+        assertEval("min <- 1; f <- function() { match.fun(as.symbol('min'), descend=F)}; f()");
         assertEval("x <- min; min <- 1; f <- function() { match.fun(x)}; f()");
         assertEval("x <- min; min <- 1; f <- function() { match.fun(x, descend=T)}; f()");
         assertEval("x <- min; min <- 1; f <- function() { match.fun(x, descend=F)}; f()");
         assertEval("min <- 1; f <- function(x) { match.fun(x)}; f(min)");
         assertEval("min <- 1; f <- function(x) { match.fun(x, descend=T)}; f(min)");
-        assertEval(Output.ContainsError, "min <- 1; f <- function(x) { match.fun(x, descend=F)}; f(min)");
+        assertEval("min <- 1; f <- function(x) { match.fun(x, descend=F)}; f(min)");
 
         assertEval("min <- 1; f <- function(min) { match.fun(min)}; f(min)");
         assertEval("min <- 1; f <- function(min) { match.fun(min, descend=T)}; f(min)");
-        assertEval(Output.ContainsError, "min <- 1; f <- function(min) { match.fun(min, descend=F)}; f(min)");
+        assertEval("min <- 1; f <- function(min) { match.fun(min, descend=F)}; f(min)");
 
         assertEval(Output.ContainsError, "min <- 1; f <- function(min) { match.fun(min)}; f(baz)");
         assertEval(Output.ContainsError, "min <- 1; f <- function(min) { match.fun(min, descend=T)}; f(baz)");
@@ -72,7 +72,7 @@ public class TestBuiltin_matchfun extends TestBase {
         assertEval("min <- 1; f <- function(x) { match.fun(x)}; f(c('min'))");
         assertEval("min <- 1; f <- function(x) { match.fun(x)}; f(c('min', 'max'))");
         assertEval("min <- 1; f <- function() { match.fun(c('min'))}; f()");
-        assertEval(Output.ContainsError, "min <- 1; f <- function() { match.fun(c('min', 'max'))}; f()");
+        assertEval("min <- 1; f <- function() { match.fun(c('min', 'max'))}; f()");
         assertEval("min <- 1; f <- function() { match.fun(c(1L))}; f()");
         assertEval("min <- 1; f <- function() { match.fun(as.raw(100))}; f()");
 

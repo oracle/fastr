@@ -63,7 +63,7 @@ public abstract class Seq extends RBuiltinNode {
     private Object seqRecursive(Object start, Object to, Object stride, Object lengthOut, Object alongWith) {
         if (seqRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            seqRecursive = insert(SeqNodeGen.create(new RNode[5], null, null));
+            seqRecursive = insert(SeqNodeGen.create(null));
         }
         return seqRecursive.execute(start, to, stride, lengthOut, alongWith);
     }

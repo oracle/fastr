@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNode;
@@ -50,7 +49,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BinaryCompare;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.And;
@@ -84,7 +82,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     public abstract Object execute(VirtualFrame frame, Object left, Object right);
 
     public static BinaryBooleanNode create(BooleanOperationFactory factory) {
-        return BinaryBooleanNodeGen.create(factory, new RNode[]{null, null}, null, null);
+        return BinaryBooleanNodeGen.create(factory, null);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})
@@ -202,8 +200,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"(isRMissing(left) || isRMissing(right))"})
     protected Object doOneArg(Object left, Object right) {
-        RBuiltinFactory builtin = getBuiltin();
-        throw RError.error(this, RError.Message.IS_OF_WRONG_ARITY, 1, builtin.getName(), 2);
+        throw RError.error(this, RError.Message.IS_OF_WRONG_ARITY, 1, factory.create().opName(), 2);
     }
 
     protected static boolean isRNullOrEmptyAndNotMissing(Object left, Object right) {

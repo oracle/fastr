@@ -38,7 +38,7 @@ final class ExecuteMethod extends RBaseNode {
     @Child private CollectArgumentsNode collectArgs;
     @Child private CallMatcherNode callMatcher;
 
-    public Object executeObject(VirtualFrame frame, RFunction fdef) {
+    public Object executeObject(VirtualFrame frame, RFunction fdef, String fname) {
         if (collectArgs == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             collectArgs = insert(CollectArgumentsNodeGen.create());
@@ -51,6 +51,6 @@ final class ExecuteMethod extends RBaseNode {
 
         S4Args s4Args = new S4Args(readDefined.execute(frame), readMethod.execute(frame), readTarget.execute(frame), readGeneric.execute(frame), readMethods.execute(frame));
 
-        return callMatcher.execute(frame, signature, oldArgs, fdef, s4Args);
+        return callMatcher.execute(frame, signature, oldArgs, fdef, fname, s4Args);
     }
 }

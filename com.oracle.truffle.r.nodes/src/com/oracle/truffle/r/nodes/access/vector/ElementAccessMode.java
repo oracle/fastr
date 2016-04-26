@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
+/**
+ * Differentiates access by subscript or by subset.
+ */
 public enum ElementAccessMode {
 
     /* x[[a]] */

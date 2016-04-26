@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import java.util.Arrays;
+import java.util.function.Function;
 
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
@@ -32,26 +33,21 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class RBuiltinFactory extends RBuiltinDescriptor {
 
-    @FunctionalInterface
-    public interface NodeGenFactory {
-        RBuiltinNode get(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature);
-    }
-
-    private final NodeGenFactory constructor;
+    private final Function<RNode[], RBuiltinNode> constructor;
 
     RBuiltinFactory(String name, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, boolean alwaysSplit, RDispatch dispatch,
-                    NodeGenFactory constructor) {
+                    Function<RNode[], RBuiltinNode> constructor) {
         super(name, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch);
         this.constructor = constructor;
     }
 
-    public NodeGenFactory getConstructor() {
+    public Function<RNode[], RBuiltinNode> getConstructor() {
         return constructor;
     }
 
     @Override
     public String toString() {
         return "RBuiltinFactory [name=" + getName() + ", aliases=" + Arrays.toString(getAliases()) + ", kind=" + getKind() + ", siagnature=" + getSignature() + ", nonEvaledArgs=" +
-                        Arrays.toString(getNonEvalArgs()) + ", splitCaller=" + isSplitCaller() + ", group=" + getGroup() + "]";
+                        Arrays.toString(getNonEvalArgs()) + ", splitCaller=" + isSplitCaller() + ", dispatch=" + getDispatch() + "]";
     }
 }

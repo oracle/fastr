@@ -39,8 +39,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * subclass-specific, specified by the {@link #getRSyntaxNode()} method, the implementation of which
  * defaults to a hierarchical search, since many replacement strategies fit that structure.
  *
- * It also overrides the implementations of {@link #getSourceSection()},
- * {@link #assignSourceSection}, {@link #clearSourceSection()} and
+ * It also provides implementations of {@link #getSourceSection()} and
  * {@link #getEncapsulatingSourceSection()} to enforce the FastR invariant that <b>only</b>nodes
  * that implement {@link RSyntaxNode} should have a {@link SourceSection} attribute (typically
  * subclasses of {@link RSourceSectionNode}).
@@ -144,20 +143,6 @@ public abstract class RBaseNode extends Node {
         } else {
             return null;
         }
-    }
-
-    @SuppressWarnings("deprecation")
-    @Deprecated
-    @Override
-    public void assignSourceSection(SourceSection section) {
-        throw RInternalError.shouldNotReachHere("assignSourceSection in RBaseNode");
-    }
-
-    @SuppressWarnings("deprecation")
-    @Deprecated
-    @Override
-    public void clearSourceSection() {
-        throw RInternalError.shouldNotReachHere("clearSourceSection in RBaseNode");
     }
 
     @Override

@@ -32,9 +32,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -42,7 +40,6 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFactor;
@@ -93,7 +90,7 @@ public abstract class Identical extends RBuiltinNode {
     private byte identicalRecursive(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         if (identicalRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            identicalRecursive = insert(IdenticalNodeGen.create(true, new RNode[7], null, null));
+            identicalRecursive = insert(IdenticalNodeGen.create(true, null));
         }
         return identicalRecursive.executeByte(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
@@ -101,7 +98,7 @@ public abstract class Identical extends RBuiltinNode {
     private byte identicalRecursiveAttr(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         if (identicalRecursiveAttr == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            identicalRecursiveAttr = insert(IdenticalNodeGen.create(true, new RNode[7], null, null));
+            identicalRecursiveAttr = insert(IdenticalNodeGen.create(true, null));
         }
         return identicalRecursiveAttr.executeByte(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
@@ -284,14 +281,6 @@ public abstract class Identical extends RBuiltinNode {
         return doInternalIdenticalGeneric(x.getVector(), y.getVector(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
-    @Specialization
-    protected byte doInternalIdenticalGeneric(RDataFrame x, RDataFrame y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
-        return identicalRecursive(x.getVector(), y.getVector(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
-    }
-
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdenticalGeneric(RFunction x, RAbstractContainer y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
@@ -422,7 +411,7 @@ public abstract class Identical extends RBuiltinNode {
         return x instanceof RConnection && y instanceof RConnection;
     }
 
-    public static Identical create(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
-        return IdenticalNodeGen.create(false, arguments, builtin, suppliedSignature);
+    public static Identical create(RNode[] arguments) {
+        return IdenticalNodeGen.create(false, arguments);
     }
 }

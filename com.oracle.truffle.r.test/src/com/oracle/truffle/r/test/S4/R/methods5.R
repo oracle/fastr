@@ -1,4 +1,4 @@
-# test from Hadley Wickham's book
+# test from Hadley Wickham's book (slightly augmented)
 
 setClass("Vehicle")
 setClass("Truck", contains = "Vehicle")
@@ -15,6 +15,7 @@ setMethod("inspect.vehicle",
  signature(v = "Vehicle", i = "Inspector"),
  function(v, i) {
    print("Looking for rust")
+   print(i@name)
  })
 
 setMethod("inspect.vehicle",

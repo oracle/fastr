@@ -28,7 +28,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -123,7 +122,7 @@ public abstract class Unlist extends RBuiltinNode {
     private void initLengthNode() {
         if (lengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lengthNode = insert(LengthNodeGen.create(new RNode[1], null, null));
+            lengthNode = insert(LengthNodeGen.create(null));
         }
     }
 
@@ -531,10 +530,6 @@ public abstract class Unlist extends RBuiltinNode {
             saveSeqNo = namesInfo.seqNo;
             saveCount = namesInfo.count;
             namesInfo.reset();
-        }
-
-        if (o instanceof RDataFrame) {
-            o = ((RDataFrame) o).getVector();
         }
 
         if (o instanceof RAbstractVector) {

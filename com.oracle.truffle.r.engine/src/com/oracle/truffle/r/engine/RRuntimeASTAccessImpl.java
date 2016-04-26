@@ -31,11 +31,11 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -55,9 +55,9 @@ import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.ReturnException;
@@ -455,8 +455,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public RLanguage getSyntaxCaller(RCaller rl) {
-        RBaseNode bn = RASTUtils.unwrap(rl.getRep());
-        return RDataFactory.createLanguage(checkBuiltin(bn).asRSyntaxNode().asRNode());
+        RSyntaxNode syntaxNode = rl.getSyntaxNode();
+        return RDataFactory.createLanguage(syntaxNode.asRNode());
     }
 
     private static RBaseNode checkBuiltin(RBaseNode bn) {
@@ -478,28 +478,24 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public String getCallerSource(RLanguage rl) {
+        RLanguage elem = rl;
+
+        /*
+         * This checks for the specific structure of replacements, to display the replacement
+         * instead of the "internal" form (with *tmp*, etc.) of the update call.
+         */
+
         RSyntaxNode sn = (RSyntaxNode) rl.getRep();
-        SourceSection ss = sn.getSourceSection();
-        if (ss == null) {
-            return RInternalSourceDescriptions.NO_SOURCE;
-        } else {
-            String code = ss.getCode();
-            int pos = code.indexOf('{');
-            if (pos != -1) {
-                code = code.substring(0, pos);
+        Node parent = RASTUtils.unwrapParent(sn.asNode());
+        if (parent instanceof WriteVariableNode) {
+            WriteVariableNode wvn = (WriteVariableNode) parent;
+            if (wvn.getParent() instanceof ReplacementNode) {
+                elem = RDataFactory.createLanguage((RNode) wvn.getParent());
             }
-            pos = code.indexOf('\n');
-            if (pos != -1) {
-                code = code.substring(0, pos);
-            }
-            if (code.length() > 60) {
-                pos = code.indexOf(' ', 60);
-                if (pos != -1) {
-                    code = code.substring(0, pos + 1);
-                }
-            }
-            return code;
         }
+
+        String string = RDeparse.deparse(elem, RDeparse.DEFAULT_Cutoff, true, 0, -1);
+        return string.split("\n")[0];
     }
 
     /**

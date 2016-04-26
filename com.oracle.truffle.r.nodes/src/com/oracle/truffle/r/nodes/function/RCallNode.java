@@ -76,7 +76,6 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -116,7 +115,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * Problem 1 can be tackled by a the use of an {@link IndirectCallNode} instead of a
  * {@link DirectCallNode} which is not as performant as the latter but has no further disadvantages.
  * But as the function changed its formal parameters changed, too, so a re-match has to be done as
- * well, which involves the creation of nodes and thus must happen on the {@link TruffleBoundary}.<br/>
+ * well, which involves the creation of nodes and thus must happen on the {@link TruffleBoundary}.
+ * <br/>
  * Problem 2 is not that easy, too: It is solved by reading the values associated with "..." (which
  * are Promises) and wrapping them in newly created {@link RNode}s. These nodes get inserted into
  * the arguments list ({@link CallArgumentsNode#executeFlatten(Frame)}) - which needs to be be
@@ -131,12 +131,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary
- * 
+ *
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
- * 
+ *
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -149,11 +149,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * non varargs, max depth:
  * |
  * D-D-D-U
- * 
+ *
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- * 
+ *
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -161,7 +161,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- * 
+ *
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -173,7 +173,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *    DV
  *    |
  *    DGV
- * 
+ *
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -205,19 +205,17 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *
  */
 @NodeInfo(cost = NodeCost.NONE)
-public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
+public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall, RCaller {
 
     private static final int FUNCTION_INLINE_CACHE_SIZE = 4;
     private static final int VARARGS_INLINE_CACHE_SIZE = 4;
-
-    private static final Object[] defaultTempIdentifiers = new Object[]{new Object(), new Object(), new Object(), new Object()};
 
     @Child private RNode functionNode;
     @Child private PromiseHelperNode promiseHelper;
     @Child private RootCallNode call;
     @Child private RootCallNode internalDispatchCall;
-    @Child private FrameSlotNode dispatchTempSlot;
     @Child private RNode dispatchArgument;
+    @Child private TemporarySlotNode dispatchTempSlot;
     @Child private S3FunctionLookupNode dispatchLookup;
     @Child private ClassHierarchyNode classHierarchyNode;
     @Child private GroupDispatchNode groupDispatchNode;
@@ -256,17 +254,30 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
     private final BranchProfile errorProfile = BranchProfile.create();
     private final ConditionProfile isRFunctionProfile = ConditionProfile.createBinaryProfile();
 
-    private int tempIdentifier;
-
     @Child private Node foreignCall;
     @CompilationFinal private int foreignCallArgCount;
     @Child private CallArgumentsNode foreignCallArguments;
 
-    public RCallNode(SourceSection sourceSection, RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
+    private RCallNode(SourceSection sourceSection, RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
         super(sourceSection);
         this.functionNode = function;
         this.arguments = new SyntaxArguments(arguments);
+
+        for (String name : signature) {
+            if (name != null && name.isEmpty()) {
+                /*
+                 * In GnuR this is evidently output by the parser, so very early, and never with a
+                 * caller in the message.
+                 */
+                throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
+            }
+        }
         this.signature = signature;
+    }
+
+    @Override
+    public RSyntaxNode getSyntaxNode() {
+        return this;
     }
 
     public Arguments<RSyntaxNode> getArguments() {
@@ -328,35 +339,21 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
 
         if (!signature.isEmpty() && function.getRBuiltin() != null) {
             RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
-            if (builtin.getDispatch() == RDispatch.INTERNAL_GENERIC) {
+            RDispatch dispatch = builtin.getDispatch();
+            if (dispatch == RDispatch.DEFAULT) {
+                // fallthrough
+            } else if (dispatch == RDispatch.INTERNAL_GENERIC) {
                 if (internalDispatchCall == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    dispatchTempSlot = insert(FrameSlotNode.createInitialized(frame.getFrameDescriptor(), defaultTempIdentifiers[0], true));
-                    internalDispatchCall = insert(new UninitializedCallNode(this, defaultTempIdentifiers[0]));
+                    dispatchTempSlot = insert(new TemporarySlotNode());
                     dispatchArgument = insert(RASTUtils.cloneNode(arguments.v[0].asRNode()));
                     dispatchLookup = insert(S3FunctionLookupNode.create(true, false));
                     classHierarchyNode = insert(ClassHierarchyNodeGen.create(false, true));
                 }
-                FrameSlot slot = dispatchTempSlot.executeFrameSlot(frame);
+                Object dispatchObject = dispatchArgument.execute(frame);
+                FrameSlot slot = dispatchTempSlot.initialize(frame, dispatchObject, identifier -> internalDispatchCall = insert(new UninitializedCallNode(this, identifier)));
                 try {
-                    if (frame.isObject(slot) && frame.getObject(slot) != null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        // keep the complete loop in the slow path
-                        do {
-                            tempIdentifier++;
-                            Object identifier = tempIdentifier < defaultTempIdentifiers.length ? defaultTempIdentifiers[tempIdentifier] : new Object();
-                            dispatchTempSlot.replace(FrameSlotNode.createInitialized(frame.getFrameDescriptor(), identifier, true));
-                            internalDispatchCall.replace(new UninitializedCallNode(this, identifier));
-                            slot = dispatchTempSlot.executeFrameSlot(frame);
-                        } while (frame.isObject(slot) && frame.getObject(slot) != null);
-                    }
-                } catch (FrameSlotTypeException e) {
-                    throw RInternalError.shouldNotReachHere();
-                }
-                try {
-                    Object dispatch = dispatchArgument.execute(frame);
-                    frame.setObject(slot, dispatch);
-                    RStringVector type = classHierarchyNode.execute(dispatch);
+                    RStringVector type = classHierarchyNode.execute(dispatchObject);
                     S3Args s3Args;
                     RFunction resultFunction;
                     if (implicitTypeProfile.profile(type != null)) {
@@ -373,8 +370,10 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
                     }
                     return internalDispatchCall.execute(frame, resultFunction, s3Args);
                 } finally {
-                    frame.setObject(slot, null);
+                    dispatchTempSlot.cleanup(frame, slot);
                 }
+            } else {
+                assert dispatch.isGroupGeneric();
             }
         }
         normalDispatchProfile.enter();
@@ -637,7 +636,8 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         @Override
         public Object execute(VirtualFrame frame, RFunction function, S3Args s3Args) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            RootCallNode next = depth + 1 < FUNCTION_INLINE_CACHE_SIZE ? this : new GenericCallNode(call.createArguments(dispatchTempIdentifier, true, true));
+            depth++;
+            RootCallNode next = depth < FUNCTION_INLINE_CACHE_SIZE ? this : new GenericCallNode(call.createArguments(dispatchTempIdentifier, true, true), call);
 
             RBuiltinDescriptor builtin = function.getRBuiltin();
             boolean modeChange = true;
@@ -654,16 +654,6 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         private static LeafCallNode createCacheNode(VirtualFrame frame, CallArgumentsNode args, RCallNode creator, RFunction function) {
             CompilerDirectives.transferToInterpreter();
 
-            for (String name : args.getSignature()) {
-                if (name != null && name.isEmpty()) {
-                    /*
-                     * In GnuR this is, evidently output by the parser, so very early, and never
-                     * with a caller in the message.
-                     */
-                    throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
-                }
-            }
-
             LeafCallNode callNode = null;
             // Check implementation: If written in Java, handle differently!
             if (function.isBuiltin()) {
@@ -674,7 +664,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
                 // We inline the given arguments here, as builtins are executed inside the same
                 // frame as they are called.
                 RNode[] inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, creator);
-                callNode = new BuiltinCallNode(root.inline(args.getSignature(), inlinedArgs), creator);
+                callNode = new BuiltinCallNode(root.inline(inlinedArgs), creator);
             } else {
                 // Now we need to distinguish: Do supplied arguments vary between calls?
                 if (args.containsVarArgsSymbol()) {
@@ -729,11 +719,12 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
         @Child private CallArgumentsNode arguments;
 
-        private final RCaller caller = RDataFactory.createCaller(this);
+        private final RCallNode call;
 
-        GenericCallNode(CallArgumentsNode arguments) {
+        GenericCallNode(CallArgumentsNode arguments, RCallNode call) {
             // here, it's safe to reuse the arguments - it's the final use
             this.arguments = arguments;
+            this.call = call;
         }
 
         @Override
@@ -743,7 +734,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             UnrolledVariadicArguments argsValuesAndNames = arguments.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, RError.ROOTNODE, true);
 
-            Object[] argsObject = RArguments.create(currentFunction, caller, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), matchedArgs.doExecuteArray(frame),
+            Object[] argsObject = RArguments.create(currentFunction, call, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), matchedArgs.doExecuteArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
@@ -790,21 +781,24 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         }
     }
 
+    public interface CallWithCallerFrame {
+        boolean setNeedsCallerFrame();
+    }
+
     /**
      * [D] A {@link RCallNode} for calls to fixed {@link RFunction}s with fixed arguments (no
      * varargs).
      *
      * @see RCallNode
      */
-    private static final class DispatchedCallNode extends LeafCallNode {
+    private static final class DispatchedCallNode extends LeafCallNode implements CallWithCallerFrame {
 
         @Child private DirectCallNode call;
         @Child private MatchedArgumentsNode matchedArgs;
         @Child private RArgumentsNode argsNode = RArgumentsNode.create();
         @Child private RFastPathNode fastPath;
 
-        private final RCaller caller = RDataFactory.createCaller(this);
-        private final boolean needsCallerFrame;
+        @CompilationFinal private boolean needsCallerFrame;
         private final RootCallTarget callTarget;
         @CompilationFinal private boolean needsSplitting;
 
@@ -841,9 +835,19 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
 
-            Object[] argsObject = argsNode.execute(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), matchedArgs.executeArray(frame),
+            Object[] argsObject = argsNode.execute(currentFunction, originalCall, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
+                            matchedArgs.executeArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
+        }
+
+        @Override
+        public boolean setNeedsCallerFrame() {
+            try {
+                return needsCallerFrame;
+            } finally {
+                needsCallerFrame = true;
+            }
         }
     }
 
@@ -901,7 +905,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
 
             // Extend cache
             this.depth += 1;
-            CallArgumentsNode clonedArgs = (CallArgumentsNode) RASTUtils.cloneNode(args);
+            CallArgumentsNode clonedArgs = RASTUtils.cloneNode(args);
             VarArgsCacheCallNode next = createNextNode(function);
             DispatchedVarArgsCallNode newCallNode = DispatchedVarArgsCallNode.create(frame, clonedArgs, next, this, function, varArgsSignature);
             return replace(newCallNode).execute(frame, function, varArgsSignature, s3Args);
@@ -911,7 +915,7 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
             if (depth < VARARGS_INLINE_CACHE_SIZE) {
                 return this;
             } else {
-                CallArgumentsNode clonedArgs = (CallArgumentsNode) RASTUtils.cloneNode(args);
+                CallArgumentsNode clonedArgs = RASTUtils.cloneNode(args);
                 return new DispatchedGenericVarArgsCallNode(function, clonedArgs, originalCall);
             }
         }
@@ -922,16 +926,15 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
      *
      * @see RCallNode
      */
-    private static final class DispatchedVarArgsCallNode extends VarArgsCacheCallNode {
+    private static final class DispatchedVarArgsCallNode extends VarArgsCacheCallNode implements CallWithCallerFrame {
         @Child private DirectCallNode call;
         @Child private CallArgumentsNode args;
         @Child private VarArgsCacheCallNode next;
         @Child private MatchedArgumentsNode matchedArgs;
         @Child private RArgumentsNode argsNode = RArgumentsNode.create();
 
-        private final RCaller caller = RDataFactory.createCaller(this);
         private final ArgumentsSignature cachedSignature;
-        private final boolean needsCallerFrame;
+        @CompilationFinal private boolean needsCallerFrame;
         @CompilationFinal private boolean needsSplitting;
 
         protected DispatchedVarArgsCallNode(CallArgumentsNode args, VarArgsCacheCallNode next, RFunction function, ArgumentsSignature varArgsSignature, MatchedArguments matchedArgs,
@@ -983,9 +986,19 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
                 call.cloneCallTarget();
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = argsNode.execute(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), matchedArgs.executeArray(frame),
+            Object[] argsObject = argsNode.execute(currentFunction, originalCall, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
+                            matchedArgs.executeArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
+        }
+
+        @Override
+        public boolean setNeedsCallerFrame() {
+            try {
+                return needsCallerFrame;
+            } finally {
+                needsCallerFrame = true;
+            }
         }
     }
 
@@ -1000,7 +1013,6 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
         @Child private DirectCallNode call;
         @Child private CallArgumentsNode suppliedArgs;
 
-        private final RCaller caller = RDataFactory.createCaller(this);
         @CompilationFinal private boolean needsCallerFrame;
 
         DispatchedGenericVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs, RCallNode originalCall) {
@@ -1022,7 +1034,8 @@ public final class RCallNode extends RSourceSectionNode implements RSyntaxNode, 
                 needsCallerFrame = true;
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = RArguments.create(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), matchedArgs.doExecuteArray(frame),
+            Object[] argsObject = RArguments.create(currentFunction, originalCall, callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
+                            matchedArgs.doExecuteArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
         }

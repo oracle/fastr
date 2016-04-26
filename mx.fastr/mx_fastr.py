@@ -21,12 +21,12 @@
 # questions.
 #
 import tempfile, platform, subprocess, sys
-from os.path import join, sep
+from os.path import join, sep, abspath
 from argparse import ArgumentParser
 import mx
 import mx_gate
 import mx_fastr_pkgs
-import os
+import shutil, os
 
 '''
 This is the launchpad for all the functions available for building/running/testing/analyzing
@@ -314,14 +314,9 @@ def _fastr_gate_runner(args, tasks):
             if junit(['--tests', _gate_noapps_unit_tests(), '--check-expected-output']) != 0:
                 t.abort('unit tests expected output check failed')
 
-    with mx_gate.Task('UnitTests: +EST', tasks) as t:
+    with mx_gate.Task('UnitTests', tasks) as t:
         if t:
-            if junit(['--J', '@-DR:+NewStateTransition', '--tests', _gate_noapps_unit_tests()]) != 0:
-                t.abort('unit tests failed')
-
-    with mx_gate.Task('UnitTests: -EST', tasks) as t:
-        if t:
-            if junit(['--J', '@-DR:-NewStateTransition', '--tests', _gate_noapps_unit_tests()]) != 0:
+            if junit(['--tests', _gate_noapps_unit_tests()]) != 0:
                 t.abort('unit tests failed')
 
 mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
@@ -583,13 +578,13 @@ def rcmplib(args):
 def _cran_test_project():
     return mx.project('com.oracle.truffle.r.test.cran').dir
 
-def installpkgs(args, out=None, err=None):
+def installpkgs(args):
+    _installpkgs(args)
+
+def _installpkgs(args, out=None, err=None):
     cran_test = _cran_test_project()
     script = join(cran_test, 'r', 'install.cran.packages.R')
     return rscript([script] + args, out=out, err=err)
-
-def bm_suite():
-    return mx.suite('r-benchmarks', fatalIfMissing=False)
 
 _commands = {
     'r' : [rshell, '[options]'],

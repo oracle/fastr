@@ -28,7 +28,7 @@ suite = {
     "suites" : [
             {
                "name" : "truffle",
-               "version" : "551e8475af2fc8769bc3ead07c9156fe0ccbe338",
+               "version" : "9c16d110f3aa63a17e3e2cf1b857e039c507078a",
                "urls" : [
                     {"url" : "https://github.com/graalvm/truffle", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -37,6 +37,15 @@ suite = {
 
         ],
    },
+
+  "licenses" : {
+    "GPLv2" : {
+      "name" : "GNU General Public License, version 2",
+      "url" : "http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html"
+    },
+  },
+
+  "defaultLicense" : "GPLv2",
 
   # libraries that we depend on
   # N.B. The first four with a "path" attribute must be located

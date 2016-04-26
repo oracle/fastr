@@ -35,6 +35,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -44,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "signif", kind = PRIMITIVE, parameterNames = {"x", "digits"})
+@RBuiltin(name = "signif", kind = PRIMITIVE, parameterNames = {"x", "digits"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
 public abstract class Signif extends RBuiltinNode {
 
     @Override

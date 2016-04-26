@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.r.library.fastr.FastRContext;
+import com.oracle.truffle.r.library.fastr.FastRContextFactory;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNodeGen;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanNodeGen;
@@ -59,6 +61,8 @@ public class BasePackage extends RBuiltinPackage {
     public BasePackage() {
         super("base");
 
+        add(FastRContext.GetBuiltin.class, FastRContextFactory.GetBuiltinNodeGen::create);
+
         /*
          * Primitive operations (these are really builtins, but not currently defined that way, so
          * we fake it). N.B. UnaryNotNode is annotated, but not loaded automatically because it is
@@ -67,27 +71,27 @@ public class BasePackage extends RBuiltinPackage {
          */
         add(UnaryNotNode.class, UnaryNotNodeGen::create);
 
-        add(BinaryArithmetic.AddBuiltin.class, (arguments, builtin, signature) -> BinaryArithmeticNodeGen.create(BinaryArithmetic.ADD, UnaryArithmetic.PLUS, arguments, builtin, signature));
+        add(BinaryArithmetic.AddBuiltin.class, arguments -> BinaryArithmeticNodeGen.create(BinaryArithmetic.ADD, UnaryArithmetic.PLUS, arguments));
         add(BinaryArithmetic.SubtractBuiltin.class,
-                        (arguments, builtin, signature) -> BinaryArithmeticNodeGen.create(BinaryArithmetic.SUBTRACT, UnaryArithmetic.NEGATE, arguments, builtin, signature));
-        add(BinaryArithmetic.DivBuiltin.class, (arguments, builtin, signature) -> BinaryArithmeticNodeGen.create(BinaryArithmetic.DIV, null, arguments, builtin, signature));
-        add(BinaryArithmetic.IntegerDivBuiltin.class, (arguments, builtin, signature) -> BinaryArithmeticNodeGen.create(BinaryArithmetic.INTEGER_DIV, null, arguments, builtin, signature));
-        add(BinaryArithmetic.ModBuiltin.class, (arguments, builtin, signature) -> BinaryArithmeticNodeGen.create(BinaryArithmetic.MOD, null, arguments, builtin, signature));
-        add(BinaryArithmetic.MultiplyBuiltin.class, (arguments, builtin, signature) -> BinaryArithmeticNodeGen.create(BinaryArithmetic.MULTIPLY, null, arguments, builtin, signature));
-        add(BinaryArithmetic.PowBuiltin.class, (arguments, builtin, signature) -> BinaryArithmeticNodeGen.create(BinaryArithmetic.POW, null, arguments, builtin, signature));
+                        arguments -> BinaryArithmeticNodeGen.create(BinaryArithmetic.SUBTRACT, UnaryArithmetic.NEGATE, arguments));
+        add(BinaryArithmetic.DivBuiltin.class, arguments -> BinaryArithmeticNodeGen.create(BinaryArithmetic.DIV, null, arguments));
+        add(BinaryArithmetic.IntegerDivBuiltin.class, arguments -> BinaryArithmeticNodeGen.create(BinaryArithmetic.INTEGER_DIV, null, arguments));
+        add(BinaryArithmetic.ModBuiltin.class, arguments -> BinaryArithmeticNodeGen.create(BinaryArithmetic.MOD, null, arguments));
+        add(BinaryArithmetic.MultiplyBuiltin.class, arguments -> BinaryArithmeticNodeGen.create(BinaryArithmetic.MULTIPLY, null, arguments));
+        add(BinaryArithmetic.PowBuiltin.class, arguments -> BinaryArithmeticNodeGen.create(BinaryArithmetic.POW, null, arguments));
 
-        add(BinaryCompare.EqualBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanNodeGen.create(BinaryCompare.EQUAL, arguments, builtin, signature));
-        add(BinaryCompare.NotEqualBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanNodeGen.create(BinaryCompare.NOT_EQUAL, arguments, builtin, signature));
-        add(BinaryCompare.GreaterEqualBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanNodeGen.create(BinaryCompare.GREATER_EQUAL, arguments, builtin, signature));
-        add(BinaryCompare.GreaterBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanNodeGen.create(BinaryCompare.GREATER_THAN, arguments, builtin, signature));
-        add(BinaryCompare.LessBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanNodeGen.create(BinaryCompare.LESS_THAN, arguments, builtin, signature));
-        add(BinaryCompare.LessEqualBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanNodeGen.create(BinaryCompare.LESS_EQUAL, arguments, builtin, signature));
+        add(BinaryCompare.EqualBuiltin.class, arguments -> BinaryBooleanNodeGen.create(BinaryCompare.EQUAL, arguments));
+        add(BinaryCompare.NotEqualBuiltin.class, arguments -> BinaryBooleanNodeGen.create(BinaryCompare.NOT_EQUAL, arguments));
+        add(BinaryCompare.GreaterEqualBuiltin.class, arguments -> BinaryBooleanNodeGen.create(BinaryCompare.GREATER_EQUAL, arguments));
+        add(BinaryCompare.GreaterBuiltin.class, arguments -> BinaryBooleanNodeGen.create(BinaryCompare.GREATER_THAN, arguments));
+        add(BinaryCompare.LessBuiltin.class, arguments -> BinaryBooleanNodeGen.create(BinaryCompare.LESS_THAN, arguments));
+        add(BinaryCompare.LessEqualBuiltin.class, arguments -> BinaryBooleanNodeGen.create(BinaryCompare.LESS_EQUAL, arguments));
 
-        add(BinaryLogic.AndBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanNodeGen.create(BinaryLogic.AND, arguments, builtin, signature));
-        add(BinaryLogic.OrBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanNodeGen.create(BinaryLogic.OR, arguments, builtin, signature));
+        add(BinaryLogic.AndBuiltin.class, arguments -> BinaryBooleanNodeGen.create(BinaryLogic.AND, arguments));
+        add(BinaryLogic.OrBuiltin.class, arguments -> BinaryBooleanNodeGen.create(BinaryLogic.OR, arguments));
 
-        add(BinaryLogic.NonVectorAndBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanScalarNodeGen.create(BinaryLogic.NON_VECTOR_AND, arguments, builtin, signature));
-        add(BinaryLogic.NonVectorOrBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanScalarNodeGen.create(BinaryLogic.NON_VECTOR_OR, arguments, builtin, signature));
+        add(BinaryLogic.NonVectorAndBuiltin.class, arguments -> BinaryBooleanScalarNodeGen.create(BinaryLogic.NON_VECTOR_AND, arguments));
+        add(BinaryLogic.NonVectorOrBuiltin.class, arguments -> BinaryBooleanScalarNodeGen.create(BinaryLogic.NON_VECTOR_OR, arguments));
 
         // Now load the rest of the builtins in "base"
         add(APerm.class, APermNodeGen::create);
@@ -340,6 +344,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Inherits.class, InheritsNodeGen::create);
         add(Interactive.class, InteractiveNodeGen::create);
         add(Internal.class, InternalNodeGen::create);
+        add(IntToBits.class, IntToBitsNodeGen::create);
         add(Invisible.class, InvisibleNodeGen::create);
         add(IsATTY.class, IsATTYNodeGen::create);
         add(IsFiniteFunctions.IsFinite.class, IsFiniteFunctionsFactory.IsFiniteNodeGen::create);

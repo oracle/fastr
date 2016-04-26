@@ -48,8 +48,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *
  */
 public final class FrameDepthNode extends RBaseNode {
-    private ConditionProfile isPromiseEvalProfile = ConditionProfile.createBinaryProfile();
-    private ConditionProfile isFastPath = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isPromiseEvalProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isFastPath = ConditionProfile.createBinaryProfile();
 
     public int execute(VirtualFrame frame) {
         Frame pfFrame = RArguments.getPromiseFrame(frame);
@@ -87,7 +87,7 @@ public final class FrameDepthNode extends RBaseNode {
         if (call == null) {
             return false;
         }
-        RSyntaxNode callNode = RASTUtils.unwrap(call.getRep()).asRSyntaxNode();
+        RSyntaxNode callNode = RASTUtils.unwrap(call.getSyntaxNode()).asRSyntaxNode();
         return new IdenticalVisitor().accept(promiseNode, callNode);
 
     }

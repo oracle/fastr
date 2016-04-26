@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EvalFunctions.Eval;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -69,7 +70,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Private, undocumented, {@code .Internal} and {@code .Primitive} functions transcribed from GnuR,
@@ -87,7 +87,7 @@ public class HiddenInternalFunctions {
         private void initEval() {
             if (eval == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                eval = insert(EvalFunctionsFactory.EvalNodeGen.create(new RNode[3], null, null));
+                eval = insert(EvalFunctionsFactory.EvalNodeGen.create(null));
             }
         }
 
@@ -179,7 +179,7 @@ public class HiddenInternalFunctions {
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
         @Child private CastIntegerNode castIntNode;
 
-        private final RCaller caller = RDataFactory.createCaller(this);
+        private final RCaller caller = RCallerHelper.InvalidRepresentation.instance;
 
         private void initCast() {
             if (castIntNode == null) {
@@ -228,8 +228,8 @@ public class HiddenInternalFunctions {
             boolean rc = true;
             /*
              * compression may have value 0, 1, 2 or 3. Value 1 is gzip and the data starts at
-             * "offset + 4". Values 2 and 3 have a "type" field at "offset +
-             * 4" and the data starts at "offset + 5". The type field is 'Z' for lzma, '2' for bzip,
+             * "offset + 4". Values 2 and 3 have a "type" field at "offset + 4
+             * " and the data starts at "offset + 5". The type field is 'Z' for lzma, '2' for bzip,
              * '1' for zip and '0' for no compression. From GnuR code, the only difference between
              * compression=2 and compression=3 is that type='Z' is only possible for the latter.
              */
@@ -366,7 +366,7 @@ public class HiddenInternalFunctions {
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("e");
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
 
-        private final RCaller caller = RDataFactory.createCaller(this);
+        private final RCaller caller = RCallerHelper.InvalidRepresentation.instance;
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -478,7 +478,7 @@ public class HiddenInternalFunctions {
 
     /*
      * Created as primitive function to avoid incrementing reference count for the argument.
-     * 
+     *
      * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
      * SHARED_PERMANENT_VAL for permanent shared
      */

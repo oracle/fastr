@@ -82,7 +82,7 @@ public abstract class VApply extends RBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Child private LapplyInternalNode doApply = LapplyInternalNodeGen.create(null, null, null);
+    @Child private LapplyInternalNode doApply = LapplyInternalNodeGen.create();
 
     @Child private CastComplexNode castComplex;
     @Child private CastDoubleNode castDouble;

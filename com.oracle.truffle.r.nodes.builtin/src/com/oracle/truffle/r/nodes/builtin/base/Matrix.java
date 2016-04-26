@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "matrix", kind = INTERNAL, parameterNames = {"data", "nrow", "ncol", "isTrue(byrow)", "dimnames", "missingNrow", "missingNcol"})
 public abstract class Matrix extends RBuiltinNode {
@@ -56,7 +55,7 @@ public abstract class Matrix extends RBuiltinNode {
     private RAbstractVector updateDimNames(RAbstractVector vector, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateDimNames = insert(UpdateDimNamesNodeGen.create(new RNode[2], null, null));
+            updateDimNames = insert(UpdateDimNamesNodeGen.create(null));
         }
         return (RAbstractVector) updateDimNames.executeRAbstractContainer(vector, o);
     }
@@ -116,7 +115,7 @@ public abstract class Matrix extends RBuiltinNode {
         int[] dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            transpose = insert(TransposeNodeGen.create(new RNode[1], null, null));
+            transpose = insert(TransposeNodeGen.create(null));
         }
         RAbstractVector res;
         if (empty.profile(data.getLength() == 0)) {
@@ -139,7 +138,7 @@ public abstract class Matrix extends RBuiltinNode {
         int[] dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            transpose = insert(TransposeNodeGen.create(new RNode[1], null, null));
+            transpose = insert(TransposeNodeGen.create(null));
         }
         RAbstractVector res;
         if (empty.profile(data.getLength() == 0)) {

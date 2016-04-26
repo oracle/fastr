@@ -48,7 +48,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which", "value"})
 public abstract class UpdateAttr extends RInvisibleBuiltinNode {
@@ -68,7 +67,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     private RAbstractContainer updateNames(RAbstractContainer container, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateNames = insert(UpdateNamesNodeGen.create(new RNode[2], null, null));
+            updateNames = insert(UpdateNamesNodeGen.create(null));
         }
         return (RAbstractContainer) updateNames.executeStringVector(container, o);
     }
@@ -76,7 +75,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     private RAbstractContainer updateDimNames(RAbstractContainer container, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateDimNames = insert(UpdateDimNamesNodeGen.create(new RNode[2], null, null));
+            updateDimNames = insert(UpdateDimNamesNodeGen.create(null));
         }
         return updateDimNames.executeRAbstractContainer(container, o);
     }

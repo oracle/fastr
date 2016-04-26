@@ -25,8 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.base.Inherits;
@@ -44,21 +42,16 @@ import com.oracle.truffle.r.nodes.builtin.base.IsTypeFunctionsFactory.IsObjectNo
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "digits", type = RNode.class), @NodeChild(value = "quote", type = RNode.class),
-                @NodeChild(value = "naPrint", type = RNode.class), @NodeChild(value = "printGap", type = RNode.class), @NodeChild(value = "right", type = RNode.class),
-                @NodeChild(value = "max", type = RNode.class), @NodeChild(value = "useSource", type = RNode.class), @NodeChild(value = "noOpt", type = RNode.class),
-                @NodeChild(value = "max", type = RNode.class)
-})
-public abstract class ValuePrinterNode extends RNode {
+public abstract class ValuePrinterNode extends RBaseNode {
 
-    @Child private IsArray isArrayBuiltIn = IsArrayNodeGen.create(null, null, null);
-    @Child private IsList isListBuiltIn = IsListNodeGen.create(null, null, null);
-    @Child private Inherits inheritsBuiltIn = InheritsNodeGen.create(null, null, null);
-    @Child private IsS4 isS4BuiltIn = IsS4NodeGen.create(null, null, null);
-    @Child private IsObject isObjectBuiltIn = IsObjectNodeGen.create(null, null, null);
-    @Child private IsMethodsDispatchOn isMethodDispatchOnBuiltIn = IsMethodsDispatchOnNodeGen.create(null, null, null);
+    @Child private IsArray isArrayBuiltIn = IsArrayNodeGen.create(null);
+    @Child private IsList isListBuiltIn = IsListNodeGen.create(null);
+    @Child private Inherits inheritsBuiltIn = InheritsNodeGen.create(null);
+    @Child private IsS4 isS4BuiltIn = IsS4NodeGen.create(null);
+    @Child private IsObject isObjectBuiltIn = IsObjectNodeGen.create(null);
+    @Child private IsMethodsDispatchOn isMethodDispatchOnBuiltIn = IsMethodsDispatchOnNodeGen.create(null);
     @Child private CastStringNode castStringNode = CastStringNode.createNonPreserving();
     @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNode.create();
 

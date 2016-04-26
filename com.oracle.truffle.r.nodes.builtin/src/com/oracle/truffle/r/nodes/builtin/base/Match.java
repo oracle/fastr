@@ -52,7 +52,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
@@ -87,7 +86,7 @@ public abstract class Match extends RBuiltinNode {
     private Object matchRecursive(Object x, Object table, RAbstractIntVector noMatch, Object incomparables) {
         if (matchRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            matchRecursive = insert(MatchNodeGen.create(new RNode[4], null, null));
+            matchRecursive = insert(MatchNodeGen.create(null));
         }
         return matchRecursive.executeRIntVector(x, table, noMatch, incomparables);
     }

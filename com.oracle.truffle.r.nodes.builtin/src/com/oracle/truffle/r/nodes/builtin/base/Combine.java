@@ -78,7 +78,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class Combine extends RBuiltinNode {
 
     public static Combine create() {
-        return CombineNodeGen.create(null, null, null);
+        return CombineNodeGen.create(null);
     }
 
     private static final ArgumentsSignature EMPTY_SIGNATURE = ArgumentsSignature.empty(1);
@@ -92,20 +92,20 @@ public abstract class Combine extends RBuiltinNode {
 
     public abstract Object executeCombine(Object value);
 
+    protected boolean isSimpleArguments(RArgsValuesAndNames args) {
+        return !signatureHasNames(args.getSignature()) && args.getLength() == 1 && !(args.getArgument(0) instanceof RAbstractVector);
+    }
+
     @Specialization(guards = "isSimpleArguments(args)")
     protected Object combineSimple(RArgsValuesAndNames args) {
         controlVisibility();
         return args.getArgument(0);
     }
 
-    protected boolean isSimpleArguments(RArgsValuesAndNames args) {
-        return !signatureHasNames() && args.getLength() == 1 && !(args.getArgument(0) instanceof RAbstractVector);
-    }
-
-    @Specialization(contains = "combineSimple", limit = "1", guards = {"args.getLength() == cachedLength", "cachedPrecedence == precedence(args, cachedLength)"})
+    @Specialization(contains = "combineSimple", limit = "1", guards = {"args.getSignature() == cachedSignature", "cachedPrecedence == precedence(args, cachedSignature.getLength())"})
     protected Object combineCached(RArgsValuesAndNames args, //
-                    @Cached("args.getLength()") int cachedLength, //
-                    @Cached("precedence( args, cachedLength)") int cachedPrecedence, //
+                    @Cached("args.getSignature()") ArgumentsSignature cachedSignature, //
+                    @Cached("precedence( args, cachedSignature.getLength())") int cachedPrecedence, //
                     @Cached("createCast(cachedPrecedence)") CastNode cast, //
                     @Cached("create()") BranchProfile naBranch, //
                     @Cached("create()") BranchProfile naNameBranch, //
@@ -113,6 +113,7 @@ public abstract class Combine extends RBuiltinNode {
                     @Cached("create()") NACheck naNameCheck, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
         controlVisibility();
+        CompilerAsserts.partialEvaluationConstant(cachedSignature);
         CompilerAsserts.partialEvaluationConstant(cachedPrecedence);
 
         if (cachedPrecedence == NO_PRECEDENCE) {
@@ -120,8 +121,8 @@ public abstract class Combine extends RBuiltinNode {
         }
 
         // perform all the casts
-        Object[] elements = new Object[cachedLength];
-        int size = prepareElements(args, cast, cachedPrecedence, elements);
+        Object[] elements = new Object[cachedSignature.getLength()];
+        int size = prepareElements(args.getArguments(), cachedSignature, cast, cachedPrecedence, elements);
 
         // prepare the names (if there are any)
         RStringVector namesVector = hasNamesProfile.profile(hasNames(elements)) ? foldNames(naNameBranch, naNameCheck, elements, size) : null;
@@ -139,14 +140,13 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @ExplodeLoop
-    private int prepareElements(RArgsValuesAndNames args, CastNode cast, int precedence, Object[] elements) {
-        boolean signatureHasNames = signatureHasNames();
+    private int prepareElements(Object[] args, ArgumentsSignature signature, CastNode cast, int precedence, Object[] elements) {
+        boolean signatureHasNames = signatureHasNames(signature);
         CompilerAsserts.partialEvaluationConstant(signatureHasNames);
 
-        Object[] array = args.getArguments();
         int size = 0;
         for (int i = 0; i < elements.length; i++) {
-            Object element = readAndCast(cast, array, i, precedence, signatureHasNames);
+            Object element = readAndCast(cast, args, signature, i, precedence, signatureHasNames);
             elements[i] = element;
             size += getElementSize(element);
         }
@@ -245,8 +245,8 @@ public abstract class Combine extends RBuiltinNode {
         }
     }
 
-    private boolean signatureHasNames() {
-        return getSuppliedSignature() != null && getSuppliedSignature().getNonNullCount() > 0;
+    private static boolean signatureHasNames(ArgumentsSignature signature) {
+        return signature != null && signature.getNonNullCount() > 0;
     }
 
     @TruffleBoundary
@@ -259,7 +259,7 @@ public abstract class Combine extends RBuiltinNode {
                     @Cached("create()") NACheck naCheck, //
                     @Cached("create()") NACheck naNameCheck, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
-        return combineCached(args, args.getLength(), cachedPrecedence, cast, naBranch, naNameBranch, naCheck, naNameCheck, hasNamesProfile);
+        return combineCached(args, args.getSignature(), cachedPrecedence, cast, naBranch, naNameBranch, naCheck, naNameCheck, hasNamesProfile);
     }
 
     @Specialization(guards = "!isArguments(args)")
@@ -267,10 +267,10 @@ public abstract class Combine extends RBuiltinNode {
         return combine.executeCombine(new RArgsValuesAndNames(new Object[]{args}, EMPTY_SIGNATURE));
     }
 
-    private Object readAndCast(CastNode castNode, Object[] values, int index, int precedence, boolean hasNames) {
+    private Object readAndCast(CastNode castNode, Object[] values, ArgumentsSignature signature, int index, int precedence, boolean hasNames) {
         Object value = inputCast.execute(values[index]);
         if (hasNames) {
-            value = namesMerge(castVector(value), getSuppliedSignature().getName(index));
+            value = namesMerge(castVector(value), signature.getName(index));
         }
         return (precedence == EXPRESSION_PRECEDENCE && value instanceof RLanguage) ? value : castNode.execute(value);
     }
@@ -324,7 +324,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     protected Combine createRecursive() {
-        return CombineNodeGen.create(null, null, null);
+        return CombineNodeGen.create(null);
     }
 
     private static RVector createResultVector(int precedence, int size, RStringVector names) {

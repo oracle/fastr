@@ -186,7 +186,7 @@ public class TestBuiltin_attributes extends TestBase {
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2) ; x }");
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(ho = 1, 2, 3) ; x }");
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2, 3) ; x }");
-        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; y<-list(1,2); names(y)<-c(\"hi\", \"\"); attributes(x)<-y; x }");
+        assertEval("{ x <- c(hello=1) ; y<-list(1,2); names(y)<-c(\"hi\", \"\"); attributes(x)<-y; x }");
         assertEval("{ x <- 1; attributes(x) <- list(my = 1) ; y <- x; attributes(y) <- list(his = 2) ; x }");
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi=1) ;  attributes(x) <- NULL ; x }");
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi=1, names=NULL, hello=3, hi=2, hello=NULL) ; x }");
