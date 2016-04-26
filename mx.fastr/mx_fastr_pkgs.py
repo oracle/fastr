@@ -126,7 +126,53 @@ def pkgtest(args):
     out = OutputCapture()
 
     rc = mx_fastr.installpkgs(stacktrace_args + install_args, out=out, err=out)
+    _set_test_status(out.test_info)
 
     shutil.rmtree(install_tmp, ignore_errors=True)
     return rc
+
+def _set_test_status(test_info_dict):
+    for _, test_info in test_info_dict.iteritems():
+        for test_file in test_info.filelist:
+            with open(test_file, 'r') as f:
+                fastr_content = f.read()
+            # where to get GnuR test output?
+            gnur_content = ""
+            result = _fuzzy_compare(gnur_content, fastr_content)
+            test_info.status = "OK" if result == 0 else "FAILED"
+
+def _find_start(content):
+    marker = "Type 'q()' to quit R."
+    for i in range(len(content)):
+        line = content[i]
+        if marker in line:
+            return i + 1
+
+def _find_end(content):
+    marker = "Time elapsed:"
+    for i in range(len(content)):
+        line = content[i]
+        if marker in line:
+            return i - 1
+
+def _fuzzy_compare(gnur_content, fastr_content):
+    gnur_start = _find_start(gnur_content) + 1 # Gnu has extra empty line
+    gnur_end = _find_end(gnur_content)
+    fastr_start = _find_start(fastr_content)
+    fastr_len = len(fastr_content)
+    result = 0
+    i = gnur_start
+    while i + gnur_start < gnur_end:
+        gnur_line = gnur_content[i + gnur_start]
+        if i + fastr_start >= fastr_len:
+            result = 1
+            break
+
+        fastr_line = fastr_content[i + fastr_start]
+        if gnur_line != fastr_line:
+            result = 1
+            break
+        i = i + 1
+    return result
+
 
