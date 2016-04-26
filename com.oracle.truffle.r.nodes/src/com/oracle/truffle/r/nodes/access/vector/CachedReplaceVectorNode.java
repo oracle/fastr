@@ -352,7 +352,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         // convert type for list like values
         switch (this.vectorType) {
             case Language:
-            case DataFrame:
             case Expression:
             case PairList:
                 vector = RType.List;

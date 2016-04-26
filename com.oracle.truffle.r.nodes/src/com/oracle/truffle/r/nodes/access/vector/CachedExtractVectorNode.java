@@ -170,7 +170,6 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         final RVector extractedVector;
         switch (vectorType) {
             case Language:
-            case DataFrame:
             case Expression:
             case PairList:
                 extractedVector = RType.List.create(extractedVectorLength, false);

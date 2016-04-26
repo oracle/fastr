@@ -29,7 +29,6 @@ import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -40,45 +39,17 @@ public abstract class CopyDFAttr extends RInvisibleBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Specialization(guards = "!isRDataFrame(in)")
+    @Specialization()
     protected RAttributable copy(RAbstractContainer in, RAbstractVector out) {
         RVector res = out.materialize();
         res.resetAllAttributes(false);
         return res.copyAttributesFrom(attrProfiles, in);
     }
 
-    @Specialization(guards = "!isRDataFrame(in)")
+    @Specialization()
     protected RAttributable copy(RAbstractContainer in, RFactor out) {
         RVector res = out.getVector();
         res.resetAllAttributes(false);
         return res.copyAttributesFrom(attrProfiles, in);
-    }
-
-    @Specialization(guards = "!isRDataFrame(in)")
-    protected RAttributable copy(RAbstractContainer in, RDataFrame out) {
-        RVector res = out.getVector();
-        res.resetAllAttributes(false);
-        return res.copyAttributesFrom(attrProfiles, in);
-    }
-
-    @Specialization
-    protected RAttributable copy(RDataFrame in, RAbstractVector out) {
-        RVector res = out.materialize();
-        res.resetAllAttributes(false);
-        return res.copyAttributesFrom(attrProfiles, in.getVector());
-    }
-
-    @Specialization
-    protected RAttributable copy(RDataFrame in, RFactor out) {
-        RVector res = out.getVector();
-        res.resetAllAttributes(false);
-        return res.copyAttributesFrom(attrProfiles, in.getVector());
-    }
-
-    @Specialization
-    protected RAttributable copy(RDataFrame in, RDataFrame out) {
-        RVector res = out.getVector();
-        res.resetAllAttributes(false);
-        return res.copyAttributesFrom(attrProfiles, in.getVector());
     }
 }

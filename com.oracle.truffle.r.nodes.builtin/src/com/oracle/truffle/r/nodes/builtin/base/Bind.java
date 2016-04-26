@@ -27,15 +27,19 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RPrecedenceBuiltinNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
 import com.oracle.truffle.r.nodes.function.UseMethodInternalNode;
 import com.oracle.truffle.r.nodes.unary.CastComplexNode;
@@ -54,11 +58,11 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -403,12 +407,44 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         return RRuntime.NAMES_ATTR_EMPTY_VALUE;
     }
 
+    @Child private InheritsCheckNode inheritsCheck = new InheritsCheckNode(RRuntime.CLASS_DATA_FRAME);
+
+    public static final class InheritsCheckNode extends Node {
+
+        @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
+        private final ConditionProfile nullClassProfile = ConditionProfile.createBinaryProfile();
+        @CompilationFinal private ConditionProfile exactMatchProfile;
+        private final String checkedClazz;
+
+        public InheritsCheckNode(String checkedClazz) {
+            this.checkedClazz = checkedClazz;
+            assert RType.fromMode(checkedClazz) == null;
+        }
+
+        public boolean execute(Object value) {
+            RStringVector clazz = classHierarchy.execute(value);
+            if (nullClassProfile.profile(clazz != null)) {
+                for (int j = 0; j < clazz.getLength(); ++j) {
+                    if (exactMatchProfile == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        exactMatchProfile = ConditionProfile.createBinaryProfile();
+                    }
+                    if (exactMatchProfile.profile(clazz.getDataAt(j) == checkedClazz) || clazz.getDataAt(j).equals(checkedClazz)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
     protected boolean isDataFrame(RArgsValuesAndNames args) {
         for (int i = 0; i < args.getLength(); i++) {
-            if (args.getArgument(i) instanceof RDataFrame) {
+            if (inheritsCheck.execute(args.getArgument(i))) {
                 return true;
             }
         }
+
         return false;
     }
 

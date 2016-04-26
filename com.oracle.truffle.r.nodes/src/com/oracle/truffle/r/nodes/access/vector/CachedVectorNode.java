@@ -22,27 +22,26 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+/**
+ * Implements common logic for accessing element of a vector which is used in RW operations:
+ * {@link CachedExtractVectorNode} and {@link CachedReplaceVectorNode}.
+ *
+ * One of the more significant parts is getting dimensions: the built-in function dim has a
+ * specialization for data.frame, i.e. data.frames have different way of getting dimensions, which
+ * is reflected in {@link #loadVectorDimensions(RAbstractContainer)} method.
+ */
 abstract class CachedVectorNode extends RBaseNode {
 
     protected final ElementAccessMode mode;
@@ -57,8 +56,6 @@ abstract class CachedVectorNode extends RBaseNode {
     protected final BranchProfile errorBranch = BranchProfile.create();
     protected final int numberOfDimensions;
     private final int filteredPositionsLength;
-
-    @Child private GetDataFrameDimensionNode getDataFrameDimension;
 
     // if this is non-null, the node needs to throw the error whenever it is executed
     @CompilationFinal protected Runnable error;
@@ -155,18 +152,14 @@ abstract class CachedVectorNode extends RBaseNode {
         }
     }
 
+    @SuppressWarnings("static-method")
     protected final int[] loadVectorDimensions(RAbstractContainer vector) {
-        if (vector instanceof RDataFrame) {
-            // TODO (chumer) its unfortunate that we need this hack for the data frame dimensions
-            // maybe we can rid of this as soon as a data frame is of the same type as a list.
-            if (getDataFrameDimension == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getDataFrameDimension = insert(new GetDataFrameDimensionNode());
-            }
-            return getDataFrameDimension.calculateFrameDimensions((RDataFrame) vector);
-        } else {
-            return vector.getDimensions();
-        }
+        // N.B. (stepan) this method used to be instance method and have special handling for
+        // RDataFrame, which was removed and any test case, which would require this special
+        // handling was not found (see TestBuiltin_extract_dataframe for tests used and further
+        // explanation). This method and note will remain here for a while in case this behavior
+        // crops up somewhere
+        return vector.getDimensions();
     }
 
     public ElementAccessMode getMode() {
@@ -189,38 +182,5 @@ abstract class CachedVectorNode extends RBaseNode {
             }
         }
         return positionString;
-    }
-
-    private final class GetDataFrameDimensionNode extends Node {
-
-        private final ConditionProfile compressedProfile = ConditionProfile.createBinaryProfile();
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-        private final ValueProfile rowNamesProfile = ValueProfile.createClassProfile();
-        private final ConditionProfile intVecProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile nameConditionProfile = ConditionProfile.createBinaryProfile();
-
-        public int[] calculateFrameDimensions(RDataFrame container) {
-            // this largely reproduces code from ShortRowNames
-            Object rowNames = container.getRowNames(attrProfiles);
-            if (nameConditionProfile.profile(rowNames == RNull.instance)) {
-                return new int[]{0, container.getLength()};
-            } else {
-                return new int[]{Math.abs(calculateN((RAbstractVector) rowNames)), container.getLength()};
-            }
-        }
-
-        private int calculateN(RAbstractVector rowNames) {
-            RAbstractVector profiledRowNames = rowNamesProfile.profile(rowNames);
-            if (intVecProfile.profile(profiledRowNames.getRType() == RType.Integer && profiledRowNames.getLength() == 2)) {
-                RAbstractIntVector rowNamesIntVector = (RAbstractIntVector) profiledRowNames;
-                if (compressedProfile.profile(RRuntime.isNA(rowNamesIntVector.getDataAt(0)))) {
-                    return rowNamesIntVector.getDataAt(1);
-                } else {
-                    return profiledRowNames.getLength();
-                }
-            } else {
-                return profiledRowNames.getLength();
-            }
-        }
     }
 }

@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -76,11 +75,6 @@ public abstract class Lengths extends RBuiltinNode {
         return createResult(list, data, useNames);
     }
 
-    @Specialization(guards = "isList(list)")
-    protected RIntVector doList(VirtualFrame frame, RDataFrame list, byte useNames) {
-        return doList(frame, (RList) list.getVector(), useNames);
-    }
-
     @Specialization
     protected RIntVector doNull(@SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") byte useNames) {
         return RDataFactory.createIntVectorFromScalar(1);
@@ -111,9 +105,5 @@ public abstract class Lengths extends RBuiltinNode {
             result.copyNamesFrom(attrProfiles, x);
         }
         return result;
-    }
-
-    protected static boolean isList(RDataFrame dataFrame) {
-        return dataFrame.getVector() instanceof RList;
     }
 }

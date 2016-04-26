@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -1450,12 +1449,6 @@ public class RSerialize {
                             writeItem(RNull.instance);
                         }
                     }
-                } else if (type == SEXPTYPE.FASTR_DATAFRAME) {
-                    RDataFrame dataFrame = (RDataFrame) obj;
-                    // In GnuR this is an object
-                    RVector vec = dataFrame.getVector();
-                    writeItem(vec);
-                    return;
                 } else if (type == SEXPTYPE.FASTR_FACTOR) {
                     RFactor factor = (RFactor) obj;
                     writeItem(factor.getVector());

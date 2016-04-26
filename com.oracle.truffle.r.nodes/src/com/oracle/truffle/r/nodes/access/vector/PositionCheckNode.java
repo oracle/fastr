@@ -75,7 +75,6 @@ abstract class PositionCheckNode extends Node {
     protected static boolean isListLike(RType type) {
         switch (type) {
             case Language:
-            case DataFrame:
             case Expression:
             case PairList:
             case List:

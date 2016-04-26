@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -41,7 +40,6 @@ public abstract class WrapArgumentBaseNode extends RNode {
     @Child protected RNode operand;
 
     private final BranchProfile everSeenVector;
-    private final BranchProfile everSeenDataFrame;
     private final BranchProfile everSeenFactor;
     private final BranchProfile everSeenLanguage;
     private final BranchProfile everSeenFunction;
@@ -54,7 +52,6 @@ public abstract class WrapArgumentBaseNode extends RNode {
         this.operand = operand;
         if (initProfiles) {
             everSeenVector = BranchProfile.create();
-            everSeenDataFrame = BranchProfile.create();
             everSeenFactor = BranchProfile.create();
             everSeenLanguage = BranchProfile.create();
             everSeenFunction = BranchProfile.create();
@@ -63,7 +60,6 @@ public abstract class WrapArgumentBaseNode extends RNode {
             nonShareable = BranchProfile.create();
         } else {
             everSeenVector = null;
-            everSeenDataFrame = null;
             everSeenFactor = null;
             everSeenLanguage = null;
             everSeenFunction = null;
@@ -77,9 +73,6 @@ public abstract class WrapArgumentBaseNode extends RNode {
         if (result instanceof RVector) {
             everSeenVector.enter();
             return (RVector) result;
-        } else if (result instanceof RDataFrame) {
-            everSeenDataFrame.enter();
-            return ((RDataFrame) result).getVector();
         } else if (result instanceof RFactor) {
             everSeenFactor.enter();
             return ((RFactor) result).getVector();
