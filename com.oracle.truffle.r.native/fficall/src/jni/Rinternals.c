@@ -389,6 +389,7 @@ SEXP Rf_install(const char *name) {
 }
 
 SEXP Rf_installChar(SEXP charsxp) {
+	TRACE("%s(%p)\n", charsxp);
 	JNIEnv *thisenv = getEnv();
 	jstring string = stringFromCharSXP(thisenv, charsxp);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createSymbolMethodID, string);

@@ -29,6 +29,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.ffi.jnr.CallRFFIHelper;
 
 public enum RFFIVariables {
     R_Home(REnvVars.rHome()),
@@ -70,7 +71,7 @@ public enum RFFIVariables {
     R_dot_target(RDataFactory.createSymbol(".target")),
     R_SrcrefSymbol(RDataFactory.createSymbol("srcref")),
     R_SrcfileSymbol(RDataFactory.createSymbol("srcfile")),
-    R_NaString(RDataFactory.createStringVectorFromScalar(RRuntime.STRING_NA)),
+    R_NaString(CallRFFIHelper.createCharSXP(RRuntime.STRING_NA)),
     R_NaN(Double.NaN),
     R_PosInf(Double.POSITIVE_INFINITY),
     R_NegInf(Double.NEGATIVE_INFINITY),

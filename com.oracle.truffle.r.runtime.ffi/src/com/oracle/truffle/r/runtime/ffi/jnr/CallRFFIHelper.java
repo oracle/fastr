@@ -92,6 +92,10 @@ public class CallRFFIHelper {
         }
     }
 
+    public static Object createCharSXP(String contents) {
+        return new CharSXPWrapper(contents);
+    }
+
     private static RuntimeException unimplemented() {
         return unimplemented("");
     }
