@@ -13,7 +13,6 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.asBlankArg;
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.indexWidth;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toStringVector;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -84,7 +83,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 if (dims.getLength() == 1) {
                     RList t = Utils.<RList> castTo(vector.getAttr(dummyAttrProfiles, RRuntime.DIMNAMES_ATTR_KEY));
                     if (t != null && t.getDataAt(0) != null) {
-                        RAbstractStringVector nn = toStringVector(t.getAttr(dummyAttrProfiles, RRuntime.NAMES_ATTR_KEY));
+                        RAbstractStringVector nn = Utils.castTo(RRuntime.asAbstractVector(t.getAttr(dummyAttrProfiles, RRuntime.NAMES_ATTR_KEY)));
 
                         if (nn != null) {
                             title = nn.getDataAt(0);
@@ -93,7 +92,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                         }
 
                         jobMode = vector.getLength() == 0 ? JobMode.namedEmpty : JobMode.named;
-                        names = toStringVector(t.getDataAt(0));
+                        names = Utils.castTo(RRuntime.asAbstractVector(t.getDataAt(0)));
                     } else {
                         title = null;
                         names = null;
@@ -115,7 +114,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 Object namesAttr = Utils.castTo(vector.getAttr(dummyAttrProfiles, RRuntime.NAMES_ATTR_KEY));
                 if (namesAttr != null) {
                     if (vector.getLength() > 0) {
-                        names = toStringVector(namesAttr);
+                        names = Utils.castTo(RRuntime.asAbstractVector(namesAttr));
                         jobMode = JobMode.named;
                     } else {
                         names = null;
@@ -703,7 +702,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         }
 
         RAbstractStringVector getDimNamesAt(int dimLevel) {
-            return dimLevel < dimnames.getLength() ? toStringVector(dimnames.getDataAt(dimLevel)) : null;
+            return dimLevel < dimnames.getLength() ? Utils.castTo(RRuntime.asAbstractVector(dimnames.getDataAt(dimLevel))) : null;
         }
     }
 }
