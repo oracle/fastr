@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,24 +21,6 @@
 # questions.
 #
 
-.PHONY: all clean libdir make_subdirs clean_subdirs
+NO_LIBRARY := 1
 
-SUBDIRS = base compiler datasets utils grDevices graphics grid parallel splines stats stats4 methods tools fastr
-export FASTR_LIBRARY_DIR = $(abspath $(TOPDIR)/../library)
-
-all: libdir make_subdirs
-
-make_subdirs:
-	for dir in $(SUBDIRS); do \
-		$(MAKE) PACKAGE=$$dir -C $$dir || exit 1; \
-	done
-
-clean: clean_subdirs
-
-clean_subdirs:
-	for dir in $(SUBDIRS); do \
-		$(MAKE) PACKAGE=$$dir -C $$dir clean || exit 1; \
-	done
-	
-libdir:
-	mkdir -p $(FASTR_LIBRARY_DIR)
+include ../lib.mk
