@@ -539,75 +539,104 @@ public class RSerialize {
                          */
                         setAttributes(pairList, attrItem);
                     }
-                    if (type == SEXPTYPE.CLOSXP) {
-                        closureDepth--;
-                        /*
-                         * Must convert the RPairList to a FastR AST We could convert to an AST
-                         * directly, but it is easier and more robust to deparse and reparse. N.B.
-                         * We always convert closures regardless of whether they are at top level or
-                         * not (and they are not always at the top in the default packages)
-                         */
-                        RPairList rpl = (RPairList) result;
-                        if (FastROptions.debugMatches("printUclosure")) {
-                            Debug.printClosure(rpl);
-                        }
-                        String deparse = RDeparse.deparseDeserialize(rpl);
-                        try {
-                            /*
-                             * The tag of result is the enclosing environment (from NAMESPACESEXP)
-                             * for the function. However the namespace is locked, so can't just eval
-                             * there (and overwrite the promise), so we fix the enclosing frame up
-                             * on return.
-                             */
-                            MaterializedFrame enclosingFrame = ((REnvironment) rpl.getTag()).getFrame();
-                            RFunction func = parseFunction(deparse, enclosingFrame, currentFunctionName);
 
-                            copyAttributes(func, rpl.getAttributes());
-                            result = func;
-                        } catch (Throwable ex) {
-                            throw new RInternalError(ex, "unserialize - failed to eval deparsed closure");
+                    // Unlike GnuR the different types require some special treatment
+                    switch (type) {
+                        case CLOSXP: {
+                            closureDepth--;
+                            /*
+                             * Must convert the RPairList to a FastR AST. We could convert to an AST
+                             * directly, but it is easier and more robust to deparse and reparse.
+                             * N.B. We always convert closures regardless of whether they are at top
+                             * level or not (and they are not always at the top in the default
+                             * packages)
+                             */
+                            RPairList rpl = (RPairList) result;
+                            if (FastROptions.debugMatches("printUclosure")) {
+                                Debug.printClosure(rpl);
+                            }
+                            String deparse = RDeparse.deparseDeserialize(rpl);
+                            try {
+                                /*
+                                 * The tag of result is the enclosing environment (from
+                                 * NAMESPACESEXP) for the function. However the namespace is locked,
+                                 * so can't just eval there (and overwrite the promise), so we fix
+                                 * the enclosing frame up on return.
+                                 */
+                                MaterializedFrame enclosingFrame = ((REnvironment) rpl.getTag()).getFrame();
+                                RFunction func = parseFunction(deparse, enclosingFrame, currentFunctionName);
+
+                                copyAttributes(func, rpl.getAttributes());
+                                result = func;
+                            } catch (Throwable ex) {
+                                throw new RInternalError(ex, "unserialize - failed to eval deparsed closure");
+                            }
+                            break;
                         }
-                    } else if (type == SEXPTYPE.LANGSXP) {
-                        langDepth--;
-                        /*
-                         * N.B. LANGSXP values occur within CLOSXP structures, so we only want to
-                         * convert them to an AST when they occur outside of a CLOSXP, as in the
-                         * CLOSXP case, the entire structure is deparsed at the end. Ditto for
-                         * LANGSXP when specifying a formula
-                         */
-                        if (closureDepth == 0 && langDepth == 0) {
+
+                        case LANGSXP: {
+                            langDepth--;
+                            /*
+                             * N.B. LANGSXP values occur within CLOSXP structures, so we only want
+                             * to convert them to an AST when they occur outside of a CLOSXP, as in
+                             * the CLOSXP case, the entire structure is deparsed at the end. Ditto
+                             * for LANGSXP when specifying a formula
+                             */
+                            if (closureDepth == 0 && langDepth == 0) {
+                                RPairList pl = (RPairList) result;
+                                String deparse = RDeparse.deparseDeserialize(pl);
+                                RExpression expr = parse(deparse);
+                                assert expr.getLength() == 1;
+                                result = expr.getDataAt(0);
+                                RAttributes attrs = pl.getAttributes();
+                                copyAttributes((RAttributable) result, attrs);
+                            }
+                            break;
+                        }
+
+                        case PROMSXP: {
                             RPairList pl = (RPairList) result;
-                            String deparse = RDeparse.deparseDeserialize(pl);
+                            /*
+                             * tag: environment for eval (or RNull if evaluated), car: value:
+                             * RUnboundValue if not evaluated, cdr: expression
+                             */
+                            String deparse = RDeparse.deparseDeserialize(pl.cdr());
                             RExpression expr = parse(deparse);
                             assert expr.getLength() == 1;
-                            result = expr.getDataAt(0);
-                            RAttributes attrs = pl.getAttributes();
-                            copyAttributes((RAttributable) result, attrs);
+                            RLanguage lang = (RLanguage) expr.getDataAt(0);
+                            if (pl.car() == RUnboundValue.instance) {
+                                REnvironment env = pl.getTag() == RNull.instance ? REnvironment.baseEnv() : (REnvironment) pl.getTag();
+                                result = RDataFactory.createPromise(lang.getRep(), env);
+                            } else {
+                                result = RDataFactory.createPromise(PromiseType.NO_ARG, OptType.PROMISED, lang.getRep(), pl.car());
+                            }
+                            break;
                         }
-                    } else if (type == SEXPTYPE.PROMSXP) {
-                        RPairList pl = (RPairList) result;
-                        /*
-                         * tag: environment for eval (or RNull if evaluated), car: value:
-                         * RUnboundValue if not evaluated, cdr: expression
-                         */
-                        String deparse = RDeparse.deparseDeserialize(pl.cdr());
-                        RExpression expr = parse(deparse);
-                        assert expr.getLength() == 1;
-                        RLanguage lang = (RLanguage) expr.getDataAt(0);
-                        if (pl.car() == RUnboundValue.instance) {
-                            REnvironment env = pl.getTag() == RNull.instance ? REnvironment.baseEnv() : (REnvironment) pl.getTag();
-                            result = RDataFactory.createPromise(lang.getRep(), env);
-                        } else {
-                            result = RDataFactory.createPromise(PromiseType.NO_ARG, OptType.PROMISED, lang.getRep(), pl.car());
+
+                        case DOTSXP: {
+                            RPairList pl = (RPairList) result;
+                            int len = pl.getLength();
+                            Object[] values = new Object[len];
+                            for (int i = 0; i < len; i++) {
+                                values[i] = pl.car();
+                                if (i < len - 1) {
+                                    pl = (RPairList) pl.cdr();
+                                }
+                            }
+                            return new RArgsValuesAndNames(values, ArgumentsSignature.empty(len));
                         }
+
+                        case LISTSXP:
+                            break;
                     }
+
                     ((RTypedValue) result).setGPBits(levs);
                     return checkResult(result);
                 }
 
                 /*
-                 * These break out of the switch to have their ATTR, LEVELS, and OBJECT fields
-                 * filled in.
+                 * These break out of the top level switch to have their ATTR, LEVELS, and OBJECT
+                 * fields filled in.
                  */
 
                 case EXPRSXP:
@@ -1366,6 +1395,10 @@ public class RSerialize {
                 return SEXPTYPE.MISSINGARG_SXP;
             if (item == REnvironment.baseNamespaceEnv())
                 return SEXPTYPE.BASENAMESPACE_SXP;
+            if (item instanceof RArgsValuesAndNames && ((RArgsValuesAndNames) item).getLength() == 0) {
+                // empty DOTSXP
+                return SEXPTYPE.NILVALUE_SXP;
+            }
             return null;
         }
 
@@ -1685,7 +1718,9 @@ public class RSerialize {
                                 case DOTSXP: {
                                     RArgsValuesAndNames rvn = (RArgsValuesAndNames) obj;
                                     // This in GnuR is a pairlist
-                                    for (int i = 0; i < rvn.getLength(); i++) {
+                                    int len = rvn.getLength();
+                                    assert len > 0;
+                                    for (int i = 0; i < len; i++) {
                                         Object rvnObj = rvn.getArgument(i);
                                         writeItem(rvnObj);
                                     }
