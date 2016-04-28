@@ -37,18 +37,20 @@ import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.TraceFunctions;
 import com.oracle.truffle.r.nodes.builtin.base.TraceFunctionsFactory.PrimTraceNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.TraceFunctionsFactory.PrimUnTraceNodeGen;
+import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
+import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
+import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * This a FastR-specific version of the standard {@code trace} function which uses the
@@ -106,9 +108,10 @@ public class FastRTrace {
     public abstract static class Trace extends Helper {
 
         @Child private TraceFunctions.PrimTrace primTrace;
+        @Child private CastLogicalNode castLogical;
 
         @Specialization
-        protected Object trace(VirtualFrame frame, Object whatObj, Object tracer, Object exit, Object at, Object print, Object signature, Object whereObj) {
+        protected Object trace(VirtualFrame frame, Object whatObj, Object tracer, Object exit, Object at, Object printObj, Object signature, Object whereObj) {
             controlVisibility();
             Object what = whatObj;
             checkWhat(what);
@@ -122,7 +125,7 @@ public class FastRTrace {
             }
             RFunction func = checkFunction(what);
 
-            if (tracer == RMissing.instance && exit == RMissing.instance && at == RMissing.instance && print == RMissing.instance && signature == RMissing.instance) {
+            if (tracer == RMissing.instance && exit == RMissing.instance && at == RMissing.instance && printObj == RMissing.instance && signature == RMissing.instance) {
                 // simple case, nargs() == 1
                 if (primTrace == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -130,26 +133,36 @@ public class FastRTrace {
                 }
                 return primTrace.execute(frame, func);
             } else {
-                complexCase(func, tracer, exit, what, print, signature);
+                if (at != RMissing.instance) {
+                    throw RError.nyi(this, "'at'");
+                }
+                boolean print = true;
+                if (printObj != RMissing.instance) {
+                    if (castLogical == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        castLogical = insert(CastLogicalNodeGen.create(false, false, false));
+                    }
+                    print = RRuntime.fromLogical((byte) castLogical.execute(printObj));
+                }
+                complexCase(func, tracer, exit, at, print, signature);
             }
 
-            // supposed to return the function name
-            return RNull.instance;
+            return func.toString();
         }
 
         @SuppressWarnings("unused")
         @TruffleBoundary
-        private void complexCase(RFunction func, Object tracer, Object exit, Object at, Object print, Object signature) {
+        private void complexCase(RFunction func, Object tracerObj, Object exit, Object at, boolean print, Object signature) {
             // the complex case
-            RSyntaxNode tracerNode;
-            if (tracer instanceof RFunction) {
-                tracerNode = RASTUtils.createCall(tracer, false, ArgumentsSignature.empty(0));
-            } else if (tracer instanceof RLanguage) {
-                tracerNode = ((RLanguage) tracer).getRep().asRSyntaxNode();
+            RLanguage tracer;
+            if (tracerObj instanceof RFunction) {
+                tracer = RDataFactory.createLanguage(RASTUtils.createCall(tracerObj, false, ArgumentsSignature.empty(0)).asRNode());
+            } else if (tracerObj instanceof RLanguage) {
+                tracer = (RLanguage) tracerObj;
             } else {
                 throw RError.error(this, RError.Message.GENERIC, "tracer is unexpected type");
             }
-            RContext.getRRuntimeASTAccess().enableStatementTrace(func, tracerNode, at);
+            TraceHandling.enableStatementTrace(func, tracer, exit, at, print);
         }
 
     }
@@ -182,8 +195,8 @@ public class FastRTrace {
             } else {
                 throw RError.nyi(this, "method tracing");
             }
-            // supposed to return the function name
-            return RNull.instance;
+
+            return func.toString();
         }
     }
 }
