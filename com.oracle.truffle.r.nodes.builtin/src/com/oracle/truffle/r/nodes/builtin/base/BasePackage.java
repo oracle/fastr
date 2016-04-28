@@ -70,7 +70,7 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRSyntaxTreeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRThrowIt;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRThrowItNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTrace;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRTraceNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRTraceFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTree;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTreeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTreeStats;
@@ -303,7 +303,8 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRStackTrace.class, FastRStackTraceNodeGen::create);
         add(FastRSyntaxTree.class, FastRSyntaxTreeNodeGen::create);
         add(FastRThrowIt.class, FastRThrowItNodeGen::create);
-        add(FastRTrace.class, FastRTraceNodeGen::create);
+        add(FastRTrace.Trace.class, FastRTraceFactory.TraceNodeGen::create);
+        add(FastRTrace.Untrace.class, FastRTraceFactory.UntraceNodeGen::create);
         add(FastRTree.class, FastRTreeNodeGen::create);
         add(FastRTreeStats.class, FastRTreeStatsNodeGen::create);
         add(FileFunctions.BaseName.class, FileFunctionsFactory.BaseNameNodeGen::create);

@@ -581,8 +581,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public void enableStatementTrace(RFunction func, RSyntaxNode tracerNode) {
-        TraceHandling.enableStatementTrace(func, tracerNode);
+    public void enableStatementTrace(RFunction func, RSyntaxNode tracerNode, Object at) {
+        TraceHandling.enableStatementTrace(func, tracerNode, at);
     }
 
     @Override

@@ -95,7 +95,7 @@ public class TraceHandling {
     }
 
     @SuppressWarnings("unused")
-    public static boolean enableStatementTrace(RFunction func, RSyntaxNode tracer) {
+    public static boolean enableStatementTrace(RFunction func, RSyntaxNode tracer, Object at) {
         return false;
     }
 
