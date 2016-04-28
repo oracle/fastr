@@ -71,6 +71,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.instrument.RPackageSource;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 // Code loosely transcribed from GnuR serialize.c.
 
@@ -589,7 +590,9 @@ public class RSerialize {
                                 assert expr.getLength() == 1;
                                 result = expr.getDataAt(0);
                                 RAttributes attrs = pl.getAttributes();
-                                copyAttributes((RAttributable) result, attrs);
+                                if (result instanceof RAttributable) {
+                                    copyAttributes((RAttributable) result, attrs);
+                                }
                             }
                             break;
                         }
@@ -603,12 +606,20 @@ public class RSerialize {
                             String deparse = RDeparse.deparseDeserialize(pl.cdr());
                             RExpression expr = parse(deparse);
                             assert expr.getLength() == 1;
-                            RLanguage lang = (RLanguage) expr.getDataAt(0);
+                            RBaseNode rep;
+                            if (expr.getDataAt(0) instanceof RLanguage) {
+                                RLanguage lang = (RLanguage) expr.getDataAt(0);
+                                rep = lang.getRep();
+                            } else if (expr.getDataAt(0) instanceof RSymbol) {
+                                rep = RContext.getRRuntimeASTAccess().createReadVariableNode(((RSymbol) expr.getDataAt(0)).getName());
+                            } else {
+                                rep = RContext.getRRuntimeASTAccess().createConstantNode(expr.getDataAt(0));
+                            }
                             if (pl.car() == RUnboundValue.instance) {
                                 REnvironment env = pl.getTag() == RNull.instance ? REnvironment.baseEnv() : (REnvironment) pl.getTag();
-                                result = RDataFactory.createPromise(lang.getRep(), env);
+                                result = RDataFactory.createPromise(rep, env);
                             } else {
-                                result = RDataFactory.createPromise(PromiseType.NO_ARG, OptType.PROMISED, lang.getRep(), pl.car());
+                                result = RDataFactory.createPromise(PromiseType.NO_ARG, OptType.PROMISED, rep, pl.car());
                             }
                             break;
                         }
@@ -630,7 +641,12 @@ public class RSerialize {
                             break;
                     }
 
-                    ((RTypedValue) result).setGPBits(levs);
+                    if (!(result instanceof RScalar)) {
+                        ((RTypedValue) result).setGPBits(levs);
+                    } else {
+                        // for now we only record S4-ness here, and in this case it shoud be 0
+                        assert (levs == 0);
+                    }
                     return checkResult(result);
                 }
 
