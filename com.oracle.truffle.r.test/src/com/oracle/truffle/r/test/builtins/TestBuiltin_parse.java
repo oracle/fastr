@@ -37,4 +37,9 @@ public class TestBuiltin_parse extends TestBase {
     public void testParseDataFrame() {
         assertEval(Ignored.ImplementationError, "eval(parse(text=deparse(data.frame(x=c(1)))))");
     }
+
+    @Test
+    public void test() {
+        assertEval("{ typeof(parse(text = \"foo\", keep.source = FALSE, srcfile = NULL)[[1]]) }");
+    }
 }
