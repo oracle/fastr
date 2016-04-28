@@ -41,7 +41,6 @@ public abstract class DimNames extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final ConditionProfile nullProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile dataframeProfile = BranchProfile.create();
     private final BranchProfile factorProfile = BranchProfile.create();
     private final BranchProfile otherProfile = BranchProfile.create();
 
