@@ -20,14 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastr;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RNull;
 
-public abstract class FastRTypeof extends RExternalBuiltinNode.Arg1 {
+/**
+ * Just a convenient way to inspect values in the Java debugger from the R shell.
+ */
+@RBuiltin(name = ".fastr.inspect", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"..."})
+public abstract class FastRInspect extends RInvisibleBuiltinNode {
     @Specialization
-    protected String typeof(Object x) {
-        return x.getClass().getSimpleName();
+    public Object call(@SuppressWarnings("unused") RArgsValuesAndNames args) {
+        controlVisibility();
+        return RNull.instance;
     }
 }

@@ -23,8 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.r.library.fastr.FastRContext;
-import com.oracle.truffle.r.library.fastr.FastRContextFactory;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNodeGen;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanNodeGen;
@@ -43,10 +41,40 @@ import com.oracle.truffle.r.nodes.builtin.base.fastpaths.VectorFastPathsFactory.
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.VectorFastPathsFactory.IntegerFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.DotC;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.DotCNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.foreign.FastR;
-import com.oracle.truffle.r.nodes.builtin.base.foreign.FastRNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.ForeignFunctions;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.ForeignFunctionsFactory;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRCallCounting;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRCallCountingFactory;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRCompile;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRCompileNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRContext;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebug;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebugNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRDumpTrees;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRDumpTreesNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRFunctionTimer;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRFunctionTimerFactory;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRIdentity;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRIdentityNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRInspect;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRInspectNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRInteropFactory;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfo;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfoNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRStackTrace;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRStackTraceNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSyntaxTree;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSyntaxTreeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRThrowIt;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRThrowItNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRTrace;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRTraceNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRTree;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRTreeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRTreeStats;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRTreeStatsNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNode;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNodeGen;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
@@ -60,8 +88,6 @@ public class BasePackage extends RBuiltinPackage {
 
     public BasePackage() {
         super("base");
-
-        add(FastRContext.GetBuiltin.class, FastRContextFactory.GetBuiltinNodeGen::create);
 
         /*
          * Primitive operations (these are really builtins, but not currently defined that way, so
@@ -249,7 +275,37 @@ public class BasePackage extends RBuiltinPackage {
         add(WithVisible.class, WithVisibleNodeGen::create);
         add(Exists.class, ExistsNodeGen::create);
         add(Expression.class, ExpressionNodeGen::create);
-        add(FastR.class, FastRNodeGen::create);
+        add(FastRCallCounting.CreateCallCounter.class, FastRCallCountingFactory.CreateCallCounterNodeGen::create);
+        add(FastRCallCounting.GetCallCounter.class, FastRCallCountingFactory.GetCallCounterNodeGen::create);
+        add(FastRCompile.class, FastRCompileNodeGen::create);
+        add(FastRContext.CloseChannel.class, FastRContextFactory.CloseChannelNodeGen::create);
+        add(FastRContext.Create.class, FastRContextFactory.CreateNodeGen::create);
+        add(FastRContext.CreateChannel.class, FastRContextFactory.CreateChannelNodeGen::create);
+        add(FastRContext.Eval.class, FastRContextFactory.EvalNodeGen::create);
+        add(FastRContext.Get.class, FastRContextFactory.GetNodeGen::create);
+        add(FastRContext.GetChannel.class, FastRContextFactory.GetChannelNodeGen::create);
+        add(FastRContext.ChannelPoll.class, FastRContextFactory.ChannelPollNodeGen::create);
+        add(FastRContext.ChannelReceive.class, FastRContextFactory.ChannelReceiveNodeGen::create);
+        add(FastRContext.ChannelSelect.class, FastRContextFactory.ChannelSelectNodeGen::create);
+        add(FastRContext.ChannelSend.class, FastRContextFactory.ChannelSendNodeGen::create);
+        add(FastRContext.Spawn.class, FastRContextFactory.SpawnNodeGen::create);
+        add(FastRContext.Join.class, FastRContextFactory.JoinNodeGen::create);
+        add(FastRDebug.class, FastRDebugNodeGen::create);
+        add(FastRDumpTrees.class, FastRDumpTreesNodeGen::create);
+        add(FastRFunctionTimer.CreateFunctionTimer.class, FastRFunctionTimerFactory.CreateFunctionTimerNodeGen::create);
+        add(FastRFunctionTimer.GetFunctionTimer.class, FastRFunctionTimerFactory.GetFunctionTimerNodeGen::create);
+        add(FastRIdentity.class, FastRIdentityNodeGen::create);
+        add(FastRInspect.class, FastRInspectNodeGen::create);
+        add(FastRInterop.Eval.class, FastRInteropFactory.EvalNodeGen::create);
+        add(FastRInterop.Export.class, FastRInteropFactory.ExportNodeGen::create);
+        add(FastRInterop.Import.class, FastRInteropFactory.ImportNodeGen::create);
+        add(FastRRefCountInfo.class, FastRRefCountInfoNodeGen::create);
+        add(FastRStackTrace.class, FastRStackTraceNodeGen::create);
+        add(FastRSyntaxTree.class, FastRSyntaxTreeNodeGen::create);
+        add(FastRThrowIt.class, FastRThrowItNodeGen::create);
+        add(FastRTrace.class, FastRTraceNodeGen::create);
+        add(FastRTree.class, FastRTreeNodeGen::create);
+        add(FastRTreeStats.class, FastRTreeStatsNodeGen::create);
         add(FileFunctions.BaseName.class, FileFunctionsFactory.BaseNameNodeGen::create);
         add(FileFunctions.DirCreate.class, FileFunctionsFactory.DirCreateNodeGen::create);
         add(FileFunctions.DirExists.class, FileFunctionsFactory.DirExistsNodeGen::create);
@@ -315,8 +371,6 @@ public class BasePackage extends RBuiltinPackage {
         add(HiddenInternalFunctions.MakeLazy.class, HiddenInternalFunctionsFactory.MakeLazyNodeGen::create);
         add(HiddenInternalFunctions.GetVarsFromFrame.class, HiddenInternalFunctionsFactory.GetVarsFromFrameNodeGen::create);
         add(HiddenInternalFunctions.LazyLoadDBinsertValue.class, HiddenInternalFunctionsFactory.LazyLoadDBinsertValueNodeGen::create);
-        add(HiddenInternalFunctions.RefCountInfo.class, HiddenInternalFunctionsFactory.RefCountInfoNodeGen::create);
-        add(HiddenInternalFunctions.Identity.class, HiddenInternalFunctionsFactory.IdentityNodeGen::create);
         add(IConv.class, IConvNodeGen::create);
         add(Identical.class, Identical::create);
         add(NumericalFunctions.Im.class, NumericalFunctionsFactory.ImNodeGen::create);

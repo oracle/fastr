@@ -20,28 +20,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastr;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.instrument.RPackageSource;
 
-public abstract class InteropImport extends RExternalBuiltinNode.Arg1 {
+public class FastRPkgSource {
 
-    @Specialization
-    @TruffleBoundary
-    protected Object debugSource(Object name) {
-        String stringName = RRuntime.asString(name);
-        if (stringName == null) {
-            throw RError.error(this, RError.Message.INVALID_ARG_TYPE, "name");
+    public abstract static class PreLoad extends RExternalBuiltinNode.Arg2 {
+        @Specialization
+        protected RNull preLoad(RAbstractStringVector pkg, RAbstractStringVector fname) {
+            RPackageSource.preLoad(pkg.getDataAt(0), fname.getDataAt(0));
+            return RNull.instance;
         }
-        Object object = RContext.getInstance().getEnv().importSymbol(stringName);
-        if (object == null) {
-            throw RError.error(this, RError.Message.NO_IMPORT_OBJECT, stringName);
+    }
+
+    public abstract static class PostLoad extends RExternalBuiltinNode.Arg3 {
+        @Specialization
+        protected RNull postLoad(RAbstractStringVector pkg, RAbstractStringVector fname, Object val) {
+            RPackageSource.postLoad(pkg.getDataAt(0), fname.getDataAt(0), val);
+            return RNull.instance;
         }
-        return object;
+    }
+
+    public abstract static class Done extends RExternalBuiltinNode.Arg1 {
+        @Specialization
+        protected RNull done(@SuppressWarnings("unused") RAbstractStringVector pkg) {
+            RPackageSource.saveMap();
+            return RNull.instance;
+        }
     }
 }

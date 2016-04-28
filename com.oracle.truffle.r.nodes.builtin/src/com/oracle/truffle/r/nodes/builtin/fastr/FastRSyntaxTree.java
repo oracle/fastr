@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastr;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import java.io.IOException;
 
@@ -30,13 +30,16 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -62,10 +65,18 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  * </ol>
  *
  */
-public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
+@RBuiltin(name = ".fastr.syntaxtree", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func", "visitMode", "printSource", "printTags"})
+public abstract class FastRSyntaxTree extends RInvisibleBuiltinNode {
+
+    @Override
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, "rsyntaxnode", RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE};
+    }
+
     @Specialization
     @TruffleBoundary
     protected RNull printTree(RFunction function, RAbstractStringVector visitMode, byte printSourceLogical, byte printTagsLogical) {
+        controlVisibility();
         boolean printSource = RRuntime.fromLogical(printSourceLogical);
         boolean printTags = RRuntime.fromLogical(printTagsLogical);
         FunctionDefinitionNode root = (FunctionDefinitionNode) function.getTarget().getRootNode();
@@ -153,6 +164,9 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg4 {
                 };
                 visitor.accept(root.getBody());
                 break;
+
+            default:
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "visitMode");
 
         }
         return RNull.instance;

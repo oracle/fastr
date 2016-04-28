@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,18 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastr;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RNull;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-/**
- * Just a convenient way to inspect values in the Java debugger from the R shell.
- */
-public final class FastRInspect extends RExternalBuiltinNode {
-    @Override
-    public Object call(RArgsValuesAndNames args) {
-        return RNull.instance;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+
+@RBuiltin(aliases = "fastr.identity", name = ".fastr.identity", kind = PRIMITIVE, parameterNames = {""})
+public abstract class FastRIdentity extends RBuiltinNode {
+    @Specialization
+    @TruffleBoundary
+    protected int typeof(Object x) {
+        return System.identityHashCode(x);
     }
 }

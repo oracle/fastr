@@ -20,23 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastr;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.instrumentation.REntryCounters;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 public class FastRCallCounting {
 
-    public abstract static class CreateCallCounter extends RExternalBuiltinNode.Arg1 {
+    @RBuiltin(name = ".fastr.createcc", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func"})
+    public abstract static class CreateCallCounter extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RNull createCallCounter(RFunction function) {
+            controlVisibility();
             if (!function.isBuiltin()) {
                 REntryCounters.FunctionListener.installCounter(function);
             }
@@ -50,10 +54,12 @@ public class FastRCallCounting {
         }
     }
 
-    public abstract static class GetCallCounter extends RExternalBuiltinNode.Arg1 {
+    @RBuiltin(name = ".fastr.getcc", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func"})
+    public abstract static class GetCallCounter extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected Object getCallCount(RFunction function) {
+            controlVisibility();
             if (!function.isBuiltin()) {
                 int entryCount = REntryCounters.FunctionListener.findCounter(function).getEnterCount();
                 if (entryCount < 0) {

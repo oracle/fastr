@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastr;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,25 +38,34 @@ import com.oracle.truffle.api.nodes.NodeFieldAccessor.NodeFieldKind;
 import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.nodes.RRootNode;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
  * Dump Truffle trees to a listening IGV instance, if any. If igvDump == FALSE, dumps tree to
  * .dot-file in the cwd
  */
-public abstract class FastRDumpTrees extends RExternalBuiltinNode.Arg3 {
+@RBuiltin(name = ".fastr.dumptrees", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func", "igvDump", "verbose"})
+public abstract class FastRDumpTrees extends RBuiltinNode {
 
     private static final int FUNCTION_LENGTH_LIMIT = 40;
     private static final String DOT_TREE_FILE_NAME = "tree.dot";
 
+    @Override
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE};
+    }
+
     @Specialization
     protected RNull dump(RFunction function, byte igvDump, byte verbose) {
-
+        controlVisibility();
         RootNode root = function.getTarget().getRootNode();
         if (igvDump == RRuntime.LOGICAL_FALSE) {
             // Use .dot dump instead

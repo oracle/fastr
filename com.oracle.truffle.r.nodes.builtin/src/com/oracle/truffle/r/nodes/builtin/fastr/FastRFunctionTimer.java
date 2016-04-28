@@ -20,24 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastr;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.instrumentation.RNodeTimer;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class FastRFunctionTimer {
-    public abstract static class CreateFunctionTimer extends RExternalBuiltinNode.Arg1 {
+
+    @RBuiltin(name = ".fastr.createtimer", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func"})
+    public abstract static class CreateFunctionTimer extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RNull createFunctionTimer(RFunction function) {
+            controlVisibility();
             if (!function.isBuiltin()) {
                 RNodeTimer.StatementListener.installTimer(function);
             }
@@ -51,10 +58,17 @@ public class FastRFunctionTimer {
         }
     }
 
-    public abstract static class GetFunctionTimer extends RExternalBuiltinNode.Arg2 {
+    @RBuiltin(name = ".fastr.gettimer", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func", "scale"})
+    public abstract static class GetFunctionTimer extends RBuiltinNode {
+        @Override
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, "nanos"};
+        }
+
         @Specialization
         @TruffleBoundary
         protected Object getFunctionTimer(RFunction function, RAbstractStringVector scale) {
+            controlVisibility();
             if (!function.isBuiltin()) {
                 long timeInfo = RNodeTimer.StatementListener.findTimer(function);
                 if (timeInfo < 0) {
@@ -73,6 +87,8 @@ public class FastRFunctionTimer {
                         case "secs":
                             timeVal = timeVal / 1000000000.0;
                             break;
+                        default:
+                            throw RError.error(this, RError.Message.GENERIC, "invalid scale: one of 'nanos, micros, millis, secs' expected");
                     }
                     return RDataFactory.createDoubleVectorFromScalar(timeVal);
                 }

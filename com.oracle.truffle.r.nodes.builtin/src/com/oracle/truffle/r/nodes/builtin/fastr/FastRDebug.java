@@ -20,37 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastr;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.instrument.RPackageSource;
 
-public class FastRPkgSource {
-
-    public abstract static class PreLoad extends RExternalBuiltinNode.Arg2 {
-        @Specialization
-        protected RNull preLoad(RAbstractStringVector pkg, RAbstractStringVector fname) {
-            RPackageSource.preLoad(pkg.getDataAt(0), fname.getDataAt(0));
-            return RNull.instance;
+@RBuiltin(name = ".fastr.debug", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"values"})
+public abstract class FastRDebug extends RInvisibleBuiltinNode {
+    @Specialization
+    protected RNull debug(RAbstractStringVector vec) {
+        controlVisibility();
+        for (int i = 0; i < vec.getLength(); i++) {
+            FastROptions.debugUpdate(vec.getDataAt(i));
         }
+        return RNull.instance;
     }
 
-    public abstract static class PostLoad extends RExternalBuiltinNode.Arg3 {
-        @Specialization
-        protected RNull postLoad(RAbstractStringVector pkg, RAbstractStringVector fname, Object val) {
-            RPackageSource.postLoad(pkg.getDataAt(0), fname.getDataAt(0), val);
-            return RNull.instance;
-        }
-    }
-
-    public abstract static class Done extends RExternalBuiltinNode.Arg1 {
-        @Specialization
-        protected RNull done(@SuppressWarnings("unused") RAbstractStringVector pkg) {
-            RPackageSource.saveMap();
-            return RNull.instance;
-        }
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object fallback(Object a1) {
+        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "element");
     }
 }

@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastr;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -29,13 +29,17 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RMissing;
 
-public abstract class FastRCompile extends RExternalBuiltinNode.Arg2 {
+@RBuiltin(name = ".fastr.compile", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func", "background"})
+public abstract class FastRCompile extends RBuiltinNode {
 
     private static final class Compiler {
         private final Class<?> optimizedCallTarget;
@@ -72,8 +76,14 @@ public abstract class FastRCompile extends RExternalBuiltinNode.Arg2 {
 
     private static final Compiler compiler = Compiler.getCompiler();
 
+    @Override
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
+    }
+
     @Specialization
     protected byte compileFunction(RFunction function, byte background) {
+        controlVisibility();
         if (compiler != null) {
             try {
                 if (compiler.compile(function.getTarget(), background == RRuntime.LOGICAL_TRUE)) {

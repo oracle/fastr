@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastr;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import java.io.IOException;
 
@@ -31,6 +31,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RChannel;
@@ -54,28 +55,42 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public class FastRContext {
 
-    public abstract static class Create extends RExternalBuiltinNode.Arg2 {
+    // TODO remove aliases once all clients are converted
+
+    @RBuiltin(aliases = "fastr.context.create", name = ".fastr.context.create", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"args", "kind"})
+    public abstract static class Create extends RBuiltinNode {
+
+        @Override
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{"", "SHARE_NOTHING"};
+        }
+
         @Specialization
         @TruffleBoundary
-        protected int create(RAbstractStringVector args, RAbstractIntVector kindVec) {
-            RContext.ContextKind kind = RContext.ContextKind.VALUES[kindVec.getDataAt(0) - 1];
-            RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, args.materialize().getDataCopy());
-            return ContextInfo.createDeferred(options, kind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
+        protected int create(RAbstractStringVector args, RAbstractStringVector kindVec) {
+            controlVisibility();
+            try {
+                RContext.ContextKind kind = RContext.ContextKind.valueOf(kindVec.getDataAt(0));
+                RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, args.materialize().getDataCopy());
+                return ContextInfo.createDeferred(options, kind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
+            } catch (IllegalArgumentException ex) {
+                throw RError.error(this, RError.Message.GENERIC, "invalid kind argument");
+            }
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected int create(Object args, Object kindVec) {
+            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
 
-    @RBuiltin(name = "__fastr_get_context", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
-    public abstract static class GetBuiltin extends RBuiltinNode {
-        @Specialization
-        protected Object get() {
-            return RContext.getInstance();
-        }
-    }
-
-    public abstract static class Get extends RExternalBuiltinNode.Arg0 {
+    @RBuiltin(aliases = "fastr.context.get", name = ".fastr.context.get", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
+    public abstract static class Get extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected Object get() {
+            controlVisibility();
             return RContext.getInstance();
         }
     }
@@ -102,10 +117,12 @@ public class FastRContext {
         }
     }
 
-    public abstract static class Spawn extends RExternalBuiltinNode.Arg2 {
+    @RBuiltin(aliases = "fastr.context.spawn", name = ".fastr.context.spawn", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts", "exprs"})
+    public abstract static class Spawn extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary
-        protected RNull eval(RAbstractIntVector contexts, RAbstractStringVector exprs) {
+        protected RNull spawn(RAbstractIntVector contexts, RAbstractStringVector exprs) {
+            controlVisibility();
             RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
             for (int i = 0; i < threads.length; i++) {
                 ContextInfo info = checkContext(contexts.getDataAt(i), this);
@@ -116,11 +133,19 @@ public class FastRContext {
             }
             return RNull.instance;
         }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected RNull spawn(Object contexts, Object exprs) {
+            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        }
     }
 
-    public abstract static class Join extends RExternalBuiltinNode.Arg1 {
+    @RBuiltin(aliases = "fastr.context.join", name = ".fastr.context.join", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts"})
+    public abstract static class Join extends RInvisibleBuiltinNode {
         @Specialization
         protected RNull eval(RAbstractIntVector contexts) {
+            controlVisibility();
             try {
                 for (int i = 0; i < contexts.getLength(); i++) {
                     Thread thread = RContext.EvalThread.threads.get(contexts.getDataAt(i));
@@ -137,6 +162,12 @@ public class FastRContext {
             }
             return RNull.instance;
         }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected RNull join(Object contexts) {
+            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        }
     }
 
     /**
@@ -145,10 +176,12 @@ public class FastRContext {
      * It may also have an attribute "error" if the evaluation threw an exception, in which case the
      * result will be NA.
      */
-    public abstract static class Eval extends RExternalBuiltinNode.Arg3 {
+    @RBuiltin(aliases = "fastr.context.eval", name = ".fastr.context.eval", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts", "exprs", "par"})
+    public abstract static class Eval extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected Object eval(RAbstractIntVector contexts, RAbstractStringVector exprs, byte par) {
+            controlVisibility();
             Object[] results = new Object[contexts.getLength()];
             if (RRuntime.fromLogical(par)) {
                 RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
@@ -193,6 +226,12 @@ public class FastRContext {
             }
             return RDataFactory.createList(results);
         }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected RNull eval(Object contexts, Object exprs, Object par) {
+            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        }
     }
 
     private static ContextInfo checkContext(int contextId, RBaseNode invokingNode) throws RError {
@@ -213,10 +252,12 @@ public class FastRContext {
         }
     }
 
-    public abstract static class CreateChannel extends RExternalBuiltinNode.Arg1 {
+    @RBuiltin(aliases = "fastr.channel.create", name = ".fastr.channel.create", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"key"})
+    public abstract static class CreateChannel extends RBuiltinNode {
         @Specialization(guards = "key.getLength() == 1")
         @TruffleBoundary
         protected int createChannel(RAbstractIntVector key) {
+            controlVisibility();
             return RChannel.createChannel(key.getDataAt(0));
         }
 
@@ -226,10 +267,12 @@ public class FastRContext {
         }
     }
 
-    public abstract static class GetChannel extends RExternalBuiltinNode.Arg1 {
+    @RBuiltin(aliases = "fastr.channel.get", name = ".fastr.channel.get", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"key"})
+    public abstract static class GetChannel extends RBuiltinNode {
         @Specialization(guards = "key.getLength() == 1")
         @TruffleBoundary
         protected int getChannel(RAbstractIntVector key) {
+            controlVisibility();
             return RChannel.getChannel(key.getDataAt(0));
         }
 
@@ -239,10 +282,12 @@ public class FastRContext {
         }
     }
 
-    public abstract static class CloseChannel extends RExternalBuiltinNode.Arg1 {
+    @RBuiltin(aliases = "fastr.channel.close", name = ".fastr.channel.close", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
+    public abstract static class CloseChannel extends RInvisibleBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected RNull getChannel(RAbstractIntVector id) {
+            controlVisibility();
             RChannel.closeChannel(id.getDataAt(0));
             return RNull.instance;
         }
@@ -253,10 +298,12 @@ public class FastRContext {
         }
     }
 
-    public abstract static class ChannelSend extends RExternalBuiltinNode.Arg2 {
+    @RBuiltin(aliases = "fastr.channel.send", name = ".fastr.channel.send", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id", "data"})
+    public abstract static class ChannelSend extends RInvisibleBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected RNull send(RAbstractIntVector id, Object data) {
+            controlVisibility();
             RChannel.send(id.getDataAt(0), data);
             return RNull.instance;
         }
@@ -267,10 +314,12 @@ public class FastRContext {
         }
     }
 
-    public abstract static class ChannelReceive extends RExternalBuiltinNode.Arg1 {
+    @RBuiltin(aliases = "fastr.channel.receive", name = ".fastr.channel.receive", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
+    public abstract static class ChannelReceive extends RBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected Object receive(RAbstractIntVector id) {
+            controlVisibility();
             return RChannel.receive(id.getDataAt(0));
         }
 
@@ -280,10 +329,12 @@ public class FastRContext {
         }
     }
 
-    public abstract static class ChannelPoll extends RExternalBuiltinNode.Arg1 {
+    @RBuiltin(aliases = "fastr.channel.poll", name = ".fastr.channel.poll", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
+    public abstract static class ChannelPoll extends RBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected Object poll(RAbstractIntVector id) {
+            controlVisibility();
             return RChannel.poll(id.getDataAt(0));
         }
 
@@ -293,10 +344,12 @@ public class FastRContext {
         }
     }
 
-    public abstract static class ChannelSelect extends RExternalBuiltinNode.Arg1 {
+    @RBuiltin(aliases = "fastr.channel.select", name = ".fastr.channel.select", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"ids"})
+    public abstract static class ChannelSelect extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RList select(RList nodes) {
+            controlVisibility();
             int ind = 0;
             int length = nodes.getLength();
             while (true) {

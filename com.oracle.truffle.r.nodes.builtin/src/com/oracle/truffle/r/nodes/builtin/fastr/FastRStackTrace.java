@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,32 +20,38 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastr;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 
-public abstract class InteropExport extends RExternalBuiltinNode.Arg2 {
+@RBuiltin(name = ".fastr.stacktrace", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"print.frame.contents"})
+public abstract class FastRStackTrace extends RInvisibleBuiltinNode {
+
+    @Override
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RRuntime.LOGICAL_FALSE};
+    }
 
     @Specialization
-    @TruffleBoundary
-    protected Object debugSource(Object name, RTypedValue value) {
-        String stringName = RRuntime.asString(name);
-        if (stringName == null) {
-            throw RError.error(this, RError.Message.INVALID_ARG_TYPE, "name");
-        }
-        if (value instanceof TruffleObject) {
-            RContext.getInstance().getExportedSymbols().put(stringName, (TruffleObject) value);
-        } else {
-            throw RError.error(this, RError.Message.NO_INTEROP, "value", value.getClass().getSimpleName());
-        }
+    protected RNull printStackTrace(byte printFrameContents) {
+        controlVisibility();
+        boolean printFrameSlots = printFrameContents == RRuntime.LOGICAL_TRUE;
+        RContext.getInstance().getConsoleHandler().print(Utils.createStackTrace(printFrameSlots));
         return RNull.instance;
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object fallback(Object a1) {
+        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "print.frame.contents");
     }
 }

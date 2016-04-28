@@ -20,43 +20,45 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastr;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-public class FastRThrowIt {
-    public abstract static class ThrowIt extends RExternalBuiltinNode.Arg1 {
-        @Specialization
-        @TruffleBoundary
-        protected RNull throwit(RAbstractStringVector x) {
-            String name = x.getDataAt(0);
-            switch (name) {
-                case "AIX":
-                    throw new ArrayIndexOutOfBoundsException();
-                case "NPE":
-                    throw new NullPointerException();
-                case "ASE":
-                    throw new AssertionError();
-                case "RTE":
-                    throw new RuntimeException();
-                case "RINT":
-                    throw RInternalError.shouldNotReachHere();
-                case "DBE":
-                    throw new Utils.DebugExitException();
-                case "Q":
-                case "BRQ":
-                    throw new BrowserQuitException();
-                default:
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "unknown case: " + name);
-            }
+@RBuiltin(name = ".fastr.throw", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"name"})
+public abstract class FastRThrowIt extends RBuiltinNode {
+    @Specialization
+    @TruffleBoundary
+    protected RNull throwit(RAbstractStringVector x) {
+        controlVisibility();
+        String name = x.getDataAt(0);
+        switch (name) {
+            case "AIX":
+                throw new ArrayIndexOutOfBoundsException();
+            case "NPE":
+                throw new NullPointerException();
+            case "ASE":
+                throw new AssertionError();
+            case "RTE":
+                throw new RuntimeException();
+            case "RINT":
+                throw RInternalError.shouldNotReachHere();
+            case "DBE":
+                throw new Utils.DebugExitException();
+            case "Q":
+            case "BRQ":
+                throw new BrowserQuitException();
+            default:
+                throw RError.error(this, RError.Message.GENERIC, "unknown case: " + name);
         }
     }
 }

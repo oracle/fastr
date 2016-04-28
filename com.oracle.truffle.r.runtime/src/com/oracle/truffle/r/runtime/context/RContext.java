@@ -163,11 +163,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     }
 
     /**
-     * A thread for performing an evaluation (used by {@code fastr} package).
+     * A thread for performing an evaluation (used by {@code .fastr} builtins).
      */
     public static class EvalThread extends ContextThread {
 
-        private static final Source GET_CONTEXT = Source.fromText("invisible(__fastr_get_context())", "<get_context>").withMimeType("application/x-r");
+        private static final Source GET_CONTEXT = Source.fromText("invisible(.fastr.context.get())", "<get_context>").withMimeType("application/x-r");
 
         private final Source source;
         private final ContextInfo info;

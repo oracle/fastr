@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastr;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import java.util.ArrayList;
 
@@ -28,26 +28,34 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-public abstract class FastRTreeStats extends RExternalBuiltinNode.Arg2 {
+@RBuiltin(name = ".fastr.treestats", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"obj"})
+public abstract class FastRTreeStats extends RBuiltinNode {
 
     private static final RStringVector COLNAMES = RDataFactory.createStringVector(new String[]{"Total", "Syntax", "Non-Syntax"}, RDataFactory.COMPLETE_VECTOR);
 
+    @Override
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance};
+    }
+
     @Specialization
     @TruffleBoundary
-    protected RList treeStats(RFunction function, @SuppressWarnings("unused") RAbstractStringVector options) {
+    protected RList treeStats(RFunction function) {
         SyntaxNodeCount snc = doWalk(function, null);
         ArrayList<SyntaxNodeCount> sncList = new ArrayList<>(1);
         sncList.add(snc);
@@ -55,7 +63,7 @@ public abstract class FastRTreeStats extends RExternalBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RList treeStats(REnvironment env, @SuppressWarnings("unused") RAbstractStringVector options) {
+    protected RList treeStats(REnvironment env) {
         RStringVector bindings = env.ls(true, null, true);
         ArrayList<SyntaxNodeCount> sncList = new ArrayList<>();
         for (int i = 0; i < bindings.getLength(); i++) {
@@ -77,12 +85,12 @@ public abstract class FastRTreeStats extends RExternalBuiltinNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    protected RList treeStats(@SuppressWarnings("unused") RNull function, RAbstractStringVector options) {
+    protected RList treeStats(@SuppressWarnings("unused") RNull function) {
         String[] searchPath = REnvironment.searchPath();
         Object[] listData = new Object[searchPath.length];
         for (int i = 0; i < searchPath.length; i++) {
             String pkg = searchPath[i];
-            listData[i] = treeStats(REnvironment.lookupOnSearchPath(pkg), options);
+            listData[i] = treeStats(REnvironment.lookupOnSearchPath(pkg));
         }
         return RDataFactory.createList(listData, RDataFactory.createStringVector(searchPath, RDataFactory.COMPLETE_VECTOR));
     }
