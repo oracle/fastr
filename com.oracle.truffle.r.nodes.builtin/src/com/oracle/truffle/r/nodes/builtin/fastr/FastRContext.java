@@ -55,9 +55,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public class FastRContext {
 
-    // TODO remove aliases once all clients are converted
-
-    @RBuiltin(aliases = "fastr.context.create", name = ".fastr.context.create", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"args", "kind"})
+    @RBuiltin(name = ".fastr.context.create", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"args", "kind"})
     public abstract static class Create extends RBuiltinNode {
 
         @Override
@@ -85,7 +83,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(aliases = "fastr.context.get", name = ".fastr.context.get", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
+    @RBuiltin(name = ".fastr.context.get", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
     public abstract static class Get extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -117,7 +115,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(aliases = "fastr.context.spawn", name = ".fastr.context.spawn", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts", "exprs"})
+    @RBuiltin(name = ".fastr.context.spawn", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts", "exprs"})
     public abstract static class Spawn extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -141,7 +139,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(aliases = "fastr.context.join", name = ".fastr.context.join", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts"})
+    @RBuiltin(name = ".fastr.context.join", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts"})
     public abstract static class Join extends RInvisibleBuiltinNode {
         @Specialization
         protected RNull eval(RAbstractIntVector contexts) {
@@ -176,7 +174,7 @@ public class FastRContext {
      * It may also have an attribute "error" if the evaluation threw an exception, in which case the
      * result will be NA.
      */
-    @RBuiltin(aliases = "fastr.context.eval", name = ".fastr.context.eval", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts", "exprs", "par"})
+    @RBuiltin(name = ".fastr.context.eval", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts", "exprs", "par"})
     public abstract static class Eval extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -252,7 +250,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(aliases = "fastr.channel.create", name = ".fastr.channel.create", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"key"})
+    @RBuiltin(name = ".fastr.channel.create", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"key"})
     public abstract static class CreateChannel extends RBuiltinNode {
         @Specialization(guards = "key.getLength() == 1")
         @TruffleBoundary
@@ -267,7 +265,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(aliases = "fastr.channel.get", name = ".fastr.channel.get", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"key"})
+    @RBuiltin(name = ".fastr.channel.get", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"key"})
     public abstract static class GetChannel extends RBuiltinNode {
         @Specialization(guards = "key.getLength() == 1")
         @TruffleBoundary
@@ -282,7 +280,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(aliases = "fastr.channel.close", name = ".fastr.channel.close", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
+    @RBuiltin(name = ".fastr.channel.close", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
     public abstract static class CloseChannel extends RInvisibleBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
@@ -298,7 +296,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(aliases = "fastr.channel.send", name = ".fastr.channel.send", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id", "data"})
+    @RBuiltin(name = ".fastr.channel.send", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id", "data"})
     public abstract static class ChannelSend extends RInvisibleBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
@@ -314,7 +312,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(aliases = "fastr.channel.receive", name = ".fastr.channel.receive", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
+    @RBuiltin(name = ".fastr.channel.receive", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
     public abstract static class ChannelReceive extends RBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
@@ -329,7 +327,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(aliases = "fastr.channel.poll", name = ".fastr.channel.poll", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
+    @RBuiltin(name = ".fastr.channel.poll", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
     public abstract static class ChannelPoll extends RBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
@@ -344,7 +342,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(aliases = "fastr.channel.select", name = ".fastr.channel.select", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"ids"})
+    @RBuiltin(name = ".fastr.channel.select", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"ids"})
     public abstract static class ChannelSelect extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
