@@ -22,47 +22,73 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class TraceFunctions {
+
+    private abstract static class Helper extends RInvisibleBuiltinNode {
+        @Child private GetFunctions.Get getNode;
+
+        protected Object getFunction(VirtualFrame frame, String funcName) {
+            if (getNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getNode = insert(GetNodeGen.create(null));
+            }
+            return getNode.execute(frame, funcName, RContext.getInstance().stateREnvironment.getGlobalEnv(), RType.Function.getName(), RRuntime.LOGICAL_TRUE);
+        }
+    }
+
     @RBuiltin(name = ".primTrace", kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
-    public abstract static class PrimTrace extends RInvisibleBuiltinNode {
+    public abstract static class PrimTrace extends Helper {
+
+        @Specialization
+        protected RNull primUnTrace(VirtualFrame frame, RAbstractStringVector funcName) {
+            return primTrace((RFunction) getFunction(frame, funcName.getDataAt(0)));
+        }
 
         @Specialization
         @TruffleBoundary
         protected RNull primTrace(RFunction func) {
             controlVisibility();
             if (!func.isBuiltin()) {
-                if (!TraceHandling.enableTrace(func)) {
-                    throw RError.error(this, RError.Message.GENERIC, "failed to attach trace handler");
-                }
+                TraceHandling.enableTrace(func);
+            } else {
+                throw RError.error(this, RError.Message.GENERIC, "builtin functions cannot be traced");
             }
             return RNull.instance;
         }
     }
 
     @RBuiltin(name = ".primUntrace", kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
-    public abstract static class PrimUnTrace extends RInvisibleBuiltinNode {
+    public abstract static class PrimUnTrace extends Helper {
+
+        @Specialization
+        protected RNull primUnTrace(VirtualFrame frame, RAbstractStringVector funcName) {
+            return primUnTrace((RFunction) getFunction(frame, funcName.getDataAt(0)));
+        }
 
         @Specialization
         @TruffleBoundary
-        protected RNull primTrace(RFunction func) {
+        protected RNull primUnTrace(RFunction func) {
             controlVisibility();
             if (!func.isBuiltin()) {
-                if (!TraceHandling.disableTrace(func)) {
-                    throw RError.error(this, RError.Message.GENERIC, "failed to detach trace handler");
-                }
+                TraceHandling.disableTrace(func);
             }
             return RNull.instance;
         }

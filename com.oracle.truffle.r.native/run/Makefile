@@ -67,7 +67,7 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh
 	cp Rscript.sh $(FASTR_BIN_DIR)/Rscript
 	chmod +x $(FASTR_BIN_DIR)/exec/R $(FASTR_BIN_DIR)/execRscript/Rscript $(FASTR_BIN_DIR)/Rscript
 	cp $(SUPPORT_SCRIPTS) $(FASTR_BIN_DIR)
-	sed -e 's!\(^R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
+	sed -e 's!^\(R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
 	chmod +x $(FASTR_BIN_DIR)/R 
 	touch $(FASTR_ETC_DIR)/ldpaths
 	sed -e "s|\(R_LIBS_USER=.*-'\)\(.*\)'}|\1$(FASTR_R_HOME)/library'}|" < $(GNUR_HOME)/etc/Renviron > $(FASTR_ETC_DIR)/Renviron

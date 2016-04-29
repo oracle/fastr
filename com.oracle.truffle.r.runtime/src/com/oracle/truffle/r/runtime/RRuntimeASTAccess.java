@@ -173,11 +173,6 @@ public interface RRuntimeASTAccess {
     /**
      * Project circularity workaround.
      */
-    void enableStatementTrace(RFunction func, RSyntaxNode tracerNode);
-
-    /**
-     * Project circularity workaround.
-     */
     void enableDebug(RFunction func);
 
     /**
@@ -190,5 +185,9 @@ public interface RRuntimeASTAccess {
      * cf. {@code Node.isTaggedWith(tag)}.
      */
     boolean isTaggedWith(Node node, Class<?> tag);
+
+    RBaseNode createReadVariableNode(String name);
+
+    RBaseNode createConstantNode(Object o);
 
 }

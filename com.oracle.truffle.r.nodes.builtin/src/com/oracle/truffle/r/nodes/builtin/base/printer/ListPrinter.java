@@ -11,26 +11,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-//Transcribed from GnuR, src/main/print.c
-
-import com.oracle.truffle.api.frame.Frame;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.canBeDoubleVector;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.canBeIntVector;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.canBeLogicalVector;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.canBeStringVector;
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.indexWidth;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.isValidName;
 import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toComplexVector;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toDoubleVector;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toIntVector;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toLogicalVector;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.toStringVector;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 
+//Transcribed from GnuR, src/main/print.c
+
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -78,12 +69,12 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         int ns = s.getLength();
         String[] t = new String[ns];
         for (int i = 0; i < ns; i++) {
-            Object tmp = s.getDataAtAsObject(i);
+            Object tmp = RRuntime.asAbstractVector(s.getDataAtAsObject(i));
             final String pbuf;
             if (tmp == null || tmp == RNull.instance) {
                 pbuf = RRuntime.NULL;
-            } else if (canBeLogicalVector(tmp)) {
-                RAbstractLogicalVector lv = toLogicalVector(tmp);
+            } else if (tmp instanceof RAbstractLogicalVector) {
+                RAbstractLogicalVector lv = (RAbstractLogicalVector) tmp;
                 if (lv.getLength() == 1) {
                     FormatMetrics fm = LogicalVectorPrinter.formatLogicalVector(lv, 0, 1, pp.getNaWidth());
                     pbuf = snprintf(115, "%s",
@@ -91,8 +82,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 } else {
                     pbuf = snprintf(115, "Logical,%d", lv.getLength());
                 }
-            } else if (canBeIntVector(tmp)) {
-                RAbstractIntVector iv = toIntVector(tmp);
+            } else if (tmp instanceof RAbstractIntVector) {
+                RAbstractIntVector iv = (RAbstractIntVector) tmp;
                 if (printCtx.printerNode().inherits(iv, "factor", RRuntime.LOGICAL_FALSE)) {
                     /* factors are stored as integers */
                     pbuf = snprintf(115, "factor,%d", iv.getLength());
@@ -105,8 +96,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                         pbuf = snprintf(115, "Integer,%d", iv.getLength());
                     }
                 }
-            } else if (canBeDoubleVector(tmp)) {
-                RAbstractDoubleVector dv = toDoubleVector(tmp);
+            } else if (tmp instanceof RAbstractDoubleVector) {
+                RAbstractDoubleVector dv = (RAbstractDoubleVector) tmp;
                 if (dv.getLength() == 1) {
                     DoubleVectorMetrics fm = DoubleVectorPrinter.formatDoubleVector(dv, 0, 1, 0, pp);
                     pbuf = snprintf(115, "%s",
@@ -115,7 +106,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                     pbuf = snprintf(115, "Numeric,%d", dv.getLength());
                 }
             } else if (tmp instanceof RAbstractComplexVector) {
-                RAbstractComplexVector cv = toComplexVector(tmp);
+                RAbstractComplexVector cv = (RAbstractComplexVector) tmp;
                 if (cv.getLength() == 1) {
                     RComplex x = cv.getDataAt(0);
                     if (RRuntime.isNA(x.getRealPart()) || RRuntime.isNA(x.getImaginaryPart())) {
@@ -129,8 +120,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 } else {
                     pbuf = snprintf(115, "Complex,%d", cv.getLength());
                 }
-            } else if (canBeStringVector(tmp)) {
-                RAbstractStringVector sv = toStringVector(tmp);
+            } else if (tmp instanceof RAbstractStringVector) {
+                RAbstractStringVector sv = (RAbstractStringVector) tmp;
                 if (sv.getLength() == 1) {
                     String ctmp = sv.getDataAt(0);
                     int len = ctmp.length();
@@ -204,7 +195,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         int ns = s.getLength();
 
         RAbstractStringVector names;
-        names = toStringVector(s.getAttr(dummyAttrProfiles, RRuntime.NAMES_ATTR_KEY));
+        names = Utils.castTo(RRuntime.asAbstractVector(s.getAttr(dummyAttrProfiles, RRuntime.NAMES_ATTR_KEY)));
 
         if (ns > 0) {
             int npr = (ns <= pp.getMax() + 1) ? ns : pp.getMax();
@@ -214,7 +205,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                     out.println();
                 }
                 String ss = names == null ? null : Utils.<String> getDataAt(names, i);
-                if (ss != null && !"".equals(ss)) {
+                if (ss != null && !ss.isEmpty()) {
                     /*
                      * Bug for L <- list(`a\\b` = 1, `a\\c` = 2) : const char *ss =
                      * translateChar(STRING_ELT(names, i));
@@ -230,7 +221,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                          */
                         if (ss == RRuntime.STRING_NA) {
                             tagbuf.appendTag("$<NA>");
-                        } else if (isValidName(ss)) {
+                        } else if (RDeparse.isValidName(ss)) {
                             tagbuf.appendTag(String.format("$%s", ss));
                         } else {
                             tagbuf.appendTag(String.format("$`%s`", ss));
@@ -269,7 +260,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
             /* Formal classes are represented as empty lists */
             String className = null;
             if (printCtx.printerNode().isObject(s) && printCtx.printerNode().isMethodDispatchOn()) {
-                RAbstractStringVector klass = toStringVector(s.getAttr(dummyAttrProfiles, RRuntime.CLASS_ATTR_KEY));
+                RAbstractStringVector klass = Utils.castTo(RRuntime.asAbstractVector(s.getAttr(dummyAttrProfiles, RRuntime.CLASS_ATTR_KEY)));
                 if (klass != null && klass.getLength() == 1) {
                     String ss = klass.getDataAt(0);
                     String str = snprintf(200, ".__C__%s", ss);

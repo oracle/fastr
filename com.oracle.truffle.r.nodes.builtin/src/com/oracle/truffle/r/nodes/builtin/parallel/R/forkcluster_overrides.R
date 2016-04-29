@@ -13,23 +13,23 @@
 
 eval(expression(
 closeNode.SHAREDnode <- function(node) {
-    fastr:::fastr.channel.close(node$channel)
+    .fastr.channel.close(node$channel)
 }), asNamespace("parallel"))
 
 eval(expression(
 sendData.SHAREDnode <- function(node, data) {
-    fastr:::fastr.channel.send(node$channel, data)
+    .fastr.channel.send(node$channel, data)
 }), asNamespace("parallel"))
 
 eval(expression(
 recvData.SHAREDnode <- function(node) {
-    fastr:::fastr.channel.receive(node$channel)
+    .fastr.channel.receive(node$channel)
 }), asNamespace("parallel"))
 
 eval(expression(
 recvOneData.SHAREDcluster <- function(cl) {
 	channel_ids = lapply(cl, function(l) l[["channel"]])
-    res <- fastr:::fastr.channel.select(channel_ids)
+    res <- .fastr.channel.select(channel_ids)
 	selected_id = res[[1]]
 	# TODO: I am sure there is a better way...
 	indexes = lapply(cl, function(l, id) if (identical(l[["channel"]], id)) id else as.integer(NA), id=selected_id)
@@ -56,12 +56,12 @@ fastr.newSHAREDnode <- function(rank, options = defaultClusterOptions)
     context_code <- paste0("commandArgs<-function() c('--args', 'PORT=", port, "'); source('", script, "')")
 	if (isTRUE(debug)) cat(sprintf("Starting context: %d with code %s\n", rank, context_code))
 
-    cx <- fastr:::fastr.context.create("SHARED_NOTHING")
-    fastr:::fastr.context.spawn(cx, context_code)
-    
-	## Need to return a list here, in the same form as the 
+    cx <- .fastr.context.create("SHARED_NOTHING")
+    .fastr.context.spawn(cx, context_code)
+
+	## Need to return a list here, in the same form as the
 	## "cluster" data structure.
-    channel <- fastr:::fastr.channel.create(port)
+    channel <- .fastr.channel.create(port)
 	if (isTRUE(debug)) cat(sprintf("Context %d started!\n", rank))
 	structure(list(channel = channel, context=cx, rank = rank), class = "SHAREDnode")
 }), asNamespace("parallel"))
@@ -76,7 +76,7 @@ makeForkCluster <- function(nnodes = getOption("mc.cores", 2L), options = defaul
     cl <- vector("list", nnodes)
     for (i in seq_along(cl)) cl[[i]] <- fastr.newSHAREDnode(rank=i, options=options)
 	class(cl) <- c("SHAREDcluster", "cluster")
-	cl	
+	cl
 }; environment(makeForkCluster)<-asNamespace("parallel")})
 eval(makeForkClusterExpr, asNamespace("parallel"))
 eval(makeForkClusterExpr, as.environment("package:parallel"))
@@ -86,6 +86,6 @@ eval(expression(
 stopCluster.SHAREDcluster <- function(cl) {
     for (n in cl) {
         parallel:::postNode(n, "DONE")
-        fastr:::fastr.context.join(n$context)
+        .fastr.context.join(n$context)
     }
 }), asNamespace("parallel"))

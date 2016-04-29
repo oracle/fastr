@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class DuplicateNode extends RBaseNode {
@@ -72,6 +73,11 @@ public abstract class DuplicateNode extends RBaseNode {
     @Specialization
     protected RLanguage duplicate(RLanguage l) {
         return l.copy();
+    }
+
+    @Specialization
+    protected REnvironment duplicate(REnvironment e) {
+        return e;
     }
 
     // TODO: support more types when required
