@@ -293,7 +293,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     /*
      * Determines if syntax call is of the form foo::bar
      */
-    private static final boolean isNamespaceLookupCall(RSyntaxElement e) {
+    private static boolean isNamespaceLookupCall(RSyntaxElement e) {
         if (e instanceof RSyntaxCall) {
             RSyntaxCall call = (RSyntaxCall) e;
             // check for syntax nodes as this will be required to recreate a call during
