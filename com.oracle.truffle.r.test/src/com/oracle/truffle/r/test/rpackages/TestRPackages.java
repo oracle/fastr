@@ -96,26 +96,27 @@ public abstract class TestRPackages extends TestBase {
                 if (FastROptions.debugMatches("TestRPackages")) {
                     pb.inheritIO();
                 }
+                pb.redirectErrorStream(true);
                 Process install = pb.start();
+                BufferedReader out = new BufferedReader(new InputStreamReader(install.getInputStream(), StandardCharsets.UTF_8));
+                StringBuilder str = new StringBuilder();
+                try {
+                    String line;
+                    while ((line = out.readLine()) != null) {
+                        str.append(line).append('\n');
+                        if (str.length() > 10 * (1 << 20)) { // if larger than 10M (just in case)
+                            System.out.println(str);
+                            str.setLength(0); // Reset buffer
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 int rc = install.waitFor();
                 if (rc == 0) {
-                    return true;
+                    return true; // Ignore output of process on success
                 } else {
-                    BufferedReader out = new BufferedReader(new InputStreamReader(install.getInputStream(), StandardCharsets.UTF_8));
-                    BufferedReader err = new BufferedReader(new InputStreamReader(install.getErrorStream(), StandardCharsets.UTF_8));
-                    try {
-                        StringBuilder str = new StringBuilder();
-                        String line;
-                        while ((line = out.readLine()) != null) {
-                            str.append(line).append('\n');
-                        }
-                        while ((line = err.readLine()) != null) {
-                            str.append(line).append('\n');
-                        }
-                        System.out.println(str);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    System.out.println(str); // Print if error happened
                     return false;
                 }
             } catch (Exception ex) {
