@@ -173,11 +173,6 @@ public interface RRuntimeASTAccess {
     /**
      * Project circularity workaround.
      */
-    void enableStatementTrace(RFunction func, RSyntaxNode tracerNode);
-
-    /**
-     * Project circularity workaround.
-     */
     void enableDebug(RFunction func);
 
     /**

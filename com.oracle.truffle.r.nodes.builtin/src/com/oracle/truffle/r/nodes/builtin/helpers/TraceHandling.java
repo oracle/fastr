@@ -27,6 +27,7 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.EventBinding;
 import com.oracle.truffle.api.instrumentation.EventContext;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
@@ -42,50 +43,51 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RMissing;
 
 /**
- * Handles everything related to the R {@code trace} function.
+ * Handles everything related to the R {@code .PrimTrace and .fastr.trace} functionality.
  */
 public class TraceHandling {
 
-    public static boolean enableTrace(RFunction func) {
+    public static void enableTrace(RFunction func) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-        TraceFunctionEventListener fbr = (TraceFunctionEventListener) RContext.getInstance().stateTraceHandling.get(fdn.getUID());
-        if (fbr == null) {
-            attachTraceHandler(func);
-        } else {
-            fbr.enable();
+        @SuppressWarnings("unchecked")
+        EventBinding<TraceEventListener> binding = (EventBinding<TraceEventListener>) RContext.getInstance().stateTraceHandling.get(fdn.getUID());
+        if (binding != null) {
+            // only one
+            binding.dispose();
         }
-        return true;
+        attachPrimitiveTraceHandler(func);
     }
 
-    public static boolean disableTrace(RFunction func) {
+    public static void disableTrace(RFunction func) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-        TraceFunctionEventListener fbr = (TraceFunctionEventListener) RContext.getInstance().stateTraceHandling.get(fdn.getUID());
-        if (fbr == null) {
-            return false;
-        } else {
-            fbr.disable();
-            return true;
+        @SuppressWarnings("unchecked")
+        EventBinding<TraceEventListener> binding = (EventBinding<TraceEventListener>) RContext.getInstance().stateTraceHandling.get(fdn.getUID());
+        if (binding != null) {
+            binding.dispose();
+            RContext.getInstance().stateTraceHandling.put(RInstrumentation.getFunctionDefinitionNode(func).getUID(), null);
         }
     }
 
     public static void setTracingState(boolean state) {
         Object[] listeners = RContext.getInstance().stateTraceHandling.getListeners();
         for (int i = 0; i < listeners.length; i++) {
-            TraceFunctionEventListener tl = (TraceFunctionEventListener) listeners[i];
+            @SuppressWarnings("unchecked")
+            EventBinding<TraceEventListener> binding = (EventBinding<TraceEventListener>) listeners[i];
             if (state) {
-                tl.enable();
+                binding.getElement().enable();
             } else {
-                tl.disable();
+                binding.getElement().disable();
             }
         }
     }
 
     public static void traceAllFunctions() {
         if (FastROptions.TraceCalls.getBooleanValue()) {
-            TraceFunctionEventListener fser = new TraceFunctionEventListener();
+            PrimitiveFunctionEntryEventListener fser = new PrimitiveFunctionEntryEventListener();
             SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
             builder.tagIs(StandardTags.RootTag.class);
             SourceSectionFilter filter = builder.build();
@@ -94,16 +96,29 @@ public class TraceHandling {
         }
     }
 
-    @SuppressWarnings("unused")
-    public static boolean enableStatementTrace(RFunction func, RSyntaxNode tracer) {
+    public static boolean enableStatementTrace(RFunction func, RLanguage tracer, @SuppressWarnings("unused") Object exit, Object at, boolean print) {
+        FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
+        @SuppressWarnings("unchecked")
+        EventBinding<TraceEventListener> binding = (EventBinding<TraceEventListener>) RContext.getInstance().stateTraceHandling.get(fdn.getUID());
+        if (binding != null) {
+            // only one allowed
+            binding.dispose();
+        }
+        if (at == RMissing.instance) {
+            // simple case
+            TracerFunctionEntryEventListener listener = new TracerFunctionEntryEventListener(tracer, print);
+            binding = RInstrumentation.getInstrumenter().attachListener(RInstrumentation.createFunctionStartFilter(func).build(), listener);
+            setOutputHandler();
+            RContext.getInstance().stateTraceHandling.put(RInstrumentation.getFunctionDefinitionNode(func).getUID(), binding);
+        }
         return false;
     }
 
-    private static void attachTraceHandler(RFunction func) {
-        TraceFunctionEventListener fser = new TraceFunctionEventListener();
-        RInstrumentation.getInstrumenter().attachListener(RInstrumentation.createFunctionStartFilter(func).build(), fser);
+    private static void attachPrimitiveTraceHandler(RFunction func) {
+        PrimitiveFunctionEntryEventListener fser = new PrimitiveFunctionEntryEventListener();
+        EventBinding<TraceEventListener> binding = RInstrumentation.getInstrumenter().attachListener(RInstrumentation.createFunctionStartFilter(func).build(), fser);
         setOutputHandler();
-        RContext.getInstance().stateTraceHandling.put(RInstrumentation.getFunctionDefinitionNode(func).getUID(), fser);
+        RContext.getInstance().stateTraceHandling.put(RInstrumentation.getFunctionDefinitionNode(func).getUID(), binding);
     }
 
     private abstract static class TraceEventListener implements ExecutionEventListener {
@@ -130,6 +145,109 @@ public class TraceHandling {
             if (newState != disabled) {
                 disabledUnchangedAssumption.invalidate();
                 disabled = newState;
+            }
+        }
+
+        protected String getCallSource(VirtualFrame frame) {
+            RCaller caller = RArguments.getCall(frame);
+            String callString;
+            if (caller != null) {
+                callString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
+            } else {
+                callString = "<no source>";
+            }
+            return callString;
+        }
+    }
+
+    /**
+     * Event listener for the simple case where no tracer is provided and the output is canned
+     * (.PrimTrace).
+     */
+    private static class PrimitiveFunctionEntryEventListener extends TraceEventListener {
+        @Override
+        public void onEnter(EventContext context, VirtualFrame frame) {
+            if (!disabled()) {
+                int depth = RArguments.getDepth(frame);
+                try {
+                    for (int i = 0; i < depth; i++) {
+                        outputHandler.writeString(" ", false);
+                    }
+                    String callString = getCallSource(frame);
+                    outputHandler.writeString("trace: " + callString, true);
+                } catch (IOException ex) {
+                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ex.getMessage());
+                }
+            }
+        }
+
+        @Override
+        public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
+        }
+
+        @Override
+        public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
+        }
+    }
+
+    /**
+     * Event listener for the case where user provided an expression to be evaluated on function
+     * entry.
+     */
+    private static class TracerFunctionEntryEventListener extends TraceEventListener {
+        private final RLanguage tracer;
+        private final boolean print;
+
+        TracerFunctionEntryEventListener(RLanguage tracer, boolean print) {
+            this.tracer = tracer;
+            this.print = print;
+        }
+
+        @Override
+        public void onEnter(EventContext context, VirtualFrame frame) {
+            if (!disabled()) {
+                if (print) {
+                    try {
+                        String callString = getCallSource(frame);
+                        outputHandler.writeString("Tracing " + callString + " on entry", true);
+                    } catch (IOException ex) {
+                        throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ex.getMessage());
+                    }
+                }
+                RContext.getEngine().eval(tracer, frame.materialize());
+            }
+        }
+
+        @Override
+        public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
+        }
+
+        @Override
+        public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static class TraceStatementEventReceiver extends TraceEventListener {
+
+        @Override
+        public void onEnter(EventContext context, VirtualFrame frame) {
+            if (!disabled()) {
+                //
+            }
+        }
+
+        @Override
+        public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
+            if (!disabled()) {
+                //
+            }
+        }
+
+        @Override
+        public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
+            if (!disabled()) {
+                //
             }
         }
     }
@@ -175,60 +293,4 @@ public class TraceHandling {
 
     private static OutputHandler outputHandler;
 
-    private static class TraceFunctionEventListener extends TraceEventListener {
-        @Override
-        public void onEnter(EventContext context, VirtualFrame frame) {
-            if (!disabled()) {
-                int depth = RArguments.getDepth(frame);
-                try {
-                    for (int i = 0; i < depth; i++) {
-                        outputHandler.writeString(" ", false);
-                    }
-                    RCaller caller = RArguments.getCall(frame);
-                    String callString;
-                    if (caller != null) {
-                        callString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
-                    } else {
-                        callString = "<no source>";
-                    }
-                    outputHandler.writeString("trace: " + callString, true);
-                } catch (IOException ex) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ex.getMessage());
-                }
-            }
-        }
-
-        @Override
-        public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
-        }
-
-        @Override
-        public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private static class TraceStatementEventReceiver extends TraceEventListener {
-
-        @Override
-        public void onEnter(EventContext context, VirtualFrame frame) {
-            if (!disabled()) {
-                //
-            }
-        }
-
-        @Override
-        public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
-            if (!disabled()) {
-                //
-            }
-        }
-
-        @Override
-        public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
-            if (!disabled()) {
-                //
-            }
-        }
-    }
 }

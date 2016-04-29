@@ -64,7 +64,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -476,43 +475,4 @@ public class HiddenInternalFunctions {
         }
     }
 
-    /*
-     * Created as primitive function to avoid incrementing reference count for the argument.
-     *
-     * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
-     * SHARED_PERMANENT_VAL for permanent shared
-     */
-    @RBuiltin(name = "fastr.refcountinfo", kind = PRIMITIVE, parameterNames = {""})
-    public abstract static class RefCountInfo extends RBuiltinNode {
-        @Specialization
-        protected int refcount(Object x) {
-            if (x instanceof RShareable) {
-                RShareable s = (RShareable) x;
-                if (s.isTemporary()) {
-                    return 0;
-                } else if (s.isSharedPermanent()) {
-                    return RShareable.SHARED_PERMANENT_VAL;
-                } else if (s.isShared()) {
-                    return 2;
-                } else {
-                    return 1;
-                }
-            } else {
-                return -1;
-            }
-        }
-    }
-
-    /*
-     * Created as primitive function to avoid incrementing reference count for the argument (used in
-     * reference count tests).
-     */
-    @RBuiltin(name = "fastr.identity", kind = PRIMITIVE, parameterNames = {""})
-    public abstract static class Identity extends RBuiltinNode {
-        @Specialization
-        @TruffleBoundary
-        protected int typeof(Object x) {
-            return System.identityHashCode(x);
-        }
-    }
 }
