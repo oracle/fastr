@@ -266,15 +266,48 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         argNodes[argNodes.length - 1] = rhs;
         names[argNodes.length - 1] = "value";
 
-        RSyntaxLookup syntaxLHS = (RSyntaxLookup) fun.getSyntaxLHS();
-        String symbol = syntaxLHS.getIdentifier();
-        if ("slot".equals(symbol) || "@".equals(symbol)) {
-            // this is pretty gross, but at this point seems like the only way to get setClass to
-            // work properly
-            argNodes[0] = GetNonSharedNodeGen.create(argNodes[0].asRNode());
+        RSyntaxElement syntaxLHS = fun.getSyntaxLHS();
+        RSyntaxNode newSyntaxLHS;
+        if (syntaxLHS instanceof RSyntaxLookup) {
+            RSyntaxLookup lookupLHS = (RSyntaxLookup) syntaxLHS;
+            String symbol = lookupLHS.getIdentifier();
+            if ("slot".equals(symbol) || "@".equals(symbol)) {
+                // this is pretty gross, but at this point seems like the only way to get setClass
+                // to
+                // work properly
+                argNodes[0] = GetNonSharedNodeGen.create(argNodes[0].asRNode());
+            }
+            newSyntaxLHS = lookup(lookupLHS.getSourceSection(), symbol + "<-", true);
+        } else {
+            // data types (and lengths) are verified in isNamespaceLookupCall
+            RSyntaxCall callLHS = (RSyntaxCall) syntaxLHS;
+            RSyntaxElement[] oldArgs = callLHS.getSyntaxArguments();
+            RSyntaxNode[] newArgs = new RSyntaxNode[2];
+            newArgs[0] = (RSyntaxNode) oldArgs[0];
+            newArgs[1] = lookup(oldArgs[1].getSourceSection(), ((RSyntaxLookup) oldArgs[1]).getIdentifier() + "<-", true);
+            newSyntaxLHS = RCallNode.createCall(callLHS.getSourceSection(), ((RSyntaxNode) callLHS.getSyntaxLHS()).asRNode(), callLHS.getSyntaxSignature(), newArgs);
         }
-        RSyntaxNode newSyntaxLHS = lookup(syntaxLHS.getSourceSection(), symbol + "<-", true);
         return RCallNode.createCall(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes);
+    }
+
+    /*
+     * Determines if syntax call is of the form foo::bar
+     */
+    private static boolean isNamespaceLookupCall(RSyntaxElement e) {
+        if (e instanceof RSyntaxCall) {
+            RSyntaxCall call = (RSyntaxCall) e;
+            // check for syntax nodes as this will be required to recreate a call during
+            // replacement form construction in createFunctionUpdate
+            if (call.getSyntaxLHS() instanceof RSyntaxLookup && call.getSyntaxLHS() instanceof RSyntaxNode) {
+                if (((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier().equals("::")) {
+                    RSyntaxElement[] args = call.getSyntaxArguments();
+                    if (args.length == 2 && args[0] instanceof RSyntaxLookup && args[0] instanceof RSyntaxNode && args[1] instanceof RSyntaxLookup && args[1] instanceof RSyntaxNode) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     // used to create unique temp names for nested replacements
@@ -309,7 +342,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             RSyntaxCall call = (RSyntaxCall) current;
             calls.add(call);
 
-            if (call.getSyntaxArguments().length == 0 || !(call.getSyntaxLHS() instanceof RSyntaxLookup)) {
+            if (call.getSyntaxArguments().length == 0 || !(call.getSyntaxLHS() instanceof RSyntaxLookup || isNamespaceLookupCall(call.getSyntaxLHS()))) {
                 // TODO: this should only be signaled when run, not when parsed
                 throw RInternalError.unimplemented("proper error message for RError.INVALID_LHS");
             }
