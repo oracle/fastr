@@ -43,33 +43,33 @@ public class FastRTckTest extends TruffleTCK {
         "fourtyTwo <- function() {\n" +
         "  42L\n" +
         "}\n" +
-        "Interop.export('fourtyTwo', fourtyTwo)\n" +
+        ".fastr.interop.export('fourtyTwo', fourtyTwo)\n" +
         "plus <- function(a, b) {\n" +
         "  a + b\n" +
         "}\n" +
-        "Interop.export('plus', plus)\n" +
+        ".fastr.interop.export('plus', plus)\n" +
         "identity <- function(a) {\n" +
         "  a\n" +
         "}\n" +
-        "Interop.export('identity', identity)\n" +
+        ".fastr.interop.export('identity', identity)\n" +
         "apply <- function(f) {\n" +
         "  f(18L, 32L) + 10L\n" +
         "}\n" +
-        "Interop.export('apply', apply)\n" +
+        ".fastr.interop.export('apply', apply)\n" +
         "null <- function() {\n" +
         "  NULL\n" +
         "}\n" +
-        "Interop.export('null', null)\n" +
+        ".fastr.interop.export('null', null)\n" +
         "counter <- 0L\n" +
         "count <- function() {\n" +
         "  counter <<- counter + 1L\n" +
         "}\n" +
-        "Interop.export('count', count)\n" +
+        ".fastr.interop.export('count', count)\n" +
         "complexAdd <- function(a, b) {\n" +
         " a$imaginary <- a$imaginary + b$imaginary\n" +
         " a$real <- a$real + b$real\n" +
         "}\n" +
-        "Interop.export('complexAdd', complexAdd)\n" +
+        ".fastr.interop.export('complexAdd', complexAdd)\n" +
         "complexSumReal <- function(a) {\n" +
         " sum <- 0\n" +
         " for (i in 0:(length(a)-1)) {\n" +
@@ -77,18 +77,18 @@ public class FastRTckTest extends TruffleTCK {
         " }\n" +
         " return(sum)\n" +
         "}\n" +
-        "Interop.export('complexSumReal', complexSumReal)\n" +
+        ".fastr.interop.export('complexSumReal', complexSumReal)\n" +
         "complexCopy <- function(a, b) {\n" +
         " for (i in 0:(length(b)-1)) {\n" +
         "   a[i]$real <- b[i]$real\n" +
         "   a[i]$imaginary <- b[i]$imaginary\n" +
         " }\n" +
         "}\n" +
-        "Interop.export('complexCopy', complexCopy)\n" +
+        ".fastr.interop.export('complexCopy', complexCopy)\n" +
         "valuesObject <- function() {\n" +
         "  list('byteValue'=0L, 'shortValue'=0L, 'intValue'=0L, 'longValue'=0L, 'floatValue'=0, 'doubleValue'=0, 'charValue'=48L, 'stringValue'='', 'booleanValue'=FALSE)\n" +
         "}\n" +
-        "Interop.export('valuesObject', valuesObject)\n",
+        ".fastr.interop.export('valuesObject', valuesObject)\n",
         "<initialization>"
     ).withMimeType(TruffleRLanguage.MIME);
     // @formatter:on

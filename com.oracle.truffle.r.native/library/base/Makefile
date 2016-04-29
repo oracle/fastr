@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,17 +21,4 @@
 # questions.
 #
 
-RPROFILE := $(FASTR_LIBRARY_DIR)/base/R/Rprofile
-RPROFILE_ORIG := $(RPROFILE).orig
-LIB_PKG_POST = $(RPROFILE)
-
 include ../lib.mk
-
-# edit the Rprofile to add fastr as a default package
-# sed's edit in place option with backup is not portable
-
-$(LIB_PKG_POST): $(RPROFILE_ORIG)
-
-$(RPROFILE_ORIG):
-	cp $(RPROFILE) $(RPROFILE_ORIG)
-	sed -f sed_profile $(RPROFILE_ORIG) > $(RPROFILE)
