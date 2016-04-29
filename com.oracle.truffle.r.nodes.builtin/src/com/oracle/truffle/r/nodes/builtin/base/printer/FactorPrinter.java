@@ -29,9 +29,10 @@ import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-final class FactorPrinter extends AbstractValuePrinter<RFactor> {
+final class FactorPrinter extends AbstractValuePrinter<RAbstractIntVector> {
 
     static final FactorPrinter INSTANCE = new FactorPrinter();
 
@@ -42,28 +43,30 @@ final class FactorPrinter extends AbstractValuePrinter<RFactor> {
     private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     @Override
-    protected void printValue(RFactor operand, PrintContext printCtx) throws IOException {
-        // TODO: this should be handled by an S3 function
-        RVector vec = operand.getLevels(dummyAttrProfiles);
+    protected void printValue(RAbstractIntVector operand, PrintContext printCtx) throws IOException {
+        // TODO: this should be handled by an S3 function. Should it? For example, in C code for split,
+        // there is direct call to getAttrib. This should be refactored to use AttributeAccess node or even
+        // Factor.GetLevels node. The same holds for the access
+        RVector levels = RFactor.getLevels(operand);
         String[] strings;
-        if (vec == null) {
+        if (levels == null) {
             strings = new String[0];
         } else {
-            strings = new String[vec.getLength()];
-            for (int i = 0; i < vec.getLength(); i++) {
-                strings[i] = printCtx.printerNode().castString(vec.getDataAtAsObject(i));
+            strings = new String[levels.getLength()];
+            for (int i = 0; i < levels.getLength(); i++) {
+                strings[i] = printCtx.printerNode().castString(levels.getDataAtAsObject(i));
             }
         }
 
-        RAbstractVector v = RClosures.createFactorToVector(operand, true, dummyAttrProfiles);
+        RAbstractVector v = RClosures.createFactorToVector(operand, true, levels);
         PrintContext vectorPrintCtx = printCtx.cloneContext();
         vectorPrintCtx.parameters().setQuote(false);
         ValuePrinters.INSTANCE.println(v, vectorPrintCtx);
 
         final PrintWriter out = printCtx.output();
         out.print("Levels:");
-        if (vec != null) {
-            for (int i = 0; i < vec.getLength(); i++) {
+        if (levels != null) {
+            for (int i = 0; i < levels.getLength(); i++) {
                 out.print(" ");
                 out.print(strings[i]);
             }

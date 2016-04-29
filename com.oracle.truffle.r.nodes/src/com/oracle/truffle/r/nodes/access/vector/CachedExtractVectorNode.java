@@ -139,10 +139,6 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                  */
                 return doEnvironment((REnvironment) castVector, positions);
             case Integer:
-                if (castVector instanceof RFactor) {
-                    vector = ((RFactor) castVector).getVector();
-                    break;
-                }
                 vector = (RAbstractContainer) castVector;
                 break;
             default:

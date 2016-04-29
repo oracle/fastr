@@ -33,18 +33,13 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RFactor;
-import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -116,22 +111,22 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(data, naCheck.neverSeenNA());
     }
 
-    @Specialization
-    protected Object match(RFactor x, RFactor table, RAbstractIntVector nomatchObj, Object incomparables) {
-        naCheck.enable(x.getVector());
-        naCheck.enable(table.getVector());
+    @Specialization(guards = {"isFactor(x)", "isFactor(table)"})
+    protected Object matchFactor(RAbstractIntVector x, RAbstractIntVector table, RAbstractIntVector nomatchObj, Object incomparables) {
+        naCheck.enable(x);
+        naCheck.enable(table);
         return matchRecursive(RClosures.createFactorToVector(x, true, attrProfiles), RClosures.createFactorToVector(table, true, attrProfiles), nomatchObj, incomparables);
     }
 
-    @Specialization
-    protected Object match(RFactor x, RAbstractVector table, RAbstractIntVector nomatchObj, Object incomparables) {
-        naCheck.enable(x.getVector());
+    @Specialization(guards = {"isFactor(x)", "!isFactor(table)"})
+    protected Object matchFactor(RAbstractIntVector x, RAbstractVector table, RAbstractIntVector nomatchObj, Object incomparables) {
+        naCheck.enable(x);
         return matchRecursive(RClosures.createFactorToVector(x, true, attrProfiles), table, nomatchObj, incomparables);
     }
 
-    @Specialization
-    protected Object match(RAbstractVector x, RFactor table, RAbstractIntVector nomatchObj, Object incomparables) {
-        naCheck.enable(table.getVector());
+    @Specialization(guards = {"!isFactor(x)", "isFactor(table)"})
+    protected Object matchFactor(RAbstractVector x, RAbstractIntVector table, RAbstractIntVector nomatchObj, Object incomparables) {
+        naCheck.enable(table);
         return matchRecursive(x, RClosures.createFactorToVector(table, true, attrProfiles), nomatchObj, incomparables);
     }
 
@@ -512,6 +507,12 @@ public abstract class Match extends RBuiltinNode {
 
     protected boolean isStringVectorTable(RAbstractVector table) {
         return table.getElementClass() == String.class;
+    }
+
+    @Child private InheritsCheckNode factorInheritsCheck = new InheritsCheckNode(RRuntime.CLASS_FACTOR);
+
+    protected boolean isFactor(Object o) {
+        return factorInheritsCheck.execute(o);
     }
 
     private static int[] initResult(int length, int nomatch) {

@@ -22,9 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class RFactor implements RShareable, RAbstractContainer {
@@ -232,14 +237,29 @@ public final class RFactor implements RShareable, RAbstractContainer {
         return vector.setClassAttr(classAttr, convertToInt);
     }
 
+    /**
+     * Helper method to get 'levels' of a factor. However, all the invocations
+     * of this method should be replaced with FactorNodes.GetLevel in the future.
+     */
+    public static RVector getLevels(RAbstractIntVector factor) {
+        return getLevelsImpl(factor.getAttr(RRuntime.LEVELS_ATTR_KEY));
+    }
+
+    /**
+     * Helper method to get 'levels' of a factor with profile. However, all the
+     * invocations of this method should be replaced with FactorNodes.GetLevel in the future.
+     */
+    public static RVector getLevels(RAttributeProfiles profile, RAbstractIntVector factor) {
+        return getLevelsImpl(factor.getAttr(profile, RRuntime.LEVELS_ATTR_KEY));
+    }
+
+    private static RVector getLevelsImpl(Object attr) {
+        // convert scalar to RVector if necessary
+        return attr instanceof RVector ? (RVector) attr : (RVector) RRuntime.asAbstractVector(attr);
+    }
+
     public RVector getLevels(RAttributeProfiles attrProfiles) {
-        Object attr = vector.getAttr(attrProfiles, RRuntime.LEVELS_ATTR_KEY);
-        if (attr instanceof RVector) {
-            return (RVector) attr;
-        } else {
-            // Scalar, must convert
-            return (RVector) RRuntime.asAbstractVector(attr);
-        }
+        return getLevels(attrProfiles, vector);
     }
 
     public int getNLevels(RAttributeProfiles attrProfiles) {

@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -36,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
-@RBuiltin(name = "mean", kind = INTERNAL, parameterNames = {"x"})
+@RBuiltin(name = "mean", kind = INTERNAL, parameterNames = {"x"}, dispatch = RDispatch.INTERNAL_GENERIC)
 public abstract class Mean extends RBuiltinNode {
 
     private final BranchProfile emptyProfile = BranchProfile.create();

@@ -569,9 +569,6 @@ public class RDeparse {
             protected Void visit(RSyntaxConstant constant) {
                 // coerce scalar values to vectors and unwrap data frames and factors:
                 Object value = RRuntime.asAbstractVector(constant.getValue());
-                if (value instanceof RFactor) {
-                    value = ((RFactor) value).getVector();
-                }
 
                 if (value instanceof RExpression) {
                     append("expression(").appendListContents(((RExpression) value).getList()).append(')');

@@ -73,9 +73,6 @@ public abstract class WrapArgumentBaseNode extends RNode {
         if (result instanceof RVector) {
             everSeenVector.enter();
             return (RVector) result;
-        } else if (result instanceof RFactor) {
-            everSeenFactor.enter();
-            return ((RFactor) result).getVector();
         } else if (result instanceof RLanguage) {
             everSeenLanguage.enter();
             return (RLanguage) result;

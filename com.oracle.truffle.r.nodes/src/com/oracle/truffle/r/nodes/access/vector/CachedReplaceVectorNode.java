@@ -183,9 +183,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             case Null:
                 vector = castType.getEmpty();
                 break;
-            case Factor:
-                vector = ((RFactor) castVector).getVector();
-                break;
             case PairList:
                 vector = ((RPairList) castVector).toRList();
                 break;
@@ -230,6 +227,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
 
         if (isList()) {
+            // TODO: RFactor refactoring: with value instanceof RFactor and isList() == true, we can reach this point,
+            // but we would not reach it if we simply set value = inner vector of RFactor
             if (mode.isSubscript()) {
                 value = copyValueOnAssignment(value);
             }

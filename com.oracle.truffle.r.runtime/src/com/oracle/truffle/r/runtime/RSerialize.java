@@ -1498,10 +1498,6 @@ public class RSerialize {
                             writeItem(RNull.instance);
                         }
                     }
-                } else if (type == SEXPTYPE.FASTR_FACTOR) {
-                    RFactor factor = (RFactor) obj;
-                    writeItem(factor.getVector());
-                    return;
                 } else {
                     // flags
                     RAttributes attributes = null;

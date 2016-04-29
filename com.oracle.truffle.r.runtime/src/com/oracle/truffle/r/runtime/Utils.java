@@ -412,9 +412,10 @@ public final class Utils {
                     assert call != null;
                     RLanguage rl = RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
                     RSyntaxNode sn = (RSyntaxNode) rl.getRep();
-                    SourceSection ss = sn.getSourceSection();
+                    SourceSection ss = sn != null ? sn.getSourceSection() : null;
                     // fabricate a srcref attribute from ss
-                    String path = ss.getSource().getPath();
+                    Source source = ss != null ? ss.getSource() : null;
+                    String path =  source != null ? source.getPath() : null;
                     if (path != null && RInternalSourceDescriptions.isInternal(path)) {
                         path = null;
                     }

@@ -57,8 +57,6 @@ public enum SEXPTYPE {
     FASTR_INT(301, Integer.class),
     FASTR_BYTE(302, Byte.class),
     FASTR_COMPLEX(303, RComplex.class),
-    // FastR special "vector" types
-    FASTR_FACTOR(305, RFactor.class),
     // very special case
     FASTR_SOURCESECTION(306, SourceSection.class),
     FASTR_CONNECTION(307, RConnection.class),
@@ -196,8 +194,6 @@ public enum SEXPTYPE {
                 return SEXPTYPE.LGLSXP;
             case FASTR_COMPLEX:
                 return SEXPTYPE.CPLXSXP;
-            case FASTR_FACTOR:
-                return SEXPTYPE.VECSXP;
             case FASTR_CONNECTION:
                 return SEXPTYPE.INTSXP;
             default:

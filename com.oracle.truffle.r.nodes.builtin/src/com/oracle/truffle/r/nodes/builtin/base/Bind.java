@@ -27,50 +27,21 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
 import com.oracle.truffle.r.nodes.function.UseMethodInternalNode;
-import com.oracle.truffle.r.nodes.unary.CastComplexNode;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
-import com.oracle.truffle.r.nodes.unary.CastListNode;
-import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
-import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
-import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
-import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
+import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -386,35 +357,6 @@ public abstract class Bind extends RBaseNode {
     }
 
     @Child private InheritsCheckNode inheritsCheck = new InheritsCheckNode(RRuntime.CLASS_DATA_FRAME);
-
-    public static final class InheritsCheckNode extends Node {
-
-        @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
-        private final ConditionProfile nullClassProfile = ConditionProfile.createBinaryProfile();
-        @CompilationFinal private ConditionProfile exactMatchProfile;
-        private final String checkedClazz;
-
-        public InheritsCheckNode(String checkedClazz) {
-            this.checkedClazz = checkedClazz;
-            assert RType.fromMode(checkedClazz) == null;
-        }
-
-        public boolean execute(Object value) {
-            RStringVector clazz = classHierarchy.execute(value);
-            if (nullClassProfile.profile(clazz != null)) {
-                for (int j = 0; j < clazz.getLength(); ++j) {
-                    if (exactMatchProfile == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        exactMatchProfile = ConditionProfile.createBinaryProfile();
-                    }
-                    if (exactMatchProfile.profile(clazz.getDataAt(j) == checkedClazz) || clazz.getDataAt(j).equals(checkedClazz)) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-    }
 
     protected boolean isDataFrame(Object[] args) {
         for (int i = 0; i < args.length; i++) {

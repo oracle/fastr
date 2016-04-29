@@ -22,14 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RFactor;
-import com.oracle.truffle.r.runtime.data.RInteger;
-import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -120,7 +113,14 @@ public class RClosures {
     // Factor to vector
 
     public static RAbstractVector createFactorToVector(RFactor factor, boolean withNames, RAttributeProfiles attrProfiles) {
-        RAbstractVector levels = factor.getLevels(attrProfiles);
+        return createFactorToVector(factor.getVector(), withNames, RFactor.getLevels(attrProfiles, factor.getVector()));
+    }
+
+    public static RAbstractVector createFactorToVector(RAbstractIntVector factor, boolean withNames, RAttributeProfiles attrProfiles) {
+        return createFactorToVector(factor, withNames, RFactor.getLevels(attrProfiles, factor));
+    }
+
+    public static RAbstractVector createFactorToVector(RAbstractIntVector factor, boolean withNames, RVector levels) {
         if (levels == null) {
             return new RFactorToStringVectorClosure(factor, null, withNames);
         } else {

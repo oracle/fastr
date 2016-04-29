@@ -33,6 +33,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -66,26 +67,17 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * </ul>
  * </ol>
  */
-@RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"})
+@RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"},
+        dispatch = RDispatch.INTERNAL_GENERIC)
 public abstract class Repeat extends RBuiltinNode {
 
     protected abstract Object execute(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each);
-
-    @Child private Repeat repeatRecursive;
 
     private final ConditionProfile lengthOutOrTimes = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorBranch = BranchProfile.create();
     private final ConditionProfile oneTimeGiven = ConditionProfile.createBinaryProfile();
     private final ConditionProfile replicateOnce = ConditionProfile.createBinaryProfile();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
-    private Object repeatRecursive(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
-        if (repeatRecursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            repeatRecursive = insert(RepeatNodeGen.create(null));
-        }
-        return repeatRecursive.execute(x, times, lengthOut, each);
-    }
 
     @Override
     public Object[] getDefaultParameterValues() {
@@ -172,13 +164,6 @@ public abstract class Repeat extends RBuiltinNode {
             r.setNames(names);
             return r;
         }
-    }
-
-    @Specialization
-    protected RAbstractContainer rep(RFactor x, RAbstractIntVector times, int lengthOut, int each) {
-        RVector vec = (RVector) repeatRecursive(x.getVector(), times, lengthOut, each);
-        vec.setAttr(RRuntime.LEVELS_ATTR_KEY, x.getLevels(attrProfiles));
-        return RVector.setVectorClassAttr(vec, x.getClassAttr(attrProfiles), null);
     }
 
     /**

@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /*
@@ -41,8 +42,8 @@ final class RFactorToComplexVectorClosure extends RToComplexVectorClosure implem
     private final RAbstractComplexVector levels;
     private final boolean withNames;
 
-    RFactorToComplexVectorClosure(RFactor factor, RAbstractComplexVector levels, boolean withNames) {
-        super(factor.getVector());
+    RFactorToComplexVectorClosure(RAbstractIntVector vector, RAbstractComplexVector levels, boolean withNames) {
+        super(vector);
         assert levels != null;
         this.levels = levels;
         this.withNames = withNames;

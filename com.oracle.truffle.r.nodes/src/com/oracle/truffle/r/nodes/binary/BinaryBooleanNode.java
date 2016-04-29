@@ -147,11 +147,11 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
                     @Cached("create()") RAttributeProfiles attrProfiles) {
         Object recursiveLeft = left;
         if (recursiveLeft instanceof RFactor) {
-            recursiveLeft = RClosures.createFactorToVector((RFactor) recursiveLeft, false, attrProfiles);
+            recursiveLeft = RClosures.createFactorToVector(((RFactor) recursiveLeft).getVector(), false, attrProfiles);
         }
         Object recursiveRight = right;
         if (recursiveRight instanceof RFactor) {
-            recursiveRight = RClosures.createFactorToVector((RFactor) recursiveRight, false, attrProfiles);
+            recursiveRight = RClosures.createFactorToVector(((RFactor) recursiveRight).getVector(), false, attrProfiles);
         }
         return recursive.execute(frame, recursiveLeft, recursiveRight);
     }

@@ -26,27 +26,18 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.nodes.helpers.RFactorNodes;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RFactor;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
- * The {@code split} internal.
+ * The {@code split} internal. Internal version of 'split' is invoked from 'split.default'
+ * function implemented in R, which makes sure that the second argument is always a R factor.
  *
  * TODO Can we find a way to efficiently write the specializations as generics? The code is
  * identical except for the argument type.
@@ -54,18 +45,25 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 @RBuiltin(name = "split", kind = INTERNAL, parameterNames = {"x", "f"})
 public abstract class Split extends RBuiltinNode {
 
-    @Child private CastStringNode castString;
+
+    @Child private RFactorNodes.GetLevels getLevelNode = new RFactorNodes.GetLevels();
 
     private final ConditionProfile noStringLevels = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
 
     private static final int INITIAL_SIZE = 5;
     private static final int SCALE_FACTOR = 2;
 
+    public static class SplitTemplate {
+        private int[] collectResulSize;
+        private int nLevels;
+    }
+
     @Specialization
-    protected RList split(RAbstractIntVector x, RFactor f) {
-        int[] factor = f.getVector().getDataWithoutCopying();
-        final int nLevels = f.getNLevels(attrProfiles);
+    protected RList split(RAbstractIntVector x, RAbstractIntVector f) {
+        int[] factor = f.materialize().getDataWithoutCopying();
+        RStringVector names = getLevelNode.execute(f);
+        final int nLevels = getNLevels(names);
 
         // initialise result arrays
         int[][] collectResults = new int[nLevels][];
@@ -91,13 +89,14 @@ public abstract class Split extends RBuiltinNode {
             results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete());
         }
 
-        return RDataFactory.createList(results, makeNames(f));
+        return RDataFactory.createList(results, names);
     }
 
     @Specialization
-    protected RList split(RAbstractDoubleVector x, RFactor f) {
-        int[] factor = f.getVector().getDataWithoutCopying();
-        final int nLevels = f.getNLevels(attrProfiles);
+    protected RList split(RAbstractDoubleVector x, RAbstractIntVector f) {
+        int[] factor = f.materialize().getDataWithoutCopying();
+        RStringVector names = getLevelNode.execute(f);
+        final int nLevels = getNLevels(names);
 
         // initialise result arrays
         double[][] collectResults = new double[nLevels][];
@@ -123,13 +122,14 @@ public abstract class Split extends RBuiltinNode {
             results[i] = RDataFactory.createDoubleVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
         }
 
-        return RDataFactory.createList(results, makeNames(f));
+        return RDataFactory.createList(results, names);
     }
 
     @Specialization
-    protected RList split(RAbstractStringVector x, RFactor f) {
-        int[] factor = f.getVector().getDataWithoutCopying();
-        final int nLevels = f.getNLevels(attrProfiles);
+    protected RList split(RAbstractStringVector x, RAbstractIntVector f) {
+        int[] factor = f.materialize().getDataWithoutCopying();
+        RStringVector names = getLevelNode.execute(f);
+        final int nLevels = getNLevels(names);
 
         // initialise result arrays
         String[][] collectResults = new String[nLevels][];
@@ -155,13 +155,14 @@ public abstract class Split extends RBuiltinNode {
             results[i] = RDataFactory.createStringVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
         }
 
-        return RDataFactory.createList(results, makeNames(f));
+        return RDataFactory.createList(results, names);
     }
 
     @Specialization
-    protected RList split(RAbstractLogicalVector x, RFactor f) {
-        int[] factor = f.getVector().getDataWithoutCopying();
-        final int nLevels = f.getNLevels(attrProfiles);
+    protected RList split(RAbstractLogicalVector x, RAbstractIntVector f) {
+        int[] factor = f.materialize().getDataWithoutCopying();
+        RStringVector names = getLevelNode.execute(f);
+        final int nLevels = getNLevels(names);
 
         // initialise result arrays
         byte[][] collectResults = new byte[nLevels][];
@@ -187,20 +188,10 @@ public abstract class Split extends RBuiltinNode {
             results[i] = RDataFactory.createLogicalVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete());
         }
 
-        return RDataFactory.createList(results, makeNames(f));
+        return RDataFactory.createList(results, names);
     }
 
-    private RStringVector makeNames(RFactor f) {
-        RVector levels = f.getLevels(attrProfiles);
-        if (noStringLevels.profile(!(levels instanceof RStringVector))) {
-            if (castString == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                castString = insert(CastStringNodeGen.create(false, false, false, false));
-            }
-            RStringVector slevels = (RStringVector) castString.executeString(f.getLevels(attrProfiles));
-            return RDataFactory.createStringVector(slevels.getDataWithoutCopying(), RDataFactory.COMPLETE_VECTOR);
-        } else {
-            return RDataFactory.createStringVector(((RStringVector) levels).getDataCopy(), RDataFactory.COMPLETE_VECTOR);
-        }
+    private int getNLevels(RStringVector levels) {
+        return levels != null ? levels.getLength() : 0;
     }
 }
