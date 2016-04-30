@@ -236,9 +236,17 @@ public abstract class Parse extends RBuiltinNode {
     private static void addAttributes(RExpression exprs, Source source, REnvironment srcFile) {
         Object[] srcrefData = new Object[exprs.getLength()];
         for (int i = 0; i < srcrefData.length; i++) {
-            RBaseNode node = ((RLanguage) exprs.getDataAt(i)).getRep();
-            SourceSection ss = node.asRSyntaxNode().getSourceSection();
-            srcrefData[i] = RSrcref.createLloc(ss, srcFile);
+            Object data = exprs.getDataAt(i);
+            if (data instanceof RLanguage) {
+                RBaseNode node = ((RLanguage) data).getRep();
+                SourceSection ss = node.asRSyntaxNode().getSourceSection();
+                srcrefData[i] = RSrcref.createLloc(ss, srcFile);
+            } else if (data == RNull.instance) {
+                srcrefData[i] = data;
+            } else {
+                throw RInternalError.unimplemented();
+            }
+
         }
         exprs.setAttr("srcref", RDataFactory.createList(srcrefData));
         int[] wholeSrcrefData = new int[8];
