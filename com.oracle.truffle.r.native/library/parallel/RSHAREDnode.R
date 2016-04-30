@@ -1,5 +1,5 @@
 makeSHAREDmaster <- function(key) {
-    channel <- fastr:::fastr.channel.get(as.integer(key))
+    channel <- .fastr.channel.get(as.integer(key))
     structure(list(channel=channel), class = "SHAREDnode")
 }
 
