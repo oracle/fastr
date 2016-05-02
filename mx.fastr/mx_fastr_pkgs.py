@@ -22,7 +22,7 @@
 #
 
 from argparse import ArgumentParser
-from os.path import join, abspath, exists, relpath
+from os.path import join, exists, relpath
 import shutil, os, re
 import mx
 import mx_fastr
@@ -188,26 +188,26 @@ def _get_test_outputs(suite, pkg_name, test_info):
             test_info[pkg_name].testfile_outputs[relfile] = TestFileStatus(status, absfile)
 
 def _gnur_install_test(pkgs):
-        gnur = _mx_gnur().extensions
-        gnur_packages = join(_mx_gnur().dir, 'gnur.packages')
-        with open(gnur_packages, 'w') as f:
-            for pkg in pkgs:
-                f.write(pkg)
-                f.write('\n')
-        # clone the cran test project into gnur
-        gnur_cran_test_project_dir = join(_mx_gnur().dir, mx_fastr._cran_test_project())
-        if not exists(gnur_cran_test_project_dir):
-            shutil.copytree(mx_fastr._cran_test_project_dir(), gnur_cran_test_project_dir)
-        gnur_libinstall, gnur_install_tmp = _create_libinstall(_mx_gnur())
-        gnur_cmd = [gnur._gnur_rscript_path(), mx_fastr._installpkgs_script()]
-        gnur_cmd += ['--pkg-filelist', gnur_packages]
-        gnur_cmd += ['--run-tests']
-        gnur_cmd += ['--ignore-blacklist']
-        env = os.environ.copy()
-        env["TMPDIR"] = gnur_install_tmp
-        env['R_LIBS_USER'] = gnur_libinstall
-        del env['R_HOME']
-        mx.run(gnur_cmd, nonZeroIsFatal=False, cwd=_mx_gnur().dir, env=env)
+    gnur = _mx_gnur().extensions
+    gnur_packages = join(_mx_gnur().dir, 'gnur.packages')
+    with open(gnur_packages, 'w') as f:
+        for pkg in pkgs:
+            f.write(pkg)
+            f.write('\n')
+    # clone the cran test project into gnur
+    gnur_cran_test_project_dir = join(_mx_gnur().dir, mx_fastr._cran_test_project())
+    if not exists(gnur_cran_test_project_dir):
+        shutil.copytree(mx_fastr._cran_test_project_dir(), gnur_cran_test_project_dir)
+    gnur_libinstall, gnur_install_tmp = _create_libinstall(_mx_gnur())
+    gnur_cmd = [gnur._gnur_rscript_path(), mx_fastr._installpkgs_script()]
+    gnur_cmd += ['--pkg-filelist', gnur_packages]
+    gnur_cmd += ['--run-tests']
+    gnur_cmd += ['--ignore-blacklist']
+    env = os.environ.copy()
+    env["TMPDIR"] = gnur_install_tmp
+    env['R_LIBS_USER'] = gnur_libinstall
+    del env['R_HOME']
+    mx.run(gnur_cmd, nonZeroIsFatal=False, cwd=_mx_gnur().dir, env=env)
 
 def _set_test_status(fastr_test_info):
     def _failed_outputs(outputs):

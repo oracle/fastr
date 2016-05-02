@@ -21,12 +21,12 @@
 # questions.
 #
 import tempfile, platform, subprocess, sys
-from os.path import join, sep, abspath
+from os.path import join, sep
 from argparse import ArgumentParser
 import mx
 import mx_gate
 import mx_fastr_pkgs
-import shutil, os
+import os
 
 '''
 This is the launchpad for all the functions available for building/running/testing/analyzing
