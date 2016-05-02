@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.concurrent.Future;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.Truffle;
@@ -44,13 +45,15 @@ public abstract class FastRCompile extends RBuiltinNode {
     private static final class Compiler {
         private final Class<?> optimizedCallTarget;
         private final Class<?> graalTruffleRuntime;
-        private final Method compileMethod;
+        private final Method submitForCompilationMethod;
+        private final Method finishCompilationMethod;
 
         private Compiler() {
             try {
                 optimizedCallTarget = Class.forName("com.oracle.graal.truffle.OptimizedCallTarget", false, Truffle.getRuntime().getClass().getClassLoader());
                 graalTruffleRuntime = Class.forName("com.oracle.graal.truffle.GraalTruffleRuntime", false, Truffle.getRuntime().getClass().getClassLoader());
-                compileMethod = graalTruffleRuntime.getDeclaredMethod("compile", optimizedCallTarget, boolean.class);
+                submitForCompilationMethod = graalTruffleRuntime.getDeclaredMethod("submitForCompilation", optimizedCallTarget);
+                finishCompilationMethod = graalTruffleRuntime.getDeclaredMethod("finishCompilation", optimizedCallTarget, Future.class, boolean.class);
             } catch (ClassNotFoundException | IllegalArgumentException | NoSuchMethodException | SecurityException e) {
                 throw Utils.fail("fastr.compile: failed to find 'compile' method");
             }
@@ -66,7 +69,8 @@ public abstract class FastRCompile extends RBuiltinNode {
 
         boolean compile(CallTarget callTarget, boolean background) throws InvocationTargetException, IllegalAccessException {
             if (optimizedCallTarget.isInstance(callTarget)) {
-                compileMethod.invoke(Truffle.getRuntime(), callTarget, background);
+                Future<?> submitted = (Future<?>) submitForCompilationMethod.invoke(Truffle.getRuntime(), callTarget);
+                finishCompilationMethod.invoke(Truffle.getRuntime(), callTarget, submitted, background);
                 return true;
             } else {
                 return false;
