@@ -22,10 +22,25 @@
 #
 
 from argparse import ArgumentParser
-from os.path import join, abspath
+from os.path import join, abspath, exists, relpath
 import shutil, os, re
 import mx
 import mx_fastr
+
+def _mx_gnur():
+    return mx.suite('gnur')
+
+def _create_libinstall(s):
+    '''Create lib.install.cran/install.tmp for suite s
+    '''
+    libinstall = join(s.dir, "lib.install.cran")
+    # make sure its empty
+    shutil.rmtree(libinstall, ignore_errors=True)
+    os.mkdir(libinstall)
+    install_tmp = join(s.dir, "install.tmp")
+    shutil.rmtree(install_tmp, ignore_errors=True)
+    os.mkdir(install_tmp)
+    return libinstall, install_tmp
 
 def pkgtest(args):
     '''used for package installation/testing'''
@@ -34,27 +49,26 @@ def pkgtest(args):
     parser.add_argument('--install-only', action='store_true', help='just install packages, do not test')
     # sundry options understood by installpkgs R code
     parser.add_argument('--pkg-count', action='store', help='number of packages to install/test', default='100')
+    parser.add_argument('--pkg-filelist', action='store', help='pass --pkg-filelist')
     parser.add_argument('--ignore-blacklist', action='store_true', help='pass --ignore-blacklist')
     parser.add_argument('--install-dependents-first', action='store_true', help='pass -install-dependents-first')
     parser.add_argument('--print-ok-installs', action='store_true', help='pass --print-ok-installs')
     parser.add_argument('--invert-pkgset', action='store_true', help='pass --invert-pkgset')
     args = parser.parse_args(args)
 
-    libinstall = abspath("lib.install.cran")
-    # make sure its empty
-    shutil.rmtree(libinstall, ignore_errors=True)
-    os.mkdir(libinstall)
-    install_tmp = "install.tmp"
-    shutil.rmtree(install_tmp, ignore_errors=True)
-    os.mkdir(install_tmp)
+    libinstall, install_tmp = _create_libinstall(mx.suite('fastr'))
     os.environ["TMPDIR"] = install_tmp
     os.environ['R_LIBS_USER'] = libinstall
     stacktrace_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
 
-    install_args = ['--pkg-count', args.pkg_count]
+    install_args = []
+    if args.pkg_count and not args.pkg_filelist:
+        install_args += ['--pkg-count', args.pkg_count]
     if args.ok_only:
         # only install/test packages that have been successfully installed
-        install_args += ['--pkg-filelist', join(mx_fastr._cran_test_project(), 'ok.packages')]
+        install_args += ['--pkg-filelist', join(mx_fastr._cran_test_project_dir(), 'ok.packages')]
+    if args.pkg_filelist:
+        install_args += ['--pkg-filelist', args.pkg_filelist]
     if not args.install_only:
         install_args += ['--run-tests']
     if args.ignore_blacklist:
@@ -65,11 +79,6 @@ def pkgtest(args):
         install_args += ['--print-ok-installs']
     if args.invert_pkgset:
         install_args += ['--invert-pkgset']
-
-    class TestStatus:
-        def __init__(self):
-            self.status = "unknown"
-            self.filelist = []
 
     class OutputCapture:
         def __init__(self):
@@ -116,30 +125,140 @@ def pkgtest(args):
                     begin_end = test_match.group(1)
                     pkg_name = test_match.group(2)
                     if begin_end == "END":
-                        pkg_testdir = join(mx.suite('fastr').dir, 'test', pkg_name)
-                        for root, _, files in os.walk(pkg_testdir):
-                            if not self.test_info.has_key(pkg_name):
-                                self.test_info[pkg_name] = TestStatus()
-                            for f in files:
-                                self.test_info[pkg_name].filelist.append(join(root, f))
+                        _get_test_outputs('fastr', pkg_name, self.test_info)
 
     out = OutputCapture()
 
-    rc = mx_fastr.installpkgs(stacktrace_args + install_args, out=out, err=out)
-    _set_test_status(out.test_info)
+    # install and (optionally) test the packages
+    rc = mx_fastr._installpkgs(stacktrace_args + install_args, out=out, err=out)
+    if not args.install_only:
+        # in order to compare the test output with GnuR we have to install/test the same
+        # set of packages with GnuR, which must be present as a sibling suite
+        ok_pkgs = [k for k, v in out.install_status.iteritems() if v]
+        _gnur_install_test(ok_pkgs)
+        _set_test_status(out.test_info)
+        print 'Test Status'
+        for pkg, test_status in out.test_info.iteritems():
+            print '{0}: {1}'.format(pkg, test_status.status)
 
     shutil.rmtree(install_tmp, ignore_errors=True)
     return rc
 
-def _set_test_status(test_info_dict):
-    for _, test_info in test_info_dict.iteritems():
-        for test_file in test_info.filelist:
-            with open(test_file, 'r') as f:
-                fastr_content = f.read()
-            # where to get GnuR test output?
-            gnur_content = ""
+class TestFileStatus:
+    '''
+    Records the status of a test file. status is either "OK" or "FAILED".
+    The latter means that the file had a .fail extension.
+    '''
+    def __init__(self, status, abspath):
+        self.status = status
+        self.abspath = abspath
+
+class TestStatus:
+    '''Records the test status of a package. status ends up as either "OK" or "FAILED",
+    unless GnuR also failed in which case it stays as UNKNOWN.
+    The testfile_outputs dict is keyed by the relative path of the output file to
+    the 'test/pkgname' directory. The value is an instance of TestFileStatus.
+    '''
+    def __init__(self):
+        self.status = "UNKNOWN"
+        self.testfile_outputs = dict()
+
+def _pkg_testdir(suite, pkg_name):
+    return join(mx.suite(suite).dir, 'test', pkg_name)
+def _get_test_outputs(suite, pkg_name, test_info):
+    pkg_testdir = _pkg_testdir(suite, pkg_name)
+    for root, _, files in os.walk(pkg_testdir):
+        if not test_info.has_key(pkg_name):
+            test_info[pkg_name] = TestStatus()
+        for f in files:
+            ext = os.path.splitext(f)[1]
+            if ext == '.R' or ext == '.prev':
+                continue
+            # suppress .pdf's for now (we can't compare them)
+            if ext == '.pdf':
+                continue
+            status = "OK"
+            if ext == '.fail':
+                # some fatal error during the test
+                status = "FAILED"
+                f = os.path.splitext(f)[0]
+
+            absfile = join(root, f)
+            relfile = relpath(absfile, pkg_testdir)
+            test_info[pkg_name].testfile_outputs[relfile] = TestFileStatus(status, absfile)
+
+def _gnur_install_test(pkgs):
+        gnur = _mx_gnur().extensions
+        gnur_packages = join(_mx_gnur().dir, 'gnur.packages')
+        with open(gnur_packages, 'w') as f:
+            for pkg in pkgs:
+                f.write(pkg)
+                f.write('\n')
+        # clone the cran test project into gnur
+        gnur_cran_test_project_dir = join(_mx_gnur().dir, mx_fastr._cran_test_project())
+        if not exists(gnur_cran_test_project_dir):
+            shutil.copytree(mx_fastr._cran_test_project_dir(), gnur_cran_test_project_dir)
+        gnur_libinstall, gnur_install_tmp = _create_libinstall(_mx_gnur())
+        gnur_cmd = [gnur._gnur_rscript_path(), mx_fastr._installpkgs_script()]
+        gnur_cmd += ['--pkg-filelist', gnur_packages]
+        gnur_cmd += ['--run-tests']
+        gnur_cmd += ['--ignore-blacklist']
+        env = os.environ.copy()
+        env["TMPDIR"] = gnur_install_tmp
+        env['R_LIBS_USER'] = gnur_libinstall
+        del env['R_HOME']
+        mx.run(gnur_cmd, nonZeroIsFatal=False, cwd=_mx_gnur().dir, env=env)
+
+def _set_test_status(fastr_test_info):
+    def _failed_outputs(outputs):
+        '''
+        return True iff outputs has any .fail files
+        '''
+        for _, testfile_status in outputs.iteritems():
+            if testfile_status.status == "FAILED":
+                return True
+        return False
+
+    gnur_test_info = dict()
+    for pkg, _ in fastr_test_info.iteritems():
+        _get_test_outputs('gnur', pkg, gnur_test_info)
+
+    # gnur is definitive so drive off that
+    for pkg in gnur_test_info.keys():
+        gnur_test_status = gnur_test_info[pkg]
+        fastr_test_status = fastr_test_info[pkg]
+        gnur_outputs = gnur_test_status.testfile_outputs
+        fastr_outputs = fastr_test_status.testfile_outputs
+        if _failed_outputs(gnur_outputs):
+            print "{0}: GnuR test had .fail outputs".format(pkg)
+            continue
+
+        if _failed_outputs(fastr_outputs):
+            print "{0}: FastR test had .fail outputs".format(pkg)
+            fastr_test_status.status = "FAILED"
+            continue
+
+
+        fastr_test_status.status = "OK" # optimistic
+        for gnur_test_output_relpath, gnur_testfile_status in gnur_outputs.iteritems():
+            if not gnur_test_output_relpath in fastr_outputs:
+                fastr_test_status.status = "FAILED"
+                print "{0}: FastR is missing output file: {1}".format(pkg, gnur_test_output_relpath)
+                break
+
+            gnur_content = None
+            with open(gnur_testfile_status.abspath) as f:
+                gnur_content = f.readlines()
+            fastr_content = None
+            fastr_testfile_status = fastr_outputs[gnur_test_output_relpath]
+            with open(fastr_testfile_status.abspath) as f:
+                fastr_content = f.readlines()
+
             result = _fuzzy_compare(gnur_content, fastr_content)
-            test_info.status = "OK" if result == 0 else "FAILED"
+            if result != 0:
+                fastr_test_status.status = "FAILED"
+                print "{0}: FastR output mismatch: {1}".format(pkg, gnur_test_output_relpath)
+                break
 
 def _find_start(content):
     marker = "Type 'q()' to quit R."

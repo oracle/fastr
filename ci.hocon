@@ -49,31 +49,17 @@ gateStyle : ${common} {
   ]
 }
 
-benchRun: ${common} ${java8Downloads} {
-# workaround mx bug
-  environment: ${common.environment} {
-    MX_IDE : "eclipse"
-  }
-  run : [
-    ["git", "clone", "ssh://git@ol-bitbucket.us.oracle.com:7999/g/r-apptests.git",  "../r-apptests"]
-    ["git", "clone", "ssh://git@ol-bitbucket.us.oracle.com:7999/g/r-benchmarks.git",  "../r-benchmarks"]
-    ["git", "clone", "ssh://git@ol-bitbucket.us.oracle.com:7999/g/graal-core.git",  "../graal-core"]
-    [mx, --vm, server, --vmbuild, product, --dynamicimport, graal-core, --strict-compliance, build, -p, --force-javac]
-    ["mx", "--vm", "server", "--dynamicimport", "r-benchmarks,r-apptests,graal-core", "benchmark", "--results-file", "results.json"]
-    ["bench-uploader.py", "--url", "$BENCH_SERVER_URL", "results.json"]
-  ]
-  timelimit : "3:00:00"
-}
-
-
 # currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
 
 # tests a (default) number of packages known to install correctly
 pkgtest: ${common} ${java8Downloads} {
   timelimit : "3:00:00"
+  setup : [
+    ["git", "clone", "--depth", "1", ${repoBase}"gnur.git",  "../gnur"]
+  ]
   run : [
-    ["mx", "build"]
-    ["mx", "pkgtest", "--print-ok-installs", "--ok-only"]
+    ["mx", "--dynamicimport", "gnur", "build"]
+    ["mx", "--dynamicimport", "gnur", "pkgtest", "--print-ok-installs", "--ok-only"]
   ]
 }
 
@@ -82,7 +68,7 @@ pkginstall: ${common} ${java8Downloads} {
   timelimit : "6:00:00"
   run : [
     ["mx", "build"]
-    ["mx", "pkgtest", "--invert-pkgset", "--ok-only", "--print-ok-installs", "--install-dependents-first", "--pkg-count", "1000"]
+    ["mx", "pkgtest", "--invert-pkgset", "--ok-only", "--install-only", "--print-ok-installs", "--install-dependents-first", "--pkg-count", "1000"]
   ]
 }
 
@@ -90,7 +76,6 @@ builds = [
   ${gateTest}       {capabilities : [linux, amd64, gate, post-merge],   name: "gate-test-linux-amd64"}
   ${gateStyle}      {capabilities : [linux, amd64, gate, post-merge],   name: "gate-style-linux-amd64"}
 #  ${gateTest}       {capabilities : [linux, sparcv9, gate, post-merge], name: "gate-test-linux-sparcv9"}
-  ${benchRun}       {capabilities : [linux, amd64, gate],   name: "bench-test-linux-amd64"}
-#  ${pkgtest}        {capabilities : [linux, amd64, gate], name: "pkgtest-test-linux-amd64"}
+  ${pkgtest}        {capabilities : [linux, amd64, gate], name: "pkgtest-test-linux-amd64"}
 #  ${pkginstall}        {capabilities : [linux, amd64, gate], name: "pkginstall-test-linux-amd64"}
 ]

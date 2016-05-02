@@ -576,14 +576,20 @@ def rcmplib(args):
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
 def _cran_test_project():
-    return mx.project('com.oracle.truffle.r.test.cran').dir
+    return 'com.oracle.truffle.r.test.cran'
+
+def _cran_test_project_dir():
+    return mx.project(_cran_test_project()).dir
 
 def installpkgs(args):
     _installpkgs(args)
 
+def _installpkgs_script():
+    cran_test = _cran_test_project_dir()
+    return join(cran_test, 'r', 'install.cran.packages.R')
+
 def _installpkgs(args, out=None, err=None):
-    cran_test = _cran_test_project()
-    script = join(cran_test, 'r', 'install.cran.packages.R')
+    script = _installpkgs_script()
     return rscript([script] + args, out=out, err=err)
 
 _commands = {

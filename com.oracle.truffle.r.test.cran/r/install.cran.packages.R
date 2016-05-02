@@ -231,7 +231,7 @@ set.package.blacklist <- function() {
 	    # not set on command line
 		blacklist.file <<- Sys.getenv("PACKAGE_BLACKLIST", unset="package.blacklist")
 	}
-	if (!create.blacklist.file) {
+	if (!create.blacklist.file && !ignore.blacklist) {
 		if (!file.exists(blacklist.file)) {
 			cat(paste("blacklist file", blacklist.file, "does not exist, creating\n"))
 			create.blacklist.file <<- T
@@ -448,8 +448,8 @@ install.pkgs <- function(pkgnames, dependents.install=F) {
 
 
 get.blacklist <- function() {
-	get.initial.package.blacklist()
 	if (create.blacklist.file) {
+		get.initial.package.blacklist()
 		blacklist <- create.blacklist()
 		writeLines(sort(blacklist), blacklist.file)
 	} else {
@@ -603,7 +603,7 @@ test.package <- function(pkgname) {
 }
 
 is.fastr <- function() {
-	"package:fastr" %in% search()
+	exists(".fastr.context.get", baseenv())
 }
 
 system.test <- function(pkgname) {
