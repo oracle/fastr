@@ -49,8 +49,8 @@ public interface RAttributable extends RTypedValue {
     RAttributes getAttributes();
 
     /**
-     * Returns the value of the {@code class} attribute or empty {@link RStringVector} if
-     * class attribute is not set.
+     * Returns the value of the {@code class} attribute or empty {@link RStringVector} if class
+     * attribute is not set.
      */
     default RStringVector getClassHierarchy() {
         Object v = getAttr(RRuntime.CLASS_ATTR_KEY);

@@ -44,9 +44,9 @@ final class FactorPrinter extends AbstractValuePrinter<RAbstractIntVector> {
 
     @Override
     protected void printValue(RAbstractIntVector operand, PrintContext printCtx) throws IOException {
-        // TODO: this should be handled by an S3 function. Should it? For example, in C code for split,
-        // there is direct call to getAttrib. This should be refactored to use AttributeAccess node or even
-        // Factor.GetLevels node. The same holds for the access
+        // TODO: this should be handled by an S3 function. Should it? For example, in C code for
+        // split, there is direct call to getAttrib. This should be refactored to use
+        // AttributeAccess node or even Factor.GetLevels node. The same holds for the access
         RVector levels = RFactor.getLevels(operand);
         String[] strings;
         if (levels == null) {

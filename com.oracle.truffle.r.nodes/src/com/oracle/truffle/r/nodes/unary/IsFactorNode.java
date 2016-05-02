@@ -11,15 +11,14 @@
 
 package com.oracle.truffle.r.nodes.unary;
 
+import static com.oracle.truffle.r.runtime.RRuntime.LOGICAL_FALSE;
+import static com.oracle.truffle.r.runtime.RRuntime.LOGICAL_TRUE;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-
-import static com.oracle.truffle.r.runtime.RRuntime.LOGICAL_FALSE;
-import static com.oracle.truffle.r.runtime.RRuntime.LOGICAL_TRUE;
 
 public abstract class IsFactorNode extends UnaryNode {
 
@@ -35,6 +34,8 @@ public abstract class IsFactorNode extends UnaryNode {
             typeofNode = insert(TypeofNodeGen.create());
         }
         if (typeofNode.execute(x) != RType.Integer) {
+            // Note: R does not allow to set class 'factor' to an arbitrary object, unlike with
+            // data.frame
             return LOGICAL_FALSE;
         }
         if (inheritsCheck == null) {

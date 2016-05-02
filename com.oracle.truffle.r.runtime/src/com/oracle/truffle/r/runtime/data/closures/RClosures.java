@@ -23,14 +23,7 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RClosures {
 
@@ -111,10 +104,6 @@ public class RClosures {
     }
 
     // Factor to vector
-
-    public static RAbstractVector createFactorToVector(RFactor factor, boolean withNames, RAttributeProfiles attrProfiles) {
-        return createFactorToVector(factor.getVector(), withNames, RFactor.getLevels(attrProfiles, factor.getVector()));
-    }
 
     public static RAbstractVector createFactorToVector(RAbstractIntVector factor, boolean withNames, RAttributeProfiles attrProfiles) {
         return createFactorToVector(factor, withNames, RFactor.getLevels(attrProfiles, factor));

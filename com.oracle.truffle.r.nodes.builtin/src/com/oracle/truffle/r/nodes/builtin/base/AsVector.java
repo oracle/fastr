@@ -40,35 +40,9 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
 import com.oracle.truffle.r.nodes.function.UseMethodInternalNode;
-import com.oracle.truffle.r.nodes.unary.CastComplexNode;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
-import com.oracle.truffle.r.nodes.unary.CastExpressionNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
-import com.oracle.truffle.r.nodes.unary.CastListNode;
-import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
-import com.oracle.truffle.r.nodes.unary.CastRawNode;
-import com.oracle.truffle.r.nodes.unary.CastSymbolNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RFactor;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RInteger;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -98,6 +72,8 @@ public abstract class AsVector extends RBuiltinNode {
         RStringVector clazz = classHierarchy.execute(x);
         if (hasClassProfile.profile(clazz != null)) {
             if (useMethod == null) {
+                // Note: this dispatch takes care of factor, because there is as.vector.factor
+                // specialization in R
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 useMethod = insert(new UseMethodInternalNode("as.vector", SIGNATURE, false));
             }
@@ -194,17 +170,6 @@ public abstract class AsVector extends RBuiltinNode {
         protected RAbstractVector asVector(RList x, @SuppressWarnings("unused") String mode) {
             RList result = x.copyWithNewDimensions(null);
             result.copyNamesFrom(attrProfiles, x);
-            return result;
-        }
-
-        @Specialization(guards = "modeIsAny(mode)")
-        protected RAbstractVector asVector(RFactor x, @SuppressWarnings("unused") String mode) {
-            RVector levels = x.getLevels(attrProfiles);
-            RVector result = levels.createEmptySameType(x.getLength(), RDataFactory.COMPLETE_VECTOR);
-            RIntVector factorData = x.getVector();
-            for (int i = 0; i < result.getLength(); i++) {
-                result.transferElementSameType(i, levels, factorData.getDataAt(i) - 1);
-            }
             return result;
         }
 

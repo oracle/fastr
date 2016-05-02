@@ -506,8 +506,10 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
             for (int i = 0; i < classAttr.getLength(); i++) {
                 String attr = classAttr.getDataAt(i);
                 if (RRuntime.CLASS_FACTOR.equals(attr)) {
-                    // For Factors we only have to check if the data-type is Integer, because otherwise we must show error.
-                    // Note: this can only happen if the class is set by hand to some non-integral vector, i.e. attr(doubles, 'class') <- 'factor'
+                    // For Factors we only have to check if the data-type is Integer, because
+                    // otherwise we must show error.
+                    // Note: this can only happen if the class is set by hand to some non-integral
+                    // vector, i.e. attr(doubles, 'class') <- 'factor'
                     vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
                     if (vector.getElementClass() != RInteger.class) {
                         // TODO: check when this 'convertToInt' is necessary

@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.ConversionFailedException;
@@ -38,7 +39,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -49,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class NChar extends RBuiltinNode {
 
     @Child private CastStringNode convertString;
+    @Child private InheritsCheckNode factorInheritsCheck;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -127,9 +128,15 @@ public abstract class NChar extends RBuiltinNode {
     @Fallback
     protected RIntVector nchar(Object obj, Object type, Object allowNA, Object keepNA) {
         controlVisibility();
-        if (obj instanceof RFactor) {
+        if (factorInheritsCheck == null) {
+            CompilerDirectives.transferToInterpreter();
+            factorInheritsCheck = insert(new InheritsCheckNode(RRuntime.CLASS_FACTOR));
+        }
+
+        if (factorInheritsCheck.execute(obj)) {
             throw RError.error(this, RError.Message.REQUIRES_CHAR_VECTOR, "nchar");
         }
+
         if (obj instanceof RAbstractVector) {
             RAbstractVector vector = (RAbstractVector) obj;
             int len = vector.getLength();

@@ -30,14 +30,17 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 /**
- * Contains helper nodes related to factors, special R class of {@link RAbstractIntVector}.
+ * Contains helper nodes related to factors, special R class of {@link RAbstractIntVector}. Note:
+ * there is also {@see IsFactorNode}, which implements a built-in, for checking factor class.
  */
 public final class RFactorNodes {
 
@@ -74,8 +77,8 @@ public final class RFactorNodes {
         private final ConditionProfile stringVectorLevels = ConditionProfile.createBinaryProfile();
 
         /**
-         * Returns the levels as a string vector. If the 'levels' attribute is not a string vector a cast is done.
-         * May return null, if the 'levels' attribute is not present.
+         * Returns the levels as a string vector. If the 'levels' attribute is not a string vector a
+         * cast is done. May return null, if the 'levels' attribute is not present.
          */
         public RStringVector execute(RAbstractIntVector factor) {
             Object attr = attrAccess.execute(factor.getAttributes());
@@ -88,8 +91,8 @@ public final class RFactorNodes {
                 vec = (RVector) RRuntime.asAbstractVector(attr);   // scalar to vector
             } else {
                 notVectorBranch.enter();
-                // N.B: when a factor is lacking the 'levels' attribute, GNU R uses range 1:14331272 as levels,
-                // but probably only in 'split'. Following example prints a huge list:
+                // N.B: when a factor is lacking the 'levels' attribute, GNU R uses range 1:14331272
+                // as levels, but probably only in 'split'. Following example prints a huge list:
                 // { f <- factor(1:5); attr(f, 'levels') <- NULL; split(1:2, f) }
                 return null;
             }

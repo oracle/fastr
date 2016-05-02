@@ -30,13 +30,14 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 /**
- * Checks if given object has given R class. More specifically: whether its attribute
- * class is a vector that contains given class name as an element.
+ * Checks if given object has given R class. More specifically: whether its attribute class is a
+ * vector that contains given class name as an element.
  */
-public final class InheritsCheckNode extends Node {
+public class InheritsCheckNode extends Node {
 
     @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
     private final ConditionProfile nullClassProfile = ConditionProfile.createBinaryProfile();
@@ -49,6 +50,10 @@ public final class InheritsCheckNode extends Node {
     }
 
     public boolean execute(Object value) {
+        if (value instanceof RMissing) {
+            return false;
+        }
+
         RStringVector clazz = classHierarchy.execute(value);
         if (nullClassProfile.profile(clazz != null)) {
             for (int j = 0; j < clazz.getLength(); ++j) {

@@ -36,8 +36,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
- * The {@code split} internal. Internal version of 'split' is invoked from 'split.default'
- * function implemented in R, which makes sure that the second argument is always a R factor.
+ * The {@code split} internal. Internal version of 'split' is invoked from 'split.default' function
+ * implemented in R, which makes sure that the second argument is always a R factor.
  *
  * TODO Can we find a way to efficiently write the specializations as generics? The code is
  * identical except for the argument type.
@@ -45,11 +45,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "split", kind = INTERNAL, parameterNames = {"x", "f"})
 public abstract class Split extends RBuiltinNode {
 
-
     @Child private RFactorNodes.GetLevels getLevelNode = new RFactorNodes.GetLevels();
 
     private final ConditionProfile noStringLevels = ConditionProfile.createBinaryProfile();
-
 
     private static final int INITIAL_SIZE = 5;
     private static final int SCALE_FACTOR = 2;

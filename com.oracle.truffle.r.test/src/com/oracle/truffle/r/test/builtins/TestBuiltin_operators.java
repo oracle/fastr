@@ -1922,6 +1922,13 @@ public class TestBuiltin_operators extends TestBase {
     }
 
     @Test
+    public void testDispatchToOpsSpecializations() {
+        assertEval(Output.ContainsError, "factor(c(\"a\",\"b\",\"c\")) == factor(c(1,2,3))");
+        assertEval("data.frame(factor(c(1,2,3))) == data.frame(factor(c(1,2,3)))");
+        assertEval("data.frame(factor(c(1,2,1))) == data.frame(factor(c(1,2,2)))");
+    }
+
+    @Test
     public void testOperators() {
         assertEval("{ `+`(1,2) }");
         assertEval("{ `-`(1,2) }");

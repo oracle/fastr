@@ -415,7 +415,7 @@ public final class Utils {
                     SourceSection ss = sn != null ? sn.getSourceSection() : null;
                     // fabricate a srcref attribute from ss
                     Source source = ss != null ? ss.getSource() : null;
-                    String path =  source != null ? source.getPath() : null;
+                    String path = source != null ? source.getPath() : null;
                     if (path != null && RInternalSourceDescriptions.isInternal(path)) {
                         path = null;
                     }
