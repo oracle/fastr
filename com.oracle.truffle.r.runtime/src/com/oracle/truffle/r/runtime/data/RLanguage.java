@@ -128,7 +128,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public RLanguage materializeNonShared() {
+    public RLanguage getNonShared() {
         return (RLanguage) getNonShared();
     }
 

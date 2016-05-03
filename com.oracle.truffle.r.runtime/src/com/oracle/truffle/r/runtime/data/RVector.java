@@ -789,11 +789,6 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     }
 
     @Override
-    public RVector materializeNonShared() {
-        return (RVector) getNonShared();
-    }
-
-    @Override
     public final RShareable materializeToShareable() {
         return materialize();
     }

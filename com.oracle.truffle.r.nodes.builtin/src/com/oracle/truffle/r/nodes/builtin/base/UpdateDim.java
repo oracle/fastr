@@ -52,7 +52,7 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
     @Specialization
     protected RAbstractVector updateDim(RAbstractVector vector, @SuppressWarnings("unused") RNull dimensions) {
         controlVisibility();
-        RVector result = (RVector) vector.materializeNonShared();
+        RVector result = (RVector) vector.getNonShared();
         result.resetDimensions(null);
         return result;
     }
@@ -66,7 +66,7 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
         }
         int[] dimsData = castInteger(dimensions).materialize().getDataCopy();
         RVector.verifyDimensions(vector.getLength(), dimsData, this);
-        RVector result = (RVector) vector.materializeNonShared();
+        RVector result = (RVector) vector.getNonShared();
         result.resetDimensions(dimsData);
         return result;
     }

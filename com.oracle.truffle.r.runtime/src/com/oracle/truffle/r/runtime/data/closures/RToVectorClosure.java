@@ -27,6 +27,7 @@ import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -45,7 +46,7 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public Void getInternalStore() {
+    public final Void getInternalStore() {
         return null;
     }
 
@@ -164,7 +165,7 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public RStringVector getImplicitClass() {
+    public final RStringVector getImplicitClass() {
         return vector.getImplicitClass();
     }
 
@@ -174,8 +175,8 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public final RAbstractVector materializeNonShared() {
-        return (RAbstractVector) vector.materializeNonShared();
+    public final RTypedValue getNonShared() {
+        return vector.getNonShared();
     }
 
     @Override
@@ -184,17 +185,17 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public int getGPBits() {
+    public final int getGPBits() {
         return vector.getGPBits();
     }
 
     @Override
-    public void setGPBits(int value) {
+    public final void setGPBits(int value) {
         vector.setGPBits(value);
     }
 
     @Override
-    public boolean isS4() {
+    public final boolean isS4() {
         return false;
     }
 }

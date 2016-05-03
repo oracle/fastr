@@ -116,12 +116,6 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RExpression materializeNonShared() {
-        RVector d = data.materializeNonShared();
-        return data != d ? RDataFactory.createExpression((RList) d) : this;
-    }
-
-    @Override
     public Object getDataAtAsObject(int index) {
         return data.getDataAtAsObject(index);
     }

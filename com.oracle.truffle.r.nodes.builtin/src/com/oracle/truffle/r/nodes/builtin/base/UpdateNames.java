@@ -58,7 +58,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
         controlVisibility();
         Object newNames = castString(names);
         if (newNames == RNull.instance) {
-            RAbstractContainer result = container.materializeNonShared();
+            RAbstractContainer result = (RAbstractContainer) container.getNonShared();
             result.setNames(null);
             return result;
         }
@@ -69,7 +69,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
         } else {
             stringVector = (RStringVector) ((RAbstractVector) newNames).materialize();
         }
-        RAbstractContainer result = container.materializeNonShared();
+        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (stringVector.getLength() < result.getLength()) {
             stringVector = stringVector.copyResized(result.getLength(), true);
         } else if (stringVector == container) {

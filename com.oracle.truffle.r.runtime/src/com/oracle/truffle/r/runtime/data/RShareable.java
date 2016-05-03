@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-public interface RShareable {
+public interface RShareable extends RTypedValue {
 
     // SHARED_PERMANENT_VAL describes both overflow value and a value that can be set to prevent
     // further updates to ref count (for sharing between different threads) - can potentially be
@@ -48,6 +48,6 @@ public interface RShareable {
 
     void makeSharedPermanent();
 
-    RShareable getNonShared();
+    RTypedValue getNonShared();
 
 }

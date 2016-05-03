@@ -43,7 +43,7 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
     @Specialization
     protected RAbstractVector updateLevels(RAbstractVector vector, @SuppressWarnings("unused") RNull levels) {
         controlVisibility();
-        RVector v = (RVector) vector.materializeNonShared();
+        RVector v = (RVector) vector.getNonShared();
         v.removeAttr(attrProfiles, RRuntime.LEVELS_ATTR_KEY);
         return v;
     }
@@ -51,7 +51,7 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
     @Specialization(guards = "levelsNotNull(levels)")
     protected RAbstractVector updateLevels(RAbstractVector vector, Object levels) {
         controlVisibility();
-        RVector v = (RVector) vector.materializeNonShared();
+        RVector v = (RVector) vector.getNonShared();
         v.setAttr(RRuntime.LEVELS_ATTR_KEY, castVector(levels));
         return v;
     }

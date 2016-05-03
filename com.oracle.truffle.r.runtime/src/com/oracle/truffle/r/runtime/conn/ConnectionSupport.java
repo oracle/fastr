@@ -346,7 +346,7 @@ public class ConnectionSupport {
 
     // TODO implement all open modes
 
-    public static class InvalidConnection extends RConnection {
+    public static final class InvalidConnection extends RConnection {
 
         public static final InvalidConnection instance = new InvalidConnection();
 
