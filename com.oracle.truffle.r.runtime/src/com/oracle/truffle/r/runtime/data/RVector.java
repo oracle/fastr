@@ -503,40 +503,32 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
             // class attribute removed - no longer a data frame or factor (even if it was before)
             return vector;
         } else if (classAttr != null && classAttr.getLength() != 0) {
-            boolean ordered = false;
             for (int i = 0; i < classAttr.getLength(); i++) {
                 String attr = classAttr.getDataAt(i);
-                if (RRuntime.CLASS_ORDERED.equals(attr)) {
-                    // "ordered" must be specified before "factor" - hence it's enough to do the
-                    // check only before encountering the "factor"
-                    ordered = true;
-                }
-                if (RType.Factor.getName().equals(attr)) {
+                if (RRuntime.CLASS_FACTOR.equals(attr)) {
+                    // For Factors we only have to check if the data-type is Integer, because
+                    // otherwise we must show error.
+                    // Note: this can only happen if the class is set by hand to some non-integral
+                    // vector, i.e. attr(doubles, 'class') <- 'factor'
                     vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
-                    if (enclosingFactor != null) {
-                        // was a factor and still is a factor
-                        return enclosingFactor;
-                    } else {
-                        RIntVector resVector;
-                        if (vector.getElementClass() != RInteger.class) {
-                            if (vector.getElementClass() == RDouble.class && convertToInt) {
-                                RDoubleVector sourceVector = (RDoubleVector) vector;
-                                int[] data = new int[sourceVector.getLength()];
-                                for (int j = 0; j < data.length; j++) {
-                                    data[j] = RRuntime.double2int(sourceVector.getDataAt(j));
-                                }
-                                resVector = RDataFactory.createIntVector(data, sourceVector.isComplete());
-                                resVector.copyAttributesFrom(sourceVector);
-                            } else {
-                                // TODO: add invoking node
-                                throw RError.error(RError.SHOW_CALLER2, RError.Message.ADDING_INVALID_CLASS, "factor");
+                    if (vector.getElementClass() != RInteger.class) {
+                        // TODO: check when this 'convertToInt' is necessary
+                        if (vector.getElementClass() == RDouble.class && convertToInt) {
+                            RDoubleVector sourceVector = (RDoubleVector) vector;
+                            int[] data = new int[sourceVector.getLength()];
+                            for (int j = 0; j < data.length; j++) {
+                                data[j] = RRuntime.double2int(sourceVector.getDataAt(j));
                             }
+                            RIntVector resVector = RDataFactory.createIntVector(data, sourceVector.isComplete());
+                            resVector.copyAttributesFrom(sourceVector);
+                            return resVector;
                         } else {
-                            resVector = (RIntVector) vector;
+                            // TODO: add invoking node
+                            throw RError.error(RError.SHOW_CALLER2, RError.Message.ADDING_INVALID_CLASS, "factor");
                         }
-                        // it's a factor now
-                        return RDataFactory.createFactor(resVector, ordered);
                     }
+
+                    break;  // TODO: check if setting connection and then factor shows both errors
                 } else if (RType.Connection.getName().equals(attr)) {
                     // convert to RConnection
                     return ConnectionSupport.fromVector(vector, classAttr);

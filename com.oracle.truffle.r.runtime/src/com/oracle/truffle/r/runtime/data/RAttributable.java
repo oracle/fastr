@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -33,6 +32,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * {@link RAttributable} is implemented by the {@link RAttributes} class.
  */
 public interface RAttributable extends RTypedValue {
+
     /**
      * If the attribute set is not initialized, then initialize it.
      *
@@ -49,16 +49,21 @@ public interface RAttributable extends RTypedValue {
     RAttributes getAttributes();
 
     /**
-     * Returns the value of the {@code class} attribute.
+     * Returns the value of the {@code class} attribute or empty {@link RStringVector} if class
+     * attribute is not set.
      */
-    RStringVector getClassHierarchy();
+    default RStringVector getClassHierarchy() {
+        Object v = getAttr(RRuntime.CLASS_ATTR_KEY);
+        RStringVector result = v instanceof RStringVector ? (RStringVector) v : getImplicitClass();
+        return result != null ? result : RDataFactory.createEmptyStringVector();
+    }
 
     /**
      * Returns {@code true} if the {@code class} attribute is set to {@link RStringVector} whose
      * first element equals to the given className.
      */
     default boolean hasClass(String className) {
-        RAbstractStringVector v = getClassHierarchy();
+        RStringVector v = getClassHierarchy();
         for (int i = 0; i < v.getLength(); ++i) {
             if (v.getDataAt(i).equals(className)) {
                 return true;
@@ -79,6 +84,14 @@ public interface RAttributable extends RTypedValue {
         } else {
             return attributes.get(name);
         }
+    }
+
+    /**
+     * Get the value of an attribute. Returns {@code null} if not set.
+     */
+    default Object getAttr(String name) {
+        RAttributes attr = getAttributes();
+        return attr == null ? null : attr.get(name);
     }
 
     /**

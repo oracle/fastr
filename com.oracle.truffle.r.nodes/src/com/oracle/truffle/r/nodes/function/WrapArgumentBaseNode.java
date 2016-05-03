@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RS4Object;
@@ -73,9 +72,6 @@ public abstract class WrapArgumentBaseNode extends RNode {
         if (result instanceof RVector) {
             everSeenVector.enter();
             return (RVector) result;
-        } else if (result instanceof RFactor) {
-            everSeenFactor.enter();
-            return ((RFactor) result).getVector();
         } else if (result instanceof RLanguage) {
             everSeenLanguage.enter();
             return (RLanguage) result;

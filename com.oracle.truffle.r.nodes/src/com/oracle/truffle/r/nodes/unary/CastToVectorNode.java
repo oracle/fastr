@@ -24,12 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RFactor;
-import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @NodeField(name = "nonVectorPreserved", type = boolean.class)
@@ -58,11 +53,6 @@ public abstract class CastToVectorNode extends CastNode {
     @Specialization
     protected RAbstractVector cast(RAbstractVector vector) {
         return vector;
-    }
-
-    @Specialization
-    protected RAbstractVector cast(RFactor factor) {
-        return factor.getVector();
     }
 
     @Specialization

@@ -41,20 +41,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RFactor;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RScalarVector;
-import com.oracle.truffle.r.runtime.data.RShareable;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -146,11 +133,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 value = castType.getEmpty();
             }
         } else {
-            if (!isList() && castValue instanceof RFactor) {
-                value = ((RFactor) castValue).getVector();
-            } else {
-                value = (RTypedValue) castValue;
-            }
+            value = (RTypedValue) castValue;
         }
 
         int appliedValueLength;
@@ -182,9 +165,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         switch (vectorType) {
             case Null:
                 vector = castType.getEmpty();
-                break;
-            case Factor:
-                vector = ((RFactor) castVector).getVector();
                 break;
             case PairList:
                 vector = ((RPairList) castVector).toRList();

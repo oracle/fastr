@@ -26,7 +26,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -40,8 +39,8 @@ final class RFactorToIntVectorClosure extends RToIntVectorClosure implements RAb
     private final RAbstractIntVector levels;
     private final boolean withNames;
 
-    RFactorToIntVectorClosure(RFactor factor, RAbstractIntVector levels, boolean withNames) {
-        super(factor.getVector());
+    RFactorToIntVectorClosure(RAbstractIntVector vector, RAbstractIntVector levels, boolean withNames) {
+        super(vector);
         assert levels != null;
         this.levels = levels;
         this.withNames = withNames;
