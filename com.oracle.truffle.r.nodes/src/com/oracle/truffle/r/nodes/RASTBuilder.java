@@ -437,8 +437,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     @Override
     public RSyntaxNode constant(SourceSection source, Object value) {
-        assert value instanceof Byte || value instanceof Integer || value instanceof Double || value instanceof RComplex || value instanceof String || value instanceof RNull ||
-                        value instanceof REmpty || value instanceof RSymbol || value instanceof RAbstractVector || value instanceof RFunction : value.getClass();
         if (value instanceof String && !RRuntime.isNA((String) value)) {
             return ConstantNode.create(source, ((String) value).intern());
         } else {
