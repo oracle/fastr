@@ -25,10 +25,11 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -39,34 +40,27 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 @RBuiltin(name = "dim<-", kind = PRIMITIVE, parameterNames = {"x", "value"})
 public abstract class UpdateDim extends RInvisibleBuiltinNode {
 
-    @Child private CastIntegerNode castInteger;
-
-    private RAbstractIntVector castInteger(RAbstractVector vector) {
-        if (castInteger == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeGen.create(true, false, false));
-        }
-        return (RAbstractIntVector) castInteger.execute(vector);
-    }
+    @Child private ReuseNonSharedNode reuse = ReuseNonSharedNode.create();
 
     @Specialization
     protected RAbstractVector updateDim(RAbstractVector vector, @SuppressWarnings("unused") RNull dimensions) {
         controlVisibility();
-        RVector result = (RVector) vector.getNonShared();
+        RVector result = ((RAbstractVector) reuse.execute(vector)).materialize();
         result.resetDimensions(null);
         return result;
     }
 
     @Specialization
-    protected RAbstractVector updateDim(RAbstractVector vector, RAbstractVector dimensions) {
+    protected RAbstractVector updateDim(RAbstractVector vector, RAbstractVector dimensions, //
+                    @Cached("createPreserveNames()") CastIntegerNode castInteger) {
         controlVisibility();
         if (dimensions.getLength() == 0) {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.LENGTH_ZERO_DIM_INVALID);
         }
-        int[] dimsData = castInteger(dimensions).materialize().getDataCopy();
+        int[] dimsData = ((RAbstractIntVector) castInteger.execute(dimensions)).materialize().getDataCopy();
         RVector.verifyDimensions(vector.getLength(), dimsData, this);
-        RVector result = (RVector) vector.getNonShared();
+        RVector result = ((RAbstractVector) reuse.execute(vector)).materialize();
         result.resetDimensions(dimsData);
         return result;
     }
