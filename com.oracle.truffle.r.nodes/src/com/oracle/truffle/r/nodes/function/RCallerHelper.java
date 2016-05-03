@@ -47,10 +47,10 @@ public class RCallerHelper {
     public static final class Representation implements RCaller {
 
         private final Object func;
-        private final Object[] arguments;
+        private final RArgsValuesAndNames arguments;
         private RSyntaxNode syntaxNode = null;
 
-        public Representation(Object func, Object[] arguments) {
+        public Representation(Object func, RArgsValuesAndNames arguments) {
             this.func = func;
             this.arguments = arguments;
         }
@@ -58,14 +58,14 @@ public class RCallerHelper {
         @Override
         public RSyntaxNode getSyntaxNode() {
             if (syntaxNode == null) {
-                RSyntaxNode[] syntaxArguments = new RSyntaxNode[arguments.length];
+                RSyntaxNode[] syntaxArguments = new RSyntaxNode[arguments.getLength()];
                 int index = 0;
                 // arguments are already ordered - once one is missing, all the remaining ones must
                 // be
                 // missing
                 boolean missing = false;
-                for (int i = 0; i < arguments.length; i++) {
-                    Object arg = arguments[i];
+                for (int i = 0; i < arguments.getLength(); i++) {
+                    Object arg = arguments.getArgument(i);
                     if (arg instanceof RPromise) {
                         assert !missing;
                         RPromise p = (RPromise) arg;
@@ -103,9 +103,6 @@ public class RCallerHelper {
                     }
 
                 }
-                // for some reason GNU R does not use argument names - hence empty signature even
-                // though
-                // an actual one is available
                 syntaxNode = RASTUtils.createCall(func, true, ArgumentsSignature.empty(syntaxArguments.length), syntaxArguments);
             }
             return syntaxNode;

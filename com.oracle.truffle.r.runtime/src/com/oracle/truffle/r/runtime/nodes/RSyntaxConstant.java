@@ -53,4 +53,19 @@ public interface RSyntaxConstant extends RSyntaxElement {
             }
         };
     }
+
+    /**
+     * Helper function: extract an integer constant from an RSyntaxElement.
+     */
+    static Integer asIntConstant(RSyntaxElement argument, boolean castFromDouble) {
+        if (argument instanceof RSyntaxConstant) {
+            Object value = ((RSyntaxConstant) argument).getValue();
+            if (value instanceof Integer) {
+                return (int) value;
+            } else if (castFromDouble && value instanceof Double) {
+                return (int) (double) value;
+            }
+        }
+        return null;
+    }
 }

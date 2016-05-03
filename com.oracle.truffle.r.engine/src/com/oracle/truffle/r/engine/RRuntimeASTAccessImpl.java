@@ -48,7 +48,6 @@ import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
-import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.Arguments;
@@ -268,16 +267,14 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     private static RNode unwrapToRNode(Object objArg) {
         Object obj = objArg;
+        // obj is RSymbol or a primitive value.
+        // A symbol needs to be converted back to a ReadVariableNode
         if (obj instanceof RLanguage) {
             return (RNode) RASTUtils.unwrap(((RLanguage) obj).getRep());
+        } else if (obj instanceof RSymbol) {
+            return ReadVariableNode.create(((RSymbol) obj).getName());
         } else {
-            // obj is RSymbol or a primitive value.
-            // A symbol needs to be converted back to a ReadVariableNode
-            if (obj instanceof RSymbol) {
-                return ReadVariableNode.create(((RSymbol) obj).getName());
-            } else {
-                return ConstantNode.create(obj);
-            }
+            return ConstantNode.create(obj);
         }
     }
 
@@ -299,7 +296,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @TruffleBoundary
     public RStringVector getNames(RLanguage rl) {
         RBaseNode node = rl.getRep();
-        if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
+        if (node instanceof RCallNode) {
+            RCallNode call = (RCallNode) node;
             /*
              * If the function or any argument has a name, then all arguments (and the function) are
              * given names, with unnamed arguments getting "". However, if no arguments have names,
@@ -307,13 +305,12 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
              */
             boolean hasName = false;
             String functionName = "";
-            RNode fnNode = RASTUtils.getFunctionNode(node);
+            RNode fnNode = call.getFunctionNode();
             if (fnNode instanceof NamedRNode) {
                 hasName = true;
                 functionName = ((NamedRNode) fnNode).name;
             }
-            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
-            ArgumentsSignature sig = args.getSignature();
+            ArgumentsSignature sig = call.getSyntaxSignature();
             if (!hasName) {
                 for (int i = 0; i < sig.getLength(); i++) {
                     if (sig.getName(i) != null) {
@@ -342,7 +339,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     public void setNames(RLanguage rl, RStringVector names) {
         RNode node = (RNode) rl.getRep();
         if (node instanceof RCallNode) {
-            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
+            RCallNode call = (RCallNode) node;
+            Arguments<RSyntaxNode> args = call.getArguments();
             ArgumentsSignature sig = args.getSignature();
             String[] newNames = new String[sig.getLength()];
             int argNamesLength = names.getLength() - 1;
@@ -354,8 +352,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             }
             // copying is already handled by RShareable
             rl.setRep(RCallNode.createCall(RSyntaxNode.INTERNAL, ((RCallNode) node).getFunctionNode(), ArgumentsSignature.get(newNames), args.getArguments()));
-        } else if (node instanceof GroupDispatchNode) {
-            throw RError.nyi(null, "group dispatch names update");
         } else {
             throw RInternalError.shouldNotReachHere();
         }
@@ -601,7 +597,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         String className = tag.getSimpleName();
         switch (className) {
             case "CallTag":
-                return node instanceof RCallNode || node instanceof GroupDispatchNode;
+                return node instanceof RCallNode;
 
             case "StatementTag": {
                 Node parent = ((RInstrumentableNode) node).unwrapParent();

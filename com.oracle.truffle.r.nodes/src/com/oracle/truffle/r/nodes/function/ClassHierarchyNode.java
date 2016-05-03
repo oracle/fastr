@@ -74,6 +74,10 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         this.withS4 = withS4;
     }
 
+    public static ClassHierarchyNode create() {
+        return ClassHierarchyNodeGen.create(false, false);
+    }
+
     @Override
     public abstract RStringVector execute(Object arg);
 
