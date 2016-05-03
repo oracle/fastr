@@ -27,13 +27,15 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.ArgumentStatePush;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
-import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 /**
  * Provides small helper function for eager evaluation of arguments for the use in
@@ -81,17 +83,17 @@ public class EagerEvalHelper {
         if (!optConsts()) {
             return null;
         }
-        if (expr instanceof RCallNode) {
-            RCallNode call = (RCallNode) expr;
-            if (call.getFunctionNode() instanceof ReadVariableNode) {
-                String functionName = ((ReadVariableNode) call.getFunctionNode()).getIdentifier();
+        if (expr instanceof RSyntaxCall) {
+            RSyntaxCall call = (RSyntaxCall) expr;
+            if (call.getSyntaxLHS() instanceof RSyntaxLookup) {
+                String functionName = ((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier();
                 switch (functionName) {
                     case "character":
-                        if (call.getArgumentCount() == 0) {
+                        if (call.getSyntaxArguments().length == 0) {
                             return RDataFactory.createEmptyStringVector();
-                        } else if (call.getArgumentCount() == 1) {
-                            RSyntaxNode argument = call.getArgument(0);
-                            Integer value = ConstantNode.asIntConstant(argument, true);
+                        } else if (call.getSyntaxArguments().length == 1) {
+                            RSyntaxElement argument = call.getSyntaxArguments()[0];
+                            Integer value = RSyntaxConstant.asIntConstant(argument, true);
                             if (value != null) {
                                 RStringVector vector = RDataFactory.createStringVector(value);
                                 ArgumentStatePush.transitionStateSlowPath(vector);
@@ -101,8 +103,8 @@ public class EagerEvalHelper {
                         break;
                 }
             }
-        } else if (expr instanceof ConstantNode) {
-            return ((ConstantNode) expr).getValue();
+        } else if (expr instanceof RSyntaxConstant) {
+            return ((RSyntaxConstant) expr).getValue();
         }
         return null;
     }

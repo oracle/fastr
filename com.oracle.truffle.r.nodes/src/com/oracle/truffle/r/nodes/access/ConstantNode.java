@@ -29,7 +29,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -44,10 +43,6 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
     private ConstantNode(SourceSection sourceSection) {
         super(sourceSection);
-    }
-
-    public static boolean isFunction(RNode node) {
-        return node instanceof ConstantObjectNode && ((ConstantObjectNode) node).value instanceof RFunction;
     }
 
     public static boolean isMissing(RNode node) {
@@ -197,17 +192,5 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
                 super.serializeImpl(state);
             }
         }
-    }
-
-    public static Integer asIntConstant(RSyntaxNode argument, boolean castFromDouble) {
-        if (argument instanceof ConstantNode) {
-            Object value = ((ConstantNode) argument).getValue();
-            if (value instanceof Integer) {
-                return (int) value;
-            } else if (castFromDouble && value instanceof Double) {
-                return (int) (double) value;
-            }
-        }
-        return null;
     }
 }

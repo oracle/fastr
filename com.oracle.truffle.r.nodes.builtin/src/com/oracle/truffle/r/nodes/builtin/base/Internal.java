@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -35,7 +34,6 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.function.RCallNode.LeafCallNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
@@ -66,8 +64,7 @@ public abstract class Internal extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
 
-    @Child private LeafCallNode builtinCallNode;
-    @CompilationFinal private RFunction builtinFunction;
+    @Child private RNode builtinCallNode;
 
     @Specialization
     protected Object doInternal(@SuppressWarnings("unused") RMissing x) {
@@ -101,10 +98,9 @@ public abstract class Internal extends RBuiltinNode {
 
             // .Internal function is validated
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            builtinCallNode = insert(RCallNode.createInternalCall(frame, callNode, function, name));
-            builtinFunction = function;
+            builtinCallNode = insert(RCallNode.createInternalCall(callNode, function));
         }
-        return builtinCallNode.execute(frame, builtinFunction, null);
+        return builtinCallNode.execute(frame);
     }
 
     private static boolean notImplemented(String name) {

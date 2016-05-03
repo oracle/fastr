@@ -91,7 +91,7 @@ final class ValuePrinters implements ValuePrinter<Object> {
                 } else if (x instanceof REnvironment) {
                     printer = EnvironmentPrinter.INSTANCE;
                 } else {
-                    RInternalError.shouldNotReachHere();
+                    RInternalError.shouldNotReachHere("unexpected type: " + (x == null ? "null" : x.getClass()));
                 }
             }
             printer.print(x, printCtx);

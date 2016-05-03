@@ -48,6 +48,7 @@ import com.oracle.truffle.api.impl.FindContextNode;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -102,6 +103,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -384,7 +386,7 @@ final class REngine implements Engine, Engine.Timings {
         for (int i = 0; i < exprs.getLength(); i++) {
             Object obj = RASTUtils.checkForRSymbol(exprs.getDataAt(i));
             if (obj instanceof RLanguage) {
-                result = evalNode((RNode) ((RLanguage) obj).getRep(), envir, depth);
+                result = evalNode(((RLanguage) obj).getRep().asRSyntaxNode(), envir, depth);
             } else {
                 result = obj;
             }
@@ -394,7 +396,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public Object eval(RLanguage expr, REnvironment envir, int depth) {
-        return evalNode((RNode) expr.getRep(), envir, depth);
+        return evalNode(expr.getRep().asRSyntaxNode(), envir, depth);
     }
 
     @Override
@@ -432,11 +434,11 @@ final class REngine implements Engine, Engine.Timings {
         return func.getTarget().call(rArgs);
     }
 
-    private Object evalNode(RNode exprRep, REnvironment envir, int depth) {
+    private Object evalNode(RSyntaxElement exprRep, REnvironment envir, int depth) {
         // we need to copy the node, otherwise it (and its children) will specialized to a specific
         // frame descriptor and will fail on subsequent re-executions
-        RNode n = (RNode) exprRep.deepCopy();
-        RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME, false, false);
+        RSyntaxNode n = RContext.getASTBuilder().process(exprRep);
+        RootCallTarget callTarget = doMakeCallTarget(n.asRNode(), EVAL_FUNCTION_NAME, false, false);
         RCaller call = RArguments.getCall(envir.getFrame());
         return evalTarget(callTarget, call, envir, depth);
     }
@@ -484,6 +486,7 @@ final class REngine implements Engine, Engine.Timings {
     private final class AnonymousRootNode extends RootNode {
 
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
+        private final ConditionProfile isVirtualFrameProfile = ConditionProfile.createBinaryProfile();
 
         private final String description;
         private final boolean printResult;
@@ -499,10 +502,21 @@ final class REngine implements Engine, Engine.Timings {
             this.topLevel = topLevel;
         }
 
+        private VirtualFrame prepareFrame(VirtualFrame frame) {
+            VirtualFrame vf;
+            MaterializedFrame originalFrame = (MaterializedFrame) frameTypeProfile.profile(frame.getArguments()[0]);
+            if (isVirtualFrameProfile.profile(originalFrame instanceof VirtualFrame)) {
+                vf = (VirtualFrame) originalFrame;
+            } else {
+                vf = SubstituteVirtualFrame.create(originalFrame);
+            }
+            return vf;
+        }
+
         @Override
         public Object execute(VirtualFrame frame) {
             assert frame.getArguments().length == 1;
-            VirtualFrame vf = SubstituteVirtualFrame.create((MaterializedFrame) frameTypeProfile.profile(frame.getArguments()[0]));
+            VirtualFrame vf = prepareFrame(frame);
             Object result = null;
             try {
                 result = body.execute(vf);

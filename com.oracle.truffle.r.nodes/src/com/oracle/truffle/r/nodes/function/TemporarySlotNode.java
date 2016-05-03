@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.function.Consumer;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
@@ -34,16 +32,17 @@ import com.oracle.truffle.r.runtime.RInternalError;
 
 public final class TemporarySlotNode extends Node {
 
-    private static final Object[] defaultTempIdentifiers = new Object[]{new Object(), new Object(), new Object(), new Object()};
+    private static final Object[] defaultTempIdentifiers = new Object[]{new Object(), new Object(), new Object(), new Object(), new Object(), new Object(), new Object(), new Object()};
 
     @Child private FrameSlotNode tempSlot;
     private int tempIdentifier;
+    private Object identifier;
 
-    public FrameSlot initialize(VirtualFrame frame, Object value, Consumer<Object> initializer) {
+    public FrameSlot initialize(VirtualFrame frame, Object value, Runnable invalidate) {
         if (tempSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            tempSlot = insert(FrameSlotNode.createInitialized(frame.getFrameDescriptor(), defaultTempIdentifiers[0], true));
-            initializer.accept(defaultTempIdentifiers[0]);
+            tempSlot = insert(FrameSlotNode.createInitialized(frame.getFrameDescriptor(), identifier = defaultTempIdentifiers[0], true));
+            invalidate.run();
         }
         FrameSlot slot = tempSlot.executeFrameSlot(frame);
         try {
@@ -52,9 +51,9 @@ public final class TemporarySlotNode extends Node {
                 // keep the complete loop in the slow path
                 do {
                     tempIdentifier++;
-                    Object identifier = tempIdentifier < defaultTempIdentifiers.length ? defaultTempIdentifiers[tempIdentifier] : new Object();
+                    identifier = tempIdentifier < defaultTempIdentifiers.length ? defaultTempIdentifiers[tempIdentifier] : new Object();
                     tempSlot.replace(FrameSlotNode.createInitialized(frame.getFrameDescriptor(), identifier, true));
-                    initializer.accept(identifier);
+                    invalidate.run();
                     slot = tempSlot.executeFrameSlot(frame);
                 } while (frame.isObject(slot) && frame.getObject(slot) != null);
             }
@@ -68,5 +67,9 @@ public final class TemporarySlotNode extends Node {
     @SuppressWarnings("static-method")
     public void cleanup(VirtualFrame frame, FrameSlot slot) {
         frame.setObject(slot, null);
+    }
+
+    public Object getIdentifier() {
+        return identifier;
     }
 }

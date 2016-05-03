@@ -379,7 +379,7 @@ public class MethodsListDispatch {
             }
             RCallNode callNode = (RCallNode) matchedCall.getRep();
             RNode f = ReadVariableNode.create(RRuntime.R_DOT_NEXT_METHOD);
-            ArgumentsSignature sig = callNode.getArguments().getSignature();
+            ArgumentsSignature sig = callNode.getSyntaxSignature();
             RSyntaxNode[] args = new RSyntaxNode[sig.getLength()];
             for (int i = 0; i < args.length; i++) {
                 args[i] = ReadVariableNode.create(sig.getName(i));
