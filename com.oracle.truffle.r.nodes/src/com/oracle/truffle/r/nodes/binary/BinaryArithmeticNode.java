@@ -31,7 +31,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
@@ -41,19 +40,19 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
-public abstract class BinaryArithmeticNode extends RBuiltinNode {
+/**
+ * Represents a binary or unary operation from the 'arithmetic' subset of Ops R group. The concrete
+ * operation is implemented by factory object given as a constructor parameter, e.g.
+ * {@link com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Add}
+ */
+public abstract class BinaryArithmeticNode extends BinaryNodeBase {
 
     protected static final int CACHE_LIMIT = 5;
 
@@ -74,13 +73,15 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return BinaryArithmeticNodeGen.create(binary, unary, null);
     }
 
-    @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})
+    @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)",
+                    "!isFactor(left)", "!isFactor(right)"})
     protected Object doNumericVectorCached(Object left, Object right, //
                     @Cached("createFastCached(left, right)") BinaryMapNode cached) {
         return cached.apply(left, right);
     }
 
-    @Specialization(contains = "doNumericVectorCached", guards = {"isNumericVector(left)", "isNumericVector(right)"})
+    @Specialization(contains = "doNumericVectorCached", guards = {"isNumericVector(left)", "isNumericVector(right)",
+                    "!isFactor(left)", "!isFactor(right)"})
     @TruffleBoundary
     protected Object doNumericVectorGeneric(Object left, Object right, //
                     @Cached("binary.create()") BinaryArithmetic arithmetic, //
@@ -117,24 +118,16 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
     }
 
-    protected static boolean isFactor(Object value) {
-        return value instanceof RFactor;
-    }
-
     @Specialization(guards = "isFactor(left) || isFactor(right)")
-    protected Object doFactor(VirtualFrame frame, Object left, Object right, @Cached("create()") RLengthNode lengthNode) {
+    protected Object doFactor(VirtualFrame frame, RAbstractIntVector left, RAbstractIntVector right, @Cached("create()") RLengthNode lengthNode) {
         Message warning;
-        if (left instanceof RFactor) {
-            warning = getFactorWarning((RFactor) left);
+        if (isFactor(left)) {
+            warning = getFactorWarning(left);
         } else {
-            warning = getFactorWarning((RFactor) right);
+            warning = getFactorWarning(right);
         }
         RError.warning(this, warning, binary.create().opName());
         return RDataFactory.createNAVector(Math.max(lengthNode.executeInteger(frame, left), lengthNode.executeInteger(frame, right)));
-    }
-
-    private static Message getFactorWarning(RFactor factor) {
-        return factor.isOrdered() ? Message.NOT_MEANINGFUL_FOR_ORDERED_FACTORS : Message.NOT_MEANINGFUL_FOR_FACTORS;
     }
 
     @Specialization
@@ -143,7 +136,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return RType.Double.getEmpty();
     }
 
-    @Specialization(guards = "isNumericVector(right)")
+    @Specialization(guards = {"isNumericVector(right)", "!isFactor(right)"})
     protected static Object doLeftNull(@SuppressWarnings("unused") RNull left, Object right, //
                     @Cached("createClassProfile()") ValueProfile classProfile) {
         if (((RAbstractVector) classProfile.profile(right)).getRType() == RType.Complex) {
@@ -153,7 +146,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = "isNumericVector(left)")
+    @Specialization(guards = {"isNumericVector(left)", "!isFactor(left)"})
     protected static Object doRightNull(Object left, RNull right, //
                     @Cached("createClassProfile()") ValueProfile classProfile) {
         return doLeftNull(right, left, classProfile);

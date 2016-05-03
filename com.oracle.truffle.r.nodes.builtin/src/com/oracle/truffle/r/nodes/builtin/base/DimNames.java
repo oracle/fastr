@@ -26,12 +26,10 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -41,9 +39,6 @@ public abstract class DimNames extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final ConditionProfile nullProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile dataframeProfile = BranchProfile.create();
-    private final BranchProfile factorProfile = BranchProfile.create();
-    private final BranchProfile otherProfile = BranchProfile.create();
 
     @Specialization
     protected RNull getDimNames(@SuppressWarnings("unused") RNull operand) {
@@ -54,14 +49,7 @@ public abstract class DimNames extends RBuiltinNode {
     @Specialization
     protected Object getDimNames(RAbstractContainer container) {
         controlVisibility();
-        RList names;
-        if (container instanceof RFactor) {
-            factorProfile.enter();
-            names = ((RFactor) container).getVector().getDimNames();
-        } else {
-            otherProfile.enter();
-            names = container.getDimNames(attrProfiles);
-        }
+        RList names = container.getDimNames(attrProfiles);
         return nullProfile.profile(names == null) ? RNull.instance : names;
     }
 }

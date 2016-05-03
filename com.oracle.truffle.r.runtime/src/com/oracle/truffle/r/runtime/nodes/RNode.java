@@ -33,39 +33,8 @@ import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.conn.RConnection;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributes;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDoubleSequence;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RFactor;
-import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.RTypesGen;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @TypeSystemReference(RTypes.class)
@@ -193,10 +162,6 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
         return RTypesGen.expectRExpression(execute(frame));
     }
 
-    public RFactor executeRFactor(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRFactor(execute(frame));
-    }
-
     public RSymbol executeRSymbol(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.expectRSymbol(execute(frame));
     }
@@ -283,10 +248,6 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
 
     protected static boolean isRList(Object value) {
         return value instanceof RList;
-    }
-
-    protected static boolean isRFactor(Object value) {
-        return value instanceof RFactor;
     }
 
     protected static boolean isRPromise(Object value) {

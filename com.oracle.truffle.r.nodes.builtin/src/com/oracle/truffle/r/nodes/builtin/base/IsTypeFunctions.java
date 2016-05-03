@@ -30,32 +30,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RFactor;
-import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -121,12 +99,6 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization
-        protected byte isRecursive(RFactor arg) {
-            controlVisibility();
-            return RRuntime.LOGICAL_FALSE;
-        }
-
         protected boolean isListVector(RAbstractVector arg) {
             return arg instanceof RList;
         }
@@ -141,6 +113,8 @@ public class IsTypeFunctions {
     @RBuiltin(name = "is.atomic", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class IsAtomic extends MissingAdapter {
 
+        @Child private InheritsCheckNode inheritsFactorCheck = new InheritsCheckNode(RRuntime.CLASS_FACTOR);
+
         @Specialization
         protected byte isAtomic(RNull arg) {
             controlVisibility();
@@ -153,18 +127,16 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization
-        protected byte isAtomic(RFactor arg) {
-            controlVisibility();
-            return RRuntime.LOGICAL_TRUE;
-        }
-
         protected static boolean isNonListVector(Object value) {
             return value instanceof Integer || value instanceof Double || value instanceof RComplex || value instanceof String || value instanceof RRaw ||
                             (value instanceof RAbstractVector && !(value instanceof RList));
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)", "!isRFactor(value)", "!isNonListVector(value)"})
+        protected boolean isFactor(Object value) {
+            return inheritsFactorCheck.execute(value);
+        }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)", "!isFactor(value)", "!isNonListVector(value)"})
         protected byte isType(Object value) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
@@ -403,10 +375,16 @@ public class IsTypeFunctions {
     @RBuiltin(name = "is.numeric", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class IsNumeric extends MissingAdapter {
 
-        @Specialization
+        @Specialization(guards = "!isFactor(value)")
         protected byte isType(RAbstractIntVector value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
+        }
+
+        @Specialization(guards = "isFactor(value)")
+        protected byte isTypeFactor(RAbstractIntVector value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization
@@ -423,6 +401,12 @@ public class IsTypeFunctions {
         protected byte isType(Object value) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
+        }
+
+        @Child private InheritsCheckNode inheritsCheck = new InheritsCheckNode(RRuntime.CLASS_FACTOR);
+
+        protected boolean isFactor(Object o) {
+            return inheritsCheck.execute(o);
         }
     }
 

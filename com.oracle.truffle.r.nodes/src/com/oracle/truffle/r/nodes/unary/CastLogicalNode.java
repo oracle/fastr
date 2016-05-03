@@ -27,17 +27,9 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RFactor;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -79,7 +71,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         return operand;
     }
 
-    @Specialization
+    @Specialization(guards = "!isFactor(operand)")
     protected RLogicalVector doIntVector(RAbstractIntVector operand) {
         return createResultVector(operand, index -> naCheck.convertIntToLogical(operand.getDataAt(index)));
     }
@@ -154,8 +146,8 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         return missing;
     }
 
-    @Specialization
-    protected RLogicalVector asLogical(RFactor factor) {
+    @Specialization(guards = "isFactor(factor)")
+    protected RLogicalVector asLogical(RAbstractIntVector factor) {
         byte[] data = new byte[factor.getLength()];
         Arrays.fill(data, RRuntime.LOGICAL_NA);
         return RDataFactory.createLogicalVector(data, RDataFactory.INCOMPLETE_VECTOR);
@@ -169,5 +161,11 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
     public static CastLogicalNode createNonPreserving() {
         return CastLogicalNodeGen.create(false, false, false);
+    }
+
+    @Child private InheritsCheckNode inheritsFactorCheck = new InheritsCheckNode(RRuntime.CLASS_FACTOR);
+
+    protected boolean isFactor(Object o) {
+        return inheritsFactorCheck.execute(o);
     }
 }

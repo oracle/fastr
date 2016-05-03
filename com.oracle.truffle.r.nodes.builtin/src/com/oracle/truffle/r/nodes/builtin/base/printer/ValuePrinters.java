@@ -23,15 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RExternalPtr;
-import com.oracle.truffle.r.runtime.data.RFactor;
-import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RS4Object;
-import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -59,7 +52,6 @@ final class ValuePrinters implements ValuePrinter<Object> {
         printers.put(RExternalPtr.class, ExternalPtrPrinter.INSTANCE);
         printers.put(RS4Object.class, S4ObjectPrinter.INSTANCE);
         printers.put(RPairList.class, PairListPrinter.INSTANCE);
-        printers.put(RFactor.class, FactorPrinter.INSTANCE);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -74,7 +66,9 @@ final class ValuePrinters implements ValuePrinter<Object> {
             Object x = printCtx.printerNode().boxPrimitive(v);
             ValuePrinter printer = printers.get(x.getClass());
             if (printer == null) {
-                if (x instanceof RAbstractStringVector) {
+                if (x instanceof RAbstractIntVector && ((RAttributable) x).hasClass(RRuntime.CLASS_FACTOR)) {
+                    printer = FactorPrinter.INSTANCE;
+                } else if (x instanceof RAbstractStringVector) {
                     printer = StringVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractDoubleVector) {
                     printer = DoubleVectorPrinter.INSTANCE;

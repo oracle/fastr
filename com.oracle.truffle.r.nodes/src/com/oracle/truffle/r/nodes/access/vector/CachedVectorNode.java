@@ -142,7 +142,6 @@ abstract class CachedVectorNode extends RBaseNode {
         switch (type) {
             case Null:
             case Language:
-            case Factor:
             case PairList:
             case Environment:
             case Expression:

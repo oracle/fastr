@@ -26,10 +26,10 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /*
@@ -40,8 +40,8 @@ final class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure implemen
     private final RAbstractDoubleVector levels;
     private final boolean withNames;
 
-    RFactorToDoubleVectorClosure(RFactor factor, RAbstractDoubleVector levels, boolean withNames) {
-        super(factor.getVector());
+    RFactorToDoubleVectorClosure(RAbstractIntVector vector, RAbstractDoubleVector levels, boolean withNames) {
+        super(vector);
         assert levels != null;
         this.levels = levels;
         this.withNames = withNames;

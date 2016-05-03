@@ -128,7 +128,8 @@ public class RRuntime {
 
     public static final String DOT_S3_CLASS = ".S3Class";
     public static final String CLASS_DATA_FRAME = "data.frame";
-    public static final String CLASS_ORDERED = "ordered";
+    public static final String CLASS_FACTOR = "factor";
+    public static final String ORDERED_ATTR_KEY = "ordered";
 
     public static final String RS3MethodsTable = ".__S3MethodsTable__.";
 
