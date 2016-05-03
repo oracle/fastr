@@ -171,7 +171,6 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/access/AccessSlotNode.
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/access/UpdateSlotNode.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/binary/CastTypeNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/CallMatcherNode.java,purdue.copyright
-com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/GroupDispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/S3FunctionLookupNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/UseMethodInternalNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/objects/AsS4.java,gnu_r_gentleman_ihaka.copyright

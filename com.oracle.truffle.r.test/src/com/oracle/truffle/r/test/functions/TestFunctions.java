@@ -218,6 +218,11 @@ public class TestFunctions extends TestBase {
     }
 
     @Test
+    public void testArgEvaluationOrder() {
+        assertEval("v <- 1; class(v) <- 'foo'; `-.foo` <- function(x,y,...) { cat('[-.foo]'); 1234 }; g <- function(...) { cat('[ing]'); ({cat('[-]'); `-`})(...) }; ({cat('[g]'); g})({cat('[x]'); v},{cat('[y]'); 3},{cat('[z]'); 5})");
+    }
+
+    @Test
     public void testMatching() {
         assertEval("{ x<-function(foo,bar){foo*bar} ; x(f=10,2) }");
         assertEval("{ x<-function(foo,bar){foo*bar} ; x(fo=10, bar=2) }");
@@ -311,13 +316,15 @@ public class TestFunctions extends TestBase {
         assertEval("f2 <- function(...) { f <- function() cat(...); f() }; f2()");
         assertEval("f2 <- function(...) { f <- function() cat(...); environment(f) <- globalenv(); f() }; f2()");
         assertEval("f2 <- function(...) { f <- function() cat(...); f() }; f2(\"a\")");
-        assertEval("f2 <- function(...) { f <- function() cat(...); assign(\"...\", NULL); f() }; f2(\"a\")");
+        assertEval(Ignored.ImplementationError, "f2 <- function(...) { f <- function() cat(...); assign(\"...\", NULL); f() }; f2(\"a\")");
         assertEval("f2 <- function(...) { f <- function() cat(...); assign(\"...\", \"asdf\"); f() }; f2(\"a\")");
 
         assertEval("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1,a=2) }");
         assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2) } ; g(1) }");
         assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., xxx=2) } ; g(1) }");
         assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, xxx=2, ...) } ; g(1) }");
+
+        assertEval("{ `-.foo` <- function(...) 123; v <- 1; class(v) <- 'foo'; sapply(1,`-`,v); sapply(v,`-`,1); sapply(v,`-`,v) }");
 
         assertEval(Ignored.Unknown, "{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
 

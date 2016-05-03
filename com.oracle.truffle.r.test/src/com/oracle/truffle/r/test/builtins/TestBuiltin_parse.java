@@ -41,5 +41,6 @@ public class TestBuiltin_parse extends TestBase {
     @Test
     public void test() {
         assertEval("{ typeof(parse(text = \"foo\", keep.source = FALSE, srcfile = NULL)[[1]]) }");
+        assertEval("{ parse(text=\"NULL\") }");
     }
 }

@@ -28,22 +28,28 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
 @RBuiltin(name = "forceAndCall", kind = PRIMITIVE, parameterNames = {"n", "FUN", "..."}, nonEvalArgs = 2)
 public abstract class ForceAndCall extends RBuiltinNode {
 
-    @Child private DoCall doCallNode;
+    private final Object argsIdentifier = new Object();
+
+    @Child private RCallNode call = RCallNode.createExplicitCall(argsIdentifier);
+    @Child private FrameSlotNode slot = FrameSlotNode.createTemp(argsIdentifier, true);
+
     @Child private PromiseHelperNode promiseHelper;
 
     protected PromiseHelperNode initPromiseHelper() {
@@ -59,29 +65,22 @@ public abstract class ForceAndCall extends RBuiltinNode {
         casts.toInteger(0);
     }
 
-    private DoCall getDoCallNode() {
-        if (doCallNode == null) {
-            doCallNode = insert(DoCallNodeGen.create(null));
+    @Specialization
+    protected Object forceAndCallBuiltin(VirtualFrame frame, int n, RFunction fun, RArgsValuesAndNames args) {
+        if (!fun.isBuiltin()) {
+            initPromiseHelper();
+            RArgsValuesAndNames flattened = flatten(args);
+            // In GnuR there appears to be no error checks on n > args.length
+            int cnt = Math.min(flattened.getLength(), n);
+            for (int i = 0; i < cnt; i++) {
+                RPromise arg = (RPromise) args.getArgument(i);
+                initPromiseHelper().evaluate(frame, arg);
+            }
         }
-        return doCallNode;
-    }
 
-    @Specialization(guards = "isBuiltin(fun)")
-    protected Object forceAndCallBuiltin(VirtualFrame frame, @SuppressWarnings("unused") int n, RFunction fun, RArgsValuesAndNames args) {
-        return getDoCallNode().execute(frame, fun, args, RNull.instance);
-    }
-
-    @Specialization(guards = "!isBuiltin(fun)")
-    protected Object forceAndCall(VirtualFrame frame, int n, RFunction fun, RArgsValuesAndNames args) {
-        initPromiseHelper();
-        RArgsValuesAndNames flattened = flatten(args);
-        // In GnuR there appears to be no error checks on n > args.length
-        int cnt = Math.min(flattened.getLength(), n);
-        for (int i = 0; i < cnt; i++) {
-            RPromise arg = (RPromise) args.getArgument(i);
-            initPromiseHelper().evaluate(frame, arg);
-        }
-        return getDoCallNode().execute(frame, fun, flattened, RNull.instance);
+        FrameSlot frameSlot = slot.executeFrameSlot(frame);
+        frame.setObject(frameSlot, args);
+        return call.execute(frame, fun);
     }
 
     @TruffleBoundary

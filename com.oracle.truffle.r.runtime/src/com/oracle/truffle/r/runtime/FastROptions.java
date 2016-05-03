@@ -80,12 +80,25 @@ public enum FastROptions {
 
     public boolean getBooleanValue() {
         assert isBoolean;
-        return (Boolean) value;
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        } else {
+            System.out.println("boolean option value expected with " + name() + " - forgot +/- ?");
+            System.exit(2);
+            return false;
+        }
+
     }
 
     public String getStringValue() {
         assert !isBoolean;
-        return (String) value;
+        if (value == null || value instanceof String) {
+            return (String) value;
+        } else {
+            System.out.println("string option value expected with " + name());
+            System.exit(2);
+            return "";
+        }
     }
 
     private static FastROptions[] VALUES = values();

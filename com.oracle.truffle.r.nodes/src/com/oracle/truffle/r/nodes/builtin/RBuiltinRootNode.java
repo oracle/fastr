@@ -31,7 +31,6 @@ import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class RBuiltinRootNode extends RRootNode {
 
@@ -74,10 +73,6 @@ public final class RBuiltinRootNode extends RRootNode {
     @Override
     public boolean needsSplitting() {
         return factory.isAlwaysSplit();
-    }
-
-    public RBuiltinNode inline(RNode[] args) {
-        return RBuiltinNode.inline(factory, args);
     }
 
     @Override

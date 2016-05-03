@@ -22,10 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
-import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -97,32 +95,19 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
      * @param modeChangeForAll
      * @param args {@link #arguments}; new array gets created. Every {@link RNode} (except
      *            <code>null</code>) gets wrapped into a {@link WrapArgumentNode}.
+     * @param varArgsSymbolIndicesArr
      * @return A fresh {@link CallArgumentsNode}
      */
-    public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, ArgumentsSignature signature) {
+    public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, ArgumentsSignature signature, int[] varArgsSymbolIndicesArr) {
         // Prepare arguments: wrap in WrapArgumentNode
         RNode[] wrappedArgs = new RNode[args.length];
-        List<Integer> varArgsSymbolIndices = new ArrayList<>();
         for (int i = 0; i < wrappedArgs.length; i++) {
             RNode arg = args[i];
             if (arg == null) {
                 wrappedArgs[i] = null;
             } else {
-                if (arg instanceof ReadVariableNode) {
-                    // Check for presence of "..." in the arguments
-                    ReadVariableNode rvn = (ReadVariableNode) arg;
-                    if (ArgumentsSignature.VARARG_NAME.equals(rvn.getIdentifier())) {
-                        varArgsSymbolIndices.add(i);
-                    }
-                }
                 wrappedArgs[i] = WrapArgumentNode.create(arg, i == 0 || modeChangeForAll ? modeChange : true, i);
             }
-        }
-
-        // Setup and return
-        int[] varArgsSymbolIndicesArr = new int[varArgsSymbolIndices.size()];
-        for (int i = 0; i < varArgsSymbolIndicesArr.length; i++) {
-            varArgsSymbolIndicesArr[i] = varArgsSymbolIndices.get(i);
         }
         return new CallArgumentsNode(wrappedArgs, signature, varArgsSymbolIndicesArr);
     }
@@ -140,10 +125,11 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
      * This methods unrolls all "..." in the argument list. The result varies if the number of
      * arguments in the varargs or their names change.
      */
-    public UnrolledVariadicArguments executeFlatten(Frame frame) {
+    public UnmatchedArguments unrollArguments(ArgumentsSignature varArgSignature) {
         CompilerAsserts.neverPartOfCompilation();
+        assert containsVarArgsSymbol() == (varArgSignature != null);
         if (!containsVarArgsSymbol()) {
-            return UnrolledVariadicArguments.create(getArguments(), getSignature(), this);
+            return this;
         } else {
             RNode[] values = new RNode[arguments.length];
             String[] newNames = new String[arguments.length];
@@ -152,19 +138,18 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
             int index = 0;
             for (int i = 0; i < arguments.length; i++) {
                 if (vargsSymbolsIndex < varArgsSymbolIndices.length && varArgsSymbolIndices[vargsSymbolsIndex] == i) {
-                    RArgsValuesAndNames varArgInfo = getVarargsAndNames(frame);
-                    if (varArgInfo.isEmpty()) {
+                    if (varArgSignature.isEmpty()) {
                         // An empty "..." vanishes
                         values = Utils.resizeArray(values, values.length - 1);
                         newNames = Utils.resizeArray(newNames, newNames.length - 1);
                         continue;
                     }
 
-                    values = Utils.resizeArray(values, values.length + varArgInfo.getLength() - 1);
-                    newNames = Utils.resizeArray(newNames, newNames.length + varArgInfo.getLength() - 1);
-                    for (int j = 0; j < varArgInfo.getLength(); j++) {
+                    values = Utils.resizeArray(values, values.length + varArgSignature.getLength() - 1);
+                    newNames = Utils.resizeArray(newNames, newNames.length + varArgSignature.getLength() - 1);
+                    for (int j = 0; j < varArgSignature.getLength(); j++) {
                         values[index] = PromiseNode.createVarArg(j);
-                        newNames[index] = varArgInfo.getSignature().getName(j);
+                        newNames[index] = varArgSignature.getName(j);
                         index++;
                     }
                     vargsSymbolsIndex++;
@@ -174,18 +159,17 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
                     index++;
                 }
             }
-
             return UnrolledVariadicArguments.create(values, ArgumentsSignature.get(newNames), this);
         }
     }
 
     @ExplodeLoop
-    public RArgsValuesAndNames evaluateFlatten(VirtualFrame frame, RArgsValuesAndNames varArgInfo) {
+    public RArgsValuesAndNames evaluateFlatten(VirtualFrame frame, RArgsValuesAndNames varArgs) {
         int size = arguments.length;
         ArgumentsSignature resultSignature = null;
         String[] names = null;
         if (containsVarArgsSymbol()) {
-            size += (varArgInfo.getLength() - 1) * varArgsSymbolIndices.length;
+            size += (varArgs.getLength() - 1) * varArgsSymbolIndices.length;
             names = new String[size];
         } else {
             resultSignature = signature;
@@ -195,7 +179,7 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
         int index = 0;
         for (int i = 0; i < arguments.length; i++) {
             if (vargsSymbolsIndex < varArgsSymbolIndices.length && varArgsSymbolIndices[vargsSymbolsIndex] == i) {
-                index = flattenVarArgs(frame, varArgInfo, names, values, index);
+                index = flattenVarArgs(frame, varArgs, names, values, index);
                 vargsSymbolsIndex++;
             } else {
                 values[index] = arguments[i] == null ? RMissing.instance : arguments[i].execute(frame);
@@ -212,19 +196,17 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
     }
 
     @ExplodeLoop
-    public Object[] evaluateFlattenObjects(VirtualFrame frame) {
+    public Object[] evaluateFlattenObjects(VirtualFrame frame, RArgsValuesAndNames varArgs) {
         int size = arguments.length;
-        RArgsValuesAndNames varArgInfo = null;
         if (containsVarArgsSymbol()) {
-            varArgInfo = getVarargsAndNames(frame);
-            size += (varArgInfo.getLength() - 1) * varArgsSymbolIndices.length;
+            size += (varArgs.getLength() - 1) * varArgsSymbolIndices.length;
         }
         Object[] values = new Object[size];
         int vargsSymbolsIndex = 0;
         int index = 0;
         for (int i = 0; i < arguments.length; i++) {
             if (vargsSymbolsIndex < varArgsSymbolIndices.length && varArgsSymbolIndices[vargsSymbolsIndex] == i) {
-                index = flattenVarArgsObject(frame, varArgInfo, values, index);
+                index = flattenVarArgsObject(frame, varArgs, values, index);
                 vargsSymbolsIndex++;
             } else {
                 values[index] = arguments[i] == null ? RMissing.instance : arguments[i].execute(frame);

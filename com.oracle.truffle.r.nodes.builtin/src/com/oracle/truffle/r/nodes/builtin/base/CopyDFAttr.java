@@ -29,7 +29,6 @@ import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -42,13 +41,6 @@ public abstract class CopyDFAttr extends RInvisibleBuiltinNode {
     @Specialization()
     protected RAttributable copy(RAbstractContainer in, RAbstractVector out) {
         RVector res = out.materialize();
-        res.resetAllAttributes(false);
-        return res.copyAttributesFrom(attrProfiles, in);
-    }
-
-    @Specialization()
-    protected RAttributable copy(RAbstractContainer in, RFactor out) {
-        RVector res = out.getVector();
         res.resetAllAttributes(false);
         return res.copyAttributesFrom(attrProfiles, in);
     }

@@ -356,10 +356,6 @@ public final class RDataFactory {
         return traceDataCreated(new RExpression(list));
     }
 
-    public static RFactor createFactor(RIntVector vector, boolean ordered) {
-        return traceDataCreated(new RFactor(vector, ordered));
-    }
-
     public static RSymbol createSymbol(String name) {
         assert name == name.intern();
         return traceDataCreated(new RSymbol(name));

@@ -44,7 +44,6 @@ import com.oracle.truffle.r.nodes.control.WhileNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
-import com.oracle.truffle.r.nodes.function.GroupDispatchNode;
 import com.oracle.truffle.r.nodes.function.PostProcessArgumentsNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
@@ -53,15 +52,13 @@ import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
 import com.oracle.truffle.r.parser.tools.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
-import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -133,11 +130,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                         return new NextNode(source);
                 }
             } else if (args.size() == 1) {
-                // handle unary arithmetics, for the time being
-                RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(symbol);
-                if (builtin != null && builtin.getDispatch() == RDispatch.OPS_GROUP_GENERIC) {
-                    return GroupDispatchNode.create(symbol, source, ArgumentsSignature.empty(1), args.get(0).value);
-                }
                 switch (symbol) {
                     case "repeat":
                         return WhileNode.create(source, ConstantNode.create(RRuntime.LOGICAL_TRUE), args.get(0).value, true);
@@ -145,11 +137,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                         return args.get(0).value;
                 }
             } else if (args.size() == 2) {
-                // handle binary arithmetics, for the time being
-                RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(symbol);
-                if (builtin != null && builtin.getDispatch() == RDispatch.OPS_GROUP_GENERIC) {
-                    return GroupDispatchNode.create(symbol, source, ArgumentsSignature.empty(2), args.get(0).value, args.get(1).value);
-                }
                 switch (symbol) {
                     case "while":
                         return WhileNode.create(source, args.get(0).value, args.get(1).value, false);
@@ -190,13 +177,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                         arg -> (arg.value == null && arg.name == null) ? ConstantNode.create(arg.source == null ? RSyntaxNode.SOURCE_UNAVAILABLE : arg.source, REmpty.instance) : arg.value).toArray(
                                         RSyntaxNode[]::new);
 
-        if (lhs instanceof RSyntaxLookup) {
-            String symbol = ((RSyntaxLookup) lhs).getIdentifier();
-            RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(symbol);
-            if (builtin != null && builtin.getDispatch().isGroupGeneric()) {
-                return GroupDispatchNode.create(symbol, source, signature, nodes);
-            }
-        }
         return RCallNode.createCall(source, lhs.asRNode(), signature, nodes);
     }
 
@@ -457,8 +437,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     @Override
     public RSyntaxNode constant(SourceSection source, Object value) {
-        assert value instanceof Byte || value instanceof Integer || value instanceof Double || value instanceof RComplex || value instanceof String || value instanceof RNull ||
-                        value instanceof REmpty || value instanceof RSymbol || value instanceof RAbstractVector : value.getClass();
         if (value instanceof String && !RRuntime.isNA((String) value)) {
             return ConstantNode.create(source, ((String) value).intern());
         } else {

@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 /**
  * An interface all arguments that are going to be matched need to implement.
  */
-interface UnmatchedArguments extends ClosureCache {
+public interface UnmatchedArguments extends ClosureCache {
     /**
      * @return The arguments to be matched. Individual {@link RNode}s may be <code>null</code> to
      *         denote "missingness"!

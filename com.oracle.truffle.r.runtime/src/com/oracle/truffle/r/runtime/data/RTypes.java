@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 @TypeSystem({boolean.class, byte.class, int.class, double.class, RRaw.class, RComplex.class, String.class, RIntSequence.class, RDoubleSequence.class, RIntVector.class, RDoubleVector.class,
                 RRawVector.class, RComplexVector.class, RStringVector.class, RLogicalVector.class, RFunction.class, RNull.class, RMissing.class, REmpty.class, REnvironment.class, RExpression.class,
                 RConnection.class, MaterializedFrame.class, FrameSlot.class, RAbstractIntVector.class, RAbstractDoubleVector.class, RAbstractLogicalVector.class, RAbstractComplexVector.class,
-                RAbstractStringVector.class, RAbstractRawVector.class, RList.class, RAbstractVector.class, RFactor.class, RSymbol.class, RPromise.class, RLanguage.class,
+                RAbstractStringVector.class, RAbstractRawVector.class, RList.class, RAbstractVector.class, RSymbol.class, RPromise.class, RLanguage.class,
                 RPairList.class, RExternalPtr.class, RS4Object.class, RAbstractContainer.class, RAttributable.class, RTypedValue.class, RArgsValuesAndNames.class, RType.class, Object[].class})
 public class RTypes {
 
