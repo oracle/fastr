@@ -71,7 +71,7 @@ _command_class_dict = {'r': _r_command_project + ".shell.RCommand",
                        'rscript': _r_command_project + ".shell.RscriptCommand",
                         'rrepl': _repl_command}
 
-def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True, out=None, err=None):
+def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     '''
     This is the basic function that runs a FastR process, where args have already been parsed.
     Args:
@@ -79,6 +79,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True, out
       command: e.g. 'R', implicitly defines the entry class (can be None for AOT)
       extraVmArgs: additional vm arguments
       jdk: jdk (an mx.JDKConfig instance) to use
+      **kwargs other keyword args understood by run_java
       nonZeroIsFatal: whether to terminate the execution run fails
       out,err possible redirects to collect output
 
@@ -103,7 +104,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True, out
     vmArgs = _sanitize_vmArgs(jdk, vmArgs)
     if command:
         vmArgs.append(_command_class_dict[command.lower()])
-    return mx.run_java(vmArgs + args, nonZeroIsFatal=nonZeroIsFatal, jdk=jdk, out=out, err=err)
+    return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
 
 def _sanitize_vmArgs(jdk, vmArgs):
     '''
@@ -185,7 +186,7 @@ def get_default_jdk():
     '''
     return mx_jvm().get_jvmci_jdk()
 
-def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, nonZeroIsFatal=True, out=None, err=None):
+def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, **kwargs):
     '''
     Common function for running either R, Rscript (or rrepl).
     args are a list of strings that came after 'command' on the command line
@@ -213,15 +214,15 @@ def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, nonZeroIsFatal
             print 'CMD not implemented via mx, use: bin/R CMD ...'
             sys.exit(1)
 
-    return do_run_r(rargs, command, extraVmArgs=extraVmArgs, jdk=jdk, nonZeroIsFatal=nonZeroIsFatal, out=out, err=err)
+    return do_run_r(rargs, command, extraVmArgs=extraVmArgs, jdk=jdk, **kwargs)
 
 def rshell(args):
     '''run R shell'''
     return run_r(args, 'r')
 
-def rscript(args, parser=None, out=None, err=None):
+def rscript(args, parser=None, **kwargs):
     '''run Rscript'''
-    return run_r(args, 'rscript', parser=parser, out=out, err=err)
+    return run_r(args, 'rscript', parser=parser, **kwargs)
 
 def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
@@ -588,9 +589,9 @@ def _installpkgs_script():
     cran_test = _cran_test_project_dir()
     return join(cran_test, 'r', 'install.cran.packages.R')
 
-def _installpkgs(args, out=None, err=None):
+def _installpkgs(args, **kwargs):
     script = _installpkgs_script()
-    return rscript([script] + args, out=out, err=err)
+    return rscript([script] + args, **kwargs)
 
 _commands = {
     'r' : [rshell, '[options]'],
