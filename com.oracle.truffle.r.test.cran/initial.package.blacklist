@@ -452,3 +452,5 @@ Reason: C++
 Package: MassSpecWavelet
 Reason: Bioconductor
 
+Packge: mixtools
+Reason: TestLoops
