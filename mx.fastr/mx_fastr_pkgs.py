@@ -22,7 +22,7 @@
 #
 
 from argparse import ArgumentParser
-from os.path import join, exists, relpath
+from os.path import join, exists, relpath, dirname
 import shutil, os, re
 import mx
 import mx_fastr
@@ -41,6 +41,9 @@ def _create_libinstall(s):
     shutil.rmtree(install_tmp, ignore_errors=True)
     os.mkdir(install_tmp)
     return libinstall, install_tmp
+
+def _log_install_test(rvariant, state):
+    print "{0} install/test with {1}".format(state, rvariant)
 
 def pkgtest(args):
     '''used for package installation/testing'''
@@ -130,7 +133,9 @@ def pkgtest(args):
     out = OutputCapture()
 
     # install and (optionally) test the packages
-    rc = mx_fastr._installpkgs(stacktrace_args + install_args, out=out, err=out)
+    _log_install_test('FastR', 'BEGIN')
+    rc = mx_fastr._installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, out=out, err=out, timeout=10)
+    _log_install_test('FastR', 'END')
     if not args.install_only:
         # in order to compare the test output with GnuR we have to install/test the same
         # set of packages with GnuR, which must be present as a sibling suite
@@ -188,6 +193,9 @@ def _get_test_outputs(suite, pkg_name, test_info):
             test_info[pkg_name].testfile_outputs[relfile] = TestFileStatus(status, absfile)
 
 def _gnur_install_test(pkgs):
+    # knitr is needed for vignettes, but FastR  can't handle it yet
+    #if not 'knitr' in pkgs:
+    #    pkgs += ['knitr']
     gnur = _mx_gnur().extensions
     gnur_packages = join(_mx_gnur().dir, 'gnur.packages')
     with open(gnur_packages, 'w') as f:
@@ -199,7 +207,7 @@ def _gnur_install_test(pkgs):
     if not exists(gnur_cran_test_project_dir):
         shutil.copytree(mx_fastr._cran_test_project_dir(), gnur_cran_test_project_dir)
     gnur_libinstall, gnur_install_tmp = _create_libinstall(_mx_gnur())
-    gnur_cmd = [gnur._gnur_rscript_path(), mx_fastr._installpkgs_script()]
+    gnur_cmd = ['Rscript', mx_fastr._installpkgs_script()]
     gnur_cmd += ['--pkg-filelist', gnur_packages]
     gnur_cmd += ['--run-tests']
     gnur_cmd += ['--ignore-blacklist']
@@ -207,7 +215,12 @@ def _gnur_install_test(pkgs):
     env["TMPDIR"] = gnur_install_tmp
     env['R_LIBS_USER'] = gnur_libinstall
     del env['R_HOME']
-    mx.run(gnur_cmd, nonZeroIsFatal=False, cwd=_mx_gnur().dir, env=env)
+    path = os.environ['PATH']
+    env['PATH'] = dirname(gnur._gnur_rscript_path()) + os.pathsep + path
+    mx.run(['bash', '-c', 'printenv'], env=env)
+    _log_install_test('GnuR', 'BEGIN')
+    mx.run(gnur_cmd, cwd=_mx_gnur().dir, nonZeroIsFatal=False, env=env)
+    _log_install_test('GnuR', 'END')
 
 def _set_test_status(fastr_test_info):
     def _failed_outputs(outputs):
