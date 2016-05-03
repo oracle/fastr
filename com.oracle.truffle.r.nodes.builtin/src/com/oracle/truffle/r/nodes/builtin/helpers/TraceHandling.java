@@ -170,7 +170,7 @@ public class TraceHandling {
             if (!disabled()) {
                 int depth = RArguments.getDepth(frame);
                 try {
-                    for (int i = 0; i < depth; i++) {
+                    for (int i = 0; i < depth - 1; i++) {
                         outputHandler.writeString(" ", false);
                     }
                     String callString = getCallSource(frame);
