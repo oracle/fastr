@@ -491,12 +491,12 @@ public class RPromise implements RTypedValue {
     }
 
     @Override
-    public int getGPBits() {
+    public int getTypedValueInfo() {
         return 0;
     }
 
     @Override
-    public void setGPBits(int value) {
+    public void setTypedValueInfo(int value) {
         // This gets called from RSerialize, just ignore (for now)
     }
 

@@ -248,12 +248,12 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public int getGPBits() {
-        return vector.getGPBits();
+    public int getTypedValueInfo() {
+        return vector.getTypedValueInfo();
     }
 
     @Override
-    public void setGPBits(int value) {
-        vector.setGPBits(value);
+    public void setTypedValueInfo(int value) {
+        vector.setTypedValueInfo(value);
     }
 }
