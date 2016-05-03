@@ -81,8 +81,9 @@ static jmethodID Rf_PairToVectorListMethodID;
 static jmethodID gnuRCodeForObjectMethodID;
 static jmethodID NAMED_MethodID;
 static jmethodID TYPEOF_MethodID;
+static jmethodID OBJECT_MethodID;
 static jmethodID DUPLICATE_ATTRIB_MethodID;
-static jmethodID iS4ObjectMethodID;
+static jmethodID isS4ObjectMethodID;
 static jmethodID logObject_MethodID;
 
 static jclass RExternalPtrClass;
@@ -157,8 +158,9 @@ void init_internals(JNIEnv *env) {
 	Rf_PairToVectorListMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_PairToVectorList", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	NAMED_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "NAMED", "(Ljava/lang/Object;)I", 1);
 	TYPEOF_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "TYPEOF", "(Ljava/lang/Object;)I", 1);
+	OBJECT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "OBJECT", "(Ljava/lang/Object;)I", 1);
 	DUPLICATE_ATTRIB_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "DUPLICATE_ATTRIB", "(Ljava/lang/Object;Ljava/lang/Object;)V", 1);
-	iS4ObjectMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isS4Object", "(Ljava/lang/Object;)I", 1);
+	isS4ObjectMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isS4Object", "(Ljava/lang/Object;)I", 1);
 	logObject_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "logObject", "(Ljava/lang/Object;)V", 1);
 
 	RExternalPtrClass = checkFindClass(env, "com/oracle/truffle/r/runtime/data/RExternalPtr");
@@ -1171,8 +1173,8 @@ SEXP ATTRIB(SEXP x){
 }
 
 int OBJECT(SEXP x){
-    unimplemented("OBJECT");
-    return 0;
+	JNIEnv *env = getEnv();
+	return 	(*env)->CallStaticIntMethod(env, CallRFFIHelperClass, OBJECT_MethodID, x);
 }
 
 int MARK(SEXP x){
@@ -1251,7 +1253,7 @@ R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
 
 int IS_S4_OBJECT(SEXP x) {
 	JNIEnv *env = getEnv();
-	return 	(*env)->CallStaticIntMethod(env, CallRFFIHelperClass, iS4ObjectMethodID, x);
+	return 	(*env)->CallStaticIntMethod(env, CallRFFIHelperClass, isS4ObjectMethodID, x);
 }
 
 void SET_S4_OBJECT(SEXP x) {

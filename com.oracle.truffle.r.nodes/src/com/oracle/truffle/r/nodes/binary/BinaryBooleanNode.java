@@ -52,7 +52,6 @@ import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
 /**
  * Represents a binary or unary operation from the 'logical' subset of Ops R group. The concrete
  * operation is implemented by factory object given as a constructor parameter, e.g.
- * {@link com.oracle.truffle.r.runtime.ops.BinaryCompare.Equal} or
  * {@link com.oracle.truffle.r.runtime.ops.BinaryLogic.And}.
  */
 public abstract class BinaryBooleanNode extends BinaryNodeBase {

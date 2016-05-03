@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 /**
  * Contains helper nodes related to factors, special R class of {@link RAbstractIntVector}. Note:
- * there is also {@see IsFactorNode}, which implements a built-in, for checking factor class.
+ * there is also {@code IsFactorNode}, which implements a built-in, for checking factor class.
  */
 public final class RFactorNodes {
 
