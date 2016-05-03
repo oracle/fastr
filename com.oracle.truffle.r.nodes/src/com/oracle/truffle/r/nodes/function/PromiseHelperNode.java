@@ -35,6 +35,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
 import com.oracle.truffle.r.nodes.PromiseEvalFrameDebug;
@@ -229,6 +230,8 @@ public class PromiseHelperNode extends RBaseNode {
         }
     }
 
+    private final PrimitiveValueProfile promiseEvalFrameLengthProfile = PrimitiveValueProfile.createEqualityProfile();
+
     /**
      * Checks to see if we need to create a {@link PromiseEvalFrame}. We cannot always just use
      * {@code promiseFrame} because it effectively resets the depth, so we wrap it, using the depth
@@ -239,7 +242,7 @@ public class PromiseHelperNode extends RBaseNode {
      */
     private Frame checkCreatePromiseEvalFrame(Frame frame, Frame promiseFrame, RPromise promise) {
         if (frame != null && chckPromiseMismatch.profile(RArguments.getDepth(frame) != RArguments.getDepth(promiseFrame))) {
-            return PromiseEvalFrame.create(frame, promiseFrame.materialize(), promise);
+            return PromiseEvalFrame.create(frame, promiseFrame.materialize(), promise, promiseEvalFrameLengthProfile);
         } else {
             return promiseFrame;
         }
@@ -247,7 +250,7 @@ public class PromiseHelperNode extends RBaseNode {
 
     private static Frame checkCreatePromiseEvalFrameSlowPath(Frame frame, Frame promiseFrame, RPromise promise) {
         if (frame != null && RArguments.getDepth(frame) != RArguments.getDepth(promiseFrame)) {
-            return PromiseEvalFrame.create(frame, promiseFrame.materialize(), promise);
+            return PromiseEvalFrame.create(frame, promiseFrame.materialize(), promise, null);
         } else {
             return promiseFrame;
         }
