@@ -47,6 +47,10 @@ public abstract class AttributeAccess extends RBaseNode {
         this.name = name.intern();
     }
 
+    public static AttributeAccess create(String name) {
+        return AttributeAccessNodeGen.create(name);
+    }
+
     public abstract Object execute(RAttributes attr);
 
     protected boolean nameMatches(RAttributes attr, int index) {

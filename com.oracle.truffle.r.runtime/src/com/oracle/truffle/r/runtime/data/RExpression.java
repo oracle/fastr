@@ -158,7 +158,7 @@ public class RExpression implements RShareable, RAbstractContainer {
 
     @Override
     public final RStringVector getClassHierarchy() {
-        RStringVector v = (RStringVector) data.getAttribute(RRuntime.CLASS_ATTR_KEY);
+        RStringVector v = (RStringVector) data.getAttr(RRuntime.CLASS_ATTR_KEY);
         if (v == null) {
             return getImplicitClass();
         } else {

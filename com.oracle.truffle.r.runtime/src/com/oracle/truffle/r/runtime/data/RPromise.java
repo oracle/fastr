@@ -484,10 +484,6 @@ public class RPromise implements RTypedValue {
         public RBaseNode getExpr() {
             return expr;
         }
-
-        public Closure deepCopy() {
-            return new Closure((RBaseNode) expr.deepCopy());
-        }
     }
 
     @Override

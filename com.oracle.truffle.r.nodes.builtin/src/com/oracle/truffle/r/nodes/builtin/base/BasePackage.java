@@ -45,8 +45,6 @@ import com.oracle.truffle.r.nodes.builtin.base.foreign.ForeignFunctions;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.ForeignFunctionsFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRCallCounting;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRCallCountingFactory;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRCompile;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRCompileNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContext;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebug;
@@ -277,7 +275,6 @@ public class BasePackage extends RBuiltinPackage {
         add(Expression.class, ExpressionNodeGen::create);
         add(FastRCallCounting.CreateCallCounter.class, FastRCallCountingFactory.CreateCallCounterNodeGen::create);
         add(FastRCallCounting.GetCallCounter.class, FastRCallCountingFactory.GetCallCounterNodeGen::create);
-        add(FastRCompile.class, FastRCompileNodeGen::create);
         add(FastRContext.CloseChannel.class, FastRContextFactory.CloseChannelNodeGen::create);
         add(FastRContext.Create.class, FastRContextFactory.CreateNodeGen::create);
         add(FastRContext.CreateChannel.class, FastRContextFactory.CreateChannelNodeGen::create);

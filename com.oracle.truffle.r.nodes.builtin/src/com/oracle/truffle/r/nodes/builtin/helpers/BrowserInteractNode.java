@@ -147,10 +147,10 @@ public abstract class BrowserInteractNode extends RNode {
     }
 
     private static String getSrcinfo(RStringVector element) {
-        Object srcref = element.getAttribute(RRuntime.R_SRCREF);
+        Object srcref = element.getAttr(RRuntime.R_SRCREF);
         if (srcref != null) {
             RIntVector lloc = (RIntVector) srcref;
-            Object srcfile = lloc.getAttribute(RRuntime.R_SRCFILE);
+            Object srcfile = lloc.getAttr(RRuntime.R_SRCFILE);
             if (srcfile != null) {
                 REnvironment env = (REnvironment) srcfile;
                 return " at " + RRuntime.asString(env.get(RSrcref.SrcrefFields.filename.name())) + "#" + lloc.getDataAt(0);

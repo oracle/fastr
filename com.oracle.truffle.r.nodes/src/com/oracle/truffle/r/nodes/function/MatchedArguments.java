@@ -27,7 +27,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -43,39 +42,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 public final class MatchedArguments extends Arguments<RNode> {
 
-    static final class MatchedArgumentsNode extends RBaseNode {
-        @Children private final RNode[] arguments;
-        private final ArgumentsSignature signature;
-
-        private MatchedArgumentsNode(RNode[] arguments, ArgumentsSignature signature) {
-            this.arguments = arguments;
-            this.signature = signature;
-        }
-
-        @ExplodeLoop
-        Object[] executeArray(VirtualFrame frame) {
-            Object[] result = new Object[arguments.length];
-            for (int i = 0; i < arguments.length; i++) {
-                result[i] = arguments[i].execute(frame);
-            }
-            return result;
-        }
-
-        public ArgumentsSignature getSignature() {
-            return signature;
-        }
-
-        public RNode[] getArguments() {
-            return arguments;
-        }
-    }
-
     private MatchedArguments(RNode[] arguments, ArgumentsSignature signature) {
         super(arguments, signature);
-    }
-
-    MatchedArgumentsNode createNode() {
-        return new MatchedArgumentsNode(getArguments(), getSignature());
     }
 
     /**

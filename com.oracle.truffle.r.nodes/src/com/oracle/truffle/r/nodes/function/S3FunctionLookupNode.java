@@ -80,6 +80,14 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         return new UseMethodFunctionLookupUninitializedNode(throwsError, nextMethod);
     }
 
+    public static S3FunctionLookupNode createWithError() {
+        return new UseMethodFunctionLookupUninitializedNode(true, false);
+    }
+
+    public static S3FunctionLookupNode createWithException() {
+        return new UseMethodFunctionLookupUninitializedNode(false, false);
+    }
+
     @FunctionalInterface
     private interface LookupOperation {
         Object read(MaterializedFrame frame, String name, boolean inMethodsTable);

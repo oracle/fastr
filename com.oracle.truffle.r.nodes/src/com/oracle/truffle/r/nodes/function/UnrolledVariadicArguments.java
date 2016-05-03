@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.IdentityHashMap;
 
-import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -32,7 +31,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * This is a simple container class for arguments whose "..." have been unrolled and inserted into
- * the original arguments, as it happens in {@link CallArgumentsNode#executeFlatten(Frame)}.
+ * the original arguments, as it happens in
+ * {@link CallArgumentsNode#unrollArguments(ArgumentsSignature)}.
  */
 public final class UnrolledVariadicArguments extends Arguments<RNode> implements UnmatchedArguments {
 

@@ -43,12 +43,10 @@ import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -132,14 +130,13 @@ public abstract class VApply extends RBuiltinNode {
 
     @Specialization
     protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, byte useNames) {
-        RArgsValuesAndNames optionalArgs = (RArgsValuesAndNames) RArguments.getArgument(frame, 3);
-        RVector result = delegateToLapply(frame, vec, fun, funValue, useNames, optionalArgs);
+        RVector result = delegateToLapply(frame, vec, fun, funValue, useNames);
         // set here else it gets overridden by the iterator evaluation
         controlVisibility();
         return result;
     }
 
-    private RVector delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValueArg, byte useNames, RArgsValuesAndNames optionalArgs) {
+    private RVector delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValueArg, byte useNames) {
         /*
          * The implementation is complicated by the existence of scalar length 1 vectors (e.g.
          * Integer) and concrete length 1 vectors (e.g. RIntVector), as either form can occur in
@@ -155,7 +152,7 @@ public abstract class VApply extends RBuiltinNode {
         int funValueVecLen = funValueVec.getLength();
 
         RVector vecMat = vec.materialize();
-        Object[] applyResult = doApply.execute(frame, vecMat, fun, optionalArgs);
+        Object[] applyResult = doApply.execute(frame, vecMat, fun);
 
         RVector result = null;
         boolean applyResultZeroLength = applyResult.length == 0;

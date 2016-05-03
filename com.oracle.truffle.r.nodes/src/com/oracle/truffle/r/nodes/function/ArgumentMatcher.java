@@ -62,9 +62,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * {@link FormalArguments} of a specific function, see
  * {@link #matchArguments(RFunction, UnmatchedArguments, RBaseNode, boolean)} . The other match
  * functions are used for special cases, where builtins make it necessary to re-match parameters,
- * e.g.: {@link #matchArgumentsEvaluated(RFunction, EvaluatedArguments, RBaseNode, boolean)} for
- * 'UseMethod' and {@link #matchArgumentsInlined(RFunction, UnmatchedArguments, RBaseNode)} for
- * builtins which are implemented in Java.
+ * e.g.: {@link #matchArgumentsEvaluated(RFunction, RArgsValuesAndNames, RBaseNode, boolean)} for
+ * 'UseMethod'.
  * </p>
  *
  * <p>
@@ -130,33 +129,13 @@ public class ArgumentMatcher {
      * @return A fresh {@link MatchedArguments} containing the arguments in correct order and
      *         wrapped in {@link PromiseNode}s
      */
-    public static MatchedArguments matchArguments(RFunction function, UnmatchedArguments suppliedArgs, RBaseNode callingNode, boolean noOpt) {
-        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callingNode, suppliedArgs, noOpt);
-        FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
-        return MatchedArguments.create(wrappedArgs, formals.getSignature());
+    public static RNode[] matchArguments(RFunction function, UnmatchedArguments suppliedArgs, RBaseNode callingNode, boolean noOpt) {
+        return matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callingNode, suppliedArgs, noOpt);
     }
 
-    /**
-     * Match arguments supplied for a specific function call to the formal arguments and wraps them
-     * in special {@link PromiseNode}s. Used for calls to builtins which are built into FastR and
-     * thus are implemented in Java
-     *
-     * @param function The function which is to be called
-     * @param suppliedArgs The arguments supplied to the call
-     * @param callingNode The {@link Node} invoking the match
-     * @return A fresh {@link InlinedArguments} containing the arguments in correct order and
-     *         wrapped in special {@link PromiseNode}s
-     */
-    public static RNode[] matchArgumentsInlined(RFunction function, UnmatchedArguments suppliedArgs, RBaseNode callingNode) {
-        return matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callingNode, suppliedArgs, false);
-    }
-
-    public static MatchPermutation matchArguments(ArgumentsSignature suppliedSignature, ArgumentsSignature formalSignature, RBaseNode callingNode, boolean forNextMethod, RBuiltinDescriptor builtin) {
+    public static MatchPermutation matchArguments(ArgumentsSignature supplied, ArgumentsSignature formal, RBaseNode callingNode, boolean forNextMethod, RBuiltinDescriptor builtin) {
         CompilerAsserts.neverPartOfCompilation();
-        MatchPermutation match = permuteArguments(suppliedSignature, formalSignature, callingNode, forNextMethod, index -> {
-            throw RInternalError.unimplemented("S3Dispatch should not have arg length mismatch");
-        }, index -> suppliedSignature.getName(index), builtin);
-        return match;
+        return permuteArguments(supplied, formal, callingNode, forNextMethod, index -> false, index -> supplied.getName(index) == null ? "" : supplied.getName(index), builtin);
     }
 
     public static ArgumentsSignature getFunctionSignature(RFunction function) {
@@ -213,10 +192,10 @@ public class ArgumentMatcher {
      * @param callingNode The {@link Node} invoking the match
      * @param forNextMethod matching when evaluating NextMethod
      *
-     * @return A Fresh {@link EvaluatedArguments} containing the arguments rearranged and stuffed
+     * @return A Fresh {@link RArgsValuesAndNames} containing the arguments rearranged and stuffed
      *         with default values (in the form of {@link RPromise}s where needed)
      */
-    public static EvaluatedArguments matchArgumentsEvaluated(RFunction function, EvaluatedArguments evaluatedArgs, RBaseNode callingNode, boolean forNextMethod) {
+    public static RArgsValuesAndNames matchArgumentsEvaluated(RFunction function, RArgsValuesAndNames evaluatedArgs, RBaseNode callingNode, boolean forNextMethod) {
         RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
         MatchPermutation match = permuteArguments(evaluatedArgs.getSignature(), formals.getSignature(), callingNode, forNextMethod, index -> {
@@ -248,7 +227,7 @@ public class ArgumentMatcher {
                 evaledArgs[formalIndex] = evaluatedArgs.getArgument(suppliedIndex);
             }
         }
-        return new EvaluatedArguments(evaledArgs, formals.getSignature());
+        return new RArgsValuesAndNames(evaledArgs, formals.getSignature());
     }
 
     private static String getErrorForArgument(RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, int index) {
@@ -430,7 +409,7 @@ public class ArgumentMatcher {
         }
     }
 
-    static final class MatchPermutation {
+    public static final class MatchPermutation {
         public static final int UNMATCHED = -1;
         public static final int VARARGS = -2;
 
