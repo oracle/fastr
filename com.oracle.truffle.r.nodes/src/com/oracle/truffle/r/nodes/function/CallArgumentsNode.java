@@ -164,35 +164,33 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
     }
 
     @ExplodeLoop
-    public RArgsValuesAndNames evaluateFlatten(VirtualFrame frame, RArgsValuesAndNames varArgs) {
-        int size = arguments.length;
-        ArgumentsSignature resultSignature = null;
+    public ArgumentsSignature flattenNames(RArgsValuesAndNames varArgs) {
         String[] names = null;
-        if (containsVarArgsSymbol()) {
-            size += (varArgs.getLength() - 1) * varArgsSymbolIndices.length;
-            names = new String[size];
-        } else {
-            resultSignature = signature;
+        if (!containsVarArgsSymbol()) {
+            return signature;
         }
-        Object[] values = new Object[size];
+        int size = arguments.length + (varArgs.getLength() - 1) * varArgsSymbolIndices.length;
+        names = new String[size];
         int vargsSymbolsIndex = 0;
         int index = 0;
         for (int i = 0; i < arguments.length; i++) {
             if (vargsSymbolsIndex < varArgsSymbolIndices.length && varArgsSymbolIndices[vargsSymbolsIndex] == i) {
-                index = flattenVarArgs(frame, varArgs, names, values, index);
+                index = flattenVarArgNames(varArgs, names, index);
                 vargsSymbolsIndex++;
             } else {
-                values[index] = arguments[i] == null ? RMissing.instance : arguments[i].execute(frame);
-                if (names != null) {
-                    names[index] = signature.getName(i);
-                }
-                index++;
+                names[index++] = signature.getName(i);
             }
         }
-        if (resultSignature == null) {
-            resultSignature = ArgumentsSignature.get(names);
+        return ArgumentsSignature.get(names);
+    }
+
+    private static int flattenVarArgNames(RArgsValuesAndNames varArgInfo, String[] names, int startIndex) {
+        int index = startIndex;
+        for (int j = 0; j < varArgInfo.getLength(); j++) {
+            names[index] = varArgInfo.getSignature().getName(j);
+            index++;
         }
-        return new RArgsValuesAndNames(values, resultSignature);
+        return index;
     }
 
     @ExplodeLoop
@@ -216,7 +214,7 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
         return values;
     }
 
-    private int flattenVarArgs(VirtualFrame frame, RArgsValuesAndNames varArgInfo, String[] names, Object[] values, int startIndex) {
+    private int flattenVarArgsObject(VirtualFrame frame, RArgsValuesAndNames varArgInfo, Object[] values, int startIndex) {
         int index = startIndex;
         for (int j = 0; j < varArgInfo.getLength(); j++) {
             if (promiseHelper == null) {
@@ -224,7 +222,6 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
                 promiseHelper = insert(new PromiseCheckHelperNode());
             }
             values[index] = promiseHelper.checkEvaluate(frame, varArgInfo.getArgument(j));
-            names[index] = varArgInfo.getSignature().getName(j);
             index++;
         }
         return index;
@@ -264,18 +261,5 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
             result[i] = argument.asRSyntaxNode();
         }
         return result;
-    }
-
-    private int flattenVarArgsObject(VirtualFrame frame, RArgsValuesAndNames varArgInfo, Object[] values, int startIndex) {
-        int index = startIndex;
-        for (int j = 0; j < varArgInfo.getLength(); j++) {
-            if (promiseHelper == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseHelper = insert(new PromiseCheckHelperNode());
-            }
-            values[index] = promiseHelper.checkEvaluate(frame, varArgInfo.getArgument(j));
-            index++;
-        }
-        return index;
     }
 }

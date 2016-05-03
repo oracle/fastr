@@ -129,6 +129,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      * Profiling for catching {@link ReturnException}s.
      */
     private final BranchProfile returnProfile = BranchProfile.create();
+    private final ConditionProfile returnTopLevelProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile returnHereProfile = ConditionProfile.createBinaryProfile();
 
     public static FunctionDefinitionNode create(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments, RSyntaxNode body,
@@ -262,7 +263,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         } catch (ReturnException ex) {
             returnProfile.enter();
             int depth = ex.getDepth();
-            if (returnHereProfile.profile(depth != -1 && RArguments.getDepth(frame) != depth)) {
+            if (returnTopLevelProfile.profile(depth != -1) && returnHereProfile.profile(RArguments.getDepth(frame) != depth)) {
                 throw ex;
             } else {
                 return ex.getResult();
