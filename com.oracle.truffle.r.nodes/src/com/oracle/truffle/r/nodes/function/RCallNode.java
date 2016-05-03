@@ -461,21 +461,18 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
         }
         final S3Args s3Args;
         final RFunction resultFunction;
-        final ArgumentsSignature argsSignature;
         if (result == null) {
             s3Args = null;
             resultFunction = function;
-            argsSignature = ArgumentsSignature.empty(args.length);
         } else {
             if (resultIsBuiltinProfile.profile(result.function.isBuiltin())) {
                 s3Args = null;
-                argsSignature = ArgumentsSignature.empty(args.length);
             } else {
                 s3Args = new S3Args(builtin.getName(), result.clazz, dotMethod, frame.materialize(), null, result.groupMatch ? dispatch.getGroupGenericName() : null);
-                argsSignature = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getSignature() : callArguments.flattenNames(lookupVarArgs(frame));
             }
             resultFunction = result.function;
         }
+        ArgumentsSignature argsSignature = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getSignature() : callArguments.flattenNames(lookupVarArgs(frame));
         return call.execute(frame, resultFunction, new RArgsValuesAndNames(args, argsSignature), s3Args);
     }
 

@@ -28,10 +28,12 @@ import java.util.IdentityHashMap;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
@@ -163,12 +165,29 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
         }
     }
 
-    @ExplodeLoop
+    private ArgumentsSignature cachedVarArgsSignature;
+    private ArgumentsSignature cachedResultSignature;
+    private final BranchProfile regenerateSignatureProfile = BranchProfile.create();
+
     public ArgumentsSignature flattenNames(RArgsValuesAndNames varArgs) {
-        String[] names = null;
         if (!containsVarArgsSymbol()) {
             return signature;
         }
+        ArgumentsSignature varArgsSignature = varArgs.getSignature();
+        if (cachedVarArgsSignature == null) {
+            CompilerDirectives.transferToInterpreter();
+        }
+        if (varArgsSignature == cachedVarArgsSignature) {
+            return cachedResultSignature;
+        }
+        regenerateSignatureProfile.enter();
+        cachedVarArgsSignature = varArgsSignature;
+        return cachedResultSignature = flattenNamesInternal(varArgsSignature);
+    }
+
+    @TruffleBoundary
+    private ArgumentsSignature flattenNamesInternal(ArgumentsSignature varArgs) {
+        String[] names = null;
         int size = arguments.length + (varArgs.getLength() - 1) * varArgsSymbolIndices.length;
         names = new String[size];
         int vargsSymbolsIndex = 0;
@@ -184,10 +203,10 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
         return ArgumentsSignature.get(names);
     }
 
-    private static int flattenVarArgNames(RArgsValuesAndNames varArgInfo, String[] names, int startIndex) {
+    private static int flattenVarArgNames(ArgumentsSignature varArgInfo, String[] names, int startIndex) {
         int index = startIndex;
         for (int j = 0; j < varArgInfo.getLength(); j++) {
-            names[index] = varArgInfo.getSignature().getName(j);
+            names[index] = varArgInfo.getName(j);
             index++;
         }
         return index;
