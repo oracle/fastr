@@ -46,7 +46,7 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public final Void getInternalStore() {
+    public Void getInternalStore() {
         return null;
     }
 
@@ -165,7 +165,7 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public final RStringVector getImplicitClass() {
+    public RStringVector getImplicitClass() {
         return vector.getImplicitClass();
     }
 
@@ -185,17 +185,17 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public final int getGPBits() {
-        return vector.getGPBits();
+    public int getTypedValueInfo() {
+        return vector.getTypedValueInfo();
     }
 
     @Override
-    public final void setGPBits(int value) {
-        vector.setGPBits(value);
+    public void setTypedValueInfo(int value) {
+        vector.setTypedValueInfo(value);
     }
 
     @Override
-    public final boolean isS4() {
+    public boolean isS4() {
         return false;
     }
 }

@@ -188,12 +188,12 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public int getGPBits() {
+    public int getTypedValueInfo() {
         return 0;
     }
 
     @Override
-    public void setGPBits(int value) {
+    public void setTypedValueInfo(int value) {
         throw RInternalError.shouldNotReachHere();
     }
 

@@ -30,7 +30,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.nodes.unary.IsFactorNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -41,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 /**
  * Contains helper nodes related to factors, special R class of {@link RAbstractIntVector}. Note:
- * there is also {@link IsFactorNode}, which implements a built-in, for checking factor class.
+ * there is also {@code IsFactorNode}, which implements a built-in, for checking factor class.
  */
 public final class RFactorNodes {
 
@@ -72,6 +71,7 @@ public final class RFactorNodes {
         @Child private CastStringNode castString;
         @Child private AttributeAccess attrAccess = AttributeAccess.create(RRuntime.LEVELS_ATTR_KEY);
 
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
         private final BranchProfile notVectorBranch = BranchProfile.create();
         private final ConditionProfile nonScalarLevels = ConditionProfile.createBinaryProfile();
         private final ConditionProfile stringVectorLevels = ConditionProfile.createBinaryProfile();

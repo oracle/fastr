@@ -54,9 +54,11 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -535,6 +537,15 @@ public class CallRFFIHelper {
             return SEXPTYPE.CHARSXP.code;
         } else {
             return SEXPTYPE.gnuRCodeForObject(x);
+        }
+    }
+
+    public static int OBJECT(Object x) {
+        if (x instanceof RTypedValue && !(x instanceof RScalar)) {
+            return ((RTypedValue) x).getIsObject();
+        } else {
+            // TODO: should we throw an error or simply return false for scalars
+            throw RInternalError.unimplemented();
         }
     }
 

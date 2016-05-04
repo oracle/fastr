@@ -227,12 +227,12 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public int getGPBits() {
-        return data.getGPBits();
+    public int getTypedValueInfo() {
+        return data.getTypedValueInfo();
     }
 
     @Override
-    public void setGPBits(int value) {
-        data.setGPBits(value);
+    public void setTypedValueInfo(int value) {
+        data.setTypedValueInfo(value);
     }
 }
