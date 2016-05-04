@@ -119,7 +119,7 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
 
     @Override
     public ForeignAccess getForeignAccess() {
-        return RContext.getEngine().getForeignAccess(this);
+        return RContext.getRForeignAccessFactory().getForeignAccess(this);
     }
 
     public FastPathFactory getFastPath() {

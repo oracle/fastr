@@ -86,6 +86,6 @@ public final class RList extends RListBase implements TruffleObject {
 
     @Override
     public ForeignAccess getForeignAccess() {
-        return RContext.getEngine().getForeignAccess(this);
+        return RContext.getRForeignAccessFactory().getForeignAccess(this);
     }
 }

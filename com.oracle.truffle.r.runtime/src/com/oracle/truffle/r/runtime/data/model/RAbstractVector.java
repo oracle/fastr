@@ -82,6 +82,6 @@ public interface RAbstractVector extends RAbstractContainer, TruffleObject {
 
     @Override
     default ForeignAccess getForeignAccess() {
-        return RContext.getEngine().getForeignAccess(this);
+        return RContext.getRForeignAccessFactory().getForeignAccess(this);
     }
 }
