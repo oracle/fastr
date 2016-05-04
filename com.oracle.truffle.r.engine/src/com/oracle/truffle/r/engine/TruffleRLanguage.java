@@ -121,6 +121,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     @Override
+    @SuppressWarnings("try")
     protected CallTarget parse(Source source, Node context, String... argumentNames) throws IOException {
         try (Closeable c = RContext.withinContext(findContext(createFindContextNode()))) {
             try {

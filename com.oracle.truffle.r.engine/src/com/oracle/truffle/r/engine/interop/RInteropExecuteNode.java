@@ -62,6 +62,7 @@ class RInteropExecuteNode extends RootNode {
     }
 
     @Override
+    @SuppressWarnings("try")
     public Object execute(VirtualFrame frame) {
         RFunction function = (RFunction) ForeignAccess.getReceiver(frame);
         List<Object> arguments = ForeignAccess.getArguments(frame);
