@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -83,11 +84,13 @@ public abstract class SubstituteVirtualFrame implements VirtualFrame, Materializ
         if (Substitute1.frameClass == clazz) {
             return new Substitute1(frame);
         } else if (Substitute1.frameClass == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             Substitute1.frameClass = clazz;
             return new Substitute1(frame);
         } else if (Substitute2.frameClass == clazz) {
             return new Substitute2(frame);
         } else if (Substitute2.frameClass == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             Substitute2.frameClass = clazz;
             return new Substitute2(frame);
         } else {

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 /**
  * A "fake" {@link VirtualFrame}, to be used by {@code REngine}.eval only!
  */
-public final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
+public abstract class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
 
     protected final MaterializedFrame originalFrame;
     @CompilationFinal protected final Object[] arguments;
@@ -178,11 +179,67 @@ public final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
         return originalFrame.isDouble(slot);
     }
 
+    private static final class Substitute1 extends VirtualEvalFrame {
+
+        @CompilationFinal private static Class<MaterializedFrame> frameClass;
+
+        protected Substitute1(MaterializedFrame originalFrame, Object[] arguments) {
+            super(originalFrame, arguments);
+        }
+
+        @Override
+        public MaterializedFrame getOriginalFrame() {
+            return frameClass.cast(originalFrame);
+        }
+    }
+
+    private static final class Substitute2 extends VirtualEvalFrame {
+
+        @CompilationFinal private static Class<MaterializedFrame> frameClass;
+
+        protected Substitute2(MaterializedFrame originalFrame, Object[] arguments) {
+            super(originalFrame, arguments);
+        }
+
+        @Override
+        public MaterializedFrame getOriginalFrame() {
+            return frameClass.cast(originalFrame);
+        }
+    }
+
+    private static final class SubstituteGeneric extends VirtualEvalFrame {
+
+        protected SubstituteGeneric(MaterializedFrame originalFrame, Object[] arguments) {
+            super(originalFrame, arguments);
+        }
+
+        @Override
+        public MaterializedFrame getOriginalFrame() {
+            return originalFrame;
+        }
+    }
+
     public static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, RCaller call) {
         Object[] arguments = Arrays.copyOf(originalFrame.getArguments(), originalFrame.getArguments().length);
         arguments[RArguments.INDEX_IS_IRREGULAR] = true;
         arguments[RArguments.INDEX_FUNCTION] = function;
         arguments[RArguments.INDEX_CALL] = call;
-        return new VirtualEvalFrame(originalFrame, arguments);
+        @SuppressWarnings("unchecked")
+        Class<MaterializedFrame> clazz = (Class<MaterializedFrame>) originalFrame.getClass();
+        if (Substitute1.frameClass == clazz) {
+            return new Substitute1(originalFrame, arguments);
+        } else if (Substitute1.frameClass == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            Substitute1.frameClass = clazz;
+            return new Substitute1(originalFrame, arguments);
+        } else if (Substitute2.frameClass == clazz) {
+            return new Substitute2(originalFrame, arguments);
+        } else if (Substitute2.frameClass == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            Substitute2.frameClass = clazz;
+            return new Substitute2(originalFrame, arguments);
+        } else {
+            return new SubstituteGeneric(originalFrame, arguments);
+        }
     }
 }
