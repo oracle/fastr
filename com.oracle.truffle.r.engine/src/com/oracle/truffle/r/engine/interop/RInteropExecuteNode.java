@@ -70,9 +70,13 @@ class RInteropExecuteNode extends RootNode {
         VirtualFrame dummyFrame = Truffle.getRuntime().createVirtualFrame(dummyFrameArgs, emptyFrameDescriptor);
 
         RArgsValuesAndNames actualArgs = new RArgsValuesAndNames(arguments.toArray(), suppliedSignature);
-        dummyFrame.setObject(slot, actualArgs);
         try (Closeable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
-            return call.execute(dummyFrame, function);
+            try {
+                dummyFrame.setObject(slot, actualArgs);
+                return call.execute(dummyFrame, function);
+            } finally {
+                dummyFrame.setObject(slot, null);
+            }
         } catch (IOException e) {
             CompilerDirectives.transferToInterpreter();
             throw new RuntimeException(e);
