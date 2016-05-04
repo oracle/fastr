@@ -549,11 +549,16 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         LookupResult lookup = FrameSlotChangeMonitor.lookup(variableFrame, identifier);
         if (lookup != null) {
             try {
-                if (lookup.getValue() == null) {
-                    return new LookupLevel(lookup);
+                if (lookup.getValue() instanceof RPromise) {
+                    evalPromiseSlowPathWithName(frame, (RPromise) lookup.getValue());
                 }
-                if (checkTypeSlowPath(frame, lookup.getValue())) {
-                    return new LookupLevel(lookup);
+                if (lookup != null) {
+                    if (lookup.getValue() == null) {
+                        return new LookupLevel(lookup);
+                    }
+                    if (checkTypeSlowPath(frame, lookup.getValue())) {
+                        return new LookupLevel(lookup);
+                    }
                 }
             } catch (InvalidAssumptionException e) {
                 // immediately invalidated...
@@ -846,18 +851,24 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
                     // we recover from a wrong type later
                     return true;
                 } else {
-                    slowPathEvaluationName.set(identifierAsString);
-                    try {
-                        obj = PromiseHelperNode.evaluateSlowPath(frame, promise);
-                    } finally {
-                        slowPathEvaluationName.set(null);
-                    }
+                    obj = evalPromiseSlowPathWithName(frame, promise);
                 }
             } else {
                 obj = promise.getValue();
             }
         }
         return RRuntime.checkType(obj, mode);
+    }
+
+    private Object evalPromiseSlowPathWithName(VirtualFrame frame, RPromise promise) {
+        Object obj;
+        slowPathEvaluationName.set(identifierAsString);
+        try {
+            obj = PromiseHelperNode.evaluateSlowPath(frame, promise);
+        } finally {
+            slowPathEvaluationName.set(null);
+        }
+        return obj;
     }
 
     public static String getSlowPathEvaluationName() {

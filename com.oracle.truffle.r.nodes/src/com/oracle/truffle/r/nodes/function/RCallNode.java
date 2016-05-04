@@ -936,7 +936,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             }
         }
 
-        @TruffleBoundary
         private static void wrapPromises(RArgsValuesAndNames varArgs) {
             Object[] array = varArgs.getArguments();
             for (int i = 0; i < array.length; i++) {
