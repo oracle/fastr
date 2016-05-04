@@ -76,7 +76,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     protected Object setClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
 
-        RAbstractContainer result = arg.materializeNonShared();
+        RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
         return result.setClassAttr(null, false);
     }
 
@@ -111,7 +111,7 @@ public abstract class UpdateClass extends RBuiltinNode {
                 return setClass((RAbstractVector) result, RNull.instance);
             }
         }
-        RAbstractContainer result = arg.materializeNonShared();
+        RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
         if (result instanceof RAbstractVector) {
             RAbstractVector resultVector = (RAbstractVector) result;
             if (RType.Matrix.getName().equals(className)) {
@@ -138,7 +138,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     @TruffleBoundary
     protected Object setClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
-        RAbstractContainer result = arg.materializeNonShared();
+        RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
         return result.setClassAttr(className, false);
     }
 

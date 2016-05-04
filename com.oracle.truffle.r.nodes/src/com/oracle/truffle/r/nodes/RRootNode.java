@@ -52,7 +52,7 @@ public abstract class RRootNode extends RootNode implements HasSignature {
     private final FormalArguments formalArguments;
 
     protected RRootNode(SourceSection src, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
-        super(RContext.getEngine().getTruffleLanguage(), checkSourceSection(src), frameDescriptor);
+        super(RContext.getRForeignAccessFactory().getTruffleLanguage(), checkSourceSection(src), frameDescriptor);
         this.formalArguments = formalArguments;
     }
 

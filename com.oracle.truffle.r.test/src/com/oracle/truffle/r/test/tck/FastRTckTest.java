@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.tck.TruffleTCK;
 
@@ -94,8 +95,8 @@ public class FastRTckTest extends TruffleTCK {
     // @formatter:on
 
     @Override
-    protected PolyglotEngine prepareVM() throws Exception {
-        PolyglotEngine vm = PolyglotEngine.newBuilder().build();
+    protected PolyglotEngine prepareVM(Builder builder) throws Exception {
+        PolyglotEngine vm = builder.build();
         vm.eval(INITIALIZATION);
         return vm;
     }

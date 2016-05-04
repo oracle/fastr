@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.engine;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -33,6 +34,7 @@ import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.engine.interop.RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
@@ -72,7 +74,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             RVersionInfo.initialize();
             TempPathName.initialize();
             RPackageSource.initialize();
-            RContext.initialize(new RASTBuilder(), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance());
+            RContext.initialize(new RASTBuilder(), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), new RForeignAccessFactoryImpl());
         } catch (Throwable t) {
             System.out.println("error during engine initialization:");
             t.printStackTrace();
@@ -119,22 +121,25 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     @Override
+    @SuppressWarnings("try")
     protected CallTarget parse(Source source, Node context, String... argumentNames) throws IOException {
-        try {
-            return RContext.getEngine().parseToCallTarget(source);
-        } catch (IncompleteSourceException e) {
-            throw new com.oracle.truffle.api.vm.IncompleteSourceException(e);
-        } catch (ParseException e) {
-            return new CallTarget() {
-                @Override
-                public Object call(Object... arguments) {
-                    try {
-                        throw e.throwAsRError();
-                    } catch (@SuppressWarnings("hiding") RError e) {
-                        return null;
+        try (Closeable c = RContext.withinContext(findContext(createFindContextNode()))) {
+            try {
+                return RContext.getEngine().parseToCallTarget(source);
+            } catch (IncompleteSourceException e) {
+                throw new com.oracle.truffle.api.vm.IncompleteSourceException(e);
+            } catch (ParseException e) {
+                return new CallTarget() {
+                    @Override
+                    public Object call(Object... arguments) {
+                        try {
+                            throw e.throwAsRError();
+                        } catch (@SuppressWarnings("hiding") RError e) {
+                            return null;
+                        }
                     }
-                }
-            };
+                };
+            }
         }
     }
 
@@ -150,8 +155,12 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     // TODO: why isn't the original method public?
-    Node actuallyCreateFindContextNode() {
+    public Node actuallyCreateFindContextNode() {
         return createFindContextNode();
+    }
+
+    public RContext actuallyFindContext0(Node contextNode) {
+        return findContext(contextNode);
     }
 
     @Override

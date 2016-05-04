@@ -368,6 +368,7 @@ public class RSerialize {
 
         protected Object readItem(int flags) throws IOException {
             int levs = flags >>> 12;
+            int isObj = (flags & Flags.IS_OBJECT_BIT_MASK) == 0 ? 0 : 1;
             Object result = null;
             SEXPTYPE type = SEXPTYPE.mapInt(Flags.ptype(flags));
 
@@ -604,6 +605,7 @@ public class RSerialize {
 
                     if (!(result instanceof RScalar)) {
                         ((RTypedValue) result).setGPBits(levs);
+                        ((RTypedValue) result).setIsObject(isObj);
                     } else {
                         // for now we only record S4-ness here, and in this case it shoud be 0
                         assert (levs == 0);
@@ -774,7 +776,6 @@ public class RSerialize {
                 default:
                     throw RInternalError.unimplemented();
             }
-            // TODO SETLEVELS
             if (type == SEXPTYPE.CHARSXP) {
                 /*
                  * With the CHARSXP cache maintained through the ATTRIB field that field has already
@@ -786,6 +787,10 @@ public class RSerialize {
                     readItem();
                 }
             } else {
+                // TODO: CHARSXP currently cannot be an object - this is not the case in GNU R
+                if (!(result instanceof RScalar)) {
+                    ((RTypedValue) result).setIsObject(isObj);
+                }
                 if (Flags.hasAttr(flags)) {
                     Object attr = readItem();
                     result = setAttributes(result, attr);

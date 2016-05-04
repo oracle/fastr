@@ -94,7 +94,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     protected RAbstractContainer updateDimnamesNull(RAbstractContainer container, @SuppressWarnings("unused") RNull list, //
                     @Cached("create(DIMNAMES_ATTR_KEY)") RemoveAttributeNode remove) {
         controlVisibility();
-        RAbstractContainer result = container.materializeNonShared();
+        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (isRVectorProfile.profile(container instanceof RVector)) {
             RVector vector = (RVector) container;
             if (vector.getInternalDimNames() != null) {
@@ -117,7 +117,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     protected RAbstractContainer updateDimnames(RAbstractContainer container, RList list, //
                     @Cached("create(DIMNAMES_ATTR_KEY)") PutAttributeNode put) {
         controlVisibility();
-        RAbstractContainer result = container.materializeNonShared();
+        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         setDimNames(result, convertToListOfStrings(list), put);
         return result;
     }

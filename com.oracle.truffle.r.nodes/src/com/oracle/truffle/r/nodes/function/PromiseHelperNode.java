@@ -35,6 +35,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
 import com.oracle.truffle.r.nodes.PromiseEvalFrameDebug;
@@ -138,6 +139,7 @@ public class PromiseHelperNode extends RBaseNode {
     private final ValueProfile multiVarArgsOptTypeProfile = ValueProfile.createIdentityProfile();
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
     private final BranchProfile varArgProfile = BranchProfile.create();
+    private final ConditionProfile chckPromiseMismatch = ConditionProfile.createBinaryProfile();
 
     /**
      * Guarded by {@link #isInOriginFrame(VirtualFrame,RPromise)}.
@@ -228,6 +230,8 @@ public class PromiseHelperNode extends RBaseNode {
         }
     }
 
+    private final PrimitiveValueProfile promiseEvalFrameLengthProfile = PrimitiveValueProfile.createEqualityProfile();
+
     /**
      * Checks to see if we need to create a {@link PromiseEvalFrame}. We cannot always just use
      * {@code promiseFrame} because it effectively resets the depth, so we wrap it, using the depth
@@ -236,13 +240,20 @@ public class PromiseHelperNode extends RBaseNode {
      * can occur so we don't need the {@link PromiseEvalFrame} (even if the frames are different).
      *
      */
-    private static Frame checkCreatePromiseEvalFrame(Frame frame, Frame promiseFrame, RPromise promise) {
-        if (frame != null && RArguments.getDepth(frame) != RArguments.getDepth(promiseFrame)) {
-            return PromiseEvalFrame.create(frame, promiseFrame.materialize(), promise);
+    private Frame checkCreatePromiseEvalFrame(Frame frame, Frame promiseFrame, RPromise promise) {
+        if (frame != null && chckPromiseMismatch.profile(RArguments.getDepth(frame) != RArguments.getDepth(promiseFrame))) {
+            return PromiseEvalFrame.create(frame, promiseFrame.materialize(), promise, promiseEvalFrameLengthProfile);
         } else {
             return promiseFrame;
         }
+    }
 
+    private static Frame checkCreatePromiseEvalFrameSlowPath(Frame frame, Frame promiseFrame, RPromise promise) {
+        if (frame != null && RArguments.getDepth(frame) != RArguments.getDepth(promiseFrame)) {
+            return PromiseEvalFrame.create(frame, promiseFrame.materialize(), promise, null);
+        } else {
+            return promiseFrame;
+        }
     }
 
     private Object generateValueEager(VirtualFrame frame, OptType optType, EagerPromise promise) {
@@ -313,7 +324,7 @@ public class PromiseHelperNode extends RBaseNode {
                 Frame promiseFrame = promise.getFrame();
                 assert promiseFrame != null;
                 try {
-                    Frame promiseEvalFrame = checkCreatePromiseEvalFrame(frame, promiseFrame, promise);
+                    Frame promiseEvalFrame = checkCreatePromiseEvalFrameSlowPath(frame, promiseFrame, promise);
                     if (PromiseEvalFrameDebug.enabled) {
                         PromiseEvalFrameDebug.doPromiseEval(true, frame, promiseFrame, promise);
                     }

@@ -24,13 +24,13 @@ package com.oracle.truffle.r.runtime.data;
 
 abstract class RBaseObject {
 
-    protected int gpbits;
+    protected int typedValueInfo;
 
-    public int getGPBits() {
-        return gpbits;
+    public int getTypedValueInfo() {
+        return typedValueInfo;
     }
 
-    public void setGPBits(int value) {
-        gpbits = value;
+    public void setTypedValueInfo(int value) {
+        typedValueInfo = value;
     }
 }

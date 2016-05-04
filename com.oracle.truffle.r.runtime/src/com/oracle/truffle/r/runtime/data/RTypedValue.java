@@ -22,13 +22,34 @@ import com.oracle.truffle.r.runtime.RType;
 public interface RTypedValue {
 
     // mask values are the same as in GNU R
+    // as is the layout of data (but it's never exposed so it does not matter for correctness)
     int S4_MASK = 1 << 4;
+    int IS_OBJECT_MASK_SHIFT = 5;
+    int IS_OBJECT_BITS_MASK = 1 << IS_OBJECT_MASK_SHIFT;
+    int GP_BITS_MASK_SHIFT = 8;
+    int GP_BITS_MASK = 0xFFFF << GP_BITS_MASK_SHIFT;
 
     RType getRType();
 
-    int getGPBits();
+    int getTypedValueInfo();
 
-    void setGPBits(int value);
+    void setTypedValueInfo(int value);
+
+    default int getIsObject() {
+        return (getTypedValueInfo() & IS_OBJECT_BITS_MASK) >>> IS_OBJECT_MASK_SHIFT;
+    }
+
+    default void setIsObject(int gpbits) {
+        setTypedValueInfo((getTypedValueInfo() & ~IS_OBJECT_BITS_MASK) | (gpbits << IS_OBJECT_MASK_SHIFT));
+    }
+
+    default int getGPBits() {
+        return (getTypedValueInfo() & GP_BITS_MASK) >>> GP_BITS_MASK_SHIFT;
+    }
+
+    default void setGPBits(int gpbits) {
+        setTypedValueInfo((getTypedValueInfo() & ~GP_BITS_MASK) | (gpbits << GP_BITS_MASK_SHIFT));
+    }
 
     default boolean isS4() {
         return (getGPBits() & S4_MASK) == S4_MASK;

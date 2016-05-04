@@ -29,7 +29,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 
-public final class RList extends RListBase implements RGPBits, TruffleObject {
+public final class RList extends RListBase implements TruffleObject {
 
     private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getClazz());
 
@@ -86,6 +86,6 @@ public final class RList extends RListBase implements RGPBits, TruffleObject {
 
     @Override
     public ForeignAccess getForeignAccess() {
-        return RContext.getEngine().getForeignAccess(this);
+        return RContext.getRForeignAccessFactory().getForeignAccess(this);
     }
 }
