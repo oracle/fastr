@@ -38,23 +38,18 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.impl.FindContextNode;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactory;
-import com.oracle.truffle.r.engine.interop.RFunctionAccessFactory;
-import com.oracle.truffle.r.engine.interop.RListAccessFactory;
 import com.oracle.truffle.r.library.graphics.RGraphics;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
@@ -93,7 +88,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -619,23 +613,5 @@ final class REngine implements Engine, Engine.Timings {
 
     private static Object evaluatePromise(Object value) {
         return value instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) value) : value;
-    }
-
-    @Override
-    public Class<? extends TruffleLanguage<RContext>> getTruffleLanguage() {
-        return TruffleRLanguage.class;
-    }
-
-    @Override
-    public ForeignAccess getForeignAccess(RTypedValue value) {
-        if (value instanceof RList) {
-            return ForeignAccess.create(RList.class, new RListAccessFactory());
-        } else if (value instanceof RAbstractVector) {
-            return ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
-        } else if (value instanceof RFunction) {
-            return ForeignAccess.create(RFunction.class, new RFunctionAccessFactory());
-        } else {
-            throw RInternalError.shouldNotReachHere("cannot create ForeignAccess for " + value);
-        }
     }
 }

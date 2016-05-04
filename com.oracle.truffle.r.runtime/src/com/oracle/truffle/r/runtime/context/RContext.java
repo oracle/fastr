@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -302,6 +303,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     @CompilationFinal private static RCodeBuilder<RSyntaxNode> astBuilder;
     @CompilationFinal private static RRuntimeASTAccess runtimeASTAccess;
     @CompilationFinal private static RBuiltinLookup builtinLookup;
+    @CompilationFinal private static RForeignAccessFactory foreignAccessFactory;
     @CompilationFinal private static boolean initialContextInitialized;
 
     public static boolean isInitialContextInitialized() {
@@ -311,10 +313,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     /**
      * Initialize VM-wide static values.
      */
-    public static void initialize(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, RBuiltinLookup rBuiltinLookup) {
+    public static void initialize(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, RBuiltinLookup rBuiltinLookup, RForeignAccessFactory rForeignAccessFactory) {
         RContext.astBuilder = rAstBuilder;
         RContext.runtimeASTAccess = rRuntimeASTAccess;
         RContext.builtinLookup = rBuiltinLookup;
+        RContext.foreignAccessFactory = rForeignAccessFactory;
     }
 
     /**
@@ -620,6 +623,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         return builtinLookup.lookupBuiltinDescriptor(name);
     }
 
+    public static RForeignAccessFactory getRForeignAccessFactory() {
+        return foreignAccessFactory;
+    }
+
     public RCmdOptions getOptions() {
         return info.getOptions();
     }
@@ -666,5 +673,16 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     @Override
     public ForeignAccess getForeignAccess() {
         throw new IllegalStateException("cannot access " + RContext.class.getSimpleName() + " via Truffle");
+    }
+
+    public static Closeable withinContext(RContext context) {
+        RContext oldContext = RContext.threadLocalContext.get();
+        RContext.threadLocalContext.set(context);
+        return new Closeable() {
+            @Override
+            public void close() {
+                RContext.threadLocalContext.set(oldContext);
+            }
+        };
     }
 }

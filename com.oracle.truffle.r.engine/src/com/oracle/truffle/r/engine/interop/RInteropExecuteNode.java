@@ -22,24 +22,37 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
+import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
 class RInteropExecuteNode extends RootNode {
 
-    private static final FrameDescriptor emptyFrameDescriptor = new FrameDescriptor();
+    private static final FrameDescriptor emptyFrameDescriptor = new FrameDescriptor("R interop frame");
+    private final Object argsIdentifier = new Object();
+    private final FrameSlot slot = emptyFrameDescriptor.addFrameSlot(argsIdentifier, FrameSlotKind.Object);
 
+    @Child private RCallNode call = RCallNode.createExplicitCall(argsIdentifier);
     @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, true);
+    @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
     private final ArgumentsSignature suppliedSignature;
 
@@ -56,6 +69,13 @@ class RInteropExecuteNode extends RootNode {
         Object[] dummyFrameArgs = RArguments.createUnitialized();
         VirtualFrame dummyFrame = Truffle.getRuntime().createVirtualFrame(dummyFrameArgs, emptyFrameDescriptor);
 
-        return callMatcher.execute(dummyFrame, suppliedSignature, arguments.toArray(), function, null, null);
+        RArgsValuesAndNames actualArgs = new RArgsValuesAndNames(arguments.toArray(), suppliedSignature);
+        dummyFrame.setObject(slot, actualArgs);
+        try (Closeable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+            return call.execute(dummyFrame, function);
+        } catch (IOException e) {
+            CompilerDirectives.transferToInterpreter();
+            throw new RuntimeException(e);
+        }
     }
 }
