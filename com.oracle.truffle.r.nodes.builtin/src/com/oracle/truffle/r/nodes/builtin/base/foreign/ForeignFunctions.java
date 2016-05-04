@@ -214,7 +214,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(RList f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding, //
+        protected Object doExternal(RList f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
             controlVisibility();
@@ -222,20 +222,25 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "lookupBuiltin(symbol) == null")
-        protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") RMissing rPackage,
+        protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
                         @SuppressWarnings("unused") RMissing encoding) {
             controlVisibility();
             return DotC.dispatch(this, getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), naok, dup, args);
         }
 
         @Specialization
-        protected RList c(String f, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") RMissing rPackage, @SuppressWarnings("unused") RMissing encoding, //
+        protected RList c(String f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding, //
                         @Cached("create()") BranchProfile errorProfile) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findRegisteredSymbolinInDLL(f, null, "");
             if (symbolInfo == null) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
+                if (rPackage instanceof String) {
+                    symbolInfo = DLL.findSymbolInfo(new StringBuffer(f).append("_").toString(), (String) rPackage);
+                    if (symbolInfo == null) {
+                        errorProfile.enter();
+                        throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
+                    }
+                }
             }
             return DotC.dispatch(this, symbolInfo.address, symbolInfo.symbol, naok, dup, args);
         }

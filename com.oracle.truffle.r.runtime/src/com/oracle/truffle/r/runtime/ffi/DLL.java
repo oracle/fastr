@@ -149,6 +149,11 @@ public class DLL {
             dllInfo.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS), false);
             return dllInfo;
         }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
     public static class SymbolInfo {
