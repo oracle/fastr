@@ -110,8 +110,7 @@ public class TestBuiltin_c extends TestBase {
 
     @Test
     public void testc18() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(V1 = c(1L, 1L, 2L, 3L), V2 = structure(c(1L, 1L, 2L, 3L), .Label = c('A', 'D', 'E'), class = 'factor'), V3 = c(6, 6, 9, 10)), .Names = c('V1', 'V2', 'V3'), row.names = c(NA, 4L), class = 'data.frame'), sep = '\\r');c(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(V1 = c(1L, 1L, 2L, 3L), V2 = structure(c(1L, 1L, 2L, 3L), .Label = c('A', 'D', 'E'), class = 'factor'), V3 = c(6, 6, 9, 10)), .Names = c('V1', 'V2', 'V3'), row.names = c(NA, 4L), class = 'data.frame'), sep = '\\r');c(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -380,8 +379,7 @@ public class TestBuiltin_c extends TestBase {
 
     @Test
     public void testc70() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(Topic = character(0), File = character(0)), .Names = c('Topic', 'File'), class = 'data.frame', row.names = integer(0)), sep = '\\r');c(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(Topic = character(0), File = character(0)), .Names = c('Topic', 'File'), class = 'data.frame', row.names = integer(0)), sep = '\\r');c(argv[[1]],argv[[2]]);");
     }
 
     @Test
