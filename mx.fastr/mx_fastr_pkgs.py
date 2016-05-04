@@ -31,7 +31,7 @@ def _mx_gnur():
     return mx.suite('gnur')
 
 def _create_libinstall(s):
-    '''Create lib.install.cran/install.tmp for suite s
+    '''Create lib.install.cran/install.tmp/test for suite s
     '''
     libinstall = join(s.dir, "lib.install.cran")
     # make sure its empty
@@ -39,11 +39,13 @@ def _create_libinstall(s):
     os.mkdir(libinstall)
     install_tmp = join(s.dir, "install.tmp")
     shutil.rmtree(install_tmp, ignore_errors=True)
-    os.mkdir(install_tmp)
+    test = join(s.dir, "test")
+    shutil.rmtree(test, ignore_errors=True)
+    os.mkdir(test)
     return libinstall, install_tmp
 
-def _log_install_test(rvariant, state):
-    print "{0} install/test with {1}".format(state, rvariant)
+def _log_step(state, step, rvariant):
+    print "{0} {1} with {2}".format(state, step, rvariant)
 
 def pkgtest(args):
     '''used for package installation/testing'''
@@ -60,8 +62,6 @@ def pkgtest(args):
     args = parser.parse_args(args)
 
     libinstall, install_tmp = _create_libinstall(mx.suite('fastr'))
-    os.environ["TMPDIR"] = install_tmp
-    os.environ['R_LIBS_USER'] = libinstall
     stacktrace_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
 
     install_args = []
@@ -130,12 +130,20 @@ def pkgtest(args):
                     if begin_end == "END":
                         _get_test_outputs('fastr', pkg_name, self.test_info)
 
-    out = OutputCapture()
+    env = os.environ.copy()
+    env["TMPDIR"] = install_tmp
+    env['R_LIBS_USER'] = libinstall
+    install_args += ['--verbose']
 
+
+    # TODO enable but via installing Suggests
+    #_install_vignette_support('FastR', env)
+
+    out = OutputCapture()
     # install and (optionally) test the packages
-    _log_install_test('FastR', 'BEGIN')
-    rc = mx_fastr._installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, out=out, err=out, timeout=10)
-    _log_install_test('FastR', 'END')
+    _log_step('BEGIN', 'install/test', 'FastR')
+    rc = mx_fastr._installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
+    _log_step('END', 'install/test', 'FastR')
     if not args.install_only:
         # in order to compare the test output with GnuR we have to install/test the same
         # set of packages with GnuR, which must be present as a sibling suite
@@ -170,6 +178,7 @@ class TestStatus:
 
 def _pkg_testdir(suite, pkg_name):
     return join(mx.suite(suite).dir, 'test', pkg_name)
+
 def _get_test_outputs(suite, pkg_name, test_info):
     pkg_testdir = _pkg_testdir(suite, pkg_name)
     for root, _, files in os.walk(pkg_testdir):
@@ -192,11 +201,19 @@ def _get_test_outputs(suite, pkg_name, test_info):
             relfile = relpath(absfile, pkg_testdir)
             test_info[pkg_name].testfile_outputs[relfile] = TestFileStatus(status, absfile)
 
-def _gnur_install_test(pkgs):
+def _install_vignette_support(rvariant, env):
     # knitr is needed for vignettes, but FastR  can't handle it yet
-    #if not 'knitr' in pkgs:
-    #    pkgs += ['knitr']
-    gnur = _mx_gnur().extensions
+    if rvariant == 'FastR':
+        return
+    _log_step('BEGIN', 'install vignette support', rvariant)
+    args = ['--ignore-blacklist', '^rmarkdown$|^knitr$']
+    _gnur_installpkgs(args, env)
+    _log_step('END', 'install vignette support', rvariant)
+
+def _gnur_installpkgs(args, env, **kwargs):
+    return mx.run(['Rscript', mx_fastr._installpkgs_script()] + args, env=env, **kwargs)
+
+def _gnur_install_test(pkgs):
     gnur_packages = join(_mx_gnur().dir, 'gnur.packages')
     with open(gnur_packages, 'w') as f:
         for pkg in pkgs:
@@ -207,20 +224,22 @@ def _gnur_install_test(pkgs):
     if not exists(gnur_cran_test_project_dir):
         shutil.copytree(mx_fastr._cran_test_project_dir(), gnur_cran_test_project_dir)
     gnur_libinstall, gnur_install_tmp = _create_libinstall(_mx_gnur())
-    gnur_cmd = ['Rscript', mx_fastr._installpkgs_script()]
-    gnur_cmd += ['--pkg-filelist', gnur_packages]
-    gnur_cmd += ['--run-tests']
-    gnur_cmd += ['--ignore-blacklist']
     env = os.environ.copy()
+    gnur = _mx_gnur().extensions
+    path = env['PATH']
+    env['PATH'] = dirname(gnur._gnur_rscript_path()) + os.pathsep + path
     env["TMPDIR"] = gnur_install_tmp
     env['R_LIBS_USER'] = gnur_libinstall
-    del env['R_HOME']
-    path = os.environ['PATH']
-    env['PATH'] = dirname(gnur._gnur_rscript_path()) + os.pathsep + path
-    mx.run(['bash', '-c', 'printenv'], env=env)
-    _log_install_test('GnuR', 'BEGIN')
-    mx.run(gnur_cmd, cwd=_mx_gnur().dir, nonZeroIsFatal=False, env=env)
-    _log_install_test('GnuR', 'END')
+
+    # TODO enable but via installing Suggests
+    # _install_vignette_support('GnuR', env)
+
+    args = ['--pkg-filelist', gnur_packages]
+    args += ['--run-tests']
+    args += ['--ignore-blacklist']
+    _log_step('BEGIN', 'install/test', 'GnuR')
+    _gnur_installpkgs(args, env=env, cwd=_mx_gnur().dir, nonZeroIsFatal=False)
+    _log_step('END', 'install/test', 'GnuR')
 
 def _set_test_status(fastr_test_info):
     def _failed_outputs(outputs):

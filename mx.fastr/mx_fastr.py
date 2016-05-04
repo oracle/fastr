@@ -86,7 +86,9 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     By default a non-zero return code will cause an mx.abort, unless nonZeroIsFatal=False
     The assumption is that the VM is already built and available.
     '''
-    setREnvironment()
+    env = kwargs['env'] if 'env' in kwargs else os.environ
+
+    setREnvironment(env)
     if not jdk:
         jdk = get_default_jdk()
 
@@ -152,7 +154,7 @@ def _get_ldpaths(lib_env_name):
     except subprocess.CalledProcessError:
         mx.abort('error retrieving etc/ldpaths')
 
-def setREnvironment():
+def setREnvironment(env=os.environ):
     '''
     If R is run via mx, then the library path will not be set, whereas if it is
     run from 'bin/R' it will be, via etc/ldpaths.
@@ -160,22 +162,22 @@ def setREnvironment():
     passed down. It is TBD if we can avoid this on Linux.
     '''
     # This may have been set by a higher power
-    if not os.environ.has_key('R_HOME'):
-        os.environ['R_HOME'] = _fastr_suite.dir
+    if not 'R_HOME' in env:
+        env['R_HOME'] = _fastr_suite.dir
 
     # Make sure that native code formats numbers consistently
-    os.environ['LC_NUMERIC'] = 'C'
+    env['LC_NUMERIC'] = 'C'
 
     osname = platform.system()
     if osname != 'Darwin':
         lib_env = 'LD_LIBRARY_PATH'
 
-        if os.environ.has_key(lib_env):
-            lib_value = os.environ[lib_env]
+        if lib_env in env:
+            lib_value = env[lib_env]
         else:
             lib_value = _get_ldpaths(lib_env)
 
-        os.environ[lib_env] = lib_value
+        env[lib_env] = lib_value
 
 def get_default_jdk():
     '''

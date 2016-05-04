@@ -40,6 +40,7 @@ parse.args <- function() {
 
 run <- function() {
 	parse.args()
+	# TODO install Suggests for vingette testing
 	install.packages(pkgname, contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
 }
 
