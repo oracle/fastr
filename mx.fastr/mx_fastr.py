@@ -154,13 +154,15 @@ def _get_ldpaths(lib_env_name):
     except subprocess.CalledProcessError:
         mx.abort('error retrieving etc/ldpaths')
 
-def setREnvironment(env=os.environ):
+def setREnvironment(env=None):
     '''
     If R is run via mx, then the library path will not be set, whereas if it is
     run from 'bin/R' it will be, via etc/ldpaths.
     On Mac OS X El Capitan and beyond, this is moot as the variable is not
     passed down. It is TBD if we can avoid this on Linux.
     '''
+    if not env:
+        env = os.environ
     # This may have been set by a higher power
     if not 'R_HOME' in env:
         env['R_HOME'] = _fastr_suite.dir
