@@ -98,7 +98,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     @Specialization
     protected RAbstractVector updateAttributes(RAbstractVector abstractVector, @SuppressWarnings("unused") RNull list) {
         controlVisibility();
-        RAbstractVector resultVector = (RAbstractVector) abstractVector.materializeNonShared();
+        RAbstractVector resultVector = (RAbstractVector) abstractVector.getNonShared();
         resultVector.resetAllAttributes(true);
         return resultVector;
     }
@@ -111,7 +111,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
             throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
         }
         RStringVector listNames = (RStringVector) listNamesObject;
-        RAbstractContainer result = container.materializeNonShared();
+        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (numAttributesProfile.profile(list.getLength() == 0)) {
             result.resetAllAttributes(true);
         } else {

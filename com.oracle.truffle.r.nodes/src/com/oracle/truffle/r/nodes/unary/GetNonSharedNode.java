@@ -30,6 +30,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -41,7 +42,7 @@ public abstract class GetNonSharedNode extends RNode implements RSyntaxNode {
     private final ValueProfile shareableTypeProfile = ValueProfile.createClassProfile();
 
     @Specialization
-    protected RShareable getNonShared(RShareable shareable) {
+    protected RTypedValue getNonShared(RShareable shareable) {
         return shareableTypeProfile.profile(shareable).getNonShared();
     }
 

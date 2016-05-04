@@ -29,6 +29,7 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RArguments;
 
 /**
@@ -37,6 +38,8 @@ import com.oracle.truffle.r.runtime.RArguments;
  * {@code globalenv}.
  */
 public final class NSBaseMaterializedFrame implements MaterializedFrame {
+
+    private static final ValueProfile frameProfile = ValueProfile.createClassProfile();
 
     private final MaterializedFrame packageBaseFrame;
     @CompilationFinal private final Object[] arguments;
@@ -52,6 +55,10 @@ public final class NSBaseMaterializedFrame implements MaterializedFrame {
         RArguments.initializeEnclosingFrame(this, globalFrame);
     }
 
+    private MaterializedFrame getPackageBaseFrame() {
+        return frameProfile.profile(packageBaseFrame);
+    }
+
     public void updateGlobalFrame(MaterializedFrame globalFrame) {
         RArguments.setEnclosingFrame(this, globalFrame);
     }
@@ -62,7 +69,7 @@ public final class NSBaseMaterializedFrame implements MaterializedFrame {
 
     @Override
     public FrameDescriptor getFrameDescriptor() {
-        return packageBaseFrame.getFrameDescriptor();
+        return getPackageBaseFrame().getFrameDescriptor();
     }
 
     @Override
@@ -81,111 +88,111 @@ public final class NSBaseMaterializedFrame implements MaterializedFrame {
 
     @Override
     public Object getObject(FrameSlot slot) throws FrameSlotTypeException {
-        return packageBaseFrame.getObject(slot);
+        return getPackageBaseFrame().getObject(slot);
     }
 
     @Override
     public void setObject(FrameSlot slot, Object value) {
-        packageBaseFrame.setObject(slot, value);
+        getPackageBaseFrame().setObject(slot, value);
     }
 
     @Override
     public byte getByte(FrameSlot slot) throws FrameSlotTypeException {
-        return packageBaseFrame.getByte(slot);
+        return getPackageBaseFrame().getByte(slot);
     }
 
     @Override
     public void setByte(FrameSlot slot, byte value) {
-        packageBaseFrame.setByte(slot, value);
+        getPackageBaseFrame().setByte(slot, value);
     }
 
     @Override
     public boolean getBoolean(FrameSlot slot) throws FrameSlotTypeException {
-        return packageBaseFrame.getBoolean(slot);
+        return getPackageBaseFrame().getBoolean(slot);
     }
 
     @Override
     public void setBoolean(FrameSlot slot, boolean value) {
-        packageBaseFrame.setBoolean(slot, value);
+        getPackageBaseFrame().setBoolean(slot, value);
     }
 
     @Override
     public int getInt(FrameSlot slot) throws FrameSlotTypeException {
-        return packageBaseFrame.getInt(slot);
+        return getPackageBaseFrame().getInt(slot);
     }
 
     @Override
     public void setInt(FrameSlot slot, int value) {
-        packageBaseFrame.setInt(slot, value);
+        getPackageBaseFrame().setInt(slot, value);
     }
 
     @Override
     public long getLong(FrameSlot slot) throws FrameSlotTypeException {
-        return packageBaseFrame.getLong(slot);
+        return getPackageBaseFrame().getLong(slot);
     }
 
     @Override
     public void setLong(FrameSlot slot, long value) {
-        packageBaseFrame.setLong(slot, value);
+        getPackageBaseFrame().setLong(slot, value);
     }
 
     @Override
     public float getFloat(FrameSlot slot) throws FrameSlotTypeException {
-        return packageBaseFrame.getFloat(slot);
+        return getPackageBaseFrame().getFloat(slot);
     }
 
     @Override
     public void setFloat(FrameSlot slot, float value) {
-        packageBaseFrame.setFloat(slot, value);
+        getPackageBaseFrame().setFloat(slot, value);
     }
 
     @Override
     public double getDouble(FrameSlot slot) throws FrameSlotTypeException {
-        return packageBaseFrame.getDouble(slot);
+        return getPackageBaseFrame().getDouble(slot);
     }
 
     @Override
     public void setDouble(FrameSlot slot, double value) {
-        packageBaseFrame.setDouble(slot, value);
+        getPackageBaseFrame().setDouble(slot, value);
     }
 
     @Override
     public Object getValue(FrameSlot slot) {
-        return packageBaseFrame.getValue(slot);
+        return getPackageBaseFrame().getValue(slot);
     }
 
     @Override
     public boolean isObject(FrameSlot slot) {
-        return packageBaseFrame.isObject(slot);
+        return getPackageBaseFrame().isObject(slot);
     }
 
     @Override
     public boolean isByte(FrameSlot slot) {
-        return packageBaseFrame.isByte(slot);
+        return getPackageBaseFrame().isByte(slot);
     }
 
     @Override
     public boolean isBoolean(FrameSlot slot) {
-        return packageBaseFrame.isBoolean(slot);
+        return getPackageBaseFrame().isBoolean(slot);
     }
 
     @Override
     public boolean isInt(FrameSlot slot) {
-        return packageBaseFrame.isInt(slot);
+        return getPackageBaseFrame().isInt(slot);
     }
 
     @Override
     public boolean isLong(FrameSlot slot) {
-        return packageBaseFrame.isLong(slot);
+        return getPackageBaseFrame().isLong(slot);
     }
 
     @Override
     public boolean isFloat(FrameSlot slot) {
-        return packageBaseFrame.isFloat(slot);
+        return getPackageBaseFrame().isFloat(slot);
     }
 
     @Override
     public boolean isDouble(FrameSlot slot) {
-        return packageBaseFrame.isDouble(slot);
+        return getPackageBaseFrame().isDouble(slot);
     }
 }

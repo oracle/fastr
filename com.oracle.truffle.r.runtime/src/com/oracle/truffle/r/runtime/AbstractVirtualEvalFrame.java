@@ -22,15 +22,12 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.runtime.data.RFunction;
 
 /**
  * Supports {@link VirtualEvalFrame} and {@link PromiseEvalFrame}.
@@ -40,13 +37,9 @@ public abstract class AbstractVirtualEvalFrame implements VirtualFrame, Material
     protected final MaterializedFrame originalFrame;
     @CompilationFinal protected final Object[] arguments;
 
-    protected AbstractVirtualEvalFrame(MaterializedFrame originalFrame, RFunction function, RCaller call, int depth) {
+    protected AbstractVirtualEvalFrame(MaterializedFrame originalFrame, Object[] arguments) {
         this.originalFrame = originalFrame;
-        this.arguments = Arrays.copyOf(originalFrame.getArguments(), originalFrame.getArguments().length);
-        this.arguments[RArguments.INDEX_DEPTH] = depth;
-        this.arguments[RArguments.INDEX_IS_IRREGULAR] = true;
-        this.arguments[RArguments.INDEX_FUNCTION] = function;
-        this.arguments[RArguments.INDEX_CALL] = call;
+        this.arguments = arguments;
     }
 
     @Override

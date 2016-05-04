@@ -370,7 +370,7 @@ public abstract class RConnection extends RAttributeStorage implements RTypedVal
     }
 
     @Override
-    public RAbstractContainer materializeNonShared() {
+    public RTypedValue getNonShared() {
         return this;
     }
 
