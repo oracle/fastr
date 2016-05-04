@@ -11,8 +11,6 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.HashSet;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -31,79 +29,13 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 
 public class DuplicatedFunctions {
 
     protected abstract static class Adapter extends RBuiltinNode {
         @Child protected CastTypeNode castTypeNode;
         @Child protected TypeofNode typeof;
-
-        /**
-         * Code sharing vehicle for the slight differences in behavior between {@code duplicated}
-         * and {@code anyDuplicated} and whether {@code fromLast} is {@code TRUE/FALSE}.
-         */
-        protected static final class DupState {
-            private final RAbstractContainer x;
-            private final HashSet<Object> vectorContents = new HashSet<>();
-            private final HashSet<Object> incompContents;
-            private final byte[] dupVec;
-            private int index;
-
-            private DupState(RAbstractContainer x, RAbstractContainer incomparables, boolean justIndex, boolean fromLast) {
-                this.x = x;
-                vectorContents.add(x.getDataAtAsObject(fromLast ? x.getLength() - 1 : 0));
-
-                if (incomparables != null) {
-                    incompContents = new HashSet<>();
-                    for (int i = 0; i < incomparables.getLength(); i++) {
-                        incompContents.add(incomparables.getDataAtAsObject(i));
-                    }
-                } else {
-                    incompContents = null;
-                }
-                dupVec = justIndex ? null : new byte[x.getLength()];
-            }
-
-            boolean doIt(int i) {
-                if (incompContents == null || !incompContents.contains(x.getDataAtAsObject(i))) {
-                    if (vectorContents.contains(x.getDataAtAsObject(i))) {
-                        if (dupVec == null) {
-                            index = i + 1;
-                            return true;
-                        } else {
-                            dupVec[i] = RRuntime.LOGICAL_TRUE;
-                        }
-                    } else {
-                        vectorContents.add(x.getDataAtAsObject(i));
-                    }
-                } else {
-                    if (dupVec != null) {
-                        dupVec[i] = RRuntime.LOGICAL_FALSE;
-                    }
-                }
-                return false;
-            }
-
-        }
-
-        @TruffleBoundary
-        protected static DupState analyze(RAbstractContainer x, RAbstractContainer incomparables, boolean justIndex, boolean fromLast) {
-            DupState ds = new DupState(x, incomparables, justIndex, fromLast);
-            if (fromLast) {
-                for (int i = x.getLength() - 2; i >= 0; i--) {
-                    if (ds.doIt(i)) {
-                        break;
-                    }
-                }
-            } else {
-                for (int i = 1; i < x.getLength(); i++) {
-                    if (ds.doIt(i)) {
-                        break;
-                    }
-                }
-            }
-            return ds;
-        }
 
         protected boolean isIncomparable(byte incomparables) {
             return incomparables == RRuntime.LOGICAL_TRUE;
@@ -132,8 +64,8 @@ public class DuplicatedFunctions {
 
         @TruffleBoundary
         protected static RLogicalVector analyzeAndCreateResult(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast) {
-            DupState ds = analyze(x, incomparables, false, RRuntime.fromLogical(fromLast));
-            return RDataFactory.createLogicalVector(ds.dupVec, RDataFactory.COMPLETE_VECTOR);
+            DuplicationHelper ds = DuplicationHelper.analyze(x, incomparables, false, RRuntime.fromLogical(fromLast));
+            return RDataFactory.createLogicalVector(ds.getDupVec(), RDataFactory.COMPLETE_VECTOR);
         }
 
         @SuppressWarnings("unused")
@@ -180,7 +112,7 @@ public class DuplicatedFunctions {
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isIncomparable(incomparables)", "!empty(x)"})
         protected int anyDuplicatedFalseIncomparables(RAbstractVector x, byte incomparables, byte fromLast) {
-            return analyze(x, null, true, RRuntime.fromLogical(fromLast)).index;
+            return DuplicationHelper.analyze(x, null, true, RRuntime.fromLogical(fromLast)).getIndex();
         }
 
         @Specialization(guards = {"isIncomparable(incomparables)", "!empty(x)"})
@@ -188,14 +120,14 @@ public class DuplicatedFunctions {
             initChildren();
             RType xType = typeof.execute(x);
             RAbstractVector vector = (RAbstractVector) (castTypeNode.execute(incomparables, xType));
-            return analyze(x, vector, true, RRuntime.fromLogical(fromLast)).index;
+            return DuplicationHelper.analyze(x, vector, true, RRuntime.fromLogical(fromLast)).getIndex();
         }
 
         @Specialization(guards = {"!empty(x)"})
         protected int anyDuplicated(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast) {
             initChildren();
             RType xType = typeof.execute(x);
-            return analyze(x, (RAbstractContainer) (castTypeNode.execute(incomparables, xType)), true, RRuntime.fromLogical(fromLast)).index;
+            return DuplicationHelper.analyze(x, (RAbstractContainer) (castTypeNode.execute(incomparables, xType)), true, RRuntime.fromLogical(fromLast)).getIndex();
         }
 
         @SuppressWarnings("unused")

@@ -67,6 +67,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 
 /**
  * This class provides methods that match the functionality of the macro/function definitions in the
@@ -551,6 +552,15 @@ public class CallRFFIHelper {
     public static Object Rf_duplicate(Object x) {
         guaranteeInstanceOf(x, RAbstractVector.class);
         return ((RAbstractVector) x).copy();
+    }
+
+    public static int Rf_anyDuplicated(Object x, int fromLast) {
+        RAbstractVector vec = (RAbstractVector) x;
+        if (vec.getLength() == 0) {
+            return 0;
+        } else {
+            return DuplicationHelper.analyze(vec, null, true, fromLast != 0).getIndex();
+        }
     }
 
     public static Object PRINTNAME(Object x) {

@@ -33,6 +33,7 @@ static jmethodID Rf_allocateVectorMethodID;
 static jmethodID Rf_allocateArrayMethodID;
 static jmethodID Rf_allocateMatrixMethodID;
 static jmethodID Rf_duplicateMethodID;
+static jmethodID Rf_anyDuplicatedMethodID;
 static jmethodID Rf_consMethodID;
 static jmethodID Rf_evalMethodID;
 static jmethodID Rf_findfunMethodID;
@@ -124,6 +125,7 @@ void init_internals(JNIEnv *env) {
 	Rf_allocateMatrixMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_allocateMatrix", "(III)Ljava/lang/Object;", 1);
 	Rf_allocateArrayMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_allocateArray", "(ILjava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_duplicateMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_duplicate", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	Rf_anyDuplicatedMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_anyDuplicated", "(Ljava/lang/Object;I)I", 1);
 	Rf_NewHashedEnvMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_createNewEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/String;ZI)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 1);
 	RprintfMethodID = checkGetMethodID(env, CallRFFIHelperClass, "printf", "(Ljava/lang/String;)V", 1);
 	R_FindNamespaceMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_FindNamespace", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
@@ -323,8 +325,9 @@ SEXP Rf_duplicate(SEXP x) {
 }
 
 R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
-	unimplemented("Rf_any_duplicated");
-	return 0;
+    if (!isVector(x)) error(_("'duplicated' applies only to vectors"));
+	JNIEnv *thisenv = getEnv();
+    return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_anyDuplicatedMethodID, x, from_last);
 }
 
 SEXP Rf_duplicated(SEXP x, Rboolean y) {
