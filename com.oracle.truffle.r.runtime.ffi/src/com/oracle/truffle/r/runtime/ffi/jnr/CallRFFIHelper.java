@@ -541,11 +541,10 @@ public class CallRFFIHelper {
     }
 
     public static int OBJECT(Object x) {
-        if (x instanceof RTypedValue && !(x instanceof RScalar)) {
-            return ((RTypedValue) x).getIsObject();
+        if (x instanceof RAttributable) {
+            return ((RAttributable) x).getAttr(RRuntime.CLASS_ATTR_KEY) == null ? 0 : 1;
         } else {
-            // TODO: should we throw an error or simply return false for scalars
-            throw RInternalError.unimplemented();
+            return 0;
         }
     }
 
