@@ -58,7 +58,7 @@ pkgtest: ${common} ${java8Downloads} {
     ["git", "clone", "--depth", "1", ${repoBase}"gnur.git",  "../gnur"]
   ]
   run : [
-    ["mx", "-v", "--dynamicimport", "gnur", "build"]
+    ["mx", "-v", "--dynamicimport", "gnur", "build", "--serial"]
     ["mx", "--dynamicimport", "gnur", "pkgtest", "--print-ok-installs", "--ok-only"]
   ]
 }
