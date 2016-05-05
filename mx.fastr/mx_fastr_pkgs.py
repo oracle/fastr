@@ -191,6 +191,8 @@ def _get_test_outputs(suite, pkg_name, test_info):
             # suppress .pdf's for now (we can't compare them)
             if ext == '.pdf':
                 continue
+            if ext == '.save':
+                continue
             status = "OK"
             if ext == '.fail':
                 # some fatal error during the test
@@ -257,6 +259,7 @@ def _set_test_status(fastr_test_info):
 
     # gnur is definitive so drive off that
     for pkg in gnur_test_info.keys():
+        print 'BEGIN checking ' + pkg
         gnur_test_status = gnur_test_info[pkg]
         fastr_test_status = fastr_test_info[pkg]
         gnur_outputs = gnur_test_status.testfile_outputs
@@ -271,7 +274,6 @@ def _set_test_status(fastr_test_info):
             continue
 
 
-        fastr_test_status.status = "OK" # optimistic
         for gnur_test_output_relpath, gnur_testfile_status in gnur_outputs.iteritems():
             if not gnur_test_output_relpath in fastr_outputs:
                 fastr_test_status.status = "FAILED"
@@ -287,10 +289,18 @@ def _set_test_status(fastr_test_info):
                 fastr_content = f.readlines()
 
             result = _fuzzy_compare(gnur_content, fastr_content)
+            if result == -1:
+                print "{0}: content malformed: {1}".format(pkg, gnur_test_output_relpath)
+                fastr_test_status.status = "INDETERMINATE"
+                break
             if result != 0:
                 fastr_test_status.status = "FAILED"
                 print "{0}: FastR output mismatch: {1}".format(pkg, gnur_test_output_relpath)
                 break
+        # we started out as UNKNOWN
+        if not (fastr_test_status.status == "INDETERMINATE" or fastr_test_status.status == "FAILED"):
+            fastr_test_status.status = "OK"
+        print 'END checking ' + pkg
 
 def _find_start(content):
     marker = "Type 'q()' to quit R."
@@ -298,6 +308,7 @@ def _find_start(content):
         line = content[i]
         if marker in line:
             return i + 1
+    return None
 
 def _find_end(content):
     marker = "Time elapsed:"
@@ -305,12 +316,17 @@ def _find_end(content):
         line = content[i]
         if marker in line:
             return i - 1
+    # not all files have a Time elapsed:
+    return len(content) - 1
 
 def _fuzzy_compare(gnur_content, fastr_content):
-    gnur_start = _find_start(gnur_content) + 1 # Gnu has extra empty line
+    gnur_start = _find_start(gnur_content)
     gnur_end = _find_end(gnur_content)
     fastr_start = _find_start(fastr_content)
     fastr_len = len(fastr_content)
+    if not gnur_start or not gnur_end or not fastr_start:
+        return -1
+    gnur_start = gnur_start + 1 # Gnu has extra empty line
     result = 0
     i = gnur_start
     while i + gnur_start < gnur_end:
