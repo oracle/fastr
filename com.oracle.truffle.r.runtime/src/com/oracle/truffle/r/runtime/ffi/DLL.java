@@ -19,6 +19,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -48,9 +49,12 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
  * So in the case of multiple {@link RContext}s package shared libraries may be registered multiple
  * times and we must take care not to duplicate them in the meta-data here ({@link #list}).
  *
- * logic derived from Rdynload.c
+ * Logic derived from Rdynload.c. For the most part we use the same type/function names as GnuR,
+ * e.g. {@link NativeSymbolType}.
  */
 public class DLL {
+
+    public static final long SYMBOL_NOT_FOUND = -1;
 
     /**
      * The list of loaded DLLs.
@@ -72,8 +76,8 @@ public class DLL {
     }
 
     /**
-     * Denotes info in registered native routines. GnuR has "subclasses" for C/Fortran, which is
-     * TBD.
+     * Denotes info in registered native routines. GnuR has "subclasses" for C/Fortran, which is TBD
+     * for FastR.
      */
     public static class DotSymbol {
         public final String name;
@@ -87,16 +91,25 @@ public class DLL {
         }
     }
 
-    public static class RegisteredNativeType {
-        NativeSymbolType nst;
-        DotSymbol dotSymbol;
-        DLLInfo dllInfo;
+    public static class RegisteredNativeSymbol {
+        private NativeSymbolType nst;
+        private DotSymbol dotSymbol; // a union in GnuR
+        private DLLInfo dllInfo;
 
-        public RegisteredNativeType(NativeSymbolType nst, DotSymbol dotSymbol, DLLInfo dllInfo) {
+        public RegisteredNativeSymbol(NativeSymbolType nst, DotSymbol dotSymbol, DLLInfo dllInfo) {
             this.nst = nst;
             this.dotSymbol = dotSymbol;
             this.dllInfo = dllInfo;
         }
+
+        public DLLInfo getDllInfo() {
+            return dllInfo;
+        }
+
+        public static RegisteredNativeSymbol any() {
+            return new RegisteredNativeSymbol(NativeSymbolType.Any, null, null);
+        }
+
     }
 
     public static class DLLInfo {
@@ -127,7 +140,30 @@ public class DLL {
         }
 
         public DotSymbol[] getNativeSymbols(NativeSymbolType nst) {
-            return nativeSymbols[nst.ordinal()];
+            if (nst == null) {
+                int totalLen = 0;
+                for (NativeSymbolType nstx : NativeSymbolType.values()) {
+                    DotSymbol[] d = nativeSymbols[nstx.ordinal()];
+                    if (d != null) {
+                        totalLen += d.length;
+                    }
+                }
+                if (totalLen == 0) {
+                    return null;
+                }
+                DotSymbol[] result = new DotSymbol[totalLen];
+                int ix = 0;
+                for (NativeSymbolType nstx : NativeSymbolType.values()) {
+                    DotSymbol[] d = nativeSymbols[nstx.ordinal()];
+                    if (d != null) {
+                        System.arraycopy(nativeSymbols[nstx.ordinal()], 0, result, ix, d.length);
+                        ix += d.length;
+                    }
+                }
+                return result;
+            } else {
+                return nativeSymbols[nst.ordinal()];
+            }
         }
 
         /**
@@ -148,6 +184,11 @@ public class DLL {
             RList dllInfo = RDataFactory.createList(data, DLLInfo.NAMES);
             dllInfo.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS), false);
             return dllInfo;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("name: %s, path: %s, dynamicLookup: %b, forceSymbols %b", name, path, dynamicLookup, forceSymbols);
         }
     }
 
@@ -172,9 +213,9 @@ public class DLL {
 
         /**
          * Method to create the R object representing symbol info. From
-         * Rdynload.c/crreateRSymbolObject.
+         * Rdynload.c/createRSymbolObject.
          */
-        public RList createRSymbolObject(RegisteredNativeType rnt, boolean withRegInfo) {
+        public RList createRSymbolObject(RegisteredNativeSymbol rnt, boolean withRegInfo) {
             int n = rnt.nst == NativeSymbolType.Any ? 3 : 4;
             String sname = symbol == null ? rnt.dotSymbol.name : symbol;
             String[] klass = new String[rnt.nst == NativeSymbolType.Any ? 1 : 2];
@@ -239,6 +280,7 @@ public class DLL {
      * R_DEFAULT_PACKAGES do throw RErrors.
      */
 
+    @TruffleBoundary
     public static DLLInfo load(String path, boolean local, boolean now) throws DLLException {
         String absPath = Utils.tildeExpand(path);
         try {
@@ -277,15 +319,17 @@ public class DLL {
     private static final String R_INIT_PREFIX = "R_init_";
     private static final Semaphore initCritical = new Semaphore(1, false);
 
+    @TruffleBoundary
     public static DLLInfo loadPackageDLL(String path, boolean local, boolean now) throws DLLException {
         DLLInfo dllInfo = load(path, local, now);
         // Search for init method
-        DLL.SymbolInfo symbolInfo = DLL.findSymbolInDLL(R_INIT_PREFIX + dllInfo.name, dllInfo);
-        if (symbolInfo != null) {
+        String pkgInit = R_INIT_PREFIX + dllInfo.name;
+        long initFunc = RFFIFactory.getRFFI().getBaseRFFI().dlsym(dllInfo.handle, pkgInit);
+        if (initFunc != 0) {
             try {
                 initCritical.acquire();
                 try {
-                    RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(symbolInfo.address, symbolInfo.symbol, new Object[]{dllInfo});
+                    RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(initFunc, pkgInit, new Object[]{dllInfo});
                 } catch (ReturnException ex) {
                     // An error call can, due to condition handling, throw this which we must
                     // propogate
@@ -306,6 +350,7 @@ public class DLL {
         return dllInfo;
     }
 
+    @TruffleBoundary
     public static void unload(String path) throws DLLException {
         String absPath = Utils.tildeExpand(path);
         try {
@@ -336,99 +381,134 @@ public class DLL {
     }
 
     /**
-     * Attempts to locate a symbol in the list of loaded libraries, possible constrained by the
-     * {@code libName} argument.
+     * Directly analogous to the GnuR function of same name. If {@code rns} is not {@code null} and
+     * the search is successful, it is updated.
      *
-     * @param symbol the symbol name to search for
-     * @param libName if not {@code null} or "", restrict search to this library.
-     * @return a {@code SymbolInfo} instance or {@code null} if not found.
+     * @param dllInfo dll to search in
+     * @param name name of symbol to lookup
+     * @param rns if not {@code null} may limit the search to a specific {@link NativeSymbolType}
+     * @return the address of the (function) symbol or {@code 0} if not found.
      */
-    public static SymbolInfo findSymbolInfo(String symbol, String libName) {
-        SymbolInfo symbolInfo = null;
-        try {
-            listCritical.acquire();
-            for (DLLInfo dllInfo : list) {
-                if (libName == null || libName.length() == 0 || dllInfo.name.equals(libName)) {
-                    symbolInfo = findSymbolInDLL(symbol, dllInfo);
-                    if (symbolInfo != null) {
-                        break;
+    public static long getDLLRegisteredSymbol(DLLInfo dllInfo, String name, RegisteredNativeSymbol rns) {
+        NativeSymbolType rnsNst = rns == null ? NativeSymbolType.Any : rns.nst;
+        for (NativeSymbolType nst : NativeSymbolType.values()) {
+            if (rnsNst == NativeSymbolType.Any || rnsNst == nst) {
+                DotSymbol[] dotSymbols = dllInfo.getNativeSymbols(nst);
+                if (dotSymbols == null) {
+                    continue;
+                }
+                for (DotSymbol dotSymbol : dotSymbols) {
+                    if (dotSymbol.name.equals(name)) {
+                        if (rns != null) {
+                            rns.nst = nst;
+                            rns.dotSymbol = dotSymbol;
+                            rns.dllInfo = dllInfo;
+                        }
+                        return dotSymbol.fun;
                     }
                 }
             }
-        } catch (InterruptedException ex) {
-            throw RInternalError.shouldNotReachHere();
-        } finally {
-            listCritical.release();
         }
-        return symbolInfo;
+        return SYMBOL_NOT_FOUND;
     }
 
     /**
-     * Attempts to locate a symbol in the given library. This does no filtering on registered
-     * symbols, it uses the OS level search of the library.
+     * Directly analogous to the GnuR function {@code R_dlsym}. Checks first for a
+     * {@link RegisteredNativeSymbol} using {@code rns}, then, unless dynamic lookup has been
+     * disabled, looks up the symbol using the {@code dlopen} machinery.
      */
-    public static SymbolInfo findSymbolInDLL(String symbol, DLLInfo dllInfo) {
-        boolean found = false;
-        long val = RFFIFactory.getRFFI().getBaseRFFI().dlsym(dllInfo.handle, symbol);
-        if (val != 0) {
-            found = true;
+    @TruffleBoundary
+    public static long dlsym(DLLInfo dllInfo, String name, RegisteredNativeSymbol rns) {
+        long f = getDLLRegisteredSymbol(dllInfo, name, rns);
+        if (f != -1) {
+            return f;
+        }
+
+        if (!dllInfo.dynamicLookup) {
+            return SYMBOL_NOT_FOUND;
+        }
+
+        String mName = name;
+        // assume Fortran underscore, although GnuR has cc code for this
+        if (rns != null && rns.nst == NativeSymbolType.Fortran) {
+            mName = name + "_";
+        }
+        f = RFFIFactory.getRFFI().getBaseRFFI().dlsym(dllInfo.handle, mName);
+        if (f != 0) {
+            return f;
         } else {
             // symbol might actually be zero
             if (RFFIFactory.getRFFI().getBaseRFFI().dlerror() == null) {
-                found = true;
+                return f;
+            } else {
+                return SYMBOL_NOT_FOUND;
             }
-        }
-        if (found) {
-            return new SymbolInfo(dllInfo, symbol, val);
-        } else {
-            return null;
-        }
-    }
-
-    public static DLLInfo findLibraryContainingSymbol(String symbol) {
-        SymbolInfo symbolInfo = findSymbolInfo(symbol, null);
-        if (symbolInfo == null) {
-            return null;
-        } else {
-            return symbolInfo.libInfo;
         }
     }
 
     /**
-     * Similar to {@link #findSymbolInDLL(String, DLLInfo)} but restricts the search to those
-     * symbols that have been registered from packages, i.e. that can be used in {@code .Call} etc.
-     * functions.
+     * Directly analogous to the GnuR function {@code R_FindSymbol}.
+     *
+     * @param name name of symbol (as appears in code) to look up
+     * @param libName name of library to restrict search to (or all if {@code null} or empty string)
+     * @param rns {@code rns.nst} encodes the type of native symbol to restrict search to (or all if
+     *            {@code null})
      */
-    public static SymbolInfo findRegisteredSymbolinInDLL(String symbol, String libName, String type) {
+    @TruffleBoundary
+    public static long findSymbol(String name, String libName, RegisteredNativeSymbol rns) {
+        boolean all = libName == null || libName.length() == 0;
         try {
             listCritical.acquire();
             for (DLLInfo dllInfo : list) {
-                if (libName == null || libName.length() == 0 || dllInfo.name.equals(libName)) {
-                    if (dllInfo.forceSymbols) {
-                        continue;
-                    }
-                    for (NativeSymbolType nst : NativeSymbolType.values()) {
-                        if (type.isEmpty() || type.equals(nst.toString())) {
-                            DotSymbol[] dotSymbols = dllInfo.getNativeSymbols(nst);
-                            if (dotSymbols == null) {
-                                continue;
-                            }
-                            for (DotSymbol dotSymbol : dotSymbols) {
-                                if (dotSymbol.name.equals(symbol)) {
-                                    return new SymbolInfo(dllInfo, symbol, dotSymbol.fun);
-                                }
-                            }
+                if (dllInfo.forceSymbols) {
+                    continue;
+                }
+                if (all || dllInfo.name.equals(libName)) {
+                    long func = dlsym(dllInfo, name, rns);
+                    if (func != SYMBOL_NOT_FOUND) {
+                        if (rns != null) {
+                            rns.dllInfo = dllInfo;
                         }
+                        return func;
                     }
-
+                }
+                if (!all && dllInfo.name.equals(libName)) {
+                    return SYMBOL_NOT_FOUND;
                 }
             }
+            return SYMBOL_NOT_FOUND;
         } catch (InterruptedException ex) {
             throw RInternalError.shouldNotReachHere();
         } finally {
             listCritical.release();
         }
-        return null;
+    }
+
+    public static DLLInfo findLibrary(String name) {
+        try {
+            listCritical.acquire();
+            for (DLLInfo dllInfo : list) {
+                if (dllInfo.name.equals(name)) {
+                    return dllInfo;
+                }
+            }
+            return null;
+        } catch (InterruptedException ex) {
+            throw RInternalError.shouldNotReachHere();
+        } finally {
+            listCritical.release();
+        }
+    }
+
+    @TruffleBoundary
+    public static DLLInfo findLibraryContainingSymbol(String symbol) {
+        RegisteredNativeSymbol rns = RegisteredNativeSymbol.any();
+        long func = findSymbol(symbol, null, rns);
+        if (func == SYMBOL_NOT_FOUND) {
+            return null;
+        } else {
+            return rns.dllInfo;
+        }
     }
 
     /*

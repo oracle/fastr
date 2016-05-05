@@ -45,7 +45,8 @@ public class JNR_Stats implements StatsRFFI {
         @TruffleBoundary
         private static Stats createAndLoadLib() {
             // fft is in the stats package .so
-            DLLInfo dllInfo = DLL.findLibraryContainingSymbol("fft");
+            DLLInfo dllInfo = DLL.findLibrary("stats");
+            assert dllInfo != null;
             return LibraryLoader.create(Stats.class).load(dllInfo.path);
         }
 
