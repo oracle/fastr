@@ -19,6 +19,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -279,6 +280,7 @@ public class DLL {
      * R_DEFAULT_PACKAGES do throw RErrors.
      */
 
+    @TruffleBoundary
     public static DLLInfo load(String path, boolean local, boolean now) throws DLLException {
         String absPath = Utils.tildeExpand(path);
         try {
@@ -317,6 +319,7 @@ public class DLL {
     private static final String R_INIT_PREFIX = "R_init_";
     private static final Semaphore initCritical = new Semaphore(1, false);
 
+    @TruffleBoundary
     public static DLLInfo loadPackageDLL(String path, boolean local, boolean now) throws DLLException {
         DLLInfo dllInfo = load(path, local, now);
         // Search for init method
@@ -347,6 +350,7 @@ public class DLL {
         return dllInfo;
     }
 
+    @TruffleBoundary
     public static void unload(String path) throws DLLException {
         String absPath = Utils.tildeExpand(path);
         try {
@@ -413,6 +417,7 @@ public class DLL {
      * {@link RegisteredNativeSymbol} using {@code rns}, then, unless dynamic lookup has been
      * disabled, looks up the symbol using the {@code dlopen} machinery.
      */
+    @TruffleBoundary
     public static long dlsym(DLLInfo dllInfo, String name, RegisteredNativeSymbol rns) {
         long f = getDLLRegisteredSymbol(dllInfo, name, rns);
         if (f != -1) {
@@ -449,6 +454,7 @@ public class DLL {
      * @param rns {@code rns.nst} encodes the type of native symbol to restrict search to (or all if
      *            {@code null})
      */
+    @TruffleBoundary
     public static long findSymbol(String name, String libName, RegisteredNativeSymbol rns) {
         boolean all = libName == null || libName.length() == 0;
         try {
@@ -494,6 +500,7 @@ public class DLL {
         }
     }
 
+    @TruffleBoundary
     public static DLLInfo findLibraryContainingSymbol(String symbol) {
         RegisteredNativeSymbol rns = RegisteredNativeSymbol.any();
         long func = findSymbol(symbol, null, rns);
