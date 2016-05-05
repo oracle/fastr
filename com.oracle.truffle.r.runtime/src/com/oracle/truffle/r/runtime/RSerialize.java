@@ -605,7 +605,6 @@ public class RSerialize {
 
                     if (!(result instanceof RScalar)) {
                         ((RTypedValue) result).setGPBits(levs);
-                        ((RTypedValue) result).setIsObject(isObj);
                     } else {
                         // for now we only record S4-ness here, and in this case it shoud be 0
                         assert (levs == 0);
@@ -787,10 +786,6 @@ public class RSerialize {
                     readItem();
                 }
             } else {
-                // TODO: CHARSXP currently cannot be an object - this is not the case in GNU R
-                if (!(result instanceof RScalar)) {
-                    ((RTypedValue) result).setIsObject(isObj);
-                }
                 if (Flags.hasAttr(flags)) {
                     Object attr = readItem();
                     result = setAttributes(result, attr);
