@@ -88,4 +88,5 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
 	res	
 }; environment(mclapply)<-asNamespace("parallel")})
 eval(mclapplyExpr, asNamespace("parallel"))
-eval(mclapplyExpr, as.environment("package:parallel"))
+# seems like we don't need these anymore, but let's make sure
+#eval(mclapplyExpr, as.environment("package:parallel"))

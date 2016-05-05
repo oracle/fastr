@@ -79,7 +79,8 @@ makeForkCluster <- function(nnodes = getOption("mc.cores", 2L), options = defaul
 	cl
 }; environment(makeForkCluster)<-asNamespace("parallel")})
 eval(makeForkClusterExpr, asNamespace("parallel"))
-eval(makeForkClusterExpr, as.environment("package:parallel"))
+# seems like we don't need these anymore, but let's make sure
+#eval(makeForkClusterExpr, as.environment("package:parallel"))
 
 
 eval(expression(
