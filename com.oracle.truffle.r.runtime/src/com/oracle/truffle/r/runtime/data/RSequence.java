@@ -169,9 +169,8 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final RVector materializeNonShared() {
-        RVector resultVector = this.materialize().materializeNonShared();
-        return resultVector;
+    public final RTypedValue getNonShared() {
+        return materialize().getNonShared();
     }
 
     @Override

@@ -28,10 +28,12 @@ import java.util.IdentityHashMap;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
@@ -163,36 +165,51 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
         }
     }
 
-    @ExplodeLoop
-    public RArgsValuesAndNames evaluateFlatten(VirtualFrame frame, RArgsValuesAndNames varArgs) {
-        int size = arguments.length;
-        ArgumentsSignature resultSignature = null;
-        String[] names = null;
-        if (containsVarArgsSymbol()) {
-            size += (varArgs.getLength() - 1) * varArgsSymbolIndices.length;
-            names = new String[size];
-        } else {
-            resultSignature = signature;
+    private ArgumentsSignature cachedVarArgsSignature;
+    private ArgumentsSignature cachedResultSignature;
+    private final BranchProfile regenerateSignatureProfile = BranchProfile.create();
+
+    public ArgumentsSignature flattenNames(RArgsValuesAndNames varArgs) {
+        if (!containsVarArgsSymbol()) {
+            return signature;
         }
-        Object[] values = new Object[size];
+        ArgumentsSignature varArgsSignature = varArgs.getSignature();
+        if (cachedVarArgsSignature == null) {
+            CompilerDirectives.transferToInterpreter();
+        }
+        if (varArgsSignature == cachedVarArgsSignature) {
+            return cachedResultSignature;
+        }
+        regenerateSignatureProfile.enter();
+        cachedVarArgsSignature = varArgsSignature;
+        return cachedResultSignature = flattenNamesInternal(varArgsSignature);
+    }
+
+    @TruffleBoundary
+    private ArgumentsSignature flattenNamesInternal(ArgumentsSignature varArgs) {
+        String[] names = null;
+        int size = arguments.length + (varArgs.getLength() - 1) * varArgsSymbolIndices.length;
+        names = new String[size];
         int vargsSymbolsIndex = 0;
         int index = 0;
         for (int i = 0; i < arguments.length; i++) {
             if (vargsSymbolsIndex < varArgsSymbolIndices.length && varArgsSymbolIndices[vargsSymbolsIndex] == i) {
-                index = flattenVarArgs(frame, varArgs, names, values, index);
+                index = flattenVarArgNames(varArgs, names, index);
                 vargsSymbolsIndex++;
             } else {
-                values[index] = arguments[i] == null ? RMissing.instance : arguments[i].execute(frame);
-                if (names != null) {
-                    names[index] = signature.getName(i);
-                }
-                index++;
+                names[index++] = signature.getName(i);
             }
         }
-        if (resultSignature == null) {
-            resultSignature = ArgumentsSignature.get(names);
+        return ArgumentsSignature.get(names);
+    }
+
+    private static int flattenVarArgNames(ArgumentsSignature varArgInfo, String[] names, int startIndex) {
+        int index = startIndex;
+        for (int j = 0; j < varArgInfo.getLength(); j++) {
+            names[index] = varArgInfo.getName(j);
+            index++;
         }
-        return new RArgsValuesAndNames(values, resultSignature);
+        return index;
     }
 
     @ExplodeLoop
@@ -216,7 +233,7 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
         return values;
     }
 
-    private int flattenVarArgs(VirtualFrame frame, RArgsValuesAndNames varArgInfo, String[] names, Object[] values, int startIndex) {
+    private int flattenVarArgsObject(VirtualFrame frame, RArgsValuesAndNames varArgInfo, Object[] values, int startIndex) {
         int index = startIndex;
         for (int j = 0; j < varArgInfo.getLength(); j++) {
             if (promiseHelper == null) {
@@ -224,7 +241,6 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
                 promiseHelper = insert(new PromiseCheckHelperNode());
             }
             values[index] = promiseHelper.checkEvaluate(frame, varArgInfo.getArgument(j));
-            names[index] = varArgInfo.getSignature().getName(j);
             index++;
         }
         return index;
@@ -264,18 +280,5 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
             result[i] = argument.asRSyntaxNode();
         }
         return result;
-    }
-
-    private int flattenVarArgsObject(VirtualFrame frame, RArgsValuesAndNames varArgInfo, Object[] values, int startIndex) {
-        int index = startIndex;
-        for (int j = 0; j < varArgInfo.getLength(); j++) {
-            if (promiseHelper == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseHelper = insert(new PromiseCheckHelperNode());
-            }
-            values[index] = promiseHelper.checkEvaluate(frame, varArgInfo.getArgument(j));
-            index++;
-        }
-        return index;
     }
 }

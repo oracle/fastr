@@ -73,7 +73,7 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
     @TruffleBoundary
     protected Object setOldClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
-        RAbstractContainer result = arg.materializeNonShared();
+        RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
         return result.setClassAttr(className, false);
     }
 
@@ -81,7 +81,7 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
     @TruffleBoundary
     protected Object setOldClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        RAbstractContainer result = arg.materializeNonShared();
+        RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
         return result.setClassAttr(null, false);
     }
 

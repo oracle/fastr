@@ -122,7 +122,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value) {
         controlVisibility();
         String internedName = intern(name);
-        RAbstractContainer result = container.materializeNonShared();
+        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
             result.setDimensions(null);
@@ -155,7 +155,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     protected RAbstractContainer updateAttr(RAbstractContainer container, String name, Object value) {
         controlVisibility();
         String internedName = intern(name);
-        RAbstractContainer result = container.materializeNonShared();
+        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
             RAbstractIntVector dimsVector = castInteger(castVector(value));

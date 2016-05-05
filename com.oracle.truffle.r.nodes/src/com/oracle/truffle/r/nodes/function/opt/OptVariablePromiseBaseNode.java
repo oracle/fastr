@@ -28,6 +28,7 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -51,6 +52,7 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
     private final int wrapIndex;
 
     private final ConditionProfile promiseEvalFrameProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile frameProfile = ValueProfile.createClassProfile();
 
     public OptVariablePromiseBaseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
         super(factory);
@@ -71,7 +73,7 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
     public Object execute(VirtualFrame initialFrame) {
         VirtualFrame frame;
         if (promiseEvalFrameProfile.profile(initialFrame instanceof PromiseEvalFrame)) {
-            frame = SubstituteVirtualFrame.create(((PromiseEvalFrame) initialFrame).getOriginalFrame());
+            frame = frameProfile.profile(SubstituteVirtualFrame.create(((PromiseEvalFrame) initialFrame).getOriginalFrame()));
         } else {
             frame = initialFrame;
         }

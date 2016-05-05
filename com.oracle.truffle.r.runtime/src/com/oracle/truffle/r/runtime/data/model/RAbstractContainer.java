@@ -45,7 +45,7 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
 
     Class<?> getElementClass();
 
-    RAbstractContainer materializeNonShared();
+    RTypedValue getNonShared();
 
     RShareable materializeToShareable();
 

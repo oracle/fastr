@@ -236,7 +236,7 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
     }
 
     @Override
-    public RVector materializeNonShared() {
+    public RVector getNonShared() {
         RInternalError.shouldNotReachHere();
         return null;
     }

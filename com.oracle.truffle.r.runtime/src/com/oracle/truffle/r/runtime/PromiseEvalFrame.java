@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
 /**
@@ -56,13 +57,19 @@ public final class PromiseEvalFrame extends AbstractVirtualEvalFrame {
      */
     private final RPromise promise;
 
-    private PromiseEvalFrame(Frame topFrame, MaterializedFrame originalFrame, RPromise promise) {
-        super(originalFrame, RArguments.getFunction(originalFrame), RArguments.getCall(originalFrame), RArguments.getDepth(topFrame));
+    private PromiseEvalFrame(MaterializedFrame originalFrame, Object[] arguments, RPromise promise) {
+        super(originalFrame, arguments);
         this.promise = promise;
     }
 
-    public static PromiseEvalFrame create(Frame topFrame, MaterializedFrame promiseFrame, RPromise promise) {
-        PromiseEvalFrame result = new PromiseEvalFrame(topFrame, promiseFrame instanceof PromiseEvalFrame ? ((PromiseEvalFrame) promiseFrame).getOriginalFrame() : promiseFrame, promise);
+    public static PromiseEvalFrame create(Frame topFrame, MaterializedFrame promiseFrame, RPromise promise, PrimitiveValueProfile lengthProfile) {
+        MaterializedFrame originalFrame = promiseFrame instanceof PromiseEvalFrame ? ((PromiseEvalFrame) promiseFrame).getOriginalFrame() : promiseFrame;
+        int length = lengthProfile == null ? originalFrame.getArguments().length : lengthProfile.profile(originalFrame.getArguments().length);
+        Object[] arguments = new Object[length];
+        System.arraycopy(originalFrame.getArguments(), 0, arguments, 0, length);
+        arguments[RArguments.INDEX_DEPTH] = RArguments.getDepth(topFrame);
+        arguments[RArguments.INDEX_IS_IRREGULAR] = true;
+        PromiseEvalFrame result = new PromiseEvalFrame(originalFrame, arguments, promise);
         result.arguments[RArguments.INDEX_PROMISE_FRAME] = result;
         return result;
     }
@@ -74,5 +81,4 @@ public final class PromiseEvalFrame extends AbstractVirtualEvalFrame {
     public RPromise getPromise() {
         return promise;
     }
-
 }

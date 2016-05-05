@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -31,12 +33,16 @@ import com.oracle.truffle.r.runtime.data.RFunction;
  */
 public final class VirtualEvalFrame extends AbstractVirtualEvalFrame {
 
-    private VirtualEvalFrame(MaterializedFrame originalFrame, RFunction function, RCaller call, int depth) {
-        super(originalFrame, function, call, depth);
+    private VirtualEvalFrame(MaterializedFrame originalFrame, Object[] arguments) {
+        super(originalFrame, arguments);
     }
 
     public static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, RCaller call, int depth) {
-        return new VirtualEvalFrame(originalFrame, function, call, depth);
+        Object[] arguments = Arrays.copyOf(originalFrame.getArguments(), originalFrame.getArguments().length);
+        arguments[RArguments.INDEX_DEPTH] = depth;
+        arguments[RArguments.INDEX_IS_IRREGULAR] = true;
+        arguments[RArguments.INDEX_FUNCTION] = function;
+        arguments[RArguments.INDEX_CALL] = call;
+        return new VirtualEvalFrame(originalFrame, arguments);
     }
-
 }
