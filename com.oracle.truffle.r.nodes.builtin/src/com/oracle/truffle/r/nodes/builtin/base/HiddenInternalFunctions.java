@@ -305,7 +305,7 @@ public class HiddenInternalFunctions {
                 Object[] symbolData = new Object[symbols.length];
                 for (int i = 0; i < symbols.length; i++) {
                     DLL.DotSymbol symbol = symbols[i];
-                    DLL.RegisteredNativeType rnt = new DLL.RegisteredNativeType(nst, symbol, dllInfo);
+                    DLL.RegisteredNativeSymbol rnt = new DLL.RegisteredNativeSymbol(nst, symbol, dllInfo);
                     DLL.SymbolInfo symbolInfo = new DLL.SymbolInfo(dllInfo, symbol.name, symbol.fun);
                     symbolData[i] = symbolInfo.createRSymbolObject(rnt, true);
                 }

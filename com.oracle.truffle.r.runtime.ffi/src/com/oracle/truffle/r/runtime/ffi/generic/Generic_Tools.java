@@ -31,20 +31,21 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 
 public class Generic_Tools implements ToolsRFFI {
     private static final class ToolsProvider {
+        private static final String C_PARSE_RD = "C_parseRd";
         private static ToolsProvider tools;
-        private static DLL.SymbolInfo parseRd;
+        private static long parseRd;
 
         @TruffleBoundary
         private ToolsProvider() {
             System.load(LibPaths.getPackageLibPath("tools"));
-            parseRd = DLL.findSymbolInfo("C_parseRd", "tools");
+            parseRd = DLL.findSymbol(C_PARSE_RD, "tools", DLL.RegisteredNativeSymbol.any());
+            assert parseRd != DLL.SYMBOL_NOT_FOUND;
         }
 
         static ToolsProvider toolsProvider() {
@@ -55,7 +56,7 @@ public class Generic_Tools implements ToolsRFFI {
         }
 
         @SuppressWarnings("static-method")
-        DLL.SymbolInfo getParseRd() {
+        long getParseRd() {
             return parseRd;
         }
     }
@@ -68,8 +69,8 @@ public class Generic_Tools implements ToolsRFFI {
         // The C code is not thread safe.
         try {
             parseRdCritical.acquire();
-            SymbolInfo parseRd = ToolsProvider.toolsProvider().getParseRd();
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(parseRd.address, parseRd.symbol, new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
+            long parseRd = ToolsProvider.toolsProvider().getParseRd();
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(parseRd, ToolsProvider.C_PARSE_RD, new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
         } catch (Throwable ex) {
             throw RInternalError.shouldNotReachHere(ex, "error during Rd parsing");
         } finally {

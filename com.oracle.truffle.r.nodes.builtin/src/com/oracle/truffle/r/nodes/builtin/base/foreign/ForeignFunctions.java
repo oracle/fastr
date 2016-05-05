@@ -71,7 +71,6 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -82,7 +81,6 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
@@ -186,6 +184,18 @@ public class ForeignFunctions {
             }
             return ((RExternalPtr) addressExtract.applyAccessField(frame, symbol, "address")).getAddr();
         }
+
+        protected String checkPackageArg(Object rPackage, BranchProfile errorProfile) {
+            String libName = null;
+            if (!(rPackage instanceof RMissing)) {
+                libName = RRuntime.asString(rPackage);
+                if (libName == null) {
+                    errorProfile.enter();
+                    throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_STRING, "PACKAGE");
+                }
+            }
+            return libName;
+        }
     }
 
     /**
@@ -214,7 +224,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(RList f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding, //
+        protected Object doExternal(RList f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
             controlVisibility();
@@ -222,22 +232,24 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "lookupBuiltin(symbol) == null")
-        protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") RMissing rPackage,
+        protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
                         @SuppressWarnings("unused") RMissing encoding) {
             controlVisibility();
             return DotC.dispatch(this, getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), naok, dup, args);
         }
 
         @Specialization
-        protected RList c(String f, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") RMissing rPackage, @SuppressWarnings("unused") RMissing encoding, //
+        protected RList c(RAbstractStringVector f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding, //
                         @Cached("create()") BranchProfile errorProfile) {
             controlVisibility();
-            SymbolInfo symbolInfo = DLL.findRegisteredSymbolinInDLL(f, null, "");
-            if (symbolInfo == null) {
+            String libName = checkPackageArg(rPackage, errorProfile);
+            DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
+            long func = DLL.findSymbol(f.getDataAt(0), libName, rns);
+            if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
             }
-            return DotC.dispatch(this, symbolInfo.address, symbolInfo.symbol, naok, dup, args);
+            return DotC.dispatch(this, func, f.getDataAt(0), naok, dup, args);
         }
 
         @SuppressWarnings("unused")
@@ -504,12 +516,13 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
-            SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
-            if (symbolInfo == null) {
+            DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
+            long func = DLL.findSymbol(name, packageName, rns);
+            if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, Message.C_SYMBOL_NOT_IN_TABLE, name);
+                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo.address, symbolInfo.symbol, args.getArguments());
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(func, name, args.getArguments());
         }
 
         @Fallback
@@ -587,13 +600,14 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
-            SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
-            if (symbolInfo == null) {
+            DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
+            long func = DLL.findSymbol(name, packageName, rns);
+            if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, Message.C_SYMBOL_NOT_IN_TABLE, name);
+                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
-            Object list = encodeArgumentPairList(args, symbolInfo.symbol);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo.address, symbolInfo.symbol, new Object[]{list});
+            Object list = encodeArgumentPairList(args, name);
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(func, name, new Object[]{list});
         }
 
         @Fallback
@@ -657,14 +671,15 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
-            SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
-            if (symbolInfo == null) {
+            DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
+            long func = DLL.findSymbol(name, packageName, rns);
+            if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, Message.C_SYMBOL_NOT_IN_TABLE, name);
+                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
-            Object list = encodeArgumentPairList(args, symbolInfo.symbol);
+            Object list = encodeArgumentPairList(args, name);
             // TODO: provide proper values for the CALL, OP and RHO parameters
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo.address, symbolInfo.symbol, new Object[]{CALL, OP, list, RHO});
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(func, name, new Object[]{CALL, OP, list, RHO});
         }
 
         @Fallback
@@ -715,13 +730,14 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
-            SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
-            if (symbolInfo == null) {
+            DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
+            long func = DLL.findSymbol(name, packageName, rns);
+            if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, Message.C_SYMBOL_NOT_IN_TABLE, name);
+                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
-            Object list = encodeArgumentPairList(args, symbolInfo.symbol);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo.address, symbolInfo.symbol, new Object[]{list});
+            Object list = encodeArgumentPairList(args, name);
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(func, name, new Object[]{list});
         }
 
         @Fallback
@@ -770,12 +786,13 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             controlVisibility();
-            SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
-            if (symbolInfo == null) {
+            DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
+            long func = DLL.findSymbol(name, packageName, rns);
+            if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, Message.C_SYMBOL_NOT_IN_TABLE, name);
+                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo.address, symbolInfo.symbol, args.getArguments());
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(func, name, args.getArguments());
         }
 
         @Fallback
