@@ -474,16 +474,16 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
 	jobject result = NULL;
 	callEnter(env, &error_jmpbuf);
 	jsize len = (*env)->GetArrayLength(env, args);
-	jobject jargs[64];
+	SEXP jargs[64];
 	for (int i = 0; i < len; i++) {
-		jargs[i] = (*env)->GetObjectArrayElement(env, args, i);
+		jargs[i] = checkRef(env, (*env)->GetObjectArrayElement(env, args, i));
 	}
 	switch (len) {
     case 10: {
         if (!setjmp(error_jmpbuf)) {
             call10func call10 = (call10func) address;
-            result = (*call10)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]));
+            result = (*call10)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9]);
         }
         callExit(env);
         return result;
@@ -492,8 +492,8 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 11: {
         if (!setjmp(error_jmpbuf)) {
             call11func call11 = (call11func) address;
-            result = (*call11)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]));
+            result = (*call11)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10]);
         }
         callExit(env);
         return result;
@@ -502,8 +502,8 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 12: {
         if (!setjmp(error_jmpbuf)) {
             call12func call12 = (call12func) address;
-            result = (*call12)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]));
+            result = (*call12)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11]);
         }
         callExit(env);
         return result;
@@ -512,8 +512,8 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 13: {
         if (!setjmp(error_jmpbuf)) {
             call13func call13 = (call13func) address;
-            result = (*call13)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]));
+            result = (*call13)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12]);
         }
         callExit(env);
         return result;
@@ -522,8 +522,8 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 14: {
         if (!setjmp(error_jmpbuf)) {
             call14func call14 = (call14func) address;
-            result = (*call14)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]));
+            result = (*call14)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13]);
         }
         callExit(env);
         return result;
@@ -532,8 +532,8 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 15: {
         if (!setjmp(error_jmpbuf)) {
             call15func call15 = (call15func) address;
-            result = (*call15)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]));
+            result = (*call15)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14]);
         }
         callExit(env);
         return result;
@@ -542,8 +542,8 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 16: {
         if (!setjmp(error_jmpbuf)) {
             call16func call16 = (call16func) address;
-            result = (*call16)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15])
+            result = (*call16)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15]
                 );
         }
         callExit(env);
@@ -553,9 +553,9 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 17: {
         if (!setjmp(error_jmpbuf)) {
             call17func call17 = (call17func) address;
-            result = (*call17)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]));
+            result = (*call17)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16]);
         }
         callExit(env);
         return result;
@@ -564,9 +564,9 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 18: {
         if (!setjmp(error_jmpbuf)) {
             call18func call18 = (call18func) address;
-            result = (*call18)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]));
+            result = (*call18)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17]);
         }
         callExit(env);
         return result;
@@ -575,9 +575,9 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 19: {
         if (!setjmp(error_jmpbuf)) {
             call19func call19 = (call19func) address;
-            result = (*call19)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]));
+            result = (*call19)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18]);
         }
         callExit(env);
         return result;
@@ -586,9 +586,9 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 20: {
         if (!setjmp(error_jmpbuf)) {
             call20func call20 = (call20func) address;
-            result = (*call20)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]));
+            result = (*call20)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19]);
         }
         callExit(env);
         return result;
@@ -597,9 +597,9 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 21: {
         if (!setjmp(error_jmpbuf)) {
             call21func call21 = (call21func) address;
-            result = (*call21)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]));
+            result = (*call21)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20]);
         }
         callExit(env);
         return result;
@@ -608,9 +608,9 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 22: {
         if (!setjmp(error_jmpbuf)) {
             call22func call22 = (call22func) address;
-            result = (*call22)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]));
+            result = (*call22)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21]);
         }
         callExit(env);
         return result;
@@ -619,9 +619,9 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 23: {
         if (!setjmp(error_jmpbuf)) {
             call23func call23 = (call23func) address;
-            result = (*call23)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]));
+            result = (*call23)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22]);
         }
         callExit(env);
         return result;
@@ -630,9 +630,9 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 24: {
         if (!setjmp(error_jmpbuf)) {
             call24func call24 = (call24func) address;
-            result = (*call24)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23])
+            result = (*call24)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23]
                 );
         }
         callExit(env);
@@ -642,10 +642,10 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 25: {
         if (!setjmp(error_jmpbuf)) {
             call25func call25 = (call25func) address;
-            result = (*call25)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]));
+            result = (*call25)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24]);
         }
         callExit(env);
         return result;
@@ -654,10 +654,10 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 26: {
         if (!setjmp(error_jmpbuf)) {
             call26func call26 = (call26func) address;
-            result = (*call26)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]));
+            result = (*call26)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25]);
         }
         callExit(env);
         return result;
@@ -666,10 +666,10 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 27: {
         if (!setjmp(error_jmpbuf)) {
             call27func call27 = (call27func) address;
-            result = (*call27)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]));
+            result = (*call27)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26]);
         }
         callExit(env);
         return result;
@@ -678,10 +678,10 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 28: {
         if (!setjmp(error_jmpbuf)) {
             call28func call28 = (call28func) address;
-            result = (*call28)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]));
+            result = (*call28)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27]);
         }
         callExit(env);
         return result;
@@ -690,10 +690,10 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 29: {
         if (!setjmp(error_jmpbuf)) {
             call29func call29 = (call29func) address;
-            result = (*call29)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]));
+            result = (*call29)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28]);
         }
         callExit(env);
         return result;
@@ -702,10 +702,10 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 30: {
         if (!setjmp(error_jmpbuf)) {
             call30func call30 = (call30func) address;
-            result = (*call30)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]));
+            result = (*call30)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29]);
         }
         callExit(env);
         return result;
@@ -714,10 +714,10 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 31: {
         if (!setjmp(error_jmpbuf)) {
             call31func call31 = (call31func) address;
-            result = (*call31)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]));
+            result = (*call31)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30]);
         }
         callExit(env);
         return result;
@@ -726,10 +726,10 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 32: {
         if (!setjmp(error_jmpbuf)) {
             call32func call32 = (call32func) address;
-            result = (*call32)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31])
+            result = (*call32)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31]
                 );
         }
         callExit(env);
@@ -739,11 +739,11 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 33: {
         if (!setjmp(error_jmpbuf)) {
             call33func call33 = (call33func) address;
-            result = (*call33)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]));
+            result = (*call33)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32]);
         }
         callExit(env);
         return result;
@@ -752,11 +752,11 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 34: {
         if (!setjmp(error_jmpbuf)) {
             call34func call34 = (call34func) address;
-            result = (*call34)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]));
+            result = (*call34)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33]);
         }
         callExit(env);
         return result;
@@ -765,11 +765,11 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 35: {
         if (!setjmp(error_jmpbuf)) {
             call35func call35 = (call35func) address;
-            result = (*call35)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]));
+            result = (*call35)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34]);
         }
         callExit(env);
         return result;
@@ -778,11 +778,11 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 36: {
         if (!setjmp(error_jmpbuf)) {
             call36func call36 = (call36func) address;
-            result = (*call36)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]));
+            result = (*call36)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35]);
         }
         callExit(env);
         return result;
@@ -791,11 +791,11 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 37: {
         if (!setjmp(error_jmpbuf)) {
             call37func call37 = (call37func) address;
-            result = (*call37)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]));
+            result = (*call37)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36]);
         }
         callExit(env);
         return result;
@@ -804,11 +804,11 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 38: {
         if (!setjmp(error_jmpbuf)) {
             call38func call38 = (call38func) address;
-            result = (*call38)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]));
+            result = (*call38)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37]);
         }
         callExit(env);
         return result;
@@ -817,11 +817,11 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 39: {
         if (!setjmp(error_jmpbuf)) {
             call39func call39 = (call39func) address;
-            result = (*call39)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]));
+            result = (*call39)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38]);
         }
         callExit(env);
         return result;
@@ -830,11 +830,11 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 40: {
         if (!setjmp(error_jmpbuf)) {
             call40func call40 = (call40func) address;
-            result = (*call40)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39])
+            result = (*call40)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39]
                 );
         }
         callExit(env);
@@ -844,12 +844,12 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 41: {
         if (!setjmp(error_jmpbuf)) {
             call41func call41 = (call41func) address;
-            result = (*call41)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]));
+            result = (*call41)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40]);
         }
         callExit(env);
         return result;
@@ -858,12 +858,12 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 42: {
         if (!setjmp(error_jmpbuf)) {
             call42func call42 = (call42func) address;
-            result = (*call42)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]));
+            result = (*call42)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41]);
         }
         callExit(env);
         return result;
@@ -872,12 +872,12 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 43: {
         if (!setjmp(error_jmpbuf)) {
             call43func call43 = (call43func) address;
-            result = (*call43)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]));
+            result = (*call43)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42]);
         }
         callExit(env);
         return result;
@@ -886,12 +886,12 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 44: {
         if (!setjmp(error_jmpbuf)) {
             call44func call44 = (call44func) address;
-            result = (*call44)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]));
+            result = (*call44)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43]);
         }
         callExit(env);
         return result;
@@ -900,12 +900,12 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 45: {
         if (!setjmp(error_jmpbuf)) {
             call45func call45 = (call45func) address;
-            result = (*call45)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]));
+            result = (*call45)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44]);
         }
         callExit(env);
         return result;
@@ -914,12 +914,12 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 46: {
         if (!setjmp(error_jmpbuf)) {
             call46func call46 = (call46func) address;
-            result = (*call46)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]));
+            result = (*call46)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45]);
         }
         callExit(env);
         return result;
@@ -928,12 +928,12 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 47: {
         if (!setjmp(error_jmpbuf)) {
             call47func call47 = (call47func) address;
-            result = (*call47)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]));
+            result = (*call47)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46]);
         }
         callExit(env);
         return result;
@@ -942,12 +942,12 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 48: {
         if (!setjmp(error_jmpbuf)) {
             call48func call48 = (call48func) address;
-            result = (*call48)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47])
+            result = (*call48)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47]
                 );
         }
         callExit(env);
@@ -957,13 +957,13 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 49: {
         if (!setjmp(error_jmpbuf)) {
             call49func call49 = (call49func) address;
-            result = (*call49)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]));
+            result = (*call49)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48]);
         }
         callExit(env);
         return result;
@@ -972,13 +972,13 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 50: {
         if (!setjmp(error_jmpbuf)) {
             call50func call50 = (call50func) address;
-            result = (*call50)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]));
+            result = (*call50)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49]);
         }
         callExit(env);
         return result;
@@ -987,13 +987,13 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 51: {
         if (!setjmp(error_jmpbuf)) {
             call51func call51 = (call51func) address;
-            result = (*call51)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]));
+            result = (*call51)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50]);
         }
         callExit(env);
         return result;
@@ -1002,13 +1002,13 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 52: {
         if (!setjmp(error_jmpbuf)) {
             call52func call52 = (call52func) address;
-            result = (*call52)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]), checkRef(env, jargs[51]));
+            result = (*call52)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50], jargs[51]);
         }
         callExit(env);
         return result;
@@ -1017,13 +1017,13 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 53: {
         if (!setjmp(error_jmpbuf)) {
             call53func call53 = (call53func) address;
-            result = (*call53)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]), checkRef(env, jargs[51]), checkRef(env, jargs[52]));
+            result = (*call53)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50], jargs[51], jargs[52]);
         }
         callExit(env);
         return result;
@@ -1032,13 +1032,13 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 54: {
         if (!setjmp(error_jmpbuf)) {
             call54func call54 = (call54func) address;
-            result = (*call54)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]), checkRef(env, jargs[51]), checkRef(env, jargs[52]), checkRef(env, jargs[53]));
+            result = (*call54)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50], jargs[51], jargs[52], jargs[53]);
         }
         callExit(env);
         return result;
@@ -1047,13 +1047,13 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 55: {
         if (!setjmp(error_jmpbuf)) {
             call55func call55 = (call55func) address;
-            result = (*call55)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]), checkRef(env, jargs[51]), checkRef(env, jargs[52]), checkRef(env, jargs[53]), checkRef(env, jargs[54]));
+            result = (*call55)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50], jargs[51], jargs[52], jargs[53], jargs[54]);
         }
         callExit(env);
         return result;
@@ -1062,13 +1062,13 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 56: {
         if (!setjmp(error_jmpbuf)) {
             call56func call56 = (call56func) address;
-            result = (*call56)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]), checkRef(env, jargs[51]), checkRef(env, jargs[52]), checkRef(env, jargs[53]), checkRef(env, jargs[54]), checkRef(env, jargs[55])
+            result = (*call56)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50], jargs[51], jargs[52], jargs[53], jargs[54], jargs[55]
                 );
         }
         callExit(env);
@@ -1078,14 +1078,14 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 57: {
         if (!setjmp(error_jmpbuf)) {
             call57func call57 = (call57func) address;
-            result = (*call57)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]), checkRef(env, jargs[51]), checkRef(env, jargs[52]), checkRef(env, jargs[53]), checkRef(env, jargs[54]), checkRef(env, jargs[55]),
-                checkRef(env, jargs[56]));
+            result = (*call57)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50], jargs[51], jargs[52], jargs[53], jargs[54], jargs[55],
+                jargs[56]);
         }
         callExit(env);
         return result;
@@ -1094,14 +1094,14 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 58: {
         if (!setjmp(error_jmpbuf)) {
             call58func call58 = (call58func) address;
-            result = (*call58)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]), checkRef(env, jargs[51]), checkRef(env, jargs[52]), checkRef(env, jargs[53]), checkRef(env, jargs[54]), checkRef(env, jargs[55]),
-                checkRef(env, jargs[56]), checkRef(env, jargs[57]));
+            result = (*call58)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50], jargs[51], jargs[52], jargs[53], jargs[54], jargs[55],
+                jargs[56], jargs[57]);
         }
         callExit(env);
         return result;
@@ -1110,14 +1110,14 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 59: {
         if (!setjmp(error_jmpbuf)) {
             call59func call59 = (call59func) address;
-            result = (*call59)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]), checkRef(env, jargs[51]), checkRef(env, jargs[52]), checkRef(env, jargs[53]), checkRef(env, jargs[54]), checkRef(env, jargs[55]),
-                checkRef(env, jargs[56]), checkRef(env, jargs[57]), checkRef(env, jargs[58]));
+            result = (*call59)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50], jargs[51], jargs[52], jargs[53], jargs[54], jargs[55],
+                jargs[56], jargs[57], jargs[58]);
         }
         callExit(env);
         return result;
@@ -1126,14 +1126,14 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 60: {
         if (!setjmp(error_jmpbuf)) {
             call60func call60 = (call60func) address;
-            result = (*call60)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]), checkRef(env, jargs[51]), checkRef(env, jargs[52]), checkRef(env, jargs[53]), checkRef(env, jargs[54]), checkRef(env, jargs[55]),
-                checkRef(env, jargs[56]), checkRef(env, jargs[57]), checkRef(env, jargs[58]), checkRef(env, jargs[59]));
+            result = (*call60)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50], jargs[51], jargs[52], jargs[53], jargs[54], jargs[55],
+                jargs[56], jargs[57], jargs[58], jargs[59]);
         }
         callExit(env);
         return result;
@@ -1142,14 +1142,14 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 61: {
         if (!setjmp(error_jmpbuf)) {
             call61func call61 = (call61func) address;
-            result = (*call61)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]), checkRef(env, jargs[51]), checkRef(env, jargs[52]), checkRef(env, jargs[53]), checkRef(env, jargs[54]), checkRef(env, jargs[55]),
-                checkRef(env, jargs[56]), checkRef(env, jargs[57]), checkRef(env, jargs[58]), checkRef(env, jargs[59]), checkRef(env, jargs[60]));
+            result = (*call61)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50], jargs[51], jargs[52], jargs[53], jargs[54], jargs[55],
+                jargs[56], jargs[57], jargs[58], jargs[59], jargs[60]);
         }
         callExit(env);
         return result;
@@ -1158,14 +1158,14 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 62: {
         if (!setjmp(error_jmpbuf)) {
             call62func call62 = (call62func) address;
-            result = (*call62)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]), checkRef(env, jargs[51]), checkRef(env, jargs[52]), checkRef(env, jargs[53]), checkRef(env, jargs[54]), checkRef(env, jargs[55]),
-                checkRef(env, jargs[56]), checkRef(env, jargs[57]), checkRef(env, jargs[58]), checkRef(env, jargs[59]), checkRef(env, jargs[60]), checkRef(env, jargs[61]));
+            result = (*call62)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50], jargs[51], jargs[52], jargs[53], jargs[54], jargs[55],
+                jargs[56], jargs[57], jargs[58], jargs[59], jargs[60], jargs[61]);
         }
         callExit(env);
         return result;
@@ -1174,14 +1174,14 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 63: {
         if (!setjmp(error_jmpbuf)) {
             call63func call63 = (call63func) address;
-            result = (*call63)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]), checkRef(env, jargs[51]), checkRef(env, jargs[52]), checkRef(env, jargs[53]), checkRef(env, jargs[54]), checkRef(env, jargs[55]),
-                checkRef(env, jargs[56]), checkRef(env, jargs[57]), checkRef(env, jargs[58]), checkRef(env, jargs[59]), checkRef(env, jargs[60]), checkRef(env, jargs[61]), checkRef(env, jargs[62]));
+            result = (*call63)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50], jargs[51], jargs[52], jargs[53], jargs[54], jargs[55],
+                jargs[56], jargs[57], jargs[58], jargs[59], jargs[60], jargs[61], jargs[62]);
         }
         callExit(env);
         return result;
@@ -1190,14 +1190,14 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
     case 64: {
         if (!setjmp(error_jmpbuf)) {
             call64func call64 = (call64func) address;
-            result = (*call64)(checkRef(env, jargs[0]), checkRef(env, jargs[1]), checkRef(env, jargs[2]), checkRef(env, jargs[3]), checkRef(env, jargs[4]), checkRef(env, jargs[5]), checkRef(env, jargs[6]), checkRef(env, jargs[7]),
-                checkRef(env, jargs[8]), checkRef(env, jargs[9]), checkRef(env, jargs[10]), checkRef(env, jargs[11]), checkRef(env, jargs[12]), checkRef(env, jargs[13]), checkRef(env, jargs[14]), checkRef(env, jargs[15]),
-                checkRef(env, jargs[16]), checkRef(env, jargs[17]), checkRef(env, jargs[18]), checkRef(env, jargs[19]), checkRef(env, jargs[20]), checkRef(env, jargs[21]), checkRef(env, jargs[22]), checkRef(env, jargs[23]),
-                checkRef(env, jargs[24]), checkRef(env, jargs[25]), checkRef(env, jargs[26]), checkRef(env, jargs[27]), checkRef(env, jargs[28]), checkRef(env, jargs[29]), checkRef(env, jargs[30]), checkRef(env, jargs[31]),
-                checkRef(env, jargs[32]), checkRef(env, jargs[33]), checkRef(env, jargs[34]), checkRef(env, jargs[35]), checkRef(env, jargs[36]), checkRef(env, jargs[37]), checkRef(env, jargs[38]), checkRef(env, jargs[39]),
-                checkRef(env, jargs[40]), checkRef(env, jargs[41]), checkRef(env, jargs[42]), checkRef(env, jargs[43]), checkRef(env, jargs[44]), checkRef(env, jargs[45]), checkRef(env, jargs[46]), checkRef(env, jargs[47]),
-                checkRef(env, jargs[48]), checkRef(env, jargs[49]), checkRef(env, jargs[50]), checkRef(env, jargs[51]), checkRef(env, jargs[52]), checkRef(env, jargs[53]), checkRef(env, jargs[54]), checkRef(env, jargs[55]),
-                checkRef(env, jargs[56]), checkRef(env, jargs[57]), checkRef(env, jargs[58]), checkRef(env, jargs[59]), checkRef(env, jargs[60]), checkRef(env, jargs[61]), checkRef(env, jargs[62]), checkRef(env, jargs[63])
+            result = (*call64)(jargs[0], jargs[1], jargs[2], jargs[3], jargs[4], jargs[5], jargs[6], jargs[7],
+                jargs[8], jargs[9], jargs[10], jargs[11], jargs[12], jargs[13], jargs[14], jargs[15],
+                jargs[16], jargs[17], jargs[18], jargs[19], jargs[20], jargs[21], jargs[22], jargs[23],
+                jargs[24], jargs[25], jargs[26], jargs[27], jargs[28], jargs[29], jargs[30], jargs[31],
+                jargs[32], jargs[33], jargs[34], jargs[35], jargs[36], jargs[37], jargs[38], jargs[39],
+                jargs[40], jargs[41], jargs[42], jargs[43], jargs[44], jargs[45], jargs[46], jargs[47],
+                jargs[48], jargs[49], jargs[50], jargs[51], jargs[52], jargs[53], jargs[54], jargs[55],
+                jargs[56], jargs[57], jargs[58], jargs[59], jargs[60], jargs[61], jargs[62], jargs[63]
                 );
         }
         callExit(env);
