@@ -43,8 +43,8 @@ public class TestBuiltin_parentframe extends TestBase {
         assertEval("{ f <- function() parent.frame() ; g <- function() { n <- 100; f() }; r <- g(); ls(r) }");
         assertEval("{ f <- function() parent.frame(2); g <- function() f(); g() }");
         assertEval("{ f <- function() parent.frame(3); g <- function() f(); g() }");
-        assertEval(Output.ContainsError, "parent.frame(0)");
-        assertEval(Output.ContainsError, "parent.frame(-1)");
+        assertEval("parent.frame(0)");
+        assertEval("parent.frame(-1)");
     }
 
     @Test

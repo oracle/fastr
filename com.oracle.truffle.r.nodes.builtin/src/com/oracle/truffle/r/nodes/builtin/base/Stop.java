@@ -38,6 +38,6 @@ public abstract class Stop extends RBuiltinNode {
     protected Object stop(byte call, RAbstractStringVector msgVec) {
         assert msgVec.getLength() == 1;
         CompilerDirectives.transferToInterpreter();
-        throw RError.stop(RRuntime.fromLogical(call), this, RError.Message.GENERIC, msgVec.getDataAt(0));
+        throw RError.stop(RRuntime.fromLogical(call), RError.SHOW_CALLER2, RError.Message.GENERIC, msgVec.getDataAt(0));
     }
 }

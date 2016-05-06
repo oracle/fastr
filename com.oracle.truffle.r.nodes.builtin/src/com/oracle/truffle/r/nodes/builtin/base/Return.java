@@ -27,12 +27,12 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.runtime.PromiseEvalFrame;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 @RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"}, nonEvalArgs = {0})
 public abstract class Return extends RBuiltinNode {
 
-    private final ConditionProfile isPromiseEvalProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile isPromiseEvalProfile = BranchProfile.create();
 
     @Child private PromiseHelperNode promiseHelper;
 
@@ -65,27 +65,24 @@ public abstract class Return extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object returnFunction(@SuppressWarnings("unused") RMissing arg) {
-        throw new ReturnException(RNull.instance);
+    protected Object returnFunction(VirtualFrame frame, @SuppressWarnings("unused") RMissing arg) {
+        throw new ReturnException(RNull.instance, RArguments.getCall(frame));
     }
 
     @Specialization
-    protected Object returnFunction(RNull arg) {
-        throw new ReturnException(arg);
+    protected Object returnFunction(VirtualFrame frame, RNull arg) {
+        throw new ReturnException(arg, RArguments.getCall(frame));
     }
 
     @Specialization
     protected Object returnFunction(VirtualFrame frame, RPromise expr) {
         // Evaluate the result
         Object value = initPromiseHelper().evaluate(frame, expr);
-
-        int depth;
-        if (isPromiseEvalProfile.profile(frame instanceof PromiseEvalFrame)) {
-            depth = ((PromiseEvalFrame) frame).getPromiseFrameDepth();
-        } else {
-            depth = RArguments.getDepth(frame);
+        RCaller call = RArguments.getCall(frame);
+        while (call.isPromise()) {
+            isPromiseEvalProfile.enter();
+            call = call.getParent();
         }
-
-        throw new ReturnException(value, depth);
+        throw new ReturnException(value, call);
     }
 }

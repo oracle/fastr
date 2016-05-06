@@ -1,4 +1,3 @@
-# ContainsError
 # test from Hadley Wickham's book
 
 check_person <- function(object) {
@@ -22,4 +21,3 @@ setClass("Person", representation(name = "character", age = "numeric"), validity
 hadley <- new("Person", name = "Hadley", age = 31)
 hadley@age <- 1:10
 print(validObject(hadley))
-

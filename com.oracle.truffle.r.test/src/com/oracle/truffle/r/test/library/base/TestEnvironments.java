@@ -283,6 +283,6 @@ public class TestEnvironments extends TestBase {
         assertEval("{ attach(.Platform, 2); r <- file.sep; detach(2); r }");
         assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); r <- x; detach(2); r }");
         assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2); x }");
-        assertEval(Output.ContainsError, "{ detach(\"missing\"); x }");
+        assertEval("{ detach(\"missing\"); x }");
     }
 }

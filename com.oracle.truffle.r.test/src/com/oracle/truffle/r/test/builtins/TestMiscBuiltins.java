@@ -241,7 +241,7 @@ public class TestMiscBuiltins extends TestBase {
 
     @Test
     public void testDiagnostics() {
-        assertEval(Output.ContainsError, "{ f <- function() { stop(\"hello\",\"world\") } ; f() }");
+        assertEval("{ f <- function() { stop(\"hello\",\"world\") } ; f() }");
     }
 
     @Test

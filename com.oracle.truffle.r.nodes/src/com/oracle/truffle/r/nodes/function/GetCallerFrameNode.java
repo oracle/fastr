@@ -23,14 +23,13 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.PromiseEvalFrameDebug;
-import com.oracle.truffle.r.nodes.function.signature.FrameDepthNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -40,44 +39,38 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 public final class GetCallerFrameNode extends RBaseNode {
 
     private final BranchProfile topLevelProfile = BranchProfile.create();
-    @Child private FrameDepthNode frameDepthNode;
+    @CompilationFinal private boolean needsSlowPath;
 
     @Override
     public NodeCost getCost() {
-        return frameDepthNode != null ? NodeCost.MONOMORPHIC : NodeCost.NONE;
+        return NodeCost.NONE;
     }
 
     public MaterializedFrame execute(VirtualFrame frame) {
         MaterializedFrame funFrame = RArguments.getCallerFrame(frame);
         if (funFrame == null) {
-            boolean reset = false;
-            if (frameDepthNode == null) {
+            if (!needsSlowPath) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
+                needsSlowPath = true;
                 RCaller call = RArguments.getCall(frame);
-                if (call instanceof RCallNode) {
-                    if (!((RCallNode) call).setNeedsCallerFrame()) {
-                        reset = true;
+                while (call != null && call.isPromise()) {
+                    call = call.getParent();
+                }
+                if (call != null && call.isValidCaller() && call.getSyntaxNode() instanceof RCallNode) {
+                    if (!((RCallNode) call.getSyntaxNode()).setNeedsCallerFrame()) {
+                        needsSlowPath = false;
                     }
                 }
-                frameDepthNode = insert(new FrameDepthNode());
             }
-            try {
-                // TODO This does not just occur in UseMethod dispatch
-                RError.performanceWarning("slow caller frame access in UseMethod dispatch");
-                PromiseEvalFrameDebug.log("GetCallerFrameNode");
-                int depth = frameDepthNode.execute(frame);
-                Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, depth - 1);
-                if (callerFrame != null) {
-                    return callerFrame.materialize();
-                } else {
-                    topLevelProfile.enter();
-                    // S3 method can be dispatched from top-level where there is no caller frame
-                    return frame.materialize();
-                }
-            } finally {
-                if (reset) {
-                    frameDepthNode = null;
-                }
+            // TODO This does not just occur in UseMethod dispatch
+            RError.performanceWarning("slow caller frame access");
+            Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
+            if (callerFrame != null) {
+                return callerFrame.materialize();
+            } else {
+                topLevelProfile.enter();
+                // S3 method can be dispatched from top-level where there is no caller frame
+                return frame.materialize();
             }
         }
         return funFrame;

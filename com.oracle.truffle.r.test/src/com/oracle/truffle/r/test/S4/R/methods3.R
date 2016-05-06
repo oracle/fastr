@@ -1,4 +1,3 @@
-# ContainsError
 # test from Hadley Wickham's book
 
 setGeneric("sides", valueClass = "numeric", function(object) {

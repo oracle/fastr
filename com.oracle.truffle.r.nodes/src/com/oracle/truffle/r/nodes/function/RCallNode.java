@@ -138,13 +138,9 @@ class ForcePromiseNode extends RNode {
     }
 }
 
-interface CallWithCallerFrame extends RCaller {
-    boolean setNeedsCallerFrame();
-}
-
 @NodeInfo(cost = NodeCost.NONE)
 @NodeChild(value = "function", type = ForcePromiseNode.class)
-public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall, RCaller {
+public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
 
     // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
 
@@ -182,16 +178,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
     }
 
-    @Override
-    public RSyntaxNode getSyntaxNode() {
-        return this;
-    }
-
     protected RCaller createCaller(VirtualFrame frame, RFunction function) {
         if (explicitArgs == null) {
-            return this;
+            return RCaller.create(frame, this);
         } else {
-            return new RCallerHelper.Representation(function, (RArgsValuesAndNames) explicitArgs.execute(frame));
+            return RCaller.create(frame, RCallerHelper.createFromArguments(function, (RArgsValuesAndNames) explicitArgs.execute(frame)));
         }
     }
 
@@ -1009,8 +1000,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 }
             }
             MaterializedFrame callerFrame = /* CompilerDirectives.inInterpreter() || */originalCall.needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = RArguments.create(cachedFunction, originalCall.createCaller(frame, cachedFunction), callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
-                            orderedArguments, signature, cachedFunction.getEnclosingFrame(), s3Args);
+            Object[] argsObject = RArguments.create(cachedFunction, originalCall.createCaller(frame, cachedFunction), callerFrame, orderedArguments, signature, cachedFunction.getEnclosingFrame(),
+                            s3Args);
             return call.call(frame, argsObject);
         }
     }
