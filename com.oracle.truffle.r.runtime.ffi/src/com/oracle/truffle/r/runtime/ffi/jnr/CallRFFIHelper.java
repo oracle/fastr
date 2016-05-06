@@ -533,6 +533,15 @@ public class CallRFFIHelper {
         }
     }
 
+    public static Object SET_TYPEOF_FASTR(Object x, int v) {
+        int code = SEXPTYPE.gnuRCodeForObject(x);
+        if (code == SEXPTYPE.LISTSXP.code && v == SEXPTYPE.LANGSXP.code) {
+            return RContext.getRRuntimeASTAccess().fromList((RList) x, RLanguage.RepType.CALL);
+        } else {
+            throw unimplemented();
+        }
+    }
+
     public static int TYPEOF(Object x) {
         if (x instanceof CharSXPWrapper) {
             return SEXPTYPE.CHARSXP.code;

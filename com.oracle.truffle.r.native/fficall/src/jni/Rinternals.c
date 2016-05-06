@@ -81,6 +81,7 @@ static jmethodID Rf_asLogicalMethodID;
 static jmethodID Rf_PairToVectorListMethodID;
 static jmethodID gnuRCodeForObjectMethodID;
 static jmethodID NAMED_MethodID;
+static jmethodID SET_TYPEOF_FASTR_MethodID;
 static jmethodID TYPEOF_MethodID;
 static jmethodID OBJECT_MethodID;
 static jmethodID DUPLICATE_ATTRIB_MethodID;
@@ -159,6 +160,7 @@ void init_internals(JNIEnv *env) {
 	Rf_asLogicalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_asLogical", "(Ljava/lang/Object;)I", 1);
 	Rf_PairToVectorListMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_PairToVectorList", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	NAMED_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "NAMED", "(Ljava/lang/Object;)I", 1);
+	SET_TYPEOF_FASTR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_TYPEOF_FASTR", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
 	TYPEOF_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "TYPEOF", "(Ljava/lang/Object;)I", 1);
 	OBJECT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "OBJECT", "(Ljava/lang/Object;)I", 1);
 	DUPLICATE_ATTRIB_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "DUPLICATE_ATTRIB", "(Ljava/lang/Object;Ljava/lang/Object;)V", 1);
@@ -1201,6 +1203,12 @@ void SET_OBJECT(SEXP x, int v){
 
 void SET_TYPEOF(SEXP x, int v){
     unimplemented("SET_TYPEOF");
+}
+
+SEXP SET_TYPEOF_FASTR(SEXP x, int v){
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SET_TYPEOF_FASTR_MethodID, x, v);
+    return checkRef(thisenv, result);
 }
 
 void SET_NAMED(SEXP x, int v){
