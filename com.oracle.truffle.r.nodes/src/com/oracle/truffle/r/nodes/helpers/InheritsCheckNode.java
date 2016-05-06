@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
  * Checks if given object has given R class. More specifically: whether its attribute class is a
  * vector that contains given class name as an element.
  */
-public class InheritsCheckNode extends Node {
+public final class InheritsCheckNode extends Node {
 
     @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
     private final ConditionProfile nullClassProfile = ConditionProfile.createBinaryProfile();

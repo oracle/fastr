@@ -186,9 +186,9 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                 updateDimNames(res, value);
             } else if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
                 if (value == RNull.instance) {
-                    res = (RAbstractContainer) result.setClassAttr(null, false);
+                    res = (RAbstractContainer) result.setClassAttr(null);
                 } else {
-                    res = (RAbstractContainer) result.setClassAttr(UpdateAttr.convertClassAttrFromObject(value), false);
+                    res = (RAbstractContainer) result.setClassAttr(UpdateAttr.convertClassAttrFromObject(value));
                 }
             } else if (attrName.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                 res.setRowNames(castVector(value));
@@ -218,7 +218,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
             RAttributable attrObj = (RAttributable) obj;
             attrObj.removeAllAttributes();
             if (operand == RNull.instance) {
-                attrObj.setClassAttr(null, false);
+                attrObj.setClassAttr(null);
             } else if (operand instanceof RList) {
                 RList list = (RList) operand;
                 RStringVector listNames = list.getNames(attrProfiles);
@@ -235,7 +235,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                         if (attrValue == null) {
                             throw RError.error(this, RError.Message.SET_INVALID_CLASS_ATTR);
                         }
-                        attrObj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue), false);
+                        attrObj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue));
                     } else {
                         attrObj.setAttr(attrName, list.getDataAt(i));
                     }
