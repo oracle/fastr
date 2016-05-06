@@ -287,7 +287,9 @@ public class CallRFFIHelper {
                 assert nameAsString != null;
             }
             nameAsString = nameAsString.intern();
-            if ("class" == nameAsString) {
+            if (val == RNull.instance) {
+                attrObj.removeAttr(nameAsString);
+            } else if ("class" == nameAsString) {
                 attrObj.initAttributes().put(nameAsString, val);
             } else {
                 attrObj.setAttr(nameAsString, val);
