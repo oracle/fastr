@@ -110,11 +110,11 @@ public abstract class Mapply extends RBuiltinNode {
         public abstract Object[] execute(VirtualFrame frame, RList dots, RFunction function, RList additionalArguments);
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "5", guards = {"function.getTarget() == cachedTarget"})
-        protected Object[] cachedMApply(VirtualFrame frame, RList dots, RFunction function, RList moreArgs, @Cached("function.getTarget()") RootCallTarget cachedTarget,
+        @Specialization
+        protected Object[] cachedMApply(VirtualFrame frame, RList dots, RFunction function, RList moreArgs,
                         @Cached("createElementNodeArray(dots.getLength())") ElementNode[] cachedElementNodeArray,
                         @Cached("createCallNode(cachedElementNodeArray, moreArgs)") RCallNode callNode) {
-
+            RootCallTarget cachedTarget = function.getTarget();
             int dotsLength = dots.getLength();
             int[] lengths = new int[dotsLength];
             int maxLength = -1;
