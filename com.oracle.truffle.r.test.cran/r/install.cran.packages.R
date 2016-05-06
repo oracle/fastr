@@ -67,6 +67,12 @@
 # test output goes to a directory derived from the '--testdir dir' option (default 'test'). Each package's test output is
 # stored in a subdirectory named after the package.
 
+# There are three ways to specify the packages to be installed
+# --pkg-pattern a regular expression to match packages
+# --pkg-filelist a file containing an explicit list of package names (not regexps), one per line
+# --alpha-daily implicitly sets --pkg-pattern from the day of the year modulo 26. E.g., 0 is ^[Aa], 1 is ^[Bb]
+# --ok-only implicitly sets --pkg-filelist to a list of packages known to install
+
 args <- commandArgs(TRUE)
 
 usage <- function() {
@@ -75,7 +81,7 @@ usage <- function() {
                       "[--no-install | -n] ",
 				      "[--create-blacklist] [--blacklist-file file] [--ignore-blacklist]",
 					  "[--initial-blacklist-file file]",
-					  "[--pkg-count count]",
+					  "[--random count]",
 					  "[--install-dependents-first]",
 					  "[--run-mode mode]",
 					  "[--pkg-filelist file]",
@@ -85,6 +91,9 @@ usage <- function() {
 					  "[--list-versions]",
 					  "[--use-installed-pkgs]",
 					  "[--invert-pkgset]",
+					  "[--alpha-daily]",
+					  "[--count-daily count]",
+					  "[--ok-only]",
                       "[--pkg.pattern package-pattern] \n"))
 	quit(status=1)
 }
@@ -239,11 +248,12 @@ set.package.blacklist <- function() {
 	}
 }
 
+this.package <- "com.oracle.truffle.r.test.cran"
+
 set.initial.package.blacklist <- function() {
 	if (is.na(initial.blacklist.file)) {
 		# not set on command line
-		this_package <- "com.oracle.truffle.r.test.cran"
-		initial.blacklist.file <<- Sys.getenv("INITIAL_PACKAGE_BLACKLIST", unset=file.path(this_package, "initial.package.blacklist"))
+		initial.blacklist.file <<- Sys.getenv("INITIAL_PACKAGE_BLACKLIST", unset=file.path(this.package, "initial.package.blacklist"))
 	}
 
 }
@@ -473,15 +483,24 @@ do.it <- function() {
 		}
 	}
 
-	if (is.na(pkg.count)) {
-		test.pkgnames <- rownames(toinstall.pkgs)
-	} else {
-		# install pkg.count packages taken at random from toinstall.pkgs
+	if (!is.na(random.count)) {
+		# install random.count packages taken at random from toinstall.pkgs
 		test.avail.pkgnames <- rownames(toinstall.pkgs)
 		rands <- sample(1:length(test.avail.pkgnames))
-		test.pkgnames <- character(pkg.count)
-		for (i in (1:pkg.count)) {
+		test.pkgnames <- character(random.count)
+		for (i in (1:random.count)) {
 			test.pkgnames[[i]] <- test.avail.pkgnames[[rands[[i]]]]
+		}
+	} else {
+		test.pkgnames <- rownames(toinstall.pkgs)
+		if (!is.na(count.daily)) {
+			# extract count from index given by yday
+			npkgs <- length(test.pkgnames)
+			yday <- as.POSIXlt(Sys.Date())$yday
+			chunk <- as.integer(npkgs / count.daily)
+			start <- (yday %% chunk) * count.daily
+			end <- ifelse(start + count.daily > npkgs, npkgs, start + count.daily)
+			test.pkgnames <- test.pkgnames[start:end]
 		}
 	}
 
@@ -492,7 +511,7 @@ do.it <- function() {
 
 		if (print.ok.installs) {
 			cat("BEGIN install status\n")
-			for (pkgname.i in names(install.status)) {
+			for (pkgname.i in test.pkgnames) {
 				cat(paste0(pkgname.i, ":"), ifelse(install.status[pkgname.i], "OK", "FAILED"), "\n")
 			}
 			cat("END install status\n")
@@ -643,7 +662,7 @@ parse.args <- function() {
 			very.verbose <<- T
 		} else if (a == "--no-install" || a == "-n") {
 			install <<- F
-		} else if (a == "--dryrun") {
+		} else if (a == "--dryrun" || a == "--dry-run") {
 			dry.run <<- T
 		} else if (a == "--create-blacklist") {
 			create.blacklist.file <<- T
@@ -655,11 +674,23 @@ parse.args <- function() {
 			initial.blacklist.file <<- get.argvalue()
 		} else if (a == "--cran-mirror") {
 			cran.mirror <<- get.argvalue()
-		} else if (a == "--pkg-count") {
-			pkg.count <<- as.integer(get.argvalue())
-			if (is.na(pkg.count)) {
+		} else if (a == "--random") {
+			random.count <<- as.integer(get.argvalue())
+			if (is.na(random.count)) {
 				usage()
 			}
+		} else if ( a == "--alpha-daily") {
+			day.index <- as.POSIXlt(Sys.Date())$yday %% 26
+			l <- letters[day.index]
+			ul <- toupper(l)
+			pkg.pattern <<- paste0("^[", ul, l, "]")
+		} else if ( a == "--count-daily") {
+			count.daily <<- as.integer(get.argvalue())
+			if (is.na(count.daily)) {
+				usage()
+			}
+		} else if ( a == "--ok-only") {
+			pkg.filelistfile <<- file.path(this.package, "ok.packages")
 		} else if (a == "--run-mode") {
 			run.mode <<- get.argvalue()
 			if (!(run.mode %in% c("system", "internal", "context"))) {
@@ -716,7 +747,8 @@ cat.args <- function() {
 		cat("ignore.blacklist:", ignore.blacklist, "\n")
 		cat("pkg.pattern:", pkg.pattern, "\n")
 		cat("contriburl:", contriburl, "\n")
-		cat("pkg.count:", pkg.count, "\n")
+		cat("random.count:", random.count, "\n")
+		cat("count.daily:", count.daily, "\n")
 		cat("run.mode:", run.mode, "\n")
 		cat("run.tests:", run.tests, "\n")
 		cat("print.ok.installs:", print.ok.installs, "\n")
@@ -790,7 +822,8 @@ avail.pkgs.rownames <- NULL
 toinstall.pkgs <- NULL
 create.blacklist.file <- F
 ignore.blacklist <- F
-pkg.count <- NA
+random.count <- NA
+count.daily <- NA
 run.mode <- "system"
 run.tests <- FALSE
 gnur <- FALSE

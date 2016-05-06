@@ -21,7 +21,7 @@
 # questions.
 #
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, REMAINDER
 from os.path import join, exists, relpath, dirname
 import shutil, os, re
 import mx
@@ -49,39 +49,11 @@ def _log_step(state, step, rvariant):
 
 def pkgtest(args):
     '''used for package installation/testing'''
-    parser = ArgumentParser(prog='r test')
-    parser.add_argument('--ok-only', action='store_true', help='only install/test packages from the ok.packages file')
-    parser.add_argument('--install-only', action='store_true', help='just install packages, do not test')
-    # sundry options understood by installpkgs R code
-    parser.add_argument('--pkg-count', action='store', help='number of packages to install/test', default='100')
-    parser.add_argument('--pkg-filelist', action='store', help='pass --pkg-filelist')
-    parser.add_argument('--ignore-blacklist', action='store_true', help='pass --ignore-blacklist')
-    parser.add_argument('--install-dependents-first', action='store_true', help='pass -install-dependents-first')
-    parser.add_argument('--print-ok-installs', action='store_true', help='pass --print-ok-installs')
-    parser.add_argument('--invert-pkgset', action='store_true', help='pass --invert-pkgset')
-    args = parser.parse_args(args)
 
     libinstall, install_tmp = _create_libinstall(mx.suite('fastr'))
     stacktrace_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
 
-    install_args = []
-    if args.pkg_count and not args.pkg_filelist:
-        install_args += ['--pkg-count', args.pkg_count]
-    if args.ok_only:
-        # only install/test packages that have been successfully installed
-        install_args += ['--pkg-filelist', join(mx_fastr._cran_test_project_dir(), 'ok.packages')]
-    if args.pkg_filelist:
-        install_args += ['--pkg-filelist', args.pkg_filelist]
-    if not args.install_only:
-        install_args += ['--run-tests']
-    if args.ignore_blacklist:
-        install_args += ['--ignore-blacklist']
-    if args.install_dependents_first:
-        install_args += ['--install-dependents-first']
-    if args.print_ok_installs:
-        install_args += ['--print-ok-installs']
-    if args.invert_pkgset:
-        install_args += ['--invert-pkgset']
+    install_args = args
 
     class OutputCapture:
         def __init__(self):
@@ -133,18 +105,19 @@ def pkgtest(args):
     env = os.environ.copy()
     env["TMPDIR"] = install_tmp
     env['R_LIBS_USER'] = libinstall
-    install_args += ['--verbose']
-
 
     # TODO enable but via installing Suggests
     #_install_vignette_support('FastR', env)
 
     out = OutputCapture()
     # install and (optionally) test the packages
+    if not '--install-only' in install_args:
+        install_args += ['--run-tests']
+
     _log_step('BEGIN', 'install/test', 'FastR')
     rc = mx_fastr._installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
     _log_step('END', 'install/test', 'FastR')
-    if not args.install_only:
+    if '--run-tests' in install_args:
         # in order to compare the test output with GnuR we have to install/test the same
         # set of packages with GnuR, which must be present as a sibling suite
         ok_pkgs = [k for k, v in out.install_status.iteritems() if v]
