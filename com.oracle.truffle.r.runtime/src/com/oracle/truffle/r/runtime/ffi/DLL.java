@@ -182,7 +182,7 @@ public class DLL {
              */
             data[4] = createExternalPtr(id, INFO_REFERENCE_CLASS);
             RList dllInfo = RDataFactory.createList(data, DLLInfo.NAMES);
-            dllInfo.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS), false);
+            dllInfo.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS));
             return dllInfo;
         }
 
@@ -258,7 +258,7 @@ public class DLL {
     public static RExternalPtr createExternalPtr(long value, RStringVector rClass) {
         CompilerAsserts.neverPartOfCompilation(); // for interning
         RExternalPtr result = RDataFactory.createExternalPtr(value, RDataFactory.createSymbolInterned(rClass.getDataAt(0)));
-        result.setClassAttr(rClass, false);
+        result.setClassAttr(rClass);
         return result;
     }
 

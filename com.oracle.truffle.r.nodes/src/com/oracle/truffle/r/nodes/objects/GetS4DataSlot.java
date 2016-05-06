@@ -83,9 +83,9 @@ abstract class GetS4DataSlot extends RNode {
 
                 }
                 s3ClassAttrRemove.execute(obj.initAttributes());
-                obj = obj.setClassAttr((RStringVector) castToVector.execute(s3Class), false);
+                obj = obj.setClassAttr((RStringVector) castToVector.execute(s3Class));
             } else {
-                obj = obj.setClassAttr(null, false);
+                obj = obj.setClassAttr(null);
             }
             obj.unsetS4();
             if (type == RType.S4Object) {

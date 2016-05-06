@@ -59,7 +59,7 @@ public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
         assert value instanceof RAttributable;
         RAttributable valueAttr = (RAttributable) value;
         if (valueAttr instanceof RS4Object || (e instanceof RAttributable && ((RAttributable) e).getAttributes() != null && pckgAttrAccess.execute(((RAttributable) e).getAttributes()) != null)) {
-            valueAttr = valueAttr.setClassAttr((RStringVector) e, false);
+            valueAttr = valueAttr.setClassAttr((RStringVector) e);
             valueAttr.setS4();
         }
         return value;

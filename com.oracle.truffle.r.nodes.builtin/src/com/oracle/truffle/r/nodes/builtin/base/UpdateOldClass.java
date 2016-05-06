@@ -74,7 +74,7 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
     protected Object setOldClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
         RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
-        return result.setClassAttr(className, false);
+        return result.setClassAttr(className);
     }
 
     @Specialization
@@ -82,7 +82,7 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
     protected Object setOldClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
-        return result.setClassAttr(null, false);
+        return result.setClassAttr(null);
     }
 
     protected boolean isStringVector(RAbstractVector className) {

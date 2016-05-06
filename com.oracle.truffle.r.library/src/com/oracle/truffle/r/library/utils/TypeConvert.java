@@ -175,7 +175,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
             }
             RIntVector res = RDataFactory.createIntVector(data, complete);
             res.setAttr(RRuntime.LEVELS_ATTR_KEY, RDataFactory.createStringVector(levelsArray, RDataFactory.COMPLETE_VECTOR));
-            return RVector.setVectorClassAttr(res, RDataFactory.createStringVector("factor"), null);
+            return RVector.setVectorClassAttr(res, RDataFactory.createStringVector("factor"));
         }
     }
 }

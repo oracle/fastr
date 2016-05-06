@@ -112,7 +112,7 @@ public class DynLoadFunctions {
                 data[i] = dllInfo.toRList();
             }
             RList result = RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
-            result.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFOLIST_CLASS), false);
+            result.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFOLIST_CLASS));
             return result;
         }
     }
