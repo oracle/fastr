@@ -131,7 +131,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {
             return updateDimNames(result, value);
         } else if (internedName == RRuntime.CLASS_ATTR_KEY) {
-            return (RAbstractContainer) result.setClassAttr(null, false);
+            return (RAbstractContainer) result.setClassAttr(null);
         } else if (internedName == RRuntime.ROWNAMES_ATTR_KEY) {
             result.setRowNames(null);
         } else if (result.getAttributes() != null) {
@@ -169,7 +169,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {
             return updateDimNames(result, value);
         } else if (internedName == RRuntime.CLASS_ATTR_KEY) {
-            return (RAbstractContainer) result.setClassAttr(convertClassAttrFromObject(value), false);
+            return (RAbstractContainer) result.setClassAttr(convertClassAttrFromObject(value));
         } else if (internedName == RRuntime.ROWNAMES_ATTR_KEY) {
             result.setRowNames(castVector(value));
         } else {

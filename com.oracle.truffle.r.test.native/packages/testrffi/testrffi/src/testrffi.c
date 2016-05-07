@@ -118,3 +118,7 @@ SEXP dot_external_access_args(SEXP args) {
 SEXP invoke_isString(SEXP s) {
   return ScalarLogical(isString(s));
 }
+
+SEXP invoke12(SEXP a1, SEXP a2, SEXP a3, SEXP a4, SEXP a5, SEXP a6, SEXP a7, SEXP a8, SEXP a9, SEXP a10, SEXP a11, SEXP a12) {
+	return a12;
+}

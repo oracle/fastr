@@ -37,3 +37,7 @@ rffi.dotExternalAccessArgs <- function(...) {
 rffi.isRString <- function(s) {
 	.Call("invoke_isString", s, PACKAGE = "testrffi")
 }
+
+rffi.invoke12 <- function() {
+	.Call("invoke12", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, PACKAGE = "testrffi")
+}

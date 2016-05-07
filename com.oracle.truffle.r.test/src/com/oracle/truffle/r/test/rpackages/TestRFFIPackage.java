@@ -68,4 +68,12 @@ public class TestRFFIPackage extends TestRPackages {
                         "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.dotExternalAccessArgs(x=1L, 3, c(1,2,3), y=c('a', 'b'), 'b', TRUE, as.raw(12)); detach(\"package:testrffi\"); list(r1) }",
                         new String[]{TestRPackages.libLoc()}));
     }
+
+    @Test
+    public void testLoadTestRFFIManyArgs() {
+        assertEval(TestBase.template(
+                        "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.invoke12(); detach(\"package:testrffi\"); r1 }",
+                        new String[]{TestRPackages.libLoc()}));
+    }
+
 }

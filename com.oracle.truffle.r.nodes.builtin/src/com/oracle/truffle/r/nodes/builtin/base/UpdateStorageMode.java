@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -78,9 +78,9 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
                             Object v = attr.getValue();
                             if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
                                 if (v == RNull.instance) {
-                                    rresult = (RAbstractContainer) rresult.setClassAttr(null, false);
+                                    rresult = (RAbstractContainer) rresult.setClassAttr(null);
                                 } else {
-                                    rresult = (RAbstractContainer) rresult.setClassAttr((RStringVector) v, false);
+                                    rresult = (RAbstractContainer) rresult.setClassAttr((RStringVector) v);
                                 }
                             } else {
                                 rresult.setAttr(attrName.intern(), v);

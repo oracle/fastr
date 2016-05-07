@@ -49,13 +49,16 @@ public final class UserRNG extends RNGInitAdapter {
 
     @Override
     public void init(int seed) throws RNGException {
-        userUnifRand = findSymbol(USER_UNIF_RAND, !OPTIONAL);
-        userUnifInit = findSymbol(USER_UNIF_INIT, OPTIONAL);
-        userUnifNSeed = findSymbol(USER_UNIF_INIT, OPTIONAL);
-        userUnifSeedloc = findSymbol(USER_UNIF_INIT, OPTIONAL);
-        DLLInfo libInfo = DLL.findLibraryContainingSymbol(USER_UNIF_RAND);
+        DLLInfo dllInfo = DLL.findLibraryContainingSymbol(USER_UNIF_RAND);
+        if (dllInfo == null) {
+            throw RNGException.raise(RError.Message.RNG_SYMBOL, true, USER_UNIF_RAND);
+        }
+        userUnifRand = findSymbol(USER_UNIF_RAND, dllInfo, !OPTIONAL);
+        userUnifInit = findSymbol(USER_UNIF_INIT, dllInfo, OPTIONAL);
+        userUnifNSeed = findSymbol(USER_UNIF_INIT, dllInfo, OPTIONAL);
+        userUnifSeedloc = findSymbol(USER_UNIF_INIT, dllInfo, OPTIONAL);
         userRngRFFI = RFFIFactory.getRFFI().getUserRngRFFI();
-        userRngRFFI.setLibrary(libInfo.path);
+        userRngRFFI.setLibrary(dllInfo.path);
         userRngRFFI.init(seed);
         if (userUnifSeedloc != 0 && userUnifNSeed == 0) {
             throw RNGException.raise(RError.Message.RNG_READ_SEEDS, false);
@@ -63,16 +66,16 @@ public final class UserRNG extends RNGInitAdapter {
         nSeeds = userRngRFFI.nSeed();
     }
 
-    private static long findSymbol(String symbol, boolean optional) throws RNGException {
-        DLL.SymbolInfo symbolInfo = DLL.findSymbolInfo(symbol, null);
-        if (symbolInfo == null) {
+    private static long findSymbol(String symbol, DLLInfo dllInfo, boolean optional) throws RNGException {
+        long func = DLL.findSymbol(symbol, dllInfo.name, DLL.RegisteredNativeSymbol.any());
+        if (func == DLL.SYMBOL_NOT_FOUND) {
             if (!optional) {
                 throw RNGException.raise(RError.Message.RNG_SYMBOL, true, symbol);
             } else {
                 return 0;
             }
         } else {
-            return symbolInfo.address;
+            return func;
         }
     }
 
