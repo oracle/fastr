@@ -499,7 +499,7 @@ do.it <- function() {
 			yday <- as.POSIXlt(Sys.Date())$yday
 			chunk <- as.integer(npkgs / count.daily)
 			start <- (yday %% chunk) * count.daily
-			end <- ifelse(start + count.daily > npkgs, npkgs, start + count.daily)
+			end <- ifelse(start + count.daily > npkgs, npkgs, start + count.daily - 1)
 			test.pkgnames <- test.pkgnames[start:end]
 		}
 	}

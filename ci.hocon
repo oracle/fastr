@@ -51,44 +51,8 @@ gateStyle : ${common} {
 
 # currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
 
-# tests a (default) number of packages known to install correctly
-pkgtest: ${common} ${java8Downloads} {
-  timelimit : "3:00:00"
-  setup : [
-    ["git", "clone", "--depth", "1", ${repoBase}"gnur.git",  "../gnur"]
-  ]
-  run : [
-    ["mx", "-v", "--dynamicimport", "gnur", "build", "--serial"]
-    ["mx", "--dynamicimport", "gnur", "pkgtest", "--print-ok-installs", "--ok-only"]
-  ]
-}
-
-# tests a (default) number of packages known to install correctly
-pkgtestDaily: ${common} ${java8Downloads} {
-  timelimit : "3:00:00"
-  setup : [
-    ["git", "clone", "--depth", "1", ${repoBase}"gnur.git",  "../gnur"]
-  ]
-  run : [
-    ["mx", "-v", "--dynamicimport", "gnur", "build", "--serial"]
-    ["mx", "--dynamicimport", "gnur", "pkgtest", "--print-ok-installs", "--count-daily", "100"]
-  ]
-}
-
-# tries to install a (default) number of packages previously known not to install
-pkginstall: ${common} ${java8Downloads} {
-  timelimit : "6:00:00"
-  run : [
-    ["mx", "build"]
-    ["mx", "pkgtest", "--invert-pkgset", "--ok-only", "--install-only", "--print-ok-installs", "--install-dependents-first", "--pkg-count", "1000"]
-  ]
-}
-
 builds = [
   ${gateTest}       {capabilities : [linux, amd64, gate, post-merge],   name: "gate-test-linux-amd64"}
   ${gateStyle}      {capabilities : [linux, amd64, gate, post-merge],   name: "gate-style-linux-amd64"}
 #  ${gateTest}       {capabilities : [linux, sparcv9, gate, post-merge], name: "gate-test-linux-sparcv9"}
-#  ${pkgtest}        {capabilities : [linux, amd64, gate], name: "pkgtest-linux-amd64"}
-  ${pkgtestDaily}        {capabilities : [linux, amd64, gate], name: "pkgtest-daily-linux-amd64"}
-#  ${pkginstall}        {capabilities : [linux, amd64, gate], name: "pkginstall-linux-amd64"}
 ]
