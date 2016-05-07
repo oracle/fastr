@@ -36,11 +36,14 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessArraySubscriptBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.MapplyNodeGen.MapplyInternalNodeGen;
+import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
+import com.oracle.truffle.r.nodes.function.CallArgumentsNode;
+import com.oracle.truffle.r.nodes.function.CallMatcherNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.UnmatchedArguments;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -48,8 +51,10 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -65,12 +70,15 @@ public abstract class Mapply extends RBuiltinNode {
         @Child private AccessArraySubscriptBuiltin indexedLoadNode;
         @Child private WriteVariableNode writeVectorElementNode;
         private final String vectorElementName;
+        private final String argName;
 
-        private ElementNode(String vectorElementName) {
-            this.vectorElementName = AnonymousFrameVariable.create(vectorElementName);
+        private ElementNode(String vectorElementName, String argName) {
+            // the name is a hack to treat ReadVariableNode-s as syntax nodes
+            this.vectorElementName = "*" + AnonymousFrameVariable.create(vectorElementName);
             this.lengthNode = insert(LengthNodeGen.create(null));
             this.indexedLoadNode = insert(InfixFunctionsFactory.AccessArraySubscriptBuiltinNodeGen.create(null));
             this.writeVectorElementNode = insert(WriteVariableNode.createAnonymous(this.vectorElementName, null, Mode.REGULAR));
+            this.argName = argName;
         }
     }
 
@@ -78,9 +86,6 @@ public abstract class Mapply extends RBuiltinNode {
 
     @Specialization
     protected Object mApply(VirtualFrame frame, RFunction fun, RList dots, RList moreArgs) {
-        if (moreArgs.getLength() > 0) {
-            throw RError.nyi(this, "moreArgs");
-        }
         Object[] result = mapply.execute(frame, dots, fun, moreArgs);
         // set here else it gets overridden by the iterator evaluation
         controlVisibility();
@@ -101,6 +106,8 @@ public abstract class Mapply extends RBuiltinNode {
         private static final ArgumentsSignature I_INDEX = ArgumentsSignature.get("i");
         private static final RArgsValuesAndNames[] INDEX_CACHE = new RArgsValuesAndNames[32];
 
+        @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, false);
+
         static {
             for (int i = 0; i < INDEX_CACHE.length; i++) {
                 INDEX_CACHE[i] = new RArgsValuesAndNames(new Object[]{i + 1}, I_INDEX);
@@ -110,12 +117,16 @@ public abstract class Mapply extends RBuiltinNode {
         public abstract Object[] execute(VirtualFrame frame, RList dots, RFunction function, RList additionalArguments);
 
         @SuppressWarnings("unused")
-        @Specialization
+        @Specialization(guards = {"dots.getLength() == cachedDots.getLength()", "sameNames(dots, cachedDots)", "sameNames(moreArgs, cachedMoreArgs)", "function == cachedFunction"})
         protected Object[] cachedMApply(VirtualFrame frame, RList dots, RFunction function, RList moreArgs,
-                        @Cached("createElementNodeArray(dots.getLength())") ElementNode[] cachedElementNodeArray,
-                        @Cached("createCallNode(cachedElementNodeArray, moreArgs)") RCallNode callNode) {
+                        @Cached("function") RFunction cachedFunction,
+                        @Cached("dots") RList cachedDots,
+                        @Cached("moreArgs") RList cachedMoreArgs,
+                        @Cached("createElementNodeArray(cachedDots, cachedMoreArgs)") ElementNode[] cachedElementNodeArray,
+                        @Cached("createCallNode(cachedElementNodeArray, cachedFunction)") RCallNode callNode) {
             RootCallTarget cachedTarget = function.getTarget();
             int dotsLength = dots.getLength();
+            int moreArgsLength = moreArgs.getLength();
             int[] lengths = new int[dotsLength];
             int maxLength = -1;
             for (int i = 0; i < dotsLength; i++) {
@@ -124,6 +135,10 @@ public abstract class Mapply extends RBuiltinNode {
                     maxLength = length;
                 }
                 lengths[i] = length;
+            }
+            for (int listIndex = dotsLength; listIndex < dotsLength + moreArgsLength; listIndex++) {
+                // store additional arguments
+                cachedElementNodeArray[listIndex].writeVectorElementNode.execute(frame, moreArgs.getDataAt(listIndex - dotsLength));
             }
             Object[] result = new Object[maxLength];
             for (int i = 0; i < maxLength; i++) {
@@ -158,6 +173,8 @@ public abstract class Mapply extends RBuiltinNode {
                 }
                 /* Now call the function */
                 result[i] = callNode.execute(frame, function);
+// result[i] = callMatcher.execute(frame, ArgumentsSignature.empty(dotsLength + moreArgsLength),
+// argNodes, function, null, null);
             }
             return result;
         }
@@ -168,22 +185,67 @@ public abstract class Mapply extends RBuiltinNode {
          * TODO names and moreArgs
          *
          */
-        protected RCallNode createCallNode(ElementNode[] elementNodeArray, @SuppressWarnings("unused") RList moreArgs) {
-            RSyntaxNode[] readVectorElementNodes = new RSyntaxNode[elementNodeArray.length];
+        protected RCallNode createCallNode(ElementNode[] elementNodeArray, RFunction function) {
+            ReadVariableNode[] readVectorElementNodes = new ReadVariableNode[elementNodeArray.length];
+            String[] names = new String[elementNodeArray.length];
             for (int i = 0; i < readVectorElementNodes.length; i++) {
                 readVectorElementNodes[i] = ReadVariableNode.create(elementNodeArray[i].vectorElementName);
+                names[i] = elementNodeArray[i].argName;
+            }
+            UnmatchedArguments unmatchedArgs = CallArgumentsNode.create(true, true, readVectorElementNodes, ArgumentsSignature.get(names), new int[0]);
+            RNode[] matchedArgs = ArgumentMatcher.matchArguments(function, unmatchedArgs, null, false);
+            RSyntaxNode[] matchedSyntaxNodes = new RSyntaxNode[elementNodeArray.length];
+            for (int i = 0; i < elementNodeArray.length; i++) {
+                matchedSyntaxNodes[i] = matchedArgs[i].asRSyntaxNode();
             }
             ArgumentsSignature argsSig = ArgumentsSignature.empty(readVectorElementNodes.length);
             // Errors can be thrown from the modified call so a SourceSection is required
-            return RCallNode.createCall(Lapply.createCallSourceSection(), null, argsSig, readVectorElementNodes);
+            return RCallNode.createCall(Lapply.createCallSourceSection(), null, argsSig, matchedSyntaxNodes);
         }
 
-        protected ElementNode[] createElementNodeArray(int length) {
+        protected ReadVariableNode[] createArgNodes(ElementNode[] elementNodeArray) {
+            ReadVariableNode[] readVectorElementNodes = new ReadVariableNode[elementNodeArray.length];
+            for (int i = 0; i < readVectorElementNodes.length; i++) {
+                readVectorElementNodes[i] = ReadVariableNode.create(elementNodeArray[i].vectorElementName);
+            }
+            return readVectorElementNodes;
+        }
+
+        protected ElementNode[] createElementNodeArray(RList dots, RList moreArgs) {
+            int length = dots.getLength() + moreArgs.getLength();
             ElementNode[] elementNodes = new ElementNode[length];
-            for (int i = 0; i < length; i++) {
-                elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1)));
+            RStringVector dotsNames = dots.getNames();
+            for (int i = 0; i < dots.getLength(); i++) {
+                elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1), dotsNames == null ? null : dotsNames.getDataAt(i)));
+            }
+            RStringVector moreArgsNames = moreArgs.getNames();
+            for (int i = dots.getLength(); i < dots.getLength() + moreArgs.getLength(); i++) {
+                elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1), moreArgsNames == null ? null : moreArgsNames.getDataAt(i - dots.getLength())));
             }
             return elementNodes;
         }
+
+        protected boolean sameNames(RList list, RList cachedList) {
+            if (list.getNames() == null && cachedList.getNames() == null) {
+                return true;
+            } else if (list.getNames() == null || cachedList.getNames() == null) {
+                return false;
+            } else {
+                for (int i = 0; i < list.getLength(); i++) {
+                    String name = list.getNames().getDataAt(i);
+                    String cachedName = cachedList.getNames().getDataAt(i);
+
+                    if (name == cachedName) {
+                        continue;
+                    } else if (name == null || cachedName == null) {
+                        return false;
+                    } else if (!(name.equals(cachedName))) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+
     }
 }
