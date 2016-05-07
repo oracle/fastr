@@ -113,3 +113,4 @@ findbugs.html
 test_gnur
 test_fastr
 lib.install.cran*
+package.blacklist
