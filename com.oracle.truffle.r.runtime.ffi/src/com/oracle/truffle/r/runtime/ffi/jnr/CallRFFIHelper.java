@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -538,7 +539,13 @@ public class CallRFFIHelper {
     public static Object SET_TYPEOF_FASTR(Object x, int v) {
         int code = SEXPTYPE.gnuRCodeForObject(x);
         if (code == SEXPTYPE.LISTSXP.code && v == SEXPTYPE.LANGSXP.code) {
-            return RContext.getRRuntimeASTAccess().fromList((RList) x, RLanguage.RepType.CALL);
+            RList l;
+            if (x instanceof RPairList) {
+                l = ((RPairList) x).toRList();
+            } else {
+                l = (RList) x;
+            }
+            return RContext.getRRuntimeASTAccess().fromList(l, RLanguage.RepType.CALL);
         } else {
             throw unimplemented();
         }
