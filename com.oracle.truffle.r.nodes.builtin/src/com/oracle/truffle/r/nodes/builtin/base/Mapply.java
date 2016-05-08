@@ -36,11 +36,8 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessArraySubscriptBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.MapplyNodeGen.MapplyInternalNodeGen;
-import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
-import com.oracle.truffle.r.nodes.function.CallArgumentsNode;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.function.UnmatchedArguments;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -54,7 +51,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -117,13 +113,13 @@ public abstract class Mapply extends RBuiltinNode {
         public abstract Object[] execute(VirtualFrame frame, RList dots, RFunction function, RList additionalArguments);
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"dots.getLength() == cachedDots.getLength()", "sameNames(dots, cachedDots)", "sameNames(moreArgs, cachedMoreArgs)", "function == cachedFunction"})
+        @Specialization(limit = "5", guards = {"dots.getLength() == cachedDots.getLength()", "moreArgs.getLength() == cachedMoreArgs.getLength()", "sameNames(dots, cachedDots)",
+                        "sameNames(moreArgs, cachedMoreArgs)"})
         protected Object[] cachedMApply(VirtualFrame frame, RList dots, RFunction function, RList moreArgs,
-                        @Cached("function") RFunction cachedFunction,
                         @Cached("dots") RList cachedDots,
                         @Cached("moreArgs") RList cachedMoreArgs,
                         @Cached("createElementNodeArray(cachedDots, cachedMoreArgs)") ElementNode[] cachedElementNodeArray,
-                        @Cached("createCallNode(cachedElementNodeArray, cachedFunction)") RCallNode callNode) {
+                        @Cached("createCallNode(cachedElementNodeArray)") RCallNode callNode) {
             RootCallTarget cachedTarget = function.getTarget();
             int dotsLength = dots.getLength();
             int moreArgsLength = moreArgs.getLength();
@@ -173,8 +169,6 @@ public abstract class Mapply extends RBuiltinNode {
                 }
                 /* Now call the function */
                 result[i] = callNode.execute(frame, function);
-// result[i] = callMatcher.execute(frame, ArgumentsSignature.empty(dotsLength + moreArgsLength),
-// argNodes, function, null, null);
             }
             return result;
         }
@@ -185,30 +179,15 @@ public abstract class Mapply extends RBuiltinNode {
          * TODO names and moreArgs
          *
          */
-        protected RCallNode createCallNode(ElementNode[] elementNodeArray, RFunction function) {
-            ReadVariableNode[] readVectorElementNodes = new ReadVariableNode[elementNodeArray.length];
+        protected RCallNode createCallNode(ElementNode[] elementNodeArray) {
+            RSyntaxNode[] syntaxNodes = new RSyntaxNode[elementNodeArray.length];
             String[] names = new String[elementNodeArray.length];
-            for (int i = 0; i < readVectorElementNodes.length; i++) {
-                readVectorElementNodes[i] = ReadVariableNode.create(elementNodeArray[i].vectorElementName);
+            for (int i = 0; i < syntaxNodes.length; i++) {
+                syntaxNodes[i] = ReadVariableNode.create(elementNodeArray[i].vectorElementName).asRSyntaxNode();
                 names[i] = elementNodeArray[i].argName;
             }
-            UnmatchedArguments unmatchedArgs = CallArgumentsNode.create(true, true, readVectorElementNodes, ArgumentsSignature.get(names), new int[0]);
-            RNode[] matchedArgs = ArgumentMatcher.matchArguments(function, unmatchedArgs, null, false);
-            RSyntaxNode[] matchedSyntaxNodes = new RSyntaxNode[elementNodeArray.length];
-            for (int i = 0; i < elementNodeArray.length; i++) {
-                matchedSyntaxNodes[i] = matchedArgs[i].asRSyntaxNode();
-            }
-            ArgumentsSignature argsSig = ArgumentsSignature.empty(readVectorElementNodes.length);
             // Errors can be thrown from the modified call so a SourceSection is required
-            return RCallNode.createCall(Lapply.createCallSourceSection(), null, argsSig, matchedSyntaxNodes);
-        }
-
-        protected ReadVariableNode[] createArgNodes(ElementNode[] elementNodeArray) {
-            ReadVariableNode[] readVectorElementNodes = new ReadVariableNode[elementNodeArray.length];
-            for (int i = 0; i < readVectorElementNodes.length; i++) {
-                readVectorElementNodes[i] = ReadVariableNode.create(elementNodeArray[i].vectorElementName);
-            }
-            return readVectorElementNodes;
+            return RCallNode.createCall(Lapply.createCallSourceSection(), null, ArgumentsSignature.get(names), syntaxNodes);
         }
 
         protected ElementNode[] createElementNodeArray(RList dots, RList moreArgs) {
