@@ -192,11 +192,12 @@ public abstract class Mapply extends RBuiltinNode {
             ElementNode[] elementNodes = new ElementNode[length];
             RStringVector dotsNames = dots.getNames();
             for (int i = 0; i < dots.getLength(); i++) {
-                elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1), dotsNames == null ? null : dotsNames.getDataAt(i)));
+                elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1), dotsNames == null ? null : (dotsNames.getDataAt(i).isEmpty() ? null : dotsNames.getDataAt(i))));
             }
             RStringVector moreArgsNames = moreArgs.getNames();
             for (int i = dots.getLength(); i < dots.getLength() + moreArgs.getLength(); i++) {
-                elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1), moreArgsNames == null ? null : moreArgsNames.getDataAt(i - dots.getLength())));
+                elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1),
+                                moreArgsNames == null ? null : moreArgsNames.getDataAt(i - dots.getLength()).isEmpty() ? null : moreArgsNames.getDataAt(i - dots.getLength())));
             }
             return elementNodes;
         }
