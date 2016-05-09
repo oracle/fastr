@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessArraySubscriptBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.MapplyNodeGen.MapplyInternalNodeGen;
-import com.oracle.truffle.r.nodes.function.CallMatcherNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -101,8 +100,6 @@ public abstract class Mapply extends RBuiltinNode {
         private static final RLogicalVector EXACT = RDataFactory.createLogicalVectorFromScalar(true);
         private static final ArgumentsSignature I_INDEX = ArgumentsSignature.get("i");
         private static final RArgsValuesAndNames[] INDEX_CACHE = new RArgsValuesAndNames[32];
-
-        @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, false);
 
         static {
             for (int i = 0; i < INDEX_CACHE.length; i++) {
