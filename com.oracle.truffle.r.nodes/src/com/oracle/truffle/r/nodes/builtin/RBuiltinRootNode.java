@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 public final class RBuiltinRootNode extends RRootNode {
@@ -38,8 +39,8 @@ public final class RBuiltinRootNode extends RRootNode {
     @Child private RBuiltinNode builtin;
     private final RBuiltinFactory factory;
 
-    RBuiltinRootNode(RBuiltinFactory factory, RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
-        super(null, formalArguments, frameDescriptor);
+    RBuiltinRootNode(RBuiltinFactory factory, RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
+        super(null, formalArguments, frameDescriptor, fastPath);
         this.factory = factory;
         this.builtin = builtin;
     }
@@ -48,7 +49,7 @@ public final class RBuiltinRootNode extends RRootNode {
     public RootCallTarget duplicateWithNewFrameDescriptor() {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("builtin", frameDescriptor);
-        return Truffle.getRuntime().createCallTarget(new RBuiltinRootNode(factory, (RBuiltinNode) builtin.deepCopy(), getFormalArguments(), frameDescriptor));
+        return Truffle.getRuntime().createCallTarget(new RBuiltinRootNode(factory, (RBuiltinNode) builtin.deepCopy(), getFormalArguments(), frameDescriptor, getFastPath()));
     }
 
     @Override
@@ -71,13 +72,28 @@ public final class RBuiltinRootNode extends RRootNode {
         return result;
     }
 
-    public RBuiltinNode getBuiltin() {
+    public RBuiltinNode getBuiltinNode() {
         return builtin;
+    }
+
+    @Override
+    public RBuiltinFactory getBuiltin() {
+        return factory;
     }
 
     @Override
     public boolean needsSplitting() {
         return factory.isAlwaysSplit();
+    }
+
+    @Override
+    public boolean containsDispatch() {
+        return false;
+    }
+
+    @Override
+    public void setContainsDispatch(boolean containsDispatch) {
+        throw RInternalError.shouldNotReachHere("set containsDispatch on builtin " + factory.getName());
     }
 
     @Override

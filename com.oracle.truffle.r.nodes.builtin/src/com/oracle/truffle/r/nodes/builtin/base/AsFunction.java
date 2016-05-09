@@ -137,8 +137,7 @@ public abstract class AsFunction extends RBuiltinNode {
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(RSyntaxNode.EAGER_DEPARSE, descriptor, null, saveArguments, (RSyntaxNode) body, formals, "from AsFunction", null);
         RDeparse.ensureSourceSection(rootNode);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
-        boolean containsDispatch = ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch();
-        return RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, envir.getFrame(), null, containsDispatch);
+        return RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, envir.getFrame());
     }
 
     @Specialization

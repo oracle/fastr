@@ -436,7 +436,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public Object[] getBuiltinDefaultParameterValues(RFunction f) {
         assert f.isBuiltin();
-        return ((RBuiltinRootNode) f.getRootNode()).getBuiltin().getDefaultParameterValues();
+        return ((RBuiltinRootNode) f.getRootNode()).getBuiltinNode().getDefaultParameterValues();
     }
 
     @Override

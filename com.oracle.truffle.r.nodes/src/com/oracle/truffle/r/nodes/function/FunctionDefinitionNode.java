@@ -39,10 +39,12 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
+import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
@@ -123,7 +125,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     private final boolean needsSplitting;
 
-    private final boolean containsDispatch;
+    @CompilationFinal private boolean containsDispatch;
 
     /**
      * Profiling for catching {@link ReturnException}s.
@@ -131,14 +133,13 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private final ConditionProfile returnTopLevelProfile = ConditionProfile.createBinaryProfile();
 
     public static FunctionDefinitionNode create(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments, RSyntaxNode body,
-                    FormalArguments formals, String description,
-                    PostProcessArgumentsNode argPostProcess) {
+                    FormalArguments formals, String description, PostProcessArgumentsNode argPostProcess) {
         return new FunctionDefinitionNode(src, frameDesc, argSourceSections, saveArguments, body, formals, description, argPostProcess, FunctionUIDFactory.get().createUID());
     }
 
     private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RSyntaxNode body, FormalArguments formals,
                     String description, PostProcessArgumentsNode argPostProcess, FunctionUID uuid) {
-        super(null, formals, frameDesc);
+        super(null, formals, frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
         this.argSourceSections = argSourceSections;
         assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
         assert src != null;
@@ -182,8 +183,14 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return NodeUtil.countNodes(body.asRNode(), dispatchingMethodsFilter) > 0;
     }
 
+    @Override
     public boolean containsDispatch() {
         return containsDispatch;
+    }
+
+    @Override
+    public void setContainsDispatch(boolean containsDispatch) {
+        this.containsDispatch = containsDispatch;
     }
 
     private boolean needsAnyBuiltinSplitting() {
@@ -457,6 +464,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     public boolean getInstrumented() {
         return instrumented;
+    }
+
+    @Override
+    public RBuiltinFactory getBuiltin() {
+        return null;
     }
 
     @Override

@@ -29,6 +29,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
@@ -36,6 +37,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.HasSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -51,9 +53,12 @@ public abstract class RRootNode extends RootNode implements HasSignature {
      */
     private final FormalArguments formalArguments;
 
-    protected RRootNode(SourceSection src, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
+    private FastPathFactory fastPath;
+
+    protected RRootNode(SourceSection src, FormalArguments formalArguments, FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
         super(RContext.getRForeignAccessFactory().getTruffleLanguage(), checkSourceSection(src), frameDescriptor);
         this.formalArguments = formalArguments;
+        this.fastPath = fastPath;
     }
 
     private static SourceSection checkSourceSection(SourceSection src) {
@@ -89,9 +94,21 @@ public abstract class RRootNode extends RootNode implements HasSignature {
         return formalArguments.getSignature();
     }
 
-    public boolean needsSplitting() {
-        return false;
+    public FastPathFactory getFastPath() {
+        return fastPath;
     }
+
+    public void setFastPath(FastPathFactory fastPath) {
+        this.fastPath = fastPath;
+    }
+
+    public abstract boolean needsSplitting();
+
+    public abstract boolean containsDispatch();
+
+    public abstract void setContainsDispatch(boolean containsDispatch);
+
+    public abstract RBuiltinFactory getBuiltin();
 
     @TruffleBoundary
     public String getSourceCode() {

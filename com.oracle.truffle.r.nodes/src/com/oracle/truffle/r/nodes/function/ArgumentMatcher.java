@@ -61,9 +61,9 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * <p>
  * {@link ArgumentMatcher} serves the purpose of matching {@link CallArgumentsNode} to
  * {@link FormalArguments} of a specific function, see
- * {@link #matchArguments(RFunction, UnmatchedArguments, RBaseNode, boolean)} . The other match
+ * {@link #matchArguments(RRootNode, UnmatchedArguments, RBaseNode, boolean)} . The other match
  * functions are used for special cases, where builtins make it necessary to re-match parameters,
- * e.g.: {@link #matchArgumentsEvaluated(RFunction, RArgsValuesAndNames, RBaseNode, boolean)} for
+ * e.g.: {@link #matchArgumentsEvaluated(RRootNode, RArgsValuesAndNames, RBaseNode, boolean)} for
  * 'UseMethod'.
  * </p>
  *
@@ -124,14 +124,14 @@ public class ArgumentMatcher {
      * Match arguments supplied for a specific function call to the formal arguments and wraps them
      * in {@link PromiseNode}s. Used for calls to all functions parsed from R code
      *
-     * @param function The function which is to be called
+     * @param target The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
      * @param callingNode The {@link RBaseNode} invoking the match
      * @return A fresh {@link MatchedArguments} containing the arguments in correct order and
      *         wrapped in {@link PromiseNode}s
      */
-    public static RNode[] matchArguments(RFunction function, UnmatchedArguments suppliedArgs, RBaseNode callingNode, boolean noOpt) {
-        return matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callingNode, suppliedArgs, noOpt);
+    public static RNode[] matchArguments(RRootNode target, UnmatchedArguments suppliedArgs, RBaseNode callingNode, boolean noOpt) {
+        return matchNodes(target, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callingNode, suppliedArgs, noOpt);
     }
 
     public static MatchPermutation matchArguments(ArgumentsSignature supplied, ArgumentsSignature formal, RBaseNode callingNode, boolean forNextMethod, RBuiltinDescriptor builtin) {
@@ -187,7 +187,7 @@ public class ArgumentMatcher {
      * Used for the implementation of the 'UseMethod' builtin. Reorders the arguments passed into
      * the called, generic function and prepares them to be passed into the specific function
      *
-     * @param function The 'Method' which is going to be 'Use'd
+     * @param target The 'Method' which is going to be 'Use'd
      * @param evaluatedArgs The arguments which are already in evaluated form (as they are directly
      *            taken from the stack)
      * @param callingNode The {@link Node} invoking the match
@@ -196,9 +196,8 @@ public class ArgumentMatcher {
      * @return A Fresh {@link RArgsValuesAndNames} containing the arguments rearranged and stuffed
      *         with default values (in the form of {@link RPromise}s where needed)
      */
-    public static RArgsValuesAndNames matchArgumentsEvaluated(RFunction function, RArgsValuesAndNames evaluatedArgs, RBaseNode callingNode, boolean forNextMethod) {
-        RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
-        FormalArguments formals = rootNode.getFormalArguments();
+    public static RArgsValuesAndNames matchArgumentsEvaluated(RRootNode target, RArgsValuesAndNames evaluatedArgs, RBaseNode callingNode, boolean forNextMethod) {
+        FormalArguments formals = target.getFormalArguments();
         MatchPermutation match = permuteArguments(evaluatedArgs.getSignature(), formals.getSignature(), callingNode, forNextMethod, index -> {
             throw RInternalError.unimplemented("S3Dispatch should not have arg length mismatch");
         }, index -> evaluatedArgs.getSignature().getName(index), null);
@@ -261,7 +260,7 @@ public class ArgumentMatcher {
      * {@code RNode[]}. Handles named args and varargs.<br/>
      * <strong>Does not</strong> alter the given {@link CallArgumentsNode}
      *
-     * @param function The function which is to be called
+     * @param target The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
      * @param suppliedSignature The names for the arguments supplied to the call
      * @param callingNode The {@link RBaseNode} initiating the match
@@ -269,15 +268,15 @@ public class ArgumentMatcher {
      * @return A list of {@link RNode}s which consist of the given arguments in the correct order
      *         and wrapped into the proper {@link PromiseNode}s
      */
-    private static RNode[] matchNodes(RFunction function, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, RBaseNode callingNode, ClosureCache closureCache, boolean noOpt) {
+    private static RNode[] matchNodes(RRootNode target, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, RBaseNode callingNode, ClosureCache closureCache, boolean noOpt) {
         assert suppliedArgs.length == suppliedSignature.getLength();
 
-        FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
+        FormalArguments formals = target.getFormalArguments();
 
         // Rearrange arguments
         MatchPermutation match = permuteArguments(suppliedSignature, formals.getSignature(), callingNode, false,
                         index -> ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(suppliedArgs[index])), index -> getErrorForArgument(suppliedArgs, suppliedSignature, index),
-                        function.getRBuiltin());
+                        target.getBuiltin());
 
         RNode[] resArgs = new RNode[match.resultPermutation.length];
 
@@ -295,8 +294,8 @@ public class ArgumentMatcher {
          */
 
         // Check whether this is a builtin
-        RBuiltinDescriptor builtin = function.getRBuiltin();
-        FastPathFactory fastPath = function.getFastPath();
+        RBuiltinDescriptor builtin = target.getBuiltin();
+        FastPathFactory fastPath = target.getFastPath();
 
         // int logicalIndex = 0; As our builtin's 'evalsArgs' is meant for FastR arguments (which
         // take "..." as one), we don't need a logicalIndex

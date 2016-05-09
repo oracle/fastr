@@ -59,7 +59,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
-import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
@@ -83,7 +82,6 @@ import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -316,9 +314,8 @@ final class REngine implements Engine, Engine.Timings {
         RParser<RSyntaxNode> parser = new RParser<>(source, new RASTBuilder());
         try {
             RootCallTarget callTarget = parser.root_function(name);
-            FastPathFactory fastPath = RASTBuilder.createFunctionFastPath(callTarget);
             FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
-            return RDataFactory.createFunction(name, callTarget, null, enclosingFrame, fastPath, ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch());
+            return RDataFactory.createFunction(name, callTarget, null, enclosingFrame);
         } catch (RecognitionException e) {
             throw handleRecognitionException(source, e);
         }

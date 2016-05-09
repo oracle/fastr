@@ -86,7 +86,7 @@ public abstract class Args extends RBuiltinNode {
         FunctionDefinitionNode newNode = FunctionDefinitionNode.create(RSyntaxNode.EAGER_DEPARSE, rootNode.getFrameDescriptor(), null, SaveArgumentsNode.NO_ARGS,
                         ConstantNode.create(RSyntaxNode.EAGER_DEPARSE, RNull.instance), formals, newDesc, null);
         RDeparse.ensureSourceSection(newNode);
-        return RDataFactory.createFunction(newDesc, Truffle.getRuntime().createCallTarget(newNode), null, REnvironment.globalEnv().getFrame(), null, false);
+        return RDataFactory.createFunction(newDesc, Truffle.getRuntime().createCallTarget(newNode), null, REnvironment.globalEnv().getFrame());
     }
 
     @Specialization(guards = {"!isRFunction(fun)", "!isRAbstractStringVector(fun)"})

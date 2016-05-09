@@ -41,6 +41,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -240,7 +241,7 @@ public class FrameFunctions {
             CallArgumentsNode callArgs = callNode.createArguments(null, false, false);
             ArgumentsSignature inputVarArgSignature = callArgs.containsVarArgsSymbol() ? CallArgumentsNode.getVarargsAndNames(cframe).getSignature() : null;
             UnmatchedArguments executeFlatten = callArgs.unrollArguments(inputVarArgSignature);
-            RNode[] matchedArgNodes = ArgumentMatcher.matchArguments(definition, executeFlatten, null, true);
+            RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), executeFlatten, null, true);
             ArgumentsSignature sig = ((HasSignature) definition.getRootNode()).getSignature();
             // expand any varargs
             ArrayList<RNode> nodes = new ArrayList<>();

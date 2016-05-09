@@ -279,7 +279,7 @@ public class GetFunctions {
         }
 
         private Object call(VirtualFrame frame, RFunction ifnFunc, String x) {
-            if (!needsCallerFrame && ifnFunc.containsDispatch()) {
+            if (!needsCallerFrame && ((RRootNode) ifnFunc.getRootNode()).containsDispatch()) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 needsCallerFrame = true;
             }

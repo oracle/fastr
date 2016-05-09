@@ -45,7 +45,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
-import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
@@ -355,7 +354,7 @@ public class EnvFunctions {
             RRootNode root = (RRootNode) fun.getTarget().getRootNode();
             RootCallTarget target = root.duplicateWithNewFrameDescriptor();
             FrameSlotChangeMonitor.initializeEnclosingFrame(target.getRootNode().getFrameDescriptor(), enclosingFrame);
-            return RDataFactory.createFunction(fun.getName(), target, null, enclosingFrame, fun.getFastPath(), ((FunctionDefinitionNode) target.getRootNode()).containsDispatch());
+            return RDataFactory.createFunction(fun.getName(), target, null, enclosingFrame);
         }
 
         @SuppressWarnings("unused")
