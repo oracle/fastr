@@ -86,8 +86,13 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
     }
 
     @Override
+    public RSyntaxNode getRSyntaxNode() {
+        return getPromiseExpr();
+    }
+
+    @Override
     public RSyntaxNode getPromiseExpr() {
-        return (RSyntaxNode) expr;
+        return expr.asRSyntaxNode();
     }
 
     @Override

@@ -317,6 +317,8 @@ public class FrameFunctions {
                                 listValue = RDataFactory.createSymbol(id);
                             } else if (n instanceof VarArgNode) {
                                 listValue = createVarArgSymbol((VarArgNode) n);
+                            } else if (n instanceof RCallNode) {
+                                listValue = RDataFactory.createLanguage(n);
                             } else {
                                 throw RInternalError.shouldNotReachHere("node: " + n + " at " + i2);
                             }

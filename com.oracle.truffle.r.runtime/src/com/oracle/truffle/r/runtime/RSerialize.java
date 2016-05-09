@@ -628,13 +628,17 @@ public class RSerialize {
                             RPairList pl = (RPairList) result;
                             int len = pl.getLength();
                             Object[] values = new Object[len];
+                            String[] names = new String[len];
                             for (int i = 0; i < len; i++) {
                                 values[i] = pl.car();
+                                if (pl.getTag() != RNull.instance) {
+                                    names[i] = ((RSymbol) pl.getTag()).getName();
+                                }
                                 if (i < len - 1) {
                                     pl = (RPairList) pl.cdr();
                                 }
                             }
-                            return new RArgsValuesAndNames(values, ArgumentsSignature.empty(len));
+                            return new RArgsValuesAndNames(values, ArgumentsSignature.get(names));
                         }
 
                         case LISTSXP:
@@ -1727,16 +1731,19 @@ public class RSerialize {
                                 }
 
                                 case DOTSXP: {
-                                    RArgsValuesAndNames rvn = (RArgsValuesAndNames) obj;
                                     // This in GnuR is a pairlist
-                                    int len = rvn.getLength();
-                                    assert len > 0;
-                                    for (int i = 0; i < len; i++) {
-                                        Object rvnObj = rvn.getArgument(i);
-                                        writeItem(rvnObj);
+                                    RArgsValuesAndNames rvn = (RArgsValuesAndNames) obj;
+                                    Object list = RNull.instance;
+                                    for (int i = rvn.getLength() - 1; i >= 0; i--) {
+                                        String name = rvn.getSignature().getName(i);
+                                        list = RDataFactory.createPairList(rvn.getArgument(i), list, name == null ? RNull.instance : RDataFactory.createSymbolInterned(name));
                                     }
-                                    writeItem(RNull.instance);
-                                    tailCall = false;
+                                    RPairList pl = (RPairList) list;
+                                    if (!pl.isNullTag()) {
+                                        writeItem(pl.getTag());
+                                    }
+                                    writeItem(pl.car());
+                                    obj = pl.cdr();
                                     break;
                                 }
                             }

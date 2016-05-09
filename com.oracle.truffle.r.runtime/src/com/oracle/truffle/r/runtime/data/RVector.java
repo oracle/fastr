@@ -262,29 +262,41 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         }
     }
 
+    private void removeAttrInternal(String name) {
+        if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
+            setNames(null);
+        } else if (name.equals(RRuntime.DIM_ATTR_KEY)) {
+            setDimensions(null);
+        } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
+            setDimNames((RList) null);
+        } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+            setRowNames(null);
+        } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
+            throw RInternalError.unimplemented("The \"class\" attribute should be reset using a separate method");
+        } else {
+            attributes.remove(name);
+            // nullify only here because other methods invoke removeAttributeMapping which does
+            // it already
+            if (attributes.size() == 0) {
+                attributes = null;
+            }
+        }
+
+    }
+
     @Override
     public final void removeAttr(RAttributeProfiles attrProfiles, String name) {
         if (attrProfiles.attrNullProfile(attributes == null)) {
             return;
         } else {
-            if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
-                setNames(null);
-            } else if (name.equals(RRuntime.DIM_ATTR_KEY)) {
-                setDimensions(null);
-            } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
-                setDimNames((RList) null);
-            } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
-                setRowNames(null);
-            } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-                throw RInternalError.unimplemented("The \"class\" attribute should be reset using a separate method");
-            } else {
-                attributes.remove(name);
-                // nullify only here because other methods invoke removeAttributeMapping which does
-                // it already
-                if (attributes.size() == 0) {
-                    attributes = null;
-                }
-            }
+            removeAttrInternal(name);
+        }
+    }
+
+    @Override
+    public final void removeAttr(String name) {
+        if (attributes != null) {
+            removeAttrInternal(name);
         }
     }
 

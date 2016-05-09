@@ -119,6 +119,13 @@ public interface RAttributable extends RTypedValue {
         }
     }
 
+    default void removeAttr(String name) {
+        RAttributes attributes = getAttributes();
+        if (attributes != null) {
+            attributes.remove(name);
+        }
+    }
+
     default void removeAllAttributes() {
         RAttributes attributes = getAttributes();
         if (attributes != null) {

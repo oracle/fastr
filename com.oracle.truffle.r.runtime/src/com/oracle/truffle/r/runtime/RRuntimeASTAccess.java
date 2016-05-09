@@ -66,8 +66,8 @@ public interface RRuntimeASTAccess {
 
     /**
      * If {@code list} is empty return {@link RNull#instance} else create an {@link RLanguage}
-     * object whose rep is a {@code RCallNode}, with the first list element as the function and the
-     * remainder as the arguments.
+     * object whose rep is a {@code RCallNode} with the first list element as the function and the
+     * remainder as the arguments, or a {@code RFunction} (as determined by repType).
      */
     Object fromList(RList list, RLanguage.RepType repType);
 

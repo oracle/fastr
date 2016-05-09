@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -287,7 +288,9 @@ public class CallRFFIHelper {
                 assert nameAsString != null;
             }
             nameAsString = nameAsString.intern();
-            if ("class" == nameAsString) {
+            if (val == RNull.instance) {
+                attrObj.removeAttr(nameAsString);
+            } else if ("class" == nameAsString) {
                 attrObj.initAttributes().put(nameAsString, val);
             } else {
                 attrObj.setAttr(nameAsString, val);
@@ -528,6 +531,21 @@ public class CallRFFIHelper {
     public static int NAMED(Object x) {
         if (x instanceof RShareable) {
             return ((RShareable) x).isShared() ? 1 : 0;
+        } else {
+            throw unimplemented();
+        }
+    }
+
+    public static Object SET_TYPEOF_FASTR(Object x, int v) {
+        int code = SEXPTYPE.gnuRCodeForObject(x);
+        if (code == SEXPTYPE.LISTSXP.code && v == SEXPTYPE.LANGSXP.code) {
+            RList l;
+            if (x instanceof RPairList) {
+                l = ((RPairList) x).toRList();
+            } else {
+                l = (RList) x;
+            }
+            return RContext.getRRuntimeASTAccess().fromList(l, RLanguage.RepType.CALL);
         } else {
             throw unimplemented();
         }
