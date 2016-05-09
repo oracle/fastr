@@ -28,21 +28,22 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.conn.RConnection;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RInteger;
-import com.oracle.truffle.r.runtime.data.closures.RClosures;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.BinaryCompare;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.And;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.Or;
@@ -54,7 +55,7 @@ import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
  * operation is implemented by factory object given as a constructor parameter, e.g.
  * {@link com.oracle.truffle.r.runtime.ops.BinaryLogic.And}.
  */
-public abstract class BinaryBooleanNode extends BinaryNodeBase {
+public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     protected static final int CACHE_LIMIT = 5;
 
@@ -135,54 +136,8 @@ public abstract class BinaryBooleanNode extends BinaryNodeBase {
         return recursive.execute(frame, recursiveLeft, recursiveRight);
     }
 
-    @Specialization(guards = {"isFactor(left) || isFactor(right)", "meaningfulFactorOp(left, right)"})
-    protected Object doFactorMeaningful(VirtualFrame frame, Object left, Object right, //
-                    @Cached("createRecursive()") BinaryBooleanNode recursive, //
-                    @Cached("create()") RAttributeProfiles attrProfiles) {
-        Object recursiveLeft = left;
-        if (isFactor(left)) {
-            recursiveLeft = RClosures.createFactorToVector((RAbstractIntVector) left, false, attrProfiles);
-        }
-
-        Object recursiveRight = right;
-        if (isFactor(right)) {
-            recursiveRight = RClosures.createFactorToVector((RAbstractIntVector) right, false, attrProfiles);
-        }
-
-        return recursive.execute(frame, recursiveLeft, recursiveRight);
-    }
-
     protected BinaryBooleanNode createRecursive() {
         return BinaryBooleanNode.create(factory);
-    }
-
-    @Specialization(guards = {"isFactor(left) || isFactor(right)", "!meaningfulFactorOp(left, right)"})
-    protected Object doFactorNotMeaniningful(VirtualFrame frame, Object left, Object right, @Cached("create()") RLengthNode lengthNode) {
-        Message warning;
-        if (isFactor(left)) {
-            warning = getFactorWarning((RAbstractIntVector) left);
-        } else {
-            warning = getFactorWarning((RAbstractIntVector) right);
-        }
-        RError.warning(this, warning, factory.create().opName());
-        return RDataFactory.createNAVector(Math.max(lengthNode.executeInteger(frame, left), lengthNode.executeInteger(frame, right)));
-    }
-
-    private ConditionProfile meaningfulOpForFactors = ConditionProfile.createBinaryProfile();
-
-    protected boolean meaningfulFactorOp(Object left, Object right) {
-        if (meaningfulOpForFactors.profile(factory == BinaryCompare.EQUAL || factory == BinaryCompare.NOT_EQUAL)) {
-            return true;
-        } else if (isFactor(left)) {
-            boolean ordered = isOrderedFactor((RAbstractIntVector) left);
-            if (isFactor(right)) {
-                return ordered && isOrderedFactor((RAbstractIntVector) right);
-            }
-            return ordered;
-        } else {
-            assert isFactor(right) : "meaningfulFactorOp is expected to be invoked with at least one factor.";
-            return isOrderedFactor((RAbstractIntVector) right);
-        }
     }
 
     @SuppressWarnings("unused")

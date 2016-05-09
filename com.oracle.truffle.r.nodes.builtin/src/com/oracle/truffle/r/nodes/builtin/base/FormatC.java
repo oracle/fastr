@@ -49,6 +49,6 @@ public abstract class FormatC extends RBuiltinNode {
     RAttributable formatC(RAbstractContainer x, RAbstractStringVector modeVec, RAbstractIntVector widthVec, RAbstractIntVector digitsVec, RAbstractStringVector formatVec,
                     RAbstractStringVector flagVec, RAbstractIntVector iStrlen) {
         RStringVector res = castStringVector(x);
-        return res.setClassAttr(null, false);
+        return res.setClassAttr(null);
     }
 }

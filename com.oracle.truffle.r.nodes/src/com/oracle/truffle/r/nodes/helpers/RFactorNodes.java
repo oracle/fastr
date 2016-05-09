@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 /**
  * Contains helper nodes related to factors, special R class of {@link RAbstractIntVector}. Note:
- * there is also {@code IsFactorNode}, which implements a built-in, for checking factor class.
+ * there is also {@link InheritsCheckNode}, which can be used to check if something is a factor.
  */
 public final class RFactorNodes {
 
@@ -50,7 +50,7 @@ public final class RFactorNodes {
     /**
      * Encapsulates the operation of deciding whether a factor is ordered.
      */
-    public static class GetOrdered extends Node {
+    public static final class GetOrdered extends Node {
         @Child private AttributeAccess isOrderedAccess = AttributeAccess.create(RRuntime.ORDERED_ATTR_KEY);
 
         public boolean execute(RAbstractIntVector factor) {
@@ -67,7 +67,7 @@ public final class RFactorNodes {
     /**
      * Encapsulates the operation of getting the 'levels' of a factor as a string vector.
      */
-    public static class GetLevels extends Node {
+    public static final class GetLevels extends Node {
         @Child private CastStringNode castString;
         @Child private AttributeAccess attrAccess = AttributeAccess.create(RRuntime.LEVELS_ATTR_KEY);
 

@@ -310,7 +310,7 @@ public class HiddenInternalFunctions {
                     symbolData[i] = symbolInfo.createRSymbolObject(rnt, true);
                 }
                 RList symbolDataList = RDataFactory.createList(symbolData);
-                symbolDataList.setClassAttr(NATIVE_ROUTINE_LIST, false);
+                symbolDataList.setClassAttr(NATIVE_ROUTINE_LIST);
                 data[nst.ordinal()] = symbolDataList;
             }
             return RDataFactory.createList(data, NAMES);

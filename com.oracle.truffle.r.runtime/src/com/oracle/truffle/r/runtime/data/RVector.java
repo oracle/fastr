@@ -498,49 +498,34 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     }
 
     @Override
-    public RAbstractContainer setClassAttr(RStringVector classAttr, boolean convertToInt) {
-        return setClassAttrInternal(this, classAttr, null, convertToInt);
+    public RAbstractContainer setClassAttr(RStringVector classAttr) {
+        return setClassAttrInternal(this, classAttr);
     }
 
-    public static RAbstractContainer setVectorClassAttr(RVector vector, RStringVector classAttr, RAbstractContainer enclosingFactor) {
-        return setClassAttrInternal(vector, classAttr, enclosingFactor, false);
+    public static RAbstractContainer setVectorClassAttr(RVector vector, RStringVector classAttr) {
+        return setClassAttrInternal(vector, classAttr);
     }
 
-    private static RAbstractContainer setClassAttrInternal(RVector vector, RStringVector classAttr, RAbstractContainer enclosingFactor, boolean convertToInt) {
+    private static RAbstractContainer setClassAttrInternal(RVector vector, RStringVector classAttr) {
         if (vector.attributes == null && classAttr != null && classAttr.getLength() != 0) {
             vector.initAttributes();
         }
         if (vector.attributes != null && (classAttr == null || classAttr.getLength() == 0)) {
             vector.removeAttributeMapping(RRuntime.CLASS_ATTR_KEY);
-            // class attribute removed - no longer a data frame or factor (even if it was before)
-            return vector;
         } else if (classAttr != null && classAttr.getLength() != 0) {
             for (int i = 0; i < classAttr.getLength(); i++) {
                 String attr = classAttr.getDataAt(i);
                 if (RRuntime.CLASS_FACTOR.equals(attr)) {
-                    // For Factors we only have to check if the data-type is Integer, because
-                    // otherwise we must show error.
-                    // Note: this can only happen if the class is set by hand to some non-integral
-                    // vector, i.e. attr(doubles, 'class') <- 'factor'
                     vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
                     if (vector.getElementClass() != RInteger.class) {
-                        // TODO: check when this 'convertToInt' is necessary
-                        if (vector.getElementClass() == RDouble.class && convertToInt) {
-                            RDoubleVector sourceVector = (RDoubleVector) vector;
-                            int[] data = new int[sourceVector.getLength()];
-                            for (int j = 0; j < data.length; j++) {
-                                data[j] = RRuntime.double2int(sourceVector.getDataAt(j));
-                            }
-                            RIntVector resVector = RDataFactory.createIntVector(data, sourceVector.isComplete());
-                            resVector.copyAttributesFrom(sourceVector);
-                            return resVector;
-                        } else {
-                            // TODO: add invoking node
-                            throw RError.error(RError.SHOW_CALLER2, RError.Message.ADDING_INVALID_CLASS, "factor");
-                        }
+                        // N.B. there used to be conversion to integer under certain circumstances.
+                        // However, it seems that it was dead/obsolete code so it was removed.
+                        // Notes: this can only happen if the class is set by hand to some
+                        // non-integral vector, i.e. attr(doubles, 'class') <- 'factor'. GnuR also
+                        // does not update the 'class' attr with other, possibly
+                        // valid classes when it reaches this error.
+                        throw RError.error(RError.SHOW_CALLER2, RError.Message.ADDING_INVALID_CLASS, "factor");
                     }
-
-                    break;  // TODO: check if setting connection and then factor shows both errors
                 } else if (RType.Connection.getName().equals(attr)) {
                     // convert to RConnection
                     return ConnectionSupport.fromVector(vector, classAttr);
@@ -548,6 +533,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
             }
             vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
         }
+
         return vector;
     }
 
@@ -637,7 +623,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         RAttributes vecAttributes = vector.getAttributes();
         if (vecAttributes != null) {
             this.attributes = vecAttributes.copy();
-            return this.setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY), false);
+            return this.setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY));
         } else {
             return this;
         }
@@ -657,7 +643,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         RAttributes vecAttributes = vector.getAttributes();
         if (vecAttributes != null) {
             this.attributes = vecAttributes.copy();
-            return this.setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY), false);
+            return this.setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY));
         } else {
             return this;
         }

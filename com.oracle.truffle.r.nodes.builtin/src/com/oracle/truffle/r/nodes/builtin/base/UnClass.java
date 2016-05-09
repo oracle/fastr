@@ -42,7 +42,7 @@ public abstract class UnClass extends RBuiltinNode {
                 assert resultVector.isTemporary();
                 resultVector.incRefCount();
             }
-            return RVector.setVectorClassAttr(resultVector, null, null);
+            return RVector.setVectorClassAttr(resultVector, null);
         }
         return arg;
     }
