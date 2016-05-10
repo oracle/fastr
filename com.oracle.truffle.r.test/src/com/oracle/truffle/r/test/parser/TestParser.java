@@ -73,6 +73,12 @@ public class TestParser extends TestBase {
         assertEval(Output.ContainsAmbiguousError, "a <- 1:100; y <- 2; z <- 5; x <- (a[[{y \n * z}]])");
     }
 
+    @Test
+    public void testLexerError() {
+        // FastR provides a more accurate error message
+        assertEval(Output.ContainsError, "%0");
+    }
+
     /**
      * Recursively look for .r source files in the args[0] directory and parse them.
      */
