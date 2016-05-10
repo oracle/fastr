@@ -26,6 +26,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -54,13 +55,13 @@ public class ConditionFunctions {
         @SuppressWarnings("unused")
         @Specialization(guards = "isRNull(classes) || isRNull(handlers)")
         protected Object addCondHands(Object classes, Object handlers, Object parentEnv, Object target, byte calling) {
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             return getHandlerStack();
         }
 
         @Specialization(guards = "classes.getLength() == handlers.getLength()")
         protected Object addCondHands(RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             return RErrorHandling.createHandlers(classes, handlers, parentEnv, target, calling);
         }
 
@@ -76,7 +77,7 @@ public class ConditionFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull resetCondHands(Object stack) {
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             // TODO
             throw RInternalError.unimplemented();
         }
@@ -159,7 +160,7 @@ public class ConditionFunctions {
     public abstract static class Seterrmessage extends RBuiltinNode {
         @Specialization
         protected RNull seterrmessage(RAbstractStringVector msg) {
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             RErrorHandling.seterrmessage(msg.getDataAt(0));
             return RNull.instance;
         }
@@ -188,7 +189,7 @@ public class ConditionFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull printDeferredWarnings() {
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             RErrorHandling.printDeferredWarnings();
             return RNull.instance;
         }

@@ -28,6 +28,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -166,10 +167,10 @@ public abstract class Switch extends RBuiltinNode {
 
     private Object prepareResult(Object value) {
         if (returnValueProfile.profile(value != null)) {
-            forceVisibility(true);
+            RContext.getInstance().setVisible(true);
             return value;
         } else {
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
     }

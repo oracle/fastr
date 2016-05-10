@@ -42,14 +42,4 @@ public interface VisibilityController {
     default boolean getVisibility() {
         return true;
     }
-
-    /**
-     * Force the visibility to {@code state}. Useful for builtins where the visibility depends on
-     * the result, e.g. {@code switch}.
-     */
-    default void forceVisibility(boolean state) {
-        if (!FastROptions.IgnoreVisibility.getBooleanValue()) {
-            RContext.getInstance().setVisible(state);
-        }
-    }
 }

@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -80,7 +81,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         writeRangeNode.execute(frame);
         writeLengthNode.execute(frame);
         loopNode.executeLoop(frame);
-        forceVisibility(false);
+        RContext.getInstance().setVisible(false);
         return RNull.instance;
     }
 

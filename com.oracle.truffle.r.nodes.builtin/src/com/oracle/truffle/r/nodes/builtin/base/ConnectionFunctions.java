@@ -316,7 +316,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object open(RConnection con, RAbstractStringVector open, @SuppressWarnings("unused") byte blocking) {
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             try {
                 BaseRConnection baseConn = getBaseConnection(con);
                 if (baseConn.isClosed()) {
@@ -377,7 +377,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object close(RConnection con) {
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             try {
                 con.closeAndDestroy();
             } catch (IOException ex) {
@@ -457,7 +457,7 @@ public abstract class ConnectionFunctions {
             } catch (IOException x) {
                 throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
             }
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
 
@@ -612,7 +612,7 @@ public abstract class ConnectionFunctions {
             } catch (IOException x) {
                 throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
             }
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
     }
@@ -929,7 +929,7 @@ public abstract class ConnectionFunctions {
                     throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
                 }
             }
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
 
@@ -940,7 +940,7 @@ public abstract class ConnectionFunctions {
             boolean useBytes = RRuntime.fromLogical(useBytesArg);
             ByteBuffer buffer = writeData.execute(object, size, swap, useBytes);
             buffer.flip();
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             return RDataFactory.createRawVector(buffer.array());
         }
     }

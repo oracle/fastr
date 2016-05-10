@@ -178,7 +178,7 @@ public class FastRTrace {
 
         @Specialization
         protected Object untrace(VirtualFrame frame, Object whatObj, Object signature, Object whereObj) {
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             Object what = whatObj;
             checkWhat(what);
             Object where = whereObj;

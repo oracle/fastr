@@ -27,6 +27,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -42,7 +43,7 @@ public final class NextNode extends RSourceSectionNode implements RSyntaxNode, R
 
     @Override
     public Object execute(VirtualFrame frame) {
-        forceVisibility(false);
+        RContext.getInstance().setVisible(false);
         throw NextException.instance;
     }
 

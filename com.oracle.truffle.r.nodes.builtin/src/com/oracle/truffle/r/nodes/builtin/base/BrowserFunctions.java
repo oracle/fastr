@@ -93,7 +93,7 @@ public class BrowserFunctions {
                     helperState.remove(helperState.size() - 1);
                 }
             }
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
     }

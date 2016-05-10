@@ -41,6 +41,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
@@ -531,7 +532,9 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     }
 
     public void setVisible(boolean v) {
-        resultVisible = v;
+        if (!FastROptions.IgnoreVisibility.getBooleanValue()) {
+            resultVisible = v;
+        }
     }
 
     public boolean isMethodTableDispatchOn() {
