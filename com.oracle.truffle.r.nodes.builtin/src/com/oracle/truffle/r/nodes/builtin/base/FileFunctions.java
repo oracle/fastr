@@ -47,7 +47,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -1024,7 +1023,7 @@ public class FileFunctions {
     }
 
     @RBuiltin(name = "unlink", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "recursive", "force"})
-    public abstract static class Unlink extends RInvisibleBuiltinNode {
+    public abstract static class Unlink extends RBuiltinNode {
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -1113,7 +1112,7 @@ public class FileFunctions {
     }
 
     @RBuiltin(name = "dir.create", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"path", "showWarnings", "recursive", "mode"})
-    public abstract static class DirCreate extends RInvisibleBuiltinNode {
+    public abstract static class DirCreate extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected byte dirCreate(RAbstractStringVector pathVec, byte showWarnings, byte recursive, RIntVector octMode) {

@@ -25,13 +25,13 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = "invisible", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"x"})
-public abstract class Invisible extends RInvisibleBuiltinNode {
+public abstract class Invisible extends RBuiltinNode {
 
     @Override
     public Object[] getDefaultParameterValues() {

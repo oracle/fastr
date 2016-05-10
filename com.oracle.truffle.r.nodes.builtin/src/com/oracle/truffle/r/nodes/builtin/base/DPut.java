@@ -29,7 +29,7 @@ import java.io.IOException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
  * The {@code dput .Internal}.
  */
 @RBuiltin(name = "dput", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "file", "opts"})
-public abstract class DPut extends RInvisibleBuiltinNode {
+public abstract class DPut extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {

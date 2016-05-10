@@ -34,7 +34,7 @@ import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
  *
  */
 @RBuiltin(name = "assign", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "value", "envir", "inherits"})
-public abstract class Assign extends RInvisibleBuiltinNode {
+public abstract class Assign extends RBuiltinNode {
 
     @CompilationFinal private final BranchProfile[] slotFoundOnIteration = {BranchProfile.create(), BranchProfile.create(), BranchProfile.create()};
     private final BranchProfile errorProfile = BranchProfile.create();

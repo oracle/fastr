@@ -26,16 +26,17 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 
-@RBuiltin(name = ".fastr.tree", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func", "verbose"})
-public abstract class FastRTree extends RInvisibleBuiltinNode {
+@RBuiltin(name = ".fastr.tree", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func", "verbose"})
+public abstract class FastRTree extends RBuiltinNode {
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};

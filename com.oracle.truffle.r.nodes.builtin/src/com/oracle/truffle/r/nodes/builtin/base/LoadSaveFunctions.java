@@ -22,7 +22,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.SerializeFunctions.Adapter;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public class LoadSaveFunctions {
 
     @RBuiltin(name = "loadFromConn2", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"con", "envir", "verbose"})
-    public abstract static class LoadFromConn2 extends RInvisibleBuiltinNode {
+    public abstract static class LoadFromConn2 extends RBuiltinNode {
 
         private final NACheck naCheck = NACheck.create();
 
@@ -100,7 +100,7 @@ public class LoadSaveFunctions {
     }
 
     @RBuiltin(name = "load", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"con", "envir"})
-    public abstract static class Load extends RInvisibleBuiltinNode {
+    public abstract static class Load extends RBuiltinNode {
         // now deprecated but still used by some packages
 
         private static final int R_MAGIC_EMPTY = 999;

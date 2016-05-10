@@ -30,7 +30,7 @@ import java.io.IOException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "readRenviron", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = "path")
-public abstract class ReadREnviron extends RInvisibleBuiltinNode {
+public abstract class ReadREnviron extends RBuiltinNode {
 
     @Specialization(guards = "lengthOneCVector(vec)")
     @TruffleBoundary

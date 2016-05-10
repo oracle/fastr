@@ -29,19 +29,20 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public class FastRInterop {
-    @RBuiltin(name = ".fastr.interop.eval", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"mimeType", "source"})
-    public abstract static class Eval extends RInvisibleBuiltinNode {
+    @RBuiltin(name = ".fastr.interop.eval", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"mimeType", "source"})
+    public abstract static class Eval extends RBuiltinNode {
 
         @Specialization
         @TruffleBoundary
@@ -61,8 +62,8 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.export", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"name", "value"})
-    public abstract static class Export extends RInvisibleBuiltinNode {
+    @RBuiltin(name = ".fastr.interop.export", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"name", "value"})
+    public abstract static class Export extends RBuiltinNode {
 
         @Specialization
         @TruffleBoundary
@@ -81,8 +82,8 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.import", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"name"})
-    public abstract static class Import extends RInvisibleBuiltinNode {
+    @RBuiltin(name = ".fastr.interop.import", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"name"})
+    public abstract static class Import extends RBuiltinNode {
 
         @Specialization
         @TruffleBoundary

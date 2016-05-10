@@ -32,6 +32,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.ToStringNode;
 import com.oracle.truffle.r.nodes.unary.ToStringNodeGen;
@@ -56,7 +57,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * The {@code cat .Internal}.
  */
 @RBuiltin(name = "cat", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"})
-public abstract class Cat extends RInvisibleBuiltinNode {
+public abstract class Cat extends RBuiltinNode {
 
     @Child private ToStringNode toString;
 

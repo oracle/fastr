@@ -30,7 +30,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNodeGen;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -60,7 +59,7 @@ public class BrowserFunctions {
     private static final ArrayList<HelperState> helperState = new ArrayList<>();
 
     @RBuiltin(name = "browser", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"})
-    public abstract static class BrowserNode extends RInvisibleBuiltinNode {
+    public abstract static class BrowserNode extends RBuiltinNode {
 
         @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
 

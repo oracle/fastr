@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 public class DebugFunctions {
 
-    protected abstract static class ErrorAdapter extends RInvisibleBuiltinNode {
+    protected abstract static class ErrorAdapter extends RBuiltinNode {
 
         protected RError arg1Closure() throws RError {
             throw RError.error(this, RError.Message.ARG_MUST_BE_CLOSURE);
@@ -112,7 +112,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "isdebugged", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
+    @RBuiltin(name = "isdebugged", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
     public abstract static class IsDebugged extends ErrorAdapter {
 
         @Fallback

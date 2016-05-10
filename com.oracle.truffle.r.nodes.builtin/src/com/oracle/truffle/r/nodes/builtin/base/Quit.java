@@ -27,7 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = "quit", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"save", "status", "runLast"})
-public abstract class Quit extends RInvisibleBuiltinNode {
+public abstract class Quit extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {

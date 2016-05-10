@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
@@ -41,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 public class SinkFunctions {
     @RBuiltin(name = "sink", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"file", "closeOnExit", "isMessage", "split"})
-    public abstract static class Sink extends RInvisibleBuiltinNode {
+    public abstract static class Sink extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RNull sink(RConnection conn, byte closeOnExit, byte isMessage, @SuppressWarnings("unused") byte split) {

@@ -34,7 +34,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
@@ -53,7 +53,7 @@ import com.oracle.truffle.r.runtime.ops.na.NAProfile;
  * evaluating function using a new slot in {@link RArguments} and run it on function exit.
  */
 @RBuiltin(name = "on.exit", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = 0)
-public abstract class OnExit extends RInvisibleBuiltinNode {
+public abstract class OnExit extends RBuiltinNode {
 
     @Child private FrameSlotNode onExitSlot = FrameSlotNode.create(RFrameSlot.OnExit, true);
 

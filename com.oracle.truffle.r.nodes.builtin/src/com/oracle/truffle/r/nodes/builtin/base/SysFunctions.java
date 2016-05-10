@@ -122,7 +122,7 @@ public class SysFunctions {
      * code depends critically in the current implementation which sets/unsets this environment
      * variable around a call to loadNamespace/attachNamespace.
      */
-    protected abstract static class LoadNamespaceAdapter extends RInvisibleBuiltinNode {
+    protected abstract static class LoadNamespaceAdapter extends RBuiltinNode {
         private static final String NS_LOAD = "_R_NS_LOAD_";
         private static final String LOADNAMESPACE = "loadNamespace";
 
@@ -187,7 +187,7 @@ public class SysFunctions {
     }
 
     @RBuiltin(name = "Sys.sleep", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"time"})
-    public abstract static class SysSleep extends RInvisibleBuiltinNode {
+    public abstract static class SysSleep extends RBuiltinNode {
 
         @Specialization
         @TruffleBoundary
@@ -304,7 +304,7 @@ public class SysFunctions {
 
     // TODO implement
     @RBuiltin(name = "Sys.chmod", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"paths", "octmode", "use_umask"})
-    public abstract static class SysChmod extends RInvisibleBuiltinNode {
+    public abstract static class SysChmod extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") byte useUmask) {

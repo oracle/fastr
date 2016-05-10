@@ -45,7 +45,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.WriteDataNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
@@ -483,7 +482,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "flush", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"con"})
-    public abstract static class Flush extends RInvisibleBuiltinNode {
+    public abstract static class Flush extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RNull flush(RConnection con) {

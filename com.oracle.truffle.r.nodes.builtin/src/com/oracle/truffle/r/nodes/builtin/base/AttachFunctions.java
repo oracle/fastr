@@ -28,7 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RVisibility;
@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.DetachException;
 
 public class AttachFunctions {
     @RBuiltin(name = "attach", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"what", "pos", "name"})
-    public abstract static class Attach extends RInvisibleBuiltinNode {
+    public abstract static class Attach extends RBuiltinNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -109,7 +109,7 @@ public class AttachFunctions {
     }
 
     @RBuiltin(name = "detach", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"pos"})
-    public abstract static class Detach extends RInvisibleBuiltinNode {
+    public abstract static class Detach extends RBuiltinNode {
 
         @Override
         protected void createCasts(CastBuilder casts) {

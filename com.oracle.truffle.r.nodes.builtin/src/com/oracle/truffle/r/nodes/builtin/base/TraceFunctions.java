@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class TraceFunctions {
 
-    private abstract static class Helper extends RInvisibleBuiltinNode {
+    private abstract static class Helper extends RBuiltinNode {
         @Child private GetFunctions.Get getNode;
 
         protected Object getFunction(VirtualFrame frame, String funcName) {

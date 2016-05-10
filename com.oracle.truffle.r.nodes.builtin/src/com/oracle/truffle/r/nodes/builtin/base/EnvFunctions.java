@@ -42,7 +42,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
@@ -442,7 +441,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "lockEnvironment", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"env", "bindings"})
-    public abstract static class LockEnvironment extends RInvisibleBuiltinNode {
+    public abstract static class LockEnvironment extends RBuiltinNode {
 
         @Specialization
         protected Object lockEnvironment(REnvironment env, byte bindings) {
@@ -471,7 +470,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "lockBinding", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "env"})
-    public abstract static class LockBinding extends RInvisibleBuiltinNode {
+    public abstract static class LockBinding extends RBuiltinNode {
         @Specialization
         protected Object lockBinding(RSymbol sym, REnvironment env) {
             controlVisibility();
@@ -486,7 +485,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "unlockBinding", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "env"})
-    public abstract static class UnlockBinding extends RInvisibleBuiltinNode {
+    public abstract static class UnlockBinding extends RBuiltinNode {
         @Specialization
         protected RNull unlockBinding(RSymbol sym, REnvironment env) {
             controlVisibility();
@@ -515,7 +514,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "makeActiveBinding", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "fun", "env"})
-    public abstract static class MakeActiveBinding extends RInvisibleBuiltinNode {
+    public abstract static class MakeActiveBinding extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object makeActiveBinding(Object sym, Object fun, Object env) {
@@ -525,8 +524,8 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "bindingIsActive", kind = INTERNAL, parameterNames = {"sym", "env"})
-    public abstract static class BindingIsActive extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "bindingIsActive", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "env"})
+    public abstract static class BindingIsActive extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object bindingIsActive(Object sym, Object fun, Object env) {
