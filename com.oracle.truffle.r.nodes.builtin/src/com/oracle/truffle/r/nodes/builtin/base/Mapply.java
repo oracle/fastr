@@ -178,7 +178,7 @@ public abstract class Mapply extends RBuiltinNode {
             return result;
         }
 
-        @Specialization
+        @Specialization(contains = "cachedMApply")
         protected Object[] mApply(VirtualFrame frame, RList dots, RFunction function, RList moreArgs,
                         @SuppressWarnings("unused") @Cached("createArgsIdentifier()") Object argsIdentifier,
                         @Cached("createFrameSlotNode(argsIdentifier)") FrameSlotNode slotNode,
