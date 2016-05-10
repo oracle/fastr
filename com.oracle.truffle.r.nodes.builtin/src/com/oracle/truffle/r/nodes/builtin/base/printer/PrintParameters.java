@@ -11,6 +11,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+
 //Transcribed from GnuR, src/include/Print.h
 
 import com.oracle.truffle.r.nodes.builtin.base.Format;
@@ -20,7 +22,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RString;
 
 public final class PrintParameters {
-    public static final int DEFAULT_DIGITS = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("digits"));
+    @CompilationFinal private static int DEFAULT_DIGITS = -1;
 
     private int width;
     private int naWidth;
@@ -40,6 +42,13 @@ public final class PrintParameters {
      * not subject to cloning so that it does not propagate to nested printers.
      */
     private boolean suppressIndexLabels;
+
+    public static int getDefaultDigits() {
+        if (DEFAULT_DIGITS == -1) {
+            DEFAULT_DIGITS = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("digits"));
+        }
+        return DEFAULT_DIGITS;
+    }
 
     public PrintParameters() {
         // default constructor
