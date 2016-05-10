@@ -32,12 +32,13 @@ import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-@RBuiltin(name = "quit", kind = INTERNAL, parameterNames = {"save", "status", "runLast"})
+@RBuiltin(name = "quit", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"save", "status", "runLast"})
 public abstract class Quit extends RInvisibleBuiltinNode {
 
     @Override

@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -52,7 +53,7 @@ public class DynLoadFunctions {
 
     private static final String DLLINFOLIST_CLASS = "DLLInfoList";
 
-    @RBuiltin(name = "dyn.load", kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"})
+    @RBuiltin(name = "dyn.load", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"})
     public abstract static class DynLoad extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -81,7 +82,7 @@ public class DynLoadFunctions {
         }
     }
 
-    @RBuiltin(name = "dyn.unload", kind = INTERNAL, parameterNames = {"lib"})
+    @RBuiltin(name = "dyn.unload", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"lib"})
     public abstract static class DynUnload extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary

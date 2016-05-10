@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -52,7 +53,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "debug", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
+    @RBuiltin(name = "debug", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
     public abstract static class Debug extends ErrorAdapter {
 
         @SuppressWarnings("unused")
@@ -71,7 +72,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "debugonce", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
+    @RBuiltin(name = "debugonce", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
     public abstract static class DebugOnce extends ErrorAdapter {
 
         @SuppressWarnings("unused")
@@ -91,7 +92,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "undebug", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
+    @RBuiltin(name = "undebug", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
     public abstract static class UnDebug extends ErrorAdapter {
 
         @Fallback

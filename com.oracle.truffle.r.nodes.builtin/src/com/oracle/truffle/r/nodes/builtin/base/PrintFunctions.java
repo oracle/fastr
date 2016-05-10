@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -63,7 +64,7 @@ public class PrintFunctions {
         }
     }
 
-    @RBuiltin(name = "print.default", kind = INTERNAL, parameterNames = {"x", "digits", "quote", "na.print", "print.gap", "right", "max", "useSource", "noOpt"})
+    @RBuiltin(name = "print.default", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "digits", "quote", "na.print", "print.gap", "right", "max", "useSource", "noOpt"})
     public abstract static class PrintDefault extends PrintAdapter {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
@@ -104,7 +105,7 @@ public class PrintFunctions {
         }
     }
 
-    @RBuiltin(name = "print.function", kind = INTERNAL, parameterNames = {"x", "useSource", "..."})
+    @RBuiltin(name = "print.function", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "useSource", "..."})
     public abstract static class PrintFunction extends PrintAdapter {
         @SuppressWarnings("unused")
         @Specialization

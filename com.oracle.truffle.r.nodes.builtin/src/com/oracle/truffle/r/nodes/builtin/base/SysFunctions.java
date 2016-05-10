@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -143,7 +144,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.setenv", kind = INTERNAL, parameterNames = {"nm", "values"})
+    @RBuiltin(name = "Sys.setenv", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"nm", "values"})
     public abstract static class SysSetEnv extends LoadNamespaceAdapter {
 
         @Specialization
@@ -164,7 +165,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.unsetenv", kind = INTERNAL, parameterNames = {"x"})
+    @RBuiltin(name = "Sys.unsetenv", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x"})
     public abstract static class SysUnSetEnv extends LoadNamespaceAdapter {
 
         @Specialization
@@ -185,7 +186,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.sleep", kind = INTERNAL, parameterNames = {"time"})
+    @RBuiltin(name = "Sys.sleep", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"time"})
     public abstract static class SysSleep extends RInvisibleBuiltinNode {
 
         @Specialization
@@ -302,7 +303,7 @@ public class SysFunctions {
     }
 
     // TODO implement
-    @RBuiltin(name = "Sys.chmod", kind = INTERNAL, parameterNames = {"paths", "octmode", "use_umask"})
+    @RBuiltin(name = "Sys.chmod", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"paths", "octmode", "use_umask"})
     public abstract static class SysChmod extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -322,7 +323,7 @@ public class SysFunctions {
     }
 
     // TODO implement
-    @RBuiltin(name = "Sys.umask", kind = INTERNAL, parameterNames = {"octmode"})
+    @RBuiltin(name = "Sys.umask", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"octmode"})
     public abstract static class SysUmask extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization

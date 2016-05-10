@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.unary.ToStringNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -54,7 +55,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 /**
  * The {@code cat .Internal}.
  */
-@RBuiltin(name = "cat", kind = INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"})
+@RBuiltin(name = "cat", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"})
 public abstract class Cat extends RInvisibleBuiltinNode {
 
     @Child private ToStringNode toString;

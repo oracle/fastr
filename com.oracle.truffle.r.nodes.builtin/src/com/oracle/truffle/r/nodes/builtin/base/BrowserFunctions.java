@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -58,7 +59,7 @@ public class BrowserFunctions {
 
     private static final ArrayList<HelperState> helperState = new ArrayList<>();
 
-    @RBuiltin(name = "browser", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"})
+    @RBuiltin(name = "browser", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"})
     public abstract static class BrowserNode extends RInvisibleBuiltinNode {
 
         @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
@@ -151,7 +152,7 @@ public class BrowserFunctions {
         }
     }
 
-    @RBuiltin(name = "browserSetDebug", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
+    @RBuiltin(name = "browserSetDebug", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserSetDebug extends RetrieveAdapter {
 
         @Specialization

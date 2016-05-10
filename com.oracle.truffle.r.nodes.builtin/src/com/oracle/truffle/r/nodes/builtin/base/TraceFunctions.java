@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -54,7 +55,7 @@ public class TraceFunctions {
         }
     }
 
-    @RBuiltin(name = ".primTrace", kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
+    @RBuiltin(name = ".primTrace", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
     public abstract static class PrimTrace extends Helper {
 
         @Specialization
@@ -75,7 +76,7 @@ public class TraceFunctions {
         }
     }
 
-    @RBuiltin(name = ".primUntrace", kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
+    @RBuiltin(name = ".primUntrace", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
     public abstract static class PrimUnTrace extends Helper {
 
         @Specialization

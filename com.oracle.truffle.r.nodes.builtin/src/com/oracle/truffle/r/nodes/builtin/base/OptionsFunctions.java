@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.ROptions.OptionsException;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -54,7 +55,7 @@ public class OptionsFunctions {
      * This could be refactored using a recursive child node to handle simple cases, but it's
      * unlikely to be the fast path.
      */
-    @RBuiltin(name = "options", kind = INTERNAL, parameterNames = {"..."})
+    @RBuiltin(name = "options", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"..."})
     public abstract static class Options extends RBuiltinNode {
 
         private final ConditionProfile argNameNull = ConditionProfile.createBinaryProfile();

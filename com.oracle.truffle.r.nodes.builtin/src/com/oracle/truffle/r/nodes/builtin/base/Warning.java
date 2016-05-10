@@ -35,8 +35,9 @@ import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 
-@RBuiltin(name = "warning", kind = RBuiltinKind.INTERNAL, parameterNames = {"call", "immediate", "nobreaks", "message"})
+@RBuiltin(name = "warning", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"call", "immediate", "nobreaks", "message"})
 public abstract class Warning extends RInvisibleBuiltinNode {
 
     @Child private CastStringNode castString;

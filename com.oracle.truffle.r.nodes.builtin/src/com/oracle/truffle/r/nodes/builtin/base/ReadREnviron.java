@@ -34,11 +34,12 @@ import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "readRenviron", kind = INTERNAL, parameterNames = "path")
+@RBuiltin(name = "readRenviron", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = "path")
 public abstract class ReadREnviron extends RInvisibleBuiltinNode {
 
     @Specialization(guards = "lengthOneCVector(vec)")

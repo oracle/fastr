@@ -20,27 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.context.RContext;
 
-@RBuiltin(name = "invisible", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"x"})
-public abstract class Invisible extends RInvisibleBuiltinNode {
-
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RNull.instance};
-    }
-
-    @Specialization
-    protected Object doInvisible(Object o) {
-        controlVisibility();
-        return o;
-    }
+/**
+ * Denotes the visibility of an output of a built-in.
+ */
+public enum RVisibility {
+    ON,
+    OFF,
+    /**
+     * In GnuR this means by default ON, but C code can change the visibility. In FastR this means
+     * that is it left up to the built-in whether and how to call
+     * {@link RContext#setVisible(boolean)}. For example, {@code do.call} and similar built-ins do
+     * not change the visibility set by the 'inner' node.
+     */
+    CUSTOM,
 }

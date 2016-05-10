@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -41,7 +42,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
-@RBuiltin(name = "remove", kind = INTERNAL, parameterNames = {"list", "envir", "inherits"})
+@RBuiltin(name = "remove", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"list", "envir", "inherits"})
 public abstract class Rm extends RInvisibleBuiltinNode {
 
     private final BranchProfile invalidateProfile = BranchProfile.create();

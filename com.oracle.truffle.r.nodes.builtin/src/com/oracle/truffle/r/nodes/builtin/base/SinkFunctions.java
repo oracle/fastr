@@ -33,13 +33,14 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 public class SinkFunctions {
-    @RBuiltin(name = "sink", kind = RBuiltinKind.INTERNAL, parameterNames = {"file", "closeOnExit", "isMessage", "split"})
+    @RBuiltin(name = "sink", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"file", "closeOnExit", "isMessage", "split"})
     public abstract static class Sink extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary

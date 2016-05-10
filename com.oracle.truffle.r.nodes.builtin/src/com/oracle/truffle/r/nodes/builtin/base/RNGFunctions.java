@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -38,7 +39,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
 import com.oracle.truffle.r.runtime.rng.RRNG.RNGException;
 
 public class RNGFunctions {
-    @RBuiltin(name = "set.seed", kind = INTERNAL, parameterNames = {"seed", "kind", "normal.kind"})
+    @RBuiltin(name = "set.seed", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"seed", "kind", "normal.kind"})
     public abstract static class SetSeed extends RInvisibleBuiltinNode {
 
         @SuppressWarnings("unused")

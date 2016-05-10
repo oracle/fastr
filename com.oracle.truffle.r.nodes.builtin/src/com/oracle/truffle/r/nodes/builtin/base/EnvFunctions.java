@@ -55,6 +55,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -440,7 +441,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "lockEnvironment", kind = INTERNAL, parameterNames = {"env", "bindings"})
+    @RBuiltin(name = "lockEnvironment", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"env", "bindings"})
     public abstract static class LockEnvironment extends RInvisibleBuiltinNode {
 
         @Specialization
@@ -469,7 +470,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "lockBinding", kind = INTERNAL, parameterNames = {"sym", "env"})
+    @RBuiltin(name = "lockBinding", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "env"})
     public abstract static class LockBinding extends RInvisibleBuiltinNode {
         @Specialization
         protected Object lockBinding(RSymbol sym, REnvironment env) {
@@ -484,7 +485,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "unlockBinding", kind = INTERNAL, parameterNames = {"sym", "env"})
+    @RBuiltin(name = "unlockBinding", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "env"})
     public abstract static class UnlockBinding extends RInvisibleBuiltinNode {
         @Specialization
         protected RNull unlockBinding(RSymbol sym, REnvironment env) {
@@ -513,7 +514,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "makeActiveBinding", kind = INTERNAL, parameterNames = {"sym", "fun", "env"})
+    @RBuiltin(name = "makeActiveBinding", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "fun", "env"})
     public abstract static class MakeActiveBinding extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization

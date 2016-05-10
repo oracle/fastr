@@ -27,6 +27,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -41,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  * {@link PromiseCheckHelperNode}.
  *
  */
-@RBuiltin(name = "switch", kind = PRIMITIVE, parameterNames = {"EXPR", "..."}, nonEvalArgs = 1)
+@RBuiltin(name = "switch", visibility = RVisibility.CUSTOM, kind = PRIMITIVE, parameterNames = {"EXPR", "..."}, nonEvalArgs = 1)
 public abstract class Switch extends RBuiltinNode {
     @Child private CastIntegerNode castIntNode;
     @Child private PromiseCheckHelperNode promiseHelper = new PromiseCheckHelperNode();

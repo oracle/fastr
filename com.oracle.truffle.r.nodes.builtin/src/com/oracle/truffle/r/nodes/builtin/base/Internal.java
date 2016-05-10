@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -59,7 +60,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * instrumentation at that level will remain in place.
  */
 @NodeInfo(cost = NodeCost.NONE)
-@RBuiltin(name = ".Internal", kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = 0)
+@RBuiltin(name = ".Internal", visibility = RVisibility.CUSTOM, kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = 0)
 public abstract class Internal extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();

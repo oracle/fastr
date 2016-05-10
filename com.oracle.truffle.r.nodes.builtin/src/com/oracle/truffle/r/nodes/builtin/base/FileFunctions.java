@@ -54,6 +54,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -1022,7 +1023,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "unlink", kind = INTERNAL, parameterNames = {"x", "recursive", "force"})
+    @RBuiltin(name = "unlink", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "recursive", "force"})
     public abstract static class Unlink extends RInvisibleBuiltinNode {
 
         @Override
@@ -1111,7 +1112,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "dir.create", kind = INTERNAL, parameterNames = {"path", "showWarnings", "recursive", "mode"})
+    @RBuiltin(name = "dir.create", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"path", "showWarnings", "recursive", "mode"})
     public abstract static class DirCreate extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary

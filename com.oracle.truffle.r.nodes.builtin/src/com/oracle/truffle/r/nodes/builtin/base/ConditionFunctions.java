@@ -25,6 +25,7 @@ import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -47,7 +48,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = ".addCondHands", kind = RBuiltinKind.INTERNAL, parameterNames = {"classes", "handlers", "parentenv", "target", "calling"})
+    @RBuiltin(name = ".addCondHands", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"classes", "handlers", "parentenv", "target", "calling"})
     public abstract static class AddCondHands extends RBuiltinNode {
 
         @SuppressWarnings("unused")
@@ -70,7 +71,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = ".resetCondHands", kind = RBuiltinKind.INTERNAL, parameterNames = {"stack"})
+    @RBuiltin(name = ".resetCondHands", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"stack"})
     public abstract static class ResetCondHands extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -161,7 +162,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = "seterrmessage", kind = RBuiltinKind.INTERNAL, parameterNames = "msg")
+    @RBuiltin(name = "seterrmessage", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = "msg")
     public abstract static class Seterrmessage extends RBuiltinNode {
         @Specialization
         protected RNull seterrmessage(RAbstractStringVector msg) {
@@ -191,7 +192,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = "printDeferredWarnings", kind = RBuiltinKind.INTERNAL, parameterNames = {})
+    @RBuiltin(name = "printDeferredWarnings", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {})
     public abstract static class PrintDeferredWarnings extends RBuiltinNode {
         @Specialization
         @TruffleBoundary

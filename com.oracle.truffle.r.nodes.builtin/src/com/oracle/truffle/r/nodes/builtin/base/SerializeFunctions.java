@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -97,7 +98,7 @@ public class SerializeFunctions {
         }
     }
 
-    @RBuiltin(name = "serializeToConn", kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
+    @RBuiltin(name = "serializeToConn", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
     public abstract static class SerializeToConn extends Adapter {
         @Specialization
         protected Object doSerializeToConn(Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {

@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
 import com.oracle.truffle.r.runtime.conn.GZIPConnections.GZIPRConnection;
@@ -320,7 +321,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "open", kind = INTERNAL, parameterNames = {"con", "open", "blocking"})
+    @RBuiltin(name = "open", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"con", "open", "blocking"})
     public abstract static class Open extends CheckIsConnAdapter {
         @Specialization
         @TruffleBoundary
@@ -382,7 +383,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "close", kind = INTERNAL, parameterNames = {"con", "type"})
+    @RBuiltin(name = "close", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"con", "type"})
     public abstract static class Close extends CheckIsConnAdapter {
         @Specialization
         @TruffleBoundary
@@ -459,7 +460,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "writeLines", kind = INTERNAL, parameterNames = {"text", "con", "sep", "useBytes"})
+    @RBuiltin(name = "writeLines", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"text", "con", "sep", "useBytes"})
     public abstract static class WriteLines extends InternalCloseHelper {
         @Specialization
         @TruffleBoundary
@@ -481,7 +482,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "flush", kind = INTERNAL, parameterNames = {"con"})
+    @RBuiltin(name = "flush", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"con"})
     public abstract static class Flush extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -496,7 +497,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "pushBack", kind = INTERNAL, parameterNames = {"data", "connection", "newLine", "type"})
+    @RBuiltin(name = "pushBack", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"data", "connection", "newLine", "type"})
     public abstract static class PushBack extends RBuiltinNode {
 
         @Override
@@ -560,7 +561,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "clearPushBack", kind = INTERNAL, parameterNames = {"connection"})
+    @RBuiltin(name = "clearPushBack", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"connection"})
     public abstract static class PushBackClear extends RBuiltinNode {
 
         @Specialization
@@ -618,7 +619,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "writeChar", kind = INTERNAL, parameterNames = {"object", "con", "nchars", "eos", "useBytes"})
+    @RBuiltin(name = "writeChar", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"object", "con", "nchars", "eos", "useBytes"})
     public abstract static class WriteChar extends InternalCloseHelper {
         @TruffleBoundary
         @Specialization
@@ -929,7 +930,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "writeBin", kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"})
+    @RBuiltin(name = "writeBin", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"})
     public abstract static class WriteBin extends InternalCloseHelper {
 
         @Override

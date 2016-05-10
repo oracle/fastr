@@ -73,6 +73,7 @@ import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -616,7 +617,7 @@ public class ForeignFunctions {
         }
     }
 
-    @RBuiltin(name = ".External2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    @RBuiltin(name = ".External2", visibility = RVisibility.CUSTOM, kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
     public abstract static class DotExternal2 extends LookupAdapter {
         private static final Object CALL = "call";
         private static final Object OP = "op";
