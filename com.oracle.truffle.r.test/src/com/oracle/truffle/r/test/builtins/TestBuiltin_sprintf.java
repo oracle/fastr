@@ -144,5 +144,6 @@ public class TestBuiltin_sprintf extends TestBase {
         assertEval("{ sprintf(c(\"foo %f\", \"bar %f\"), 7) }");
         assertEval("{ sprintf(c(\"foo %f %d\", \"bar %f %d\"), 7, 42L) }");
         assertEval("{ sprintf(c(\"foo %f %d\", \"bar %f %d\"), c(7,1), c(42L, 2L)) }");
+        assertEval("{ sprintf(\"%.3g\", 1.234) }");
     }
 }

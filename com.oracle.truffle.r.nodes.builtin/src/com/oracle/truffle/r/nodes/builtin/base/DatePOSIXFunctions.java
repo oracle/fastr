@@ -121,7 +121,7 @@ public class DatePOSIXFunctions {
             data[8] = RDataFactory.createIntVector(isdst, true);
             RList result = RDataFactory.createList(data, LT_NAMES_VEC);
             result.setAttr("tzone", zone);
-            result.setClassAttr(CLASS_ATTR, false);
+            result.setClassAttr(CLASS_ATTR);
             return result;
         }
     }
@@ -297,7 +297,7 @@ public class DatePOSIXFunctions {
                 }
             }
             RDoubleVector result = RDataFactory.createDoubleVector(data, complete);
-            result.setClassAttr(CLASS_ATTR, false);
+            result.setClassAttr(CLASS_ATTR);
             return result;
         }
     }

@@ -26,7 +26,6 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
@@ -61,8 +60,10 @@ public class RGraphics {
                 baseEnv.safePut(DOT_DEVICES, devices);
                 registerBaseGraphicsSystem();
             } else {
-                SymbolInfo symbolInfo = DLL.findSymbolInfo("InitGraphics", null);
-                RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(symbolInfo.address, "InitGraphics", new Object[0]);
+                DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
+                long func = DLL.findSymbol("InitGraphics", null, rns);
+                assert func != DLL.SYMBOL_NOT_FOUND;
+                RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(func, "InitGraphics", new Object[0]);
             }
         }
     }

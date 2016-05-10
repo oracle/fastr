@@ -217,8 +217,8 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RAbstractContainer setClassAttr(RStringVector classAttr, boolean convertToInt) {
-        return data.setClassAttr(classAttr, convertToInt);
+    public RAbstractContainer setClassAttr(RStringVector classAttr) {
+        return data.setClassAttr(classAttr);
     }
 
     @Override

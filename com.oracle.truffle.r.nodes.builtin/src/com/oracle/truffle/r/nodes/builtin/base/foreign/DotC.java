@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
@@ -82,16 +81,24 @@ public abstract class DotC extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RList c(RAbstractStringVector f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackageObj, RMissing encoding, //
+    protected RList c(RAbstractStringVector f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, //
                     @Cached("create()") BranchProfile errorProfile) {
         controlVisibility();
-        String rPackage = RRuntime.asString(rPackageObj);
-        SymbolInfo symbolInfo = DLL.findSymbolInfo(f.getDataAt(0), rPackage);
-        if (symbolInfo == null) {
+        String libName = null;
+        if (!(rPackage instanceof RMissing)) {
+            libName = RRuntime.asString(rPackage);
+            if (libName == null) {
+                errorProfile.enter();
+                throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_STRING, "PACKAGE");
+            }
+        }
+        DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.C, null, null);
+        long func = DLL.findSymbol(f.getDataAt(0), libName, rns);
+        if (func == -1) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
         }
-        return dispatch(this, symbolInfo.address, symbolInfo.symbol, naok, dup, args);
+        return dispatch(this, func, f.getDataAt(0), naok, dup, args);
     }
 
     private String getNameFromSymbolInfo(VirtualFrame frame, RList symbol) {

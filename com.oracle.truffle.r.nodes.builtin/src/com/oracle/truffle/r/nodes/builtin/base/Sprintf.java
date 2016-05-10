@@ -483,6 +483,10 @@ public abstract class Sprintf extends RBuiltinNode {
                         if (isNumeric(c)) {
                             widthAndPrecision(cs, j, fi);
                             j = fi.nextChar;
+                        } else if (c == '.') {
+                            // apparently precision can be specified without width as well
+                            oneWidth(cs, j + 1, fi, false);
+                            j = fi.nextChar;
                         } else {
                             throw fail("problem with format expression");
                         }

@@ -119,6 +119,13 @@ public interface RAttributable extends RTypedValue {
         }
     }
 
+    default void removeAttr(String name) {
+        RAttributes attributes = getAttributes();
+        if (attributes != null) {
+            attributes.remove(name);
+        }
+    }
+
     default void removeAllAttributes() {
         RAttributes attributes = getAttributes();
         if (attributes != null) {
@@ -132,7 +139,7 @@ public interface RAttributable extends RTypedValue {
         return attributes;
     }
 
-    default RAttributable setClassAttr(RStringVector classAttr, @SuppressWarnings("unused") boolean convertToInt) {
+    default RAttributable setClassAttr(RStringVector classAttr) {
         if (classAttr == null && getAttributes() != null) {
             getAttributes().remove(RRuntime.CLASS_ATTR_KEY);
         } else {

@@ -1,6 +1,3 @@
-Package: quadprog
-Reason: parser
-
 Package: ABCoptim
 Reason: corebug
 
@@ -25,9 +22,6 @@ Reason: Bioconductor
 Package: graph
 Reason: Bioconductor
 
-Package: bigmemory
-Reason: C++
-
 Package: SAGx
 Reason: Bioconductor
 
@@ -39,9 +33,6 @@ Reason: Bioconductor
 
 Package: widgetTools
 Reason: Bioconductor
-
-Package: SparseM
-Reason: corebug
 
 Package: gmp
 Reason: C++
@@ -57,9 +48,6 @@ Reason: Bioconductor
 
 Package: ShortRead
 Reason: Bioconductor
-
-Package: ICSNP
-Reason: C++
 
 Package: safe
 Reason: Bioconductor
@@ -93,9 +81,6 @@ Reason: Bioconductor
 
 Package: archiDART
 Reason: corebug
-
-Package: aylmer
-Reason: C++
 
 Package: DNAcopy
 Reason: Bioconductor
@@ -209,9 +194,6 @@ Reason: native
 Package: xcms
 Reason: Bioconductor
 
-Package: tgp
-Reason: C++
-
 Package: qvalue
 Reason: Bioconductor
 
@@ -281,9 +263,6 @@ Reason: Bioconductor
 Package: zlibbioc
 Reason: Bioconductor
 
-Package: CORElearn
-Reason: C++
-
 Package: flowCore
 Reason: Bioconductor
 
@@ -301,9 +280,6 @@ Reason: Bioconductor
 
 Package: annotate
 Reason: Bioconductor
-
-Package: GenABEL
-Reason: C++
 
 Package: Rgraphviz
 Reason: Bioconductor
@@ -328,9 +304,6 @@ Reason: Bioconductor
 
 Package: Biobase
 Reason: Bioconductor
-
-Package: kernlab
-Reason: C++
 
 Package: cit
 Reason: C++
@@ -437,9 +410,6 @@ Reason: Bioconductor
 Package: stringi
 Reason: C++
 
-Package: RApiSerialize
-Reason: C++
-
 Package: KFKSDS
 Reason: C++
 
@@ -452,3 +422,5 @@ Reason: C++
 Package: MassSpecWavelet
 Reason: Bioconductor
 
+Package: mixtools
+Reason: TestLoops

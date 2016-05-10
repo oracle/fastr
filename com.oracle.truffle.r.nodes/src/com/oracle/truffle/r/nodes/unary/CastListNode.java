@@ -93,7 +93,7 @@ public abstract class CastListNode extends CastBaseNode {
             while (iter.hasNext()) {
                 RAttribute attr = iter.next();
                 if (attr.getName().equals(RRuntime.CLASS_ATTR_KEY)) {
-                    result.setClassAttr((RStringVector) attr.getValue(), false);
+                    result.setClassAttr((RStringVector) attr.getValue());
                 } else {
                     result.setAttr(attr.getName(), attr.getValue());
                 }

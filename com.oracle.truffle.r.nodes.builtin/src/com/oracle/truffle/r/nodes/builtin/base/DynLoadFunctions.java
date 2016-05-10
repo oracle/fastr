@@ -45,6 +45,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.ffi.DLL.NativeSymbolType;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 
 public class DynLoadFunctions {
 
@@ -110,7 +112,7 @@ public class DynLoadFunctions {
                 data[i] = dllInfo.toRList();
             }
             RList result = RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
-            result.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFOLIST_CLASS), false);
+            result.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFOLIST_CLASS));
             return result;
         }
     }
@@ -119,9 +121,27 @@ public class DynLoadFunctions {
     public abstract static class IsLoaded extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
-        protected byte isLoaded(String symbol, String packageName, String type) {
+        protected byte isLoaded(RAbstractStringVector symbol, RAbstractStringVector packageName, RAbstractStringVector typeVec) {
             controlVisibility();
-            boolean found = DLL.findRegisteredSymbolinInDLL(symbol, packageName, type) != null;
+            String type = typeVec.getDataAt(0);
+            NativeSymbolType nst = null;
+            switch (type) {
+                case "":
+                    break;
+                case "Fortran":
+                    nst = NativeSymbolType.Fortran;
+                    break;
+                case "Call":
+                    nst = NativeSymbolType.Call;
+                    break;
+                case "External":
+                    nst = NativeSymbolType.External;
+                    break;
+                default:
+                    // Not an error in GnuR
+            }
+            DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(nst, null, null);
+            boolean found = DLL.findSymbol(symbol.getDataAt(0), packageName.getDataAt(0), rns) != DLL.SYMBOL_NOT_FOUND;
             return RRuntime.asLogical(found);
         }
     }
@@ -131,27 +151,40 @@ public class DynLoadFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object getSymbolInfo(RAbstractStringVector symbol, String packageName, byte withReg) {
+        protected Object getSymbolInfo(RAbstractStringVector symbolVec, String packageName, byte withReg) {
             controlVisibility();
-            DLL.SymbolInfo symbolInfo = DLL.findSymbolInfo(RRuntime.asString(symbol), packageName);
+            String symbol = symbolVec.getDataAt(0);
+            DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
+            long f = DLL.findSymbol(RRuntime.asString(symbol), packageName, rns);
+            SymbolInfo symbolInfo = null;
+            if (f != DLL.SYMBOL_NOT_FOUND) {
+                symbolInfo = new SymbolInfo(rns.getDllInfo(), symbol, f);
+            }
             return getResult(symbolInfo, withReg);
         }
 
         @Specialization(guards = "isDLLInfo(externalPtr)")
         @TruffleBoundary
-        protected Object getSymbolInfo(RAbstractStringVector symbol, RExternalPtr externalPtr, byte withReg) {
+        protected Object getSymbolInfo(RAbstractStringVector symbolVec, RExternalPtr externalPtr, byte withReg) {
             controlVisibility();
             DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.getAddr());
             if (dllInfo == null) {
                 throw RError.error(this, RError.Message.REQUIRES_NAME_DLLINFO);
             }
-            DLL.SymbolInfo symbolInfo = DLL.findSymbolInDLL(RRuntime.asString(symbol), dllInfo);
+
+            DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
+            String symbol = symbolVec.getDataAt(0);
+            long f = DLL.dlsym(dllInfo, RRuntime.asString(symbol), rns);
+            SymbolInfo symbolInfo = null;
+            if (f != DLL.SYMBOL_NOT_FOUND) {
+                symbolInfo = new SymbolInfo(dllInfo, symbol, f);
+            }
             return getResult(symbolInfo, withReg);
         }
 
         private static Object getResult(DLL.SymbolInfo symbolInfo, byte withReg) {
             if (symbolInfo != null) {
-                return symbolInfo.createRSymbolObject(new DLL.RegisteredNativeType(DLL.NativeSymbolType.Any, null, null), RRuntime.fromLogical(withReg));
+                return symbolInfo.createRSymbolObject(new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Any, null, null), RRuntime.fromLogical(withReg));
             } else {
                 return RNull.instance;
             }

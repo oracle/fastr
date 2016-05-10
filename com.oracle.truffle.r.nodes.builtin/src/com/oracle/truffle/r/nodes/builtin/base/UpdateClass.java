@@ -77,7 +77,7 @@ public abstract class UpdateClass extends RBuiltinNode {
         controlVisibility();
 
         RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
-        return result.setClassAttr(null, false);
+        return result.setClassAttr(null);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = "cachedClassName == className")
@@ -131,7 +131,7 @@ public abstract class UpdateClass extends RBuiltinNode {
             }
         }
 
-        return result.setClassAttr(RDataFactory.createStringVector(className), false);
+        return result.setClassAttr(RDataFactory.createStringVector(className));
     }
 
     @Specialization
@@ -139,76 +139,76 @@ public abstract class UpdateClass extends RBuiltinNode {
     protected Object setClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
         RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
-        return result.setClassAttr(className, false);
+        return result.setClassAttr(className);
     }
 
     @Specialization
     protected Object setClass(RFunction arg, RAbstractStringVector className) {
         controlVisibility();
-        arg.setClassAttr(className.materialize(), false);
+        arg.setClassAttr(className.materialize());
         return arg;
     }
 
     @Specialization
     protected Object setClass(RFunction arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        arg.setClassAttr(null, false);
+        arg.setClassAttr(null);
         return arg;
     }
 
     @Specialization
     protected Object setClass(REnvironment arg, RAbstractStringVector className) {
         controlVisibility();
-        arg.setClassAttr(className.materialize(), false);
+        arg.setClassAttr(className.materialize());
         return arg;
     }
 
     @Specialization
     protected Object setClass(REnvironment arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        arg.setClassAttr(null, false);
+        arg.setClassAttr(null);
         return arg;
     }
 
     @Specialization
     protected Object setClass(RSymbol arg, RAbstractStringVector className) {
         controlVisibility();
-        arg.setClassAttr(className.materialize(), false);
+        arg.setClassAttr(className.materialize());
         return arg;
     }
 
     @Specialization
     protected Object setClass(RSymbol arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        arg.setClassAttr(null, false);
+        arg.setClassAttr(null);
         return arg;
     }
 
     @Specialization
     protected Object setClass(RExternalPtr arg, RAbstractStringVector className) {
         controlVisibility();
-        arg.setClassAttr(className.materialize(), false);
+        arg.setClassAttr(className.materialize());
         return arg;
     }
 
     @Specialization
     protected Object setClass(RExternalPtr arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        arg.setClassAttr(null, false);
+        arg.setClassAttr(null);
         return arg;
     }
 
     @Specialization
     protected Object setClass(RS4Object arg, RAbstractStringVector className) {
         controlVisibility();
-        arg.setClassAttr(className.materialize(), false);
+        arg.setClassAttr(className.materialize());
         return arg;
     }
 
     @Specialization
     protected Object setClass(RS4Object arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        arg.setClassAttr(null, false);
+        arg.setClassAttr(null);
         return arg;
     }
 

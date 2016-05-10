@@ -386,7 +386,7 @@ public class FileFunctions {
             switch(column) {
                 case size: return RDataFactory.createDoubleVector((double[]) data, complete);
                 case isdir: return RDataFactory.createLogicalVector((byte[]) data, complete);
-                case mode: RIntVector res = RDataFactory.createIntVector((int[]) data, complete); res.setClassAttr(OCTMODE, false); return res;
+                case mode: RIntVector res = RDataFactory.createIntVector((int[]) data, complete); res.setClassAttr(OCTMODE); return res;
                 case mtime: case ctime: case atime:
                 case uid: case gid: return RDataFactory.createIntVector((int[]) data, complete);
                 case uname: case grname: return RDataFactory.createStringVector((String[]) data, complete);
