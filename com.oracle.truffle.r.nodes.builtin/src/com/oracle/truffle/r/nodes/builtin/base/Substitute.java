@@ -69,19 +69,16 @@ public abstract class Substitute extends RBuiltinNode {
 
     @Specialization
     protected Object doSubstitute(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envMissing) {
-        controlVisibility();
         return doSubstituteWithEnv(frame, expr, null);
     }
 
     @Specialization
     protected Object doSubstitute(VirtualFrame frame, RPromise expr, REnvironment env) {
-        controlVisibility();
         return doSubstituteWithEnv(frame, expr, env);
     }
 
     @Specialization
     protected Object doSubstitute(VirtualFrame frame, RPromise expr, RList list) {
-        controlVisibility();
         return doSubstituteWithEnv(frame, expr, REnvironment.createFromList(attrProfiles, list, REnvironment.baseEnv()));
     }
 

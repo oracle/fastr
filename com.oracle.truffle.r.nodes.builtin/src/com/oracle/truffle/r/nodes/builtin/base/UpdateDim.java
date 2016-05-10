@@ -45,7 +45,6 @@ public abstract class UpdateDim extends RBuiltinNode {
 
     @Specialization
     protected RAbstractVector updateDim(RAbstractVector vector, @SuppressWarnings("unused") RNull dimensions) {
-        controlVisibility();
         RVector result = ((RAbstractVector) reuse.execute(vector)).materialize();
         result.resetDimensions(null);
         return result;
@@ -54,7 +53,6 @@ public abstract class UpdateDim extends RBuiltinNode {
     @Specialization
     protected RAbstractVector updateDim(RAbstractVector vector, RAbstractVector dimensions, //
                     @Cached("createPreserveNames()") CastIntegerNode castInteger) {
-        controlVisibility();
         if (dimensions.getLength() == 0) {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.LENGTH_ZERO_DIM_INVALID);

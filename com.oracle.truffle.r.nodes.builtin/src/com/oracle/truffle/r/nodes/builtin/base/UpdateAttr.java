@@ -121,7 +121,6 @@ public abstract class UpdateAttr extends RBuiltinNode {
 
     @Specialization
     protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value) {
-        controlVisibility();
         String internedName = intern(name);
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
@@ -154,7 +153,6 @@ public abstract class UpdateAttr extends RBuiltinNode {
 
     @Specialization(guards = "!nullValue(value)")
     protected RAbstractContainer updateAttr(RAbstractContainer container, String name, Object value) {
-        controlVisibility();
         String internedName = intern(name);
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
@@ -183,7 +181,6 @@ public abstract class UpdateAttr extends RBuiltinNode {
 
     @Specialization(guards = "!nullValue(value)")
     protected RAbstractContainer updateAttr(RAbstractVector vector, RStringVector name, Object value) {
-        controlVisibility();
         return updateAttr(vector, name.getDataAt(0), value);
     }
 
@@ -199,7 +196,6 @@ public abstract class UpdateAttr extends RBuiltinNode {
     @Fallback
     protected Object updateAttr(Object obj, Object name, Object value) {
         Object object = obj;
-        controlVisibility();
         String sname = RRuntime.asString(name);
         if (sname == null) {
             errorProfile.enter();

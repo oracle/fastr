@@ -52,7 +52,6 @@ public abstract class Complex extends RBuiltinNode {
 
     @Specialization(guards = "!resultEmpty(lengthOut, realAbsVec, imaginaryAbsVec)")
     protected RComplexVector complex(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
-        controlVisibility();
         RDoubleVector real = checkLength(realAbsVec);
         RDoubleVector imaginary = checkLength(imaginaryAbsVec);
         int realLength = real.getLength();

@@ -56,7 +56,6 @@ public class LoadSaveFunctions {
         @Specialization
         @TruffleBoundary
         protected RStringVector load(RConnection con, REnvironment envir, @SuppressWarnings("unused") RAbstractLogicalVector verbose) {
-            controlVisibility();
             try (RConnection openConn = con.forceOpen("r")) {
                 String s = openConn.readChar(5, true);
                 if (s.equals("RDA2\n") || s.equals("RDB2\n") || s.equals("RDX2\n")) {
@@ -116,7 +115,6 @@ public class LoadSaveFunctions {
         @Specialization
         @TruffleBoundary
         protected RStringVector load(RAbstractStringVector fileVec, @SuppressWarnings("unused") REnvironment envir) {
-            controlVisibility();
             String path = Utils.tildeExpand(fileVec.getDataAt(0));
             try (BufferedInputStream bs = new BufferedInputStream(new FileInputStream(path))) {
                 int magic = readMagic(bs);

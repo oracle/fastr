@@ -33,7 +33,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.PrintParameters;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNodeGen;
@@ -82,7 +81,6 @@ public class PrintFunctions {
         @Specialization(guards = "!isS4(o)")
         protected Object printDefault(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
             valuePrinter.executeString(o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
-            controlVisibility();
             return o;
         }
 
@@ -112,7 +110,6 @@ public class PrintFunctions {
         @Specialization
         protected RFunction printFunction(RFunction x, byte useSource, RArgsValuesAndNames extra) {
             valuePrinter.executeString(x, PrintParameters.DEFAULT_DIGITS, true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDeafultMaxPrint(), true, false);
-            controlVisibility();
             return x;
         }
     }

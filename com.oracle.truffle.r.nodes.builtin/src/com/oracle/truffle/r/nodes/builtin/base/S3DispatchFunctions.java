@@ -107,7 +107,6 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
 
         @Specialization
         protected Object execute(VirtualFrame frame, String generic, Object arg) {
-            controlVisibility();
 
             Object dispatchedObject;
             if (argMissingProfile.profile(arg == RMissing.instance)) {
@@ -199,7 +198,6 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object nextMethod(VirtualFrame frame, String generic, Object obj, RArgsValuesAndNames args) {
-            controlVisibility();
             MaterializedFrame genericCallFrame = getCallFrame(frame);
             MaterializedFrame genericDefFrame = getDefFrame(frame);
             String group = (String) rvnGroup.execute(frame);

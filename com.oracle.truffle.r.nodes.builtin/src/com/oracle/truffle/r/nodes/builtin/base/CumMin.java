@@ -50,19 +50,16 @@ public abstract class CumMin extends RBuiltinNode {
 
     @Specialization
     protected double cummin(double arg) {
-        controlVisibility();
         return arg;
     }
 
     @Specialization
     protected int cummin(int arg) {
-        controlVisibility();
         return arg;
     }
 
     @Specialization
     protected int cummin(byte arg) {
-        controlVisibility();
         na.enable(arg);
         if (na.check(arg)) {
             return RRuntime.INT_NA;
@@ -72,14 +69,12 @@ public abstract class CumMin extends RBuiltinNode {
 
     @Specialization
     protected double cummin(String arg) {
-        controlVisibility();
         return na.convertStringToDouble(arg);
     }
 
     @Specialization
     protected RAbstractIntVector cumminIntSequence(RIntSequence v, //
                     @Cached("createBinaryProfile()") ConditionProfile negativeStrideProfile) {
-        controlVisibility();
         if (negativeStrideProfile.profile(v.getStride() > 0)) {
             // all numbers are bigger than the first one
             return RDataFactory.createIntSequence(v.getStart(), 0, v.getLength());
@@ -90,7 +85,6 @@ public abstract class CumMin extends RBuiltinNode {
 
     @Specialization
     protected RDoubleVector cummin(RAbstractDoubleVector v) {
-        controlVisibility();
         double[] cminV = new double[v.getLength()];
         double min = v.getDataAt(0);
         cminV[0] = min;
@@ -113,7 +107,6 @@ public abstract class CumMin extends RBuiltinNode {
 
     @Specialization(contains = "cumminIntSequence")
     protected RIntVector cummin(RAbstractIntVector v) {
-        controlVisibility();
         int[] cminV = new int[v.getLength()];
         int min = v.getDataAt(0);
         cminV[0] = min;
@@ -136,7 +129,6 @@ public abstract class CumMin extends RBuiltinNode {
 
     @Specialization
     protected RIntVector cummin(RAbstractLogicalVector v) {
-        controlVisibility();
         int[] cminV = new int[v.getLength()];
         int min = v.getDataAt(0);
         cminV[0] = min;
@@ -159,7 +151,6 @@ public abstract class CumMin extends RBuiltinNode {
 
     @Specialization
     protected RDoubleVector cummin(RAbstractStringVector v) {
-        controlVisibility();
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeGen.create(false, false, false));
@@ -170,7 +161,6 @@ public abstract class CumMin extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RComplexVector cummin(@SuppressWarnings("unused") RAbstractComplexVector v) {
-        controlVisibility();
         throw RError.error(this, RError.Message.CUMMIN_UNDEFINED_FOR_COMPLEX);
     }
 }

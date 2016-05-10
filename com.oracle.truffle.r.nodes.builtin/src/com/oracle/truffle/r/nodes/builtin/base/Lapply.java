@@ -72,7 +72,6 @@ public abstract class Lapply extends RBuiltinNode {
     protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun) {
         Object[] result = lapply.execute(frame, vec, fun);
         // set here else it gets overridden by the iterator evaluation
-        controlVisibility();
         return RDataFactory.createList(result, vec.getNames(attrProfiles));
     }
 

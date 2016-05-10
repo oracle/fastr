@@ -46,6 +46,8 @@ import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -104,7 +106,7 @@ public class FastRTrace {
 
     }
 
-    @RBuiltin(name = ".fastr.trace", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"what", "tracer", "exit", "at", "print", "signature", "where"})
+    @RBuiltin(name = ".fastr.trace", visibility = RVisibility.CUSTOM, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"what", "tracer", "exit", "at", "print", "signature", "where"})
     public abstract static class Trace extends Helper {
 
         @Child private TraceFunctions.PrimTrace primTrace;
@@ -112,7 +114,6 @@ public class FastRTrace {
 
         @Specialization
         protected Object trace(VirtualFrame frame, Object whatObj, Object tracer, Object exit, Object at, Object printObj, Object signature, Object whereObj) {
-            controlVisibility();
             Object what = whatObj;
             checkWhat(what);
             Object where = whereObj;
@@ -126,27 +127,30 @@ public class FastRTrace {
             RFunction func = checkFunction(what);
 
             if (tracer == RMissing.instance && exit == RMissing.instance && at == RMissing.instance && printObj == RMissing.instance && signature == RMissing.instance) {
-                // simple case, nargs() == 1
+                // simple case, nargs() == 1, corresponds to .primTrace that has invisible output
                 if (primTrace == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     primTrace = insert(PrimTraceNodeGen.create(null));
                 }
-                return primTrace.execute(frame, func);
-            } else {
-                if (at != RMissing.instance) {
-                    throw RError.nyi(this, "'at'");
-                }
-                boolean print = true;
-                if (printObj != RMissing.instance) {
-                    if (castLogical == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        castLogical = insert(CastLogicalNodeGen.create(false, false, false));
-                    }
-                    print = RRuntime.fromLogical((byte) castLogical.execute(printObj));
-                }
-                complexCase(func, tracer, exit, at, print, signature);
+
+                Object result = primTrace.execute(frame, func);
+                RContext.getInstance().setVisible(false);
+                return result;
             }
 
+            if (at != RMissing.instance) {
+                throw RError.nyi(this, "'at'");
+            }
+            boolean print = true;
+            if (printObj != RMissing.instance) {
+                if (castLogical == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    castLogical = insert(CastLogicalNodeGen.create(false, false, false));
+                }
+                print = RRuntime.fromLogical((byte) castLogical.execute(printObj));
+            }
+            complexCase(func, tracer, exit, at, print, signature);
+            RContext.getInstance().setVisible(true);
             return func.toString();
         }
 
@@ -167,7 +171,7 @@ public class FastRTrace {
 
     }
 
-    @RBuiltin(name = ".fastr.untrace", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"what", "signature", "where"})
+    @RBuiltin(name = ".fastr.untrace", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"what", "signature", "where"})
     public abstract static class Untrace extends Helper {
 
         @Child private TraceFunctions.PrimUnTrace primUnTrace;

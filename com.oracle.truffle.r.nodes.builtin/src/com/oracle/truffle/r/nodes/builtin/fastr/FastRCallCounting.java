@@ -41,7 +41,6 @@ public class FastRCallCounting {
         @Specialization
         @TruffleBoundary
         protected RNull createCallCounter(RFunction function) {
-            controlVisibility();
             if (!function.isBuiltin()) {
                 REntryCounters.FunctionListener.installCounter(function);
             }
@@ -60,7 +59,6 @@ public class FastRCallCounting {
         @Specialization
         @TruffleBoundary
         protected Object getCallCount(RFunction function) {
-            controlVisibility();
             if (!function.isBuiltin()) {
                 int entryCount = REntryCounters.FunctionListener.findCounter(function).getEnterCount();
                 if (entryCount < 0) {

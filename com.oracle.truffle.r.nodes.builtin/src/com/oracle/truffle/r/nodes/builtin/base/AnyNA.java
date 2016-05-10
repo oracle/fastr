@@ -53,7 +53,6 @@ public abstract class AnyNA extends RBuiltinNode {
     public abstract byte execute(VirtualFrame frame, Object value);
 
     private byte doScalar(boolean isNA) {
-        controlVisibility();
         return RRuntime.asLogical(isNA);
     }
 
@@ -63,7 +62,6 @@ public abstract class AnyNA extends RBuiltinNode {
     }
 
     private <T extends RAbstractVector> byte doVector(T vector, VectorIndexPredicate<T> predicate) {
-        controlVisibility();
         naCheck.enable(vector);
         for (int i = 0; i < vector.getLength(); i++) {
             if (predicate.apply(vector, i)) {
@@ -148,7 +146,6 @@ public abstract class AnyNA extends RBuiltinNode {
                     @Cached("createRecursive()") AnyNA recursive, //
                     @Cached("createClassProfile()") ValueProfile elementProfile, //
                     @Cached("create()") RLengthNode length) {
-        controlVisibility();
         for (int i = 0; i < list.getLength(); i++) {
             Object value = elementProfile.profile(list.getDataAt(i));
             if (length.executeInteger(frame, value) == 1) {

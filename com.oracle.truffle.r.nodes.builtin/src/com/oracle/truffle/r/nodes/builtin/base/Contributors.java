@@ -44,7 +44,6 @@ public abstract class Contributors extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object contributors() {
-        controlVisibility();
         try {
             StdConnections.getStdout().writeString(CONTRIBUTORS, true);
         } catch (IOException ex) {

@@ -42,7 +42,6 @@ public abstract class License extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object license() {
-        controlVisibility();
         try {
             StdConnections.getStdout().writeString(RRuntime.LICENSE, true);
         } catch (IOException ex) {

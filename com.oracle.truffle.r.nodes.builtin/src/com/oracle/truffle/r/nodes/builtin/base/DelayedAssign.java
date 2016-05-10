@@ -43,7 +43,6 @@ public abstract class DelayedAssign extends RBuiltinNode {
 
     @Specialization
     protected Object doDelayedAssign(RAbstractStringVector nameVec, Object value, REnvironment evalEnv, REnvironment assignEnv) {
-        controlVisibility();
         String name = nameVec.getDataAt(0);
         try {
             assignEnv.put(name, RDataFactory.createPromise(RASTUtils.createNodeForValue(value), evalEnv));

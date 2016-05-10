@@ -66,7 +66,6 @@ public class DebugFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull doDebug(RFunction fun, Object text, Object condition) {
-            controlVisibility();
             doDebug(fun, text, condition, false);
             return RNull.instance;
         }
@@ -86,7 +85,6 @@ public class DebugFunctions {
         @TruffleBoundary
         protected RNull debugonce(RFunction fun, Object text, Object condition) {
             // TODO implement
-            controlVisibility();
             doDebug(fun, text, condition, true);
             return RNull.instance;
         }
@@ -104,7 +102,6 @@ public class DebugFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull undebug(RFunction func) {
-            controlVisibility();
             if (!DebugHandling.undebug(func)) {
                 throw RError.error(this, RError.Message.NOT_DEBUGGED);
             }

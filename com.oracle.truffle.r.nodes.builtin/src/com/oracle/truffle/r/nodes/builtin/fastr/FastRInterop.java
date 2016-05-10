@@ -47,7 +47,6 @@ public class FastRInterop {
         @Specialization
         @TruffleBoundary
         protected Object interopEval(Object mimeType, Object source) {
-            controlVisibility();
             Source sourceObject = Source.fromText(RRuntime.asString(source), Engine.EVAL_FUNCTION_NAME).withMimeType(RRuntime.asString(mimeType));
 
             CallTarget callTarget;
@@ -68,7 +67,6 @@ public class FastRInterop {
         @Specialization
         @TruffleBoundary
         protected Object debugSource(Object name, RTypedValue value) {
-            controlVisibility();
             String stringName = RRuntime.asString(name);
             if (stringName == null) {
                 throw RError.error(this, RError.Message.INVALID_ARG_TYPE, "name");
@@ -88,7 +86,6 @@ public class FastRInterop {
         @Specialization
         @TruffleBoundary
         protected Object debugSource(Object name) {
-            controlVisibility();
             String stringName = RRuntime.asString(name);
             if (stringName == null) {
                 throw RError.error(this, RError.Message.INVALID_ARG_TYPE, "name");

@@ -159,7 +159,6 @@ public class GrepFunctions {
     private abstract static class GrepAdapter extends CommonCodeAdapter {
         protected Object doGrep(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCaseLogical, byte valueLogical, byte perlLogical, byte fixedLogical,
                         @SuppressWarnings("unused") byte useBytes, byte invertLogical, boolean grepl) {
-            controlVisibility();
             boolean value = RRuntime.fromLogical(valueLogical);
             boolean invert = RRuntime.fromLogical(invertLogical);
             boolean perl = RRuntime.fromLogical(perlLogical);
@@ -547,7 +546,6 @@ public class GrepFunctions {
         @TruffleBoundary
         protected RStringVector subRegexp(RAbstractStringVector patternArgVec, RAbstractStringVector replacementVec, RAbstractStringVector x, byte ignoreCaseLogical, byte perlLogical,
                         byte fixedLogical, byte useBytes) {
-            controlVisibility();
             return doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, false);
         }
     }
@@ -559,7 +557,6 @@ public class GrepFunctions {
         @TruffleBoundary
         protected RStringVector gsub(RAbstractStringVector patternArgVec, RAbstractStringVector replacementVec, RAbstractStringVector x, byte ignoreCaseLogical, byte perlLogical, byte fixedLogical,
                         byte useBytes) {
-            controlVisibility();
             return doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, true);
         }
     }
@@ -570,7 +567,6 @@ public class GrepFunctions {
         @Specialization
         @TruffleBoundary
         protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCaseL, byte perlL, byte fixedL, byte useBytesL) {
-            controlVisibility();
             checkExtraArgs(RRuntime.LOGICAL_FALSE, perlL, RRuntime.LOGICAL_FALSE, useBytesL, RRuntime.LOGICAL_FALSE);
             boolean ignoreCase = RRuntime.fromLogical(ignoreCaseL);
             String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
@@ -618,7 +614,6 @@ public class GrepFunctions {
         @TruffleBoundary
         @Override
         protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCaseL, byte perlL, byte fixedL, byte useBytesL) {
-            controlVisibility();
             checkExtraArgs(RRuntime.LOGICAL_FALSE, perlL, fixedL, useBytesL, RRuntime.LOGICAL_FALSE);
             boolean ignoreCase = RRuntime.fromLogical(ignoreCaseL);
             String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
@@ -647,7 +642,6 @@ public class GrepFunctions {
         @TruffleBoundary
         protected Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
             // TODO implement completely; this is a very basic implementation for fixed=TRUE only.
-            controlVisibility();
             checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
             valueCheck(value);
             checkNotImplemented(!RRuntime.fromLogical(fixed), "fixed", false);
@@ -752,7 +746,6 @@ public class GrepFunctions {
         @TruffleBoundary
         protected Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
             // TODO implement properly, this only supports strict equality!
-            controlVisibility();
             checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
             byte[] data = new byte[vector.getLength()];
             String pattern = patternArg.getDataAt(0);
@@ -771,7 +764,6 @@ public class GrepFunctions {
         @Specialization
         @TruffleBoundary
         protected RList split(RAbstractStringVector x, RAbstractStringVector splitArg, byte fixedLogical, byte perlLogical, @SuppressWarnings("unused") byte useBytes) {
-            controlVisibility();
             boolean fixed = RRuntime.fromLogical(fixedLogical);
             boolean perl = checkPerlFixed(RRuntime.fromLogical(perlLogical), fixed);
             RStringVector[] result = new RStringVector[x.getLength()];

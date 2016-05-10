@@ -45,7 +45,6 @@ public abstract class ReadREnviron extends RBuiltinNode {
     @Specialization(guards = "lengthOneCVector(vec)")
     @TruffleBoundary
     protected Object doReadEnviron(RAbstractStringVector vec) {
-        controlVisibility();
         String path = Utils.tildeExpand(vec.getDataAt(0));
         byte result = RRuntime.LOGICAL_TRUE;
         try {

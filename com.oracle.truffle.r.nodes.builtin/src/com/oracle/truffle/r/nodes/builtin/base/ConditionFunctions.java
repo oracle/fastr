@@ -96,14 +96,12 @@ public class ConditionFunctions {
     public abstract static class AddRestart extends RestartAdapter {
         @Specialization
         protected Object addRestart(RList restart) {
-            controlVisibility();
             RErrorHandling.addRestart(restart);
             return RNull.instance;
         }
 
         @Specialization(guards = "lengthok(restart)")
         protected Object addRestart(@SuppressWarnings("unused") Object restart) {
-            controlVisibility();
             throw badRestart();
         }
     }
@@ -117,7 +115,6 @@ public class ConditionFunctions {
 
         @Specialization
         protected Object getRestart(int index) {
-            controlVisibility();
             Object result = RErrorHandling.getRestart(index);
             return result;
         }
@@ -127,7 +124,6 @@ public class ConditionFunctions {
     public abstract static class InvokeRestart extends RestartAdapter {
         @Specialization(guards = "lengthok(restart)")
         protected RNull invokeRestart(RList restart, Object args) {
-            controlVisibility();
             if (RErrorHandling.invokeRestart(restart, args) == null) {
                 throw RError.error(this, RError.Message.RESTART_NOT_ON_STACK);
             } else {
@@ -138,7 +134,6 @@ public class ConditionFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object invokeRestart(Object restart, Object args) {
-            controlVisibility();
             throw badRestart();
         }
     }
@@ -147,7 +142,6 @@ public class ConditionFunctions {
     public abstract static class SignalCondition extends RBuiltinNode {
         @Specialization
         protected RNull signalCondition(RList condition, RAbstractStringVector msg, Object call) {
-            controlVisibility();
             RErrorHandling.signalCondition(condition, msg.getDataAt(0), call);
             return RNull.instance;
         }
@@ -157,7 +151,6 @@ public class ConditionFunctions {
     public abstract static class Geterrmessage extends RBuiltinNode {
         @Specialization
         protected String geterrmessage() {
-            controlVisibility();
             return RErrorHandling.geterrmessage();
         }
     }
@@ -176,7 +169,6 @@ public class ConditionFunctions {
     public abstract static class DfltWarn extends RBuiltinNode {
         @Specialization
         protected RNull dfltWarn(RAbstractStringVector msg, Object call) {
-            controlVisibility();
             RErrorHandling.dfltWarn(msg.getDataAt(0), call);
             return RNull.instance;
         }
@@ -186,7 +178,6 @@ public class ConditionFunctions {
     public abstract static class DfltStop extends RBuiltinNode {
         @Specialization
         protected Object dfltStop(RAbstractStringVector message, Object call) {
-            controlVisibility();
             RErrorHandling.dfltStop(message.getDataAt(0), call);
             return RNull.instance;
         }

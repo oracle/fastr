@@ -77,7 +77,6 @@ public abstract class FastRSyntaxTree extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RNull printTree(RFunction function, RAbstractStringVector visitMode, byte printSourceLogical, byte printTagsLogical) {
-        controlVisibility();
         boolean printSource = RRuntime.fromLogical(printSourceLogical);
         boolean printTags = RRuntime.fromLogical(printTagsLogical);
         FunctionDefinitionNode root = (FunctionDefinitionNode) function.getTarget().getRootNode();

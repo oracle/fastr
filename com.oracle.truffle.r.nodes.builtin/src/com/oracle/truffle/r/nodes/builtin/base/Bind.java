@@ -409,7 +409,6 @@ public abstract class Bind extends RBaseNode {
 
         @Specialization
         protected Object bind(VirtualFrame frame, Object deparseLevelObj, RArgsValuesAndNames args) {
-            controlVisibility();
             return bind.execute(frame, deparseLevelObj, args.getArguments(), (RArgsValuesAndNames) RArguments.getArgument(frame, 0), precedence(args.getArguments()));
         }
     }
@@ -524,7 +523,6 @@ public abstract class Bind extends RBaseNode {
 
         @Specialization
         protected Object bind(VirtualFrame frame, Object deparseLevelObj, RArgsValuesAndNames args) {
-            controlVisibility();
             return bind.execute(frame, deparseLevelObj, args.getArguments(), (RArgsValuesAndNames) RArguments.getArgument(frame, 0), precedence(args.getArguments()));
         }
     }

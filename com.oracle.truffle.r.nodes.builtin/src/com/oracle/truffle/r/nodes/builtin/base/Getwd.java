@@ -37,7 +37,6 @@ public abstract class Getwd extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object getwd() {
-        controlVisibility();
         String result = RFFIFactory.getRFFI().getBaseRFFI().getwd();
         return RDataFactory.createStringVector(result);
     }

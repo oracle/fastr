@@ -44,7 +44,6 @@ public abstract class FastRStackTrace extends RBuiltinNode {
 
     @Specialization
     protected RNull printStackTrace(byte printFrameContents) {
-        controlVisibility();
         boolean printFrameSlots = printFrameContents == RRuntime.LOGICAL_TRUE;
         RContext.getInstance().getConsoleHandler().print(Utils.createStackTrace(printFrameSlots));
         return RNull.instance;

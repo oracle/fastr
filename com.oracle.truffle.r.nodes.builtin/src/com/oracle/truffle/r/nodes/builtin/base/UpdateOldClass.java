@@ -47,7 +47,6 @@ public abstract class UpdateOldClass extends RBuiltinNode {
 
     @Specialization(guards = "!isStringVector(className)")
     protected Object setOldClass(RAbstractContainer arg, RAbstractVector className) {
-        controlVisibility();
         if (className.getLength() == 0) {
             return setOldClass(arg, RNull.instance);
         }
@@ -72,7 +71,6 @@ public abstract class UpdateOldClass extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object setOldClass(RAbstractContainer arg, RStringVector className) {
-        controlVisibility();
         RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
         return result.setClassAttr(className);
     }
@@ -80,7 +78,6 @@ public abstract class UpdateOldClass extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object setOldClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
-        controlVisibility();
         RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
         return result.setClassAttr(null);
     }

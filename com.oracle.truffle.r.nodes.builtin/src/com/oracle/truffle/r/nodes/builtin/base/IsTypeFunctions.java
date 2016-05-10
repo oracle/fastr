@@ -77,7 +77,6 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isType(RMissing value) throws RError {
-            controlVisibility();
             throw missingError();
         }
     }
@@ -89,13 +88,11 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isType(RAbstractVector vector) {
-            controlVisibility();
             return RRuntime.asLogical(vector.isArray());
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRAbstractVector(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -105,19 +102,16 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isRecursive(RNull arg) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization(guards = "!isListVector(arg)")
         protected byte isRecursive(RAbstractVector arg) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization
         protected byte isRecursive(RList arg) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -127,7 +121,6 @@ public class IsTypeFunctions {
 
         @Fallback
         protected byte isRecursiveFallback(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
     }
@@ -139,13 +132,11 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isAtomic(RNull arg) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = "!isRList(arg)")
         protected byte isAtomic(RAbstractVector arg) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -160,7 +151,6 @@ public class IsTypeFunctions {
 
         @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)", "!isFactor(value)", "!isNonListVector(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -175,7 +165,6 @@ public class IsTypeFunctions {
 
         @Specialization(guards = {"!isRMissing(value)", "!isRLanguage(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -185,7 +174,6 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isType(RAbstractStringVector value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -195,7 +183,6 @@ public class IsTypeFunctions {
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyCharacter(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -205,7 +192,6 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isType(RAbstractComplexVector value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -215,7 +201,6 @@ public class IsTypeFunctions {
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyComplex(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -225,7 +210,6 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isType(RAbstractDoubleVector value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -235,7 +219,6 @@ public class IsTypeFunctions {
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyDouble(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -250,7 +233,6 @@ public class IsTypeFunctions {
 
         @Specialization(guards = {"!isRMissing(value)", "!isRExpression(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -265,7 +247,6 @@ public class IsTypeFunctions {
 
         @Specialization(guards = {"!isRMissing(value)", "!isRFunction(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -275,7 +256,6 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isType(RAbstractIntVector value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -285,7 +265,6 @@ public class IsTypeFunctions {
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyInteger(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -309,7 +288,6 @@ public class IsTypeFunctions {
 
         @Specialization(guards = {"!isRMissing(value)", "!isRSymbol(value)", "!isRExpression(value)", "!isRLanguage(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -323,19 +301,16 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isType(RList value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization
         protected byte isType(RPairList pl) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRList(value)", "!isRPairList(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -345,7 +320,6 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isType(RAbstractLogicalVector value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -355,7 +329,6 @@ public class IsTypeFunctions {
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyLogical(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -367,13 +340,11 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isType(RAbstractVector vector) {
-            controlVisibility();
             return RRuntime.asLogical(isMatrixProfile.profile(vector.isMatrix()));
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRAbstractVector(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -383,13 +354,11 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isType(RSymbol value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRSymbol(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -399,19 +368,16 @@ public class IsTypeFunctions {
 
         @Specialization(guards = "!isFactor(value)")
         protected byte isType(RAbstractIntVector value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = "isFactor(value)")
         protected byte isTypeFactor(RAbstractIntVector value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization
         protected byte isType(RAbstractDoubleVector value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -421,7 +387,6 @@ public class IsTypeFunctions {
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyNumeric(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
 
@@ -437,13 +402,11 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isType(RNull value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -464,13 +427,11 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isObject(RAttributable arg) {
-            controlVisibility();
             return arg.isObject(attrProfiles) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRAttributable(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -479,19 +440,16 @@ public class IsTypeFunctions {
     public abstract static class IsPairList extends MissingAdapter {
         @Specialization
         protected byte isType(RNull value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization
         protected byte isType(RPairList value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)", "!isRPairList(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -501,7 +459,6 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isType(RAbstractRawVector value) {
-            controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -511,7 +468,6 @@ public class IsTypeFunctions {
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyRaw(value)"})
         protected byte isType(Object value) {
-            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -529,13 +485,11 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isVector(RMissing value, String mode) {
-            controlVisibility();
             throw missingError();
         }
 
         @Specialization
         protected byte isVector(RAbstractVector x, String mode) {
-            controlVisibility();
             if (!namesOnlyOrNoAttr(x) || !modeIsAnyOrMatches(x, mode)) {
                 return RRuntime.LOGICAL_FALSE;
             } else {

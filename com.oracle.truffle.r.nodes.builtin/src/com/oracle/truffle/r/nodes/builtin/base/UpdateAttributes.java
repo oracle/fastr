@@ -98,7 +98,6 @@ public abstract class UpdateAttributes extends RBuiltinNode {
 
     @Specialization
     protected RAbstractVector updateAttributes(RAbstractVector abstractVector, @SuppressWarnings("unused") RNull list) {
-        controlVisibility();
         RAbstractVector resultVector = (RAbstractVector) abstractVector.getNonShared();
         resultVector.resetAllAttributes(true);
         return resultVector;
@@ -106,7 +105,6 @@ public abstract class UpdateAttributes extends RBuiltinNode {
 
     @Specialization
     protected RAbstractContainer updateAttributes(RAbstractContainer container, RList list) {
-        controlVisibility();
         Object listNamesObject = list.getNames(attrProfiles);
         if (listNamesObject == null || listNamesObject == RNull.instance) {
             throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
@@ -210,7 +208,6 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     @Fallback
     @TruffleBoundary
     protected Object doOther(Object o, Object operand) {
-        controlVisibility();
         Object obj = o;
         if (obj instanceof RShareable) {
             obj = ((RShareable) obj).getNonShared();

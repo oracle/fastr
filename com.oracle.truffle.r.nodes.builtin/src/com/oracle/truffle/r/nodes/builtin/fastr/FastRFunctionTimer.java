@@ -44,7 +44,6 @@ public class FastRFunctionTimer {
         @Specialization
         @TruffleBoundary
         protected RNull createFunctionTimer(RFunction function) {
-            controlVisibility();
             if (!function.isBuiltin()) {
                 RNodeTimer.StatementListener.installTimer(function);
             }
@@ -68,7 +67,6 @@ public class FastRFunctionTimer {
         @Specialization
         @TruffleBoundary
         protected Object getFunctionTimer(RFunction function, RAbstractStringVector scale) {
-            controlVisibility();
             if (!function.isBuiltin()) {
                 long timeInfo = RNodeTimer.StatementListener.findTimer(function);
                 if (timeInfo < 0) {

@@ -70,7 +70,6 @@ public abstract class Diag extends RBuiltinNode {
 
     @Specialization
     protected Object diag(@SuppressWarnings("unused") RNull x, int nrow, int ncol) {
-        controlVisibility();
         checkParams(nrow, ncol);
         if (nrow == 0 && ncol == 0) {
             return RDataFactory.createDoubleVector(new double[]{}, true, new int[]{0, 0});
@@ -81,7 +80,6 @@ public abstract class Diag extends RBuiltinNode {
 
     @Specialization
     protected Object diag(RAbstractComplexVector x, int nrow, int ncol) {
-        controlVisibility();
         checkParams(nrow, ncol);
         int mn = checkX(x, nrow, ncol);
 
@@ -99,7 +97,6 @@ public abstract class Diag extends RBuiltinNode {
     @Specialization(guards = "!isRAbstractComplexVector(x)")
     protected Object diag(RAbstractVector x, int nrow, int ncol, //
                     @Cached("create()") CastDoubleNode cast) {
-        controlVisibility();
         checkParams(nrow, ncol);
         int mn = checkX(x, nrow, ncol);
 

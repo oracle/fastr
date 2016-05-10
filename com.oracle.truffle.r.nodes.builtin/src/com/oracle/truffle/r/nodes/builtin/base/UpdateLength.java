@@ -46,20 +46,17 @@ public abstract class UpdateLength extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "isLengthOne(lengthVector)")
     protected RNull updateLength(RNull value, RAbstractIntVector lengthVector) {
-        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = "isLengthOne(lengthVector)")
     protected RAbstractContainer updateLength(RAbstractContainer container, RAbstractIntVector lengthVector) {
-        controlVisibility();
         return container.resize(lengthVector.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected Object updateLengthError(Object vector, Object lengthVector) {
-        controlVisibility();
         CompilerDirectives.transferToInterpreter();
         throw RError.error(this, RError.Message.INVALID_UNNAMED_VALUE);
     }

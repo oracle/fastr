@@ -52,7 +52,6 @@ public abstract class Sprintf extends RBuiltinNode {
 
     @Specialization
     protected String sprintf(String fmt, @SuppressWarnings("unused") RMissing x) {
-        controlVisibility();
         return fmt;
     }
 
@@ -65,7 +64,6 @@ public abstract class Sprintf extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected String sprintf(String fmt, int x) {
-        controlVisibility();
         return format(fmt, x);
     }
 
@@ -78,14 +76,12 @@ public abstract class Sprintf extends RBuiltinNode {
     @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
     protected String sprintf(RAbstractStringVector fmt, byte x) {
-        controlVisibility();
         return format(fmt.getDataAt(0), x);
     }
 
     @Specialization
     @TruffleBoundary
     protected RStringVector sprintf(String fmt, RAbstractIntVector x) {
-        controlVisibility();
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; k++) {
             r[k] = format(fmt, x.getDataAt(k));
@@ -102,7 +98,6 @@ public abstract class Sprintf extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected String sprintf(String fmt, double x) {
-        controlVisibility();
         char f = Character.toLowerCase(firstFormatChar(fmt));
         if (f == 'x' || f == 'd') {
             if (Math.floor(x) == x) {
@@ -122,7 +117,6 @@ public abstract class Sprintf extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RStringVector sprintf(String fmt, RAbstractDoubleVector x) {
-        controlVisibility();
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; k++) {
             r[k] = sprintf(fmt, x.getDataAt(k));
@@ -139,7 +133,6 @@ public abstract class Sprintf extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected String sprintf(String fmt, String x) {
-        controlVisibility();
         return format(fmt, x);
     }
 
@@ -152,7 +145,6 @@ public abstract class Sprintf extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RStringVector sprintf(String fmt, RAbstractStringVector x) {
-        controlVisibility();
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; k++) {
             r[k] = format(fmt, x.getDataAt(k));
@@ -203,7 +195,6 @@ public abstract class Sprintf extends RBuiltinNode {
     @Specialization(guards = "!oneElement(args)")
     @TruffleBoundary
     protected RStringVector sprintf(String fmt, RArgsValuesAndNames args) {
-        controlVisibility();
         Object[] values = args.getArguments();
         int maxLength = maxLengthAndConvertToScalar(values);
         if (maxLength == 0) {
@@ -225,7 +216,6 @@ public abstract class Sprintf extends RBuiltinNode {
 
     @Specialization(guards = "oneElement(args)")
     protected Object sprintfOneElement(VirtualFrame frame, String fmt, RArgsValuesAndNames args) {
-        controlVisibility();
         if (sprintfRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             sprintfRecursive = insert(SprintfNodeGen.create(null));

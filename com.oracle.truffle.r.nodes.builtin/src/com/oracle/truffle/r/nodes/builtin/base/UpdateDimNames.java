@@ -94,7 +94,6 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     @Specialization
     protected RAbstractContainer updateDimnamesNull(RAbstractContainer container, @SuppressWarnings("unused") RNull list, //
                     @Cached("create(DIMNAMES_ATTR_KEY)") RemoveAttributeNode remove) {
-        controlVisibility();
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (isRVectorProfile.profile(container instanceof RVector)) {
             RVector vector = (RVector) container;
@@ -117,7 +116,6 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     @Specialization(guards = "list.getLength() > 0")
     protected RAbstractContainer updateDimnames(RAbstractContainer container, RList list, //
                     @Cached("create(DIMNAMES_ATTR_KEY)") PutAttributeNode put) {
-        controlVisibility();
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         setDimNames(result, convertToListOfStrings(list), put);
         return result;
@@ -125,7 +123,6 @@ public abstract class UpdateDimNames extends RBuiltinNode {
 
     @Specialization(guards = "!isRList(c)")
     protected RAbstractContainer updateDimnamesError(@SuppressWarnings("unused") RAbstractContainer container, @SuppressWarnings("unused") Object c) {
-        controlVisibility();
         CompilerDirectives.transferToInterpreter();
         throw RError.error(this, RError.Message.DIMNAMES_LIST);
     }

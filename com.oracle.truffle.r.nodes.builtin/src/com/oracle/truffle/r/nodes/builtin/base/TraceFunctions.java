@@ -27,7 +27,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -66,7 +65,6 @@ public class TraceFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull primTrace(RFunction func) {
-            controlVisibility();
             if (!func.isBuiltin()) {
                 TraceHandling.enableTrace(func);
             } else {
@@ -87,7 +85,6 @@ public class TraceFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull primUnTrace(RFunction func) {
-            controlVisibility();
             if (!func.isBuiltin()) {
                 TraceHandling.disableTrace(func);
             }

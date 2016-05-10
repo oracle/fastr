@@ -71,7 +71,6 @@ public abstract class StandardGeneric extends RBuiltinNode {
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     private Object stdGenericInternal(VirtualFrame frame, RAbstractStringVector fVec, RFunction fdef) {
-        controlVisibility();
         String fname = fVec.getDataAt(0);
         MaterializedFrame fnFrame = fdef.getEnclosingFrame();
         REnvironment mtable = (REnvironment) readMTableFirst.execute(frame, fnFrame);
@@ -161,13 +160,11 @@ public abstract class StandardGeneric extends RBuiltinNode {
                 return fnObj;
             }
         }
-        controlVisibility();
         throw RError.error(this, RError.Message.STD_GENERIC_WRONG_CALL, fname);
     }
 
     @Specialization
     protected Object stdGeneric(Object fVec, RAttributable fdef) {
-        controlVisibility();
         if (!(fVec instanceof String || (fVec instanceof RAbstractStringVector && ((RAbstractStringVector) fVec).getLength() > 0))) {
             throw RError.error(this, RError.Message.GENERIC, "argument to 'standardGeneric' must be a non-empty character string");
         } else {

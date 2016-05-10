@@ -102,7 +102,6 @@ public class HiddenInternalFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull doMakeLazy(RAbstractStringVector names, RList values, RLanguage expr, REnvironment eenv, REnvironment aenv) {
-            controlVisibility();
             initEval();
             for (int i = 0; i < names.getLength(); i++) {
                 String name = names.getDataAt(i);
@@ -143,7 +142,6 @@ public class HiddenInternalFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull importIntoEnv(REnvironment impEnv, RAbstractStringVector impNames, REnvironment expEnv, RAbstractStringVector expNames) {
-            controlVisibility();
             int length = impNames.getLength();
             if (length != expNames.getLength()) {
                 throw RError.error(this, Message.IMP_EXP_NAMES_MATCH);

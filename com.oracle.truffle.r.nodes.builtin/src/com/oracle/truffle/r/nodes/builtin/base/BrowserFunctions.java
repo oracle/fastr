@@ -121,14 +121,12 @@ public class BrowserFunctions {
         @Specialization
         @TruffleBoundary
         protected String browserText(int n) {
-            controlVisibility();
             return getHelperState(n).text;
         }
 
         @Specialization
         @TruffleBoundary
         protected String browserText(double n) {
-            controlVisibility();
             return getHelperState((int) n).text;
         }
     }
@@ -139,14 +137,12 @@ public class BrowserFunctions {
         @Specialization
         @TruffleBoundary
         protected Object browserCondition(int n) {
-            controlVisibility();
             return getHelperState(n).condition;
         }
 
         @Specialization
         @TruffleBoundary
         protected Object browserCondition(double n) {
-            controlVisibility();
             return getHelperState((int) n).condition;
         }
     }
@@ -158,7 +154,6 @@ public class BrowserFunctions {
         @TruffleBoundary
         protected RNull browserSetDebug(@SuppressWarnings("unused") int n) {
             // TODO implement
-            controlVisibility();
             return RNull.instance;
         }
 

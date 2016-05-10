@@ -59,25 +59,21 @@ public class LogFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull log(RNull x, RNull base) {
-            controlVisibility();
             throw RError.error(this, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
         }
 
         @Specialization
         protected double log(int x, double base) {
-            controlVisibility();
             return logb(x, base);
         }
 
         @Specialization
         protected double log(double x, double base) {
-            controlVisibility();
             return logb(x, base);
         }
 
         @Specialization
         protected RDoubleVector log(RIntVector vector, double base) {
-            controlVisibility();
             double[] resultVector = new double[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 int inputValue = vector.getDataAt(i);
@@ -92,7 +88,6 @@ public class LogFunctions {
 
         @Specialization
         protected RDoubleVector log(RDoubleVector vector, double base) {
-            controlVisibility();
             double[] doubleVector = new double[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 double value = vector.getDataAt(i);

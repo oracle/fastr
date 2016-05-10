@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,6 @@ public abstract class Exists extends RBuiltinNode {
     @TruffleBoundary
     protected byte existsStringEnv(RAbstractStringVector nameVec, REnvironment env, String mode, byte inherits) {
         String name = nameVec.getDataAt(0);
-        controlVisibility();
         RType modeType = typeFromMode.execute(mode);
         if (inherits == RRuntime.LOGICAL_FALSE) {
             Object obj = env.get(name);

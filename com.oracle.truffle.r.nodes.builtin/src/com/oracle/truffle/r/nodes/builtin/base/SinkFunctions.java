@@ -49,7 +49,6 @@ public class SinkFunctions {
             } else {
                 StdConnections.pushDivertOut(conn, RRuntime.fromLogical(closeOnExit));
             }
-            controlVisibility();
             return RNull.instance;
         }
 
@@ -61,7 +60,6 @@ public class SinkFunctions {
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
-            controlVisibility();
             return RNull.instance;
         }
 

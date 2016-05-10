@@ -46,7 +46,6 @@ public abstract class ProcTime extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RDoubleVector procTime() {
-        controlVisibility();
         double[] data = new double[5];
         Engine.Timings timings = RContext.getEngine().getTimings();
         long nowInNanos = timings.elapsedTimeInNanos();

@@ -39,7 +39,6 @@ public abstract class Rhome extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected String doRhome() {
-        controlVisibility();
         return REnvVars.rHome();
     }
 }

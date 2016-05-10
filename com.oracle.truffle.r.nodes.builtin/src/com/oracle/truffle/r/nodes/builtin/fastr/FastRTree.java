@@ -44,7 +44,6 @@ public abstract class FastRTree extends RBuiltinNode {
 
     @Specialization
     protected String printTree(RFunction function, byte verbose) {
-        controlVisibility();
         RootNode root = function.getTarget().getRootNode();
         String printedTree = verbose == RRuntime.LOGICAL_TRUE ? NodeUtil.printTreeToString(root) : NodeUtil.printCompactTreeToString(root);
         System.out.println(printedTree);

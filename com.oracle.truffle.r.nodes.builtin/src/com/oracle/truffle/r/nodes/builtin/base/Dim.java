@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,6 @@ public abstract class Dim extends RBuiltinNode {
     @Specialization
     protected Object dim(RAbstractContainer container, //
                     @Cached("createBinaryProfile()") ConditionProfile hasDimensionsProfile) {
-        controlVisibility();
         if (hasDimensionsProfile.profile(container.hasDimensions())) {
             return RDataFactory.createIntVector(container.getDimensions(), RDataFactory.COMPLETE_VECTOR);
         } else {
@@ -50,7 +49,6 @@ public abstract class Dim extends RBuiltinNode {
 
     @Specialization(guards = "!isRAbstractContainer(vector)")
     protected RNull dim(@SuppressWarnings("unused") Object vector) {
-        controlVisibility();
         return RNull.instance;
     }
 }

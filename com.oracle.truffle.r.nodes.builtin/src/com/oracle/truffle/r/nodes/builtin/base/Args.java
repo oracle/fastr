@@ -77,7 +77,6 @@ public abstract class Args extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object args(RFunction fun) {
-        controlVisibility();
         if (fun.isBuiltin()) {
             return RNull.instance;
         }

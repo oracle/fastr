@@ -59,7 +59,6 @@ public abstract class ShortRowNames extends RBuiltinNode {
 
     @Specialization
     protected Object getNames(Object originalOperand, RAbstractIntVector originalType) {
-        controlVisibility();
 
         if (originalType.getLength() == 0) {
             errorProfile.enter();

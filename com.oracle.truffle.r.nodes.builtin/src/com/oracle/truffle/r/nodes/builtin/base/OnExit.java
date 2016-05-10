@@ -71,7 +71,6 @@ public abstract class OnExit extends RBuiltinNode {
 
     @Specialization
     protected Object onExit(VirtualFrame frame, RPromise expr, byte add) {
-        controlVisibility();
 
         if (na.isNA(add)) {
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "add");

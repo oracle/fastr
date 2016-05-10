@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 public abstract class FastRInspect extends RBuiltinNode {
     @Specialization
     public Object call(@SuppressWarnings("unused") RArgsValuesAndNames args) {
-        controlVisibility();
         return RNull.instance;
     }
 }

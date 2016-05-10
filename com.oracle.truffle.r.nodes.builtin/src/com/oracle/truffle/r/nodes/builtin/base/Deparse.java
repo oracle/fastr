@@ -40,7 +40,6 @@ public abstract class Deparse extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RStringVector deparse(Object expr, int widthCutoffArg, RAbstractLogicalVector backtick, int control, int nlines) {
-        controlVisibility();
         int widthCutoff = widthCutoffArg;
         if (widthCutoff == RRuntime.INT_NA || widthCutoff < RDeparse.MIN_Cutoff || widthCutoff > RDeparse.MAX_Cutoff) {
             RError.warning(this, RError.Message.DEPARSE_INVALID_CUTOFF);

@@ -105,7 +105,6 @@ public class EvalFunctions {
         @Specialization
         protected Object doEval(VirtualFrame frame, Object expr, Object envir, REnvironment enclos, //
                         @Cached("createCast()") EvalEnvCast envCast) {
-            controlVisibility();
             return doEvalBody(RArguments.getDepth(frame) + 1, expr, envCast.execute(envir, enclos));
         }
 

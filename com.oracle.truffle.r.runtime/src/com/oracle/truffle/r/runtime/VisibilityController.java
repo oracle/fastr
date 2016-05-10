@@ -44,21 +44,6 @@ public interface VisibilityController {
     }
 
     /**
-     * Set the global visibility flag according to the visibility property of the node implementing
-     * this interface. There is no need to ever override this method, but all node classes
-     * implementing the {@link VisibilityController} interface must call this method in each of
-     * their specializations or {@code execute()} methods.
-     *
-     * This call is not necessary in specializations or {@code execute()} methods that are
-     * guaranteed to always replace and execute, as is common in "unresolved" node implementations.
-     */
-    default void controlVisibility() {
-        if (!FastROptions.IgnoreVisibility.getBooleanValue()) {
-            RContext.getInstance().setVisible(getVisibility());
-        }
-    }
-
-    /**
      * Force the visibility to {@code state}. Useful for builtins where the visibility depends on
      * the result, e.g. {@code switch}.
      */

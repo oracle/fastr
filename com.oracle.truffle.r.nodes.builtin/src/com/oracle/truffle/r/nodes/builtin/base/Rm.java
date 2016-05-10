@@ -51,7 +51,6 @@ public abstract class Rm extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     protected Object rm(VirtualFrame frame, String name, RMissing envir, byte inherits) {
-        controlVisibility();
         removeFromFrame(frame, name);
         return RNull.instance;
     }
@@ -60,7 +59,6 @@ public abstract class Rm extends RBuiltinNode {
     @TruffleBoundary
     @SuppressWarnings("unused")
     protected Object rm(RAbstractStringVector list, REnvironment envir, byte inherits) {
-        controlVisibility();
         try {
             for (int i = 0; i < list.getLength(); i++) {
                 if (envir == REnvironment.globalEnv()) {

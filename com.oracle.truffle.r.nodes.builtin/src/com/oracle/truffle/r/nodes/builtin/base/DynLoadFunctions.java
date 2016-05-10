@@ -57,7 +57,6 @@ public class DynLoadFunctions {
         @Specialization
         @TruffleBoundary
         protected RList doDynLoad(RAbstractStringVector libVec, RAbstractLogicalVector localVec, byte now, @SuppressWarnings("unused") String unused) {
-            controlVisibility();
             // Length checked by GnuR
             if (libVec.getLength() > 1) {
                 throw RError.error(this, RError.Message.TYPE_EXPECTED, RType.Character.getName());
@@ -86,7 +85,6 @@ public class DynLoadFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull doDynunload(RAbstractStringVector lib) {
-            controlVisibility();
             try {
                 DLL.unload(lib.getDataAt(0));
             } catch (DLLException ex) {
@@ -101,7 +99,6 @@ public class DynLoadFunctions {
         @Specialization
         @TruffleBoundary
         protected RList doGetLoadedDLLs() {
-            controlVisibility();
             ArrayList<DLLInfo> dlls = DLL.getLoadedDLLs();
             String[] names = new String[dlls.size()];
             Object[] data = new Object[names.length];
@@ -122,7 +119,6 @@ public class DynLoadFunctions {
         @Specialization
         @TruffleBoundary
         protected byte isLoaded(RAbstractStringVector symbol, RAbstractStringVector packageName, RAbstractStringVector typeVec) {
-            controlVisibility();
             String type = typeVec.getDataAt(0);
             NativeSymbolType nst = null;
             switch (type) {
@@ -152,7 +148,6 @@ public class DynLoadFunctions {
         @Specialization
         @TruffleBoundary
         protected Object getSymbolInfo(RAbstractStringVector symbolVec, String packageName, byte withReg) {
-            controlVisibility();
             String symbol = symbolVec.getDataAt(0);
             DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
             long f = DLL.findSymbol(RRuntime.asString(symbol), packageName, rns);
@@ -166,7 +161,6 @@ public class DynLoadFunctions {
         @Specialization(guards = "isDLLInfo(externalPtr)")
         @TruffleBoundary
         protected Object getSymbolInfo(RAbstractStringVector symbolVec, RExternalPtr externalPtr, byte withReg) {
-            controlVisibility();
             DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.getAddr());
             if (dllInfo == null) {
                 throw RError.error(this, RError.Message.REQUIRES_NAME_DLLINFO);

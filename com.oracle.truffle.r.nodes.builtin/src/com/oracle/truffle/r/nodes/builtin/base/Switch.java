@@ -56,7 +56,6 @@ public abstract class Switch extends RBuiltinNode {
 
     @Specialization
     protected Object doSwitch(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
-        controlVisibility();
         if (x.getLength() != 1) {
             throw RError.error(this, RError.Message.EXPR_NOT_LENGTH_ONE);
         }
@@ -64,7 +63,6 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     private Object doSwitchString(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
-        controlVisibility();
         Object[] optionalArgValues = optionalArgs.getArguments();
         final String xStr = x.getDataAt(0);
         ArgumentsSignature signature = optionalArgs.getSignature();

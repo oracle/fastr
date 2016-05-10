@@ -203,7 +203,6 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected Object doFileCreate(RAbstractStringVector vec, byte showWarnings) {
-            controlVisibility();
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
@@ -228,7 +227,6 @@ public class FileFunctions {
         @Fallback
         @TruffleBoundary
         protected Object doFileCreate(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
     }
@@ -266,7 +264,6 @@ public class FileFunctions {
              *
              * TODO implement extras_cols=FALSE
              */
-            controlVisibility();
             int vecLength = vec.getLength();
             Object[] data = new Object[NAMES.length];
             boolean[] complete = new boolean[NAMES.length];
@@ -439,14 +436,12 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected Object doFileLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
-            controlVisibility();
             return doFileLink(vecFrom, vecTo, false);
         }
 
         @Fallback
         @TruffleBoundary
         protected Object doFileLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
     }
@@ -456,14 +451,12 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected Object doFileSymLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
-            controlVisibility();
             return doFileLink(vecFrom, vecTo, true);
         }
 
         @Fallback
         @TruffleBoundary
         protected Object doFileSymLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
     }
@@ -474,7 +467,6 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected Object doFileRemove(RAbstractStringVector vec) {
-            controlVisibility();
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
@@ -495,7 +487,6 @@ public class FileFunctions {
         @Fallback
         @TruffleBoundary
         protected Object doFileRemove(@SuppressWarnings("unused") Object x) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
     }
@@ -505,7 +496,6 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected Object doFileRename(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
-            controlVisibility();
             int len = vecFrom.getLength();
             if (len != vecTo.getLength()) {
                 throw RError.error(this, RError.Message.FROM_TO_DIFFERENT);
@@ -532,7 +522,6 @@ public class FileFunctions {
         @Fallback
         @TruffleBoundary
         protected Object doFileRename(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
     }
@@ -543,7 +532,6 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected Object doFileExists(RAbstractStringVector vec) {
-            controlVisibility();
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
@@ -560,7 +548,6 @@ public class FileFunctions {
 
         @Fallback
         protected Object doFileExists(@SuppressWarnings("unused") Object vec) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
     }
@@ -596,7 +583,6 @@ public class FileFunctions {
         }
 
         private RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, byte allFilesL, byte fullNamesL, byte recursiveL, byte ignoreCaseL, byte includeDirsL, byte noDotDotL) {
-            controlVisibility();
             boolean allFiles = RRuntime.fromLogical(allFilesL);
             boolean fullNames = RRuntime.fromLogical(fullNamesL);
             boolean recursive = RRuntime.fromLogical(recursiveL);
@@ -1116,7 +1102,6 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected byte dirCreate(RAbstractStringVector pathVec, byte showWarnings, byte recursive, RIntVector octMode) {
-            controlVisibility();
             boolean ok = true;
             if (pathVec.getLength() != 1) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, "path");

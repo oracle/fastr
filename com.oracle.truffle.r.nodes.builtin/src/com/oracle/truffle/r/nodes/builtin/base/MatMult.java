@@ -76,7 +76,6 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "bothZeroDim(a, b)")
     protected RDoubleVector both0Dim(RAbstractDoubleVector a, RAbstractDoubleVector b) {
-        controlVisibility();
         int r = b.getDimensions()[1];
         int c = a.getDimensions()[0];
         RDoubleVector result = RDataFactory.createDoubleVector(r * c);
@@ -86,14 +85,12 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "hasZeroDim(a)")
     protected RAbstractVector left0Dim(RAbstractVector a, RAbstractVector b) {
-        controlVisibility();
         int[] dim = a.getDimensions()[0] == 0 ? new int[]{0, b.getDimensions()[1]} : new int[]{b.getDimensions()[0], 0};
         return a.copyWithNewDimensions(dim);
     }
 
     @Specialization(guards = "hasZeroDim(b)")
     protected RAbstractVector right0Dim(RAbstractVector a, RAbstractVector b) {
-        controlVisibility();
         int[] dim = b.getDimensions()[0] == 0 ? new int[]{0, a.getDimensions()[1]} : new int[]{a.getDimensions()[0], 0};
         return b.copyWithNewDimensions(dim);
     }
@@ -124,7 +121,6 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "matmat(a, b)")
     protected RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
-        controlVisibility();
         int[] aDimensions = a.getDimensions();
         int[] bDimensions = b.getDimensions();
         return doubleMatrixMultiply(a, b, aDimensions[0], aDimensions[1], bDimensions[0], bDimensions[1]);
@@ -244,7 +240,6 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "vecvec(a, b)")
     protected RDoubleVector vecvecmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
-        controlVisibility();
         if (a.getLength() != b.getLength()) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
@@ -265,7 +260,6 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "matvec(a, b)")
     protected RDoubleVector matvecmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
-        controlVisibility();
         int aRows = a.getDimensions()[0];
         int aCols = a.getDimensions()[1];
         int bRows;
@@ -282,7 +276,6 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "vecmat(a, b)")
     protected RDoubleVector vecmatmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
-        controlVisibility();
         int bRows = b.getDimensions()[0];
         int bCols = b.getDimensions()[1];
         int aRows;
@@ -301,7 +294,6 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "matmat(a, b)")
     protected RComplexVector matmatmult(RAbstractComplexVector a, RAbstractComplexVector b) {
-        controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int bRows = b.getDimensions()[0];
         if (aCols != bRows) {
@@ -330,7 +322,6 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "vecvec(a, b)")
     protected RComplexVector vecvecmult(RAbstractComplexVector a, RAbstractComplexVector b) {
-        controlVisibility();
         if (a.getLength() != b.getLength()) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
@@ -347,7 +338,6 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "matvec(a, b)")
     protected RComplexVector matvecmult(RAbstractComplexVector a, RAbstractComplexVector b) {
-        controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int aRows = a.getDimensions()[0];
         if (aCols != 1 && aCols != b.getLength()) {
@@ -384,7 +374,6 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "vecmat(a, b)")
     protected RComplexVector vecmatmult(RAbstractComplexVector a, RAbstractComplexVector b) {
-        controlVisibility();
         final int bRows = b.getDimensions()[0];
         final int bCols = b.getDimensions()[1];
         if (bRows != 1 && bRows != a.getLength()) {
@@ -423,7 +412,6 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "matmat(a, b)")
     protected RIntVector matmatmult(RAbstractIntVector a, RAbstractIntVector b) {
-        controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int bRows = b.getDimensions()[0];
         if (aCols != bRows) {
@@ -450,7 +438,6 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "vecvec(a, b)")
     protected RIntVector vecvecmult(RAbstractIntVector a, RAbstractIntVector b) {
-        controlVisibility();
         if (a.getLength() != b.getLength()) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
@@ -466,7 +453,6 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "matvec(a, b)")
     protected RIntVector matvecmult(RAbstractIntVector a, RAbstractIntVector b) {
-        controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int aRows = a.getDimensions()[0];
         if (aCols != 1 && aCols != b.getLength()) {
@@ -501,7 +487,6 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "vecmat(a, b)")
     protected RIntVector vecmatmult(RAbstractIntVector a, RAbstractIntVector b) {
-        controlVisibility();
         final int bCols = b.getDimensions()[1];
         final int bRows = b.getDimensions()[0];
         if (bRows != 1 && bRows != a.getLength()) {

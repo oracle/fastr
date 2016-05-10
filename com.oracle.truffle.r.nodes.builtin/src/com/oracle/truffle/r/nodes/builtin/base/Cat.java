@@ -33,7 +33,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.ToStringNode;
 import com.oracle.truffle.r.nodes.unary.ToStringNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -215,7 +214,6 @@ public abstract class Cat extends RBuiltinNode {
             throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
 
-        controlVisibility();
         return RNull.instance;
     }
 

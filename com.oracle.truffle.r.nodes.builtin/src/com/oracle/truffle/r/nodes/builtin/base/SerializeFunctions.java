@@ -46,7 +46,6 @@ public class SerializeFunctions {
     public abstract static class Adapter extends RBuiltinNode {
         @TruffleBoundary
         protected Object doUnserializeFromConnBase(RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
-            controlVisibility();
             try (RConnection openConn = conn.forceOpen("rb")) {
                 if (!openConn.canRead()) {
                     throw RError.error(this, RError.Message.CONNECTION_NOT_OPEN_READ);
@@ -60,14 +59,12 @@ public class SerializeFunctions {
 
         @TruffleBoundary
         protected Object doUnserializeFromRaw(RAbstractRawVector data, @SuppressWarnings("unused") REnvironment refhook) {
-            controlVisibility();
             return RSerialize.unserialize(data);
         }
 
         @TruffleBoundary
         protected Object doSerializeToConnBase(Object object, RConnection conn, int type, @SuppressWarnings("unused") byte xdrLogical, @SuppressWarnings("unused") RNull version,
                         @SuppressWarnings("unused") RNull refhook) {
-            controlVisibility();
             // xdr is only relevant if ascii is false
             try (RConnection openConn = conn.forceOpen(type != RSerialize.XDR ? "wt" : "wb")) {
                 if (!openConn.canWrite()) {

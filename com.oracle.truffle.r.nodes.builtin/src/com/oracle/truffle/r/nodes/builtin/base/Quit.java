@@ -49,7 +49,6 @@ public abstract class Quit extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object doQuit(String saveArg, int status, byte runLast) {
-        controlVisibility();
         if (BrowserInteractNode.inBrowser()) {
             RError.warning(this, RError.Message.BROWSER_QUIT);
             return null;

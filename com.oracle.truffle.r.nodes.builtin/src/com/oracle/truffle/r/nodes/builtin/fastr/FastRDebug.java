@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
@@ -38,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public abstract class FastRDebug extends RBuiltinNode {
     @Specialization
     protected RNull debug(RAbstractStringVector vec) {
-        controlVisibility();
         for (int i = 0; i < vec.getLength(); i++) {
             FastROptions.debugUpdate(vec.getDataAt(i));
         }

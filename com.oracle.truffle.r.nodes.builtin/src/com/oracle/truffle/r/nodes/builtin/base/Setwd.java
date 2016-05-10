@@ -41,7 +41,6 @@ public abstract class Setwd extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object setwd(RAbstractStringVector path) {
-        controlVisibility();
         if (path.getLength() == 0) {
             throw RError.error(this, RError.Message.CHAR_ARGUMENT);
         }

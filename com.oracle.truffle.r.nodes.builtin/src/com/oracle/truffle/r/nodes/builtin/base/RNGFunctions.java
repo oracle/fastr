@@ -44,7 +44,6 @@ public class RNGFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull setSeed(double seed, RNull kind, RNull normKind) {
-            controlVisibility();
             doSetSeed((int) seed, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
         }
@@ -52,7 +51,6 @@ public class RNGFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull setSeed(double seed, RAbstractIntVector kind, RNull normKind) {
-            controlVisibility();
             doSetSeed((int) seed, kind.getDataAt(0), RRNG.NO_KIND_CHANGE);
             return RNull.instance;
         }
@@ -60,7 +58,6 @@ public class RNGFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull setSeed(RNull seed, RNull kind, RNull normKind) {
-            controlVisibility();
             doSetSeed(RRNG.RESET_SEED, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
         }
@@ -68,7 +65,6 @@ public class RNGFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull setSeed(byte seed, RNull kind, RNull normKind) {
-            controlVisibility();
             CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.SEED_NOT_VALID_INT);
         }
@@ -91,7 +87,6 @@ public class RNGFunctions {
 
         @Specialization
         protected RIntVector doRNGkind(Object kind, Object normKind) {
-            controlVisibility();
             RIntVector result = getCurrent();
             int kindChange = checkType(kind, "kind");
             int normKindChange = checkType(normKind, "normkind");

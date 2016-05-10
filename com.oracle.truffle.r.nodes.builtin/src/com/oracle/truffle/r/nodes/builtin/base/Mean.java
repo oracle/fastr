@@ -47,7 +47,6 @@ public abstract class Mean extends RBuiltinNode {
 
     @Specialization
     protected double mean(RAbstractDoubleVector x) {
-        controlVisibility();
         if (x.getLength() == 0) {
             emptyProfile.enter();
             return Double.NaN;
@@ -61,7 +60,6 @@ public abstract class Mean extends RBuiltinNode {
 
     @Specialization
     protected double mean(RAbstractIntVector x) {
-        controlVisibility();
         if (x.getLength() == 0) {
             emptyProfile.enter();
             return Double.NaN;
@@ -75,7 +73,6 @@ public abstract class Mean extends RBuiltinNode {
 
     @Specialization
     protected double mean(RAbstractLogicalVector x) {
-        controlVisibility();
         if (x.getLength() == 0) {
             emptyProfile.enter();
             return Double.NaN;
@@ -89,7 +86,6 @@ public abstract class Mean extends RBuiltinNode {
 
     @Specialization
     protected RComplex mean(RAbstractComplexVector x) {
-        controlVisibility();
         if (x.getLength() == 0) {
             emptyProfile.enter();
             return RDataFactory.createComplex(Double.NaN, Double.NaN);

@@ -50,7 +50,6 @@ public abstract class DPut extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object dput(Object x, RConnection file, int opts) {
-        controlVisibility();
 
         String string = RDeparse.deparse(x, RDeparse.DEFAULT_Cutoff, true, opts, -1);
         try (RConnection openConn = file.forceOpen("wt")) {

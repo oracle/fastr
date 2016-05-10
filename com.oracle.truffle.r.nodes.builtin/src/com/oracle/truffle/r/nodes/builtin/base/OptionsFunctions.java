@@ -64,7 +64,6 @@ public class OptionsFunctions {
         @Specialization
         @TruffleBoundary
         protected RList options(@SuppressWarnings("unused") RMissing x) {
-            controlVisibility();
             Set<Map.Entry<String, Object>> optionSettings = RContext.getInstance().stateROptions.getValues();
             Object[] data = new Object[optionSettings.size()];
             String[] names = new String[data.length];

@@ -33,7 +33,6 @@ public abstract class UnClass extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object unClass(RAbstractVector arg) {
-        controlVisibility();
         if (arg.isObject(attrProfiles)) {
             objectProfile.enter();
             RVector resultVector = arg.materialize();
@@ -49,7 +48,6 @@ public abstract class UnClass extends RBuiltinNode {
 
     @Specialization
     protected Object unClass(RLanguage arg) {
-        controlVisibility();
         if (arg.getClassAttr(attrProfiles) != null) {
             objectProfile.enter();
             RLanguage resultLang = arg;
@@ -66,7 +64,6 @@ public abstract class UnClass extends RBuiltinNode {
 
     @Specialization
     protected Object unClass(RS4Object arg) {
-        controlVisibility();
         if (arg.getClassAttr(attrProfiles) != null) {
             objectProfile.enter();
             RS4Object resultS4 = arg;

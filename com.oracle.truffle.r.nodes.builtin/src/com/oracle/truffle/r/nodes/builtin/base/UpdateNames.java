@@ -55,7 +55,6 @@ public abstract class UpdateNames extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RAbstractContainer updateNames(RAbstractContainer container, Object names) {
-        controlVisibility();
         Object newNames = castString(names);
         if (newNames == RNull.instance) {
             RAbstractContainer result = (RAbstractContainer) container.getNonShared();

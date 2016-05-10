@@ -70,7 +70,6 @@ public class LaFunctions {
 
         @Specialization
         protected Object doRg(RDoubleVector matrix, byte onlyValues) {
-            controlVisibility();
             if (!matrix.isMatrix()) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.MUST_BE_SQUARE_NUMERIC, "x");

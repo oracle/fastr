@@ -75,7 +75,6 @@ public abstract class Internal extends RBuiltinNode {
 
     @Specialization
     protected Object doInternal(VirtualFrame frame, RPromise x) {
-        controlVisibility();
         if (builtinCallNode == null) {
             RNode call = (RNode) x.getRep();
             RNode operand = (RNode) RASTUtils.unwrap(call);

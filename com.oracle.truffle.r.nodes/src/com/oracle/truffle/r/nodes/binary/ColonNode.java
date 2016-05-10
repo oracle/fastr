@@ -62,7 +62,6 @@ public abstract class ColonNode extends RBuiltinNode {
 
     @Specialization(guards = "left <= right")
     protected RIntSequence colonAscending(int left, int right) {
-        controlVisibility();
         leftNA.enable(left);
         rightNA.enable(right);
         naCheck(leftNA.check(left) || rightNA.check(right));
@@ -71,7 +70,6 @@ public abstract class ColonNode extends RBuiltinNode {
 
     @Specialization(guards = "left > right")
     protected RIntSequence colonDescending(int left, int right) {
-        controlVisibility();
         leftNA.enable(left);
         rightNA.enable(right);
         naCheck(leftNA.check(left) || rightNA.check(right));
@@ -80,7 +78,6 @@ public abstract class ColonNode extends RBuiltinNode {
 
     @Specialization(guards = "asDouble(left) <= right")
     protected RIntSequence colonAscending(int left, double right) {
-        controlVisibility();
         leftNA.enable(left);
         naCheck(leftNA.check(left) || RRuntime.isNAorNaN(right));
         return RDataFactory.createAscendingRange(left, (int) right);
@@ -88,7 +85,6 @@ public abstract class ColonNode extends RBuiltinNode {
 
     @Specialization(guards = "asDouble(left) > right")
     protected RIntSequence colonDescending(int left, double right) {
-        controlVisibility();
         leftNA.enable(left);
         naCheck(leftNA.check(left) || RRuntime.isNAorNaN(right));
         return RDataFactory.createDescendingRange(left, (int) right);
@@ -96,7 +92,6 @@ public abstract class ColonNode extends RBuiltinNode {
 
     @Specialization(guards = "left <= asDouble(right)")
     protected RDoubleSequence colonAscending(double left, int right) {
-        controlVisibility();
         rightNA.enable(right);
         naCheck(RRuntime.isNAorNaN(left) || rightNA.check(right));
         return RDataFactory.createAscendingRange(left, right);
@@ -104,7 +99,6 @@ public abstract class ColonNode extends RBuiltinNode {
 
     @Specialization(guards = "left > asDouble(right)")
     protected RDoubleSequence colonDescending(double left, int right) {
-        controlVisibility();
         rightNA.enable(right);
         naCheck(RRuntime.isNAorNaN(left) || rightNA.check(right));
         return RDataFactory.createDescendingRange(left, right);
@@ -112,14 +106,12 @@ public abstract class ColonNode extends RBuiltinNode {
 
     @Specialization(guards = "left <= right")
     protected RDoubleSequence colonAscending(double left, double right) {
-        controlVisibility();
         naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right));
         return RDataFactory.createAscendingRange(left, right);
     }
 
     @Specialization(guards = "left > right")
     protected RDoubleSequence colonDescending(double left, double right) {
-        controlVisibility();
         naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right));
         return RDataFactory.createDescendingRange(left, right);
     }

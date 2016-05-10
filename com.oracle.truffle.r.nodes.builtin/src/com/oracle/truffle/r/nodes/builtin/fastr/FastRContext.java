@@ -66,7 +66,6 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected int create(RAbstractStringVector args, RAbstractStringVector kindVec) {
-            controlVisibility();
             try {
                 RContext.ContextKind kind = RContext.ContextKind.valueOf(kindVec.getDataAt(0));
                 RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, args.materialize().getDataCopy());
@@ -88,7 +87,6 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected Object get() {
-            controlVisibility();
             return RContext.getInstance();
         }
     }
@@ -120,7 +118,6 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected RNull spawn(RAbstractIntVector contexts, RAbstractStringVector exprs) {
-            controlVisibility();
             RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
             for (int i = 0; i < threads.length; i++) {
                 ContextInfo info = checkContext(contexts.getDataAt(i), this);
@@ -143,7 +140,6 @@ public class FastRContext {
     public abstract static class Join extends RBuiltinNode {
         @Specialization
         protected RNull eval(RAbstractIntVector contexts) {
-            controlVisibility();
             try {
                 for (int i = 0; i < contexts.getLength(); i++) {
                     Thread thread = RContext.EvalThread.threads.get(contexts.getDataAt(i));
@@ -179,7 +175,6 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected Object eval(RAbstractIntVector contexts, RAbstractStringVector exprs, byte par) {
-            controlVisibility();
             Object[] results = new Object[contexts.getLength()];
             if (RRuntime.fromLogical(par)) {
                 RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
@@ -255,7 +250,6 @@ public class FastRContext {
         @Specialization(guards = "key.getLength() == 1")
         @TruffleBoundary
         protected int createChannel(RAbstractIntVector key) {
-            controlVisibility();
             return RChannel.createChannel(key.getDataAt(0));
         }
 
@@ -270,7 +264,6 @@ public class FastRContext {
         @Specialization(guards = "key.getLength() == 1")
         @TruffleBoundary
         protected int getChannel(RAbstractIntVector key) {
-            controlVisibility();
             return RChannel.getChannel(key.getDataAt(0));
         }
 
@@ -285,7 +278,6 @@ public class FastRContext {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected RNull getChannel(RAbstractIntVector id) {
-            controlVisibility();
             RChannel.closeChannel(id.getDataAt(0));
             return RNull.instance;
         }
@@ -301,7 +293,6 @@ public class FastRContext {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected RNull send(RAbstractIntVector id, Object data) {
-            controlVisibility();
             RChannel.send(id.getDataAt(0), data);
             return RNull.instance;
         }
@@ -317,7 +308,6 @@ public class FastRContext {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected Object receive(RAbstractIntVector id) {
-            controlVisibility();
             return RChannel.receive(id.getDataAt(0));
         }
 
@@ -332,7 +322,6 @@ public class FastRContext {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected Object poll(RAbstractIntVector id) {
-            controlVisibility();
             return RChannel.poll(id.getDataAt(0));
         }
 
@@ -347,7 +336,6 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected RList select(RList nodes) {
-            controlVisibility();
             int ind = 0;
             int length = nodes.getLength();
             while (true) {

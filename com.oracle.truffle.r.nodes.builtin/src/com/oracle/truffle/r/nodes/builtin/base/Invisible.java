@@ -40,7 +40,6 @@ public abstract class Invisible extends RBuiltinNode {
 
     @Specialization
     protected Object doInvisible(Object o) {
-        controlVisibility();
         return o;
     }
 }

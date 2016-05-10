@@ -65,7 +65,6 @@ public abstract class Warning extends RBuiltinNode {
         boolean immediate = RRuntime.fromLogical(immediateL);
         boolean noBreakWarning = RRuntime.fromLogical(noBreakWarningL);
         RErrorHandling.warningcallInternal(call, message, immediate, noBreakWarning);
-        controlVisibility();
         return message;
     }
 

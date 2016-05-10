@@ -42,13 +42,11 @@ public abstract class DimNames extends RBuiltinNode {
 
     @Specialization
     protected RNull getDimNames(@SuppressWarnings("unused") RNull operand) {
-        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     protected Object getDimNames(RAbstractContainer container) {
-        controlVisibility();
         RList names = container.getDimNames(attrProfiles);
         return nullProfile.profile(names == null) ? RNull.instance : names;
     }

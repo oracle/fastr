@@ -54,66 +54,56 @@ public abstract class AsInteger extends RBuiltinNode {
 
     @Specialization
     protected int asInteger(int value) {
-        controlVisibility();
         return value;
     }
 
     @Specialization
     protected int asInteger(double value) {
-        controlVisibility();
         initCast();
         return (int) castIntNode.executeInt(value);
     }
 
     @Specialization
     protected int asInteger(byte value) {
-        controlVisibility();
         initCast();
         return (int) castIntNode.executeInt(value);
     }
 
     @Specialization
     protected int asInteger(RComplex value) {
-        controlVisibility();
         initCast();
         return (int) castIntNode.executeInt(value);
     }
 
     @Specialization
     protected int asInteger(RRaw value) {
-        controlVisibility();
         initCast();
         return (int) castIntNode.executeInt(value);
     }
 
     @Specialization
     protected int asInteger(String value) {
-        controlVisibility();
         initCast();
         return (int) castIntNode.executeInt(value);
     }
 
     @Specialization
     protected RIntVector asInteger(@SuppressWarnings("unused") RNull value) {
-        controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
 
     @Specialization
     protected RIntVector asInteger(RIntVector vector) {
-        controlVisibility();
         return RDataFactory.createIntVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
     protected RIntVector asInteger(RIntSequence sequence) {
-        controlVisibility();
         return (RIntVector) sequence.createVector();
     }
 
     @Specialization
     protected RAbstractIntVector asInteger(RAbstractVector vector) {
-        controlVisibility();
         initCast();
         return (RAbstractIntVector) castIntNode.executeInt(vector);
     }

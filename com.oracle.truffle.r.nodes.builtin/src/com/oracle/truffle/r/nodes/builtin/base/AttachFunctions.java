@@ -56,7 +56,6 @@ public class AttachFunctions {
         @Specialization
         @TruffleBoundary
         protected REnvironment doAttach(@SuppressWarnings("unused") RNull what, RAbstractIntVector pos, RAbstractStringVector name) {
-            controlVisibility();
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
             doAttachEnv(pos.getDataAt(0), env);
             return env;
@@ -65,7 +64,6 @@ public class AttachFunctions {
         @Specialization
         @TruffleBoundary
         protected REnvironment doAttach(REnvironment what, RAbstractIntVector pos, RAbstractStringVector name) {
-            controlVisibility();
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
             RStringVector names = what.ls(true, null, false);
             for (int i = 0; i < names.getLength(); i++) {
@@ -81,7 +79,6 @@ public class AttachFunctions {
         @Specialization
         @TruffleBoundary
         protected REnvironment doAttach(RList what, RAbstractIntVector pos, RAbstractStringVector name) {
-            controlVisibility();
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
             RStringVector names = what.getNames(attrProfiles);
             for (int i = 0; i < names.getLength(); i++) {
@@ -119,7 +116,6 @@ public class AttachFunctions {
         @Specialization
         @TruffleBoundary
         protected Object doDetach(RAbstractIntVector pos) {
-            controlVisibility();
             try {
                 return REnvironment.detach(pos.getDataAt(0));
             } catch (DetachException ex) {

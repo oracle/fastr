@@ -85,7 +85,6 @@ public abstract class Assign extends RBuiltinNode {
     @Specialization
     protected Object assignInherit(RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits, //
                     @Cached("createBinaryProfile()") ConditionProfile inheritsProfile) {
-        controlVisibility();
         String x = checkVariable(xVec);
         REnvironment env = envir;
         if (inheritsProfile.profile(inherits == RRuntime.LOGICAL_TRUE)) {

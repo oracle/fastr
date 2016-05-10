@@ -76,7 +76,6 @@ public abstract class Return extends RBuiltinNode {
 
     @Specialization
     protected Object returnFunction(VirtualFrame frame, RPromise expr) {
-        controlVisibility();
         // Evaluate the result
         Object value = initPromiseHelper().evaluate(frame, expr);
 
