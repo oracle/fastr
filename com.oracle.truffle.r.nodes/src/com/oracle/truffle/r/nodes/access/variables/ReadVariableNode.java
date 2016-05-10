@@ -59,6 +59,7 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.StableValue;
 import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -197,7 +198,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     private Object executeInternal(VirtualFrame frame, Frame variableFrame) {
         if (kind != ReadKind.Silent) {
-            controlVisibility();
+            RContext.getInstance().setVisible(true);
         }
 
         Object result;

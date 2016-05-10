@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -61,7 +62,7 @@ public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, 
     @Override
     @ExplodeLoop
     public Object execute(VirtualFrame frame) {
-        controlVisibility();
+        RContext.getInstance().setVisible(true);
         Object lastResult = RNull.instance;
         for (int i = 0; i < sequence.length; i++) {
             lastResult = sequence[i].execute(frame);

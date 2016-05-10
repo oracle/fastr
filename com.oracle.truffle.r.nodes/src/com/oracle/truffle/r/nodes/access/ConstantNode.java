@@ -28,6 +28,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -62,7 +63,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
     @Override
     public final Object execute(VirtualFrame frame) {
-        controlVisibility();
+        RContext.getInstance().setVisible(true);
         return getValue();
     }
 
@@ -119,7 +120,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
         @Override
         public double executeDouble(VirtualFrame frame) {
-            controlVisibility();
+            RContext.getInstance().setVisible(true);
             return doubleValue;
         }
     }
@@ -142,7 +143,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
         @Override
         public byte executeByte(VirtualFrame frame) {
-            controlVisibility();
+            RContext.getInstance().setVisible(true);
             return logicalValue;
         }
     }
@@ -165,7 +166,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
         @Override
         public int executeInteger(VirtualFrame frame) {
-            controlVisibility();
+            RContext.getInstance().setVisible(true);
             return intValue;
         }
     }

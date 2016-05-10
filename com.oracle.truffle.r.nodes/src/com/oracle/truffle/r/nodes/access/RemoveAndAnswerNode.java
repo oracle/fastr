@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNodeFactory.RemoveAndAns
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -85,11 +86,6 @@ public abstract class RemoveAndAnswerNode extends RNode {
             this.slot = slot;
         }
 
-        @Override
-        public boolean getVisibility() {
-            return false;
-        }
-
         protected boolean isObject(VirtualFrame frame) {
             return frame.isObject(slot);
         }
@@ -108,7 +104,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
 
         @Specialization(guards = "isObject(frame)")
         protected Object doObject(VirtualFrame frame) {
-            controlVisibility();
+            RContext.getInstance().setVisible(false);
             Object result;
             try {
                 result = frame.getObject(slot);
@@ -123,7 +119,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
 
         @Specialization(guards = "isInt(frame)")
         protected int doInt(VirtualFrame frame) {
-            controlVisibility();
+            RContext.getInstance().setVisible(false);
             int result;
             try {
                 result = frame.getInt(slot);
@@ -138,7 +134,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
 
         @Specialization(guards = "isDouble(frame)")
         protected double doDouble(VirtualFrame frame) {
-            controlVisibility();
+            RContext.getInstance().setVisible(false);
             double result;
             try {
                 result = frame.getDouble(slot);
@@ -153,7 +149,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
 
         @Specialization(guards = "isByte(frame)")
         protected byte doByte(VirtualFrame frame) {
-            controlVisibility();
+            RContext.getInstance().setVisible(false);
             byte result;
             try {
                 result = frame.getByte(slot);
