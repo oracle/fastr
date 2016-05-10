@@ -29,7 +29,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -44,7 +43,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 /**
  * A {@link BlockNode} represents a sequence of statements created by "{ ... }" in source code.
  */
-public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall, VisibilityController {
+public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
     public static final RNode[] EMPTY_BLOCK = new RNode[0];
 

@@ -35,7 +35,6 @@ import com.oracle.truffle.r.nodes.unary.ConvertBooleanNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -47,7 +46,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RSyntaxCall, VisibilityController {
+public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RSyntaxCall {
 
     @Child private LoopNode loop;
 

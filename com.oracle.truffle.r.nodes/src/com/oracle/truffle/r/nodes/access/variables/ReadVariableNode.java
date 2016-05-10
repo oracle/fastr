@@ -58,7 +58,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.StableValue;
-import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -86,7 +85,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * a particular layout of frame descriptors and enclosing environments, and re-specializes in case
  * the layout changes.
  */
-public final class ReadVariableNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup, VisibilityController {
+public final class ReadVariableNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup {
 
     private static final int MAX_INVALIDATION_COUNT = 2;
 

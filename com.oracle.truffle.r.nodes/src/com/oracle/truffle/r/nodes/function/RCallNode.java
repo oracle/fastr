@@ -83,6 +83,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -962,7 +963,9 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
 
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction, Object[] orderedArguments, S3Args s3Args) {
-            return builtin.execute(frame, castArguments(frame, orderedArguments));
+            Object result = builtin.execute(frame, castArguments(frame, orderedArguments));
+            RContext.getInstance().setVisible(builtinDescriptor.getVisibility());
+            return result;
         }
     }
 

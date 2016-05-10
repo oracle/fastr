@@ -154,12 +154,8 @@ public class BrowserFunctions {
         @TruffleBoundary
         protected RNull browserSetDebug(@SuppressWarnings("unused") int n) {
             // TODO implement
+            RContext.getInstance().setVisible(false);
             return RNull.instance;
-        }
-
-        @Override
-        public final boolean getVisibility() {
-            return false;
         }
     }
 }

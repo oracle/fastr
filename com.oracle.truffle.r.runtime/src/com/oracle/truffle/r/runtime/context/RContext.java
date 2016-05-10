@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
@@ -534,6 +535,14 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public void setVisible(boolean v) {
         if (!FastROptions.IgnoreVisibility.getBooleanValue()) {
             resultVisible = v;
+        }
+    }
+
+    public void setVisible(RVisibility visibility) {
+        if (visibility == RVisibility.ON) {
+            setVisible(true);
+        } else if (visibility == RVisibility.OFF) {
+            setVisible(false);
         }
     }
 

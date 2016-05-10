@@ -31,7 +31,6 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNodeFactory.RemoveAndAnswerResolvedNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -73,7 +72,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
         }
     }
 
-    protected abstract static class RemoveAndAnswerResolvedNode extends RemoveAndAnswerNode implements VisibilityController {
+    protected abstract static class RemoveAndAnswerResolvedNode extends RemoveAndAnswerNode {
 
         /**
          * The frame slot representing the variable that is to be removed and whose value is to be

@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -46,7 +45,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 /**
  * An {@link RNode} that handles accesses to components of the variadic argument (..1, ..2, etc.).
  */
-public class ReadVariadicComponentNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup, VisibilityController {
+public class ReadVariadicComponentNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup {
 
     @Child private ReadVariableNode lookup = ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any);
     @Child private PromiseHelperNode promiseHelper;

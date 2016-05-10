@@ -17,12 +17,11 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-public final class UseMethodInternalNode extends RNode implements VisibilityController {
+public final class UseMethodInternalNode extends RNode {
 
     @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true, true);
     @Child private S3FunctionLookupNode lookup = S3FunctionLookupNode.create(false, false);

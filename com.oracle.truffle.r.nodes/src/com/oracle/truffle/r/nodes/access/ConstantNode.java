@@ -27,7 +27,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -40,7 +39,7 @@ import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public abstract class ConstantNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxConstant, VisibilityController {
+public abstract class ConstantNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxConstant {
 
     private ConstantNode(SourceSection sourceSection) {
         super(sourceSection);
