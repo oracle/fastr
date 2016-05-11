@@ -191,6 +191,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     public Object execute(VirtualFrame frame, Frame variableFrame) {
+        assert frame != null;
         return executeInternal(frame, kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(variableFrame)) : variableFrame);
     }
 

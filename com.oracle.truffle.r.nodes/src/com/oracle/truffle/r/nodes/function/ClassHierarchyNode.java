@@ -170,7 +170,6 @@ abstract class S4Class extends RBaseNode {
 
     public abstract RStringVector executeRStringVector(String classAttr);
 
-    @Child private ReadVariableNode sExtendsForS3Find = ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, ".extendsForS3");
     @Child private CastToVectorNode castToVector = CastToVectorNode.create();
 
     @TruffleBoundary
@@ -180,8 +179,8 @@ abstract class S4Class extends RBaseNode {
         RStringVector s4Extends = RContext.getInstance().getS4Extends(classAttr);
         if (s4Extends == null) {
             REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
-            RFunction sExtendsForS3Function = (RFunction) sExtendsForS3Find.execute(null, methodsEnv.getFrame());
-            // the assumption here is that R function can only return either a String or
+            RFunction sExtendsForS3Function = ReadVariableNode.lookupFunction(".extendsForS3", methodsEnv.getFrame(), false);
+            // the assumption here is that the R function can only return either a String or
             // RStringVector
             s4Extends = (RStringVector) castToVector.execute(RContext.getEngine().evalFunction(sExtendsForS3Function, methodsEnv.getFrame(), classAttr));
             RContext.getInstance().putS4Extends(classAttr, s4Extends);

@@ -297,7 +297,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
                 if ((genericIdentityProfile.profile(genericName != cachedGenericName) && !cachedGenericName.equals(genericName)) || !isEqualType(type) || group != cachedGroup) {
                     return next.execute(frame, genericName, type, group, callerFrame, genericDefFrame);
                 }
-                if (!executeReads(unsuccessfulReadsCallerFrame, callerFrame)) {
+                if (!executeReads(frame, unsuccessfulReadsCallerFrame, callerFrame)) {
                     break;
                 }
                 REnvironment methodsTable;
@@ -311,7 +311,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
                 }
                 if (successfulRead != null || successfulReadTable != null) {
 
-                    Object actualFunction = successfulRead != null ? successfulRead.execute(null, callerFrame) : successfulReadTable.execute(null, methodsTable.getFrame());
+                    Object actualFunction = successfulRead != null ? successfulRead.execute(frame, callerFrame) : successfulReadTable.execute(frame, methodsTable.getFrame());
                     if (actualFunction != result.function) {
                         break;
                     }
@@ -331,9 +331,9 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         }
 
         @ExplodeLoop
-        private static boolean executeReads(ReadVariableNode[] reads, Frame callerFrame) {
+        private static boolean executeReads(VirtualFrame frame, ReadVariableNode[] reads, Frame callerFrame) {
             for (ReadVariableNode read : reads) {
-                if (read.execute(null, callerFrame) != null) {
+                if (read.execute(frame, callerFrame) != null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     return false;
                 }
