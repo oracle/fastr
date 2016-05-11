@@ -1006,7 +1006,9 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
 
     @Override
     public RSyntaxElement getSyntaxLHS() {
-        return getFunction() == null ? RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "FUN", true) : getFunctionNode().asRSyntaxNode();
+        ForcePromiseNode func = getFunction();
+        RNode fn = getFunctionNode();
+        return getFunction() == null || getFunction().getValueNode() == null ? RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "FUN", true) : getFunctionNode().asRSyntaxNode();
     }
 
     @Override
