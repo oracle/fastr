@@ -116,12 +116,6 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RExpression materializeNonShared() {
-        RVector d = data.materializeNonShared();
-        return data != d ? RDataFactory.createExpression((RList) d) : this;
-    }
-
-    @Override
     public Object getDataAtAsObject(int index) {
         return data.getDataAtAsObject(index);
     }
@@ -223,8 +217,8 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RAbstractContainer setClassAttr(RStringVector classAttr, boolean convertToInt) {
-        return data.setClassAttr(classAttr, convertToInt);
+    public RAbstractContainer setClassAttr(RStringVector classAttr) {
+        return data.setClassAttr(classAttr);
     }
 
     @Override
@@ -233,12 +227,12 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public int getGPBits() {
-        return data.getGPBits();
+    public int getTypedValueInfo() {
+        return data.getTypedValueInfo();
     }
 
     @Override
-    public void setGPBits(int value) {
-        data.setGPBits(value);
+    public void setTypedValueInfo(int value) {
+        data.setTypedValueInfo(value);
     }
 }

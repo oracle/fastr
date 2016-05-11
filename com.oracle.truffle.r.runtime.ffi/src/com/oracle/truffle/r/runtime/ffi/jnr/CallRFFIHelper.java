@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -54,9 +55,11 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -65,6 +68,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 
 /**
  * This class provides methods that match the functionality of the macro/function definitions in the
@@ -284,7 +288,9 @@ public class CallRFFIHelper {
                 assert nameAsString != null;
             }
             nameAsString = nameAsString.intern();
-            if ("class" == nameAsString) {
+            if (val == RNull.instance) {
+                attrObj.removeAttr(nameAsString);
+            } else if ("class" == nameAsString) {
                 attrObj.initAttributes().put(nameAsString, val);
             } else {
                 attrObj.setAttr(nameAsString, val);
@@ -530,6 +536,21 @@ public class CallRFFIHelper {
         }
     }
 
+    public static Object SET_TYPEOF_FASTR(Object x, int v) {
+        int code = SEXPTYPE.gnuRCodeForObject(x);
+        if (code == SEXPTYPE.LISTSXP.code && v == SEXPTYPE.LANGSXP.code) {
+            RList l;
+            if (x instanceof RPairList) {
+                l = ((RPairList) x).toRList();
+            } else {
+                l = (RList) x;
+            }
+            return RContext.getRRuntimeASTAccess().fromList(l, RLanguage.RepType.CALL);
+        } else {
+            throw unimplemented();
+        }
+    }
+
     public static int TYPEOF(Object x) {
         if (x instanceof CharSXPWrapper) {
             return SEXPTYPE.CHARSXP.code;
@@ -538,9 +559,26 @@ public class CallRFFIHelper {
         }
     }
 
+    public static int OBJECT(Object x) {
+        if (x instanceof RAttributable) {
+            return ((RAttributable) x).getAttr(RRuntime.CLASS_ATTR_KEY) == null ? 0 : 1;
+        } else {
+            return 0;
+        }
+    }
+
     public static Object Rf_duplicate(Object x) {
         guaranteeInstanceOf(x, RAbstractVector.class);
         return ((RAbstractVector) x).copy();
+    }
+
+    public static int Rf_anyDuplicated(Object x, int fromLast) {
+        RAbstractVector vec = (RAbstractVector) x;
+        if (vec.getLength() == 0) {
+            return 0;
+        } else {
+            return DuplicationHelper.analyze(vec, null, true, fromLast != 0).getIndex();
+        }
     }
 
     public static Object PRINTNAME(Object x) {

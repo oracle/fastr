@@ -81,8 +81,8 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
-    public RAbstractContainer materializeNonShared() {
-        return materialize().materializeNonShared();
+    public RTypedValue getNonShared() {
+        return materialize().getNonShared();
     }
 
     @Override

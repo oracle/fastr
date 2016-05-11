@@ -43,7 +43,8 @@ run <- function() {
 	if (!file.exists(outDir)) {
 		dir.create(outDir)
 	}
-	tools:::testInstalledPackage(pkgname, outDir=outDir, lib.loc=lib.install)
+	# TODO add vignettes to types when practical
+	tools:::testInstalledPackage(pkgname, outDir=outDir, lib.loc=lib.install, types=c("examples", "tests"))
 }
 
 if (!interactive()) {

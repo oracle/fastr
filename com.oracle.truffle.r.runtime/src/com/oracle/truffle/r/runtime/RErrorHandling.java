@@ -264,7 +264,7 @@ public class RErrorHandling {
         } else if (i == 1) {
             Object[] data = new Object[]{"abort", RNull.instance};
             RList result = RDataFactory.createList(data);
-            result.setClassAttr(RESTART_CLASS, false);
+            result.setClassAttr(RESTART_CLASS);
             return result;
         } else {
             return RNull.instance;

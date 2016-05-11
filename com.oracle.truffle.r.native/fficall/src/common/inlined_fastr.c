@@ -199,7 +199,7 @@ INLINE_FUN SEXP listAppend(SEXP s, SEXP t)
 INLINE_FUN SEXP lcons(SEXP car, SEXP cdr)
 {
     SEXP e = cons(car, cdr);
-    SET_TYPEOF(e, LANGSXP);
+    e = SET_TYPEOF_FASTR(e, LANGSXP);
     return e;
 }
 

@@ -27,9 +27,7 @@ import java.io.IOException;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RError;
@@ -38,7 +36,6 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -201,9 +198,4 @@ public interface Engine {
     String toString(Object value);
 
     RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws ParseException;
-
-    ForeignAccess getForeignAccess(RTypedValue value);
-
-    Class<? extends TruffleLanguage<RContext>> getTruffleLanguage();
-
 }

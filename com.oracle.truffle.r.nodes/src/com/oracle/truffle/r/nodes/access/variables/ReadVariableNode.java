@@ -64,8 +64,12 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -880,44 +884,43 @@ abstract class CheckTypeNode extends RBaseNode {
     private final RType type;
 
     CheckTypeNode(RType type) {
+        assert type != RType.Any;
         this.type = type;
     }
 
     @Specialization
-    boolean checkType(@SuppressWarnings("unused") Integer o) {
-        return type == RType.Any || type == RType.Integer || type == RType.Double ? true : false;
+    boolean checkType(@SuppressWarnings("unused") RAbstractIntVector o) {
+        return type == RType.Integer || type == RType.Double;
     }
 
     @Specialization
-    boolean checkType(@SuppressWarnings("unused") Double o) {
-        return type == RType.Any || type == RType.Integer || type == RType.Double ? true : false;
+    boolean checkType(@SuppressWarnings("unused") RAbstractDoubleVector o) {
+        return type == RType.Integer || type == RType.Double;
     }
 
     @Specialization
-    boolean checkType(@SuppressWarnings("unused") Byte o) {
-        return type == RType.Any || type == RType.Logical ? true : false;
+    boolean checkType(@SuppressWarnings("unused") RAbstractRawVector o) {
+        return type == RType.Logical;
     }
 
     @Specialization
-    boolean checkType(@SuppressWarnings("unused") String o) {
-        return type == RType.Any || type == RType.Character ? true : false;
+    boolean checkType(@SuppressWarnings("unused") RAbstractStringVector o) {
+        return type == RType.Character;
     }
 
     @Specialization
-    boolean checkType(@SuppressWarnings("unused") RStringVector o) {
-        return type == RType.Any || type == RType.Character ? true : false;
+    boolean checkType(@SuppressWarnings("unused") RAbstractComplexVector o) {
+        return type == RType.Complex;
     }
 
     @Specialization
     boolean checkType(@SuppressWarnings("unused") RFunction o) {
-        return type == RType.Any || type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special ? true : false;
+        return type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special;
     }
 
     @Fallback
     boolean checkType(Object o) {
-        if (type == RType.Any) {
-            return true;
-        } else if (type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special) {
+        if (type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special) {
             return o instanceof TruffleObject && !(o instanceof RTypedValue);
         } else {
             return false;

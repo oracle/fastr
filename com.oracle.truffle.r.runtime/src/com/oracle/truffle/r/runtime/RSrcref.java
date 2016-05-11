@@ -74,7 +74,7 @@ public class RSrcref {
         env.safePut(SrcrefFields.filename.name(), path.toString());
         env.safePut(SrcrefFields.isFile.name(), RRuntime.LOGICAL_TRUE);
         env.safePut(SrcrefFields.wd.name(), RFFIFactory.getRFFI().getBaseRFFI().getwd());
-        env.setClassAttr(SRCFILE_ATTR, false);
+        env.setClassAttr(SRCFILE_ATTR);
         return env;
     }
 
@@ -103,7 +103,7 @@ public class RSrcref {
         llocData[6] = startLine;
         llocData[7] = lastLine;
         RIntVector lloc = RDataFactory.createIntVector(llocData, RDataFactory.COMPLETE_VECTOR);
-        lloc.setClassAttr(SRCREF_ATTR, false);
+        lloc.setClassAttr(SRCREF_ATTR);
         lloc.setAttr(RRuntime.R_SRCFILE, srcfile);
         return lloc;
     }

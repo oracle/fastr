@@ -419,7 +419,7 @@ public class InfixFunctions {
         private RLanguage doTilde(VirtualFrame frame, @SuppressWarnings("unused") RSyntaxNode response, @SuppressWarnings("unused") RSyntaxNode model) {
             RCallNode call = (RCallNode) ((RBaseNode) getParent()).asRSyntaxNode();
             RLanguage lang = RDataFactory.createLanguage(call);
-            lang.setClassAttr(FORMULA_CLASS, false);
+            lang.setClassAttr(FORMULA_CLASS);
             REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
             lang.setAttr(RRuntime.DOT_ENVIRONMENT, env);
             return lang;

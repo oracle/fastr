@@ -122,7 +122,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value) {
         controlVisibility();
         String internedName = intern(name);
-        RAbstractContainer result = container.materializeNonShared();
+        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
             result.setDimensions(null);
@@ -131,7 +131,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {
             return updateDimNames(result, value);
         } else if (internedName == RRuntime.CLASS_ATTR_KEY) {
-            return (RAbstractContainer) result.setClassAttr(null, false);
+            return (RAbstractContainer) result.setClassAttr(null);
         } else if (internedName == RRuntime.ROWNAMES_ATTR_KEY) {
             result.setRowNames(null);
         } else if (result.getAttributes() != null) {
@@ -155,7 +155,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     protected RAbstractContainer updateAttr(RAbstractContainer container, String name, Object value) {
         controlVisibility();
         String internedName = intern(name);
-        RAbstractContainer result = container.materializeNonShared();
+        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
             RAbstractIntVector dimsVector = castInteger(castVector(value));
@@ -169,7 +169,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {
             return updateDimNames(result, value);
         } else if (internedName == RRuntime.CLASS_ATTR_KEY) {
-            return (RAbstractContainer) result.setClassAttr(convertClassAttrFromObject(value), false);
+            return (RAbstractContainer) result.setClassAttr(convertClassAttrFromObject(value));
         } else if (internedName == RRuntime.ROWNAMES_ATTR_KEY) {
             result.setRowNames(castVector(value));
         } else {

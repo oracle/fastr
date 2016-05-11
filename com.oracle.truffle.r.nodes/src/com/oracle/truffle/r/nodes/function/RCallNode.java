@@ -68,7 +68,6 @@ import com.oracle.truffle.r.nodes.function.RCallNodeGen.FunctionDispatchNodeGen;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.call.PrepareArguments;
-import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.Arguments;
@@ -409,12 +408,12 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
                     @Cached("createPromiseHelper()") PromiseCheckHelperNode promiseHelperNode, //
                     @Cached("createUninitializedExplicitCall()") FunctionDispatch call) {
 
-        RArgsValuesAndNames argAndNames = explicitArgs != null ? (RArgsValuesAndNames) explicitArgs.execute(frame) : callArguments.evaluateFlatten(frame, lookupVarArgs(frame));
+        Object[] args = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getArguments() : callArguments.evaluateFlattenObjects(frame, lookupVarArgs(frame));
 
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         RDispatch dispatch = builtin.getDispatch();
 
-        RStringVector typeX = classHierarchyNodeX.execute(promiseHelperNode.checkEvaluate(frame, argAndNames.getArgument(0)));
+        RStringVector typeX = classHierarchyNodeX.execute(promiseHelperNode.checkEvaluate(frame, args[0]));
         Result resultX = null;
         if (implicitTypeProfileX.profile(typeX != null)) {
             try {
@@ -424,8 +423,8 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
             }
         }
         Result resultY = null;
-        if (argAndNames.getLength() > 1 && dispatch == RDispatch.OPS_GROUP_GENERIC) {
-            RStringVector typeY = classHierarchyNodeY.execute(promiseHelperNode.checkEvaluate(frame, argAndNames.getArgument(1)));
+        if (args.length > 1 && dispatch == RDispatch.OPS_GROUP_GENERIC) {
+            RStringVector typeY = classHierarchyNodeY.execute(promiseHelperNode.checkEvaluate(frame, args[1]));
             if (implicitTypeProfileY.profile(typeY != null)) {
                 try {
                     resultY = dispatchLookupY.execute(frame, builtin.getName(), typeY, dispatch.getGroupGenericName(), frame.materialize(), null);
@@ -460,8 +459,8 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
                 }
             }
         }
-        S3Args s3Args;
-        RFunction resultFunction;
+        final S3Args s3Args;
+        final RFunction resultFunction;
         if (result == null) {
             s3Args = null;
             resultFunction = function;
@@ -473,7 +472,8 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
             }
             resultFunction = result.function;
         }
-        return call.execute(frame, resultFunction, argAndNames, s3Args);
+        ArgumentsSignature argsSignature = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getSignature() : callArguments.flattenNames(lookupVarArgs(frame));
+        return call.execute(frame, resultFunction, new RArgsValuesAndNames(args, argsSignature), s3Args);
     }
 
     protected class ForeignCall extends Node {
@@ -964,7 +964,6 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
     private static final class DispatchedCallNode extends LeafCallNode {
 
         @Child private DirectCallNode call;
-        @Child private RArgumentsNode argsNode;
         @Child private RFastPathNode fastPath;
 
         private final ArgumentsSignature signature;
@@ -989,17 +988,16 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
                 fastPath = null;
             }
 
-            if (argsNode == null) {
+            if (call == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                argsNode = insert(RArgumentsNode.create());
                 call = insert(Truffle.getRuntime().createDirectCallNode(cachedFunction.getTarget()));
                 if (needsSplitting(cachedFunction)) {
                     call.cloneCallTarget();
                 }
             }
-            MaterializedFrame callerFrame = CompilerDirectives.inInterpreter() || originalCall.needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = argsNode.execute(cachedFunction, originalCall.createCaller(frame, cachedFunction), callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
-                            orderedArguments, signature, s3Args);
+            MaterializedFrame callerFrame = /* CompilerDirectives.inInterpreter() || */originalCall.needsCallerFrame ? frame.materialize() : null;
+            Object[] argsObject = RArguments.create(cachedFunction, originalCall.createCaller(frame, cachedFunction), callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
+                            orderedArguments, signature, cachedFunction.getEnclosingFrame(), s3Args);
             return call.call(frame, argsObject);
         }
     }

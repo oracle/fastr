@@ -21,12 +21,12 @@
 # questions.
 #
 import tempfile, platform, subprocess, sys
-from os.path import join, sep, abspath
+from os.path import join, sep
 from argparse import ArgumentParser
 import mx
 import mx_gate
-import mx_fastr_pkgtest
-import shutil, os
+import mx_fastr_pkgs
+import os
 
 '''
 This is the launchpad for all the functions available for building/running/testing/analyzing
@@ -71,7 +71,7 @@ _command_class_dict = {'r': _r_command_project + ".shell.RCommand",
                        'rscript': _r_command_project + ".shell.RscriptCommand",
                         'rrepl': _repl_command}
 
-def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True, out=None, err=None):
+def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     '''
     This is the basic function that runs a FastR process, where args have already been parsed.
     Args:
@@ -79,13 +79,16 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True, out
       command: e.g. 'R', implicitly defines the entry class (can be None for AOT)
       extraVmArgs: additional vm arguments
       jdk: jdk (an mx.JDKConfig instance) to use
+      **kwargs other keyword args understood by run_java
       nonZeroIsFatal: whether to terminate the execution run fails
       out,err possible redirects to collect output
 
     By default a non-zero return code will cause an mx.abort, unless nonZeroIsFatal=False
     The assumption is that the VM is already built and available.
     '''
-    setREnvironment()
+    env = kwargs['env'] if 'env' in kwargs else os.environ
+
+    setREnvironment(env)
     if not jdk:
         jdk = get_default_jdk()
 
@@ -103,7 +106,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True, out
     vmArgs = _sanitize_vmArgs(jdk, vmArgs)
     if command:
         vmArgs.append(_command_class_dict[command.lower()])
-    return mx.run_java(vmArgs + args, nonZeroIsFatal=nonZeroIsFatal, jdk=jdk, out=out, err=err)
+    return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
 
 def _sanitize_vmArgs(jdk, vmArgs):
     '''
@@ -151,30 +154,32 @@ def _get_ldpaths(lib_env_name):
     except subprocess.CalledProcessError:
         mx.abort('error retrieving etc/ldpaths')
 
-def setREnvironment():
+def setREnvironment(env=None):
     '''
     If R is run via mx, then the library path will not be set, whereas if it is
     run from 'bin/R' it will be, via etc/ldpaths.
     On Mac OS X El Capitan and beyond, this is moot as the variable is not
     passed down. It is TBD if we can avoid this on Linux.
     '''
+    if not env:
+        env = os.environ
     # This may have been set by a higher power
-    if not os.environ.has_key('R_HOME'):
-        os.environ['R_HOME'] = _fastr_suite.dir
+    if not 'R_HOME' in env:
+        env['R_HOME'] = _fastr_suite.dir
 
     # Make sure that native code formats numbers consistently
-    os.environ['LC_NUMERIC'] = 'C'
+    env['LC_NUMERIC'] = 'C'
 
     osname = platform.system()
     if osname != 'Darwin':
         lib_env = 'LD_LIBRARY_PATH'
 
-        if os.environ.has_key(lib_env):
-            lib_value = os.environ[lib_env]
+        if lib_env in env:
+            lib_value = env[lib_env]
         else:
             lib_value = _get_ldpaths(lib_env)
 
-        os.environ[lib_env] = lib_value
+        env[lib_env] = lib_value
 
 def get_default_jdk():
     '''
@@ -185,7 +190,7 @@ def get_default_jdk():
     '''
     return mx_jvm().get_jvmci_jdk()
 
-def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, nonZeroIsFatal=True, out=None, err=None):
+def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, **kwargs):
     '''
     Common function for running either R, Rscript (or rrepl).
     args are a list of strings that came after 'command' on the command line
@@ -213,19 +218,72 @@ def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, nonZeroIsFatal
             print 'CMD not implemented via mx, use: bin/R CMD ...'
             sys.exit(1)
 
-    return do_run_r(rargs, command, extraVmArgs=extraVmArgs, jdk=jdk, nonZeroIsFatal=nonZeroIsFatal, out=out, err=err)
+    return do_run_r(rargs, command, extraVmArgs=extraVmArgs, jdk=jdk, **kwargs)
 
 def rshell(args):
     '''run R shell'''
     return run_r(args, 'r')
 
-def rscript(args, parser=None, out=None, err=None):
+def rscript(args, parser=None, **kwargs):
     '''run Rscript'''
-    return run_r(args, 'rscript', parser=parser, out=out, err=err)
+    return run_r(args, 'rscript', parser=parser, **kwargs)
 
 def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
     run_r(args, 'rrepl')
+
+def process_bm_args(args):
+    '''
+    Analyze args for those specific to the rhome of this suite for benchmarks.
+    Return a dict with keys:
+      'suite': this suite
+      'printname': print name for suite
+      'args': non-rhome-specific args
+      'rhome_args: rhome-specific-args
+      'executor': function to execute a command using the rhome
+    Other keys can be stored based on the analysis
+    '''
+    def getVmArgValue(key, args, i):
+        if i < len(args) - 1:
+            return args[i + 1]
+        else:
+            mx.abort('value expected after ' + key)
+
+    non_rhome_args = []
+    rhome_args = []
+    rhome_args.append('-Xmx6g')
+    # This turns off all visibility support
+    rhome_args.append('-DR:+IgnoreVisibility')
+    # Evidently these options are specific to Graal but do_run_r filters inappropriate options
+    # if we are running under a different VM
+#    rhome_args.append('-Dgraal.TruffleCompilationExceptionsAreFatal=true')
+    rhome_args.append('-Dgraal.TraceTruffleCompilation=true')
+    rhome_args += ['-da', '-dsa']
+    error_args = []
+    i = 0
+    jdk = None
+    while i < len(args):
+        arg = args[i]
+        if arg == '--J':
+            argslist = mx.split_j_args([getVmArgValue(arg, args, i)])
+            rhome_args += argslist
+            i = i + 1
+        elif arg == '--jdk':
+            jdk = getVmArgValue(arg, args, i)
+            i = i + 1
+        elif args == '--print-internal-errors':
+            # Non-interactively we don't want exceptions going to fastr_errors.log
+            error_args = ['-DR:+PrintErrorStacktraces', '-DR:-PrintErrorStacktracesToFile']
+        else:
+            non_rhome_args.append(arg)
+        i = i + 1
+    return {'suite': _fastr_suite, 'printname': 'FastR',
+            'args': non_rhome_args, 'rhome-args': rhome_args + error_args,
+            'executor': _bm_runner,
+            'jdk': jdk}
+
+def _bm_runner(command, rhome_dict, out, err, nonZeroIsFatal=False):
+    return do_run_r(command, 'R', nonZeroIsFatal=False, extraVmArgs=rhome_dict['rhome-args'], jdk=rhome_dict['jdk'], out=out, err=out)
 
 def build(args):
     '''FastR build'''
@@ -276,58 +334,6 @@ def gate(args):
 def original_gate(args):
     '''Run the R gate (without filtering gate tasks)'''
     mx_gate.gate(args)
-
-def _test_harness_body(args, vmArgs):
-    '''the callback from mx.test'''
-    libinstall = abspath("lib.install.cran")
-    # make sure its empty
-    shutil.rmtree(libinstall, ignore_errors=True)
-    os.mkdir(libinstall)
-    install_tmp = "install.tmp"
-    shutil.rmtree(install_tmp, ignore_errors=True)
-    os.mkdir(install_tmp)
-    os.environ["TMPDIR"] = install_tmp
-    os.environ['R_LIBS_USER'] = libinstall
-    stacktrace_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
-
-    install_args = ['--pkg-count', args.pkg_count]
-    if args.ok_only:
-        # only install/test packages that have been successfully installed
-        install_args += ['--pkg-filelist', join(_cran_test_project(), 'ok.packages')]
-    if not args.install_only:
-        install_args += ['--run-tests']
-    if args.ignore_blacklist:
-        install_args += ['--ignore-blacklist']
-    if args.install_dependents:
-        install_args += ['--install-dependents']
-    if args.print_ok_installs:
-        install_args += ['--print-ok-installs']
-
-    class OutputCapture:
-        def __init__(self):
-            self.data = ""
-        def __call__(self, data):
-            print data,
-            self.data += data
-
-    out = OutputCapture()
-
-    rc = _installpkgs(stacktrace_args + install_args, out=out, err=out)
-
-    shutil.rmtree(install_tmp, ignore_errors=True)
-    return rc
-
-def test(args):
-    '''used for package installation/testing'''
-    parser = ArgumentParser(prog='r test')
-    parser.add_argument('--ok-only', action='store_true', help='only install/test packages from the ok.packages file')
-    parser.add_argument('--install-only', action='store_true', help='just install packages, do not test')
-    # sundry options understood by installpkgs R code
-    parser.add_argument('--pkg-count', action='store', help='number of packages to install/test', default='100')
-    parser.add_argument('--ignore-blacklist', action='store_true', help='pass --ignore-blacklist')
-    parser.add_argument('--install-dependents', action='store_true', help='pass -install-dependents')
-    parser.add_argument('--print-ok-installs', action='store_true', help='pass --print-ok-installs')
-    return mx.test(args, harness=_test_harness_body, parser=parser)
 
 def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
@@ -430,8 +436,7 @@ def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
 def _simple_unit_tests():
-#    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'tck', 'parser', 'S4']))
-    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'parser', 'S4']))
+    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'tck', 'parser', 'S4']))
 
 def _package_unit_tests():
     return ','.join(map(_test_subpackage, ['rffi', 'rpackages']))
@@ -575,15 +580,21 @@ def rcmplib(args):
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
 def _cran_test_project():
-    return mx.project('com.oracle.truffle.r.test.cran').dir
+    return 'com.oracle.truffle.r.test.cran'
+
+def _cran_test_project_dir():
+    return mx.project(_cran_test_project()).dir
 
 def installpkgs(args):
     _installpkgs(args)
 
-def _installpkgs(args, out=None, err=None):
-    cran_test = _cran_test_project()
-    script = join(cran_test, 'r', 'install.cran.packages.R')
-    return rscript([script] + args, out=out, err=err)
+def _installpkgs_script():
+    cran_test = _cran_test_project_dir()
+    return join(cran_test, 'r', 'install.cran.packages.R')
+
+def _installpkgs(args, **kwargs):
+    script = _installpkgs_script()
+    return rscript([script] + args, **kwargs)
 
 _commands = {
     'r' : [rshell, '[options]'],
@@ -602,12 +613,10 @@ _commands = {
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, ['options']],
     'rcmplib' : [rcmplib, ['options']],
-    'test' : [test, ['options']],
+    'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'installpkgs' : [installpkgs, '[options]'],
     'installcran' : [installpkgs, '[options]'],
     }
-
-_commands.update(mx_fastr_pkgtest._commands)
 
 mx.update_commands(_fastr_suite, _commands)
