@@ -49,8 +49,6 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRContext;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebug;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebugNodeGen;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRDumpTrees;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRDumpTreesNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRFunctionTimer;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRFunctionTimerFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRIdentity;
@@ -288,7 +286,6 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRContext.Spawn.class, FastRContextFactory.SpawnNodeGen::create);
         add(FastRContext.Join.class, FastRContextFactory.JoinNodeGen::create);
         add(FastRDebug.class, FastRDebugNodeGen::create);
-        add(FastRDumpTrees.class, FastRDumpTreesNodeGen::create);
         add(FastRFunctionTimer.CreateFunctionTimer.class, FastRFunctionTimerFactory.CreateFunctionTimerNodeGen::create);
         add(FastRFunctionTimer.GetFunctionTimer.class, FastRFunctionTimerFactory.GetFunctionTimerNodeGen::create);
         add(FastRIdentity.class, FastRIdentityNodeGen::create);
