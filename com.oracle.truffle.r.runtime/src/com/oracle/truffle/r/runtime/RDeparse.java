@@ -418,7 +418,8 @@ public class RDeparse {
                             switch (info.kind) {
                                 case BINARY:
                                 case BINARY2:
-                                    append(func.op, lhs).append(args[0]);
+                                    append(func.op, lhs);
+                                    appendWithParens(args[0], info, false);
                                     return null;
                                 case REPEAT:
                                     append("repeat", lhs).append(' ').append(args[0]);
@@ -641,15 +642,26 @@ public class RDeparse {
                     case BINARY:
                     case BINARY2:
                         RSyntaxElement[] subArgs = ((RSyntaxCall) arg).getSyntaxArguments();
+                        if (subArgs.length > 2) {
+                            needsParens = false;
+                            break;
+                        }
                         if (subArgs.length == 1) {
-                            if (isLeft && arginfo.prec == RDeparse.PREC_SUM) {
+                            if (!isLeft) {
+                                needsParens = false;
+                                break;
+                            }
+                            if (arginfo.prec == RDeparse.PREC_SUM) {
                                 arginfo = arginfo.changePrec(RDeparse.PREC_SIGN);
                             }
-                        } else if (subArgs.length == 2) {
-                            needsParens = checkPrec(mainOp, arginfo, isLeft);
                         }
-                        break;
-                    case UNARY:
+                        if (subArgs.length == 2) {
+                            if (mainOp.prec == PREC_COMPARE && arginfo.prec == PREC_COMPARE) {
+                                needsParens = true;
+                                break;
+                            }
+
+                        }
                         needsParens = mainOp.prec > arginfo.prec || (mainOp.prec == arginfo.prec && isLeft == mainOp.rightassoc);
                         break;
                     default:
@@ -663,10 +675,6 @@ public class RDeparse {
             } else {
                 append(arg);
             }
-        }
-
-        private static boolean checkPrec(PPInfo mainop, PPInfo arginfo, boolean left) {
-            return mainop.prec > arginfo.prec || (mainop.prec == arginfo.prec && left == mainop.rightassoc);
         }
 
         private DeparseVisitor appendArgs(ArgumentsSignature signature, RSyntaxElement[] args, int start, boolean formals) {
