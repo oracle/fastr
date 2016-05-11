@@ -51,11 +51,6 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
     private final NAProfile naProfile = NAProfile.create();
 
-    @Override
-    protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
-        return Collections.singleton(RAbstractLogicalVector.class);
-    }
-
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
@@ -177,7 +172,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     }
 
     @Override
-    protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
+    protected Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
         return downStreamSamples;
     }
 

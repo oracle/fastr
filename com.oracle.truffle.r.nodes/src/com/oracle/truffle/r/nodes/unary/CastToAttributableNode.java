@@ -36,11 +36,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public abstract class CastToAttributableNode extends CastBaseNode {
 
-    @Override
-    protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
-        return Collections.singleton(RAttributable.class);
-    }
-
     public abstract Object executeObject(Object value);
 
     @Specialization
@@ -75,7 +70,7 @@ public abstract class CastToAttributableNode extends CastBaseNode {
     }
 
     @Override
-    protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
+    protected Samples<?> collectSamples(TypeExpr inputTypes, Samples<?> downStreamSamples) {
         return downStreamSamples;
     }
 }

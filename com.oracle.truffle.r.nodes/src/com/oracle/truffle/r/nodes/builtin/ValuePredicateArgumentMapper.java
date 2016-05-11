@@ -27,19 +27,20 @@ import java.util.Set;
 import java.util.function.Function;
 
 import com.oracle.truffle.r.nodes.unary.CastNode.Samples;
+import com.oracle.truffle.r.nodes.unary.CastNode.TypeExpr;
 
 public class ValuePredicateArgumentMapper<T, R> implements ArgumentMapper<T, R> {
 
     private final Function<T, R> mapper;
     private final Function<R, T> unmapper;
-    private final Set<Class<?>> allowedTypeSet;
+    private final TypeExpr allowedTypes;
     private final Set<? extends T> positiveSamples;
-    private final Set<? extends T> negativeSamples;
+    private final Set<?> negativeSamples;
 
-    public ValuePredicateArgumentMapper(Function<T, R> mapper, Function<R, T> unmapper, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples, Set<Class<?>> allowedTypeSet) {
+    public ValuePredicateArgumentMapper(Function<T, R> mapper, Function<R, T> unmapper, Set<? extends T> positiveSamples, Set<?> negativeSamples, Set<Class<?>> allowedTypeSet) {
         this.mapper = mapper;
         this.unmapper = unmapper;
-        this.allowedTypeSet = allowedTypeSet;
+        this.allowedTypes = allowedTypeSet.isEmpty() ? TypeExpr.ANYTHING : TypeExpr.union(allowedTypeSet);
         this.positiveSamples = positiveSamples;
         this.negativeSamples = negativeSamples;
     }
@@ -48,22 +49,23 @@ public class ValuePredicateArgumentMapper<T, R> implements ArgumentMapper<T, R> 
         return mapper.apply(arg);
     }
 
-    public Set<Class<?>> resultTypes() {
-        return allowedTypeSet;
+    public TypeExpr resultTypes() {
+        return allowedTypes;
     }
 
     public static <T, R> ValuePredicateArgumentMapper<T, R> fromLambda(Function<T, R> mapper, Function<R, T> unmapper, Class<R> resultClass) {
         return new ValuePredicateArgumentMapper<>(mapper, unmapper, Collections.emptySet(), Collections.emptySet(), Collections.singleton(resultClass));
     }
 
-    public static <T, R> ValuePredicateArgumentMapper<T, R> fromLambda(Function<T, R> mapper, Function<R, T> unmapper, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples, Class<R> resultClass) {
+    public static <T, R> ValuePredicateArgumentMapper<T, R> fromLambda(Function<T, R> mapper, Function<R, T> unmapper, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples,
+                    Class<R> resultClass) {
         return new ValuePredicateArgumentMapper<>(mapper, unmapper, positiveSamples, negativeSamples, Collections.singleton(resultClass));
     }
 
     @Override
     public Samples<T> collectSamples(Samples<R> downStreamSamples) {
-        Samples<T> unmappedSamples = downStreamSamples.map(x -> unmapper.apply(x));
-        return new Samples<>(positiveSamples, negativeSamples).and(unmappedSamples);
+        Samples<T> unmappedSamples = downStreamSamples.map(x -> unmapper.apply(x), x -> x);
+        return new Samples<T>(positiveSamples, negativeSamples).and(unmappedSamples);
     }
 
 }

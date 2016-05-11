@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -43,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -59,6 +61,7 @@ public abstract class NChar extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mapIf(stringValue(), asStringVector(), asIntegerVector());
         casts.toLogical(2).toLogical(3);
     }
 
@@ -96,6 +99,25 @@ public abstract class NChar extends RBuiltinNode {
     @Specialization
     protected int nchar(byte value, String type, byte allowNA, byte keepNA) {
         return coerceContent(value).length();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    protected RIntVector ncharInt(RAbstractIntVector vector, String type, byte allowNA, byte keepNA) {
+        controlVisibility();
+
+        int len = vector.getLength();
+        int[] result = new int[len];
+        for (int i = 0; i < len; i++) {
+            int x = vector.getDataAt(i);
+            if (x == RRuntime.INT_NA) {
+                result[i] = 2;
+            } else {
+                result[i] = (int) (Math.log10(x) + 1); // not the fastest one
+            }
+        }
+
+        return RDataFactory.createIntVector(result, false);
     }
 
     @SuppressWarnings("unused")

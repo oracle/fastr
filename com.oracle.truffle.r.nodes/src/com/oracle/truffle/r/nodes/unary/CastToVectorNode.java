@@ -22,13 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.List;
 
 import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastUtils.Cast;
+import com.oracle.truffle.r.nodes.builtin.CastUtils.Casts;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -43,13 +43,23 @@ public abstract class CastToVectorNode extends CastNode {
     public abstract boolean isNonVectorPreserved();
 
     @Override
-    protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
-        HashSet<Class<?>> newTypes = inputTypes.stream().filter(x -> RAbstractVector.class.isAssignableFrom(x)).collect(Collectors.toCollection(HashSet::new));
-        if (newTypes.isEmpty()) {
-            return Collections.singleton(RAbstractVector.class);
+    protected TypeExpr resultTypes(TypeExpr inputType) {
+        List<Cast> castList;
+        if (isNonVectorPreserved()) {
+            castList = Arrays.asList(new Cast(RNull.class, RNull.class),
+                            new Cast(RMissing.class, RNull.class),
+                            new Cast(RFunction.class, RFunction.class),
+                            new Cast(RAbstractVector.class, RAbstractVector.class),
+                            new Cast(RExpression.class, RList.class));
         } else {
-            return newTypes;
+            castList = Arrays.asList(new Cast(RNull.class, RList.class),
+                            new Cast(RMissing.class, RList.class),
+                            new Cast(RFunction.class, RList.class),
+                            new Cast(RAbstractVector.class, RAbstractVector.class),
+                            new Cast(RExpression.class, RList.class));
         }
+        TypeExpr narrowed = Casts.createCasts(castList).narrow(inputType);
+        return narrowed;
     }
 
     @Specialization
@@ -90,7 +100,7 @@ public abstract class CastToVectorNode extends CastNode {
     }
 
     @Override
-    protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
+    protected Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
         return downStreamSamples;
     }
 

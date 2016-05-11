@@ -27,7 +27,7 @@ import java.util.function.Predicate;
 
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public class VectorPredicateArgumentFilter<T extends RAbstractVector, R extends T> extends ValuePredicateArgumentFilter<T, R> {
+public class VectorPredicateArgumentFilter<T extends RAbstractVector> extends ValuePredicateArgumentFilter<T> {
 
     public VectorPredicateArgumentFilter(Predicate<T> valuePredicate, boolean isNullable) {
         super(valuePredicate, CastBuilder.samples(), CastBuilder.samples(), Collections.emptySet(), isNullable);

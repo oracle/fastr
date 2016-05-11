@@ -44,13 +44,19 @@ public final class ChainedCastNode extends CastNode {
     }
 
     @Override
-    protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
+    protected TypeExpr resultTypes(TypeExpr inputTypes) {
         return secondCast.resultTypes(firstCast.resultTypes(inputTypes));
     }
 
     @Override
-    protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
-        return firstCast.collectSamples(secondCast.collectSamples(downStreamSamples));
+    public String toString() {
+        return firstCast.toString();
+    }
+
+    @Override
+    protected Samples<?> collectSamples(TypeExpr inputTypes, Samples<?> downStreamSamples) {
+        TypeExpr rt1 = firstCast.resultTypes(inputTypes);
+        return firstCast.collectSamples(inputTypes, secondCast.collectSamples(rt1, downStreamSamples));
     }
 
 }

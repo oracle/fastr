@@ -22,98 +22,238 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.oracle.truffle.r.nodes.unary.CastNode.Samples;
+import com.oracle.truffle.r.nodes.unary.CastNode.TypeExpr;
 
-public interface ArgumentFilter<T, R extends T> {
+public interface ArgumentFilter<T, R> {
 
     boolean test(T arg);
 
-    Samples<T> collectSamples(Samples<? extends T> downStreamSamples);
+    Samples<R> collectSamples(Samples<? extends R> downStreamSamples);
 
-    Set<Class<?>> allowedTypes();
+    TypeExpr allowedTypes();
 
-    default <S extends T> ArgumentFilter<T, ?> union(ArgumentFilter<T, S> other) {
-        return new ArgumentFilter<T, S>() {
+    interface NarrowingArgumentFilter<T, R extends T> extends ArgumentFilter<T, R> {
 
-            public boolean test(T arg) {
-                if (ArgumentFilter.this.test(arg)) {
-                    return true;
-                } else {
-                    return other.test(arg);
+        default <S extends T> ArgumentTypeFilter<T, T> or(ArgumentFilter<T, S> other) {
+            return new ArgumentTypeFilter<T, T>() {
+
+                public boolean test(T arg) {
+                    if (NarrowingArgumentFilter.this.test(arg)) {
+                        return true;
+                    } else {
+                        return other.test(arg);
+                    }
                 }
-            }
 
-            public Set<Class<?>> allowedTypes() {
-                final Set<Class<?>> typesUnion;
-                Set<Class<?>> tu = new HashSet<>(ArgumentFilter.this.allowedTypes());
-                tu.addAll(other.allowedTypes());
-                typesUnion = Collections.unmodifiableSet(tu);
-                return typesUnion;
-            }
+                public TypeExpr allowedTypes() {
+                    return NarrowingArgumentFilter.this.allowedTypes().or(other.allowedTypes());
+                }
 
-            @Override
-            public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
-                Samples<T> thisSamples = ArgumentFilter.this.collectSamples(downStreamSamples);
-                Samples<T> otherSamples = other.collectSamples(downStreamSamples);
+                @Override
+                public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
+                    Samples<R> downStreamSamplesForThis = downStreamSamples.filter(x -> NarrowingArgumentFilter.this.allowedTypes().isInstance(x)).map(x -> (R) x, x -> x);
+                    Samples<R> thisSamples = NarrowingArgumentFilter.this.collectSamples(downStreamSamplesForThis);
 
-                return thisSamples.or(otherSamples);
-            }
+                    Samples<S> downStreamSamplesForOther = downStreamSamples.filter(x -> other.allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
+                    Samples<S> otherSamples = other.collectSamples(downStreamSamplesForOther);
 
-        };
+                    return Samples.<T> empty().or(thisSamples).or(otherSamples);
+                }
+
+            };
+        }
+
     }
 
-    default ArgumentFilter<T, T> not() {
-        return new ArgumentFilter<T, T>() {
+    interface ArgumentValueFilter<T> extends NarrowingArgumentFilter<T, T> {
 
-            public boolean test(T arg) {
-                return !ArgumentFilter.this.test(arg);
-            }
+        default ArgumentValueFilter<T> and(ArgumentValueFilter<T> other) {
+            return new ArgumentValueFilter<T>() {
 
-            public Set<Class<?>> allowedTypes() {
-                return Collections.emptySet();
-            }
+                public boolean test(T arg) {
+                    return ArgumentValueFilter.this.test(arg) && other.test(arg);
+                }
 
-            @Override
-            public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
-                Samples<T> thisSamples = ArgumentFilter.this.collectSamples(downStreamSamples);
-                return thisSamples.swap();
-            }
+                public TypeExpr allowedTypes() {
+                    return ArgumentValueFilter.this.allowedTypes().and(other.allowedTypes());
+                }
 
-        };
+                @Override
+                public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
+                    Samples<T> thisSamples = ArgumentValueFilter.this.collectSamples(downStreamSamples);
+                    Samples<T> otherSamples = other.collectSamples(downStreamSamples);
+
+                    return thisSamples.and(otherSamples);
+                }
+            };
+        }
+
+        default <S extends T> ArgumentTypeFilter<T, S> and(ArgumentTypeFilter<T, S> other) {
+            return new ArgumentTypeFilter<T, S>() {
+
+                public boolean test(T arg) {
+                    return ArgumentValueFilter.this.test(arg) && other.test(arg);
+                }
+
+                public TypeExpr allowedTypes() {
+                    return ArgumentValueFilter.this.allowedTypes().and(other.allowedTypes());
+                }
+
+                @Override
+                public Samples<S> collectSamples(Samples<? extends S> downStreamSamples) {
+                    Samples<S> thisSamples = ArgumentValueFilter.this.collectSamples(downStreamSamples).filter(x -> allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
+                    Samples<S> otherSamples = other.collectSamples(downStreamSamples);
+
+                    return thisSamples.and(otherSamples);
+                }
+            };
+        }
+
+        default ArgumentValueFilter<T> not() {
+            return new ArgumentValueFilter<T>() {
+
+                public boolean test(T arg) {
+                    return !ArgumentValueFilter.this.test(arg);
+                }
+
+                public TypeExpr allowedTypes() {
+                    return ArgumentValueFilter.this.allowedTypes();
+                }
+
+                @Override
+                public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
+                    Samples<T> thisSamples = ArgumentValueFilter.this.collectSamples(downStreamSamples);
+                    return thisSamples.swap().filter(x -> allowedTypes().isInstance(x)).map(x -> (T) x, x -> x);
+                }
+            };
+        }
+
     }
 
-    @SuppressWarnings("unchecked")
-    default <S extends T> ArgumentFilter<T, T> or(ArgumentFilter<T, S> other) {
-        return (ArgumentFilter<T, T>) union(other);
+    interface ArgumentTypeFilter<T, R extends T> extends NarrowingArgumentFilter<T, R> {
+
+        default <S extends R> ArgumentTypeFilter<T, S> and(ArgumentTypeFilter<R, S> other) {
+            return new ArgumentTypeFilter<T, S>() {
+
+                public boolean test(T arg) {
+                    return ArgumentTypeFilter.this.test(arg) && other.test((R) arg);
+                }
+
+                public TypeExpr allowedTypes() {
+                    return ArgumentTypeFilter.this.allowedTypes().and(other.allowedTypes());
+                }
+
+                @Override
+                public Samples<S> collectSamples(Samples<? extends S> downStreamSamples) {
+                    Samples<S> thisSamples = ArgumentTypeFilter.this.collectSamples(downStreamSamples).filter(x -> other.allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
+                    Samples<S> otherSamples = other.collectSamples(downStreamSamples);
+
+                    return thisSamples.and(otherSamples);
+                }
+            };
+        }
+
+        default ArgumentTypeFilter<T, R> and(ArgumentValueFilter<T> other) {
+            return new ArgumentTypeFilter<T, R>() {
+
+                public boolean test(T arg) {
+                    return ArgumentTypeFilter.this.test(arg) && other.test(arg);
+                }
+
+                public TypeExpr allowedTypes() {
+                    return ArgumentTypeFilter.this.allowedTypes().and(other.allowedTypes());
+                }
+
+                @Override
+                public Samples<R> collectSamples(Samples<? extends R> downStreamSamples) {
+                    Samples<R> thisSamples = ArgumentTypeFilter.this.collectSamples(downStreamSamples);
+                    Samples<R> otherSamples = other.collectSamples(downStreamSamples).filter(x -> ArgumentTypeFilter.this.allowedTypes().isInstance(x)).map(x -> (R) x, x -> x);
+
+                    return thisSamples.and(otherSamples);
+                }
+            };
+        }
+
+        default InverseArgumentFilter<T, R> not() {
+            return new InverseArgumentFilter<>(this);
+        }
+
     }
 
-    default <S extends T> ArgumentFilter<T, S> and(ArgumentFilter<T, S> other) {
-        return new ArgumentFilter<T, S>() {
+    class InverseArgumentFilter<T, R extends T> implements ArgumentFilter<T, Object> {
 
-            public boolean test(T arg) {
-                return ArgumentFilter.this.test(arg) && other.test(arg);
-            }
+        private final ArgumentTypeFilter<T, R> orig;
 
-            public Set<Class<?>> allowedTypes() {
-                final Set<Class<?>> typesIntersection;
-                Set<Class<?>> ti = new HashSet<>(ArgumentFilter.this.allowedTypes());
-                ti.removeAll(other.allowedTypes());
-                typesIntersection = Collections.unmodifiableSet(ti);
-                return typesIntersection;
-            }
+        public InverseArgumentFilter(ArgumentTypeFilter<T, R> orig) {
+            this.orig = orig;
+        }
 
-            @Override
-            public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
-                Samples<T> thisSamples = ArgumentFilter.this.collectSamples(downStreamSamples);
-                Samples<T> otherSamples = other.collectSamples(downStreamSamples);
+        public boolean test(T arg) {
+            return !orig.test(arg);
+        }
 
-                return thisSamples.and(otherSamples);
-            }
+        public TypeExpr allowedTypes() {
+            return orig.allowedTypes().not();
+        }
 
-        };
+        @Override
+        public Samples<Object> collectSamples(Samples<?> downStreamSamples) {
+            Samples<R> swappedSamples = downStreamSamples.swap().filter(x -> orig.allowedTypes().isInstance(x)).map(x -> (R) x, x -> x);
+            Samples<R> thisSamples = orig.collectSamples(swappedSamples);
+            return thisSamples.swap();
+        }
+
+        public ArgumentTypeFilter<T, R> not() {
+            return orig;
+        }
+
+        public <S extends T> ArgumentTypeFilter<T, S> and(ArgumentTypeFilter<T, S> other) {
+            return new ArgumentTypeFilter<T, S>() {
+
+                public boolean test(T arg) {
+                    return InverseArgumentFilter.this.test(arg) && other.test(arg);
+                }
+
+                public TypeExpr allowedTypes() {
+                    return InverseArgumentFilter.this.allowedTypes().and(other.allowedTypes());
+                }
+
+                @Override
+                public Samples<S> collectSamples(Samples<? extends S> downStreamSamples) {
+                    Samples<S> thisSamples = InverseArgumentFilter.this.collectSamples(downStreamSamples).filter(x -> other.allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
+                    Samples<S> otherSamples = other.collectSamples(downStreamSamples);
+
+                    return thisSamples.and(otherSamples);
+                }
+            };
+        }
+
+        public <S extends T> ArgumentValueFilter<S> and(ArgumentValueFilter<S> other) {
+            return new ArgumentValueFilter<S>() {
+
+                public boolean test(S arg) {
+                    return InverseArgumentFilter.this.test(arg) && other.test(arg);
+                }
+
+                public TypeExpr allowedTypes() {
+                    return InverseArgumentFilter.this.allowedTypes().and(other.allowedTypes());
+                }
+
+                @Override
+                public Samples<S> collectSamples(Samples<? extends S> downStreamSamples) {
+                    Samples<S> thisSamples = InverseArgumentFilter.this.collectSamples(downStreamSamples).filter(x -> other.allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
+                    Samples<S> otherSamples = other.collectSamples(downStreamSamples);
+
+                    return thisSamples.and(otherSamples);
+                }
+            };
+        }
+
+        public <S extends T> InverseArgumentFilter<T, T> and(InverseArgumentFilter<T, S> other) {
+            return new InverseArgumentFilter<>(other.orig.or(this.orig));
+        }
+
     }
+
 }

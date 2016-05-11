@@ -31,13 +31,22 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
+import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
+import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNode;
+import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastFunctions.MapNode;
 import com.oracle.truffle.r.nodes.unary.CastFunctionsFactory;
+import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalScalarNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastNode.Samples;
+import com.oracle.truffle.r.nodes.unary.CastNode.TypeExpr;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
@@ -245,148 +254,192 @@ public final class CastBuilder {
 
     public static final class Predef {
 
-        public static <T, R extends T> ValuePredicateArgumentFilter<T, R> sameAs(R x) {
-            return ValuePredicateArgumentFilter.fromLambda(arg -> arg == x, samples(x), CastBuilder.<R> samples());
+        public static <T, R> MapNode mapNode(ArgumentMapper<T, R> mapper) {
+            return CastFunctionsFactory.MapNodeGen.create(mapper);
         }
 
-        public static <T, R extends T> ValuePredicateArgumentFilter<T, R> equalTo(R x) {
-            return ValuePredicateArgumentFilter.fromLambda(arg -> Objects.equals(arg, x), samples(x), CastBuilder.<R> samples());
+        public static CastIntegerBaseNode asInteger() {
+            return CastIntegerBaseNodeGen.create(false, false, false);
         }
 
-        public static <T, R extends T> ValuePredicateArgumentFilter<T, R> nullValue() {
-            return ValuePredicateArgumentFilter.fromLambda(x -> x == RNull.instance || x == null, CastBuilder.<R> samples(null), CastBuilder.<R> samples());
+        public static CastIntegerNode asIntegerVector() {
+            return CastIntegerNodeGen.create(false, false, false);
         }
 
-        public static <T, R extends T> ValuePredicateArgumentFilter<T, R> notNull() {
-            return ValuePredicateArgumentFilter.fromLambda(x -> x != RNull.instance && x != null, CastBuilder.<R> samples(), CastBuilder.<R> samples(null));
+        public static CastDoubleBaseNode asDouble() {
+            return CastDoubleBaseNodeGen.create(false, false, false);
         }
 
-        public static <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilter<T, R> notEmpty() {
+        public static CastStringNode asStringVector() {
+            return CastStringNodeGen.create(false, false, false, false);
+        }
+
+        public static MapNode asBoolean() {
+            return mapNode(toBoolean);
+        }
+
+        public static <T> ValuePredicateArgumentFilter<T> sameAs(T x) {
+            return ValuePredicateArgumentFilter.fromLambda(arg -> arg == x, samples(x), CastBuilder.<T> samples());
+        }
+
+        public static <T> ValuePredicateArgumentFilter<T> equalTo(T x) {
+            return ValuePredicateArgumentFilter.fromLambda(arg -> Objects.equals(arg, x), samples(x), CastBuilder.<T> samples());
+        }
+
+        public static <T, R extends T> TypePredicateArgumentFilter<T, R> nullValue() {
+            return TypePredicateArgumentFilter.fromLambda(x -> x == RNull.instance || x == null, CastBuilder.<R> samples(null), CastBuilder.<R> samples(), RNull.class);
+        }
+
+        public static <T extends RAbstractVector> VectorPredicateArgumentFilter<T> notEmpty() {
             return new VectorPredicateArgumentFilter<>(x -> x.getLength() > 0, false);
         }
 
-        public static <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilter<T, R> singleElement() {
+        public static <T extends RAbstractVector> VectorPredicateArgumentFilter<T> singleElement() {
             return new VectorPredicateArgumentFilter<>(x -> x.getLength() == 1, false);
         }
 
-        public static final ValuePredicateArgumentFilter<Boolean, Boolean> trueValue = ValuePredicateArgumentFilter.fromLambda(x -> x, CastBuilder.<Boolean> samples(), samples(Boolean.FALSE));
-        public static final ValuePredicateArgumentFilter<Boolean, Boolean> falseValue = ValuePredicateArgumentFilter.fromLambda(x -> x, CastBuilder.<Boolean> samples(), samples(Boolean.FALSE));
-        public static final ValuePredicateArgumentFilter<Integer, Integer> intNA = ValuePredicateArgumentFilter.fromLambda((Integer x) -> RRuntime.isNA(x), samples(RRuntime.INT_NA), samples(0));
-        public static final ValuePredicateArgumentFilter<Integer, Integer> notIntNA = ValuePredicateArgumentFilter.fromLambda((Integer x) -> !RRuntime.isNA(x), CastBuilder.<Integer> samples(),
+        public static <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilter<T> size(int s) {
+            return new VectorPredicateArgumentFilter<>(x -> x.getLength() == s, false);
+        }
+
+        public static final ValuePredicateArgumentFilter<Boolean> trueValue = ValuePredicateArgumentFilter.fromLambda(x -> x, CastBuilder.<Boolean> samples(), samples(Boolean.FALSE));
+        public static final ValuePredicateArgumentFilter<Boolean> falseValue = ValuePredicateArgumentFilter.fromLambda(x -> x, CastBuilder.<Boolean> samples(), samples(Boolean.FALSE));
+        public static final ValuePredicateArgumentFilter<Byte> logicalTrue = ValuePredicateArgumentFilter.fromLambda(x -> RRuntime.LOGICAL_TRUE == x, CastBuilder.<Byte> samples(),
+                        samples(RRuntime.LOGICAL_FALSE));
+        public static final ValuePredicateArgumentFilter<Byte> logicalFalse = ValuePredicateArgumentFilter.fromLambda(x -> RRuntime.LOGICAL_FALSE == x, CastBuilder.<Byte> samples(),
+                        samples(RRuntime.LOGICAL_TRUE));
+        public static final ValuePredicateArgumentFilter<Integer> intNA = ValuePredicateArgumentFilter.fromLambda((Integer x) -> RRuntime.isNA(x), samples(RRuntime.INT_NA), samples(0));
+        public static final ValuePredicateArgumentFilter<Integer> notIntNA = ValuePredicateArgumentFilter.fromLambda((Integer x) -> !RRuntime.isNA(x), CastBuilder.<Integer> samples(),
                         samples(RRuntime.INT_NA));
-        public static final ValuePredicateArgumentFilter<Byte, Byte> logicalNA = ValuePredicateArgumentFilter.fromLambda((Byte x) -> RRuntime.isNA(x), samples(RRuntime.LOGICAL_NA),
+        public static final ValuePredicateArgumentFilter<Byte> logicalNA = ValuePredicateArgumentFilter.fromLambda((Byte x) -> RRuntime.isNA(x), samples(RRuntime.LOGICAL_NA),
                         samples(RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE));
-        public static final ValuePredicateArgumentFilter<Byte, Byte> notLogicalNA = ValuePredicateArgumentFilter.fromLambda((Byte x) -> !RRuntime.isNA(x), CastBuilder.<Byte> samples(),
+        public static final ValuePredicateArgumentFilter<Byte> notLogicalNA = ValuePredicateArgumentFilter.fromLambda((Byte x) -> !RRuntime.isNA(x), CastBuilder.<Byte> samples(),
                         samples(RRuntime.LOGICAL_NA));
-        public static final ValuePredicateArgumentFilter<Double, Double> doubleNA = ValuePredicateArgumentFilter.fromLambda((Double x) -> RRuntime.isNA(x), samples(RRuntime.DOUBLE_NA), samples(0.0));
-        public static final ValuePredicateArgumentFilter<Double, Double> notDoubleNA = ValuePredicateArgumentFilter.fromLambda((Double x) -> !RRuntime.isNA(x), CastBuilder.<Double> samples(),
+        public static final ValuePredicateArgumentFilter<Double> doubleNA = ValuePredicateArgumentFilter.fromLambda((Double x) -> RRuntime.isNA(x), samples(RRuntime.DOUBLE_NA), samples(0.0));
+        public static final ValuePredicateArgumentFilter<Double> notDoubleNA = ValuePredicateArgumentFilter.fromLambda((Double x) -> !RRuntime.isNA(x), CastBuilder.<Double> samples(),
                         samples(RRuntime.DOUBLE_NA));
-        public static final ValuePredicateArgumentFilter<String, String> stringNA = ValuePredicateArgumentFilter.fromLambda((String x) -> RRuntime.isNA(x), samples(RRuntime.STRING_NA), samples(""));
-        public static final ValuePredicateArgumentFilter<String, String> notStringNA = ValuePredicateArgumentFilter.fromLambda((String x) -> !RRuntime.isNA(x), CastBuilder.<String> samples(),
+        public static final ValuePredicateArgumentFilter<String> stringNA = ValuePredicateArgumentFilter.fromLambda((String x) -> RRuntime.isNA(x), samples(RRuntime.STRING_NA), samples(""));
+        public static final ValuePredicateArgumentFilter<String> notStringNA = ValuePredicateArgumentFilter.fromLambda((String x) -> !RRuntime.isNA(x), CastBuilder.<String> samples(),
                         samples(RRuntime.STRING_NA));
 
-        public static ValuePredicateArgumentFilter<Integer, Integer> gt(int x) {
+        public static ValuePredicateArgumentFilter<Integer> eq(int x) {
+            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg != null && arg.intValue() == x, samples(x), samples(x + 1));
+        }
+
+        public static ValuePredicateArgumentFilter<Double> eq(double x) {
+            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg != null && arg.doubleValue() == x, samples(x), samples(x + 0.00001));
+        }
+
+        public static ValuePredicateArgumentFilter<Integer> neq(int x) {
+            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg == null || arg.intValue() != x, samples(x + 1), samples(x));
+        }
+
+        public static ValuePredicateArgumentFilter<Double> neq(double x) {
+            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg == null || arg.doubleValue() != x, samples(x + 0.00001), samples(x));
+        }
+
+        public static ValuePredicateArgumentFilter<Integer> gt(int x) {
             return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg > x, samples(x + 1), samples(x));
         }
 
-        public static ValuePredicateArgumentFilter<Double, Double> gt(double x) {
+        public static ValuePredicateArgumentFilter<Double> gt(double x) {
             return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg > x, samples(x + 0.00001), samples(x));
         }
 
-        public static ValuePredicateArgumentFilter<Integer, Integer> gte(int x) {
+        public static ValuePredicateArgumentFilter<Integer> gte(int x) {
             return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg >= x, samples(x), samples(x - 1));
         }
 
-        public static ValuePredicateArgumentFilter<Double, Double> gte(double x) {
+        public static ValuePredicateArgumentFilter<Double> gte(double x) {
             return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg >= x, samples(x), samples(x - 0.00001));
         }
 
-        public static ValuePredicateArgumentFilter<Integer, Integer> lt(int x) {
+        public static ValuePredicateArgumentFilter<Integer> lt(int x) {
             return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg < x, samples(x - 1), samples(x));
         }
 
-        public static ValuePredicateArgumentFilter<Double, Double> lt(double x) {
+        public static ValuePredicateArgumentFilter<Double> lt(double x) {
             return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg < x, samples(x - 0.00001), samples(x));
         }
 
-        public static ValuePredicateArgumentFilter<Integer, Integer> lte(int x) {
+        public static ValuePredicateArgumentFilter<Integer> lte(int x) {
             return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg <= x, samples(x), samples(x + 1));
         }
 
-        public static ValuePredicateArgumentFilter<Double, Double> lte(double x) {
+        public static ValuePredicateArgumentFilter<Double> lte(double x) {
             return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg <= x, samples(x), samples(x + 0.00001));
         }
 
-        public static ValuePredicateArgumentFilter<String, String> length(int l) {
+        public static ValuePredicateArgumentFilter<String> length(int l) {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() == l);
         }
 
-        public static ValuePredicateArgumentFilter<String, String> isEmpty() {
+        public static ValuePredicateArgumentFilter<String> isEmpty() {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.isEmpty());
         }
 
-        public static ValuePredicateArgumentFilter<String, String> lengthGt(int l) {
+        public static ValuePredicateArgumentFilter<String> lengthGt(int l) {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() > l);
         }
 
-        public static ValuePredicateArgumentFilter<String, String> lengthGte(int l) {
+        public static ValuePredicateArgumentFilter<String> lengthGte(int l) {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() >= l);
         }
 
-        public static ValuePredicateArgumentFilter<String, String> lengthLt(int l) {
+        public static ValuePredicateArgumentFilter<String> lengthLt(int l) {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() < l);
         }
 
-        public static ValuePredicateArgumentFilter<String, String> lengthLte(int l) {
+        public static ValuePredicateArgumentFilter<String> lengthLte(int l) {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() <= l);
         }
 
-        public static final ValuePredicateArgumentFilter<Integer, Integer> gt0 = ValuePredicateArgumentFilter.fromLambda((Integer x) -> x > 0, CastBuilder.<Integer> samples(), samples(-1, 0),
+        public static final ValuePredicateArgumentFilter<Integer> gt0 = ValuePredicateArgumentFilter.fromLambda((Integer x) -> x > 0, CastBuilder.<Integer> samples(), samples(-1, 0),
                         Integer.class);
-        public static final ValuePredicateArgumentFilter<Integer, Integer> gte0 = ValuePredicateArgumentFilter.fromLambda((Integer x) -> x >= 0, CastBuilder.<Integer> samples(), samples(-1),
+        public static final ValuePredicateArgumentFilter<Integer> gte0 = ValuePredicateArgumentFilter.fromLambda((Integer x) -> x >= 0, CastBuilder.<Integer> samples(), samples(-1),
                         Integer.class);
-        public static final ValuePredicateArgumentFilter<Integer, Integer> gt1 = ValuePredicateArgumentFilter.fromLambda((Integer x) -> x > 1, CastBuilder.<Integer> samples(), samples(-1, 0, 1),
+        public static final ValuePredicateArgumentFilter<Integer> gt1 = ValuePredicateArgumentFilter.fromLambda((Integer x) -> x > 1, CastBuilder.<Integer> samples(), samples(-1, 0, 1),
                         Integer.class);
-        public static final ValuePredicateArgumentFilter<Integer, Integer> gte1 = ValuePredicateArgumentFilter.fromLambda((Integer x) -> x >= 1, CastBuilder.<Integer> samples(), samples(-1, 0),
+        public static final ValuePredicateArgumentFilter<Integer> gte1 = ValuePredicateArgumentFilter.fromLambda((Integer x) -> x >= 1, CastBuilder.<Integer> samples(), samples(-1, 0),
                         Integer.class);
 
-        public static <R extends RAbstractIntVector> ValuePredicateArgumentFilter<Object, R> integerValue() {
-            return ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Integer || x instanceof RAbstractIntVector, RAbstractIntVector.class);
+        public static <R extends RAbstractIntVector> TypePredicateArgumentFilter<Object, R> integerValue() {
+            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Integer || x instanceof RAbstractIntVector, RAbstractIntVector.class, Integer.class);
         }
 
-        public static <R extends RAbstractStringVector> ValuePredicateArgumentFilter<Object, R> stringValue() {
-            return ValuePredicateArgumentFilter.fromLambda(x -> x instanceof String ||
-                            x instanceof RAbstractStringVector, RAbstractStringVector.class);
+        public static <R extends RAbstractStringVector> TypePredicateArgumentFilter<Object, R> stringValue() {
+            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof String ||
+                            x instanceof RAbstractStringVector, RAbstractStringVector.class, String.class);
         }
 
-        public static <R extends RAbstractDoubleVector> ValuePredicateArgumentFilter<Object, R> doubleValue() {
-            return ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Double ||
-                            x instanceof RAbstractDoubleVector, RAbstractDoubleVector.class);
+        public static <R extends RAbstractDoubleVector> TypePredicateArgumentFilter<Object, R> doubleValue() {
+            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Double ||
+                            x instanceof RAbstractDoubleVector, RAbstractDoubleVector.class, Double.class);
         }
 
-        public static <R extends RAbstractLogicalVector> ValuePredicateArgumentFilter<Object, R> logicalValue() {
-            return ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Byte ||
-                            x instanceof RAbstractLogicalVector, RAbstractLogicalVector.class);
+        public static <R extends RAbstractLogicalVector> TypePredicateArgumentFilter<Object, R> logicalValue() {
+            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Byte ||
+                            x instanceof RAbstractLogicalVector, RAbstractLogicalVector.class, Byte.class);
         }
 
-        public static <R extends RAbstractComplexVector> ValuePredicateArgumentFilter<Object, R> complexValue() {
-            return ValuePredicateArgumentFilter.fromLambda(x -> x instanceof RComplex ||
-                            x instanceof RAbstractComplexVector, RAbstractComplexVector.class);
+        public static <R extends RAbstractComplexVector> TypePredicateArgumentFilter<Object, R> complexValue() {
+            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RComplex ||
+                            x instanceof RAbstractComplexVector, RAbstractComplexVector.class, RComplex.class);
         }
 
-        public static final ArgumentFilter<Object, ?> numericValue = integerValue().union(doubleValue()).union(complexValue()).union(logicalValue());
+        public static final ArgumentTypeFilter<Object, Object> numericValue = integerValue().or(doubleValue()).or(logicalValue());
 
-        public static final ValuePredicateArgumentFilter<Object, String> scalarStringValue = ValuePredicateArgumentFilter.fromLambda(x -> x instanceof String, String.class);
+        public static final TypePredicateArgumentFilter<Object, String> scalarStringValue = TypePredicateArgumentFilter.fromLambda(x -> x instanceof String, String.class);
 
-        public static final ValuePredicateArgumentFilter<Object, Integer> scalarIntegerValue = ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Integer, Integer.class);
+        public static final TypePredicateArgumentFilter<Object, Integer> scalarIntegerValue = TypePredicateArgumentFilter.fromLambda(x -> x instanceof Integer, Integer.class);
 
-        public static final ValuePredicateArgumentFilter<Object, Double> scalarDoubleValue = ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Double, Double.class);
+        public static final TypePredicateArgumentFilter<Object, Double> scalarDoubleValue = TypePredicateArgumentFilter.fromLambda(x -> x instanceof Double, Double.class);
 
-        public static final ValuePredicateArgumentFilter<Object, Byte> scalarLogicalValue = ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Byte, Byte.class);
+        public static final TypePredicateArgumentFilter<Object, Byte> scalarLogicalValue = TypePredicateArgumentFilter.fromLambda(x -> x instanceof Byte, Byte.class);
 
-        public static final ValuePredicateArgumentFilter<Object, RComplex> scalarComplexValue = ValuePredicateArgumentFilter.fromLambda(x -> x instanceof RComplex, RComplex.class);
+        public static final TypePredicateArgumentFilter<Object, RComplex> scalarComplexValue = TypePredicateArgumentFilter.fromLambda(x -> x instanceof RComplex, RComplex.class);
 
-        public static final ValuePredicateArgumentFilter<Object, RMissing> missingValue = ValuePredicateArgumentFilter.fromLambda(x -> RMissing.instance == x, RMissing.class);
+        public static final TypePredicateArgumentFilter<Object, RMissing> missingValue = TypePredicateArgumentFilter.fromLambda(x -> RMissing.instance == x, RMissing.class);
 
         public static final ValuePredicateArgumentMapper<Byte, Boolean> toBoolean = ValuePredicateArgumentMapper.fromLambda(x -> RRuntime.fromLogical(x), x -> RRuntime.asLogical(x), Boolean.class);
 
@@ -396,7 +449,7 @@ public final class CastBuilder {
         }
 
         public static ValuePredicateArgumentMapper<String, String> constant(String s) {
-            return ValuePredicateArgumentMapper.<String, String> fromLambda((String x) -> s, (String x) -> (String) null, samples(s), CastBuilder.<String> samples(), String.class);
+            return ValuePredicateArgumentMapper.<String, String> fromLambda((String x) -> s, (String x) -> null, samples(s), CastBuilder.<String> samples(), String.class);
         }
 
         public static ValuePredicateArgumentMapper<Integer, Integer> constant(int i) {
@@ -415,7 +468,7 @@ public final class CastBuilder {
 
             assert (defVal != null);
 
-            final Set<Class<?>> defCls = Collections.singleton(defVal.getClass());
+            final TypeExpr defType = TypeExpr.atom(defVal.getClass()).or(TypeExpr.atom(RNull.class).not());
 
             return new ArgumentMapper<T, T>() {
 
@@ -423,8 +476,8 @@ public final class CastBuilder {
                     return arg == RNull.instance || arg == null ? defVal : arg;
                 }
 
-                public Set<Class<?>> resultTypes() {
-                    return defCls;
+                public TypeExpr resultTypes() {
+                    return defType;
                 }
 
                 public Samples<T> collectSamples(Samples<T> downStreamSamples) {
@@ -434,7 +487,6 @@ public final class CastBuilder {
                 }
             };
         }
-
     }
 
     @SuppressWarnings("unchecked")
@@ -452,12 +504,12 @@ public final class CastBuilder {
             return (THIS) this;
         }
 
-        default THIS shouldBe(ArgumentFilter<? super T, ? extends T> argFilter, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.ArgumentValueConditionNodeGen.create(argFilter, true, message, messageArgs, state().boxPrimitives, state().cb.out));
+        default THIS shouldBe(ArgumentFilter<? super T, ?> argFilter, RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.FilterNodeGen.create(argFilter, true, message, messageArgs, state().boxPrimitives, state().cb.out));
             return (THIS) this;
         }
 
-        default THIS shouldBe(ArgumentFilter<? super T, ? extends T> argFilter) {
+        default THIS shouldBe(ArgumentFilter<? super T, ?> argFilter) {
             return shouldBe(argFilter, state().defaultWarning().message, state().defaultWarning().args);
         }
 
@@ -562,7 +614,7 @@ public final class CastBuilder {
         }
 
         void mustBe(ArgumentFilter<?, ?> argFilter, RError.Message message, Object... messageArgs) {
-            castBuilder().insert(index(), CastFunctionsFactory.ArgumentValueConditionNodeGen.create(argFilter, false, message, messageArgs, boxPrimitives, cb.out));
+            castBuilder().insert(index(), CastFunctionsFactory.FilterNodeGen.create(argFilter, false, message, messageArgs, boxPrimitives, cb.out));
         }
 
         void mustBe(ArgumentFilter<?, ?> argFilter) {
@@ -570,7 +622,7 @@ public final class CastBuilder {
         }
 
         void shouldBe(ArgumentFilter<?, ?> argFilter, RError.Message message, Object... messageArgs) {
-            castBuilder().insert(index(), CastFunctionsFactory.ArgumentValueConditionNodeGen.create(argFilter, true, message, messageArgs, boxPrimitives, cb.out));
+            castBuilder().insert(index(), CastFunctionsFactory.FilterNodeGen.create(argFilter, true, message, messageArgs, boxPrimitives, cb.out));
         }
 
         void shouldBe(ArgumentFilter<?, ?> argFilter) {
@@ -594,22 +646,22 @@ public final class CastBuilder {
 
     public interface InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilder<T>> {
 
-        default <S extends T> InitialPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
+        default <S> InitialPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
             state().mustBe(argFilter, message, messageArgs);
             return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default <S extends T> InitialPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter) {
+        default <S> InitialPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter) {
             return mustBe(argFilter, state().defaultError().message, state().defaultError().args);
         }
 
         default <S> InitialPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
-            mustBe(ValuePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x), cls), message, messageArgs);
+            mustBe(TypePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x), cls), message, messageArgs);
             return state().factory.newInitialPhaseBuilder(this);
         }
 
         default <S> InitialPhaseBuilder<S> mustBe(Class<S> cls) {
-            mustBe(ValuePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x), cls));
+            mustBe(TypePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x), cls));
             return state().factory.newInitialPhaseBuilder(this);
         }
 
@@ -618,9 +670,25 @@ public final class CastBuilder {
             return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default <S extends T, R> InitialPhaseBuilder<S> mapIf(ArgumentFilter<? super T, ? extends S> argFilter, ArgumentMapper<S, R> mapFn) {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.ConditionalMapNodeGen.create(argFilter, mapFn));
+        default <S, R> InitialPhaseBuilder<S> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.ConditionalMapNodeGen.create(argFilter, CastFunctionsFactory.MapNodeGen.create(trueBranchMapper), null));
+
             return state().factory.newInitialPhaseBuilder(this);
+        }
+
+        default <S, R> InitialPhaseBuilder<T> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper, ArgumentMapper<T, T> falseBranchMapper) {
+            state().castBuilder().insert(
+                            state().index(),
+                            CastFunctionsFactory.ConditionalMapNodeGen.create(argFilter, CastFunctionsFactory.MapNodeGen.create(trueBranchMapper),
+                                            CastFunctionsFactory.MapNodeGen.create(falseBranchMapper)));
+
+            return state().factory.newInitialPhaseBuilder(this);
+        }
+
+        default <S, R> InitialPhaseBuilder<T> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode, CastNode falseBranchNode) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.ConditionalMapNodeGen.create(argFilter, trueBranchNode, falseBranchNode));
+
+            return this;
         }
 
         default InitialPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
@@ -633,13 +701,13 @@ public final class CastBuilder {
             return this;
         }
 
-        default InitialPhaseBuilder<T> notNA() {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(state().defaultError().message, state().defaultError().args, state().cb.out, RNull.instance));
+        default InitialPhaseBuilder<T> notNA(T naReplacement) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(naReplacement));
             return this;
         }
 
-        default InitialPhaseBuilder<T> notNA(T naReplacement) {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(naReplacement));
+        default InitialPhaseBuilder<T> notNA() {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(state().defaultError().message, state().defaultError().args, state().cb.out, null));
             return this;
         }
 
@@ -726,7 +794,7 @@ public final class CastBuilder {
 
         default CoercedPhaseBuilder<T, S> mustBe(ArgumentFilter<? super T, ? extends T> argFilter, RError.Message message, Object... messageArgs) {
             state().mustBe(argFilter, message, messageArgs);
-            return state().factory.newCoercedPhaseBuilder(this, elementClass());
+            return this;
         }
 
         default CoercedPhaseBuilder<T, S> mustBe(ArgumentFilter<? super T, ? extends T> argFilter) {
@@ -742,29 +810,44 @@ public final class CastBuilder {
             return state().factory.newHeadPhaseBuilder(this);
         }
 
-        default <S extends T, R> HeadPhaseBuilder<S> mapIf(ArgumentFilter<? super T, ? extends S> argFilter, ArgumentMapper<S, R> mapFn) {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.ConditionalMapNodeGen.create(argFilter, mapFn));
+        default <S, R> HeadPhaseBuilder<S> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.ConditionalMapNodeGen.create(argFilter, CastFunctionsFactory.MapNodeGen.create(trueBranchMapper), null));
 
             return state().factory.newHeadPhaseBuilder(this);
         }
 
-        default <S extends T> HeadPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
+        default <S, R> HeadPhaseBuilder<T> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper, ArgumentMapper<T, T> falseBranchMapper) {
+            state().castBuilder().insert(
+                            state().index(),
+                            CastFunctionsFactory.ConditionalMapNodeGen.create(argFilter, CastFunctionsFactory.MapNodeGen.create(trueBranchMapper),
+                                            CastFunctionsFactory.MapNodeGen.create(falseBranchMapper)));
+
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
+        default <S, R> HeadPhaseBuilder<T> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode, CastNode falseBranchNode) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.ConditionalMapNodeGen.create(argFilter, trueBranchNode, falseBranchNode));
+
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
+        default <S> HeadPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
             state().mustBe(argFilter, message, messageArgs);
             return state().factory.newHeadPhaseBuilder(this);
         }
 
-        default <S extends T> HeadPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter) {
+        default <S> HeadPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter) {
             return mustBe(argFilter, state().defaultError().message, state().defaultError().args);
         }
 
-        default <S> InitialPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
-            mustBe(ValuePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x), cls), message, messageArgs);
-            return state().factory.newInitialPhaseBuilder(this);
+        default <S> HeadPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
+            mustBe(TypePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x), cls), message, messageArgs);
+            return state().factory.newHeadPhaseBuilder(this);
         }
 
-        default <S> InitialPhaseBuilder<S> mustBe(Class<S> cls) {
-            mustBe(ValuePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x), cls));
-            return state().factory.newInitialPhaseBuilder(this);
+        default <S> HeadPhaseBuilder<S> mustBe(Class<S> cls) {
+            mustBe(TypePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x), cls));
+            return state().factory.newHeadPhaseBuilder(this);
         }
 
         default HeadPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
@@ -778,7 +861,7 @@ public final class CastBuilder {
         }
 
         default HeadPhaseBuilder<T> notNA() {
-            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(state().defaultError().message, state().defaultError().args, state().cb.out, RNull.instance));
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.NonNANodeGen.create(state().defaultError().message, state().defaultError().args, state().cb.out, null));
             return this;
         }
 

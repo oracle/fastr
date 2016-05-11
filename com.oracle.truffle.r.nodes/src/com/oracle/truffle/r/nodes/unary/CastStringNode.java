@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.util.Collections;
-import java.util.Set;
-
 import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -34,16 +31,10 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
 public abstract class CastStringNode extends CastStringBaseNode {
-
-    @Override
-    protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
-        return Collections.singleton(RAbstractStringVector.class);
-    }
 
     public abstract Object executeString(int o);
 
@@ -54,6 +45,16 @@ public abstract class CastStringNode extends CastStringBaseNode {
     public abstract Object executeString(Object o);
 
     public abstract boolean isEmptyVectorConvertedToNull();
+
+    @Override
+    protected TypeExpr resultTypes(TypeExpr inputType) {
+        TypeExpr rt = super.resultTypes(inputType);
+        if (isEmptyVectorConvertedToNull()) {
+            return rt.or(TypeExpr.union(RNull.class));
+        } else {
+            return rt;
+        }
+    }
 
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
@@ -71,7 +72,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     @Specialization(guards = "operand.getLength() != 0")
-    protected RAbstractContainer doIntVector(RAbstractContainer operand) {
+    protected RStringVector doIntVector(RAbstractContainer operand) {
         String[] sdata = new String[operand.getLength()];
         // conversions to character will not introduce new NAs
         for (int i = 0; i < operand.getLength(); i++) {
@@ -96,7 +97,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     @Override
-    protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
+    protected Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
         return downStreamSamples;
     }
 

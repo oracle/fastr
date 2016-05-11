@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.samples;
 
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -37,10 +38,12 @@ import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastUtils;
+import com.oracle.truffle.r.nodes.builtin.CastUtils.Cast.Coverage;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -69,7 +72,7 @@ public class CastFunctions {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public abstract static class ArgumentValueConditionNode extends CastNode {
+    public abstract static class FilterNode extends CastNode {
 
         private final ArgumentFilter filter;
         private final RError.Message message;
@@ -77,18 +80,18 @@ public class CastFunctions {
         private final boolean boxPrimitives;
         private final boolean isWarning;
         private final PrintWriter out;
-        private final Set<Class<?>> resTypes;
+        private final TypeExpr resType;
 
         @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNodeGen.create();
 
-        protected ArgumentValueConditionNode(ArgumentFilter<?, ?> filter, boolean isWarning, RError.Message message, Object[] messageArgs, boolean boxPrimitives, PrintWriter out) {
+        protected FilterNode(ArgumentFilter<?, ?> filter, boolean isWarning, RError.Message message, Object[] messageArgs, boolean boxPrimitives, PrintWriter out) {
             this.filter = filter;
             this.isWarning = isWarning;
             this.message = message;
             this.messageArgs = messageArgs;
             this.boxPrimitives = boxPrimitives;
             this.out = out;
-            this.resTypes = filter.allowedTypes();
+            this.resType = filter.allowedTypes();
         }
 
         @Specialization
@@ -105,12 +108,16 @@ public class CastFunctions {
         }
 
         @Override
-        protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
-            return resTypes.isEmpty() ? inputTypes : resTypes;
+        protected TypeExpr resultTypes(TypeExpr inputType) {
+            if (isWarning) {
+                return inputType;
+            } else {
+                return inputType.and(resType);
+            }
         }
 
         @Override
-        protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
+        protected Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
             Samples samplesForError = filter.collectSamples(downStreamSamples);
             return isWarning ? new Samples<>(samplesForError.positiveSamples(), samples()) : samplesForError;
         }
@@ -138,12 +145,16 @@ public class CastFunctions {
         }
 
         @Override
-        protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
-            return mapFn.resultTypes();
+        protected TypeExpr resultTypes(TypeExpr inputType) {
+            if (inputType.coverageFrom(RNull.class, true) == Coverage.none) {
+                return mapFn.resultTypes().and(TypeExpr.atom(RNull.class).not());
+            } else {
+                return mapFn.resultTypes().or(TypeExpr.atom(RNull.class));
+            }
         }
 
         @Override
-        protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
+        protected Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
             return mapFn.collectSamples(downStreamSamples);
         }
     }
@@ -152,24 +163,31 @@ public class CastFunctions {
     public abstract static class ConditionalMapNode extends CastNode {
 
         private final ArgumentFilter argFilter;
-        private final ArgumentMapper mapFn;
-        private final Set<Class<?>> conditionTypes;
+        @Child private CastNode trueBranch;
+        @Child private CastNode falseBranch;
+        private final TypeExpr conditionType;
 
-        protected ConditionalMapNode(ArgumentFilter<?, ?> argFilter, ArgumentMapper<?, ?> mapFn) {
+        protected ConditionalMapNode(ArgumentFilter<?, ?> argFilter, CastNode trueBranch, CastNode falseBranch) {
             this.argFilter = argFilter;
-            this.mapFn = mapFn;
-            this.conditionTypes = argFilter.allowedTypes();
+            this.trueBranch = trueBranch;
+            this.falseBranch = falseBranch;
+            this.conditionType = argFilter.allowedTypes();
         }
 
         @Override
-        protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
-            if (conditionTypes.isEmpty()) {
-                return inputTypes;
+        protected TypeExpr resultTypes(TypeExpr inputType) {
+            return trueBranchResultTypes(inputType).or(falseBranchResultTypes(inputType));
+        }
+
+        private TypeExpr trueBranchResultTypes(TypeExpr inputType) {
+            return trueBranch.resultTypes(conditionType.and(inputType));
+        }
+
+        private TypeExpr falseBranchResultTypes(TypeExpr inputType) {
+            if (falseBranch != null) {
+                return falseBranch.resultTypes(inputType.and(conditionType.not()));
             } else {
-                Set<Class<?>> newTypes = new HashSet<>(inputTypes);
-                newTypes.removeIf(x -> conditionTypes.contains(x));
-                newTypes.addAll(mapFn.resultTypes());
-                return newTypes;
+                return inputType.and(conditionType.not());
             }
         }
 
@@ -179,13 +197,7 @@ public class CastFunctions {
 
         @Specialization(guards = "doMap(x)")
         protected Object map(Object x) {
-            return mapFn.map(x);
-        }
-
-        @Specialization
-        protected Object mapNull(RNull x) {
-            Object res = mapFn.map(null);
-            return res == null ? x : res;
+            return trueBranch.execute(x);
         }
 
         @Specialization(guards = "!doMap(x)")
@@ -193,22 +205,20 @@ public class CastFunctions {
             return x;
         }
 
-        private boolean isDefined(Object x) {
-            Set<Class<?>> mapperResultTypes = mapFn.resultTypes();
-            return mapperResultTypes.stream().anyMatch(cls -> cls.isInstance(x));
-        }
-
         @Override
-        protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
+        protected Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
+            TypeExpr trueBranchResultType = trueBranchResultTypes(inputType);
+            TypeExpr falseBranchResultType = falseBranchResultTypes(inputType);
+
             // filter out the incompatible samples
-            Samples<?> definedSamples = downStreamSamples.filter(x -> isDefined(x));
+            Samples definedTrueBranchSamples = downStreamSamples.filter(x -> trueBranchResultType.isInstance(x));
+            Samples definedFalseBranchSamples = downStreamSamples.filter(x -> falseBranchResultType.isInstance(x));
 
-            Set<?> undefinedPositive = downStreamSamples.positiveSamples().stream().filter(x -> !isDefined(x)).collect(Collectors.toSet());
-            Set<Object> undefinedNegative = downStreamSamples.negativeSamples().stream().filter(x -> !isDefined(x)).collect(Collectors.toSet());
+            Samples unmappedTrueBranchDefinedSamples = argFilter.collectSamples(trueBranch.collectSamples(conditionType.and(inputType), definedTrueBranchSamples));
+            Samples unmappedFalseBranchDefinedSamples = falseBranch == null ? definedFalseBranchSamples :
+                            falseBranch.collectSamples(inputType.and(conditionType.not()), definedFalseBranchSamples);
 
-            Samples<Object> unmappedDefinedSamples = mapFn.collectSamples(definedSamples);
-
-            return argFilter.collectSamples(new Samples<>(undefinedPositive, undefinedNegative).and(unmappedDefinedSamples));
+            return unmappedTrueBranchDefinedSamples.or(unmappedFalseBranchDefinedSamples);
         }
     }
 
@@ -223,7 +233,7 @@ public class CastFunctions {
 
         protected FindFirstNode(Class<?> elementClass, RError.Message message, Object[] messageArgs, PrintWriter out, Object defaultValue) {
             this.elementClass = elementClass;
-            this.defaultValue = defaultValue == null ? RNull.instance : defaultValue;
+            this.defaultValue = defaultValue;
             this.message = message;
             this.messageArgs = messageArgs;
             this.out = out;
@@ -234,48 +244,23 @@ public class CastFunctions {
         }
 
         @Specialization
-        protected Object onVector(RAbstractVector x) {
-            return x.getLength() > 0 ? x.getDataAtAsObject(0) : defaultValue;
-        }
-
-        @Specialization
-        protected Object onNull(@SuppressWarnings("unused") RNull x) {
-            return defaultValue;
-        }
-
-        @Specialization
-        protected Object onScalar(int x) {
-            return x;
-        }
-
-        @Specialization
-        protected Object onScalar(double x) {
-            return x;
-        }
-
-        @Specialization
-        protected Object onScalar(byte x) {
-            return x;
-        }
-
-        @Specialization
-        protected Object onScalar(String x) {
-            return x;
-        }
-
-        @Specialization
-        protected Object onScalar(RComplex x) {
-            return x;
-        }
-
-        @Specialization
         protected Object onNull(RNull x) {
+            return handleMissingElement(x);
+        }
+
+        @Specialization
+        protected Object onMissing(RMissing x) {
             return handleMissingElement(x);
         }
 
         @Specialization(guards = "isVectorEmpty(x)")
         protected Object onEmptyVector(RAbstractVector x) {
             return handleMissingElement(x);
+        }
+
+        @Specialization(guards = "!isVector(x)")
+        protected Object onNonVector(Object x) {
+            return x;
         }
 
         private Object handleMissingElement(Object x) {
@@ -297,17 +282,22 @@ public class CastFunctions {
             return x.getLength() == 0;
         }
 
+        protected boolean isVector(Object x) {
+            return x instanceof RAbstractVector;
+        }
+
         @Override
-        protected Samples<?> collectSamples(Samples<?> downStreamSamples) {
+        protected Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
             Samples<Object> defaultSamples = defaultSamples();
 
             // convert scalar samples to vector ones
-            Samples<Object> vectorizedSamples = downStreamSamples.map(x -> CastUtils.singletonVector(x));
+            Samples<Object> vectorizedSamples = downStreamSamples.map(x -> CastUtils.singletonVector(x), x -> CastUtils.singletonVector(x));
             return defaultSamples.and(vectorizedSamples);
         }
 
         private Samples<Object> defaultSamples() {
             Set<Object> defaultNegativeSamples = new HashSet<>();
+            Set<Object> defaultPositiveSamples = new HashSet<>();
 
             if (defaultValue == null) {
                 defaultNegativeSamples.add(RNull.instance);
@@ -316,16 +306,28 @@ public class CastFunctions {
                     defaultNegativeSamples.add(emptyVec);
                 }
                 defaultNegativeSamples.add(RNull.instance);
+            } else {
+                defaultPositiveSamples.add(CastUtils.singletonVector(defaultValue));
             }
 
-            return new Samples<>(Collections.emptySet(), defaultNegativeSamples);
+            return new Samples<>(defaultPositiveSamples, defaultNegativeSamples);
         }
 
         @Override
-        protected Set<Class<?>> resultTypes(Set<Class<?>> inputTypes) {
-            return inputTypes.stream().map(x -> CastUtils.elementType(x)).collect(Collectors.toCollection(HashSet::new));
+        protected TypeExpr resultTypes(TypeExpr inputType) {
+            if (elementClass == null || elementClass == Object.class) {
+                if (inputType.isAnything()) {
+                    return TypeExpr.atom(RAbstractVector.class).not();
+                } else {
+                    Set<Type> resTypes = inputType.classify().stream().
+                                    map(c -> CastUtils.elementType(c)).
+                                    collect(Collectors.toSet());
+                    return TypeExpr.union(resTypes);
+                }
+            } else {
+                return TypeExpr.atom(elementClass).or(TypeExpr.atom(RNull.class)).or(TypeExpr.atom(RMissing.class));
+            }
         }
-
     }
 
     public abstract static class NonNANode extends CastNode {
@@ -354,6 +356,11 @@ public class CastFunctions {
                 handleArgumentError(arg, this, message, messageArgs);
                 return null;
             }
+        }
+
+        @Override
+        protected TypeExpr resultTypes(TypeExpr inputType) {
+            return inputType;
         }
 
         @Specialization
@@ -393,13 +400,25 @@ public class CastFunctions {
 
         @SuppressWarnings("unchecked")
         @Override
-        public Samples<?> collectSamples(Samples<?> downStreamSamples) {
-            Set<Object> defaultPositiveSamples = Collections.emptySet();
-            Set<?> defaultNegativeSamples = naReplacement != null ? samples() : samples(RRuntime.INT_NA, RRuntime.DOUBLE_NA, RRuntime.LOGICAL_NA, RRuntime.STRING_NA, RComplex.createNA());
+        public Samples<?> collectSamples(TypeExpr inputTypes, Samples<?> downStreamSamples) {
+            Set<Object> defaultPositiveSamples;
+            Set<Object> defaultNegativeSamples;
+
+            if (naReplacement != null) {
+                defaultNegativeSamples = Collections.emptySet();
+                defaultPositiveSamples = Collections.singleton(naReplacement);
+            } else {
+                defaultNegativeSamples = inputTypes.normalize().stream().
+                                filter(t -> t instanceof Class).
+                                map(t -> CastUtils.naValue((Class<?>) t)).
+                                filter(x -> x != null).
+                                collect(Collectors.toSet());
+                defaultPositiveSamples = Collections.emptySet();
+            }
+
             Samples<Object> defaultSamples = new Samples<>(defaultPositiveSamples, defaultNegativeSamples);
             return defaultSamples.and((Samples<Object>) downStreamSamples);
         }
-
     }
 
 }

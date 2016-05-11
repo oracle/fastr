@@ -22,24 +22,43 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.*;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.samples;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.io.StringWriter;
-import java.util.Collections;
-import java.util.Set;
+import java.util.Arrays;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
+import com.oracle.truffle.r.nodes.builtin.base.ColSums;
+import com.oracle.truffle.r.nodes.builtin.base.ColSumsNodeGen;
 import com.oracle.truffle.r.nodes.test.TestUtilities;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastNode.Samples;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -48,6 +67,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public class CastBuilderTest {
 
@@ -137,10 +157,6 @@ public class CastBuilderTest {
     public void testIsInteger() {
         cb.arg(0).mustBe(integerValue(), RError.Message.SEED_NOT_VALID_INT);
         testPipeline();
-
-        Set<Class<?>> contextTypes = cb.getCasts()[0].resultTypes();
-        assertEquals(1, contextTypes.size());
-        assertEquals(true, contextTypes.contains(RAbstractIntVector.class));
 
         RAbstractIntVector v = RDataFactory.createIntVectorFromScalar(1);
         assertEquals(v, cast(v));
@@ -390,24 +406,15 @@ public class CastBuilderTest {
 
     @Test
     public void testSample5() {
-        integerValue().union(doubleValue()).union(complexValue()).union(logicalValue());
+        integerValue().or(doubleValue()).or(complexValue()).or(logicalValue());
         cb.arg(0).defaultError(RError.Message.INVALID_ARGUMENT, "fill").
-                        mustBe(numericValue.union(logicalValue())).
+                        mustBe(numericValue.or(logicalValue())).
                         asVector().
                         mustBe(singleElement()).
                         findFirst().
                         shouldBe(ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0), Message.NON_POSITIVE_FILL).
                         mapIf(scalarLogicalValue, toBoolean);
         testPipeline();
-
-        @SuppressWarnings("unused")
-        Set<Class<?>> contextTypes = cb.getCasts()[0].resultTypes();
-
-        // assertEquals(3, contextTypes.size());
-// assertEquals(true, contextTypes.contains(RAbstractIntVector.class));
-// assertEquals(true, contextTypes.contains(RAbstractDoubleVector.class));
-// assertEquals(true, contextTypes.contains(RAbstractComplexVector.class));
-// assertEquals(true, contextTypes.contains(RAbstractLogicalVector.class));
 
         assertEquals(true, cast(RRuntime.LOGICAL_TRUE));
         assertEquals(10, cast(10));
@@ -475,6 +482,52 @@ public class CastBuilderTest {
 
         testPipeline(true);
 
+    }
+
+    class RBuiltinRootNode extends RootNode {
+
+        @Child private RBuiltinNode builtinNode;
+
+        RBuiltinRootNode(RBuiltinNode builtinNode) {
+            super(TruffleLanguage.class, null, null);
+            this.builtinNode = builtinNode;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return builtinNode.execute(frame);
+        }
+    }
+
+    @Test
+    public void autoTestColSums() {
+        RBuiltin annotation = ColSums.class.getAnnotation(RBuiltin.class);
+        String[] parameterNames = annotation.parameterNames();
+        parameterNames = Arrays.stream(parameterNames).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
+        ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
+
+        int total = signature.getLength();
+        RNode[] args = new RNode[total];
+        for (int i = 0; i < total; i++) {
+            args[i] = AccessArgumentNode.create(i);
+        }
+        RBuiltinNode builtinNode = ColSumsNodeGen.create(args.clone());
+
+        CastNode[] castNodes = builtinNode.getCasts();
+        for (int i = 0; i < castNodes.length; i++) {
+            CastNode castNode = builtinNode.getCasts()[i];
+            if (castNode == null) {
+                System.out.println("No Samples");
+            } else {
+                Samples<?> s = castNode.collectSamples();
+                System.out.println("Samples:\n" + s);
+            }
+        }
+
+// RootCallTarget builtinNodeCallTarget = Truffle.getRuntime().createCallTarget(new
+// RBuiltinRootNode(builtinNode));
+// builtinNodeCallTarget.call(RArguments.createUnitialized(RDataFactory.createIntVector(new
+// int[]{1}, true), 1, 1, 1));
     }
 
     private Object cast(Object arg) {
