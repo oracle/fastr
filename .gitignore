@@ -64,8 +64,6 @@
 .hprof.txt
 /compilations-*.cfg
 /graal/.*/build.xml
-/.*/build.xml
-/.*/nbproject/
 dist
 foo1
 /doc/.*/dot_temp_
@@ -74,7 +72,8 @@ foo1
 output.txt
 output.cfg
 .cfg
-/nbproject/private/
+**/nbproject/**
+**/build.xml
 /scratch/
 /test/
 /test_gnur/
@@ -113,3 +112,14 @@ findbugs.html
 test_gnur
 test_fastr
 lib.install.cran*
+/com.oracle.truffle.r.nodes.test/nbproject/private/
+/com.oracle.truffle.r.runtime.ffi/nbproject/private/
+/com.oracle.truffle.r.test.cran/nbproject/private/
+/com.oracle.truffle.r.nodes/nbproject/private/
+/com.oracle.truffle.r.runtime/nbproject/private/
+/com.oracle.truffle.r.library/nbproject/private/
+/com.oracle.truffle.r.parser/nbproject/private/
+/com.oracle.truffle.r.parser.processor/nbproject/private/
+/com.oracle.truffle.r.nodes.builtin/nbproject/private/
+/com.oracle.truffle.r.engine/nbproject/private/
+/com.oracle.truffle.r.test/nbproject/private/

@@ -689,8 +689,8 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
 
     /**
      * Creates a modified call in which the first N arguments are replaced by
-     * {@code replacementArgs}. This is, for example, to support
-     * {@code HiddenInternalFunctions.MakeLazy}, and condition handling.
+     * {@code replacementArgs}. This is only used to support
+     * {@code HiddenInternalFunctions.MakeLazy}.
      */
     @TruffleBoundary
     public static RCallNode createCloneReplacingArgs(RCallNode call, RSyntaxNode... replacementArgs) {
@@ -698,7 +698,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
         for (int i = 0; i < args.length; i++) {
             args[i] = i < replacementArgs.length ? replacementArgs[i] : call.arguments[i];
         }
-        return RCallNodeGen.create(call.getSourceSection(), args, call.signature, new ForcePromiseNode(RASTUtils.cloneNode(call.getFunction())));
+        return RCallNodeGen.create(call.getSourceSection(), args, call.signature, RASTUtils.cloneNode(call.getFunction()));
     }
 
     /**
