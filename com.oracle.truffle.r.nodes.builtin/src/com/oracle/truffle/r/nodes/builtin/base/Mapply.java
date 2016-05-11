@@ -25,17 +25,19 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessArraySubscriptBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.MapplyNodeGen.MapplyInternalNodeGen;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -109,15 +111,44 @@ public abstract class Mapply extends RBuiltinNode {
 
         public abstract Object[] execute(VirtualFrame frame, RList dots, RFunction function, RList additionalArguments);
 
+        private static Object getVecElement(VirtualFrame frame, RList dots, int i, int listIndex, int[] lengths, AccessArraySubscriptBuiltin indexedLoadNode) {
+            Object listElem = dots.getDataAt(listIndex);
+            RAbstractContainer vec = null;
+            if (listElem instanceof RAbstractContainer) {
+                vec = (RAbstractContainer) listElem;
+            } else {
+                // TODO scalar types are a nuisance!
+                if (listElem instanceof String) {
+                    vec = RDataFactory.createStringVectorFromScalar((String) listElem);
+                } else if (listElem instanceof Integer) {
+                    vec = RDataFactory.createIntVectorFromScalar((int) listElem);
+                } else if (listElem instanceof Double) {
+                    vec = RDataFactory.createDoubleVectorFromScalar((double) listElem);
+                } else {
+                    throw RInternalError.unimplemented();
+                }
+            }
+
+            int adjIndex = i % lengths[listIndex];
+            RArgsValuesAndNames indexArg;
+            if (adjIndex < INDEX_CACHE.length) {
+                indexArg = INDEX_CACHE[adjIndex];
+            } else {
+                indexArg = new RArgsValuesAndNames(new Object[]{adjIndex + 1}, I_INDEX);
+            }
+            return indexedLoadNode.execute(frame, vec, indexArg, EXACT, DROP);
+
+        }
+
         @SuppressWarnings("unused")
-        @Specialization(limit = "5", guards = {"dots.getLength() == cachedDots.getLength()", "moreArgs.getLength() == cachedMoreArgs.getLength()", "sameNames(dots, cachedDots)",
+        @Specialization(limit = "5", guards = {"dots.getLength() == cachedDots.getLength()",
+                        "moreArgs.getLength() == cachedMoreArgs.getLength()", "sameNames(dots, cachedDots)",
                         "sameNames(moreArgs, cachedMoreArgs)"})
         protected Object[] cachedMApply(VirtualFrame frame, RList dots, RFunction function, RList moreArgs,
                         @Cached("dots") RList cachedDots,
                         @Cached("moreArgs") RList cachedMoreArgs,
                         @Cached("createElementNodeArray(cachedDots, cachedMoreArgs)") ElementNode[] cachedElementNodeArray,
                         @Cached("createCallNode(cachedElementNodeArray)") RCallNode callNode) {
-            RootCallTarget cachedTarget = function.getTarget();
             int dotsLength = dots.getLength();
             int moreArgsLength = moreArgs.getLength();
             int[] lengths = new int[dotsLength];
@@ -131,40 +162,64 @@ public abstract class Mapply extends RBuiltinNode {
             }
             for (int listIndex = dotsLength; listIndex < dotsLength + moreArgsLength; listIndex++) {
                 // store additional arguments
-                cachedElementNodeArray[listIndex].writeVectorElementNode.execute(frame, moreArgs.getDataAt(listIndex - dotsLength));
+                cachedElementNodeArray[listIndex].writeVectorElementNode.execute(frame,
+                                moreArgs.getDataAt(listIndex - dotsLength));
             }
             Object[] result = new Object[maxLength];
             for (int i = 0; i < maxLength; i++) {
                 /* Evaluate and store the arguments */
                 for (int listIndex = 0; listIndex < dotsLength; listIndex++) {
-                    Object listElem = dots.getDataAt(listIndex);
-                    RAbstractContainer vec = null;
-                    if (listElem instanceof RAbstractContainer) {
-                        vec = (RAbstractContainer) listElem;
-                    } else {
-                        // TODO scalar types are a nuisance!
-                        if (listElem instanceof String) {
-                            vec = RDataFactory.createStringVectorFromScalar((String) listElem);
-                        } else if (listElem instanceof Integer) {
-                            vec = RDataFactory.createIntVectorFromScalar((int) listElem);
-                        } else if (listElem instanceof Double) {
-                            vec = RDataFactory.createDoubleVectorFromScalar((double) listElem);
-                        } else {
-                            throw RInternalError.unimplemented();
-                        }
-                    }
-
-                    int adjIndex = i % lengths[listIndex];
-                    RArgsValuesAndNames indexArg;
-                    if (adjIndex < INDEX_CACHE.length) {
-                        indexArg = INDEX_CACHE[adjIndex];
-                    } else {
-                        indexArg = new RArgsValuesAndNames(new Object[]{adjIndex + 1}, I_INDEX);
-                    }
-                    Object vecElement = cachedElementNodeArray[listIndex].indexedLoadNode.execute(frame, vec, indexArg, EXACT, DROP);
+                    Object vecElement = getVecElement(frame, dots, i, listIndex, lengths, cachedElementNodeArray[listIndex].indexedLoadNode);
                     cachedElementNodeArray[listIndex].writeVectorElementNode.execute(frame, vecElement);
                 }
                 /* Now call the function */
+                result[i] = callNode.execute(frame, function);
+            }
+            return result;
+        }
+
+        @Specialization(contains = "cachedMApply")
+        protected Object[] mApply(VirtualFrame frame, RList dots, RFunction function, RList moreArgs,
+                        @SuppressWarnings("unused") @Cached("createArgsIdentifier()") Object argsIdentifier,
+                        @Cached("createFrameSlotNode(argsIdentifier)") FrameSlotNode slotNode,
+                        @Cached("create()") RLengthNode lengthNode,
+                        @Cached("createIndexedLoadNode()") AccessArraySubscriptBuiltin indexedLoadNode,
+                        @Cached("createExplicitCallNode(argsIdentifier)") RCallNode callNode) {
+            int dotsLength = dots.getLength();
+            int moreArgsLength = moreArgs.getLength();
+            int[] lengths = new int[dotsLength];
+            int maxLength = -1;
+            for (int i = 0; i < dotsLength; i++) {
+                int length = lengthNode.executeInteger(frame, dots.getDataAt(i));
+                if (length > maxLength) {
+                    maxLength = length;
+                }
+                lengths[i] = length;
+            }
+            Object[] values = new Object[dotsLength + moreArgsLength];
+            String[] names = new String[dotsLength + moreArgsLength];
+            RStringVector dotsNames = dots.getNames();
+            if (dotsNames != null) {
+                for (int listIndex = 0; listIndex < dotsLength; listIndex++) {
+                    names[listIndex] = dotsNames.getDataAt(listIndex).isEmpty() ? null : dotsNames.getDataAt(listIndex);
+                }
+            }
+            RStringVector moreArgsNames = moreArgs.getNames();
+            for (int listIndex = dotsLength; listIndex < dotsLength + moreArgsLength; listIndex++) {
+                values[listIndex] = moreArgs.getDataAt(listIndex - dotsLength);
+                names[listIndex] = moreArgsNames == null ? null : (moreArgsNames.getDataAt(listIndex - dotsLength).isEmpty() ? null : moreArgsNames.getDataAt(listIndex - dotsLength));
+            }
+            ArgumentsSignature signature = ArgumentsSignature.get(names);
+            Object[] result = new Object[maxLength];
+            for (int i = 0; i < maxLength; i++) {
+                /* Evaluate and store the arguments */
+                for (int listIndex = 0; listIndex < dotsLength; listIndex++) {
+                    Object vecElement = getVecElement(frame, dots, i, listIndex, lengths, indexedLoadNode);
+                    values[listIndex] = vecElement;
+                }
+                /* Now call the function */
+                FrameSlot frameSlot = slotNode.executeFrameSlot(frame);
+                frame.setObject(frameSlot, new RArgsValuesAndNames(values, signature));
                 result[i] = callNode.execute(frame, function);
             }
             return result;
@@ -192,13 +247,30 @@ public abstract class Mapply extends RBuiltinNode {
             ElementNode[] elementNodes = new ElementNode[length];
             RStringVector dotsNames = dots.getNames();
             for (int i = 0; i < dots.getLength(); i++) {
-                elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1), dotsNames == null ? null : dotsNames.getDataAt(i)));
+                elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1), dotsNames == null ? null : (dotsNames.getDataAt(i).isEmpty() ? null : dotsNames.getDataAt(i))));
             }
             RStringVector moreArgsNames = moreArgs.getNames();
             for (int i = dots.getLength(); i < dots.getLength() + moreArgs.getLength(); i++) {
-                elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1), moreArgsNames == null ? null : moreArgsNames.getDataAt(i - dots.getLength())));
+                elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1),
+                                moreArgsNames == null ? null : moreArgsNames.getDataAt(i - dots.getLength()).isEmpty() ? null : moreArgsNames.getDataAt(i - dots.getLength())));
             }
             return elementNodes;
+        }
+
+        protected Object createArgsIdentifier() {
+            return new Object();
+        }
+
+        protected FrameSlotNode createFrameSlotNode(Object argsIdentifier) {
+            return FrameSlotNode.createTemp(argsIdentifier, true);
+        }
+
+        protected RCallNode createExplicitCallNode(Object argsIdentifier) {
+            return RCallNode.createExplicitCall(argsIdentifier);
+        }
+
+        protected AccessArraySubscriptBuiltin createIndexedLoadNode() {
+            return InfixFunctionsFactory.AccessArraySubscriptBuiltinNodeGen.create(null);
         }
 
         protected boolean sameNames(RList list, RList cachedList) {
