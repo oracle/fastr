@@ -76,7 +76,7 @@ public class TestParser extends TestBase {
     @Test
     public void testLexerError() {
         // FastR provides a more accurate error message
-        assertEval(Output.ContainsError, "%0");
+        assertEval(Output.ContainsAmbiguousError, "%0");
     }
 
     /**

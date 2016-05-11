@@ -327,6 +327,8 @@ public class TestBase {
     private static int ignoredInputCount;
     private static int failedInputCount;
 
+    protected static String explicitTestContext;
+
     /**
      * A way to limit which tests are actually run. TODO requires more JUnit support for filtering
      * in the wrapper.
@@ -427,6 +429,9 @@ public class TestBase {
     }
 
     private static String getTestContext() {
+        if (explicitTestContext != null) {
+            return explicitTestContext;
+        }
         // We want the stack trace as if the JUnit test failed
         RuntimeException ex = new RuntimeException();
         // The first method not in TestBase is the culprit
