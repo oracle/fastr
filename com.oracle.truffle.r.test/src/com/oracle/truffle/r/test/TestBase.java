@@ -67,7 +67,8 @@ public class TestBase {
         ContainsAmbiguousError, // the actual error message is ignored
         ContainsWarning, // the warning context is ignored
         MayContainError,
-        MayContainWarning;
+        MayContainWarning,
+        IgnoreWhitespace;
     }
 
     public enum Ignored implements TestTrait {
@@ -456,6 +457,7 @@ public class TestBase {
         boolean mayContainWarning = TestTrait.contains(traits, Output.MayContainWarning);
         boolean mayContainError = TestTrait.contains(traits, Output.MayContainError);
         boolean ambiguousError = TestTrait.contains(traits, Output.ContainsAmbiguousError);
+        boolean ignoreWhitespace = TestTrait.contains(traits, Output.IgnoreWhitespace);
         boolean nonSharedContext = TestTrait.contains(traits, Context.NonShared);
 
         ContextInfo contextInfo = nonSharedContext ? fastROutputManager.fastRSession.createContextInfo(ContextKind.SHARE_NOTHING) : null;
@@ -468,6 +470,10 @@ public class TestBase {
                 ignoredInputCount++;
             } else {
                 String result = fastREval(input, contextInfo);
+                if (ignoreWhitespace) {
+                    expected = expected.replaceAll("\\s+", "");
+                    result = result.replaceAll("\\s+", "");
+                }
 
                 CheckResult checkResult = checkResult(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError);
 
