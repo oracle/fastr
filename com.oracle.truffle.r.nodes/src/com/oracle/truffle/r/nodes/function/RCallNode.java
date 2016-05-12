@@ -83,7 +83,9 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -976,12 +978,16 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
 
         private final ArgumentsSignature signature;
         private final RFunction cachedFunction;
+        private final FastPathFactory fastPathFactory;
+        private final RVisibility fastPathVisibility;
 
         DispatchedCallNode(RFunction function, ArgumentsSignature signature, RCallNode originalCall) {
             super(originalCall);
             this.cachedFunction = function;
             this.signature = signature;
-            this.fastPath = function.getFastPath() == null ? null : function.getFastPath().create();
+            this.fastPathFactory = function.getFastPath();
+            this.fastPath = fastPathFactory == null ? null : fastPathFactory.create();
+            this.fastPathVisibility = fastPathFactory == null ? null : fastPathFactory.getVisibility();
             originalCall.needsCallerFrame |= cachedFunction.containsDispatch();
         }
 
@@ -990,6 +996,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
             if (fastPath != null) {
                 Object result = fastPath.execute(frame, orderedArguments);
                 if (result != null) {
+                    RContext.getInstance().setVisible(this.fastPathVisibility);
                     return result;
                 }
                 CompilerDirectives.transferToInterpreterAndInvalidate();
