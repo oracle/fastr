@@ -558,6 +558,22 @@ def rbcheck(args):
     cp = mx.classpath('com.oracle.truffle.r.test')
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.AnalyzeRBuiltin'] + analyzeArgs)
 
+def rbuiltins(args):
+    '''Checks FastR builtins against GnuR (alternative impl of rbcheck)
+
+    gnur-only:    GnuR builtins not implemented in FastR (i.e. TODO list).
+    fastr-only:   FastR builtins not implemented in GnuR
+    both-diff:    implemented in both GnuR and FastR, but with difference
+                  in signature (e.g. visibility)
+    both:         implemented in both GnuR and FastR with matching signature
+
+    If the option --filter is not given, shows all groups.
+    Multiple groups can be combined: e.g. "--filter gnur-only,fastr-only"'''
+    cp = mx.classpath('com.oracle.truffle.r.test')
+    args.append("--suite-path")
+    args.append(mx.primary_suite().dir)
+    mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.RBuiltinCheck'] + args)
+
 def rcmplib(args):
     '''compare FastR library R sources against GnuR'''
     parser = ArgumentParser(prog='mx rcmplib')
@@ -612,6 +628,7 @@ _commands = {
     'junitnoapps' : [junit_noapps, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, ['options']],
+    'rbuiltins': [rbuiltins, '--filter [gnur-only,fastr-only,both,both-diff]'],
     'rcmplib' : [rcmplib, ['options']],
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'rrepl' : [rrepl, '[options]'],
