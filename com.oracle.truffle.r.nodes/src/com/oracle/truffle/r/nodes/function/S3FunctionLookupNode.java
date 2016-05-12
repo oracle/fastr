@@ -170,7 +170,8 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
 
     public abstract S3FunctionLookupNode.Result execute(VirtualFrame frame, String genericName, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame);
 
-    private static UseMethodFunctionLookupCachedNode specialize(String genericName, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame,
+    private static UseMethodFunctionLookupCachedNode specialize(VirtualFrame frame, String genericName, RStringVector type, String group, MaterializedFrame callerFrame,
+                    MaterializedFrame genericDefFrame,
                     S3FunctionLookupNode next) {
         ArrayList<ReadVariableNode> unsuccessfulReadsCaller = new ArrayList<>();
         ArrayList<LocalReadVariableNode> unsuccessfulReadsTable = new ArrayList<>();
@@ -185,7 +186,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
             Object result;
             if (inMethodsTable) {
                 LocalReadVariableNode read = LocalReadVariableNode.create(name, true);
-                result = read.execute(null, lookupFrame);
+                result = read.execute(frame, lookupFrame);
                 if (result == null) {
                     unsuccessfulReadsTable.add(read);
                 } else {
@@ -193,7 +194,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
                 }
             } else {
                 ReadVariableNode read = ReadVariableNode.createSilent(name, RType.Function);
-                result = read.execute(null, lookupFrame);
+                result = read.execute(frame, lookupFrame);
                 if (result == null) {
                     unsuccessfulReadsCaller.add(read);
                 } else {
@@ -206,7 +207,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         GetMethodsTable getTable = () -> {
             if (genericDefFrame != null) {
                 reads.methodsTableRead = LocalReadVariableNode.create(RRuntime.RS3MethodsTable, true);
-                return reads.methodsTableRead.execute(null, genericDefFrame);
+                return reads.methodsTableRead.execute(frame, genericDefFrame);
             } else {
                 return null;
             }
@@ -241,7 +242,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
             if (++depth > MAX_CACHE_DEPTH) {
                 return replace(new UseMethodFunctionLookupGenericNode(throwsError, nextMethod)).execute(frame, genericName, type, group, callerFrame, genericDefFrame);
             } else {
-                UseMethodFunctionLookupCachedNode cachedNode = replace(specialize(genericName, type, group, callerFrame, genericDefFrame, this));
+                UseMethodFunctionLookupCachedNode cachedNode = replace(specialize(frame, genericName, type, group, callerFrame, genericDefFrame, this));
                 return cachedNode.execute(frame, genericName, type, group, callerFrame, genericDefFrame);
             }
         }
@@ -327,7 +328,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
                 }
             } while (true);
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            return replace(specialize(genericName, type, group, callerFrame, genericDefFrame, next)).execute(frame, genericName, type, group, callerFrame, genericDefFrame);
+            return replace(specialize(frame, genericName, type, group, callerFrame, genericDefFrame, next)).execute(frame, genericName, type, group, callerFrame, genericDefFrame);
         }
 
         @ExplodeLoop
