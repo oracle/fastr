@@ -162,10 +162,11 @@ public final class AccessArgumentNode extends RNode {
 
     private boolean checkInsertOptDefaultArg() {
         if (optDefaultArgNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+
             RNode defaultArg = formals.getDefaultArgument(index);
             RNode arg = (RNode) RASTUtils.unwrap(defaultArg);
 
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             // TODO: all tests pass without it but perhaps we should "re-wrap" promises here?
             if (isOptimizableDefault(arg)) {
                 optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) RASTUtils.cloneNode(arg), ArgumentStatePush.INVALID_INDEX);

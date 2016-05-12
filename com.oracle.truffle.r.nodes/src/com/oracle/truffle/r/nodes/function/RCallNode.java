@@ -794,13 +794,17 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
             }
         }
 
-        protected PrepareArguments createArguments(RFunction function) {
+        protected PrepareArguments createArguments(RFunction function, boolean noOpt) {
             if (explicitArgs) {
                 return PrepareArguments.createExplicit(function);
             } else {
                 CallArgumentsNode args = originalCall.createArguments(dispatchTempIdentifiers, !function.isBuiltin(), true);
-                return PrepareArguments.create(function, args);
+                return PrepareArguments.create(function, args, noOpt);
             }
+        }
+
+        protected PrepareArguments createArguments(RFunction function) {
+            return createArguments(function, false);
         }
 
         @Specialization(limit = "CACHE_SIZE", guards = "function == cachedFunction")
@@ -826,7 +830,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
             public Object execute(MaterializedFrame materializedFrame, RFunction function, Object varArgs, Object s3Args) {
                 if (cachedFunction != function) {
                     leafCall = insert(createCacheNode(function));
-                    prepareArguments = insert(createArguments(function));
+                    prepareArguments = insert(createArguments(function, true));
                 }
                 VirtualFrame frame = SubstituteVirtualFrame.create(materializedFrame);
                 Object[] orderedArguments = prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, originalCall);

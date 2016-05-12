@@ -50,8 +50,8 @@ public abstract class PrepareArguments extends Node {
 
     public abstract Object[] execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call);
 
-    public static PrepareArguments create(RFunction function, CallArgumentsNode args) {
-        return new UninitializedPrepareArguments(function, args);
+    public static PrepareArguments create(RFunction function, CallArgumentsNode args, boolean noOpt) {
+        return new UninitializedPrepareArguments(function, args, noOpt);
     }
 
     public static PrepareArguments createExplicit(RFunction function) {
@@ -62,11 +62,13 @@ public abstract class PrepareArguments extends Node {
 
         private final RFunction function;
         private final CallArgumentsNode sourceArguments; // not used as a node
+        private final boolean noOpt;
         private int depth = CACHE_SIZE;
 
-        UninitializedPrepareArguments(RFunction function, CallArgumentsNode sourceArguments) {
+        UninitializedPrepareArguments(RFunction function, CallArgumentsNode sourceArguments, boolean noOpt) {
             this.function = function;
             this.sourceArguments = sourceArguments;
+            this.noOpt = noOpt;
         }
 
         @Override
@@ -74,7 +76,7 @@ public abstract class PrepareArguments extends Node {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             PrepareArguments next;
             if (depth-- > 0) {
-                next = new CachedPrepareArguments(this, function, call, sourceArguments, varArgs == null ? null : varArgs.getSignature());
+                next = new CachedPrepareArguments(this, function, call, sourceArguments, varArgs == null ? null : varArgs.getSignature(), noOpt);
             } else {
                 next = new GenericPrepareArguments(function, sourceArguments);
             }
@@ -88,10 +90,10 @@ public abstract class PrepareArguments extends Node {
         @Children private final RNode[] matchedArguments;
         private final ArgumentsSignature cachedVarArgSignature;
 
-        CachedPrepareArguments(PrepareArguments next, RFunction function, RCallNode call, CallArgumentsNode args, ArgumentsSignature varArgSignature) {
+        CachedPrepareArguments(PrepareArguments next, RFunction function, RCallNode call, CallArgumentsNode args, ArgumentsSignature varArgSignature, boolean noOpt) {
             this.next = next;
             cachedVarArgSignature = varArgSignature;
-            matchedArguments = ArgumentMatcher.matchArguments(function, args.unrollArguments(varArgSignature), call, false);
+            matchedArguments = ArgumentMatcher.matchArguments(function, args.unrollArguments(varArgSignature), call, noOpt);
         }
 
         @Override
