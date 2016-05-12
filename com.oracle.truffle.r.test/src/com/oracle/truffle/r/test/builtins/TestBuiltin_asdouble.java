@@ -120,8 +120,7 @@ public class TestBuiltin_asdouble extends TestBase {
 
     @Test
     public void testasdouble21() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(foo = 5L, Species = 2L), .Names = c('foo', 'Species'), out.attrs = structure(list(dim = structure(c(6L, 3L), .Names = c('foo', 'Species')), dimnames = structure(list(foo = c('foo=1', 'foo=2', 'foo=3', 'foo=4', 'foo=5', 'foo=6'), Species = c('Species=1', 'Species=2', 'Species=3')), .Names = c('foo', 'Species'))), .Names = c('dim', 'dimnames')), row.names = 11L, class = 'data.frame'));as.double(argv[[1]]);");
+        assertEval("argv <- list(structure(list(foo = 5L, Species = 2L), .Names = c('foo', 'Species'), out.attrs = structure(list(dim = structure(c(6L, 3L), .Names = c('foo', 'Species')), dimnames = structure(list(foo = c('foo=1', 'foo=2', 'foo=3', 'foo=4', 'foo=5', 'foo=6'), Species = c('Species=1', 'Species=2', 'Species=3')), .Names = c('foo', 'Species'))), .Names = c('dim', 'dimnames')), row.names = 11L, class = 'data.frame'));as.double(argv[[1]]);");
     }
 
     @Test

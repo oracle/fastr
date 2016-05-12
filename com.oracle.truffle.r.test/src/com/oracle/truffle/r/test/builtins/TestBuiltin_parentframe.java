@@ -52,5 +52,4 @@ public class TestBuiltin_parentframe extends TestBase {
         assertEval("{ f <- function(frame) frame; g <- function() f(parent.frame()); g() }");
         assertEval("{ f <- function(frame) frame; g <- function() f(parent.frame(3)); g() }");
     }
-
 }

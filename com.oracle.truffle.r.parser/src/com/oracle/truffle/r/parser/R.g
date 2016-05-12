@@ -135,6 +135,12 @@ package com.oracle.truffle.r.parser;
         value &= 0xff; // octal escape sequences are clamped the 0-255 range
         return new String(new int[]{value}, 0, 1);
     }
+
+	// without this override, the parser will not throw exceptions if it can recover    
+    @Override
+    public void reportError(RecognitionException e) {
+        throw new IllegalArgumentException(e);
+    }
 }
 
 @lexer::init{

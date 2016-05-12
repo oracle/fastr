@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
@@ -610,12 +611,13 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * be materialized.
      */
     public static REnvironment frameToEnvironment(MaterializedFrame frame) {
-        REnvironment env = RArguments.getEnvironment(frame);
+        MaterializedFrame f = frame instanceof VirtualEvalFrame ? ((VirtualEvalFrame) frame).getOriginalFrame() : frame;
+        REnvironment env = RArguments.getEnvironment(f);
         if (env == null) {
-            if (RArguments.getFunction(frame) == null) {
+            if (RArguments.getFunction(f) == null) {
                 throw RInternalError.shouldNotReachHere();
             }
-            env = createEnclosingEnvironments(frame);
+            env = createEnclosingEnvironments(f);
         }
         return env;
     }
@@ -628,10 +630,11 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      */
     @TruffleBoundary
     public static REnvironment createEnclosingEnvironments(MaterializedFrame frame) {
-        REnvironment env = RArguments.getEnvironment(frame);
+        MaterializedFrame f = frame instanceof VirtualEvalFrame ? ((VirtualEvalFrame) frame).getOriginalFrame() : frame;
+        REnvironment env = RArguments.getEnvironment(f);
         if (env == null) {
             // parent is the env of the enclosing frame
-            env = REnvironment.Function.create(frame);
+            env = REnvironment.Function.create(f);
         }
         return env;
     }

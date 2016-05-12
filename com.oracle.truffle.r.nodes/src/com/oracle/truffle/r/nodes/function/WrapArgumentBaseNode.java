@@ -39,7 +39,6 @@ public abstract class WrapArgumentBaseNode extends RNode {
     @Child protected RNode operand;
 
     private final BranchProfile everSeenVector;
-    private final BranchProfile everSeenFactor;
     private final BranchProfile everSeenLanguage;
     private final BranchProfile everSeenFunction;
     private final BranchProfile everSeenS4Object;
@@ -51,7 +50,6 @@ public abstract class WrapArgumentBaseNode extends RNode {
         this.operand = operand;
         if (initProfiles) {
             everSeenVector = BranchProfile.create();
-            everSeenFactor = BranchProfile.create();
             everSeenLanguage = BranchProfile.create();
             everSeenFunction = BranchProfile.create();
             everSeenS4Object = BranchProfile.create();
@@ -59,7 +57,6 @@ public abstract class WrapArgumentBaseNode extends RNode {
             nonShareable = BranchProfile.create();
         } else {
             everSeenVector = null;
-            everSeenFactor = null;
             everSeenLanguage = null;
             everSeenFunction = null;
             everSeenS4Object = null;
