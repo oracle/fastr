@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
@@ -36,24 +37,37 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "quit", kind = INTERNAL, parameterNames = {"save", "status", "runLast"})
 public abstract class Quit extends RInvisibleBuiltinNode {
+
+    private static final String[] SAVE_VALUES = new String[]{"yes", "no", "ask", "default"};
 
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.toInteger(1);
     }
 
+    private void checkSaveValue(String save) throws RError {
+        for (String saveValue : SAVE_VALUES) {
+            if (saveValue.equals(save)) {
+                return;
+            }
+        }
+        throw RError.error(this, RError.Message.QUIT_ASK);
+    }
+
     @Specialization
     @TruffleBoundary
-    protected Object doQuit(String saveArg, int status, byte runLast) {
+    protected Object doQuit(RAbstractStringVector saveArg, int status, byte runLast) {
         controlVisibility();
         if (BrowserInteractNode.inBrowser()) {
             RError.warning(this, RError.Message.BROWSER_QUIT);
             return null;
         }
-        String save = saveArg;
+        String save = saveArg.getDataAt(0);
+        checkSaveValue(save);
         // Quit does not divert its output to sink
         ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         if (save.equals("default")) {
@@ -112,4 +126,11 @@ public abstract class Quit extends RInvisibleBuiltinNode {
         Utils.exit(status);
         return null;
     }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object doQuit(Object saveArg, Object status, Object runLast) {
+        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+    }
+
 }
