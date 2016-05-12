@@ -689,8 +689,8 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
 
     /**
      * Creates a modified call in which the first N arguments are replaced by
-     * {@code replacementArgs}. This is, for example, to support
-     * {@code HiddenInternalFunctions.MakeLazy}, and condition handling.
+     * {@code replacementArgs}. This is only used to support
+     * {@code HiddenInternalFunctions.MakeLazy}.
      */
     @TruffleBoundary
     public static RCallNode createCloneReplacingArgs(RCallNode call, RSyntaxNode... replacementArgs) {
@@ -698,7 +698,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
         for (int i = 0; i < args.length; i++) {
             args[i] = i < replacementArgs.length ? replacementArgs[i] : call.arguments[i];
         }
-        return RCallNodeGen.create(call.getSourceSection(), args, call.signature, new ForcePromiseNode(RASTUtils.cloneNode(call.getFunction())));
+        return RCallNodeGen.create(call.getSourceSection(), args, call.signature, RASTUtils.cloneNode(call.getFunction()));
     }
 
     /**
@@ -794,13 +794,17 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
             }
         }
 
-        protected PrepareArguments createArguments(RFunction function) {
+        protected PrepareArguments createArguments(RFunction function, boolean noOpt) {
             if (explicitArgs) {
                 return PrepareArguments.createExplicit(function);
             } else {
                 CallArgumentsNode args = originalCall.createArguments(dispatchTempIdentifiers, !function.isBuiltin(), true);
-                return PrepareArguments.create(function, args);
+                return PrepareArguments.create(function, args, noOpt);
             }
+        }
+
+        protected PrepareArguments createArguments(RFunction function) {
+            return createArguments(function, false);
         }
 
         @Specialization(limit = "CACHE_SIZE", guards = "function == cachedFunction")
@@ -825,8 +829,9 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
             @TruffleBoundary
             public Object execute(MaterializedFrame materializedFrame, RFunction function, Object varArgs, Object s3Args) {
                 if (cachedFunction != function) {
+                    cachedFunction = function;
                     leafCall = insert(createCacheNode(function));
-                    prepareArguments = insert(createArguments(function));
+                    prepareArguments = insert(createArguments(function, true));
                 }
                 VirtualFrame frame = SubstituteVirtualFrame.create(materializedFrame);
                 Object[] orderedArguments = prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, originalCall);
@@ -1004,7 +1009,8 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
 
     @Override
     public RSyntaxElement getSyntaxLHS() {
-        return getFunction() == null ? RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "FUN", true) : getFunctionNode().asRSyntaxNode();
+        ForcePromiseNode func = getFunction();
+        return func == null || func.getValueNode() == null ? RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "FUN", true) : getFunctionNode().asRSyntaxNode();
     }
 
     @Override

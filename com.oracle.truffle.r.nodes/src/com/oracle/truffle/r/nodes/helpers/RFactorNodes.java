@@ -71,7 +71,6 @@ public final class RFactorNodes {
         @Child private CastStringNode castString;
         @Child private AttributeAccess attrAccess = AttributeAccess.create(RRuntime.LEVELS_ATTR_KEY);
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
         private final BranchProfile notVectorBranch = BranchProfile.create();
         private final ConditionProfile nonScalarLevels = ConditionProfile.createBinaryProfile();
         private final ConditionProfile stringVectorLevels = ConditionProfile.createBinaryProfile();

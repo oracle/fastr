@@ -119,7 +119,7 @@ abstract class LoadMethod extends RBaseNode {
             if (loadMethodFind == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 loadMethodFind = insert(ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, RRuntime.R_LOAD_METHOD_NAME));
-                currentFunction = (RFunction) loadMethodFind.execute(null, methodsEnv.getFrame());
+                currentFunction = (RFunction) loadMethodFind.execute(frame, methodsEnv.getFrame());
                 loadMethodFunction = currentFunction;
                 loadMethodCall = insert(Truffle.getRuntime().createDirectCallNode(loadMethodFunction.getTarget()));
                 RError.performanceWarning("loadMethod executing slow path");

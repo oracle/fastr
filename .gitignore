@@ -64,8 +64,6 @@
 .hprof.txt
 /compilations-*.cfg
 /graal/.*/build.xml
-/.*/build.xml
-/.*/nbproject/
 dist
 foo1
 /doc/.*/dot_temp_
@@ -74,7 +72,8 @@ foo1
 output.txt
 output.cfg
 .cfg
-/nbproject/private/
+**/nbproject/**
+**/build.xml
 /scratch/
 /test/
 /test_gnur/

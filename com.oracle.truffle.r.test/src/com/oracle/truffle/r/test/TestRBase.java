@@ -74,6 +74,7 @@ public class TestRBase extends TestBase {
             return;
         }
         for (int i = 0; i < files.length; i++) {
+            explicitTestContext = testDirName + "/R/" + files[i].getName();
             try {
                 BufferedReader bf = new BufferedReader(new FileReader(files[i]));
                 TestTrait testTrait = null;
@@ -98,6 +99,8 @@ public class TestRBase extends TestBase {
                 }
             } catch (IOException x) {
                 Assert.fail("error reading: " + files[i].getPath() + ": " + x);
+            } finally {
+                explicitTestContext = null;
             }
         }
     }

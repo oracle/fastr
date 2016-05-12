@@ -14,7 +14,6 @@ import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 
-// FIXME: I've seen tests crash when run by JUnit, but pass when run manually through console...
 public class TestSimpleTruffle extends TestBase {
 
     @Test
@@ -35,7 +34,6 @@ public class TestSimpleTruffle extends TestBase {
 
     @Test
     public void test1Ignore() {
-        // FIXME these incorrectly output NULL
         assertEval("{ f<-function(i) { if(i==1) { i } } ; f(1) ; f(2) }");
         assertEval("{ f<-function() { if (!1) TRUE } ; f(); f() }");
         assertEval("{ f<-function() { if (!TRUE) 1 } ; f(); f() }");
@@ -56,6 +54,6 @@ public class TestSimpleTruffle extends TestBase {
     public void testWarningsAndErrors() {
         assertEval("{ (c(1, 2) < c(1, 2, 3)) ==  (c(1, 2) < c(1, 3, 4)) }");
         assertEval(Output.ContainsError, Output.ContainsWarning, "{ 1i > (c(1, 2) < c(1, 2, 3)) }");
-        assertEval(Output.ContainsError, Output.ContainsWarning, "{ 1i > ((c(1, 2) < c(1, 2, 3)) ==  (c(1, 2) < c(1, 3, 4))) }");
+        assertEval("{ 1i > ((c(1, 2) < c(1, 2, 3)) ==  (c(1, 2) < c(1, 3, 4))) }");
     }
 }
