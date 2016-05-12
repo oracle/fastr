@@ -37,7 +37,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EvalFunctions.Eval;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -178,8 +177,6 @@ public class HiddenInternalFunctions {
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
         @Child private CastIntegerNode castIntNode;
 
-        private final RCaller caller = RCallerHelper.InvalidRepresentation.instance;
-
         private void initCast() {
             if (castIntNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -260,7 +257,8 @@ public class HiddenInternalFunctions {
                 RSerialize.CallHook callHook = new RSerialize.CallHook() {
                     @Override
                     public Object eval(Object arg) {
-                        Object[] callArgs = RArguments.create(envhook, caller, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), new Object[]{arg}, SIGNATURE, null);
+                        Object[] callArgs = RArguments.create(envhook, (RCaller) getOriginalCall(), null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), new Object[]{arg},
+                                        SIGNATURE, null);
                         return callCache.execute(SubstituteVirtualFrame.create(frame), envhook.getTarget(), callArgs);
                     }
                 };
@@ -365,8 +363,6 @@ public class HiddenInternalFunctions {
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("e");
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
 
-        private final RCaller caller = RCallerHelper.InvalidRepresentation.instance;
-
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.toInteger(2).toInteger(3);
@@ -386,7 +382,8 @@ public class HiddenInternalFunctions {
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
                 @Override
                 public Object eval(Object arg) {
-                    Object[] callArgs = RArguments.create(hook, caller, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), new Object[]{arg}, SIGNATURE, null);
+                    Object[] callArgs = RArguments.create(hook, (RCaller) getOriginalCall(), null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), new Object[]{arg}, SIGNATURE,
+                                    null);
                     return callCache.execute(SubstituteVirtualFrame.create(frame), hook.getTarget(), callArgs);
                 }
             };
