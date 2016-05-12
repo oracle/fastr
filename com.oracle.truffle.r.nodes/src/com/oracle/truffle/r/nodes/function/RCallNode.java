@@ -829,6 +829,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
             @TruffleBoundary
             public Object execute(MaterializedFrame materializedFrame, RFunction function, Object varArgs, Object s3Args) {
                 if (cachedFunction != function) {
+                    cachedFunction = function;
                     leafCall = insert(createCacheNode(function));
                     prepareArguments = insert(createArguments(function, true));
                 }
