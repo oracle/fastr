@@ -151,9 +151,19 @@ public class RMissingHelper {
             }
 
             try {
-                // TODO Profile necessary here???
+                if (promise.isEvaluated()) {
+                    return false;
+                }
                 if (promise instanceof EagerPromise) {
-                    ((EagerPromise) promise).materialize();
+                    EagerPromise eagerPromise = (EagerPromise) promise;
+                    if (!eagerPromise.isDeoptimized()) {
+                        Object eagerValue = eagerPromise.getEagerValue();
+                        if (eagerValue instanceof RPromise) {
+                            return isMissingName((RPromise) eagerValue);
+                        } else {
+                            return isMissing(eagerValue);
+                        }
+                    }
                 }
                 // promise.materialize(globalMissingPromiseProfile);
                 promise.setUnderEvaluation(true);
