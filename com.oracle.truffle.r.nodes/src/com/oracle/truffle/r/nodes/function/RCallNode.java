@@ -144,7 +144,7 @@ interface CallWithCallerFrame extends RCaller {
 
 @NodeInfo(cost = NodeCost.NONE)
 @NodeChild(value = "function", type = ForcePromiseNode.class)
-public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCall, RCaller {
+public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall, RCaller {
 
     // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
 
@@ -160,8 +160,6 @@ public abstract class RCallNode extends RNode implements RSyntaxNode, RSyntaxCal
     public final SourceSection getSourceSection() {
         return sourceSectionR;
     }
-
-    public abstract Object execute(VirtualFrame frame, Object function);
 
     protected abstract ForcePromiseNode getFunction();
 
