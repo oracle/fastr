@@ -128,7 +128,7 @@ public final class PrintParameters {
         return cloned;
     }
 
-    public static int getDeafultMaxPrint() {
+    public static int getDefaultMaxPrint() {
         RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("max.print"));
         int max = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("max.print"));
         if (max == RRuntime.INT_NA || max < 0) {
@@ -151,7 +151,7 @@ public final class PrintParameters {
         if (this.scipen == RRuntime.INT_NA) {
             this.scipen = 0;
         }
-        this.max = getDeafultMaxPrint();
+        this.max = getDefaultMaxPrint();
         this.gap = 1;
         this.width = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("width"));
         this.useSource = true;
