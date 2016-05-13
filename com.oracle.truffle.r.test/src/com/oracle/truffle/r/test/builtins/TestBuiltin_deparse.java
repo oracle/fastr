@@ -10,8 +10,12 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
@@ -312,5 +316,17 @@ public class TestBuiltin_deparse extends TestBase {
         // should deparse as structure(...
         assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
         assertEval("{ deparse(function (a1, a2, a3) if (!(a1 || a2) && a3) 42 else 7) }");
+    }
+
+    @Test
+    public void testIsValidName() {
+        assertFalse(RDeparse.isValidName(""));
+        assertFalse(RDeparse.isValidName("7"));
+        assertTrue(RDeparse.isValidName(".f7"));
+        assertFalse(RDeparse.isValidName(".7"));
+        assertTrue(RDeparse.isValidName("x7_y.z"));
+        assertFalse(RDeparse.isValidName("x%"));
+        assertTrue(RDeparse.isValidName("..."));
+        assertFalse(RDeparse.isValidName("while"));
     }
 }
