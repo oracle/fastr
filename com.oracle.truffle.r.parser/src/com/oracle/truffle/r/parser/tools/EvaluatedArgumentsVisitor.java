@@ -190,4 +190,26 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
             return new EvaluatedArgumentsFastPath(forcedArguments);
         }
     }
+
+    public static boolean isSimpleArgument(RSyntaxElement node) {
+        if (node instanceof RSyntaxCall) {
+            RSyntaxCall call = (RSyntaxCall) node;
+            RSyntaxElement lhs = call.getSyntaxLHS();
+            if (lhs instanceof RSyntaxLookup) {
+                if (wellKnownFunctions.contains(((RSyntaxLookup) lhs).getIdentifier())) {
+                    for (RSyntaxElement arg : call.getSyntaxArguments()) {
+                        if (!isSimpleArgument(arg)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            }
+        } else if (node instanceof RSyntaxLookup) {
+            return true;
+        } else if (node instanceof RSyntaxConstant) {
+            return true;
+        }
+        return false;
+    }
 }
