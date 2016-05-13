@@ -30,15 +30,18 @@ import org.junit.BeforeClass;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
 
 public class TestBase {
 
     private static PolyglotEngine testVM;
+    static RContext testVMContext;
 
     @BeforeClass
-    public static void setupClass() {
+    public static void setupClass() throws IOException {
         testVM = FastRSession.create().createTestContext(null);
+        testVMContext = testVM.eval(FastRSession.GET_CONTEXT).as(RContext.class);
     }
 
     // clear out warnings (which are stored in shared base env)
