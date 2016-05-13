@@ -211,15 +211,14 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
         RAbstractVector vector = originalVector.copy();
         assumeFalse(isLogicOp(factory));
         assumeFalse(vector.getRType() == RType.Raw);
-        RAbstractVector result = createEmptyLogicalVector();
-        assertThat(executeArithmetic(factory, vector, RNull.instance), is(result));
-        assertThat(executeArithmetic(factory, RNull.instance, vector), is(result));
+        assertThat(executeArithmetic(factory, vector, RNull.instance), isEmptyVectorOf(RType.Logical));
+        assertThat(executeArithmetic(factory, RNull.instance, vector), isEmptyVectorOf(RType.Logical));
     }
 
     @Theory
     public void testBothNull(BooleanOperationFactory factory) {
         assumeFalse(isLogicOp(factory));
-        assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), is(createEmptyLogicalVector()));
+        assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), isEmptyVectorOf(RType.Logical));
     }
 
     @Theory
