@@ -39,6 +39,10 @@ import com.oracle.truffle.r.runtime.*;
 
 @RunWith(Theories.class)
 public class StringCompareNodeTest extends TestBase {
+    @Test
+    public void dummy() {
+        // to make sure this file is recognized as a test
+    }
 
     // Please note that "FB" and "Ea" produce a hash collision. Thats why its tested here.
     @DataPoints public static String[] TEST = {RRuntime.STRING_NA, "a", "abc", "bc".intern(), "bc".intern(), "FB", "Ea"};

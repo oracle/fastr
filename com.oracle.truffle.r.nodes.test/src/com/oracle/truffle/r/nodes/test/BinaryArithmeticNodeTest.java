@@ -83,6 +83,10 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
  */
 @RunWith(Theories.class)
 public class BinaryArithmeticNodeTest extends BinaryVectorTest {
+    @Test
+    public void dummy() {
+        // to make sure this file is recognized as a test
+    }
 
     @DataPoints public static final BinaryArithmeticFactory[] BINARY = BinaryArithmetic.ALL;
 
