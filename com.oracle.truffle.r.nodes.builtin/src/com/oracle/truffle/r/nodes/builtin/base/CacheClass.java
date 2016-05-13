@@ -29,7 +29,6 @@ public abstract class CacheClass extends RBuiltinNode {
     @TruffleBoundary
     @Specialization
     protected RAbstractStringVector getClass(Object cl, RAbstractStringVector ext) {
-        controlVisibility();
         String clString;
         if (cl instanceof String) {
             clString = (String) cl;

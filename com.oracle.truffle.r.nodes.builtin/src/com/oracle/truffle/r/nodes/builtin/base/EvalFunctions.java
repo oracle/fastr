@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.builtin.base.EvalFunctionsFactory.EvalEnvCastN
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -98,13 +99,12 @@ public class EvalFunctions {
         }
     }
 
-    @RBuiltin(name = "eval", kind = INTERNAL, parameterNames = {"expr", "envir", "enclos"})
+    @RBuiltin(name = "eval", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"expr", "envir", "enclos"})
     public abstract static class Eval extends EvalAdapter {
 
         @Specialization
         protected Object doEval(VirtualFrame frame, Object expr, Object envir, REnvironment enclos, //
                         @Cached("createCast()") EvalEnvCast envCast) {
-            controlVisibility();
             return doEvalBody(RArguments.getDepth(frame) + 1, expr, envCast.execute(envir, enclos));
         }
 

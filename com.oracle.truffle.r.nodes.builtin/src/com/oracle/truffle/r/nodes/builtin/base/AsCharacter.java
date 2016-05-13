@@ -81,56 +81,47 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @Specialization
     protected String doInt(int value) {
-        controlVisibility();
         return castString(value);
     }
 
     @Specialization
     protected String doDouble(double value) {
-        controlVisibility();
         return castString(value);
     }
 
     @Specialization
     protected String doLogical(byte value) {
-        controlVisibility();
         return castString(value);
     }
 
     @Specialization
     protected String doRaw(RRaw value) {
-        controlVisibility();
         initCast();
         return (String) castStringNode.executeString(value);
     }
 
     @Specialization
     protected String doString(String value) {
-        controlVisibility();
         return value;
     }
 
     @Specialization
     protected String doSymbol(RSymbol value) {
-        controlVisibility();
         return value.getName();
     }
 
     @Specialization
     protected RStringVector doNull(@SuppressWarnings("unused") RNull value) {
-        controlVisibility();
         return RDataFactory.createStringVector(0);
     }
 
     @Specialization
     protected RStringVector doStringVector(RStringVector vector) {
-        controlVisibility();
         return RDataFactory.createStringVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
     protected RStringVector doList(RList list) {
-        controlVisibility();
         int len = list.getLength();
         boolean complete = RDataFactory.COMPLETE_VECTOR;
         String[] data = new String[len];
@@ -152,7 +143,6 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @Specialization(guards = "!isRList(container)")
     protected RStringVector doVector(RAbstractContainer container) {
-        controlVisibility();
         return castStringVector(container);
     }
 }

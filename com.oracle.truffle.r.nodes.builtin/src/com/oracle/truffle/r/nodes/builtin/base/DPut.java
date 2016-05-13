@@ -29,17 +29,18 @@ import java.io.IOException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 
 /**
  * The {@code dput .Internal}.
  */
-@RBuiltin(name = "dput", kind = INTERNAL, parameterNames = {"x", "file", "opts"})
-public abstract class DPut extends RInvisibleBuiltinNode {
+@RBuiltin(name = "dput", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "file", "opts"})
+public abstract class DPut extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -49,7 +50,6 @@ public abstract class DPut extends RInvisibleBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object dput(Object x, RConnection file, int opts) {
-        controlVisibility();
 
         String string = RDeparse.deparse(x, RDeparse.DEFAULT_Cutoff, true, opts, -1);
         try (RConnection openConn = file.forceOpen("wt")) {

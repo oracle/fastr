@@ -27,6 +27,8 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -41,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  * {@link PromiseCheckHelperNode}.
  *
  */
-@RBuiltin(name = "switch", kind = PRIMITIVE, parameterNames = {"EXPR", "..."}, nonEvalArgs = 1)
+@RBuiltin(name = "switch", visibility = RVisibility.CUSTOM, kind = PRIMITIVE, parameterNames = {"EXPR", "..."}, nonEvalArgs = 1)
 public abstract class Switch extends RBuiltinNode {
     @Child private CastIntegerNode castIntNode;
     @Child private PromiseCheckHelperNode promiseHelper = new PromiseCheckHelperNode();
@@ -55,7 +57,6 @@ public abstract class Switch extends RBuiltinNode {
 
     @Specialization
     protected Object doSwitch(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
-        controlVisibility();
         if (x.getLength() != 1) {
             throw RError.error(this, RError.Message.EXPR_NOT_LENGTH_ONE);
         }
@@ -63,7 +64,6 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     private Object doSwitchString(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
-        controlVisibility();
         Object[] optionalArgValues = optionalArgs.getArguments();
         final String xStr = x.getDataAt(0);
         ArgumentsSignature signature = optionalArgs.getSignature();
@@ -167,10 +167,10 @@ public abstract class Switch extends RBuiltinNode {
 
     private Object prepareResult(Object value) {
         if (returnValueProfile.profile(value != null)) {
-            forceVisibility(true);
+            RContext.getInstance().setVisible(true);
             return value;
         } else {
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
     }

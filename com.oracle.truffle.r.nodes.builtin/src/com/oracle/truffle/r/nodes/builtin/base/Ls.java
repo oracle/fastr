@@ -38,7 +38,6 @@ public abstract class Ls extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RStringVector ls(REnvironment envir, byte allNames, byte sorted) {
-        controlVisibility();
         return envir.ls(RRuntime.fromLogical(allNames), null, RRuntime.fromLogical(sorted));
     }
 }

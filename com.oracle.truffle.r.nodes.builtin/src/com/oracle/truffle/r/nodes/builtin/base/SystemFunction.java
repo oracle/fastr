@@ -34,12 +34,13 @@ import com.oracle.truffle.r.runtime.ProcessOutputManager;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "system", kind = RBuiltinKind.INTERNAL, parameterNames = {"command", "intern"})
+@RBuiltin(name = "system", visibility = RVisibility.CUSTOM, kind = RBuiltinKind.INTERNAL, parameterNames = {"command", "intern"})
 public abstract class SystemFunction extends RBuiltinNode {
     @Specialization
     @TruffleBoundary

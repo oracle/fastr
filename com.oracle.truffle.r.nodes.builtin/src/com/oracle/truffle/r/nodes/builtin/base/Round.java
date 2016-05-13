@@ -66,35 +66,30 @@ public abstract class Round extends RBuiltinNode {
 
     @Specialization
     protected double round(int x, @SuppressWarnings("unused") int digits) {
-        controlVisibility();
         check.enable(x);
         return check.check(x) ? RRuntime.DOUBLE_NA : x;
     }
 
     @Specialization
     protected double round(byte x, @SuppressWarnings("unused") int digits) {
-        controlVisibility();
         check.enable(x);
         return check.check(x) ? RRuntime.DOUBLE_NA : x;
     }
 
     @Specialization(guards = "digits == 0")
     protected double round(double x, @SuppressWarnings("unused") int digits) {
-        controlVisibility();
         check.enable(x);
         return check.check(x) ? RRuntime.DOUBLE_NA : roundOp.op(x);
     }
 
     @Specialization(guards = "digits != 0")
     protected double roundDigits(double x, int digits) {
-        controlVisibility();
         check.enable(x);
         return check.check(x) ? RRuntime.DOUBLE_NA : roundOp.opd(x, digits);
     }
 
     @Specialization(guards = "digits == 0")
     protected RDoubleVector round(RAbstractDoubleVector x, int digits) {
-        controlVisibility();
         double[] result = new double[x.getLength()];
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
@@ -108,7 +103,6 @@ public abstract class Round extends RBuiltinNode {
 
     @Specialization(guards = "digits != 0")
     protected RDoubleVector roundDigits(RAbstractDoubleVector x, int digits) {
-        controlVisibility();
         double[] result = new double[x.getLength()];
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
@@ -122,21 +116,18 @@ public abstract class Round extends RBuiltinNode {
 
     @Specialization(guards = "digits == 0")
     protected RComplex round(RComplex x, @SuppressWarnings("unused") int digits) {
-        controlVisibility();
         check.enable(x);
         return check.check(x) ? RComplex.createNA() : roundOp.op(x.getRealPart(), x.getImaginaryPart());
     }
 
     @Specialization(guards = "digits != 0")
     protected RComplex roundDigits(RComplex x, int digits) {
-        controlVisibility();
         check.enable(x);
         return check.check(x) ? RComplex.createNA() : roundOp.opd(x.getRealPart(), x.getImaginaryPart(), digits);
     }
 
     @Specialization(guards = "digits == 0")
     protected RComplexVector round(RAbstractComplexVector x, int digits) {
-        controlVisibility();
         double[] result = new double[x.getLength() << 1];
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
@@ -153,7 +144,6 @@ public abstract class Round extends RBuiltinNode {
 
     @Specialization(guards = "digits != 0")
     protected RComplexVector roundDigits(RAbstractComplexVector x, int digits) {
-        controlVisibility();
         double[] result = new double[x.getLength() << 1];
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {

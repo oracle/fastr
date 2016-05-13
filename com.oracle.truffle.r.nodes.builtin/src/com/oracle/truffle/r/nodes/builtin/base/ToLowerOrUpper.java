@@ -71,7 +71,6 @@ public abstract class ToLowerOrUpper extends RBuiltinNode {
     @Specialization
     protected String toLower(String value, //
                     @Cached("create()") NAProfile na) {
-        controlVisibility();
         return na.isNA(value) ? RRuntime.STRING_NA : processElement(value);
     }
 
@@ -80,7 +79,6 @@ public abstract class ToLowerOrUpper extends RBuiltinNode {
                     @Cached("createCountingProfile()") LoopConditionProfile loopProfile, //
                     @Cached("create()") NACheck na, //
                     @Cached("create()") CopyOfRegAttributesNode copyAttributes) {
-        controlVisibility();
         na.enable(vector);
         String[] stringVector = new String[vector.getLength()];
         loopProfile.profileCounted(vector.getLength());

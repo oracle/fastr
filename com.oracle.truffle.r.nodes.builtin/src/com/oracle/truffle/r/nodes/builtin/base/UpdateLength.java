@@ -28,7 +28,7 @@ import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, dispatch = INTERNAL_GENERIC)
-public abstract class UpdateLength extends RInvisibleBuiltinNode {
+public abstract class UpdateLength extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -46,20 +46,17 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "isLengthOne(lengthVector)")
     protected RNull updateLength(RNull value, RAbstractIntVector lengthVector) {
-        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = "isLengthOne(lengthVector)")
     protected RAbstractContainer updateLength(RAbstractContainer container, RAbstractIntVector lengthVector) {
-        controlVisibility();
         return container.resize(lengthVector.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected Object updateLengthError(Object vector, Object lengthVector) {
-        controlVisibility();
         CompilerDirectives.transferToInterpreter();
         throw RError.error(this, RError.Message.INVALID_UNNAMED_VALUE);
     }

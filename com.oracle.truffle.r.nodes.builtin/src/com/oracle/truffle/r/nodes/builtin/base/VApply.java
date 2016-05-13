@@ -132,7 +132,6 @@ public abstract class VApply extends RBuiltinNode {
     protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, byte useNames) {
         RVector result = delegateToLapply(frame, vec, fun, funValue, useNames);
         // set here else it gets overridden by the iterator evaluation
-        controlVisibility();
         return result;
     }
 

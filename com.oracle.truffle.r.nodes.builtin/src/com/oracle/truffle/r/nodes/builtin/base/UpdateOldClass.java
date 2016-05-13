@@ -28,7 +28,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -41,13 +41,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 // oldClass<- (as opposed to class<-), simply sets the attribute (without handling "implicit" attributes)
 @RBuiltin(name = "oldClass<-", kind = PRIMITIVE, parameterNames = {"x", "value"})
-public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
+public abstract class UpdateOldClass extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
 
     @Specialization(guards = "!isStringVector(className)")
     protected Object setOldClass(RAbstractContainer arg, RAbstractVector className) {
-        controlVisibility();
         if (className.getLength() == 0) {
             return setOldClass(arg, RNull.instance);
         }
@@ -72,7 +71,6 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object setOldClass(RAbstractContainer arg, RStringVector className) {
-        controlVisibility();
         RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
         return result.setClassAttr(className);
     }
@@ -80,7 +78,6 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object setOldClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
-        controlVisibility();
         RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
         return result.setClassAttr(null);
     }

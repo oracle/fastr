@@ -59,49 +59,41 @@ public abstract class AsLogical extends RBuiltinNode {
 
     @Specialization
     protected byte asLogical(byte value) {
-        controlVisibility();
         return value;
     }
 
     @Specialization
     protected byte asLogical(int value) {
-        controlVisibility();
         return castLogical(value);
     }
 
     @Specialization
     protected byte asLogical(double value) {
-        controlVisibility();
         return castLogical(value);
     }
 
     @Specialization
     protected byte asLogical(RComplex value) {
-        controlVisibility();
         return castLogical(value);
     }
 
     @Specialization
     protected byte asLogical(String value) {
-        controlVisibility();
         return castLogical(value);
     }
 
     @Specialization
     protected RLogicalVector asLogical(@SuppressWarnings("unused") RNull vector) {
-        controlVisibility();
         return RDataFactory.createLogicalVector(0);
     }
 
     @Specialization
     protected RLogicalVector asLogical(RLogicalVector vector) {
-        controlVisibility();
         return RDataFactory.createLogicalVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
     protected RLogicalVector asLogical(RAbstractContainer container) {
-        controlVisibility();
         return castLogicalVector(container);
     }
 }

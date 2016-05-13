@@ -26,11 +26,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.instrumentation.RNodeTimer;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -39,12 +39,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class FastRFunctionTimer {
 
-    @RBuiltin(name = ".fastr.createtimer", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func"})
-    public abstract static class CreateFunctionTimer extends RInvisibleBuiltinNode {
+    @RBuiltin(name = ".fastr.createtimer", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func"})
+    public abstract static class CreateFunctionTimer extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RNull createFunctionTimer(RFunction function) {
-            controlVisibility();
             if (!function.isBuiltin()) {
                 RNodeTimer.StatementListener.installTimer(function);
             }
@@ -68,7 +67,6 @@ public class FastRFunctionTimer {
         @Specialization
         @TruffleBoundary
         protected Object getFunctionTimer(RFunction function, RAbstractStringVector scale) {
-            controlVisibility();
             if (!function.isBuiltin()) {
                 long timeInfo = RNodeTimer.StatementListener.findTimer(function);
                 if (timeInfo < 0) {

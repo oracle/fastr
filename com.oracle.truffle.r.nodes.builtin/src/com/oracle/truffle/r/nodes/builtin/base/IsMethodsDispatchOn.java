@@ -36,7 +36,6 @@ public abstract class IsMethodsDispatchOn extends RBuiltinNode {
 
     @Specialization
     protected byte doIsMethodsDispatchOn() {
-        controlVisibility();
         return RRuntime.asLogical(RContext.getInstance().isMethodTableDispatchOn());
     }
 }

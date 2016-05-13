@@ -29,7 +29,6 @@ public abstract class Row extends RBuiltinNode {
 
     @Specialization
     protected RIntVector col(RAbstractIntVector x) {
-        controlVisibility();
         int nrows = x.getDataAt(0);
         int ncols = x.getDataAt(1);
         int[] result = new int[nrows * ncols];
@@ -44,7 +43,6 @@ public abstract class Row extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RIntVector col(@SuppressWarnings("unused") RNull x) {
-        controlVisibility();
         throw RError.error(this, RError.Message.MATRIX_LIKE_REQUIRED, "row");
     }
 }

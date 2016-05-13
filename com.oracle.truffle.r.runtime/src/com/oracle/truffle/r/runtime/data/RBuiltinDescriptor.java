@@ -29,6 +29,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RDispatch;
+import com.oracle.truffle.r.runtime.RVisibility;
 
 public abstract class RBuiltinDescriptor {
 
@@ -43,10 +44,13 @@ public abstract class RBuiltinDescriptor {
     private final boolean alwaysSplit;
     private final RDispatch dispatch;
     private final int primitiveMethodIndex;
+    private final RVisibility visibility;
     @CompilationFinal private final boolean[] evaluatesArgument;
 
-    public RBuiltinDescriptor(String name, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, boolean alwaysSplit, RDispatch dispatch) {
+    public RBuiltinDescriptor(String name, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, boolean alwaysSplit,
+                    RDispatch dispatch) {
         this.name = name.intern();
+        this.visibility = visibility;
         this.aliases = aliases;
         this.kind = kind;
         this.signature = signature;
@@ -110,5 +114,9 @@ public abstract class RBuiltinDescriptor {
 
     public int getPrimMethodIndex() {
         return primitiveMethodIndex;
+    }
+
+    public RVisibility getVisibility() {
+        return visibility;
     }
 }

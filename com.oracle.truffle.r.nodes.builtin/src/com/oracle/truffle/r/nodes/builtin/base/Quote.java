@@ -55,7 +55,6 @@ public abstract class Quote extends RBuiltinNode {
 
     @Specialization
     protected Object doQuote(RPromise expr) {
-        controlVisibility();
         // GnuR creates symbols for simple variables and actual values for constants
         RNode node = (RNode) expr.getRep();
         RNode unode = (RNode) RASTUtils.unwrap(node);

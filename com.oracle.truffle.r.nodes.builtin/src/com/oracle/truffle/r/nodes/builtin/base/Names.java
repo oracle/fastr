@@ -43,7 +43,6 @@ public abstract class Names extends RBuiltinNode {
 
     @Specialization
     protected Object getNames(RAbstractContainer container) {
-        controlVisibility();
         if (hasNames.profile(container.getNames(attrProfiles) != null)) {
             return container.getNames(attrProfiles);
         } else {
@@ -54,13 +53,11 @@ public abstract class Names extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object getNames(REnvironment env) {
-        controlVisibility();
         return env.ls(true, null, false);
     }
 
     @Fallback
     protected RNull getNames(@SuppressWarnings("unused") Object operand) {
-        controlVisibility();
         return RNull.instance;
     }
 }

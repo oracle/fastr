@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,8 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin;
 
-public abstract class RInvisibleBuiltinNode extends RBuiltinNode {
+package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.r.runtime.context.RContext;
+
+/**
+ * Denotes the visibility of an output of a built-in.
+ */
+public enum RVisibility {
+    ON,
+    OFF,
+    /**
+     * In GnuR this means by default ON, but C code can change the visibility. In FastR this means
+     * that is it left up to the built-in whether and how to call
+     * {@link RContext#setVisible(boolean)}. For example, {@code do.call} and similar built-ins do
+     * not change the visibility set by the 'inner' node.
+     */
+    CUSTOM,
 }

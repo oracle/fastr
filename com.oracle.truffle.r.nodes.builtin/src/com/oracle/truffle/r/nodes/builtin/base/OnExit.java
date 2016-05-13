@@ -34,12 +34,13 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -51,8 +52,8 @@ import com.oracle.truffle.r.runtime.ops.na.NAProfile;
  * evaluated, but {@code add} is. TODO arrange for the {@code expr} be stored with the currently
  * evaluating function using a new slot in {@link RArguments} and run it on function exit.
  */
-@RBuiltin(name = "on.exit", kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = 0)
-public abstract class OnExit extends RInvisibleBuiltinNode {
+@RBuiltin(name = "on.exit", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = 0)
+public abstract class OnExit extends RBuiltinNode {
 
     @Child private FrameSlotNode onExitSlot = FrameSlotNode.create(RFrameSlot.OnExit, true);
 
@@ -70,7 +71,6 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
 
     @Specialization
     protected Object onExit(VirtualFrame frame, RPromise expr, byte add) {
-        controlVisibility();
 
         if (na.isNA(add)) {
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "add");

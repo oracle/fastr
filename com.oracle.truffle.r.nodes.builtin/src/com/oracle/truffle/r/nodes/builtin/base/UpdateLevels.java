@@ -13,7 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "levels<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "value"}, dispatch = RDispatch.INTERNAL_GENERIC)
-public abstract class UpdateLevels extends RInvisibleBuiltinNode {
+public abstract class UpdateLevels extends RBuiltinNode {
 
     @Child private CastToVectorNode castVector;
 
@@ -42,7 +42,6 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
 
     @Specialization
     protected RAbstractVector updateLevels(RAbstractVector vector, @SuppressWarnings("unused") RNull levels) {
-        controlVisibility();
         RVector v = (RVector) vector.getNonShared();
         v.removeAttr(attrProfiles, RRuntime.LEVELS_ATTR_KEY);
         return v;
@@ -50,7 +49,6 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
 
     @Specialization(guards = "levelsNotNull(levels)")
     protected RAbstractVector updateLevels(RAbstractVector vector, Object levels) {
-        controlVisibility();
         RVector v = (RVector) vector.getNonShared();
         v.setAttr(RRuntime.LEVELS_ATTR_KEY, castVector(levels));
         return v;

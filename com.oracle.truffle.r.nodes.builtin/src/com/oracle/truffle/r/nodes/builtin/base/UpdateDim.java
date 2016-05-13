@@ -27,24 +27,24 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "dim<-", kind = PRIMITIVE, parameterNames = {"x", "value"})
-public abstract class UpdateDim extends RInvisibleBuiltinNode {
+@RBuiltin(name = "dim<-", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"x", "value"})
+public abstract class UpdateDim extends RBuiltinNode {
 
     @Child private ReuseNonSharedNode reuse = ReuseNonSharedNode.create();
 
     @Specialization
     protected RAbstractVector updateDim(RAbstractVector vector, @SuppressWarnings("unused") RNull dimensions) {
-        controlVisibility();
         RVector result = ((RAbstractVector) reuse.execute(vector)).materialize();
         result.resetDimensions(null);
         return result;
@@ -53,7 +53,6 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
     @Specialization
     protected RAbstractVector updateDim(RAbstractVector vector, RAbstractVector dimensions, //
                     @Cached("createPreserveNames()") CastIntegerNode castInteger) {
-        controlVisibility();
         if (dimensions.getLength() == 0) {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.LENGTH_ZERO_DIM_INVALID);

@@ -27,9 +27,9 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -38,13 +38,12 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
 import com.oracle.truffle.r.runtime.rng.RRNG.RNGException;
 
 public class RNGFunctions {
-    @RBuiltin(name = "set.seed", kind = INTERNAL, parameterNames = {"seed", "kind", "normal.kind"})
-    public abstract static class SetSeed extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "set.seed", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"seed", "kind", "normal.kind"})
+    public abstract static class SetSeed extends RBuiltinNode {
 
         @SuppressWarnings("unused")
         @Specialization
         protected RNull setSeed(double seed, RNull kind, RNull normKind) {
-            controlVisibility();
             doSetSeed((int) seed, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
         }
@@ -52,7 +51,6 @@ public class RNGFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull setSeed(double seed, RAbstractIntVector kind, RNull normKind) {
-            controlVisibility();
             doSetSeed((int) seed, kind.getDataAt(0), RRNG.NO_KIND_CHANGE);
             return RNull.instance;
         }
@@ -60,7 +58,6 @@ public class RNGFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull setSeed(RNull seed, RNull kind, RNull normKind) {
-            controlVisibility();
             doSetSeed(RRNG.RESET_SEED, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
         }
@@ -68,7 +65,6 @@ public class RNGFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull setSeed(byte seed, RNull kind, RNull normKind) {
-            controlVisibility();
             CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.SEED_NOT_VALID_INT);
         }
@@ -91,7 +87,6 @@ public class RNGFunctions {
 
         @Specialization
         protected RIntVector doRNGkind(Object kind, Object normKind) {
-            controlVisibility();
             RIntVector result = getCurrent();
             int kindChange = checkType(kind, "kind");
             int normKindChange = checkType(normKind, "normkind");

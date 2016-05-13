@@ -117,7 +117,6 @@ public abstract class Parse extends RBuiltinNode {
 
     @Specialization
     protected Object parse(RConnection conn, Object n, Object text, RAbstractStringVector prompt, Object srcFile, RAbstractStringVector encoding) {
-        controlVisibility();
         int nAsInt;
         if (n != RNull.instance) {
             nAsInt = castInt(n);

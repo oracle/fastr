@@ -43,7 +43,6 @@ public abstract class IsUnsorted extends RBuiltinNode {
 
     @Specialization
     protected byte isUnsorted(RAbstractDoubleVector x, @SuppressWarnings("unused") byte strictly) {
-        controlVisibility();
         double last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             double current = x.getDataAt(k);
@@ -57,7 +56,6 @@ public abstract class IsUnsorted extends RBuiltinNode {
 
     @Specialization
     protected byte isUnsorted(RAbstractIntVector x, @SuppressWarnings("unused") byte strictly) {
-        controlVisibility();
         int last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             int current = x.getDataAt(k);
@@ -71,7 +69,6 @@ public abstract class IsUnsorted extends RBuiltinNode {
 
     @Specialization
     protected byte isUnsorted(RAbstractStringVector x, @SuppressWarnings("unused") byte strictly) {
-        controlVisibility();
         String last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             String current = x.getDataAt(k);

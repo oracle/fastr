@@ -77,7 +77,6 @@ public class CapabilitiesFunctions {
 
         @Specialization
         protected RLogicalVector capabilities() {
-            controlVisibility();
             byte[] data = new byte[NAMES.getLength()];
             for (Capability c : Capability.values()) {
                 boolean value = c.defValue;

@@ -37,7 +37,6 @@ public abstract class RVersion extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object doRVersion() {
-        controlVisibility();
         return RDataFactory.createList(RVersionInfo.listValues(), RDataFactory.createStringVector(RVersionInfo.listNames(), RDataFactory.COMPLETE_VECTOR));
     }
 }

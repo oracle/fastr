@@ -40,7 +40,6 @@ public abstract class SeqAlong extends RBuiltinNode {
 
     @Specialization
     protected RIntSequence seq(VirtualFrame frame, Object value) {
-        controlVisibility();
         return RDataFactory.createIntSequence(1, 1, length.executeInteger(frame, value));
     }
 }

@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall, VisibilityController {
+public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
     @Child private ConvertBooleanNode condition;
     @Child private RNode thenPart;
@@ -73,7 +73,7 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
     @Override
     public Object execute(VirtualFrame frame) {
         byte cond = condition.executeByte(frame);
-        forceVisibility(elsePart != null || cond == RRuntime.LOGICAL_TRUE);
+        RContext.getInstance().setVisible(elsePart != null || cond == RRuntime.LOGICAL_TRUE);
 
         if (cond == RRuntime.LOGICAL_NA) {
             // NA is the only remaining option

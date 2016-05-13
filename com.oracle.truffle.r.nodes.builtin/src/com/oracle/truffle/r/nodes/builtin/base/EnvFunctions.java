@@ -42,7 +42,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
@@ -55,6 +54,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -100,7 +100,6 @@ public class EnvFunctions {
 
         @Specialization
         protected REnvironment asEnvironment(REnvironment env) {
-            controlVisibility();
             return env;
         }
 
@@ -115,7 +114,6 @@ public class EnvFunctions {
         }
 
         private REnvironment asEnvironmentInt(VirtualFrame frame, int pos) {
-            controlVisibility();
             if (pos == -1) {
                 Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
                 if (callerFrame == null) {
@@ -140,7 +138,6 @@ public class EnvFunctions {
 
         @Specialization
         protected REnvironment asEnvironment(RAbstractStringVector nameVec) {
-            controlVisibility();
             String name = nameVec.getDataAt(0);
             String[] searchPath = REnvironment.searchPath();
             for (String e : searchPath) {
@@ -189,7 +186,6 @@ public class EnvFunctions {
 
         @Specialization
         protected REnvironment emptyenv() {
-            controlVisibility();
             return REnvironment.emptyEnv();
         }
     }
@@ -199,7 +195,6 @@ public class EnvFunctions {
 
         @Specialization
         protected Object globalenv() {
-            controlVisibility();
             return REnvironment.globalEnv();
         }
     }
@@ -212,7 +207,6 @@ public class EnvFunctions {
 
         @Specialization
         protected Object baseenv() {
-            controlVisibility();
             return REnvironment.baseEnv();
         }
     }
@@ -271,7 +265,6 @@ public class EnvFunctions {
 
         @Specialization
         protected REnvironment parentenv(REnvironment env) {
-            controlVisibility();
             if (env == REnvironment.emptyEnv()) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.EMPTY_NO_PARENT);
@@ -286,7 +279,6 @@ public class EnvFunctions {
         @Specialization
         @TruffleBoundary
         protected REnvironment setParentenv(REnvironment env, REnvironment parent) {
-            controlVisibility();
             if (env == REnvironment.emptyEnv()) {
                 throw RError.error(this, RError.Message.CANNOT_SET_PARENT);
             }
@@ -300,7 +292,6 @@ public class EnvFunctions {
 
         @Specialization
         protected byte isEnvironment(Object env) {
-            controlVisibility();
             return env instanceof REnvironment ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
         }
     }
@@ -312,7 +303,6 @@ public class EnvFunctions {
         protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull fun, //
                         @Cached("new()") GetCallerFrameNode callerFrame, //
                         @Cached("new()") PromiseDeoptimizeFrameNode deoptFrameNode) {
-            controlVisibility();
             MaterializedFrame matFrame = callerFrame.execute(frame);
             deoptFrameNode.deoptimizeFrame(matFrame);
             return REnvironment.frameToEnvironment(matFrame);
@@ -325,7 +315,6 @@ public class EnvFunctions {
         protected Object environment(RFunction fun, //
                         @Cached("createBinaryProfile()") ConditionProfile noEnvProfile, //
                         @Cached("createBinaryProfile()") ConditionProfile createProfile) {
-            controlVisibility();
             Frame enclosing = fun.getEnclosingFrame();
             if (noEnvProfile.profile(enclosing == null)) {
                 return RNull.instance;
@@ -340,14 +329,12 @@ public class EnvFunctions {
         @Specialization(guards = "isRFormula(formula)")
         protected Object environment(RLanguage formula, //
                         @Cached("create()") RAttributeProfiles attrProfiles) {
-            controlVisibility();
             return formula.getAttr(attrProfiles, RRuntime.DOT_ENVIRONMENT);
         }
 
         @Specialization(guards = {"!isRNull(fun)", "!isRFunction(fun)", "!isRFormula(fun)"})
         protected Object environment(@SuppressWarnings("unused") Object fun) {
             // Not an error according to GnuR
-            controlVisibility();
             return RNull.instance;
         }
     }
@@ -402,13 +389,11 @@ public class EnvFunctions {
 
         @Specialization
         protected String environmentName(REnvironment env) {
-            controlVisibility();
             return env.getName();
         }
 
         @Specialization(guards = "!isREnvironment(env)")
         protected String environmentName(@SuppressWarnings("unused") Object env) {
-            controlVisibility();
             // Not an error according to GnuR
             return "";
         }
@@ -425,7 +410,6 @@ public class EnvFunctions {
         @Specialization
         @TruffleBoundary
         protected REnvironment newEnv(byte hash, REnvironment parent, int size) {
-            controlVisibility();
             REnvironment env = RDataFactory.createNewEnv(null, RRuntime.fromLogical(hash), size);
             RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
             return env;
@@ -440,12 +424,11 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "lockEnvironment", kind = INTERNAL, parameterNames = {"env", "bindings"})
-    public abstract static class LockEnvironment extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "lockEnvironment", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"env", "bindings"})
+    public abstract static class LockEnvironment extends RBuiltinNode {
 
         @Specialization
         protected Object lockEnvironment(REnvironment env, byte bindings) {
-            controlVisibility();
             env.lock(bindings == RRuntime.LOGICAL_TRUE);
             return RNull.instance;
         }
@@ -455,7 +438,6 @@ public class EnvFunctions {
     public abstract static class EnvironmentIsLocked extends RBuiltinNode {
         @Specialization
         protected Object lockEnvironment(REnvironment env) {
-            controlVisibility();
             return RDataFactory.createLogicalVectorFromScalar(env.isLocked());
         }
     }
@@ -469,11 +451,10 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "lockBinding", kind = INTERNAL, parameterNames = {"sym", "env"})
-    public abstract static class LockBinding extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "lockBinding", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "env"})
+    public abstract static class LockBinding extends RBuiltinNode {
         @Specialization
         protected Object lockBinding(RSymbol sym, REnvironment env) {
-            controlVisibility();
             env.lockBinding(sym.getName());
             return RNull.instance;
         }
@@ -484,11 +465,10 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "unlockBinding", kind = INTERNAL, parameterNames = {"sym", "env"})
-    public abstract static class UnlockBinding extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "unlockBinding", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "env"})
+    public abstract static class UnlockBinding extends RBuiltinNode {
         @Specialization
         protected RNull unlockBinding(RSymbol sym, REnvironment env) {
-            controlVisibility();
             env.unlockBinding(sym.getName());
             return RNull.instance;
         }
@@ -503,7 +483,6 @@ public class EnvFunctions {
     public abstract static class BindingIsLocked extends RBuiltinNode {
         @Specialization
         protected Object bindingIsLocked(RSymbol sym, REnvironment env) {
-            controlVisibility();
             return RDataFactory.createLogicalVectorFromScalar(env.bindingIsLocked(sym.getName()));
         }
 
@@ -513,24 +492,22 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "makeActiveBinding", kind = INTERNAL, parameterNames = {"sym", "fun", "env"})
-    public abstract static class MakeActiveBinding extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "makeActiveBinding", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "fun", "env"})
+    public abstract static class MakeActiveBinding extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object makeActiveBinding(Object sym, Object fun, Object env) {
             // TODO implement
-            controlVisibility();
             throw RError.nyi(this, "makeActiveBinding");
         }
     }
 
-    @RBuiltin(name = "bindingIsActive", kind = INTERNAL, parameterNames = {"sym", "env"})
-    public abstract static class BindingIsActive extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "bindingIsActive", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "env"})
+    public abstract static class BindingIsActive extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object bindingIsActive(Object sym, Object fun, Object env) {
             // TODO implement
-            controlVisibility();
             throw RError.nyi(this, "bindingIsActive");
         }
     }
@@ -552,7 +529,6 @@ public class EnvFunctions {
         protected RList envToListAllNames(VirtualFrame frame, REnvironment env, RAbstractLogicalVector allNamesVec, RAbstractLogicalVector sortedVec) {
             // according to the docs it is expected to be slow as it creates a copy of environment
             // objects
-            controlVisibility();
             boolean allNames = allNamesVec.getLength() == 0 || allNamesVec.getDataAt(0) == RRuntime.LOGICAL_FALSE ? false : true;
             boolean sorted = sortedVec.getLength() == 0 || sortedVec.getDataAt(0) == RRuntime.LOGICAL_FALSE ? false : true;
             RStringVector keys = envls(env, allNames, sorted);

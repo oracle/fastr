@@ -48,7 +48,6 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
 
     @Specialization
     protected Object update(Object x, String value) {
-        controlVisibility();
         RType mode = typeFromMode.execute(value);
         if (mode == RType.DefunctReal || mode == RType.DefunctSingle) {
             errorProfile.enter();
@@ -120,7 +119,6 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected Object update(Object x, Object value) {
-        controlVisibility();
         CompilerDirectives.transferToInterpreter();
         throw RError.error(this, RError.Message.NULL_VALUE);
     }

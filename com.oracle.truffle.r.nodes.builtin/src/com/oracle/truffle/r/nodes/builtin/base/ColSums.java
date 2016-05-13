@@ -55,7 +55,6 @@ public abstract class ColSums extends RBuiltinNode {
 
     @Specialization
     protected RDoubleVector colSums(RDoubleVector x, int rowNum, int colNum, byte naRm) {
-        controlVisibility();
         double[] result = new double[colNum];
         boolean isComplete = true;
         final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
@@ -92,7 +91,6 @@ public abstract class ColSums extends RBuiltinNode {
 
     @Specialization
     protected RDoubleVector colSums(RLogicalVector x, int rowNum, int colNum, byte naRm) {
-        controlVisibility();
         double[] result = new double[colNum];
         boolean isComplete = true;
         final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
@@ -124,7 +122,6 @@ public abstract class ColSums extends RBuiltinNode {
 
     @Specialization
     protected RDoubleVector colSums(RIntVector x, int rowNum, int colNum, byte naRm) {
-        controlVisibility();
         double[] result = new double[colNum];
         boolean isComplete = true;
         final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
@@ -157,7 +154,6 @@ public abstract class ColSums extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected RDoubleVector colSums(RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
-        controlVisibility();
         throw RError.error(this, RError.Message.X_NUMERIC);
     }
 }

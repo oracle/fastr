@@ -28,9 +28,10 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -42,8 +43,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.DetachException;
 
 public class AttachFunctions {
-    @RBuiltin(name = "attach", kind = INTERNAL, parameterNames = {"what", "pos", "name"})
-    public abstract static class Attach extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "attach", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"what", "pos", "name"})
+    public abstract static class Attach extends RBuiltinNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -55,7 +56,6 @@ public class AttachFunctions {
         @Specialization
         @TruffleBoundary
         protected REnvironment doAttach(@SuppressWarnings("unused") RNull what, RAbstractIntVector pos, RAbstractStringVector name) {
-            controlVisibility();
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
             doAttachEnv(pos.getDataAt(0), env);
             return env;
@@ -64,7 +64,6 @@ public class AttachFunctions {
         @Specialization
         @TruffleBoundary
         protected REnvironment doAttach(REnvironment what, RAbstractIntVector pos, RAbstractStringVector name) {
-            controlVisibility();
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
             RStringVector names = what.ls(true, null, false);
             for (int i = 0; i < names.getLength(); i++) {
@@ -80,7 +79,6 @@ public class AttachFunctions {
         @Specialization
         @TruffleBoundary
         protected REnvironment doAttach(RList what, RAbstractIntVector pos, RAbstractStringVector name) {
-            controlVisibility();
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
             RStringVector names = what.getNames(attrProfiles);
             for (int i = 0; i < names.getLength(); i++) {
@@ -107,8 +105,8 @@ public class AttachFunctions {
         }
     }
 
-    @RBuiltin(name = "detach", kind = INTERNAL, parameterNames = {"pos"})
-    public abstract static class Detach extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "detach", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"pos"})
+    public abstract static class Detach extends RBuiltinNode {
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -118,7 +116,6 @@ public class AttachFunctions {
         @Specialization
         @TruffleBoundary
         protected Object doDetach(RAbstractIntVector pos) {
-            controlVisibility();
             try {
                 return REnvironment.detach(pos.getDataAt(0));
             } catch (DetachException ex) {

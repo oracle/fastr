@@ -70,7 +70,6 @@ public abstract class RepeatInternal extends RBuiltinNode {
 
     private <ValueT extends RAbstractVector, ResultT extends ValueT, ArrayT> ResultT repInt(ValueT value, RAbstractIntVector times, IntFunction<ArrayT> arrayConstructor,
                     ArrayUpdateFunction<ValueT, ArrayT> arrayUpdate, CreateResultFunction<ResultT, ArrayT> createResult) {
-        controlVisibility();
         ArrayT result;
         int timesLength = times.getLength();
         int valueLength = value.getLength();
@@ -136,7 +135,6 @@ public abstract class RepeatInternal extends RBuiltinNode {
 
     @Specialization
     protected RList repList(RList value, int times) {
-        controlVisibility();
         int oldLength = value.getLength();
         int length = value.getLength() * times;
         Object[] array = new Object[length];

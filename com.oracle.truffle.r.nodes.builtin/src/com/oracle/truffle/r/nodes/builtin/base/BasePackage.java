@@ -73,8 +73,10 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRTreeStats;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTreeStatsNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNode;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryCompare;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic;
@@ -624,14 +626,19 @@ public class BasePackage extends RBuiltinPackage {
         function.setFastPath(factory);
     }
 
+    private static void addFastPath(MaterializedFrame baseFrame, String name, java.util.function.Supplier<RFastPathNode> factory, Class<?> builtinNodeClass) {
+        RBuiltin builtin = builtinNodeClass.getAnnotation(RBuiltin.class);
+        addFastPath(baseFrame, name, FastPathFactory.fromRBuiltin(builtin, factory));
+    }
+
     @Override
     public void loadOverrides(MaterializedFrame baseFrame) {
         super.loadOverrides(baseFrame);
-        addFastPath(baseFrame, "matrix", () -> MatrixFastPathNodeGen.create(null));
+        addFastPath(baseFrame, "matrix", () -> MatrixFastPathNodeGen.create(null), Matrix.class);
         addFastPath(baseFrame, "setdiff", () -> SetDiffFastPathNodeGen.create(null));
         addFastPath(baseFrame, "get", () -> GetFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "exists", () -> ExistsFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "assign", () -> AssignFastPathNodeGen.create(null));
+        addFastPath(baseFrame, "exists", () -> ExistsFastPathNodeGen.create(null), Exists.class);
+        addFastPath(baseFrame, "assign", () -> AssignFastPathNodeGen.create(null), Assign.class);
         addFastPath(baseFrame, "is.element", () -> IsElementFastPathNodeGen.create(null));
         addFastPath(baseFrame, "integer", () -> IntegerFastPathNodeGen.create(null));
         addFastPath(baseFrame, "numeric", () -> DoubleFastPathNodeGen.create(null));

@@ -101,7 +101,6 @@ public class TrigExpFunctions {
 
         @Specialization
         protected byte isType(@SuppressWarnings("unused") RMissing value) {
-            controlVisibility();
             CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
         }
@@ -130,14 +129,12 @@ public class TrigExpFunctions {
 
         @Specialization
         protected double trigOp(int x) {
-            controlVisibility();
             na.enable(x);
             return doFunInt(x);
         }
 
         @Specialization
         protected double trigOp(double x) {
-            controlVisibility();
             na.enable(x);
             return doFunDouble(x);
         }
@@ -145,7 +142,6 @@ public class TrigExpFunctions {
         @Specialization
         protected RAbstractVector trigOp(RIntVector vector, //
                         @Cached("createCountingProfile()") LoopConditionProfile profile) {
-            controlVisibility();
             int length = vector.getLength();
             double[] resultVector = new double[length];
             reportWork(length);
@@ -160,7 +156,6 @@ public class TrigExpFunctions {
         @Specialization
         protected RAbstractVector trigOp(RDoubleVector vector, //
                         @Cached("createCountingProfile()") LoopConditionProfile profile) {
-            controlVisibility();
             int length = vector.getLength();
             double[] resultVector = new double[length];
             reportWork(length);
@@ -635,7 +630,6 @@ public class TrigExpFunctions {
 
         private RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun,
                         LoopConditionProfile profile) {
-            controlVisibility();
             double[] resultVector = new double[length];
             reportWork(length);
             profile.profileCounted(length);
@@ -653,7 +647,6 @@ public class TrigExpFunctions {
 
         @Specialization
         protected double atan2(double y, double x) {
-            controlVisibility();
             xNACheck.enable(x);
             yNACheck.enable(y);
             return doFunDouble(y, x);

@@ -131,14 +131,12 @@ public class GetFunctions {
 
         @Specialization(guards = "!isInherits(inherits)")
         protected Object getNonInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
-            controlVisibility();
             RType modeType = typeFromMode.execute(mode);
             return getAndCheck(frame, xv, envir, modeType, true);
         }
 
         @Specialization(guards = "isInherits(inherits)")
         protected Object getInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
-            controlVisibility();
             Object result = getInherits(frame, xv, envir, mode, true);
             return result;
         }
@@ -148,7 +146,6 @@ public class GetFunctions {
     public abstract static class Get0 extends Adapter {
         @Specialization(guards = "!isInherits(inherits)")
         protected Object get0NonInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits, Object ifnotfound) {
-            controlVisibility();
             RType modeType = typeFromMode.execute(mode);
             Object result = getAndCheck(frame, xv, envir, modeType, false);
             if (result == null) {
@@ -159,7 +156,6 @@ public class GetFunctions {
 
         @Specialization(guards = "isInherits(inherits)")
         protected Object get0Inherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits, Object ifnotfound) {
-            controlVisibility();
             Object result = getInherits(frame, xv, envir, mode, false);
             if (result == null) {
                 result = ifnotfound;
@@ -229,7 +225,6 @@ public class GetFunctions {
 
         @Specialization(guards = "!isInherits(inherits)")
         protected RList mgetNonInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment env, RAbstractStringVector mode, RList ifNotFound, @SuppressWarnings("unused") byte inherits) {
-            controlVisibility();
             State state = checkArgs(xv, mode, ifNotFound);
             for (int i = 0; i < state.svLength; i++) {
                 String x = state.checkNA(xv.getDataAt(i));
@@ -247,7 +242,6 @@ public class GetFunctions {
 
         @Specialization(guards = "isInherits(inherits)")
         protected RList mgetInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, RAbstractStringVector mode, RList ifNotFound, @SuppressWarnings("unused") byte inherits) {
-            controlVisibility();
             State state = checkArgs(xv, mode, ifNotFound);
             for (int i = 0; i < state.svLength; i++) {
                 String x = state.checkNA(xv.getDataAt(i));

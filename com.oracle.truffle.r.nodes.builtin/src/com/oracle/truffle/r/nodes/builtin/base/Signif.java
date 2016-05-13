@@ -67,7 +67,6 @@ public abstract class Signif extends RBuiltinNode {
 
     @Specialization(guards = "digitsVec.getLength() == 1")
     protected RAbstractDoubleVector signif(RAbstractDoubleVector x, RAbstractIntVector digitsVec) {
-        controlVisibility();
         int digits = digitsVec.getDataAt(0) <= 0 ? 1 : digitsVec.getDataAt(0);
         if (digits > 22) {
             identity.enter();
@@ -102,7 +101,6 @@ public abstract class Signif extends RBuiltinNode {
 
     @Specialization(guards = "digits.getLength() == 1")
     protected RAbstractIntVector roundDigits(RAbstractIntVector x, @SuppressWarnings("unused") RAbstractIntVector digits) {
-        controlVisibility();
         return x;
     }
 

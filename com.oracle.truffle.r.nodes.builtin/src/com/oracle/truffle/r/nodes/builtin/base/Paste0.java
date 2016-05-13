@@ -49,7 +49,6 @@ public abstract class Paste0 extends RBuiltinNode {
 
     @Specialization
     protected Object paste0(RList values, Object collapse) {
-        controlVisibility();
         return paste(values, collapse);
     }
 }

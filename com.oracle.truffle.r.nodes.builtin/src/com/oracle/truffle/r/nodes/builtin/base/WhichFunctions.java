@@ -55,7 +55,6 @@ public class WhichFunctions {
         @Specialization(guards = "!hasNames(x)")
         @TruffleBoundary
         protected RIntVector which(RAbstractLogicalVector x) {
-            controlVisibility();
             ArrayList<Integer> w = new ArrayList<>();
             for (int i = 0; i < x.getLength(); i++) {
                 if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {
@@ -72,7 +71,6 @@ public class WhichFunctions {
         @Specialization(guards = "hasNames(x)")
         @TruffleBoundary
         protected RIntVector whichNames(RAbstractLogicalVector x) {
-            controlVisibility();
             ArrayList<Integer> w = new ArrayList<>();
             ArrayList<String> n = new ArrayList<>();
             RStringVector oldNames = x.getNames(attrProfiles);
@@ -108,7 +106,6 @@ public class WhichFunctions {
 
         @Specialization
         protected int which(RAbstractDoubleVector x) {
-            controlVisibility();
             double max = x.getDataAt(0);
             int maxIndex = 0;
             for (int i = 0; i < x.getLength(); i++) {
@@ -131,7 +128,6 @@ public class WhichFunctions {
 
         @Specialization
         protected int which(RAbstractDoubleVector x) {
-            controlVisibility();
             double minimum = x.getDataAt(0);
             int minIndex = 0;
             for (int i = 0; i < x.getLength(); i++) {
