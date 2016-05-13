@@ -11,6 +11,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+
 //Transcribed from GnuR, src/include/Print.h
 
 import com.oracle.truffle.r.nodes.builtin.base.Format;
@@ -20,7 +23,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RString;
 
 public final class PrintParameters {
-    public static final int DEFAULT_DIGITS = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("digits"));
+    @CompilationFinal private static int DefaultDigits = -1;
 
     private int width;
     private int naWidth;
@@ -41,12 +44,20 @@ public final class PrintParameters {
      */
     private boolean suppressIndexLabels;
 
+    public static int getDefaultDigits() {
+        if (DefaultDigits == -1) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            DefaultDigits = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("digits"));
+        }
+        return DefaultDigits;
+    }
+
     public PrintParameters() {
         // default constructor
     }
 
     PrintParameters(Object digits, boolean quote, Object naPrint,
-                    Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
+                    Object printGap, boolean right, Object max, boolean useSource, @SuppressWarnings("unused") boolean noOpt) {
 
         setDefaults();
 
@@ -117,7 +128,7 @@ public final class PrintParameters {
         return cloned;
     }
 
-    public static int getDeafultMaxPrint() {
+    public static int getDefaultMaxPrint() {
         RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("max.print"));
         int max = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("max.print"));
         if (max == RRuntime.INT_NA || max < 0) {
@@ -135,12 +146,12 @@ public final class PrintParameters {
         this.naWidthNoquote = this.naStringNoquote.length();
         this.quote = true;
         this.right = false;
-        this.digits = DEFAULT_DIGITS;
+        this.digits = getDefaultDigits();
         this.scipen = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("scipen"));
         if (this.scipen == RRuntime.INT_NA) {
             this.scipen = 0;
         }
-        this.max = getDeafultMaxPrint();
+        this.max = getDefaultMaxPrint();
         this.gap = 1;
         this.width = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("width"));
         this.useSource = true;
