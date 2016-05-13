@@ -146,7 +146,7 @@ public final class PrintParameters {
         this.naWidthNoquote = this.naStringNoquote.length();
         this.quote = true;
         this.right = false;
-        this.digits = DefaultDigits;
+        this.digits = getDefaultDigits();
         this.scipen = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("scipen"));
         if (this.scipen == RRuntime.INT_NA) {
             this.scipen = 0;
