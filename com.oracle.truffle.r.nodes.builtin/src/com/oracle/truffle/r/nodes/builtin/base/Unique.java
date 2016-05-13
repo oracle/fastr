@@ -280,7 +280,7 @@ public abstract class Unique extends RBuiltinNode {
     private boolean identical(Object x, Object y) {
         if (identical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            identical = insert(IdenticalNodeGen.create(true, null));
+            identical = insert(IdenticalNodeGen.create(null));
         }
         return RRuntime.fromLogical(identical.executeByte(x, y, true, true, true, true, false));
     }
