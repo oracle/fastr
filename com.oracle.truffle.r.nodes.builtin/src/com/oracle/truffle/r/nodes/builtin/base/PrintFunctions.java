@@ -109,7 +109,7 @@ public class PrintFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RFunction printFunction(RFunction x, byte useSource, RArgsValuesAndNames extra) {
-            valuePrinter.executeString(x, PrintParameters.getDefaultDigits(), true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDeafultMaxPrint(), true, false);
+            valuePrinter.executeString(x, PrintParameters.getDefaultDigits(), true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDefaultMaxPrint(), true, false);
             return x;
         }
     }
