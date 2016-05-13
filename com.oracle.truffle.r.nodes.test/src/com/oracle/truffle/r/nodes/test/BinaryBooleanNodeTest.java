@@ -43,6 +43,7 @@ import static org.junit.Assume.assumeThat;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.experimental.theories.DataPoint;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
@@ -69,6 +70,10 @@ import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
  */
 @RunWith(Theories.class)
 public class BinaryBooleanNodeTest extends BinaryVectorTest {
+    @Test
+    public void dummy() {
+        // to make sure this file is recognized as a test
+    }
 
     @DataPoint public static final RAbstractVector EMPTY_STRING = createEmptyStringVector();
     @DataPoint public static final RAbstractVector EMPTY_RAW = createEmptyRawVector();

@@ -70,6 +70,10 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
  */
 @RunWith(Theories.class)
 public class UnaryArithmeticNodeTest extends BinaryVectorTest {
+    @Test
+    public void dummy() {
+        // to make sure this file is recognized as a test
+    }
 
     public static final UnaryArithmeticFactory[] ALL = new UnaryArithmeticFactory[]{NEGATE, Round.ROUND, Floor.FLOOR, Ceiling.CEILING, PLUS};
 
