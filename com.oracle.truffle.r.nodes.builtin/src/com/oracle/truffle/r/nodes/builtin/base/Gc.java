@@ -40,7 +40,6 @@ public abstract class Gc extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected RDoubleVector gc(RAbstractLogicalVector verbose, RAbstractLogicalVector reset) {
-        controlVisibility();
         // manually triggering gc in Java is typically not a terribly good idea so we don't do it
         // here at all
 

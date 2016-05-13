@@ -43,6 +43,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperN
 import com.oracle.truffle.r.nodes.function.opt.OptConstantPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptForcedEagerPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
+import com.oracle.truffle.r.parser.tools.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize.State;
@@ -108,7 +109,7 @@ public abstract class PromiseNode extends RNode {
         if (arg instanceof WrapArgumentNode && ((WrapArgumentNode) arg).modeChange()) {
             wrapIndex = ((WrapArgumentNode) arg).getIndex();
         }
-        if (forcedEager) {
+        if (forcedEager && EvaluatedArgumentsVisitor.isSimpleArgument(expr.asRSyntaxNode())) {
             return new OptForcedEagerPromiseNode(factory, wrapIndex);
         } else {
             Object optimizableConstant = getOptimizableConstant(expr);

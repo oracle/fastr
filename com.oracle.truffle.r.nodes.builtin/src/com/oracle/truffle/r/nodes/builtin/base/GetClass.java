@@ -26,7 +26,6 @@ public abstract class GetClass extends RBuiltinNode {
 
     @Specialization
     protected RAbstractStringVector getClass(Object x) {
-        controlVisibility();
         return classHierarchy.execute(x);
     }
 }

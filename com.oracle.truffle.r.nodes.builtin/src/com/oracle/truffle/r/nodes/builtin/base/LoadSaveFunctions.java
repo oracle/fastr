@@ -22,7 +22,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.SerializeFunctions.Adapter;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -47,15 +48,14 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class LoadSaveFunctions {
 
-    @RBuiltin(name = "loadFromConn2", kind = RBuiltinKind.INTERNAL, parameterNames = {"con", "envir", "verbose"})
-    public abstract static class LoadFromConn2 extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "loadFromConn2", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"con", "envir", "verbose"})
+    public abstract static class LoadFromConn2 extends RBuiltinNode {
 
         private final NACheck naCheck = NACheck.create();
 
         @Specialization
         @TruffleBoundary
         protected RStringVector load(RConnection con, REnvironment envir, @SuppressWarnings("unused") RAbstractLogicalVector verbose) {
-            controlVisibility();
             try (RConnection openConn = con.forceOpen("r")) {
                 String s = openConn.readChar(5, true);
                 if (s.equals("RDA2\n") || s.equals("RDB2\n") || s.equals("RDX2\n")) {
@@ -98,8 +98,8 @@ public class LoadSaveFunctions {
         }
     }
 
-    @RBuiltin(name = "load", kind = RBuiltinKind.INTERNAL, parameterNames = {"con", "envir"})
-    public abstract static class Load extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "load", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"con", "envir"})
+    public abstract static class Load extends RBuiltinNode {
         // now deprecated but still used by some packages
 
         private static final int R_MAGIC_EMPTY = 999;
@@ -115,7 +115,6 @@ public class LoadSaveFunctions {
         @Specialization
         @TruffleBoundary
         protected RStringVector load(RAbstractStringVector fileVec, @SuppressWarnings("unused") REnvironment envir) {
-            controlVisibility();
             String path = Utils.tildeExpand(fileVec.getDataAt(0));
             try (BufferedInputStream bs = new BufferedInputStream(new FileInputStream(path))) {
                 int magic = readMagic(bs);
@@ -170,7 +169,7 @@ public class LoadSaveFunctions {
         }
     }
 
-    @RBuiltin(name = "saveToConn", kind = INTERNAL, parameterNames = {"list", "conn", "ascii", "version", "envir", "eval.promises"})
+    @RBuiltin(name = "saveToConn", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"list", "conn", "ascii", "version", "envir", "eval.promises"})
     public abstract static class SaveToConn extends Adapter {
         private static final String ASCII_HEADER = "RDA2\n";
         private static final String XDR_HEADER = "RDX2\n";

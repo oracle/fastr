@@ -30,13 +30,14 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -65,8 +66,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  * </ol>
  *
  */
-@RBuiltin(name = ".fastr.syntaxtree", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func", "visitMode", "printSource", "printTags"})
-public abstract class FastRSyntaxTree extends RInvisibleBuiltinNode {
+@RBuiltin(name = ".fastr.syntaxtree", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func", "visitMode", "printSource", "printTags"})
+public abstract class FastRSyntaxTree extends RBuiltinNode {
 
     @Override
     public Object[] getDefaultParameterValues() {
@@ -76,7 +77,6 @@ public abstract class FastRSyntaxTree extends RInvisibleBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RNull printTree(RFunction function, RAbstractStringVector visitMode, byte printSourceLogical, byte printTagsLogical) {
-        controlVisibility();
         boolean printSource = RRuntime.fromLogical(printSourceLogical);
         boolean printTags = RRuntime.fromLogical(printTagsLogical);
         FunctionDefinitionNode root = (FunctionDefinitionNode) function.getTarget().getRootNode();

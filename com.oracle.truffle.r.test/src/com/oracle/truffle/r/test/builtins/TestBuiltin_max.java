@@ -213,6 +213,8 @@ public class TestBuiltin_max extends TestBase {
         assertEval("{ max(123, NA, TRUE, 12, FALSE, na.rm=FALSE) }");
         assertEval("{ max(123, NA, TRUE, 12, FALSE) }");
 
+        assertEval("max(v<-42)");
+
         assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(integer(0)) }");
         assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(integer()) }");
         assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(as.double(NA), na.rm=TRUE) }");

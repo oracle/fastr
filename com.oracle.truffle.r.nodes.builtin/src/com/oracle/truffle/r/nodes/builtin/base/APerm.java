@@ -52,7 +52,6 @@ public abstract class APerm extends RBuiltinNode {
 
     @Specialization
     protected RAbstractVector aPerm(RAbstractVector vector, @SuppressWarnings("unused") RNull permVector, byte resize) {
-        controlVisibility();
         checkErrorConditions(vector, resize);
 
         int[] dim = vector.getDimensions();
@@ -93,7 +92,6 @@ public abstract class APerm extends RBuiltinNode {
 
     @Specialization
     protected RAbstractVector aPerm(RAbstractVector vector, RAbstractIntVector permVector, byte resize) {
-        controlVisibility();
         checkErrorConditions(vector, resize);
 
         int[] dim = vector.getDimensions();

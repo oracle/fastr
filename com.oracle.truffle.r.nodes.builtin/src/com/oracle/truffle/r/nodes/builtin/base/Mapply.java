@@ -85,7 +85,6 @@ public abstract class Mapply extends RBuiltinNode {
     protected Object mApply(VirtualFrame frame, RFunction fun, RList dots, RList moreArgs) {
         Object[] result = mapply.execute(frame, dots, fun, moreArgs);
         // set here else it gets overridden by the iterator evaluation
-        controlVisibility();
         return RDataFactory.createList(result);
     }
 

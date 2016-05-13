@@ -32,12 +32,13 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.ToStringNode;
 import com.oracle.truffle.r.nodes.unary.ToStringNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -54,8 +55,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 /**
  * The {@code cat .Internal}.
  */
-@RBuiltin(name = "cat", kind = INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"})
-public abstract class Cat extends RInvisibleBuiltinNode {
+@RBuiltin(name = "cat", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"})
+public abstract class Cat extends RBuiltinNode {
 
     @Child private ToStringNode toString;
 
@@ -213,7 +214,6 @@ public abstract class Cat extends RInvisibleBuiltinNode {
             throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
 
-        controlVisibility();
         return RNull.instance;
     }
 

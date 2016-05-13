@@ -80,7 +80,6 @@ public class IsFiniteFunctions {
 
         @Fallback
         protected Object doIsFiniteOther(Object x) {
-            controlVisibility();
             if (typeofNode == null) {
                 typeofNode = insert(TypeofNodeGen.create());
             }
@@ -89,14 +88,12 @@ public class IsFiniteFunctions {
         }
 
         protected RLogicalVector doFunConstant(RAbstractVector x, byte value) {
-            controlVisibility();
             byte[] b = new byte[x.getLength()];
             Arrays.fill(b, value);
             return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
         }
 
         protected RLogicalVector doFunDouble(RAbstractDoubleVector x, DoublePredicate fun) {
-            controlVisibility();
             byte[] b = new byte[x.getLength()];
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
@@ -105,7 +102,6 @@ public class IsFiniteFunctions {
         }
 
         protected RLogicalVector doFunLogical(RAbstractLogicalVector x, LogicalPredicate fun) {
-            controlVisibility();
             byte[] b = new byte[x.getLength()];
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
@@ -114,7 +110,6 @@ public class IsFiniteFunctions {
         }
 
         protected RLogicalVector doFunInt(RAbstractIntVector x, IntPredicate fun) {
-            controlVisibility();
             byte[] b = new byte[x.getLength()];
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
@@ -123,7 +118,6 @@ public class IsFiniteFunctions {
         }
 
         protected RLogicalVector doFunComplex(RAbstractComplexVector x, ComplexPredicate fun) {
-            controlVisibility();
             byte[] b = new byte[x.getLength()];
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));

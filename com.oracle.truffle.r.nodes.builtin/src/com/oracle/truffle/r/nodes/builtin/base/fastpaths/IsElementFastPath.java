@@ -28,7 +28,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -36,13 +36,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public abstract class IsElementFastPath extends RFastPathNode implements VisibilityController {
+public abstract class IsElementFastPath extends RFastPathNode {
 
     @Specialization(guards = "el.getLength() == 1")
     protected Byte iselementOne(RAbstractStringVector el, RAbstractStringVector set, //
                     @Cached("create()") BranchProfile trueProfile, //
                     @Cached("create()") BranchProfile falseProfile) {
-        controlVisibility();
+        RContext.getInstance().setVisible(true);
         String element = el.getDataAt(0);
         int length = set.getLength();
         for (int i = 0; i < length; i++) {
@@ -57,7 +57,7 @@ public abstract class IsElementFastPath extends RFastPathNode implements Visibil
 
     @Specialization
     protected Byte iselementOne(double el, double set) {
-        controlVisibility();
+        RContext.getInstance().setVisible(true);
         return RRuntime.asLogical(el == set);
     }
 
@@ -65,7 +65,7 @@ public abstract class IsElementFastPath extends RFastPathNode implements Visibil
     protected Byte iselementOne(RAbstractDoubleVector el, RAbstractDoubleVector set, //
                     @Cached("create()") BranchProfile trueProfile, //
                     @Cached("create()") BranchProfile falseProfile) {
-        controlVisibility();
+        RContext.getInstance().setVisible(true);
         double element = el.getDataAt(0);
         int length = set.getLength();
         for (int i = 0; i < length; i++) {
@@ -81,7 +81,7 @@ public abstract class IsElementFastPath extends RFastPathNode implements Visibil
     @Specialization(guards = "el.getLength() == 1")
     protected Byte isElementOneSequence(RAbstractDoubleVector el, RIntSequence set, //
                     @Cached("createBinaryProfile()") ConditionProfile profile) {
-        controlVisibility();
+        RContext.getInstance().setVisible(true);
         double element = el.getDataAt(0);
         return RRuntime.asLogical(profile.profile(element >= set.getStart() && element <= set.getEnd()));
     }
@@ -91,7 +91,7 @@ public abstract class IsElementFastPath extends RFastPathNode implements Visibil
                     @Cached("create()") NACheck na, //
                     @Cached("create()") BranchProfile trueProfile, //
                     @Cached("create()") BranchProfile falseProfile) {
-        controlVisibility();
+        RContext.getInstance().setVisible(true);
         double element = el.getDataAt(0);
         int length = set.getLength();
         na.enable(set);

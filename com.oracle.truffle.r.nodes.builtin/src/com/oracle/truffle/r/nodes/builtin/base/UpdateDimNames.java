@@ -30,7 +30,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.PutAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -46,8 +47,8 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "dimnames<-", kind = PRIMITIVE, parameterNames = {"x", "value"})
-public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
+@RBuiltin(name = "dimnames<-", visibility = RVisibility.ON, kind = PRIMITIVE, parameterNames = {"x", "value"})
+public abstract class UpdateDimNames extends RBuiltinNode {
 
     protected static final String DIMNAMES_ATTR_KEY = RRuntime.DIMNAMES_ATTR_KEY;
 
@@ -93,7 +94,6 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     @Specialization
     protected RAbstractContainer updateDimnamesNull(RAbstractContainer container, @SuppressWarnings("unused") RNull list, //
                     @Cached("create(DIMNAMES_ATTR_KEY)") RemoveAttributeNode remove) {
-        controlVisibility();
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (isRVectorProfile.profile(container instanceof RVector)) {
             RVector vector = (RVector) container;
@@ -116,7 +116,6 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     @Specialization(guards = "list.getLength() > 0")
     protected RAbstractContainer updateDimnames(RAbstractContainer container, RList list, //
                     @Cached("create(DIMNAMES_ATTR_KEY)") PutAttributeNode put) {
-        controlVisibility();
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         setDimNames(result, convertToListOfStrings(list), put);
         return result;
@@ -124,7 +123,6 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
 
     @Specialization(guards = "!isRList(c)")
     protected RAbstractContainer updateDimnamesError(@SuppressWarnings("unused") RAbstractContainer container, @SuppressWarnings("unused") Object c) {
-        controlVisibility();
         CompilerDirectives.transferToInterpreter();
         throw RError.error(this, RError.Message.DIMNAMES_LIST);
     }

@@ -49,25 +49,21 @@ public abstract class CumMax extends RBuiltinNode {
 
     @Specialization
     protected double cummax(double arg) {
-        controlVisibility();
         return arg;
     }
 
     @Specialization
     protected int cummax(int arg) {
-        controlVisibility();
         return arg;
     }
 
     @Specialization
     protected Object cummax(String arg) {
-        controlVisibility();
         return na.convertStringToDouble(arg);
     }
 
     @Specialization
     protected int cummax(byte arg) {
-        controlVisibility();
         na.enable(arg);
         if (na.check(arg)) {
             return RRuntime.INT_NA;
@@ -78,7 +74,6 @@ public abstract class CumMax extends RBuiltinNode {
     @Specialization
     protected RAbstractIntVector cummaxIntSequence(RIntSequence v, //
                     @Cached("createBinaryProfile()") ConditionProfile negativeStrideProfile) {
-        controlVisibility();
         if (negativeStrideProfile.profile(v.getStride() < 0)) {
             // all numbers are smaller than the first one
             return RDataFactory.createIntSequence(v.getStart(), 0, v.getLength());
@@ -89,7 +84,6 @@ public abstract class CumMax extends RBuiltinNode {
 
     @Specialization
     protected RDoubleVector cummax(RAbstractDoubleVector v) {
-        controlVisibility();
         double[] cmaxV = new double[v.getLength()];
         double max = v.getDataAt(0);
         cmaxV[0] = max;
@@ -112,7 +106,6 @@ public abstract class CumMax extends RBuiltinNode {
 
     @Specialization(contains = "cummaxIntSequence")
     protected RIntVector cummax(RAbstractIntVector v) {
-        controlVisibility();
         int[] cmaxV = new int[v.getLength()];
         int max = v.getDataAt(0);
         cmaxV[0] = max;
@@ -135,7 +128,6 @@ public abstract class CumMax extends RBuiltinNode {
 
     @Specialization
     protected RIntVector cummax(RAbstractLogicalVector v) {
-        controlVisibility();
         int[] cmaxV = new int[v.getLength()];
         int max = v.getDataAt(0);
         cmaxV[0] = max;
@@ -158,7 +150,6 @@ public abstract class CumMax extends RBuiltinNode {
 
     @Specialization
     protected RDoubleVector cummax(RAbstractStringVector v) {
-        controlVisibility();
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeGen.create(false, false, false));
@@ -169,7 +160,6 @@ public abstract class CumMax extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RComplexVector cummax(@SuppressWarnings("unused") RAbstractComplexVector v) {
-        controlVisibility();
         throw RError.error(this, RError.Message.CUMMAX_UNDEFINED_FOR_COMPLEX);
     }
 }

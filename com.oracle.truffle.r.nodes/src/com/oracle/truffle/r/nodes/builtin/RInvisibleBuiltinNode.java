@@ -24,8 +24,4 @@ package com.oracle.truffle.r.nodes.builtin;
 
 public abstract class RInvisibleBuiltinNode extends RBuiltinNode {
 
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
 }

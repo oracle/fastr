@@ -92,7 +92,6 @@ public abstract class ListBuiltin extends RBuiltinNode {
                     @SuppressWarnings("unused") @Cached("args.getSignature()") ArgumentsSignature cachedSignature, //
                     @Cached("argNameVector(cachedSignature)") RStringVector cachedArgNames) {
         Object[] argArray = args.getArguments();
-        controlVisibility();
         for (int i = 0; i < cachedLength; i++) {
             if (valueProfiles[i] == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -106,7 +105,6 @@ public abstract class ListBuiltin extends RBuiltinNode {
     @Specialization(guards = "!args.isEmpty()")
     protected RList list(RArgsValuesAndNames args) {
         Object[] argArray = args.getArguments();
-        controlVisibility();
         for (int i = 0; i < argArray.length; i++) {
             shareListElement(argArray[i]);
         }
@@ -120,13 +118,11 @@ public abstract class ListBuiltin extends RBuiltinNode {
 
     @Specialization
     protected RList listMissing(@SuppressWarnings("unused") RMissing missing) {
-        controlVisibility();
         return RDataFactory.createList(new Object[]{});
     }
 
     @Specialization(guards = {"!isRArgsValuesAndNames(value)", "!isRMissing(value)"})
     protected RList listSingleElement(Object value) {
-        controlVisibility();
         shareListElement(value);
         if (suppliedSignatureArgNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

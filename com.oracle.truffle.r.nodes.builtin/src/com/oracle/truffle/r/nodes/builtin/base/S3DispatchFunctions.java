@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -85,7 +86,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         return result;
     }
 
-    @RBuiltin(name = "UseMethod", kind = PRIMITIVE, parameterNames = {"generic", "object"})
+    @RBuiltin(name = "UseMethod", visibility = RVisibility.CUSTOM, kind = PRIMITIVE, parameterNames = {"generic", "object"})
     public abstract static class UseMethod extends S3DispatchFunctions {
 
         /*
@@ -106,7 +107,6 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
 
         @Specialization
         protected Object execute(VirtualFrame frame, String generic, Object arg) {
-            controlVisibility();
 
             Object dispatchedObject;
             if (argMissingProfile.profile(arg == RMissing.instance)) {
@@ -153,7 +153,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         }
     }
 
-    @RBuiltin(name = "NextMethod", kind = SUBSTITUTE, parameterNames = {"generic", "object", "..."})
+    @RBuiltin(name = "NextMethod", visibility = RVisibility.CUSTOM, kind = SUBSTITUTE, parameterNames = {"generic", "object", "..."})
     public abstract static class NextMethod extends S3DispatchFunctions {
 
         @Child private LocalReadVariableNode rvnGroup = LocalReadVariableNode.create(RRuntime.R_DOT_GROUP, false);
@@ -198,7 +198,6 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
         protected Object nextMethod(VirtualFrame frame, String generic, Object obj, RArgsValuesAndNames args) {
-            controlVisibility();
             MaterializedFrame genericCallFrame = getCallFrame(frame);
             MaterializedFrame genericDefFrame = getDefFrame(frame);
             String group = (String) rvnGroup.execute(frame);

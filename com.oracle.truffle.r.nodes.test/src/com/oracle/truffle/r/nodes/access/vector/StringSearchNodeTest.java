@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.nodes.test.TestUtilities.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.*;
 
+import org.junit.Test;
 import org.junit.experimental.theories.*;
 import org.junit.runner.*;
 
@@ -37,6 +38,10 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RunWith(Theories.class)
 public class StringSearchNodeTest extends TestBase {
+    @Test
+    public void dummy() {
+        // to make sure this file is recognized as a test
+    }
 
     // Please note that "FB" and "Ea" produce a hash collision. Thats why its tested here.
     @DataPoints public static String[] TEST = {RRuntime.STRING_NA, "a", "abc", "bc".intern(), "bc".intern(), "FB", "Ea"};

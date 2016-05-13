@@ -30,12 +30,12 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -52,12 +52,11 @@ public class DynLoadFunctions {
 
     private static final String DLLINFOLIST_CLASS = "DLLInfoList";
 
-    @RBuiltin(name = "dyn.load", kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"})
-    public abstract static class DynLoad extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "dyn.load", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"})
+    public abstract static class DynLoad extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RList doDynLoad(RAbstractStringVector libVec, RAbstractLogicalVector localVec, byte now, @SuppressWarnings("unused") String unused) {
-            controlVisibility();
             // Length checked by GnuR
             if (libVec.getLength() > 1) {
                 throw RError.error(this, RError.Message.TYPE_EXPECTED, RType.Character.getName());
@@ -81,12 +80,11 @@ public class DynLoadFunctions {
         }
     }
 
-    @RBuiltin(name = "dyn.unload", kind = INTERNAL, parameterNames = {"lib"})
-    public abstract static class DynUnload extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "dyn.unload", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"lib"})
+    public abstract static class DynUnload extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RNull doDynunload(RAbstractStringVector lib) {
-            controlVisibility();
             try {
                 DLL.unload(lib.getDataAt(0));
             } catch (DLLException ex) {
@@ -101,7 +99,6 @@ public class DynLoadFunctions {
         @Specialization
         @TruffleBoundary
         protected RList doGetLoadedDLLs() {
-            controlVisibility();
             ArrayList<DLLInfo> dlls = DLL.getLoadedDLLs();
             String[] names = new String[dlls.size()];
             Object[] data = new Object[names.length];
@@ -122,7 +119,6 @@ public class DynLoadFunctions {
         @Specialization
         @TruffleBoundary
         protected byte isLoaded(RAbstractStringVector symbol, RAbstractStringVector packageName, RAbstractStringVector typeVec) {
-            controlVisibility();
             String type = typeVec.getDataAt(0);
             NativeSymbolType nst = null;
             switch (type) {
@@ -152,7 +148,6 @@ public class DynLoadFunctions {
         @Specialization
         @TruffleBoundary
         protected Object getSymbolInfo(RAbstractStringVector symbolVec, String packageName, byte withReg) {
-            controlVisibility();
             String symbol = symbolVec.getDataAt(0);
             DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
             long f = DLL.findSymbol(RRuntime.asString(symbol), packageName, rns);
@@ -166,7 +161,6 @@ public class DynLoadFunctions {
         @Specialization(guards = "isDLLInfo(externalPtr)")
         @TruffleBoundary
         protected Object getSymbolInfo(RAbstractStringVector symbolVec, RExternalPtr externalPtr, byte withReg) {
-            controlVisibility();
             DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.getAddr());
             if (dllInfo == null) {
                 throw RError.error(this, RError.Message.REQUIRES_NAME_DLLINFO);

@@ -98,7 +98,6 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = "isSimpleArguments(args)")
     protected Object combineSimple(RArgsValuesAndNames args) {
-        controlVisibility();
         return args.getArgument(0);
     }
 
@@ -112,7 +111,6 @@ public abstract class Combine extends RBuiltinNode {
                     @Cached("create()") NACheck naCheck, //
                     @Cached("create()") NACheck naNameCheck, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
-        controlVisibility();
         CompilerAsserts.partialEvaluationConstant(cachedSignature);
         CompilerAsserts.partialEvaluationConstant(cachedPrecedence);
 

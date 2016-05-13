@@ -61,25 +61,21 @@ public abstract class All extends RBuiltinNode {
 
     @Specialization
     protected byte all(byte value, @SuppressWarnings("unused") byte naRm) {
-        controlVisibility();
         return value;
     }
 
     @Specialization
     protected byte all(RLogicalVector vector, byte naRm) {
-        controlVisibility();
         return accumulate(vector, naRm);
     }
 
     @Specialization
     protected byte all(@SuppressWarnings("unused") RNull vector, @SuppressWarnings("unused") byte naRm) {
-        controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
     protected byte all(@SuppressWarnings("unused") RMissing vector, @SuppressWarnings("unused") byte naRm) {
-        controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
@@ -89,7 +85,6 @@ public abstract class All extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogicalNode = insert(CastLogicalNodeGen.create(true, false, false));
         }
-        controlVisibility();
         Object[] argValues = args.getArguments();
         for (Object argValue : argValues) {
             byte result;

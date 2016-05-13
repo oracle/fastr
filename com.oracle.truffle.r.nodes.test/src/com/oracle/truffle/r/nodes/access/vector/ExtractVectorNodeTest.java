@@ -40,6 +40,10 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RunWith(Theories.class)
 public class ExtractVectorNodeTest extends TestBase {
+    @Test
+    public void dummy() {
+        // to make sure this file is recognized as a test
+    }
 
     @DataPoints public static RType[] vectorTypes = RType.getVectorTypes();
 

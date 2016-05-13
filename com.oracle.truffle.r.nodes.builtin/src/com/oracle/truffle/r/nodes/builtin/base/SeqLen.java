@@ -53,7 +53,6 @@ public abstract class SeqLen extends RBuiltinNode {
                 throw RError.error(this, RError.Message.MUST_BE_COERCIBLE_INTEGER);
             }
         }
-        controlVisibility();
         return RDataFactory.createIntSequence(1, 1, length.getDataAt(0));
     }
 }

@@ -48,7 +48,6 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -58,7 +57,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.StableValue;
-import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -85,7 +84,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * a particular layout of frame descriptors and enclosing environments, and re-specializes in case
  * the layout changes.
  */
-public final class ReadVariableNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup, VisibilityController {
+public final class ReadVariableNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup {
 
     private static final int MAX_INVALIDATION_COUNT = 2;
 
@@ -173,7 +172,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     @Override
     public boolean isSyntax() {
-        return identifier instanceof String && !AnonymousFrameVariable.isAnonymous(identifierAsString);
+        return identifier instanceof String;
     }
 
     @Override
@@ -197,7 +196,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     private Object executeInternal(VirtualFrame frame, Frame variableFrame) {
         if (kind != ReadKind.Silent) {
-            controlVisibility();
+            RContext.getInstance().setVisible(true);
         }
 
         Object result;

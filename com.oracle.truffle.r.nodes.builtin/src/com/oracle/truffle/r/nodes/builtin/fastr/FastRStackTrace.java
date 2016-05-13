@@ -24,17 +24,18 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-@RBuiltin(name = ".fastr.stacktrace", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"print.frame.contents"})
-public abstract class FastRStackTrace extends RInvisibleBuiltinNode {
+@RBuiltin(name = ".fastr.stacktrace", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"print.frame.contents"})
+public abstract class FastRStackTrace extends RBuiltinNode {
 
     @Override
     public Object[] getDefaultParameterValues() {
@@ -43,7 +44,6 @@ public abstract class FastRStackTrace extends RInvisibleBuiltinNode {
 
     @Specialization
     protected RNull printStackTrace(byte printFrameContents) {
-        controlVisibility();
         boolean printFrameSlots = printFrameContents == RRuntime.LOGICAL_TRUE;
         RContext.getInstance().getConsoleHandler().print(Utils.createStackTrace(printFrameSlots));
         return RNull.instance;

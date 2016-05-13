@@ -45,12 +45,12 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.WriteDataNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
 import com.oracle.truffle.r.runtime.conn.GZIPConnections.GZIPRConnection;
@@ -96,7 +96,6 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RConnection stdin() {
-            controlVisibility();
             return getStdin();
         }
     }
@@ -106,7 +105,6 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RConnection stdout() {
-            controlVisibility();
             return getStdout();
         }
     }
@@ -116,7 +114,6 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RConnection stderr() {
-            controlVisibility();
             return getStderr();
         }
     }
@@ -127,7 +124,6 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         @SuppressWarnings("unused")
         protected Object file(RAbstractStringVector description, RAbstractStringVector openVec, byte blocking, RAbstractStringVector encoding, byte raw) {
-            controlVisibility();
             if (!RRuntime.fromLogical(blocking)) {
                 throw RError.nyi(this, "non-blocking mode not supported");
             }
@@ -162,7 +158,6 @@ public abstract class ConnectionFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object file(Object description, Object open, Object blocking, Object encoding, Object raw) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
     }
@@ -178,7 +173,6 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         @SuppressWarnings("unused")
         protected Object gzFile(RAbstractStringVector description, RAbstractStringVector open, RAbstractStringVector encoding, double compression) {
-            controlVisibility();
             try {
                 return new GZIPRConnection(description.getDataAt(0), open.getDataAt(0));
             } catch (ZipException ex) {
@@ -204,7 +198,6 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object textConnection(RAbstractStringVector nm, RAbstractStringVector object, RAbstractStringVector open, REnvironment env, @SuppressWarnings("unused") RAbstractIntVector encoding) {
-            controlVisibility();
             if (nm.getLength() != 1) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, "description");
             }
@@ -228,7 +221,6 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object textConnection(RConnection conn) {
-            controlVisibility();
             if (conn instanceof TextRConnection) {
                 return RDataFactory.createStringVector(((TextRConnection) conn).getValue(), RDataFactory.COMPLETE_VECTOR);
             } else {
@@ -270,7 +262,6 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object urlConnection(RAbstractStringVector url, RAbstractStringVector open, @SuppressWarnings("unused") byte blocking, @SuppressWarnings("unused") RAbstractStringVector encoding) {
-            controlVisibility();
             try {
                 return new URLRConnection(url.getDataAt(0), open.getDataAt(0));
             } catch (MalformedURLException ex) {
@@ -320,12 +311,12 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "open", kind = INTERNAL, parameterNames = {"con", "open", "blocking"})
+    @RBuiltin(name = "open", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"con", "open", "blocking"})
     public abstract static class Open extends CheckIsConnAdapter {
         @Specialization
         @TruffleBoundary
         protected Object open(RConnection con, RAbstractStringVector open, @SuppressWarnings("unused") byte blocking) {
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             try {
                 BaseRConnection baseConn = getBaseConnection(con);
                 if (baseConn.isClosed()) {
@@ -356,7 +347,6 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RLogicalVector isOpen(RConnection con, RAbstractIntVector rw) {
-            controlVisibility();
             BaseRConnection baseCon = getBaseConnection(con);
             boolean result = baseCon.isOpen();
             switch (rw.getDataAt(0)) {
@@ -382,12 +372,12 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "close", kind = INTERNAL, parameterNames = {"con", "type"})
+    @RBuiltin(name = "close", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"con", "type"})
     public abstract static class Close extends CheckIsConnAdapter {
         @Specialization
         @TruffleBoundary
         protected Object close(RConnection con) {
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             try {
                 con.closeAndDestroy();
             } catch (IOException ex) {
@@ -433,7 +423,6 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected Object readLines(RConnection con, int n, byte ok, byte warn, @SuppressWarnings("unused") String encoding, byte skipNul) {
             // TODO implement all the arguments
-            controlVisibility();
             try (RConnection openConn = con.forceOpen("rt")) {
                 String[] lines = openConn.readLines(n, RRuntime.fromLogical(warn), RRuntime.fromLogical(skipNul));
                 if (n > 0 && lines.length < n && ok == RRuntime.LOGICAL_FALSE) {
@@ -454,12 +443,11 @@ public abstract class ConnectionFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object readLines(Object con, Object n, Object ok, Object warn, Object encoding, Object skipNul) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
     }
 
-    @RBuiltin(name = "writeLines", kind = INTERNAL, parameterNames = {"text", "con", "sep", "useBytes"})
+    @RBuiltin(name = "writeLines", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"text", "con", "sep", "useBytes"})
     public abstract static class WriteLines extends InternalCloseHelper {
         @Specialization
         @TruffleBoundary
@@ -469,24 +457,22 @@ public abstract class ConnectionFunctions {
             } catch (IOException x) {
                 throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
             }
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
 
         @SuppressWarnings("unused")
         @Fallback
         protected RNull writeLines(Object text, Object con, Object sep, Object useBytes) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
     }
 
-    @RBuiltin(name = "flush", kind = INTERNAL, parameterNames = {"con"})
-    public abstract static class Flush extends RInvisibleBuiltinNode {
+    @RBuiltin(name = "flush", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"con"})
+    public abstract static class Flush extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RNull flush(RConnection con) {
-            controlVisibility();
             try {
                 con.flush();
             } catch (IOException x) {
@@ -496,7 +482,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "pushBack", kind = INTERNAL, parameterNames = {"data", "connection", "newLine", "type"})
+    @RBuiltin(name = "pushBack", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"data", "connection", "newLine", "type"})
     public abstract static class PushBack extends RBuiltinNode {
 
         @Override
@@ -507,7 +493,6 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull pushBack(RAbstractStringVector data, RConnection connection, RAbstractLogicalVector newLine, @SuppressWarnings("unused") RAbstractIntVector type) {
-            controlVisibility();
             if (newLine.getLength() == 0) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, "newLine");
             }
@@ -519,7 +504,6 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object pushBack(RAbstractStringVector data, RConnection connection, RNull newLine, RAbstractIntVector type) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "newLine");
         }
 
@@ -527,7 +511,6 @@ public abstract class ConnectionFunctions {
         @Specialization(guards = "!newLineIsLogical(newLine)")
         @TruffleBoundary
         protected Object pushBack(RAbstractStringVector data, RConnection connection, RAbstractVector newLine, RAbstractIntVector type) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "newLine");
         }
 
@@ -535,7 +518,6 @@ public abstract class ConnectionFunctions {
         @Fallback
         @TruffleBoundary
         protected Object pushBack(Object data, Object connection, Object newLine, Object encoding) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_CONNECTION);
         }
 
@@ -549,30 +531,26 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         protected int pushBackLength(RConnection connection) {
-            controlVisibility();
             return connection.pushBackLength();
         }
 
         @Fallback
         protected Object pushBacklLength(@SuppressWarnings("unused") Object connection) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_CONNECTION);
         }
     }
 
-    @RBuiltin(name = "clearPushBack", kind = INTERNAL, parameterNames = {"connection"})
+    @RBuiltin(name = "clearPushBack", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"connection"})
     public abstract static class PushBackClear extends RBuiltinNode {
 
         @Specialization
         protected RNull pushBackClear(RConnection connection) {
-            controlVisibility();
             connection.pushBackClear();
             return RNull.instance;
         }
 
         @Fallback
         protected Object pushBackClear(@SuppressWarnings("unused") Object connection) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_CONNECTION);
         }
     }
@@ -583,21 +561,18 @@ public abstract class ConnectionFunctions {
         @SuppressWarnings("unused")
         @Specialization(guards = "ncharsEmpty(nchars)")
         protected RStringVector readCharNcharsEmpty(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
-            controlVisibility();
             return RDataFactory.createEmptyStringVector();
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "useBytesEmpty(useBytes)")
         protected RStringVector readCharUseBytesEmpty(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "useBytes");
         }
 
         @Specialization(guards = {"!ncharsEmpty(nchars)", "!useBytesEmpty(useBytes)"})
         @TruffleBoundary
         protected RStringVector readChar(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
-            controlVisibility();
             try (RConnection openConn = con.forceOpen("rb")) {
                 String[] data = new String[nchars.getLength()];
                 for (int i = 0; i < data.length; i++) {
@@ -618,12 +593,11 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "writeChar", kind = INTERNAL, parameterNames = {"object", "con", "nchars", "eos", "useBytes"})
+    @RBuiltin(name = "writeChar", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"object", "con", "nchars", "eos", "useBytes"})
     public abstract static class WriteChar extends InternalCloseHelper {
         @TruffleBoundary
         @Specialization
         protected RNull writeChar(RAbstractStringVector object, RConnection con, RAbstractIntVector nchars, RAbstractStringVector eos, byte useBytes) {
-            controlVisibility();
             try (RConnection openConn = con.forceOpen("wb")) {
                 int length = object.getLength();
                 for (int i = 0; i < length; i++) {
@@ -638,7 +612,7 @@ public abstract class ConnectionFunctions {
             } catch (IOException x) {
                 throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
             }
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
     }
@@ -929,7 +903,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "writeBin", kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"})
+    @RBuiltin(name = "writeBin", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"})
     public abstract static class WriteBin extends InternalCloseHelper {
 
         @Override
@@ -955,7 +929,7 @@ public abstract class ConnectionFunctions {
                     throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
                 }
             }
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
 
@@ -966,7 +940,7 @@ public abstract class ConnectionFunctions {
             boolean useBytes = RRuntime.fromLogical(useBytesArg);
             ByteBuffer buffer = writeData.execute(object, size, swap, useBytes);
             buffer.flip();
-            forceVisibility(false);
+            RContext.getInstance().setVisible(false);
             return RDataFactory.createRawVector(buffer.array());
         }
     }
@@ -982,7 +956,6 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RConnection getConnection(int what) {
-            controlVisibility();
             BaseRConnection con = RContext.getInstance().stateRConnection.getConnection(what);
             if (con == null) {
                 throw RError.error(this, RError.Message.NO_SUCH_CONNECTION, what);
@@ -997,7 +970,6 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RIntVector getAllConnections() {
-            controlVisibility();
             return RContext.getInstance().stateRConnection.getAllConnections();
         }
     }

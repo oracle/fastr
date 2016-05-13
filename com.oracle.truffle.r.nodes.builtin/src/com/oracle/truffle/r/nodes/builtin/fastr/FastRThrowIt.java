@@ -39,7 +39,6 @@ public abstract class FastRThrowIt extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RNull throwit(RAbstractStringVector x) {
-        controlVisibility();
         String name = x.getDataAt(0);
         switch (name) {
             case "AIX":

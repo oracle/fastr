@@ -73,7 +73,6 @@ public abstract class DotC extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding) {
-        controlVisibility();
         long address = getAddressFromSymbolInfo(frame, symbol);
         String name = getNameFromSymbolInfo(frame, symbol);
         return dispatch(this, address, name, naok, dup, args);
@@ -83,7 +82,6 @@ public abstract class DotC extends RBuiltinNode {
     @Specialization
     protected RList c(RAbstractStringVector f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, //
                     @Cached("create()") BranchProfile errorProfile) {
-        controlVisibility();
         String libName = null;
         if (!(rPackage instanceof RMissing)) {
             libName = RRuntime.asString(rPackage);

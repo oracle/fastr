@@ -50,14 +50,12 @@ public abstract class TempFile extends RBuiltinNode {
     @Specialization(guards = "tempDir.getLength() == 1")
     @TruffleBoundary
     protected RStringVector tempfile(String pattern, RAbstractStringVector tempDir, String fileExt) {
-        controlVisibility();
         return RDataFactory.createStringVector(TempPathName.createNonExistingFilePath(pattern, tempDir.getDataAt(0), fileExt));
     }
 
     @Specialization
     @TruffleBoundary
     protected RStringVector tempfileGeneric(Object pattern, Object tempDir, Object fileExt) {
-        controlVisibility();
         // Now we have RStringVectors of at least length 1
         RStringVector[] argVecs = new RStringVector[]{checkVector(pattern, INVALID_PATTERN), checkVector(tempDir, INVALID_TEMPDIR), checkVector(fileExt, INVALID_FILEEXT)};
         stringVectorsAmount = argVecs.length;

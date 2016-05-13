@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,6 @@ public abstract class Stop extends RBuiltinNode {
 
     @Specialization
     protected Object stop(byte call, RAbstractStringVector msgVec) {
-        controlVisibility();
         assert msgVec.getLength() == 1;
         CompilerDirectives.transferToInterpreter();
         throw RError.stop(RRuntime.fromLogical(call), this, RError.Message.GENERIC, msgVec.getDataAt(0));

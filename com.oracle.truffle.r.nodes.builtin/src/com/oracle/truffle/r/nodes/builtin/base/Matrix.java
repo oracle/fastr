@@ -70,7 +70,6 @@ public abstract class Matrix extends RBuiltinNode {
     @Specialization(guards = "!isTrue(byrow)")
     @SuppressWarnings("unused")
     protected RAbstractVector matrixbc(RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        controlVisibility();
         int[] dim = computeDimByCol(data.getLength(), nrow, ncol, missingNr, missingNc);
         if (empty.profile(data.getLength() == 0)) {
             if (isList.profile(data instanceof RList)) {
@@ -104,14 +103,12 @@ public abstract class Matrix extends RBuiltinNode {
             res = data.copyResizedWithDimensions(dim, false);
             res = updateDimNames(res, dimnames);
         }
-        controlVisibility();
         return res;
     }
 
     @Specialization(guards = "isTrue(byrow)")
     @SuppressWarnings("unused")
     protected RAbstractVector matrixbr(RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        controlVisibility();
         int[] dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -154,7 +151,6 @@ public abstract class Matrix extends RBuiltinNode {
             res = (RVector) transpose.execute(data.copyResizedWithDimensions(dim, false));
             res = updateDimNames(res, dimnames);
         }
-        controlVisibility();
         return res;
     }
 

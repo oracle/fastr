@@ -91,7 +91,6 @@ public abstract class AsVector extends RBuiltinNode {
 
     @Specialization
     protected Object asVector(VirtualFrame frame, Object x, String mode) {
-        controlVisibility();
         RStringVector clazz = classHierarchy.execute(x);
         if (hasClassProfile.profile(clazz != null)) {
             if (useMethod == null) {

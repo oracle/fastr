@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,6 @@ public abstract class Substr extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyArg(arg)")
     protected RStringVector substrEmptyArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
-        controlVisibility();
         return RDataFactory.createEmptyStringVector();
     }
 
@@ -62,7 +61,6 @@ public abstract class Substr extends RBuiltinNode {
 
     @Specialization(guards = {"!emptyArg(arg)", "!wrongParams(start, stop)"})
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
-        controlVisibility();
         String[] res = new String[arg.getLength()];
         na.enable(arg);
         na.enable(start);

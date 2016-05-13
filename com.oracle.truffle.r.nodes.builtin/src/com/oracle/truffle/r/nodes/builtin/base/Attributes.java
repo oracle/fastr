@@ -54,7 +54,6 @@ public abstract class Attributes extends RBuiltinNode {
     @Specialization
     protected Object attributesNull(RAbstractContainer container, //
                     @Cached("createBinaryProfile()") ConditionProfile hasAttributesProfile) {
-        controlVisibility();
         if (hasAttributesProfile.profile(hasAttributes(container))) {
             return createResult(container, container instanceof RLanguage);
         } else {
@@ -70,7 +69,6 @@ public abstract class Attributes extends RBuiltinNode {
     @Fallback
     @TruffleBoundary
     protected Object attributes(Object object) {
-        controlVisibility();
         if (object instanceof RAttributable) {
             if (!hasAttributes((RAttributable) object)) {
                 return RNull.instance;

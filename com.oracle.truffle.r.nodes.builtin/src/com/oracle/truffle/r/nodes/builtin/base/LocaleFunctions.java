@@ -47,7 +47,6 @@ public class LocaleFunctions {
         @Specialization
         @TruffleBoundary
         protected Object getLocale(RAbstractIntVector categoryVec) {
-            controlVisibility();
             // TODO implement all: for now just return not available (NULL)
             int category = categoryVec.getDataAt(0);
             switch (category) {
@@ -82,7 +81,6 @@ public class LocaleFunctions {
         @Specialization
         @TruffleBoundary
         protected Object setLocale(@SuppressWarnings("unused") RAbstractIntVector categoryVec, RAbstractStringVector locale) {
-            controlVisibility();
             // TODO implement properly!!
             return locale;
         }
@@ -90,7 +88,6 @@ public class LocaleFunctions {
         @Specialization
         @TruffleBoundary
         protected Object setLocale(@SuppressWarnings("unused") RAbstractIntVector categoryVec, RNull locale) {
-            controlVisibility();
             // TODO implement properly!!
             return locale;
         }
@@ -101,7 +98,6 @@ public class LocaleFunctions {
         @Specialization
         @TruffleBoundary
         protected Object localeconv() {
-            controlVisibility();
             RError.nyi(this, "localeconv");
             return RNull.instance;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,6 @@ public abstract class Col extends RBuiltinNode {
 
     @Specialization
     protected RIntVector col(RAbstractIntVector x) {
-        controlVisibility();
         int nrows = x.getDataAt(0);
         int ncols = x.getDataAt(1);
         int[] result = new int[nrows * ncols];
@@ -55,7 +54,6 @@ public abstract class Col extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RIntVector col(@SuppressWarnings("unused") RNull x) {
-        controlVisibility();
         throw RError.error(this, RError.Message.MATRIX_LIKE_REQUIRED, "col");
     }
 }

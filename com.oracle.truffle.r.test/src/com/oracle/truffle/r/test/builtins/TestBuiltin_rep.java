@@ -197,5 +197,7 @@ public class TestBuiltin_rep extends TestBase {
 
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, times=3) }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, length=5) }");
+
+        assertEval("rep(x<-42)");
     }
 }

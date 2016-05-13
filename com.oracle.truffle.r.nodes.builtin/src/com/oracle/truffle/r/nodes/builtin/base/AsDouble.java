@@ -53,65 +53,55 @@ public abstract class AsDouble extends RBuiltinNode {
 
     @Specialization
     protected double asDouble(double value) {
-        controlVisibility();
         return value;
     }
 
     @Specialization
     protected double asDoubleInt(int value) {
-        controlVisibility();
         initCast();
         return (double) castDoubleNode.executeDouble(value);
     }
 
     @Specialization
     protected double asDouble(byte value) {
-        controlVisibility();
         initCast();
         return (double) castDoubleNode.executeDouble(value);
     }
 
     @Specialization
     protected double asDouble(RComplex value) {
-        controlVisibility();
         initCast();
         return (double) castDoubleNode.executeDouble(value);
     }
 
     @Specialization
     protected double asDouble(String value) {
-        controlVisibility();
         initCast();
         return (double) castDoubleNode.executeDouble(value);
     }
 
     @Specialization
     protected RDoubleVector asDouble(@SuppressWarnings("unused") RNull vector) {
-        controlVisibility();
         return RDataFactory.createDoubleVector(0);
     }
 
     @Specialization
     protected RDoubleVector asDouble(RDoubleVector vector) {
-        controlVisibility();
         return RDataFactory.createDoubleVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
     protected RDoubleSequence asDouble(RDoubleSequence sequence) {
-        controlVisibility();
         return sequence;
     }
 
     @Specialization
     protected RDoubleSequence asDouble(RIntSequence sequence) {
-        controlVisibility();
         return RDataFactory.createDoubleSequence(sequence.getStart(), sequence.getStride(), sequence.getLength());
     }
 
     @Specialization
     protected RDoubleVector asDouble(RAbstractVector vector) {
-        controlVisibility();
         initCast();
         return (RDoubleVector) castDoubleNode.executeDouble(vector);
     }

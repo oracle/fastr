@@ -107,7 +107,6 @@ public abstract class Array extends RBuiltinNode {
 
     @Specialization
     protected RIntVector doArrayNoDimNames(RAbstractIntVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
-        controlVisibility();
         return doArrayInt(vec, dim);
     }
 
@@ -115,7 +114,6 @@ public abstract class Array extends RBuiltinNode {
     protected RIntVector doArray(RAbstractIntVector vec, RAbstractIntVector dim, RList dimnames) {
         RIntVector ret = doArrayInt(vec, dim);
         updateDimNames(ret, dimnames);
-        controlVisibility();
         return ret;
     }
 
@@ -131,7 +129,6 @@ public abstract class Array extends RBuiltinNode {
 
     @Specialization
     protected RDoubleVector doArrayNoDimNames(RAbstractDoubleVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
-        controlVisibility();
         return doArrayDouble(vec, dim);
     }
 
@@ -139,7 +136,6 @@ public abstract class Array extends RBuiltinNode {
     protected RDoubleVector doArray(RAbstractDoubleVector vec, RAbstractIntVector dim, RList dimnames) {
         RDoubleVector ret = doArrayDouble(vec, dim);
         updateDimNames(ret, dimnames);
-        controlVisibility();
         return ret;
     }
 
@@ -155,7 +151,6 @@ public abstract class Array extends RBuiltinNode {
 
     @Specialization
     protected RLogicalVector doArrayNoDimNames(RAbstractLogicalVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
-        controlVisibility();
         return doArrayLogical(vec, dim);
     }
 
@@ -163,7 +158,6 @@ public abstract class Array extends RBuiltinNode {
     protected RLogicalVector doArray(RAbstractLogicalVector vec, RAbstractIntVector dim, RList dimnames) {
         RLogicalVector ret = doArrayLogical(vec, dim);
         updateDimNames(ret, dimnames);
-        controlVisibility();
         return ret;
     }
 
@@ -179,7 +173,6 @@ public abstract class Array extends RBuiltinNode {
 
     @Specialization
     protected RStringVector doArrayNoDimNames(RAbstractStringVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
-        controlVisibility();
         return doArrayString(vec, dim);
     }
 
@@ -187,7 +180,6 @@ public abstract class Array extends RBuiltinNode {
     protected RStringVector doArray(RAbstractStringVector vec, RAbstractIntVector dim, RList dimnames) {
         RStringVector ret = doArrayString(vec, dim);
         updateDimNames(ret, dimnames);
-        controlVisibility();
         return ret;
     }
 
@@ -206,7 +198,6 @@ public abstract class Array extends RBuiltinNode {
 
     @Specialization
     protected RComplexVector doArrayNoDimNames(RAbstractComplexVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
-        controlVisibility();
         return doArrayComplex(vec, dim);
     }
 
@@ -214,7 +205,6 @@ public abstract class Array extends RBuiltinNode {
     protected RComplexVector doArray(RAbstractComplexVector vec, RAbstractIntVector dim, RList dimnames) {
         RComplexVector ret = doArrayComplex(vec, dim);
         updateDimNames(ret, dimnames);
-        controlVisibility();
         return ret;
     }
 
@@ -230,7 +220,6 @@ public abstract class Array extends RBuiltinNode {
 
     @Specialization
     protected RRawVector doArrayNoDimNames(RAbstractRawVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
-        controlVisibility();
         return doArrayRaw(vec, dim);
     }
 
@@ -238,7 +227,6 @@ public abstract class Array extends RBuiltinNode {
     protected RRawVector doArray(RAbstractRawVector vec, RAbstractIntVector dim, RList dimnames) {
         RRawVector ret = doArrayRaw(vec, dim);
         updateDimNames(ret, dimnames);
-        controlVisibility();
         return ret;
     }
 
@@ -254,7 +242,6 @@ public abstract class Array extends RBuiltinNode {
 
     @Specialization
     protected RList doArrayNoDimeNames(RList vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
-        controlVisibility();
         return doArrayList(vec, dim);
     }
 
@@ -262,7 +249,6 @@ public abstract class Array extends RBuiltinNode {
     protected RList doArray(RList vec, RAbstractIntVector dim, RList dimnames) {
         RList ret = doArrayList(vec, dim);
         updateDimNames(ret, dimnames);
-        controlVisibility();
         return ret;
     }
 }

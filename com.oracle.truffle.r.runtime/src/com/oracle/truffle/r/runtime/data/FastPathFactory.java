@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.function.Supplier;
+
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 /**
@@ -29,6 +33,10 @@ import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
  * may be useful for cases in which there is a significantly simpler implementation for a known
  * configuration of arguments. Returning {@code null} from the fast path node will revert the call
  * site so that it calls the normal R code again.
+ *
+ * A fast path can be added to a function using {@link RFunction#setFastPath(FastPathFactory)}. When
+ * the function is invoked, the fast path is invoked first and only if it returns {@code null}, then
+ * the original implementation is invoked.
  */
 @FunctionalInterface
 public interface FastPathFactory {
@@ -53,6 +61,30 @@ public interface FastPathFactory {
         }
     };
 
+    static FastPathFactory fromRBuiltin(RBuiltin builtin, final Supplier<RFastPathNode> factory) {
+        final RVisibility visibility = builtin.visibility();
+        final int[] nonEvalArgs = builtin.nonEvalArgs();
+        return new FastPathFactory() {
+            @Override
+            public RFastPathNode create() {
+                return factory.get();
+            }
+
+            public RVisibility getVisibility() {
+                return visibility;
+            }
+
+            public boolean evaluatesArgument(int index) {
+                for (int i = 0; i < nonEvalArgs.length; ++i) {
+                    if (nonEvalArgs[i] == index) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        };
+    }
+
     RFastPathNode create();
 
     default boolean evaluatesArgument(@SuppressWarnings("unused") int index) {
@@ -61,5 +93,12 @@ public interface FastPathFactory {
 
     default boolean forcedEagerPromise(@SuppressWarnings("unused") int index) {
         return false;
+    }
+
+    /**
+     * Visibility of the output. This corresponds to {@link RBuiltin#visibility()}
+     */
+    default RVisibility getVisibility() {
+        return RVisibility.ON;
     }
 }

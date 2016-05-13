@@ -29,7 +29,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * The "syntax" variant corresponding to {@code x <- y} in the source.
  */
 @NodeInfo(cost = NodeCost.NONE)
-public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, RSyntaxCall, VisibilityController {
+public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, RSyntaxCall {
     @Child private WriteLocalFrameVariableNode writeLocalFrameVariableNode;
 
     protected WriteCurrentVariableNode(SourceSection src) {
@@ -67,7 +67,7 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
     @Override
     public Object execute(VirtualFrame frame) {
         Object result = writeLocalFrameVariableNode.execute(frame);
-        forceVisibility(false);
+        RContext.getInstance().setVisible(false);
         return result;
     }
 

@@ -114,7 +114,6 @@ public abstract class Attr extends RBuiltinNode {
 
     @Specialization(guards = "!isRowNamesAttr(name)")
     protected Object attr(RAbstractContainer container, String name) {
-        controlVisibility();
         return attrRA(container, intern(name));
     }
 
@@ -130,7 +129,6 @@ public abstract class Attr extends RBuiltinNode {
 
     @Specialization(guards = "isRowNamesAttr(name)")
     protected Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name) {
-        controlVisibility();
         RAttributes attributes = container.getAttributes();
         if (attributes == null) {
             return RNull.instance;
@@ -152,7 +150,6 @@ public abstract class Attr extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "!exactlyOne(name)")
     protected Object attrEmtpyName(RAbstractContainer container, RStringVector name) {
-        controlVisibility();
         throw RError.error(this, RError.Message.EXACTLY_ONE_WHICH);
     }
 
@@ -162,7 +159,6 @@ public abstract class Attr extends RBuiltinNode {
     @Fallback
     @TruffleBoundary
     protected Object attr(Object object, Object name) {
-        controlVisibility();
         String sname = RRuntime.asString(name);
         if (sname == null) {
             throw RError.error(this, RError.Message.MUST_BE_CHARACTER, "which");
