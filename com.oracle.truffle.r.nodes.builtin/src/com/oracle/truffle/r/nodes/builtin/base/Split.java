@@ -189,7 +189,7 @@ public abstract class Split extends RBuiltinNode {
         return RDataFactory.createList(results, names);
     }
 
-    private int getNLevels(RStringVector levels) {
+    private static int getNLevels(RStringVector levels) {
         return levels != null ? levels.getLength() : 0;
     }
 }

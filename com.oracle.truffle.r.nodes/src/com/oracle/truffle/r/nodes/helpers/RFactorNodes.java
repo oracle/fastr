@@ -31,7 +31,6 @@ import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;

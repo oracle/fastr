@@ -13,6 +13,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.ArrayList;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -181,6 +182,7 @@ public class RErrorHandling {
     }
 
     public static Object createHandlers(RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
+        CompilerAsserts.neverPartOfCompilation();
         Object oldStack = getRestartStack();
         Object newStack = oldStack;
         RList result = RDataFactory.createList(new Object[]{RNull.instance, RNull.instance, RNull.instance});
@@ -215,7 +217,6 @@ public class RErrorHandling {
         RList entry = RDataFactory.createList(data);
         entry.setGPBits(calling);
         return entry;
-
     }
 
     private static boolean isCallingEntry(RList entry) {

@@ -52,7 +52,7 @@ public abstract class AnyNA extends RBuiltinNode {
 
     public abstract byte execute(VirtualFrame frame, Object value);
 
-    private byte doScalar(boolean isNA) {
+    private static byte doScalar(boolean isNA) {
         return RRuntime.asLogical(isNA);
     }
 

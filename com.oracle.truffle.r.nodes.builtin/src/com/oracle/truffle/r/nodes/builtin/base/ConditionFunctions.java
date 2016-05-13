@@ -54,12 +54,14 @@ public class ConditionFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isRNull(classes) || isRNull(handlers)")
+        @TruffleBoundary
         protected Object addCondHands(Object classes, Object handlers, Object parentEnv, Object target, byte calling) {
             RContext.getInstance().setVisible(false);
             return getHandlerStack();
         }
 
         @Specialization(guards = "classes.getLength() == handlers.getLength()")
+        @TruffleBoundary
         protected Object addCondHands(RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
             RContext.getInstance().setVisible(false);
             return RErrorHandling.createHandlers(classes, handlers, parentEnv, target, calling);
