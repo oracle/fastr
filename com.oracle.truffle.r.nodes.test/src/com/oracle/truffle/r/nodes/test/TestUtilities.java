@@ -182,6 +182,7 @@ public class TestUtilities {
             return ((TestRoot<T>) target.getRootNode()).node;
         }
 
+        @SuppressWarnings("try")
         public Object call(Object... args) {
             try (Closeable c = RContext.withinContext(TestBase.testVMContext)) {
                 return target.call(RArguments.createUnitialized((Object) args));
