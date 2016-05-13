@@ -110,3 +110,8 @@ int R_gc_running() {
     return 0;
 }
 
+SEXP Rf_allocS4Object() {
+	unimplemented("Rf_allocS4Object unimplemented");
+	return NULL;
+}
+

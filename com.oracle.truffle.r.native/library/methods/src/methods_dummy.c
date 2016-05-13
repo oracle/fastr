@@ -45,7 +45,6 @@ SEXP R_set_el_named(SEXP object, SEXP what, SEXP value) UNIMPLEMENTED
 SEXP R_set_slot(SEXP obj, SEXP name, SEXP value) UNIMPLEMENTED
 SEXP R_standardGeneric(SEXP fname, SEXP ev, SEXP fdef) UNIMPLEMENTED
 SEXP do_substitute_direct(SEXP f, SEXP env) UNIMPLEMENTED
-SEXP Rf_allocS4Object() UNIMPLEMENTED
 SEXP R_set_method_dispatch(SEXP onOff) UNIMPLEMENTED
 SEXP R_get_primname(SEXP object) UNIMPLEMENTED
 SEXP new_object(SEXP class_def) UNIMPLEMENTED
