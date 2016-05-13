@@ -23,7 +23,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RString;
 
 public final class PrintParameters {
-    @CompilationFinal private static int DEFAULT_DIGITS = -1;
+    @CompilationFinal private static int DefaultDigits = -1;
 
     private int width;
     private int naWidth;
@@ -45,11 +45,11 @@ public final class PrintParameters {
     private boolean suppressIndexLabels;
 
     public static int getDefaultDigits() {
-        if (DEFAULT_DIGITS == -1) {
+        if (DefaultDigits == -1) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            DEFAULT_DIGITS = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("digits"));
+            DefaultDigits = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("digits"));
         }
-        return DEFAULT_DIGITS;
+        return DefaultDigits;
     }
 
     public PrintParameters() {
@@ -146,7 +146,7 @@ public final class PrintParameters {
         this.naWidthNoquote = this.naStringNoquote.length();
         this.quote = true;
         this.right = false;
-        this.digits = DEFAULT_DIGITS;
+        this.digits = DefaultDigits;
         this.scipen = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("scipen"));
         if (this.scipen == RRuntime.INT_NA) {
             this.scipen = 0;
