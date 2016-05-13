@@ -174,7 +174,6 @@ public class BitwiseFunctions {
 
         @Specialization
         protected Object bitwAnd(RAbstractVector a, RAbstractVector b) {
-            controlVisibility();
             return basicBit(a, b, Operation.AND);
         }
     }
@@ -184,7 +183,6 @@ public class BitwiseFunctions {
 
         @Specialization
         protected Object bitwOr(RAbstractVector a, RAbstractVector b) {
-            controlVisibility();
             return basicBit(a, b, Operation.OR);
         }
     }
@@ -194,7 +192,6 @@ public class BitwiseFunctions {
 
         @Specialization
         protected Object bitwXor(RAbstractVector a, RAbstractVector b) {
-            controlVisibility();
             return basicBit(a, b, Operation.XOR);
         }
     }
@@ -204,14 +201,12 @@ public class BitwiseFunctions {
 
         @Specialization(guards = {"!shiftByCharacter(n)"})
         protected Object bitwShiftR(RAbstractVector a, RAbstractVector n) {
-            controlVisibility();
             return basicBit(a, n, Operation.SHIFTR);
         }
 
         @Specialization(guards = {"shiftByCharacter(n)"})
         @SuppressWarnings("unused")
         protected Object bitwShiftRChar(RAbstractVector a, RAbstractVector n) {
-            controlVisibility();
             checkShiftOrNot(a, Operation.SHIFTR);
             return makeNA(a.getLength());
         }
@@ -222,14 +217,12 @@ public class BitwiseFunctions {
 
         @Specialization(guards = {"!shiftByCharacter(n)"})
         protected Object bitwShiftR(RAbstractVector a, RAbstractVector n) {
-            controlVisibility();
             return basicBit(a, n, Operation.SHIFTL);
         }
 
         @Specialization(guards = {"shiftByCharacter(n)"})
         @SuppressWarnings("unused")
         protected Object bitwShiftRChar(RAbstractVector a, RAbstractVector n) {
-            controlVisibility();
             checkShiftOrNot(a, Operation.SHIFTL);
             return makeNA(a.getLength());
         }
@@ -240,7 +233,6 @@ public class BitwiseFunctions {
 
         @Specialization
         protected Object bitwNot(RAbstractVector a) {
-            controlVisibility();
             checkShiftOrNot(a, Operation.NOT);
             return bitNot(a);
         }

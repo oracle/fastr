@@ -96,7 +96,6 @@ public abstract class Paste extends RBuiltinNode {
 
     @Specialization
     protected RStringVector pasteList(RList values, String sep, @SuppressWarnings("unused") RNull collapse) {
-        controlVisibility();
         int length = lengthProfile.profile(values.getLength());
         if (hasNonNullElements(values, length)) {
             String[] result = pasteListElements(values, sep, length);
@@ -109,7 +108,6 @@ public abstract class Paste extends RBuiltinNode {
     @Specialization(guards = "!isRNull(collapse)")
     protected String pasteList(RList values, String sep, Object collapse, //
                     @Cached("createBinaryProfile()") ConditionProfile collapseIsVectorProfile) {
-        controlVisibility();
         int length = lengthProfile.profile(values.getLength());
         if (hasNonNullElements(values, length)) {
             String[] result = pasteListElements(values, sep, length);

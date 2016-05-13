@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -283,7 +284,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
+    @RBuiltin(name = "<-", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
     public abstract static class AssignBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -292,7 +293,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "=", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
+    @RBuiltin(name = "=", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
     public abstract static class AssignBuiltinEq extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -301,7 +302,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "<<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
+    @RBuiltin(name = "<<-", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
     public abstract static class AssignOuterBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -373,7 +374,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "{", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "{", visibility = RVisibility.CUSTOM, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class BraceBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -426,7 +427,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "if", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "if", visibility = RVisibility.CUSTOM, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class IfBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -435,7 +436,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "while", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "while", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class WhileBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -444,7 +445,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "repeat", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "repeat", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class RepeatBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -453,7 +454,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "for", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "for", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class ForBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization

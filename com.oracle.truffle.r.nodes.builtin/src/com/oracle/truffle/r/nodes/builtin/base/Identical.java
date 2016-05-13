@@ -73,11 +73,6 @@ public abstract class Identical extends RBuiltinNode {
 
     @Child private Identical identicalRecursive;
     @Child private Identical identicalRecursiveAttr;
-    private final boolean recursive;
-
-    protected Identical(boolean recursive) {
-        this.recursive = recursive;
-    }
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -86,10 +81,13 @@ public abstract class Identical extends RBuiltinNode {
 
     private final ConditionProfile vecLengthProfile = ConditionProfile.createBinaryProfile();
 
+    // Note: the execution of the recursive cases is not done directly and not through RCallNode or
+    // similar, this means that the visibility handling is left to us.
+
     private byte identicalRecursive(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         if (identicalRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            identicalRecursive = insert(IdenticalNodeGen.create(true, null));
+            identicalRecursive = insert(IdenticalNodeGen.create(null));
         }
         return identicalRecursive.executeByte(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
@@ -97,7 +95,7 @@ public abstract class Identical extends RBuiltinNode {
     private byte identicalRecursiveAttr(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         if (identicalRecursiveAttr == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            identicalRecursiveAttr = insert(IdenticalNodeGen.create(true, null));
+            identicalRecursiveAttr = insert(IdenticalNodeGen.create(null));
         }
         return identicalRecursiveAttr.executeByte(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
@@ -105,45 +103,30 @@ public abstract class Identical extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "isRNull(x) || isRNull(y)")
     protected byte doInternalIdenticalNull(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isRMissing(x) || isRMissing(y)")
     protected byte doInternalIdenticalMissing(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(byte x, byte y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(String x, String y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         return x.equals(y) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(double x, double y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         boolean truth = numEq ? x == y : Double.doubleToRawLongBits(x) == Double.doubleToRawLongBits(y);
         return truth ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
@@ -177,27 +160,18 @@ public abstract class Identical extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(RAbstractLogicalVector x, REnvironment y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         return RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(REnvironment x, RAbstractLogicalVector y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         return RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(REnvironment x, REnvironment y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         // reference equality for environments
         return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
@@ -205,9 +179,6 @@ public abstract class Identical extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(RSymbol x, RSymbol y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         assert x.getName() == x.getName().intern() && y.getName() == y.getName().intern();
         return x.getName() == y.getName() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
@@ -215,9 +186,6 @@ public abstract class Identical extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected byte doInternalIdentical(RLanguage x, RLanguage y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         if (x == y) {
             return RRuntime.LOGICAL_TRUE;
         }
@@ -232,17 +200,11 @@ public abstract class Identical extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     byte doInternalIdentical(RFunction x, RFunction y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         return RRuntime.asLogical(x == y);
     }
 
     @Specialization(guards = "!vectorsLists(x, y)")
     protected byte doInternalIdenticalGeneric(RAbstractVector x, RAbstractVector y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         if (vecLengthProfile.profile(x.getLength() != y.getLength())) {
             return RRuntime.LOGICAL_FALSE;
         } else {
@@ -257,9 +219,6 @@ public abstract class Identical extends RBuiltinNode {
 
     @Specialization
     protected byte doInternalIdenticalGeneric(RList x, RList y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         if (x.getLength() != y.getLength()) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -275,35 +234,23 @@ public abstract class Identical extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdenticalGeneric(RFunction x, RAbstractContainer y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         return RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdenticalGeneric(RLanguage x, RAbstractContainer y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         return RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdenticalGeneric(RAbstractContainer x, RFunction y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     protected byte doInternalIdenticalGeneric(RS4Object x, RS4Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         if (x.isS4() != y.isS4()) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -313,17 +260,11 @@ public abstract class Identical extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdenticalGeneric(RExternalPtr x, RExternalPtr y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         return RRuntime.asLogical(x.getAddr() == y.getAddr());
     }
 
     @Specialization
     protected byte doInternalIdenticalGeneric(RPairList x, RPairList y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         if (identicalRecursive(x.car(), y.car(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment) == RRuntime.LOGICAL_FALSE) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -375,18 +316,12 @@ public abstract class Identical extends RBuiltinNode {
 
     @Specialization
     protected byte doInternalIdenticalGeneric(RExpression x, RExpression y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         return doInternalIdenticalGeneric(x.getList(), y.getList(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
     @SuppressWarnings("unused")
     @Fallback
     protected byte doInternalIdenticalWrongTypes(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (!recursive) {
-            controlVisibility();
-        }
         if (x.getClass() != y.getClass()) {
             return RRuntime.LOGICAL_FALSE;
         } else {
@@ -403,6 +338,6 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     public static Identical create(RNode[] arguments) {
-        return IdenticalNodeGen.create(false, arguments);
+        return IdenticalNodeGen.create(arguments);
     }
 }

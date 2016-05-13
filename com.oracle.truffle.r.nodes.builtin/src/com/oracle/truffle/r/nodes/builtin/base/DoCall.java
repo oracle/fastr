@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -58,7 +59,7 @@ import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 // TODO Implement properly, this is a simple implementation that works when the environment doesn't matter
-@RBuiltin(name = "do.call", kind = INTERNAL, parameterNames = {"what", "args", "envir"})
+@RBuiltin(name = "do.call", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"what", "args", "envir"})
 public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNodeChildren {
 
     @Child private GetFunctions.Get getNode;

@@ -42,7 +42,6 @@ public abstract class Drop extends RBuiltinNode {
     @Specialization
     protected RAbstractVector doDrop(RAbstractVector x, //
                     @Cached("createBinaryProfile()") ConditionProfile nullDimensions) {
-        controlVisibility();
         int[] dims = x.getDimensions();
         if (nullDimensions.profile(dims == null)) {
             return x;

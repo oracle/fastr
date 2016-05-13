@@ -154,7 +154,6 @@ public abstract class Missing extends RBuiltinNode {
 
     @Specialization
     protected byte missing(VirtualFrame frame, RPromise promise) {
-        controlVisibility();
         if (repCache == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             repCache = insert(createRepCache(0));
@@ -165,13 +164,11 @@ public abstract class Missing extends RBuiltinNode {
 
     @Specialization
     protected byte missing(@SuppressWarnings("unused") RMissing obj) {
-        controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Fallback
     protected byte missing(@SuppressWarnings("unused") Object obj) {
-        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 }

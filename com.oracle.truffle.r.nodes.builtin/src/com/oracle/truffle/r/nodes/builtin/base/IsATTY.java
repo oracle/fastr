@@ -37,13 +37,11 @@ public abstract class IsATTY extends RBuiltinNode {
 
     @Specialization
     protected byte isATTY(RConnection con) {
-        controlVisibility();
         return RRuntime.asLogical(con instanceof StdConnection);
     }
 
     @Specialization(guards = "!isRConnection(con)")
     protected byte isATTYNonConnection(Object con) {
-        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 }

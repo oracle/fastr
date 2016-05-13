@@ -141,28 +141,24 @@ public abstract class Unlist extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected RNull unlist(RNull vector, byte recursive, byte useNames) {
-        controlVisibility();
         return RNull.instance;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isVectorList(vector)")
     protected RAbstractVector unlistVector(RAbstractVector vector, byte recursive, byte useNames) {
-        controlVisibility();
         return vector;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isEmpty(list)")
     protected RNull unlistEmptyList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
-        controlVisibility();
         return RNull.instance;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isOneNull(list)")
     protected RNull unlistOneNullList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
-        controlVisibility();
         return RNull.instance;
     }
 
@@ -170,7 +166,6 @@ public abstract class Unlist extends RBuiltinNode {
     // the slow path as well; ultimately we may consider (non-recursive) optimization
     @Specialization(guards = "!isEmpty(list)")
     protected Object unlistList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
-        controlVisibility();
         boolean isRecursive = RRuntime.fromLogical(recursive);
         boolean isUseNames = RRuntime.fromLogical(useNames);
 

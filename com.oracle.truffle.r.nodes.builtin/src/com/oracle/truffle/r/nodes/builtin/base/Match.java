@@ -137,7 +137,6 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     protected RIntVector match(RAbstractIntVector x, RAbstractIntVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
-        controlVisibility();
         int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
@@ -174,7 +173,6 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     protected RIntVector match(RAbstractDoubleVector x, RAbstractIntVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
-        controlVisibility();
         int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
@@ -211,7 +209,6 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     protected RIntVector match(RAbstractIntVector x, RAbstractDoubleVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
-        controlVisibility();
         int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
@@ -255,7 +252,6 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     protected RIntVector match(RAbstractDoubleVector x, RAbstractDoubleVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
-        controlVisibility();
         int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
@@ -292,7 +288,6 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     protected RIntVector match(RAbstractIntVector x, RAbstractLogicalVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
-        controlVisibility();
         int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
@@ -328,7 +323,6 @@ public abstract class Match extends RBuiltinNode {
                     @Cached("create()") NAProfile naProfile, //
                     @Cached("create()") BranchProfile foundProfile, //
                     @Cached("create()") BranchProfile notFoundProfile) {
-        controlVisibility();
         String element = x.getDataAt(0);
         int length = table.getLength();
         if (naProfile.isNA(element)) {
@@ -353,7 +347,6 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     protected RIntVector match(RAbstractStringVector x, RAbstractStringVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
-        controlVisibility();
         int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
@@ -408,7 +401,6 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     protected RIntVector match(RAbstractLogicalVector x, RAbstractLogicalVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
-        controlVisibility();
         int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
@@ -440,7 +432,6 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization(guards = "!isStringVectorTable(table)")
     protected RIntVector match(RAbstractStringVector x, RAbstractVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
-        controlVisibility();
         int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
@@ -463,7 +454,6 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     protected RIntVector match(RAbstractComplexVector x, RAbstractComplexVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
-        controlVisibility();
         int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;

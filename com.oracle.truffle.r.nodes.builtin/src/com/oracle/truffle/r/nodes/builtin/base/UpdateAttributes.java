@@ -30,7 +30,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -49,8 +50,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "attributes<-", kind = PRIMITIVE, parameterNames = {"obj", "value"})
-public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
+@RBuiltin(name = "attributes<-", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"obj", "value"})
+public abstract class UpdateAttributes extends RBuiltinNode {
     private final ConditionProfile numAttributesProfile = ConditionProfile.createBinaryProfile();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -97,7 +98,6 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
 
     @Specialization
     protected RAbstractVector updateAttributes(RAbstractVector abstractVector, @SuppressWarnings("unused") RNull list) {
-        controlVisibility();
         RAbstractVector resultVector = (RAbstractVector) abstractVector.getNonShared();
         resultVector.resetAllAttributes(true);
         return resultVector;
@@ -105,7 +105,6 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
 
     @Specialization
     protected RAbstractContainer updateAttributes(RAbstractContainer container, RList list) {
-        controlVisibility();
         Object listNamesObject = list.getNames(attrProfiles);
         if (listNamesObject == null || listNamesObject == RNull.instance) {
             throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
@@ -209,7 +208,6 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     @Fallback
     @TruffleBoundary
     protected Object doOther(Object o, Object operand) {
-        controlVisibility();
         Object obj = o;
         if (obj instanceof RShareable) {
             obj = ((RShareable) obj).getNonShared();

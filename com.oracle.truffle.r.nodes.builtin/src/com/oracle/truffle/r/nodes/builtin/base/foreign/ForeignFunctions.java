@@ -73,6 +73,7 @@ import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -227,21 +228,18 @@ public class ForeignFunctions {
         protected Object doExternal(RList f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
-            controlVisibility();
             return builtin.call(args);
         }
 
         @Specialization(guards = "lookupBuiltin(symbol) == null")
         protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
                         @SuppressWarnings("unused") RMissing encoding) {
-            controlVisibility();
             return DotC.dispatch(this, getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), naok, dup, args);
         }
 
         @Specialization
         protected RList c(RAbstractStringVector f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding, //
                         @Cached("create()") BranchProfile errorProfile) {
-            controlVisibility();
             String libName = checkPackageArg(rPackage, errorProfile);
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
             long func = DLL.findSymbol(f.getDataAt(0), libName, rns);
@@ -498,13 +496,11 @@ public class ForeignFunctions {
         protected Object doExternal(RList f, RArgsValuesAndNames args, RMissing packageName, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
-            controlVisibility();
             return builtin.call(args);
         }
 
         @Specialization
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            controlVisibility();
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), args.getArguments());
         }
 
@@ -515,7 +511,6 @@ public class ForeignFunctions {
 
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
-            controlVisibility();
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
             long func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
@@ -581,7 +576,6 @@ public class ForeignFunctions {
         protected Object doExternal(RList f, RArgsValuesAndNames args, RMissing packageName, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
-            controlVisibility();
             return builtin.call(args);
         }
 
@@ -599,7 +593,6 @@ public class ForeignFunctions {
 
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
-            controlVisibility();
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
             long func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
@@ -616,7 +609,7 @@ public class ForeignFunctions {
         }
     }
 
-    @RBuiltin(name = ".External2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    @RBuiltin(name = ".External2", visibility = RVisibility.CUSTOM, kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
     public abstract static class DotExternal2 extends LookupAdapter {
         private static final Object CALL = "call";
         private static final Object OP = "op";
@@ -651,7 +644,6 @@ public class ForeignFunctions {
         protected Object doExternal(RList f, RArgsValuesAndNames args, RMissing packageName, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
-            controlVisibility();
             return builtin.call(args);
         }
 
@@ -670,7 +662,6 @@ public class ForeignFunctions {
 
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
-            controlVisibility();
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
             long func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
@@ -711,7 +702,6 @@ public class ForeignFunctions {
         protected Object doExternal(RList f, RArgsValuesAndNames args, RMissing packageName, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
-            controlVisibility();
             return builtin.call(args);
         }
 
@@ -729,7 +719,6 @@ public class ForeignFunctions {
 
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
-            controlVisibility();
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
             long func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
@@ -769,7 +758,6 @@ public class ForeignFunctions {
         protected Object doExternal(RList f, RArgsValuesAndNames args, RMissing packageName, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
-            controlVisibility();
             return builtin.call(args);
         }
 
@@ -785,7 +773,6 @@ public class ForeignFunctions {
 
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
-            controlVisibility();
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
             long func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {

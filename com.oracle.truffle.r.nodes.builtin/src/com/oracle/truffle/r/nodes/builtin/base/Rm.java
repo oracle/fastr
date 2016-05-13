@@ -30,10 +30,11 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -41,8 +42,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
-@RBuiltin(name = "remove", kind = INTERNAL, parameterNames = {"list", "envir", "inherits"})
-public abstract class Rm extends RInvisibleBuiltinNode {
+@RBuiltin(name = "remove", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"list", "envir", "inherits"})
+public abstract class Rm extends RBuiltinNode {
 
     private final BranchProfile invalidateProfile = BranchProfile.create();
 
@@ -50,7 +51,6 @@ public abstract class Rm extends RInvisibleBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     protected Object rm(VirtualFrame frame, String name, RMissing envir, byte inherits) {
-        controlVisibility();
         removeFromFrame(frame, name);
         return RNull.instance;
     }
@@ -59,7 +59,6 @@ public abstract class Rm extends RInvisibleBuiltinNode {
     @TruffleBoundary
     @SuppressWarnings("unused")
     protected Object rm(RAbstractStringVector list, REnvironment envir, byte inherits) {
-        controlVisibility();
         try {
             for (int i = 0; i < list.getLength(); i++) {
                 if (envir == REnvironment.globalEnv()) {

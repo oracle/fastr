@@ -27,7 +27,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -35,6 +34,7 @@ import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class TraceFunctions {
 
-    private abstract static class Helper extends RInvisibleBuiltinNode {
+    private abstract static class Helper extends RBuiltinNode {
         @Child private GetFunctions.Get getNode;
 
         protected Object getFunction(VirtualFrame frame, String funcName) {
@@ -54,7 +54,7 @@ public class TraceFunctions {
         }
     }
 
-    @RBuiltin(name = ".primTrace", kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
+    @RBuiltin(name = ".primTrace", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
     public abstract static class PrimTrace extends Helper {
 
         @Specialization
@@ -65,7 +65,6 @@ public class TraceFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull primTrace(RFunction func) {
-            controlVisibility();
             if (!func.isBuiltin()) {
                 TraceHandling.enableTrace(func);
             } else {
@@ -75,7 +74,7 @@ public class TraceFunctions {
         }
     }
 
-    @RBuiltin(name = ".primUntrace", kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
+    @RBuiltin(name = ".primUntrace", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
     public abstract static class PrimUnTrace extends Helper {
 
         @Specialization
@@ -86,7 +85,6 @@ public class TraceFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull primUnTrace(RFunction func) {
-            controlVisibility();
             if (!func.isBuiltin()) {
                 TraceHandling.disableTrace(func);
             }

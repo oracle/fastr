@@ -50,7 +50,6 @@ public abstract class NormalizePath extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RStringVector doNormalizePath(RAbstractStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork) {
-        controlVisibility();
         String[] results = new String[pathVec.getLength()];
         FileSystem fileSystem = FileSystems.getDefault();
         for (int i = 0; i < results.length; i++) {
@@ -88,7 +87,6 @@ public abstract class NormalizePath extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected Object doNormalizePath(Object path, Object winslash, Object mustWork) {
-        controlVisibility();
         throw RError.error(this, RError.Message.WRONG_TYPE);
     }
 }

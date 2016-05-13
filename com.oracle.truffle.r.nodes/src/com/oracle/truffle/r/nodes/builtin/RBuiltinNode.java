@@ -38,7 +38,6 @@ import com.oracle.truffle.r.nodes.unary.ApplyCastNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.VisibilityController;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -49,7 +48,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @NodeChild(value = "arguments", type = RNode[].class)
-public abstract class RBuiltinNode extends RNode implements VisibilityController {
+public abstract class RBuiltinNode extends RNode {
 
     public abstract Object execute(VirtualFrame frame, Object... args);
 

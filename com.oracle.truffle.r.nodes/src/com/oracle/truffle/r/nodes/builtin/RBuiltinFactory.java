@@ -28,6 +28,7 @@ import java.util.function.Function;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RDispatch;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -35,9 +36,10 @@ public final class RBuiltinFactory extends RBuiltinDescriptor {
 
     private final Function<RNode[], RBuiltinNode> constructor;
 
-    RBuiltinFactory(String name, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, boolean alwaysSplit, RDispatch dispatch,
+    RBuiltinFactory(String name, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, boolean alwaysSplit,
+                    RDispatch dispatch,
                     Function<RNode[], RBuiltinNode> constructor) {
-        super(name, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch);
+        super(name, visibility, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch);
         this.constructor = constructor;
     }
 

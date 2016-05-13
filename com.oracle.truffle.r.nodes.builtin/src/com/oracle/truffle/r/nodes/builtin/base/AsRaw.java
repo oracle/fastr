@@ -54,60 +54,51 @@ public abstract class AsRaw extends RBuiltinNode {
 
     @Specialization
     protected RRawVector asRaw(@SuppressWarnings("unused") RNull vector) {
-        controlVisibility();
         return RDataFactory.createRawVector(0);
     }
 
     @Specialization
     protected RRaw asRaw(byte logical) {
-        controlVisibility();
         initCast();
         return (RRaw) castRawNode.executeRaw(logical);
     }
 
     @Specialization
     protected RRaw asRaw(int value) {
-        controlVisibility();
         initCast();
         return (RRaw) castRawNode.executeRaw(value);
     }
 
     @Specialization
     protected RRaw asRaw(double value) {
-        controlVisibility();
         initCast();
         return (RRaw) castRawNode.executeRaw(value);
     }
 
     @Specialization
     protected RRaw asRaw(RComplex value) {
-        controlVisibility();
         initCast();
         return (RRaw) castRawNode.executeRaw(value);
     }
 
     @Specialization
     protected RRaw asRaw(String value) {
-        controlVisibility();
         initCast();
         return (RRaw) castRawNode.executeRaw(value);
     }
 
     @Specialization
     protected RRaw asRaw(RRaw value) {
-        controlVisibility();
         return value;
     }
 
     @Specialization
     protected RRawVector asRaw(RRawVector value) {
-        controlVisibility();
         return RDataFactory.createRawVector(value.getDataCopy());
     }
 
     @Specialization
     protected RRawVector asRaw(RList value) {
-        controlVisibility();
         initCast();
         int length = value.getLength();
         RRawVector result = RDataFactory.createRawVector(length);
@@ -119,7 +110,6 @@ public abstract class AsRaw extends RBuiltinNode {
 
     @Specialization
     protected RRawVector asRaw(RAbstractVector vector) {
-        controlVisibility();
         initCast();
         return (RRawVector) castRawNode.executeRaw(vector);
     }

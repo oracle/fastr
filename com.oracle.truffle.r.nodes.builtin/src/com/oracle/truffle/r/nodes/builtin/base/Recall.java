@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -43,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 /**
  * The {@code Recall} {@code .Internal}.
  */
-@RBuiltin(name = "Recall", kind = INTERNAL, parameterNames = {"..."}, nonEvalArgs = {0})
+@RBuiltin(name = "Recall", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"..."}, nonEvalArgs = {0})
 public abstract class Recall extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();

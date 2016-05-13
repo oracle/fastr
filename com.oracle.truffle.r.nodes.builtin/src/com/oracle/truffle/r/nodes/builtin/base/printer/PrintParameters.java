@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 //Transcribed from GnuR, src/include/Print.h
@@ -45,6 +46,7 @@ public final class PrintParameters {
 
     public static int getDefaultDigits() {
         if (DEFAULT_DIGITS == -1) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             DEFAULT_DIGITS = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("digits"));
         }
         return DEFAULT_DIGITS;
@@ -55,7 +57,7 @@ public final class PrintParameters {
     }
 
     PrintParameters(Object digits, boolean quote, Object naPrint,
-                    Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
+                    Object printGap, boolean right, Object max, boolean useSource, @SuppressWarnings("unused") boolean noOpt) {
 
         setDefaults();
 

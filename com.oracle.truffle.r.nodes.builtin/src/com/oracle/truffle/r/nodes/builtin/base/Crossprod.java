@@ -61,7 +61,6 @@ public abstract class Crossprod extends RBuiltinNode {
 
     @Specialization(guards = {"isMatrix(x)", "isMatrix(y)"})
     protected RDoubleVector crossprod(RAbstractDoubleVector x, RAbstractDoubleVector y) {
-        controlVisibility();
         ensureMatMult();
         int xRows = x.getDimensions()[0];
         int xCols = x.getDimensions()[1];
@@ -92,13 +91,11 @@ public abstract class Crossprod extends RBuiltinNode {
 
     @Specialization
     protected Object crossprod(RAbstractVector x, RAbstractVector y) {
-        controlVisibility();
         return matMult(transpose(x), y);
     }
 
     @Specialization(guards = "isMatrix(x)")
     protected Object crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y) {
-        controlVisibility();
         ensureMatMult();
         int xRows = x.getDimensions()[0];
         int xCols = x.getDimensions()[1];
@@ -107,7 +104,6 @@ public abstract class Crossprod extends RBuiltinNode {
 
     @Specialization
     protected Object crossprod(RAbstractVector x, @SuppressWarnings("unused") RNull y) {
-        controlVisibility();
         return matMult(transpose(x), x);
     }
 

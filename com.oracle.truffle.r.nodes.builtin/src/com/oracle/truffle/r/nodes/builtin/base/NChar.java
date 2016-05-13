@@ -73,49 +73,42 @@ public abstract class NChar extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected RIntVector nchar(RNull value, String type, byte allowNA, byte keepNA) {
-        controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected int nchar(int value, String type, byte allowNA, byte keepNA) {
-        controlVisibility();
         return coerceContent(value).length();
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected int nchar(double value, String type, byte allowNA, byte keepNA) {
-        controlVisibility();
         return coerceContent(value).length();
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected int nchar(byte value, String type, byte allowNA, byte keepNA) {
-        controlVisibility();
         return coerceContent(value).length();
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "vector.getLength() == 0")
     protected RIntVector ncharL0(RAbstractStringVector vector, String type, byte allowNA, byte keepNA) {
-        controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "vector.getLength() == 1")
     protected int ncharL1(RAbstractStringVector vector, String type, byte allowNA, byte keepNA) {
-        controlVisibility();
         return vector.getDataAt(0).length();
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "vector.getLength() > 1")
     protected RIntVector nchar(RAbstractStringVector vector, String type, byte allowNA, byte keepNA) {
-        controlVisibility();
         int len = vector.getLength();
         int[] result = new int[len];
         for (int i = 0; i < len; i++) {
@@ -127,7 +120,6 @@ public abstract class NChar extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     protected RIntVector nchar(Object obj, Object type, Object allowNA, Object keepNA) {
-        controlVisibility();
         if (factorInheritsCheck == null) {
             CompilerDirectives.transferToInterpreter();
             factorInheritsCheck = insert(new InheritsCheckNode(RRuntime.CLASS_FACTOR));

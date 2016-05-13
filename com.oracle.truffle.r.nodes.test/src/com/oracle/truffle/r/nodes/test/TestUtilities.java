@@ -22,12 +22,27 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import java.io.Closeable;
+import java.io.IOException;
+
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class TestUtilities {
 
@@ -167,8 +182,14 @@ public class TestUtilities {
             return ((TestRoot<T>) target.getRootNode()).node;
         }
 
+        @SuppressWarnings("try")
         public Object call(Object... args) {
-            return target.call(RArguments.createUnitialized((Object) args));
+            try (Closeable c = RContext.withinContext(TestBase.testVMContext)) {
+                return target.call(RArguments.createUnitialized((Object) args));
+            } catch (IOException e) {
+                CompilerDirectives.transferToInterpreter();
+                throw new RuntimeException(e);
+            }
         }
     }
 

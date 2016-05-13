@@ -58,6 +58,13 @@ public @interface RBuiltin {
     int[] nonEvalArgs() default {};
 
     /**
+     * The visibility of the output of the builtin. If the visibility is set to
+     * {@link RVisibility#CUSTOM}, then it is responsibility of the execute method/specializations
+     * to set the visibility in {@link com.oracle.truffle.r.runtime.context.RContext}.
+     */
+    RVisibility visibility() default RVisibility.ON;
+
+    /**
      * Indicates whether or not function containing a call of the form
      * <code>.Internal(name(...))</code> should trigger a split of the caller at its direct call
      * sites. <code>name</code> indicates the builtin name defined in {@link #name()}.

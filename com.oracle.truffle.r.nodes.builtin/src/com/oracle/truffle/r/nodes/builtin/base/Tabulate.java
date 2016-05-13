@@ -38,7 +38,6 @@ public abstract class Tabulate extends RBuiltinNode {
 
     @Specialization
     protected RIntVector tabulate(RAbstractIntVector bin, int nBins) {
-        controlVisibility();
         if (RRuntime.isNA(nBins) || nBins < 0) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "nbin");

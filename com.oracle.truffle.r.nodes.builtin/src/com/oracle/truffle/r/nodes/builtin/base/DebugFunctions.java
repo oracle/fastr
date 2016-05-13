@@ -25,18 +25,20 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 public class DebugFunctions {
 
-    protected abstract static class ErrorAdapter extends RInvisibleBuiltinNode {
+    protected abstract static class ErrorAdapter extends RBuiltinNode {
 
         protected RError arg1Closure() throws RError {
             throw RError.error(this, RError.Message.ARG_MUST_BE_CLOSURE);
@@ -52,7 +54,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "debug", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
+    @RBuiltin(name = "debug", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
     public abstract static class Debug extends ErrorAdapter {
 
         @SuppressWarnings("unused")
@@ -65,13 +67,12 @@ public class DebugFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull doDebug(RFunction fun, Object text, Object condition) {
-            controlVisibility();
             doDebug(fun, text, condition, false);
             return RNull.instance;
         }
     }
 
-    @RBuiltin(name = "debugonce", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
+    @RBuiltin(name = "debugonce", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
     public abstract static class DebugOnce extends ErrorAdapter {
 
         @SuppressWarnings("unused")
@@ -85,13 +86,12 @@ public class DebugFunctions {
         @TruffleBoundary
         protected RNull debugonce(RFunction fun, Object text, Object condition) {
             // TODO implement
-            controlVisibility();
             doDebug(fun, text, condition, true);
             return RNull.instance;
         }
     }
 
-    @RBuiltin(name = "undebug", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
+    @RBuiltin(name = "undebug", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
     public abstract static class UnDebug extends ErrorAdapter {
 
         @Fallback
@@ -103,7 +103,6 @@ public class DebugFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull undebug(RFunction func) {
-            controlVisibility();
             if (!DebugHandling.undebug(func)) {
                 throw RError.error(this, RError.Message.NOT_DEBUGGED);
             }
@@ -111,7 +110,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "isdebugged", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
+    @RBuiltin(name = "isdebugged", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
     public abstract static class IsDebugged extends ErrorAdapter {
 
         @Fallback
@@ -123,7 +122,7 @@ public class DebugFunctions {
         @Specialization
         @TruffleBoundary
         protected byte isDebugged(RFunction func) {
-            forceVisibility(true);
+            RContext.getInstance().setVisible(true);
             return RRuntime.asLogical(DebugHandling.isDebugged(func));
         }
     }

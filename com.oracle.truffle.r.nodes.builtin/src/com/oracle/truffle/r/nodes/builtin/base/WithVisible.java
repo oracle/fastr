@@ -47,13 +47,11 @@ public abstract class WithVisible extends RBuiltinNode {
         Object[] data = new Object[]{x, RRuntime.asLogical(RContext.getInstance().isVisible())};
         // Visibility is changed by the evaluation (else this code would not work),
         // so we have to force it back on.
-        controlVisibility();
         return RDataFactory.createList(data, LISTNAMES);
     }
 
     @Specialization
     protected RList withVisible(@SuppressWarnings("unused") RMissing x) {
-        controlVisibility();
         throw RError.error(this, Message.ARGUMENT_MISSING, "x");
     }
 }

@@ -59,7 +59,6 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     private <T extends RAbstractVector> RDoubleVector performSums(T x, int rowNum, int colNum, byte naRm, GetFunction<T> get) {
-        controlVisibility();
         reportWork(x.getLength());
         double[] result = new double[rowNum];
         final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
@@ -128,7 +127,6 @@ public abstract class RowSums extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RDoubleVector rowSums(RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
-        controlVisibility();
         throw RError.error(this, RError.Message.X_NUMERIC);
     }
 }

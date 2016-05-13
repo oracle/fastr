@@ -41,6 +41,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
@@ -56,6 +57,7 @@ import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
@@ -531,7 +533,17 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     }
 
     public void setVisible(boolean v) {
-        resultVisible = v;
+        if (!FastROptions.IgnoreVisibility.getBooleanValue()) {
+            resultVisible = v;
+        }
+    }
+
+    public void setVisible(RVisibility visibility) {
+        if (visibility == RVisibility.ON) {
+            setVisible(true);
+        } else if (visibility == RVisibility.OFF) {
+            setVisible(false);
+        }
     }
 
     public boolean isMethodTableDispatchOn() {

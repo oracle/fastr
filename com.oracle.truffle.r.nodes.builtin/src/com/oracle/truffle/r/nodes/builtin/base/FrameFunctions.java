@@ -191,7 +191,6 @@ public class FrameFunctions {
             /*
              * sys.call preserves provided names but does not create them, unlike match.call.
              */
-            controlVisibility();
             Frame cframe = getFrame(frame, which);
             if (RArguments.getFunction(cframe) == null) {
                 return RNull.instance;
@@ -240,7 +239,6 @@ public class FrameFunctions {
              * definition==null in the standard (default) case, in which case we get the RFunction
              * from the calling frame
              */
-            controlVisibility();
             RLanguage call = checkCall(callObj);
             if (expandDotsL == RRuntime.LOGICAL_NA) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, "expand.dots");
@@ -395,7 +393,6 @@ public class FrameFunctions {
         @Specialization
         @SuppressWarnings("unused")
         protected RLanguage matchCall(Object definition, Object call, Object expandDots, Object envir) {
-            controlVisibility();
             throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
 
@@ -419,7 +416,6 @@ public class FrameFunctions {
     public abstract static class SysNFrame extends FrameDepthHelper {
         @Specialization
         protected int sysNFrame(VirtualFrame frame) {
-            controlVisibility();
             return getEffectiveDepth(frame) - 1;
         }
     }
@@ -441,7 +437,6 @@ public class FrameFunctions {
 
         @Specialization
         protected REnvironment sysFrame(VirtualFrame frame, int which) {
-            controlVisibility();
             REnvironment result;
             if (zeroProfile.profile(which == 0)) {
                 result = REnvironment.globalEnv();
@@ -470,7 +465,6 @@ public class FrameFunctions {
 
         @Specialization
         protected Object sysFrames(VirtualFrame frame) {
-            controlVisibility();
             int depth = getEffectiveDepth(frame);
             if (depth == 1) {
                 return RNull.instance;
@@ -506,7 +500,6 @@ public class FrameFunctions {
 
         @Specialization
         protected Object sysCalls(VirtualFrame frame) {
-            controlVisibility();
             int depth = getEffectiveDepth(frame);
             if (depth == 1) {
                 return RNull.instance;
@@ -549,7 +542,6 @@ public class FrameFunctions {
 
         @Specialization
         protected int sysParent(VirtualFrame frame, int n) {
-            controlVisibility();
             int p = getEffectiveDepth(frame) - n - 1;
             return p < 0 ? 0 : p;
         }
@@ -572,7 +564,6 @@ public class FrameFunctions {
 
         @Specialization
         protected Object sysFunction(VirtualFrame frame, int which) {
-            controlVisibility();
             // N.B. Despite the spec, n==0 is treated as the current function
             Frame callerFrame = getFrame(frame, which);
             RFunction func = RArguments.getFunction(callerFrame);
@@ -599,7 +590,6 @@ public class FrameFunctions {
 
         @Specialization
         protected RIntVector sysParents(VirtualFrame frame) {
-            controlVisibility();
             int d = getEffectiveDepth(frame) - 1;
             int[] data = new int[d];
             for (int i = 0; i < d; i++) {
@@ -631,7 +621,6 @@ public class FrameFunctions {
 
         @Specialization
         protected REnvironment parentFrame(VirtualFrame frame, int n) {
-            controlVisibility();
             if (n <= 0) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.INVALID_VALUE, "n");

@@ -43,7 +43,6 @@ public abstract class GetOldClass extends RBuiltinNode {
 
     @Specialization
     protected Object getOldClass(RAbstractContainer arg) {
-        controlVisibility();
         if (isObjectProfile.profile(arg.isObject(attrProfiles))) {
             return arg.getClassHierarchy();
         } else {
@@ -53,13 +52,11 @@ public abstract class GetOldClass extends RBuiltinNode {
 
     @Specialization
     protected Object getOldClass(@SuppressWarnings("unused") RFunction arg) {
-        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     protected Object getOldClass(@SuppressWarnings("unused") RNull arg) {
-        controlVisibility();
         return RNull.instance;
     }
 

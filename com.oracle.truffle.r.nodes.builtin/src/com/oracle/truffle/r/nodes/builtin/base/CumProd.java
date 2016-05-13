@@ -44,19 +44,16 @@ public abstract class CumProd extends RBuiltinNode {
 
     @Specialization
     protected int cumprod(int arg) {
-        controlVisibility();
         return arg;
     }
 
     @Specialization
     protected double cumrpod(double arg) {
-        controlVisibility();
         return arg;
     }
 
     @Specialization
     protected int cumprod(byte arg) {
-        controlVisibility();
         na.enable(arg);
         if (na.check(arg)) {
             return RRuntime.INT_NA;
@@ -66,7 +63,6 @@ public abstract class CumProd extends RBuiltinNode {
 
     @Specialization
     protected RIntVector cumprod(RAbstractIntVector arg) {
-        controlVisibility();
         int[] array = new int[arg.getLength()];
         na.enable(arg);
         int prev = 1;
@@ -89,7 +85,6 @@ public abstract class CumProd extends RBuiltinNode {
 
     @Specialization
     protected RDoubleVector cumprod(RAbstractDoubleVector arg) {
-        controlVisibility();
         double[] array = new double[arg.getLength()];
         na.enable(arg);
         double prev = 1;
@@ -112,7 +107,6 @@ public abstract class CumProd extends RBuiltinNode {
 
     @Specialization
     protected RIntVector cumprod(RAbstractLogicalVector arg) {
-        controlVisibility();
         int[] array = new int[arg.getLength()];
         na.enable(arg);
         int prev = 1;
@@ -135,7 +129,6 @@ public abstract class CumProd extends RBuiltinNode {
 
     @Specialization
     protected RDoubleVector cumprod(RAbstractStringVector arg) {
-        controlVisibility();
         double[] array = new double[arg.getLength()];
         na.enable(arg);
         double prev = 1;
@@ -155,7 +148,6 @@ public abstract class CumProd extends RBuiltinNode {
 
     @Specialization
     protected RComplexVector cumprod(RAbstractComplexVector arg) {
-        controlVisibility();
         double[] array = new double[arg.getLength() * 2];
         na.enable(arg);
         RComplex prev = RDataFactory.createComplex(1, 0);

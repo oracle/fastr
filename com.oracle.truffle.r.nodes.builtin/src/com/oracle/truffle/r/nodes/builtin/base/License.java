@@ -28,20 +28,20 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-@RBuiltin(name = "license", aliases = {"licence"}, kind = SUBSTITUTE, parameterNames = {})
-public abstract class License extends RInvisibleBuiltinNode {
+@RBuiltin(name = "license", visibility = RVisibility.OFF, aliases = {"licence"}, kind = SUBSTITUTE, parameterNames = {})
+public abstract class License extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
     protected Object license() {
-        controlVisibility();
         try {
             StdConnections.getStdout().writeString(RRuntime.LICENSE, true);
         } catch (IOException ex) {

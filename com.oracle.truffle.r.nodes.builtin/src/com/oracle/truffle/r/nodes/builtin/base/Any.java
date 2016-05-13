@@ -68,7 +68,6 @@ public abstract class Any extends RBuiltinNode {
     @ExplodeLoop
     protected byte anyCachedLength(RArgsValuesAndNames args, byte naRm, //
                     @Cached("args.getLength()") int cachedLength) {
-        controlVisibility();
         boolean profiledNaRm = naRmProfile.profile(naRm != RRuntime.LOGICAL_FALSE);
         Object[] arguments = args.getArguments();
 
@@ -87,7 +86,6 @@ public abstract class Any extends RBuiltinNode {
 
     @Specialization(contains = "anyCachedLength")
     protected byte any(RArgsValuesAndNames args, byte naRm) {
-        controlVisibility();
         boolean profiledNaRm = naRmProfile.profile(naRm != RRuntime.LOGICAL_FALSE);
 
         byte result = RRuntime.LOGICAL_FALSE;

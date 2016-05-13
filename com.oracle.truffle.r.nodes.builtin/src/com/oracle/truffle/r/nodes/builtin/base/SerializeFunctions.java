@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -45,7 +46,6 @@ public class SerializeFunctions {
     public abstract static class Adapter extends RBuiltinNode {
         @TruffleBoundary
         protected Object doUnserializeFromConnBase(RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
-            controlVisibility();
             try (RConnection openConn = conn.forceOpen("rb")) {
                 if (!openConn.canRead()) {
                     throw RError.error(this, RError.Message.CONNECTION_NOT_OPEN_READ);
@@ -59,14 +59,12 @@ public class SerializeFunctions {
 
         @TruffleBoundary
         protected Object doUnserializeFromRaw(RAbstractRawVector data, @SuppressWarnings("unused") REnvironment refhook) {
-            controlVisibility();
             return RSerialize.unserialize(data);
         }
 
         @TruffleBoundary
         protected Object doSerializeToConnBase(Object object, RConnection conn, int type, @SuppressWarnings("unused") byte xdrLogical, @SuppressWarnings("unused") RNull version,
                         @SuppressWarnings("unused") RNull refhook) {
-            controlVisibility();
             // xdr is only relevant if ascii is false
             try (RConnection openConn = conn.forceOpen(type != RSerialize.XDR ? "wt" : "wb")) {
                 if (!openConn.canWrite()) {
@@ -97,7 +95,7 @@ public class SerializeFunctions {
         }
     }
 
-    @RBuiltin(name = "serializeToConn", kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
+    @RBuiltin(name = "serializeToConn", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
     public abstract static class SerializeToConn extends Adapter {
         @Specialization
         protected Object doSerializeToConn(Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {

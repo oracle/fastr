@@ -31,7 +31,6 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RChannel;
@@ -39,8 +38,9 @@ import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
@@ -66,7 +66,6 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected int create(RAbstractStringVector args, RAbstractStringVector kindVec) {
-            controlVisibility();
             try {
                 RContext.ContextKind kind = RContext.ContextKind.valueOf(kindVec.getDataAt(0));
                 RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, args.materialize().getDataCopy());
@@ -88,7 +87,6 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected Object get() {
-            controlVisibility();
             return RContext.getInstance();
         }
     }
@@ -115,12 +113,11 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.context.spawn", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts", "exprs"})
-    public abstract static class Spawn extends RInvisibleBuiltinNode {
+    @RBuiltin(name = ".fastr.context.spawn", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts", "exprs"})
+    public abstract static class Spawn extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RNull spawn(RAbstractIntVector contexts, RAbstractStringVector exprs) {
-            controlVisibility();
             RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
             for (int i = 0; i < threads.length; i++) {
                 ContextInfo info = checkContext(contexts.getDataAt(i), this);
@@ -139,11 +136,10 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.context.join", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts"})
-    public abstract static class Join extends RInvisibleBuiltinNode {
+    @RBuiltin(name = ".fastr.context.join", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts"})
+    public abstract static class Join extends RBuiltinNode {
         @Specialization
         protected RNull eval(RAbstractIntVector contexts) {
-            controlVisibility();
             try {
                 for (int i = 0; i < contexts.getLength(); i++) {
                     Thread thread = RContext.EvalThread.threads.get(contexts.getDataAt(i));
@@ -179,7 +175,6 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected Object eval(RAbstractIntVector contexts, RAbstractStringVector exprs, byte par) {
-            controlVisibility();
             Object[] results = new Object[contexts.getLength()];
             if (RRuntime.fromLogical(par)) {
                 RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
@@ -255,7 +250,6 @@ public class FastRContext {
         @Specialization(guards = "key.getLength() == 1")
         @TruffleBoundary
         protected int createChannel(RAbstractIntVector key) {
-            controlVisibility();
             return RChannel.createChannel(key.getDataAt(0));
         }
 
@@ -270,7 +264,6 @@ public class FastRContext {
         @Specialization(guards = "key.getLength() == 1")
         @TruffleBoundary
         protected int getChannel(RAbstractIntVector key) {
-            controlVisibility();
             return RChannel.getChannel(key.getDataAt(0));
         }
 
@@ -280,12 +273,11 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.channel.close", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
-    public abstract static class CloseChannel extends RInvisibleBuiltinNode {
+    @RBuiltin(name = ".fastr.channel.close", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
+    public abstract static class CloseChannel extends RBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected RNull getChannel(RAbstractIntVector id) {
-            controlVisibility();
             RChannel.closeChannel(id.getDataAt(0));
             return RNull.instance;
         }
@@ -296,12 +288,11 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.channel.send", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id", "data"})
-    public abstract static class ChannelSend extends RInvisibleBuiltinNode {
+    @RBuiltin(name = ".fastr.channel.send", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id", "data"})
+    public abstract static class ChannelSend extends RBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected RNull send(RAbstractIntVector id, Object data) {
-            controlVisibility();
             RChannel.send(id.getDataAt(0), data);
             return RNull.instance;
         }
@@ -317,7 +308,6 @@ public class FastRContext {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected Object receive(RAbstractIntVector id) {
-            controlVisibility();
             return RChannel.receive(id.getDataAt(0));
         }
 
@@ -332,7 +322,6 @@ public class FastRContext {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected Object poll(RAbstractIntVector id) {
-            controlVisibility();
             return RChannel.poll(id.getDataAt(0));
         }
 
@@ -347,7 +336,6 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected RList select(RList nodes) {
-            controlVisibility();
             int ind = 0;
             int length = nodes.getLength();
             while (true) {

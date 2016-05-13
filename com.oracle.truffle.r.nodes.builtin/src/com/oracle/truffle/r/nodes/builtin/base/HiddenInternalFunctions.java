@@ -52,6 +52,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -78,7 +79,7 @@ public class HiddenInternalFunctions {
     /**
      * Transcribed from GnuR {@code do_makeLazy} in src/main/builtin.c.
      */
-    @RBuiltin(name = "makeLazy", kind = RBuiltinKind.INTERNAL, parameterNames = {"names", "values", "expr", "eenv", "aenv"})
+    @RBuiltin(name = "makeLazy", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"names", "values", "expr", "eenv", "aenv"})
     public abstract static class MakeLazy extends RBuiltinNode {
         @Child private Eval eval;
 
@@ -100,7 +101,6 @@ public class HiddenInternalFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull doMakeLazy(RAbstractStringVector names, RList values, RLanguage expr, REnvironment eenv, REnvironment aenv) {
-            controlVisibility();
             initEval();
             for (int i = 0; i < names.getLength(); i++) {
                 String name = names.getDataAt(i);
@@ -141,7 +141,6 @@ public class HiddenInternalFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull importIntoEnv(REnvironment impEnv, RAbstractStringVector impNames, REnvironment expEnv, RAbstractStringVector expNames) {
-            controlVisibility();
             int length = impNames.getLength();
             if (length != expNames.getLength()) {
                 throw RError.error(this, Message.IMP_EXP_NAMES_MATCH);

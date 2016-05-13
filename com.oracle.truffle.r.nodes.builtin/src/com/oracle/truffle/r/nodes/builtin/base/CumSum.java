@@ -57,19 +57,16 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     protected double cumsum(double arg) {
-        controlVisibility();
         return arg;
     }
 
     @Specialization
     protected int cumsum(int arg) {
-        controlVisibility();
         return arg;
     }
 
     @Specialization
     protected int cumsum(byte arg) {
-        controlVisibility();
         na.enable(arg);
         if (na.check(arg)) {
             return RRuntime.INT_NA;
@@ -79,7 +76,6 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     protected RIntVector cumsum(RIntSequence arg) {
-        controlVisibility();
         int[] res = new int[arg.getLength()];
         int current = arg.getStart();
         int prev = 0;
@@ -101,7 +97,6 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     protected RDoubleVector cumsum(RAbstractDoubleVector arg) {
-        controlVisibility();
         double[] res = new double[arg.getLength()];
         double prev = 0.0;
         na.enable(true);
@@ -121,7 +116,6 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     protected RIntVector cumsum(RAbstractIntVector arg) {
-        controlVisibility();
         int[] res = new int[arg.getLength()];
         int prev = 0;
         int i;
@@ -144,7 +138,6 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     protected RIntVector cumsum(RAbstractLogicalVector arg) {
-        controlVisibility();
         int[] res = new int[arg.getLength()];
         int prev = 0;
         int i;
@@ -164,7 +157,6 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     protected RDoubleVector cumsum(RAbstractStringVector arg) {
-        controlVisibility();
         double[] res = new double[arg.getLength()];
         double prev = 0.0;
         na.enable(true);
@@ -185,7 +177,6 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     protected RComplexVector cumsum(RAbstractComplexVector arg) {
-        controlVisibility();
         double[] res = new double[arg.getLength() * 2];
         RComplex prev = RDataFactory.createComplex(0.0, 0.0);
         int i;

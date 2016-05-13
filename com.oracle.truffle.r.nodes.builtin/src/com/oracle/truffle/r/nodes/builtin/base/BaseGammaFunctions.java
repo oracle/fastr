@@ -79,7 +79,6 @@ public class BaseGammaFunctions {
                 result[i] = GammaFunctions.lgammafn(xv);
                 naValCheck.check(result[i]);
             }
-            controlVisibility();
             return RDataFactory.createDoubleVector(result, naValCheck.neverSeenNA());
         }
 
@@ -123,7 +122,6 @@ public class BaseGammaFunctions {
 
         @Specialization
         protected RDoubleVector digamma(RAbstractDoubleVector x) {
-            controlVisibility();
             naValCheck.enable(x);
             double[] result = new double[x.getLength()];
             boolean warnNaN = false;

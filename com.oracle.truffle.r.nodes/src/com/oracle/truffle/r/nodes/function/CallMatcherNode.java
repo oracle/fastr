@@ -32,7 +32,9 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -181,6 +183,7 @@ public abstract class CallMatcherNode extends RBaseNode {
         @Child private RBuiltinNode builtin;
         @Children private final CastNode[] builtinArgumentCasts;
 
+        private final RBuiltinDescriptor builtinDescriptor;
         private final ArgumentsSignature cachedSuppliedSignature;
         private final ArgumentsSignature[] cachedVarArgSignatures;
         private final RFunction cachedFunction;
@@ -199,11 +202,13 @@ public abstract class CallMatcherNode extends RBaseNode {
             this.next = next;
             this.formals = ((RRootNode) cachedFunction.getRootNode()).getFormalArguments();
             if (function.isBuiltin()) {
-                this.builtin = RBuiltinNode.inline(function.getRBuiltin(), null);
+                this.builtinDescriptor = function.getRBuiltin();
+                this.builtin = RBuiltinNode.inline(builtinDescriptor, null);
                 this.builtinArgumentCasts = builtin.getCasts();
             } else {
                 this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
                 this.builtinArgumentCasts = null;
+                this.builtinDescriptor = null;
             }
         }
 
@@ -222,7 +227,9 @@ public abstract class CallMatcherNode extends RBaseNode {
                     return call.call(frame, arguments);
                 } else {
                     applyCasts(reorderedArgs);
-                    return builtin.execute(frame, reorderedArgs);
+                    Object result = builtin.execute(frame, reorderedArgs);
+                    RContext.getInstance().setVisible(builtinDescriptor.getVisibility());
+                    return result;
                 }
             } else {
                 return next.execute(frame, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);

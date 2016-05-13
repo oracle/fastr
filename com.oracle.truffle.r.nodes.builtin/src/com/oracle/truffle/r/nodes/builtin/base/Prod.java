@@ -51,7 +51,6 @@ public abstract class Prod extends RBuiltinNode {
 
     @Specialization
     protected double prod(RAbstractDoubleVector x) {
-        controlVisibility();
         double product = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             product = prod.op(product, x.getDataAt(k));
@@ -61,7 +60,6 @@ public abstract class Prod extends RBuiltinNode {
 
     @Specialization
     protected double prod(RAbstractIntVector x) {
-        controlVisibility();
         double product = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             product = prod.op(product, x.getDataAt(k));
@@ -71,7 +69,6 @@ public abstract class Prod extends RBuiltinNode {
 
     @Specialization
     protected double prod(RAbstractLogicalVector x) {
-        controlVisibility();
         double product = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             product = prod.op(product, x.getDataAt(k));
@@ -81,7 +78,6 @@ public abstract class Prod extends RBuiltinNode {
 
     @Specialization
     protected RComplex prod(RAbstractComplexVector x) {
-        controlVisibility();
         RComplex product = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             RComplex a = x.getDataAt(k);

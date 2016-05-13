@@ -42,13 +42,11 @@ public abstract class IntToBits extends RBuiltinNode {
 
     @Specialization
     protected RAbstractRawVector intToBits(@SuppressWarnings("unused") RNull x) {
-        controlVisibility();
         return RDataFactory.createEmptyRawVector();
     }
 
     @Specialization
     protected RAbstractRawVector intToBits(RAbstractIntVector x) {
-        controlVisibility();
         byte[] result = new byte[32 * x.getLength()];
         int pos = 0;
         for (int j = 0; j < x.getLength(); j++) {

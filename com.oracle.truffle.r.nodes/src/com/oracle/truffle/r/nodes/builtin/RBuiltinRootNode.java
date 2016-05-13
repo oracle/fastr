@@ -30,6 +30,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 public final class RBuiltinRootNode extends RRootNode {
@@ -58,12 +59,16 @@ public final class RBuiltinRootNode extends RRootNode {
     @Override
     public Object execute(VirtualFrame frame) {
         verifyEnclosingAssumptions(frame);
+        Object result = null;
         try {
-            return builtin.execute(frame);
+            result = builtin.execute(frame);
         } catch (NullPointerException | ArrayIndexOutOfBoundsException | AssertionError e) {
             CompilerDirectives.transferToInterpreter();
             throw new RInternalError(e, "internal error");
         }
+
+        RContext.getInstance().setVisible(factory.getVisibility());
+        return result;
     }
 
     public RBuiltinNode getBuiltin() {

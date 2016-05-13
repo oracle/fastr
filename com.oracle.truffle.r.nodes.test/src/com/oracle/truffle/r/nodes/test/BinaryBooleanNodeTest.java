@@ -43,6 +43,7 @@ import static org.junit.Assume.assumeThat;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.experimental.theories.DataPoint;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
@@ -69,6 +70,10 @@ import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
  */
 @RunWith(Theories.class)
 public class BinaryBooleanNodeTest extends BinaryVectorTest {
+    @Test
+    public void dummy() {
+        // to make sure this file is recognized as a test
+    }
 
     @DataPoint public static final RAbstractVector EMPTY_STRING = createEmptyStringVector();
     @DataPoint public static final RAbstractVector EMPTY_RAW = createEmptyRawVector();
@@ -206,15 +211,14 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
         RAbstractVector vector = originalVector.copy();
         assumeFalse(isLogicOp(factory));
         assumeFalse(vector.getRType() == RType.Raw);
-        RAbstractVector result = createEmptyLogicalVector();
-        assertThat(executeArithmetic(factory, vector, RNull.instance), is(result));
-        assertThat(executeArithmetic(factory, RNull.instance, vector), is(result));
+        assertThat(executeArithmetic(factory, vector, RNull.instance), isEmptyVectorOf(RType.Logical));
+        assertThat(executeArithmetic(factory, RNull.instance, vector), isEmptyVectorOf(RType.Logical));
     }
 
     @Theory
     public void testBothNull(BooleanOperationFactory factory) {
         assumeFalse(isLogicOp(factory));
-        assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), is(createEmptyLogicalVector()));
+        assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), isEmptyVectorOf(RType.Logical));
     }
 
     @Theory
