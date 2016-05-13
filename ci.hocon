@@ -13,7 +13,7 @@ common : {
   }
   environment : {
   }
-  timelimit : "30:00"
+  timelimit : "1:00:00"
 }
 
 gateCmd : ["mx", "--strict-compliance", "originalgate", "--strict-mode", "-t"]
