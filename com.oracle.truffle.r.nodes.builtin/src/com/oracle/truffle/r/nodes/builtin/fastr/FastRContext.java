@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -172,6 +173,11 @@ public class FastRContext {
      */
     @RBuiltin(name = ".fastr.context.eval", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts", "exprs", "par"})
     public abstract static class Eval extends RBuiltinNode {
+        @Override
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
+        }
+
         @Specialization
         @TruffleBoundary
         protected Object eval(RAbstractIntVector contexts, RAbstractStringVector exprs, byte par) {
