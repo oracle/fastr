@@ -672,6 +672,7 @@ public final class RError extends RuntimeException {
         POSITIVE_LENGTH("'%s' must have positive length"),
         BROWSER_QUIT("cannot quit from browser"),
         QUIT_ASK("one of \"yes\", \"no\", \"ask\" or \"default\" expected."),
+        QUIT_SAVE("unrecognized value of 'save'"),
         ENVIRONMENTS_COERCE("environments cannot be coerced to other types"),
         CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'");
 
