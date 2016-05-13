@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
+import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -71,7 +72,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
     private final BranchProfile containsRSymbolProfile = BranchProfile.create();
 
     private final Object argsIdentifier = new Object();
-    @Child private RCallNode call = RCallNode.createExplicitCall(argsIdentifier);
+    @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier);
     @Child private FrameSlotNode slot = FrameSlotNode.createTemp(argsIdentifier, true);
 
     @Specialization

@@ -36,6 +36,7 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -49,7 +50,7 @@ class RInteropExecuteNode extends RootNode {
     private final Object argsIdentifier = new Object();
     private final FrameSlot slot = emptyFrameDescriptor.addFrameSlot(argsIdentifier, FrameSlotKind.Object);
 
-    @Child private RCallNode call = RCallNode.createExplicitCall(argsIdentifier);
+    @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier);
     @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
     private final ArgumentsSignature suppliedSignature;

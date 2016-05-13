@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -66,17 +65,7 @@ public abstract class Unique extends RBuiltinNode {
 
     private static final long BIG_THRESHOLD = 100;
 
-    @Child private Unique uniqueRecursive;
-
     private final ConditionProfile bigProfile = ConditionProfile.createBinaryProfile();
-
-    private RVector uniqueRecursive(VirtualFrame frame, RVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
-        if (uniqueRecursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            uniqueRecursive = insert(UniqueNodeGen.create(null));
-        }
-        return (RVector) uniqueRecursive.execute(frame, vec, incomparables, fromLast, nmax, vararg);
-    }
 
     @SuppressWarnings("unused")
     @Specialization

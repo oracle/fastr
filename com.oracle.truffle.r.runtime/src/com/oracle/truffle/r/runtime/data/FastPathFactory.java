@@ -62,19 +62,20 @@ public interface FastPathFactory {
     };
 
     static FastPathFactory fromRBuiltin(RBuiltin builtin, final Supplier<RFastPathNode> factory) {
-        final RVisibility visibility = builtin.visibility();
-        final int[] nonEvalArgs = builtin.nonEvalArgs();
         return new FastPathFactory() {
             @Override
             public RFastPathNode create() {
                 return factory.get();
             }
 
+            @Override
             public RVisibility getVisibility() {
-                return visibility;
+                return builtin.visibility();
             }
 
+            @Override
             public boolean evaluatesArgument(int index) {
+                final int[] nonEvalArgs = builtin.nonEvalArgs();
                 for (int i = 0; i < nonEvalArgs.length; ++i) {
                     if (nonEvalArgs[i] == index) {
                         return false;
