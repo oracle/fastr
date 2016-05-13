@@ -48,7 +48,6 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -173,7 +172,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     @Override
     public boolean isSyntax() {
-        return identifier instanceof String && !AnonymousFrameVariable.isAnonymous(identifierAsString);
+        return identifier instanceof String;
     }
 
     @Override
