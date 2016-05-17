@@ -64,11 +64,24 @@ public class TestStackBuiltins extends TestBase {
         assertEval(template("n <- 100; f <- function(x) { n <- 101; data.frame(a=as.character(%0),b=as.character(%0),c=x) }; f('foo')", FRAME_FUNCTIONS));
     }
 
+    private static final String[] SIMPLE_FRAME_FUNCTIONS = {
+                    "sys.parent()", "sys.parent(2)", "sys.parent(4)",
+                    "sys.call()", "sys.call(1)", "sys.call(4)",
+                    "{ e <- parent.frame(); e$n}", "{ e <- parent.frame(2); e$n}"
+    };
+    private static final String[] COMPLEX_FRAME_FUNCTIONS = {
+                    "sys.nframe()",
+                    "sys.call(-2)",
+                    "sys.calls()",
+    };
+
     @Test
     public void testS3() {
+        assertEval(template("n <- 100; v <- 123; class(v) <- 'cls'; foo <- function(o) { n <- 101; UseMethod('foo') }; foo.cls <- function(o) { n <- 102; NextMethod() }; " +
+                        "foo.default <- function(o) { n <- 103; %0 }; ident <- function(x) { n <- 104; x }; ident(try(foo(v)))", SIMPLE_FRAME_FUNCTIONS));
         // S3 frames are not handled correctly at the moment
         assertEval(Ignored.ImplementationError,
                         template("n <- 100; v <- 123; class(v) <- 'cls'; foo <- function(o) { n <- 101; UseMethod('foo') }; foo.cls <- function(o) { n <- 102; NextMethod() }; " +
-                                        "foo.default <- function(o) { n <- 103; %0 }; ident <- function(x) { n <- 104; x }; ident(try(foo(v)))", FRAME_FUNCTIONS));
+                                        "foo.default <- function(o) { n <- 103; %0 }; ident <- function(x) { n <- 104; x }; ident(try(foo(v)))", COMPLEX_FRAME_FUNCTIONS));
     }
 }
