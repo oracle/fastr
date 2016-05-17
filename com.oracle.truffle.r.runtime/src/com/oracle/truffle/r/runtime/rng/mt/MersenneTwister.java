@@ -163,39 +163,50 @@ public final class MersenneTwister extends RNGInitAdapter {
         double[] result = new double[count];
 
         localMti = localDummy0;
+        // It appears that this never happens
+        // sgenrand(4357);
+        RInternalError.guarantee(localMti != N + 1);
 
         int pos = 0;
-        while (pos < count) {
-            // It appears that this never happens
-            // sgenrand(4357);
-            RInternalError.guarantee(localMti != N + 1);
-
-            if (localMti >= N) {
-                /* generate N words at one time */
-                int kk;
-                for (kk = 0; kk < N - M; kk++) {
-                    int y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
-                    setMt(kk, getMt(kk + M) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
-                }
-                for (; kk < N - 1; kk++) {
-                    int y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
-                    setMt(kk, getMt(kk + (M - N)) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
-                }
-                int y2y = (getMt(N - 1) & UPPERMASK) | (getMt(0) & LOWERMASK);
-                setMt(N - 1, getMt(M - 1) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
-
-                localMti = 0;
-            }
-
+        while (pos < count && localMti < N) {
             int y = getMt(localMti++);
             /* Tempering */
             y ^= (y >>> 11);
             y ^= (y << 7) & TEMPERING_MASK_B;
             y ^= (y << 15) & TEMPERING_MASK_C;
             y ^= (y >>> 18);
-            result[pos++] = RRNG.fixup((y & 0xffffffffL) * RRNG.I2_32M1);
-            localDummy0 = localMti;
+            result[pos] = RRNG.fixup((y & 0xffffffffL) * RRNG.I2_32M1);
+            pos++;
         }
+
+        while (pos < count) {
+            /* generate N words at one time */
+            int kk;
+            for (kk = 0; kk < N - M; kk++) {
+                int y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
+                setMt(kk, getMt(kk + M) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
+            }
+            for (; kk < N - 1; kk++) {
+                int y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
+                setMt(kk, getMt(kk + (M - N)) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
+            }
+            int y2y = (getMt(N - 1) & UPPERMASK) | (getMt(0) & LOWERMASK);
+            setMt(N - 1, getMt(M - 1) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
+
+            localMti = 0;
+
+            while (pos < count && localMti < N) {
+                int y = getMt(localMti++);
+                /* Tempering */
+                y ^= (y >>> 11);
+                y ^= (y << 7) & TEMPERING_MASK_B;
+                y ^= (y << 15) & TEMPERING_MASK_C;
+                y ^= (y >>> 18);
+                result[pos] = RRNG.fixup((y & 0xffffffffL) * RRNG.I2_32M1);
+                pos++;
+            }
+        }
+        localDummy0 = localMti;
         mti = localMti;
         dummy[0] = localDummy0;
         return result;

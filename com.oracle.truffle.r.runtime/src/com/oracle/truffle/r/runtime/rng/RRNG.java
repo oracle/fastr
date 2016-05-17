@@ -125,7 +125,7 @@ public class RRNG {
 
     public static final class ContextStateImpl implements RContext.ContextState {
         private RandomNumberGenerator currentGenerator;
-        private RandomNumberGenerator[] allGenerators;
+        private final RandomNumberGenerator[] allGenerators;
         private NormKind currentNormKind;
 
         private ContextStateImpl(RandomNumberGenerator rng, NormKind currentNormKind) {

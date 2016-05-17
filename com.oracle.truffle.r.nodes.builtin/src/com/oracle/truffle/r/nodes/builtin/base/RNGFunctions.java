@@ -68,7 +68,7 @@ public class RNGFunctions {
             throw RError.error(this, RError.Message.SEED_NOT_VALID_INT);
         }
 
-        private static void doSetSeed(Integer newSeed, int kind, int normKind) {
+        private static void doSetSeed(int newSeed, int kind, int normKind) {
             RRNG.doSetSeed(newSeed, kind, normKind);
         }
     }
