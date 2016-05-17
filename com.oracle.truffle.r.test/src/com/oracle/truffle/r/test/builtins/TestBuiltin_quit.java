@@ -26,7 +26,10 @@ import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 
+import jdk.nashorn.internal.ir.annotations.Ignore;
+
 public class TestBuiltin_quit extends TestBase {
+    @Ignore
     @Test
     public void testQuitErrorSave() {
         assertEval(Output.ContainsError, "{ quit(\"xx\") }");
