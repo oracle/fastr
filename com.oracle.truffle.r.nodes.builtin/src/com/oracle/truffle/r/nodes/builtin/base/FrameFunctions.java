@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -90,10 +89,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * relative to the current frame.
  */
 public class FrameFunctions {
-
-    public static void log(String msg) {
-        // System.out.println(msg);
-    }
 
     public abstract static class FrameHelper extends RBuiltinNode {
 
@@ -182,7 +177,6 @@ public class FrameFunctions {
                 return RNull.instance;
             }
             RLanguage createCall = createCall(RArguments.getCall(cframe));
-            log("sys.call " + createCall.getRep().getSourceSection());
             return createCall;
         }
 
@@ -331,7 +325,6 @@ public class FrameFunctions {
             RSyntaxNode[] newArgs = nodes.toArray(new RSyntaxNode[nodes.size()]);
 
             RSyntaxNode modCallNode = RASTUtils.createCall(callNode.getFunctionNode(), false, sig, newArgs);
-            log("match.call " + modCallNode.getSourceSection());
             return RDataFactory.createLanguage(modCallNode.asRNode());
         }
 
@@ -413,7 +406,6 @@ public class FrameFunctions {
                 isPromiseResultProfile.enter();
                 call = call.getParent();
             }
-            log("sys.nframe " + call.getDepth());
             return call.getDepth();
         }
     }
@@ -446,7 +438,6 @@ public class FrameFunctions {
             // Deoptimize every promise which is now in this frame, as it might leave it's stack
             deoptFrameNode.deoptimizeFrame(result.getFrame());
 
-            log("sys.frame " + result);
             return result;
         }
 
@@ -467,7 +458,6 @@ public class FrameFunctions {
         protected Object sysFrames(VirtualFrame frame) {
             int depth = RArguments.getDepth(frame);
             if (depth == 1) {
-                log("sys.frames " + RNull.instance);
                 return RNull.instance;
             } else {
                 RPairList result = RDataFactory.createPairList();
@@ -484,7 +474,6 @@ public class FrameFunctions {
                         next.setCdr(RNull.instance);
                     }
                 }
-                log("sys.frames " + result);
                 return result;
             }
         }
@@ -526,7 +515,6 @@ public class FrameFunctions {
                         return RArguments.getDepth(f) == 1 ? result : null;
                     }
                 });
-                log("sys.calls " + result);
                 return result;
             }
         }
@@ -551,7 +539,6 @@ public class FrameFunctions {
                 call = call.getParent();
                 if (call == null) {
                     nullCallerProfile.enter();
-                    log("sys.parent 0");
                     return 0;
                 }
                 while (call.isPromise()) {
@@ -560,7 +547,6 @@ public class FrameFunctions {
                 }
             }
             nonNullCallerProfile.enter();
-            log("sys.parent " + call.getDepth());
             return call.getDepth();
         }
     }
@@ -581,7 +567,6 @@ public class FrameFunctions {
             Frame callerFrame = getFrame(frame, which);
             RFunction func = RArguments.getFunction(callerFrame);
 
-            log("sys.function " + func);
             if (func == null) {
                 return RNull.instance;
             } else {
@@ -617,7 +602,6 @@ public class FrameFunctions {
             }
             int depth = call.getDepth();
             if (depth == 0) {
-                log("sys.parents ()");
                 return RDataFactory.createEmptyIntVector();
             } else {
                 int[] data = Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, int[]>() {
@@ -632,7 +616,6 @@ public class FrameFunctions {
                         return RArguments.getDepth(f) == 1 ? result : null;
                     }
                 });
-                log("sys.parents " + Arrays.toString(data));
                 return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
             }
         }
@@ -686,7 +669,6 @@ public class FrameFunctions {
                 call = call.getParent();
                 if (call == null) {
                     nullCallerProfile.enter();
-                    log("parent.frame global");
                     return REnvironment.globalEnv();
                 }
                 while (call.isPromise()) {
@@ -703,9 +685,7 @@ public class FrameFunctions {
             // */
             // parentDepth--;
             // }
-            REnvironment result = REnvironment.frameToEnvironment(getNumberedFrame(frame, call.getDepth()).materialize());
-            log("parent.frame " + n + " " + result);
-            return result;
+            return REnvironment.frameToEnvironment(getNumberedFrame(frame, call.getDepth()).materialize());
         }
 
         @Specialization

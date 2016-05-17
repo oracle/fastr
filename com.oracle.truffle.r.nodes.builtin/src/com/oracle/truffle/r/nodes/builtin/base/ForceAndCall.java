@@ -25,18 +25,18 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -53,77 +53,60 @@ public abstract class ForceAndCall extends RBuiltinNode {
 
     @Child private PromiseHelperNode promiseHelper;
 
-    protected PromiseHelperNode initPromiseHelper() {
-        if (promiseHelper == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            promiseHelper = insert(new PromiseHelperNode());
-        }
-        return promiseHelper;
-    }
-
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.toInteger(0);
     }
 
-    @Specialization
-    protected Object forceAndCallBuiltin(VirtualFrame frame, int n, RFunction fun, RArgsValuesAndNames args) {
+    @Specialization(guards = "cachedN == n")
+    protected Object forceAndCall(VirtualFrame frame, @SuppressWarnings("unused") int n, RFunction fun, RArgsValuesAndNames args, //
+                    @Cached("n") int cachedN) {
         if (!fun.isBuiltin()) {
-            initPromiseHelper();
-            RArgsValuesAndNames flattened = flatten(args);
-            // In GnuR there appears to be no error checks on n > args.length
-            int cnt = Math.min(flattened.getLength(), n);
-            for (int i = 0; i < cnt; i++) {
-                RPromise arg = (RPromise) args.getArgument(i);
-                initPromiseHelper().evaluate(frame, arg);
-            }
+            flattenFirstArgs(frame, cachedN, args);
         }
 
         FrameSlot frameSlot = slot.executeFrameSlot(frame);
-        frame.setObject(frameSlot, args);
-        return call.execute(frame, fun);
+        try {
+            frame.setObject(frameSlot, args);
+            return call.execute(frame, fun);
+        } finally {
+            frame.setObject(frameSlot, null);
+        }
     }
 
-    @TruffleBoundary
-    private static RArgsValuesAndNames flatten(RArgsValuesAndNames args) {
-        boolean hasVarArgs = false;
-        int finalSize = args.getLength();
-        for (Object arg : args.getArguments()) {
+    @ExplodeLoop
+    private void flattenFirstArgs(VirtualFrame frame, int n, RArgsValuesAndNames args) {
+        if (promiseHelper == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            promiseHelper = insert(new PromiseHelperNode());
+        }
+        // In GnuR there appears to be no error checks on n > args.length
+        if (args.getLength() < n) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.nyi(this, "callAndForce with insufficient arguments");
+        }
+        for (int i = 0; i < n; i++) {
+            Object arg = args.getArgument(i);
             if (arg instanceof RArgsValuesAndNames) {
-                hasVarArgs = true;
-                finalSize += ((RArgsValuesAndNames) arg).getLength() - 1;
+                CompilerDirectives.transferToInterpreter();
+                throw RError.nyi(this, "callAndForce trying to force varargs");
+            }
+            if (arg instanceof RPromise) {
+                promiseHelper.evaluate(frame, (RPromise) arg);
             }
         }
-        if (!hasVarArgs) {
-            return args;
-        }
-        Object[] values = new Object[finalSize];
-        String[] names = new String[finalSize];
-        int pos = 0;
-        Object[] arguments = args.getArguments();
-        for (int i = 0; i < arguments.length; i++) {
-            Object arg = arguments[i];
-            if (arg instanceof RArgsValuesAndNames) {
-                RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
-                for (int j = 0; j < varArgs.getLength(); j++) {
-                    values[pos] = varArgs.getArgument(j);
-                    names[pos++] = varArgs.getSignature().getName(j);
-                }
-            } else {
-                values[pos] = arg;
-                names[pos++] = args.getSignature().getName(i);
-            }
-        }
-        return new RArgsValuesAndNames(values, ArgumentsSignature.get(names));
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    protected Object forceAndCallGeneric(VirtualFrame frame, int n, RFunction fun, RArgsValuesAndNames args) {
+        CompilerDirectives.transferToInterpreter();
+        throw RError.nyi(this, "generic case of forceAndCall");
     }
 
     @SuppressWarnings("unused")
     @Fallback
     protected Object forceAndCall(Object n, Object fun, RArgsValuesAndNames args) {
         throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
-    }
-
-    protected static boolean isBuiltin(RFunction fun) {
-        return fun.isBuiltin();
     }
 }

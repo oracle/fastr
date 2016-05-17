@@ -138,7 +138,6 @@ public class PromiseHelperNode extends RBaseNode {
     private final ValueProfile multiVarArgsOptTypeProfile = ValueProfile.createIdentityProfile();
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
     private final BranchProfile varArgProfile = BranchProfile.create();
-    private final ConditionProfile chckPromiseMismatch = ConditionProfile.createBinaryProfile();
 
     /**
      * Guarded by {@link #isInOriginFrame(VirtualFrame,RPromise)}.
@@ -211,8 +210,7 @@ public class PromiseHelperNode extends RBaseNode {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     promiseClosureCache = insert(InlineCacheNode.createPromise(3));
                 }
-                promiseFrame = VirtualEvalFrame.create(promiseFrame.materialize(), RArguments.getFunction(promiseFrame),
-                                RCaller.createForPromise(RArguments.getCall(promiseFrame), RArguments.getDepth(frame)));
+                promiseFrame = wrapPromiseFrame(frame, promiseFrame);
                 return promiseClosureCache.execute(promiseFrame, promise.getClosure());
             }
         } finally {
@@ -287,11 +285,18 @@ public class PromiseHelperNode extends RBaseNode {
             } else {
                 Frame promiseFrame = promise.getFrame();
                 assert promiseFrame != null;
+
+                promiseFrame = wrapPromiseFrame(frame, promiseFrame);
                 return promise.getClosure().eval(promiseFrame.materialize());
             }
         } finally {
             promise.setUnderEvaluation(false);
         }
+    }
+
+    private static VirtualEvalFrame wrapPromiseFrame(VirtualFrame frame, Frame promiseFrame) {
+        return VirtualEvalFrame.create(promiseFrame.materialize(), RArguments.getFunction(promiseFrame),
+                        RCaller.createForPromise(RArguments.getCall(promiseFrame), frame == null ? 0 : RArguments.getDepth(frame)));
     }
 
     private static Object generateValueEagerSlowPath(VirtualFrame frame, OptType optType, EagerPromise promise) {

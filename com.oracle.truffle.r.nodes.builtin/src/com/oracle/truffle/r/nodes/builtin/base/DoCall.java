@@ -132,8 +132,12 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
             }
         }
         FrameSlot frameSlot = slot.executeFrameSlot(frame);
-        frame.setObject(frameSlot, new RArgsValuesAndNames(argValues, signature));
-        return call.execute(frame, func);
+        try {
+            frame.setObject(frameSlot, new RArgsValuesAndNames(argValues, signature));
+            return call.execute(frame, func);
+        } finally {
+            frame.setObject(frameSlot, null);
+        }
     }
 
     private MaterializedFrame getCallerFrame(VirtualFrame frame, MaterializedFrame callerFrame) {

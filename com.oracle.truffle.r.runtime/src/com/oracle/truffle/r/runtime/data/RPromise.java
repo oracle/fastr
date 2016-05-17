@@ -26,6 +26,8 @@ import java.util.HashMap;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.RootCallTarget;
@@ -101,7 +103,7 @@ public class RPromise implements RTypedValue {
      * @see #getFrame()
      * @see EagerPromise#materialize()
      */
-    protected MaterializedFrame execFrame;
+    @CompilationFinal protected MaterializedFrame execFrame;
 
     /**
      * Might not be <code>null</code>.
@@ -323,6 +325,7 @@ public class RPromise implements RTypedValue {
         @TruffleBoundary
         public void materialize() {
             if (execFrame == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 this.execFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, targetFrame).materialize();
             }
         }
