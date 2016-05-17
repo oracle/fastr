@@ -228,7 +228,6 @@ public class RRNG {
      *            {@link NormKind}.
      */
     public static void doSetSeed(int seed, int kindAsInt, int normKindAsInt) {
-// int newSeed = seed == RESET_SEED ? timeToSeed() : seed;
         getRNGKind(RNull.instance);
         changeKindsAndInitGenerator(seed, kindAsInt, normKindAsInt);
         updateDotRandomSeed();
@@ -239,10 +238,8 @@ public class RRNG {
      * chooses the new seed from the previous RNG.
      */
     public static void doRNGKind(int kindAsInt, int normKindAsInt) {
-// int newSeed = (int) (unifRand() * UINT_MAX);
         getRNGKind(RNull.instance);
         changeKindsAndInitGenerator(SAME_SEED, kindAsInt, normKindAsInt);
-// updateDotRandomSeed();
     }
 
     @TruffleBoundary
