@@ -14,12 +14,11 @@ import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 
-// Checkstyle: stop line length check
 public class TestBuiltin_oldClassassign extends TestBase {
 
     @Test
     public void testoldClassassign1() {
-        assertEval(Ignored.Unknown, "argv <- list(list(), NULL);`oldClass<-`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(list(), NULL);`oldClass<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
