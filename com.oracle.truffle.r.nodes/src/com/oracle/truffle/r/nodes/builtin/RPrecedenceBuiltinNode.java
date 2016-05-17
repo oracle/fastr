@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 
 public abstract class RPrecedenceBuiltinNode extends RBuiltinNode {
@@ -35,7 +34,7 @@ public abstract class RPrecedenceBuiltinNode extends RBuiltinNode {
         int precedence = -1;
         Object[] array = args.getArguments();
         for (int i = 0; i < array.length; i++) {
-            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], RRuntime.LOGICAL_FALSE));
+            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], false));
         }
         return precedence;
     }
@@ -77,38 +76,38 @@ public abstract class RPrecedenceBuiltinNode extends RBuiltinNode {
     }
 
     protected boolean isIntegerPrecedence(Object arg) {
-        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.INT_PRECEDENCE;
+        return precedenceNode.executeInteger(arg, false) == PrecedenceNode.INT_PRECEDENCE;
     }
 
     protected boolean isLogicalPrecedence(Object arg) {
-        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.LOGICAL_PRECEDENCE;
+        return precedenceNode.executeInteger(arg, false) == PrecedenceNode.LOGICAL_PRECEDENCE;
     }
 
     protected boolean isDoublePrecedence(Object arg) {
-        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.DOUBLE_PRECEDENCE;
+        return precedenceNode.executeInteger(arg, false) == PrecedenceNode.DOUBLE_PRECEDENCE;
     }
 
     protected boolean isComplexPrecedence(Object arg) {
-        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.COMPLEX_PRECEDENCE;
+        return precedenceNode.executeInteger(arg, false) == PrecedenceNode.COMPLEX_PRECEDENCE;
     }
 
     protected boolean isStringPrecedence(Object arg) {
-        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.STRING_PRECEDENCE;
+        return precedenceNode.executeInteger(arg, false) == PrecedenceNode.STRING_PRECEDENCE;
     }
 
     protected boolean isRawPrecedence(Object arg) {
-        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.RAW_PRECEDENCE;
+        return precedenceNode.executeInteger(arg, false) == PrecedenceNode.RAW_PRECEDENCE;
     }
 
     protected boolean isNullPrecedence(Object arg) {
-        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.NO_PRECEDENCE;
+        return precedenceNode.executeInteger(arg, false) == PrecedenceNode.NO_PRECEDENCE;
     }
 
     protected boolean isListPrecedence(Object arg) {
-        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.LIST_PRECEDENCE;
+        return precedenceNode.executeInteger(arg, false) == PrecedenceNode.LIST_PRECEDENCE;
     }
 
     protected boolean isExprPrecedence(Object arg) {
-        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.EXPRESSION_PRECEDENCE;
+        return precedenceNode.executeInteger(arg, false) == PrecedenceNode.EXPRESSION_PRECEDENCE;
     }
 }

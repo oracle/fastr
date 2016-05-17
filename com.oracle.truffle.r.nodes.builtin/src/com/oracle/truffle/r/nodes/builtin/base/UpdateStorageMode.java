@@ -22,7 +22,6 @@ import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.IsFactorNode;
-import com.oracle.truffle.r.nodes.unary.IsFactorNodeGen;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -59,7 +58,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
             return x;
         }
         initFactorNode();
-        if (isFactor.executeIsFactor(x) == RRuntime.LOGICAL_TRUE) {
+        if (isFactor.executeIsFactor(x)) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.INVALID_STORAGE_MODE_UPDATE);
         }
@@ -105,7 +104,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     private void initFactorNode() {
         if (isFactor == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            isFactor = insert(IsFactorNodeGen.create());
+            isFactor = insert(new IsFactorNode());
         }
     }
 
