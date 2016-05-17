@@ -39,8 +39,7 @@ public abstract class RArgumentsNode extends RBaseNode {
      * certain parameters, on which Truffle DSL cannot specialize.
      */
 
-    public abstract Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, int depth, MaterializedFrame promiseFrame, Object[] evaluatedArgs,
-                    ArgumentsSignature signature, DispatchArgs dispatchArgs);
+    public abstract Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature signature, DispatchArgs dispatchArgs);
 
     public static RArgumentsNode create() {
         return new RArgumentsUninitializedNode();
@@ -53,10 +52,9 @@ public abstract class RArgumentsNode extends RBaseNode {
 
     private static final class RArgumentsUninitializedNode extends RArgumentsNode {
         @Override
-        public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, int depth, MaterializedFrame promiseFrame, Object[] evaluatedArgs, ArgumentsSignature signature,
-                        DispatchArgs dispatchArgs) {
+        public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature signature, DispatchArgs dispatchArgs) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            return replace(new RArgumentsCachedNode(function)).execute(function, caller, callerFrame, depth, promiseFrame, evaluatedArgs, signature, dispatchArgs);
+            return replace(new RArgumentsCachedNode(function)).execute(function, caller, callerFrame, evaluatedArgs, signature, dispatchArgs);
         }
     }
 
@@ -68,22 +66,20 @@ public abstract class RArgumentsNode extends RBaseNode {
         }
 
         @Override
-        public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, int depth, MaterializedFrame promiseFrame, Object[] evaluatedArgs, ArgumentsSignature signature,
-                        DispatchArgs dispatchArgs) {
+        public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature signature, DispatchArgs dispatchArgs) {
             if (function == cachedFunction) {
-                return RArguments.create(cachedFunction, caller, callerFrame, depth, promiseFrame, evaluatedArgs, signature, cachedFunction.getEnclosingFrame(), dispatchArgs);
+                return RArguments.create(cachedFunction, caller, callerFrame, evaluatedArgs, signature, cachedFunction.getEnclosingFrame(), dispatchArgs);
             } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new RArgumentsGenericNode()).execute(function, caller, callerFrame, depth, promiseFrame, evaluatedArgs, signature, dispatchArgs);
+                return replace(new RArgumentsGenericNode()).execute(function, caller, callerFrame, evaluatedArgs, signature, dispatchArgs);
             }
         }
     }
 
     private static final class RArgumentsGenericNode extends RArgumentsNode {
         @Override
-        public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, int depth, MaterializedFrame promiseFrame, Object[] evaluatedArgs, ArgumentsSignature signature,
-                        DispatchArgs dispatchArgs) {
-            return RArguments.create(function, caller, callerFrame, depth, promiseFrame, evaluatedArgs, signature, function.getEnclosingFrame(), dispatchArgs);
+        public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature signature, DispatchArgs dispatchArgs) {
+            return RArguments.create(function, caller, callerFrame, evaluatedArgs, signature, function.getEnclosingFrame(), dispatchArgs);
         }
     }
 }

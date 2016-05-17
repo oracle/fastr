@@ -304,6 +304,8 @@ public class EnvFunctions {
                         @Cached("new()") GetCallerFrameNode callerFrame, //
                         @Cached("new()") PromiseDeoptimizeFrameNode deoptFrameNode) {
             MaterializedFrame matFrame = callerFrame.execute(frame);
+
+            matFrame = matFrame instanceof VirtualEvalFrame ? ((VirtualEvalFrame) matFrame).getOriginalFrame() : matFrame;
             deoptFrameNode.deoptimizeFrame(matFrame);
             return REnvironment.frameToEnvironment(matFrame);
         }

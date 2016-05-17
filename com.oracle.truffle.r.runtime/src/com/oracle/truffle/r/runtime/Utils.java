@@ -305,11 +305,12 @@ public final class Utils {
      * return {@code null}.
      *
      * @param fa kind of access required to the frame
-     * @param depth identifies which frame is required (> 0)
+     * @param target identifies which frame is required
      * @return {@link Frame} instance or {@code null} if {@code depth} is out of range
      */
     @TruffleBoundary
-    public static Frame getStackFrame(FrameAccess fa, int depth, boolean skipPromiseEvalFrames) {
+    public static Frame getStackFrame(FrameAccess fa, RCaller target) {
+        assert target != null;
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             boolean first = true;
 
@@ -319,10 +320,7 @@ public final class Utils {
                     Frame pf = frameInstance.getFrame(fa, false);
                     Frame f = RArguments.unwrap(pf);
                     if (RArguments.isRFrame(f)) {
-                        if (skipPromiseEvalFrames && f instanceof PromiseEvalFrame) {
-                            return null;
-                        }
-                        return RArguments.getDepth(f) == depth ? f : null;
+                        return RArguments.getCall(f) == target ? f : null;
                     } else {
                         return null;
                     }
@@ -333,8 +331,30 @@ public final class Utils {
         });
     }
 
+    /**
+     * Like {@link #getStackFrame(FrameAccess, RCaller)}, but identifying the stack with its depth.
+     */
+    @TruffleBoundary
     public static Frame getStackFrame(FrameAccess fa, int depth) {
-        return getStackFrame(fa, depth, false);
+        return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
+            boolean first = true;
+
+            @Override
+            public Frame visitFrame(FrameInstance frameInstance) {
+                if (!first) {
+                    Frame pf = frameInstance.getFrame(fa, false);
+                    Frame f = RArguments.unwrap(pf);
+                    if (RArguments.isRFrame(f)) {
+                        RCaller call = RArguments.getCall(f);
+                        return (!call.isPromise() && call.getDepth() == depth) ? f : null;
+                    } else {
+                        return null;
+                    }
+                }
+                first = false;
+                return null;
+            }
+        });
     }
 
     /**
@@ -372,7 +392,15 @@ public final class Utils {
      * in progress and replaced with use of {@code FrameDepthNode}.
      */
     public static Frame getCallerFrame(Frame frame, FrameAccess fa) {
-        return getStackFrame(fa, RArguments.getDepth(frame) - 1);
+        RCaller parent = RArguments.getCall(frame);
+        while (parent != null && parent.isPromise()) {
+            parent = parent.getParent();
+        }
+        parent = parent.getParent();
+        while (parent != null && parent.isPromise()) {
+            parent = parent.getParent();
+        }
+        return parent == null ? null : getStackFrame(fa, parent);
     }
 
     /**
@@ -505,12 +533,9 @@ public final class Utils {
                  * the effective depth and 'p' is the promise frame depth, or -1 if no promise
                  * evaluation in progress.
                  */
-                String callSrc = RContext.getRRuntimeASTAccess().getCallerSource(call);
+                String callSrc = call.isValidCaller() ? RContext.getRRuntimeASTAccess().getCallerSource(call) : "<invalid call>";
                 int depth = RArguments.getDepth(unwrapped);
-                int effectiveDepth = RArguments.getEffectiveDepth(unwrapped);
-                Frame pf = RArguments.getPromiseFrame(unwrapped);
-                int pfDepth = pf == null ? -1 : ((PromiseEvalFrame) pf).getPromiseFrameDepth();
-                str.append("Frame(d=").append(depth).append(',').append(effectiveDepth).append(',').append(pfDepth).append("): ").append(callTarget).append(isVirtual ? " (virtual)" : "");
+                str.append("Frame(d=").append(depth).append("): ").append(callTarget).append(isVirtual ? " (virtual)" : "");
                 str.append(" (called as: ").append(callSrc).append(')');
             }
             if (printFrameSlots) {

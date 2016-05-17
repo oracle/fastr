@@ -33,6 +33,7 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -286,7 +287,7 @@ public class RPromise implements RTypedValue {
         private final Object eagerValue;
 
         private final Assumption notChangedNonLocally;
-        private final int frameId;
+        private final RCaller targetFrame;
         private final EagerFeedback feedback;
         private final int wrapIndex;
 
@@ -296,12 +297,12 @@ public class RPromise implements RTypedValue {
          */
         private boolean deoptimized = false;
 
-        EagerPromise(PromiseType type, OptType optType, Closure closure, Object eagerValue, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback, int wrapIndex) {
+        EagerPromise(PromiseType type, OptType optType, Closure closure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, int wrapIndex) {
             super(type, optType, (MaterializedFrame) null, closure);
             assert type != PromiseType.NO_ARG;
             this.eagerValue = eagerValue;
             this.notChangedNonLocally = notChangedNonLocally;
-            this.frameId = nFrameId;
+            this.targetFrame = targetFrame;
             this.feedback = feedback;
             this.wrapIndex = wrapIndex;
         }
@@ -322,7 +323,7 @@ public class RPromise implements RTypedValue {
         @TruffleBoundary
         public void materialize() {
             if (execFrame == null) {
-                this.execFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, frameId).materialize();
+                this.execFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, targetFrame).materialize();
             }
         }
 
@@ -423,12 +424,12 @@ public class RPromise implements RTypedValue {
          *            until evaluation
          * @return An {@link EagerPromise}
          */
-        public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback, int wrapIndex) {
-            return RDataFactory.createEagerPromise(type, OptType.EAGER, exprClosure, eagerValue, notChangedNonLocally, nFrameId, feedback, wrapIndex);
+        public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, int wrapIndex) {
+            return RDataFactory.createEagerPromise(type, OptType.EAGER, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex);
         }
 
-        public RPromise createPromisedPromise(RPromise promisedPromise, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
-            return RDataFactory.createEagerPromise(type, OptType.PROMISED, exprClosure, promisedPromise, notChangedNonLocally, nFrameId, feedback, -1);
+        public RPromise createPromisedPromise(RPromise promisedPromise, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback) {
+            return RDataFactory.createEagerPromise(type, OptType.PROMISED, exprClosure, promisedPromise, notChangedNonLocally, targetFrame, feedback, -1);
         }
 
         public Object getExpr() {

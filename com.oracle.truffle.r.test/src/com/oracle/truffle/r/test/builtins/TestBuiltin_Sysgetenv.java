@@ -29,7 +29,7 @@ public class TestBuiltin_Sysgetenv extends TestBase {
 
     @Test
     public void testEnvVars() {
-        assertEval(Output.ContainsError, "{ Sys.setenv(\"a\") } ");
+        assertEval("{ Sys.setenv(\"a\") } ");
         assertEval("{ Sys.setenv(FASTR_A=\"a\"); Sys.getenv(\"FASTR_A\"); } ");
         assertEval("{ Sys.setenv(FASTR_A=\"a\", FASTR_B=\"b\"); Sys.getenv(c(\"FASTR_A\", \"FASTR_B\"));  } ");
         assertEval("{ Sys.getenv(\"FASTR_A\") } ");

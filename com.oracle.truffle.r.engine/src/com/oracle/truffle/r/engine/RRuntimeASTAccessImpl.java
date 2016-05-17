@@ -451,7 +451,11 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public RLanguage getSyntaxCaller(RCaller rl) {
-        RSyntaxNode syntaxNode = rl.getSyntaxNode();
+        RCaller call = rl;
+        while (call.isPromise()) {
+            call = call.getParent();
+        }
+        RSyntaxNode syntaxNode = call.getSyntaxNode();
         return RDataFactory.createLanguage(syntaxNode.asRNode());
     }
 
@@ -509,7 +513,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             return findCallerFromFrame(frame);
         } else if (call == RError.SHOW_CALLER2) {
             Frame frame = Utils.getActualCurrentFrame();
-            if (RArguments.isRFrame(frame) && frame != null) {
+            if (frame != null && RArguments.isRFrame(frame)) {
                 frame = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
             }
             return findCallerFromFrame(frame);
@@ -530,30 +534,21 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return (FunctionDefinitionNode) f.getTarget().getRootNode();
     }
 
-    private static Object getCallerFromFrame(Frame frame) {
-        if (frame == null) {
-            // parser error
-            return RNull.instance;
-        }
-        if (RArguments.isRFrame(frame)) {
+    private Object findCallerFromFrame(Frame frame) {
+        if (frame != null && RArguments.isRFrame(frame)) {
             RCaller caller = RArguments.getCall(frame);
-            if (caller != null) {
-                return caller;
+            while (caller.isPromise()) {
+                caller = caller.getParent();
+            }
+            if (caller != null && caller.isValidCaller()) {
+                /*
+                 * This is where we need to ensure that we have an RLanguage object with a rep that
+                 * is an RSyntaxNode.
+                 */
+                return getSyntaxCaller(caller);
             }
         }
         return RNull.instance;
-    }
-
-    private Object findCallerFromFrame(Frame frame) {
-        Object caller = getCallerFromFrame(frame);
-        if (caller == RNull.instance) {
-            return caller;
-        }
-        /*
-         * This is where we need to ensure that we have an RLanguage object with a rep that is an
-         * RSyntaxNode.
-         */
-        return getSyntaxCaller((RCaller) caller);
     }
 
     @Override

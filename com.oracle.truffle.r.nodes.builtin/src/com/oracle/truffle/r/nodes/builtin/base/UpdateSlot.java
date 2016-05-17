@@ -29,11 +29,9 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -48,6 +46,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @RBuiltin(name = "@<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", "value"}, nonEvalArgs = 1)
 public abstract class UpdateSlot extends RBuiltinNode {
 
+    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("cl", "name", "valueClass");
+
     @CompilationFinal private RFunction checkSlotAssignFunction;
     @Child private ClassHierarchyNode objClassHierarchy;
     @Child private ClassHierarchyNode valClassHierarchy;
@@ -56,9 +56,6 @@ public abstract class UpdateSlot extends RBuiltinNode {
     @Child private DirectCallNode checkAtAssignmentCall;
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
     private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
-    // TODO: technically, someone could override checkAtAssignment function and access the caller,
-    // but it's rather unlikely
-    private final RCaller caller = RCallerHelper.InvalidRepresentation.instance;
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -104,8 +101,9 @@ public abstract class UpdateSlot extends RBuiltinNode {
         RStringVector valClass = objClassHierarchy.execute(value);
         RFunction currentFunction = (RFunction) checkAtAssignmentFind.execute(frame);
         if (cached.profile(currentFunction == checkSlotAssignFunction)) {
-            Object[] args = argsNode.execute(checkSlotAssignFunction, caller, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), new Object[]{objClass, name, valClass},
-                            ArgumentsSignature.get("cl", "name", "valueClass"), null);
+            // TODO: technically, someone could override checkAtAssignment function and access the
+            // caller, but it's rather unlikely
+            Object[] args = argsNode.execute(checkSlotAssignFunction, RCaller.createInvalid(frame), null, new Object[]{objClass, name, valClass}, SIGNATURE, null);
             checkAtAssignmentCall.call(frame, args);
         } else {
             // slow path

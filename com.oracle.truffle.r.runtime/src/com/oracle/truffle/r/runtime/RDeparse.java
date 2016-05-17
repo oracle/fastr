@@ -475,14 +475,14 @@ public class RDeparse {
                                     }
                                     return null;
                                 case IF:
-                                    append("if", lhs).append(" (").append(args[0]).append(") ");
+                                    append("if", lhs).append(" (").append(args[0]).append(")");
                                     if (inCurly > 0 && inList == 0 && !isSequence(args[1])) {
-                                        printline();
                                         try (C c = indent()) {
+                                            printline();
                                             append(args[1]);
                                         }
                                     } else {
-                                        append(args[1]);
+                                        append(" ").append(args[1]);
                                     }
                                     return null;
                                 case WHILE:
@@ -495,14 +495,14 @@ public class RDeparse {
                                     append("for", lhs).append(" (").append(args[0]).append(" in ").append(args[1]).append(") ").append(args[2]);
                                     return null;
                                 case "if":
-                                    append("if", lhs).append(" (").append(args[0]).append(") ");
+                                    append("if", lhs).append(" (").append(args[0]).append(")");
                                     if (inCurly > 0 && inList == 0 && !isSequence(args[1])) {
-                                        printline();
                                         try (C c = indent()) {
+                                            printline();
                                             append(args[1]).printline();
                                         }
                                     } else {
-                                        append(args[1]);
+                                        append(" ").append(args[1]);
                                         if (inCurly > 0 && inList == 0) {
                                             printline();
                                         } else {
@@ -645,7 +645,6 @@ public class RDeparse {
                         if ("{".equals(l.getIdentifier())) {
                             newline = c.getSyntaxArguments().length == 1 && !hasBraces(c);
                         }
-
                     }
                 }
                 if (newline) {

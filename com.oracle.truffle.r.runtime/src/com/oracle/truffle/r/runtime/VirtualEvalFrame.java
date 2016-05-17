@@ -24,6 +24,10 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -31,15 +35,151 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 /**
  * A "fake" {@link VirtualFrame}, to be used by {@code REngine}.eval only!
  */
-public final class VirtualEvalFrame extends AbstractVirtualEvalFrame {
+public final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
+
+    protected final MaterializedFrame originalFrame;
+    @CompilationFinal protected final Object[] arguments;
 
     private VirtualEvalFrame(MaterializedFrame originalFrame, Object[] arguments) {
-        super(originalFrame, arguments);
+        this.originalFrame = originalFrame;
+        this.arguments = arguments;
     }
 
-    public static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, RCaller call, int depth) {
+    @Override
+    public FrameDescriptor getFrameDescriptor() {
+        return originalFrame.getFrameDescriptor();
+    }
+
+    @Override
+    public Object[] getArguments() {
+        return arguments;
+    }
+
+    public MaterializedFrame getOriginalFrame() {
+        return originalFrame;
+    }
+
+    @Override
+    public MaterializedFrame materialize() {
+        return this;
+    }
+
+    /*
+     * Delegates to #originalFrame
+     */
+
+    @Override
+    public Object getObject(FrameSlot slot) throws FrameSlotTypeException {
+        return originalFrame.getObject(slot);
+    }
+
+    @Override
+    public void setObject(FrameSlot slot, Object value) {
+        originalFrame.setObject(slot, value);
+    }
+
+    @Override
+    public byte getByte(FrameSlot slot) throws FrameSlotTypeException {
+        return originalFrame.getByte(slot);
+    }
+
+    @Override
+    public void setByte(FrameSlot slot, byte value) {
+        originalFrame.setByte(slot, value);
+    }
+
+    @Override
+    public boolean getBoolean(FrameSlot slot) throws FrameSlotTypeException {
+        return originalFrame.getBoolean(slot);
+    }
+
+    @Override
+    public void setBoolean(FrameSlot slot, boolean value) {
+        originalFrame.setBoolean(slot, value);
+    }
+
+    @Override
+    public int getInt(FrameSlot slot) throws FrameSlotTypeException {
+        return originalFrame.getInt(slot);
+    }
+
+    @Override
+    public void setInt(FrameSlot slot, int value) {
+        originalFrame.setInt(slot, value);
+    }
+
+    @Override
+    public long getLong(FrameSlot slot) throws FrameSlotTypeException {
+        return originalFrame.getLong(slot);
+    }
+
+    @Override
+    public void setLong(FrameSlot slot, long value) {
+        originalFrame.setLong(slot, value);
+    }
+
+    @Override
+    public float getFloat(FrameSlot slot) throws FrameSlotTypeException {
+        return originalFrame.getFloat(slot);
+    }
+
+    @Override
+    public void setFloat(FrameSlot slot, float value) {
+        originalFrame.setFloat(slot, value);
+    }
+
+    @Override
+    public double getDouble(FrameSlot slot) throws FrameSlotTypeException {
+        return originalFrame.getDouble(slot);
+    }
+
+    @Override
+    public void setDouble(FrameSlot slot, double value) {
+        originalFrame.setDouble(slot, value);
+    }
+
+    @Override
+    public Object getValue(FrameSlot slot) {
+        return originalFrame.getValue(slot);
+    }
+
+    @Override
+    public boolean isObject(FrameSlot slot) {
+        return originalFrame.isObject(slot);
+    }
+
+    @Override
+    public boolean isByte(FrameSlot slot) {
+        return originalFrame.isByte(slot);
+    }
+
+    @Override
+    public boolean isBoolean(FrameSlot slot) {
+        return originalFrame.isBoolean(slot);
+    }
+
+    @Override
+    public boolean isInt(FrameSlot slot) {
+        return originalFrame.isInt(slot);
+    }
+
+    @Override
+    public boolean isLong(FrameSlot slot) {
+        return originalFrame.isLong(slot);
+    }
+
+    @Override
+    public boolean isFloat(FrameSlot slot) {
+        return originalFrame.isFloat(slot);
+    }
+
+    @Override
+    public boolean isDouble(FrameSlot slot) {
+        return originalFrame.isDouble(slot);
+    }
+
+    public static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, RCaller call) {
         Object[] arguments = Arrays.copyOf(originalFrame.getArguments(), originalFrame.getArguments().length);
-        arguments[RArguments.INDEX_DEPTH] = depth;
         arguments[RArguments.INDEX_IS_IRREGULAR] = true;
         arguments[RArguments.INDEX_FUNCTION] = function;
         arguments[RArguments.INDEX_CALL] = call;

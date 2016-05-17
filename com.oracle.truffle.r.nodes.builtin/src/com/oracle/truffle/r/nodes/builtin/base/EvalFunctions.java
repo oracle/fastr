@@ -32,8 +32,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EvalFunctionsFactory.EvalEnvCastNodeGen;
-import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -50,21 +50,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * The {@code eval} {@code .Internal} and the {@code withVisible} {@code .Primitive}.
  */
 public class EvalFunctions {
-    public abstract static class EvalAdapter extends RBuiltinNode {
-        @TruffleBoundary
-        protected Object doEvalBody(int depth, Object exprArg, REnvironment envir) {
-            Object expr = RASTUtils.checkForRSymbol(exprArg);
-
-            if (expr instanceof RExpression) {
-                return RContext.getEngine().eval((RExpression) expr, envir, depth);
-            } else if (expr instanceof RLanguage) {
-                return RContext.getEngine().eval((RLanguage) expr, envir, depth);
-            } else {
-                // just return value
-                return expr;
-            }
-        }
-    }
 
     public abstract static class EvalEnvCast extends RBaseNode {
 
@@ -100,12 +85,26 @@ public class EvalFunctions {
     }
 
     @RBuiltin(name = "eval", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"expr", "envir", "enclos"})
-    public abstract static class Eval extends EvalAdapter {
+    public abstract static class Eval extends RBuiltinNode {
+
+        @TruffleBoundary
+        protected Object doEvalBody(RCaller rCaller, Object exprArg, REnvironment envir) {
+            Object expr = RASTUtils.checkForRSymbol(exprArg);
+
+            if (expr instanceof RExpression) {
+                return RContext.getEngine().eval((RExpression) expr, envir, rCaller);
+            } else if (expr instanceof RLanguage) {
+                return RContext.getEngine().eval((RLanguage) expr, envir, rCaller);
+            } else {
+                // just return value
+                return expr;
+            }
+        }
 
         @Specialization
         protected Object doEval(VirtualFrame frame, Object expr, Object envir, REnvironment enclos, //
                         @Cached("createCast()") EvalEnvCast envCast) {
-            return doEvalBody(RArguments.getDepth(frame) + 1, expr, envCast.execute(envir, enclos));
+            return doEvalBody(RCaller.createInvalid(frame), expr, envCast.execute(envir, enclos));
         }
 
         protected EvalEnvCast createCast() {

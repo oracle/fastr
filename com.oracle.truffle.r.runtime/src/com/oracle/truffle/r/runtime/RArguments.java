@@ -52,11 +52,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  *                            +--------------------+
  * INDEX_ENCLOSING_FRAME   -> | MaterializedFrame  |
  *                            +--------------------+
- * INDEX_S3_ARGS           -> | S3Args             |
- *                            +--------------------+
- * INDEX_DEPTH             -> | depth              |
- *                            +--------------------+
- * INDEX_PROMISE_FRAME     -> | promise frame      |
+ * INDEX_DISPATCH_ARGS     -> | DispatchArgs       |
  *                            +--------------------+
  * INDEX_IS_IRREGULAR      -> | isIrregular        |
  *                            +--------------------+
@@ -138,11 +134,9 @@ public final class RArguments {
     static final int INDEX_CALLER_FRAME = 3;
     static final int INDEX_ENCLOSING_FRAME = 4;
     static final int INDEX_DISPATCH_ARGS = 5;
-    static final int INDEX_DEPTH = 6;
-    static final int INDEX_PROMISE_FRAME = 7;
-    static final int INDEX_IS_IRREGULAR = 8;
-    static final int INDEX_SIGNATURE = 9;
-    static final int INDEX_ARGUMENTS = 10;
+    static final int INDEX_IS_IRREGULAR = 6;
+    static final int INDEX_SIGNATURE = 7;
+    static final int INDEX_ARGUMENTS = 8;
 
     /**
      * At the least, the array contains the function, enclosing frame, and numbers of arguments and
@@ -161,17 +155,18 @@ public final class RArguments {
         return ((HasSignature) function.getRootNode()).getSignature();
     }
 
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, int depth, MaterializedFrame promiseFrame, Object[] evaluatedArgs, ArgumentsSignature signature,
+    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature signature,
                     DispatchArgs dispatchArgs) {
         CompilerAsserts.neverPartOfCompilation();
-        return create(functionObj, call, callerFrame, depth, promiseFrame, evaluatedArgs, signature, functionObj.getEnclosingFrame(), dispatchArgs);
+        return create(functionObj, call, callerFrame, evaluatedArgs, signature, functionObj.getEnclosingFrame(), dispatchArgs);
     }
 
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, int depth, MaterializedFrame promiseFrame, Object[] evaluatedArgs,
+    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
                     ArgumentsSignature signature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
         assert evaluatedArgs != null && signature != null : evaluatedArgs + " " + signature;
         assert evaluatedArgs.length == signature.getLength() : Arrays.toString(evaluatedArgs) + " " + signature;
         assert signature == getSignature(functionObj) : signature + " vs. " + getSignature(functionObj);
+        assert call != null;
         // Eventually we want to have this invariant
         // assert call != null || REnvironment.isGlobalEnvFrame(callerFrame);
 
@@ -182,8 +177,6 @@ public final class RArguments {
         a[INDEX_CALLER_FRAME] = callerFrame;
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
         a[INDEX_DISPATCH_ARGS] = dispatchArgs;
-        a[INDEX_DEPTH] = depth;
-        a[INDEX_PROMISE_FRAME] = promiseFrame;
         a[INDEX_IS_IRREGULAR] = false;
         a[INDEX_SIGNATURE] = signature;
         System.arraycopy(evaluatedArgs, 0, a, INDEX_ARGUMENTS, evaluatedArgs.length);
@@ -202,7 +195,7 @@ public final class RArguments {
      */
     public static Object[] createUnitialized(Object... args) {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + args.length];
-        a[INDEX_DEPTH] = 0;
+        a[INDEX_CALL] = RCaller.createInvalid(null);
         a[INDEX_SIGNATURE] = ArgumentsSignature.empty(args.length);
         a[INDEX_IS_IRREGULAR] = false;
         System.arraycopy(args, 0, a, INDEX_ARGUMENTS, args.length);
@@ -231,7 +224,7 @@ public final class RArguments {
     }
 
     public static int getDepth(Frame frame) {
-        return (Integer) frame.getArguments()[INDEX_DEPTH];
+        return getCall(frame).getDepth();
     }
 
     public static boolean getIsIrregular(Frame frame) {
@@ -262,33 +255,6 @@ public final class RArguments {
 
     public static int getArgumentsLength(Frame frame) {
         return getNArgs(frame);
-    }
-
-    public static MaterializedFrame getPromiseFrame(Frame frame) {
-        return (MaterializedFrame) frame.getArguments()[INDEX_PROMISE_FRAME];
-    }
-
-    /**
-     * Returns the "effective" depth of {@code frame} in the presence of promise evaluation. If no
-     * promise evaluation is in progress then returns the depth of {@code frame}. Otherwise, adds
-     * the gap between the depth at which the promise evaluation began and the depth of
-     * {@code frame} to the depth of the promise frame. I.e., this produces the depth that would
-     * have occurred had the promise literally been evaluated starting in promise frame, and handles
-     * the requirement that frame depth be a unique and monotonically increasing value in the
-     * Truffle frame stack.
-     */
-    public static int getEffectiveDepth(Frame frame) {
-        Frame unwrapped = RArguments.unwrap(frame);
-        int depth = RArguments.getDepth(unwrapped);
-        int effectiveDepth = depth;
-        Frame pf = RArguments.getPromiseFrame(unwrapped);
-        if (pf != null) {
-            PromiseEvalFrame castPf = (PromiseEvalFrame) pf;
-            int pfDepth = RArguments.getDepth(castPf);
-            int pfOrigDepth = castPf.getPromiseFrameDepth();
-            effectiveDepth = depth - pfDepth + pfOrigDepth;
-        }
-        return effectiveDepth;
     }
 
     public static MaterializedFrame getEnclosingFrame(Frame frame) {

@@ -56,9 +56,9 @@ public class TestSimpleDataFrames extends TestBase {
     @Test
     public void testRowNames() {
         // testing row.names
-        assertEval(Output.ContainsError, "{ x<-c(1,2); row.names(x)<-c(7, 42); attributes(x) }");
+        assertEval("{ x<-c(1,2); row.names(x)<-c(7, 42); attributes(x) }");
         assertEval("{ x<-c(1,2); row.names(x)<-NULL; attributes(x) }");
-        assertEval(Output.ContainsError, "{ x<-c(1,2); row.names(x)<-logical(); attributes(x) }");
+        assertEval("{ x<-c(1,2); row.names(x)<-logical(); attributes(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-c(7, 42); attributes(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-c(7, 42); row.names(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-NULL; attributes(x) }");
