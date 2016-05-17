@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
  * configuration of arguments. Returning {@code null} from the fast path node will revert the call
  * site so that it calls the normal R code again.
  *
- * A fast path can be added to a function using {@link RFunction#setFastPath(FastPathFactory)}. When
+ * A fast path can be added to a function using {@code RootNode.setFastPath(FastPathFactory)}. When
  * the function is invoked, the fast path is invoked first and only if it returns {@code null}, then
  * the original implementation is invoked.
  */

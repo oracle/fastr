@@ -366,9 +366,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
     }
 
-    public static FastPathFactory createFunctionFastPath(RootCallTarget callTarget) {
-        FunctionDefinitionNode def = (FunctionDefinitionNode) callTarget.getRootNode();
-        return EvaluatedArgumentsVisitor.process(def.getBody(), def.getSignature());
+    public static FastPathFactory createFunctionFastPath(RSyntaxElement body, ArgumentsSignature signature) {
+        return EvaluatedArgumentsVisitor.process(body, signature);
     }
 
     @Override

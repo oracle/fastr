@@ -311,7 +311,7 @@ public class RPromise implements RTypedValue {
          * @return Whether the promise has been deoptimized before
          */
         public boolean deoptimize() {
-            if (!deoptimized) {
+            if (!deoptimized && !isEvaluated()) {
                 deoptimized = true;
                 feedback.onFailure(this);
                 materialize();
@@ -426,6 +426,10 @@ public class RPromise implements RTypedValue {
          */
         public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, int wrapIndex) {
             return RDataFactory.createEagerPromise(type, OptType.EAGER, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex);
+        }
+
+        public RPromise createForcedEagerSuppliedPromise(Object eagerValue) {
+            return RDataFactory.createPromise(PromiseType.ARG_SUPPLIED, OptType.DEFAULT, exprClosure.getExpr(), eagerValue);
         }
 
         public RPromise createPromisedPromise(RPromise promisedPromise, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback) {

@@ -111,7 +111,7 @@ public abstract class RBuiltinNode extends RNode {
 
         // Setup
         FrameDescriptor frameDescriptor = new FrameDescriptor();
-        RBuiltinRootNode root = new RBuiltinRootNode(builtin, node, formals, frameDescriptor);
+        RBuiltinRootNode root = new RBuiltinRootNode(builtin, node, formals, frameDescriptor, null);
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getName(), frameDescriptor);
         return Truffle.getRuntime().createCallTarget(root);
     }

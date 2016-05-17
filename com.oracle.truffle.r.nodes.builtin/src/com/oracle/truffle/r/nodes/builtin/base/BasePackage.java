@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNodeGen;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanNodeGen;
@@ -623,7 +624,7 @@ public class BasePackage extends RBuiltinPackage {
 
     private static void addFastPath(MaterializedFrame baseFrame, String name, FastPathFactory factory) {
         RFunction function = ReadVariableNode.lookupFunction(name, baseFrame, false);
-        function.setFastPath(factory);
+        ((RRootNode) function.getRootNode()).setFastPath(factory);
     }
 
     private static void addFastPath(MaterializedFrame baseFrame, String name, java.util.function.Supplier<RFastPathNode> factory, Class<?> builtinNodeClass) {
@@ -649,13 +650,13 @@ public class BasePackage extends RBuiltinPackage {
         addFastPath(baseFrame, "cbind", FastPathFactory.FORCED_EAGER_ARGS);
         addFastPath(baseFrame, "rbind", FastPathFactory.FORCED_EAGER_ARGS);
 
-        setContainsDispatch(baseFrame, "sys.function", "parent.frame", "match.arg", "eval", "[.data.frame", "[[.data.frame", "[<-.data.frame", "[[<-.data.frame");
+        setContainsDispatch(baseFrame, "sys.function", "match.arg", "eval", "[.data.frame", "[[.data.frame", "[<-.data.frame", "[[<-.data.frame");
     }
 
     private static void setContainsDispatch(MaterializedFrame baseFrame, String... functions) {
         for (String name : functions) {
             RFunction function = ReadVariableNode.lookupFunction(name, baseFrame, false);
-            function.setContainsDispatch(true);
+            ((RRootNode) function.getRootNode()).setContainsDispatch(true);
         }
     }
 }

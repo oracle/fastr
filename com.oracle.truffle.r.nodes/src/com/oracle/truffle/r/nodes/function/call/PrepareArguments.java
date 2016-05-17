@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.function.UnmatchedArguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -50,23 +49,23 @@ public abstract class PrepareArguments extends Node {
 
     public abstract Object[] execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call);
 
-    public static PrepareArguments create(RFunction function, CallArgumentsNode args, boolean noOpt) {
-        return new UninitializedPrepareArguments(function, args, noOpt);
+    public static PrepareArguments create(RRootNode target, CallArgumentsNode args, boolean noOpt) {
+        return new UninitializedPrepareArguments(target, args, noOpt);
     }
 
-    public static PrepareArguments createExplicit(RFunction function) {
-        return new UninitializedExplicitPrepareArguments(function);
+    public static PrepareArguments createExplicit(RRootNode target) {
+        return new UninitializedExplicitPrepareArguments(target);
     }
 
     private static final class UninitializedPrepareArguments extends PrepareArguments {
 
-        private final RFunction function;
+        private final RRootNode target;
         private final CallArgumentsNode sourceArguments; // not used as a node
         private final boolean noOpt;
         private int depth = CACHE_SIZE;
 
-        UninitializedPrepareArguments(RFunction function, CallArgumentsNode sourceArguments, boolean noOpt) {
-            this.function = function;
+        UninitializedPrepareArguments(RRootNode target, CallArgumentsNode sourceArguments, boolean noOpt) {
+            this.target = target;
             this.sourceArguments = sourceArguments;
             this.noOpt = noOpt;
         }
@@ -76,9 +75,9 @@ public abstract class PrepareArguments extends Node {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             PrepareArguments next;
             if (depth-- > 0) {
-                next = new CachedPrepareArguments(this, function, call, sourceArguments, varArgs == null ? null : varArgs.getSignature(), noOpt);
+                next = new CachedPrepareArguments(this, target, call, sourceArguments, varArgs == null ? null : varArgs.getSignature(), noOpt);
             } else {
-                next = new GenericPrepareArguments(function, sourceArguments);
+                next = new GenericPrepareArguments(target, sourceArguments);
             }
             return replace(next).execute(frame, varArgs, call);
         }
@@ -90,10 +89,10 @@ public abstract class PrepareArguments extends Node {
         @Children private final RNode[] matchedArguments;
         private final ArgumentsSignature cachedVarArgSignature;
 
-        CachedPrepareArguments(PrepareArguments next, RFunction function, RCallNode call, CallArgumentsNode args, ArgumentsSignature varArgSignature, boolean noOpt) {
+        CachedPrepareArguments(PrepareArguments next, RRootNode target, RCallNode call, CallArgumentsNode args, ArgumentsSignature varArgSignature, boolean noOpt) {
             this.next = next;
             cachedVarArgSignature = varArgSignature;
-            matchedArguments = ArgumentMatcher.matchArguments(function, args.unrollArguments(varArgSignature), call, noOpt);
+            matchedArguments = ArgumentMatcher.matchArguments(target, args.unrollArguments(varArgSignature), call, noOpt);
         }
 
         @Override
@@ -113,11 +112,11 @@ public abstract class PrepareArguments extends Node {
 
     private static final class GenericPrepareArguments extends PrepareArguments {
 
-        private final RFunction function;
+        private final RRootNode target;
         private final CallArgumentsNode args; // not used as a node
 
-        GenericPrepareArguments(RFunction function, CallArgumentsNode args) {
-            this.function = function;
+        GenericPrepareArguments(RRootNode target, CallArgumentsNode args) {
+            this.target = target;
             this.args = args;
         }
 
@@ -126,7 +125,7 @@ public abstract class PrepareArguments extends Node {
             CompilerDirectives.transferToInterpreter();
             ArgumentsSignature varArgSignature = varArgs == null ? null : varArgs.getSignature();
             UnmatchedArguments argsValuesAndNames = args.unrollArguments(varArgSignature);
-            RNode[] matchedArgs = ArgumentMatcher.matchArguments(function, argsValuesAndNames, RError.ROOTNODE, true);
+            RNode[] matchedArgs = ArgumentMatcher.matchArguments(target, argsValuesAndNames, RError.ROOTNODE, true);
             Object[] result = new Object[matchedArgs.length];
             for (int i = 0; i < matchedArgs.length; i++) {
                 result[i] = matchedArgs[i].execute(frame);
@@ -137,11 +136,11 @@ public abstract class PrepareArguments extends Node {
 
     private static final class UninitializedExplicitPrepareArguments extends PrepareArguments {
 
-        private final RFunction function;
+        private final RRootNode target;
         private int depth = CACHE_SIZE;
 
-        UninitializedExplicitPrepareArguments(RFunction function) {
-            this.function = function;
+        UninitializedExplicitPrepareArguments(RRootNode target) {
+            this.target = target;
         }
 
         @Override
@@ -149,9 +148,9 @@ public abstract class PrepareArguments extends Node {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             PrepareArguments next;
             if (depth-- > 0) {
-                next = new CachedExplicitPrepareArguments(this, function, call, explicitArgs == null ? null : explicitArgs.getSignature());
+                next = new CachedExplicitPrepareArguments(this, target, call, explicitArgs == null ? null : explicitArgs.getSignature());
             } else {
-                next = new GenericExplicitPrepareArguments(function);
+                next = new GenericExplicitPrepareArguments(target);
             }
             return replace(next).execute(frame, explicitArgs, call);
         }
@@ -165,10 +164,10 @@ public abstract class PrepareArguments extends Node {
         private final ArgumentsSignature cachedExplicitArgSignature;
         private final FormalArguments formals;
 
-        CachedExplicitPrepareArguments(PrepareArguments next, RFunction function, RCallNode call, ArgumentsSignature explicitArgSignature) {
+        CachedExplicitPrepareArguments(PrepareArguments next, RRootNode target, RCallNode call, ArgumentsSignature explicitArgSignature) {
             this.next = next;
-            formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
-            permutation = ArgumentMatcher.matchArguments(explicitArgSignature, formals.getSignature(), call, false, function.getRBuiltin());
+            formals = target.getFormalArguments();
+            permutation = ArgumentMatcher.matchArguments(explicitArgSignature, formals.getSignature(), call, false, target.getBuiltin());
             cachedExplicitArgSignature = explicitArgSignature;
         }
 
@@ -183,17 +182,17 @@ public abstract class PrepareArguments extends Node {
 
     private static final class GenericExplicitPrepareArguments extends PrepareArguments {
 
-        private final RFunction function;
+        private final RRootNode target;
 
-        GenericExplicitPrepareArguments(RFunction function) {
-            this.function = function;
+        GenericExplicitPrepareArguments(RRootNode target) {
+            this.target = target;
         }
 
         @Override
         public Object[] execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, RCallNode call) {
             CompilerDirectives.transferToInterpreter();
             // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
-            return ArgumentMatcher.matchArgumentsEvaluated(function, explicitArgs, RError.ROOTNODE, false).getArguments();
+            return ArgumentMatcher.matchArgumentsEvaluated(target, explicitArgs, RError.ROOTNODE, false).getArguments();
         }
     }
 }

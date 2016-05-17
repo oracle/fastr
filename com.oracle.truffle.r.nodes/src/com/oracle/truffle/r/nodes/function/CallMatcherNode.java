@@ -159,7 +159,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             } else {
                 CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, this));
                 // for splitting if necessary
-                if (cachedNode.call != null && RCallNode.needsSplitting(function)) {
+                if (cachedNode.call != null && RCallNode.needsSplitting(function.getTarget())) {
                     cachedNode.call.cloneCallTarget();
                 }
                 return cachedNode.execute(frame, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
@@ -374,7 +374,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             RArgsValuesAndNames evaledArgs = new RArgsValuesAndNames(argValues, signature);
 
             // ...to match them against the chosen function's formal arguments
-            RArgsValuesAndNames evaluated = ArgumentMatcher.matchArgumentsEvaluated(function, evaledArgs, this, forNextMethod);
+            RArgsValuesAndNames evaluated = ArgumentMatcher.matchArgumentsEvaluated((RRootNode) function.getRootNode(), evaledArgs, this, forNextMethod);
             return evaluated;
         }
 
