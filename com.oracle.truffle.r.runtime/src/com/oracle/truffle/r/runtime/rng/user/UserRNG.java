@@ -29,7 +29,6 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 import com.oracle.truffle.r.runtime.rng.RNGInitAdapter;
 import com.oracle.truffle.r.runtime.rng.RRNG.Kind;
-import com.oracle.truffle.r.runtime.rng.RRNG.RNGException;
 
 /**
  * Interface to a user-supplied RNG.
@@ -45,13 +44,13 @@ public final class UserRNG extends RNGInitAdapter {
     private long userUnifNSeed;
     private long userUnifSeedloc;
     private UserRngRFFI userRngRFFI;
-    private int nSeeds;
+    private int nSeeds = 0;
 
     @Override
-    public void init(int seed) throws RNGException {
+    public void init(int seed) {
         DLLInfo dllInfo = DLL.findLibraryContainingSymbol(USER_UNIF_RAND);
         if (dllInfo == null) {
-            throw RNGException.raise(RError.Message.RNG_SYMBOL, true, USER_UNIF_RAND);
+            throw RError.error(RError.NO_CALLER, RError.Message.RNG_SYMBOL, USER_UNIF_RAND);
         }
         userUnifRand = findSymbol(USER_UNIF_RAND, dllInfo, !OPTIONAL);
         userUnifInit = findSymbol(USER_UNIF_INIT, dllInfo, OPTIONAL);
@@ -61,16 +60,24 @@ public final class UserRNG extends RNGInitAdapter {
         userRngRFFI.setLibrary(dllInfo.path);
         userRngRFFI.init(seed);
         if (userUnifSeedloc != 0 && userUnifNSeed == 0) {
-            throw RNGException.raise(RError.Message.RNG_READ_SEEDS, false);
+            RError.warning(RError.NO_CALLER, RError.Message.RNG_READ_SEEDS);
         }
-        nSeeds = userRngRFFI.nSeed();
+        int ns = userRngRFFI.nSeed();
+        if (ns < 0 || ns > 625) {
+            RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "seed length must be in 0...625; ignored");
+        } else {
+            nSeeds = ns;
+            // TODO: if we ever (initially) share iSeed (as GNU R does) we need to assign this
+            // generator's iSeed here
+            userRngRFFI.seeds(iSeed);
+        }
     }
 
-    private static long findSymbol(String symbol, DLLInfo dllInfo, boolean optional) throws RNGException {
+    private static long findSymbol(String symbol, DLLInfo dllInfo, boolean optional) {
         long func = DLL.findSymbol(symbol, dllInfo.name, DLL.RegisteredNativeSymbol.any());
         if (func == DLL.SYMBOL_NOT_FOUND) {
             if (!optional) {
-                throw RNGException.raise(RError.Message.RNG_SYMBOL, true, symbol);
+                throw RError.error(RError.NO_CALLER, RError.Message.RNG_SYMBOL, symbol);
             } else {
                 return 0;
             }
@@ -107,4 +114,10 @@ public final class UserRNG extends RNGInitAdapter {
     public Kind getKind() {
         return Kind.USER_UNIF;
     }
+
+    @Override
+    public int getNSeed() {
+        return nSeeds;
+    }
+
 }
