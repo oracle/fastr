@@ -49,10 +49,18 @@ gateStyle : ${common} {
   ]
 }
 
+rbcheck : ${common} ${java8Downloads} {
+  run : [
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildNative"]
+    ["mx", "rbcheck"]
+  ]
+}
+
 # currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
 
 builds = [
   ${gateTest}       {capabilities : [linux, amd64, gate, post-merge],   name: "gate-test-linux-amd64"}
   ${gateStyle}      {capabilities : [linux, amd64, gate, post-merge],   name: "gate-style-linux-amd64"}
-#  ${gateTest}       {capabilities : [linux, sparcv9, gate, post-merge], name: "gate-test-linux-sparcv9"}
+  ${rbcheck}        {capabilities : [linux, amd64, gate, post-merge],   name: "gate-rbcheck-linux-amd64"}
+#  ${gateTest}      {capabilities : [linux, sparcv9, gate, post-merge], name: "gate-test-linux-sparcv9"}
 ]
