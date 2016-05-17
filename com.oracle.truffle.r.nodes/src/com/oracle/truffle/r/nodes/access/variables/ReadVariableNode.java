@@ -86,7 +86,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public final class ReadVariableNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup {
 
-    private static final int MAX_INVALIDATION_COUNT = 2;
+    private static final int MAX_INVALIDATION_COUNT = 3;
 
     private enum ReadKind {
         Normal,
