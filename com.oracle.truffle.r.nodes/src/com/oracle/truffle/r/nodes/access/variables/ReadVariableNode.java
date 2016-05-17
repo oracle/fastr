@@ -734,6 +734,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     private static Object getValue(boolean[] seenValueKinds, Frame variableFrame, FrameSlot frameSlot) {
+        assert variableFrame.getFrameDescriptor() == frameSlot.getFrameDescriptor();
         Object value = variableFrame.getValue(frameSlot);
         if (variableFrame.isObject(frameSlot)) {
             seenValueKinds[FrameSlotKind.Object.ordinal()] = true;
@@ -748,6 +749,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     static Object profiledGetValue(boolean[] seenValueKinds, Frame variableFrame, FrameSlot frameSlot) {
+        assert variableFrame.getFrameDescriptor() == frameSlot.getFrameDescriptor();
         try {
             if (seenValueKinds[FrameSlotKind.Object.ordinal()] && variableFrame.isObject(frameSlot)) {
                 return variableFrame.getObject(frameSlot);

@@ -378,7 +378,7 @@ public abstract class PMinMax extends RBuiltinNode {
         int precedence = -1;
         Object[] array = args.getArguments();
         for (int i = 0; i < array.length; i++) {
-            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], RRuntime.LOGICAL_FALSE));
+            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], false));
         }
         return precedence;
     }

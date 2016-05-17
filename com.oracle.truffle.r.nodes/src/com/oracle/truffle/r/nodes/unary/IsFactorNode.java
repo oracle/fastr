@@ -11,24 +11,17 @@
 
 package com.oracle.truffle.r.nodes.unary;
 
-import static com.oracle.truffle.r.runtime.RRuntime.LOGICAL_FALSE;
-import static com.oracle.truffle.r.runtime.RRuntime.LOGICAL_TRUE;
-
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 
-public abstract class IsFactorNode extends UnaryNode {
+public final class IsFactorNode extends UnaryNode {
 
     @Child private TypeofNode typeofNode;
     @Child private InheritsCheckNode inheritsCheck;
 
-    public abstract byte executeIsFactor(Object c);
-
-    @Specialization
-    protected byte isFactor(Object x) {
+    public boolean executeIsFactor(Object x) {
         if (typeofNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             typeofNode = insert(TypeofNodeGen.create());
@@ -36,13 +29,18 @@ public abstract class IsFactorNode extends UnaryNode {
         if (typeofNode.execute(x) != RType.Integer) {
             // Note: R does not allow to set class 'factor' to an arbitrary object, unlike with
             // data.frame
-            return LOGICAL_FALSE;
+            return false;
         }
         if (inheritsCheck == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             inheritsCheck = insert(new InheritsCheckNode(RRuntime.CLASS_FACTOR));
         }
 
-        return inheritsCheck.execute(x) ? LOGICAL_TRUE : LOGICAL_FALSE;
+        return inheritsCheck.execute(x);
+    }
+
+    @Override
+    public Object execute(Object value) {
+        return executeIsFactor(value);
     }
 }

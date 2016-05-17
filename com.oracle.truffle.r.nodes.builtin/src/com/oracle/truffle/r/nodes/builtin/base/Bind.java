@@ -111,7 +111,7 @@ public abstract class Bind extends RBaseNode {
         int precedence = -1;
         Object[] array = args.getArguments();
         for (int i = 0; i < array.length; i++) {
-            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], RRuntime.LOGICAL_FALSE));
+            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], false));
         }
         return precedence;
     }
@@ -402,7 +402,7 @@ public abstract class Bind extends RBaseNode {
         private int precedence(Object[] args) {
             int precedence = -1;
             for (int i = 0; i < args.length; i++) {
-                precedence = Math.max(precedence, precedenceNode.executeInteger(args[i], RRuntime.LOGICAL_FALSE));
+                precedence = Math.max(precedence, precedenceNode.executeInteger(args[i], false));
             }
             return precedence;
         }
@@ -516,7 +516,7 @@ public abstract class Bind extends RBaseNode {
         private int precedence(Object[] args) {
             int precedence = -1;
             for (int i = 0; i < args.length; i++) {
-                precedence = Math.max(precedence, precedenceNode.executeInteger(args[i], RRuntime.LOGICAL_FALSE));
+                precedence = Math.max(precedence, precedenceNode.executeInteger(args[i], false));
             }
             return precedence;
         }

@@ -302,7 +302,7 @@ public abstract class Combine extends RBuiltinNode {
         int precedence = NO_PRECEDENCE;
         Object[] array = args.getArguments();
         for (int i = 0; i < array.length; i++) {
-            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], RRuntime.LOGICAL_FALSE));
+            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], false));
         }
         return precedence;
     }
@@ -312,7 +312,7 @@ public abstract class Combine extends RBuiltinNode {
         int precedence = NO_PRECEDENCE;
         Object[] array = args.getArguments();
         for (int i = 0; i < length; i++) {
-            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], RRuntime.LOGICAL_FALSE));
+            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], false));
         }
         return precedence;
     }
