@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -215,7 +216,11 @@ public abstract class UpdateAttr extends RBuiltinNode {
             return object;
         } else {
             errorProfile.enter();
-            throw RError.nyi(this, "object cannot be attributed");
+            if (object instanceof RNull) {
+                throw RError.error(this, Message.GENERIC, "attempt to set an attribute on NULL");
+            } else {
+                throw RError.nyi(this, "object cannot be attributed");
+            }
         }
     }
 }
