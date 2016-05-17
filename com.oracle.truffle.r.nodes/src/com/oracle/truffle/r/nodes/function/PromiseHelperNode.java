@@ -138,7 +138,6 @@ public class PromiseHelperNode extends RBaseNode {
     private final ValueProfile multiVarArgsOptTypeProfile = ValueProfile.createIdentityProfile();
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
     private final BranchProfile varArgProfile = BranchProfile.create();
-    private final ConditionProfile chckPromiseMismatch = ConditionProfile.createBinaryProfile();
 
     /**
      * Guarded by {@link #isInOriginFrame(VirtualFrame,RPromise)}.
