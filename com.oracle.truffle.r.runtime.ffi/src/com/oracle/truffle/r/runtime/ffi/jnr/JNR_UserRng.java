@@ -97,7 +97,7 @@ public class JNR_UserRng implements UserRngRFFI {
     public void seeds(int[] n) {
         Pointer pInt = userRng().user_unif_seedloc();
         for (int i = 0; i < n.length; i++) {
-            n[i] = pInt.getInt(i);
+            n[i] = pInt.getInt(i * 4);
         }
     }
 }
