@@ -22,29 +22,20 @@
  */
 #include <rffiutils.h>
 
-static jmethodID GetRNGstate_MethodID;
-static jmethodID PutRNGstate_MethodID;
-static jmethodID UnifRand_MethodID;
-
 void init_random(JNIEnv *env) {
-	GetRNGstate_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "getRNGstate", "()V", 1);
-	PutRNGstate_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "putRNGstate", "()V", 1);
-	UnifRand_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "unifRand", "()D", 1);
 }
 
 void GetRNGstate() {
-	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, GetRNGstate_MethodID);
+  	unimplemented("GetRNGstate");
 }
 
 void PutRNGstate() {
-	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, PutRNGstate_MethodID);
+  	unimplemented("PutRNGstate");
 }
 
 double unif_rand() {
-	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticDoubleMethod(thisenv, CallRFFIHelperClass, UnifRand_MethodID);
+  	unimplemented("unif_rand");
+    return 0;
 }
 
 double norm_rand() {
