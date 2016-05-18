@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,29 @@
  */
 #include <rffiutils.h>
 
+static jmethodID GetRNGstate_MethodID;
+static jmethodID PutRNGstate_MethodID;
+static jmethodID UnifRand_MethodID;
+
 void init_random(JNIEnv *env) {
+	GetRNGstate_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "getRNGstate", "()V", 1);
+	PutRNGstate_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "putRNGstate", "()V", 1);
+	UnifRand_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "unifRand", "()D", 1);
 }
 
 void GetRNGstate() {
-	unimplemented("GetRNGstate");
+	JNIEnv *thisenv = getEnv();
+	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, GetRNGstate_MethodID);
 }
 
 void PutRNGstate() {
-	unimplemented("PutRNGstate");
+	JNIEnv *thisenv = getEnv();
+	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, PutRNGstate_MethodID);
 }
 
 double unif_rand() {
-	unimplemented("unif_rand");
-	return 0;
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallStaticDoubleMethod(thisenv, CallRFFIHelperClass, UnifRand_MethodID);
 }
 
 double norm_rand() {

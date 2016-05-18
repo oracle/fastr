@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -15,16 +15,14 @@ import com.oracle.truffle.r.runtime.rng.RRNG.RandomNumberGenerator;
 
 public abstract class RNGInitAdapter implements RandomNumberGenerator {
 
-    /**
-     * This function is derived from GNU R, RNG.c (RNG_Init).
-     */
-    protected void init(int seedParam, int[] array) {
-        int seed = seedParam;
-        for (int j = 0; j < array.length; j++) {
-            seed = (69069 * seed + 1);
-            array[j] = seed;
-        }
+    // TODO: it seems like GNU R this is shared between the generators (does it matter?)
+    protected int[] iSeed = new int[625];
 
-        fixupSeeds(true);
+    @Override
+    public void setISeed(int[] seeds) {
+        for (int i = 1; i <= getNSeed(); i++) {
+            iSeed[i - 1] = seeds[i];
+        }
+        fixupSeeds(false);
     }
 }

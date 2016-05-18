@@ -63,9 +63,10 @@ public final class RBuiltinCheck {
 
     private static final String DEFAULT_NAMESC = "com.oracle.truffle.r.native/gnur/R-3.2.4/src/main/names.c";
 
+    // old-style code annotation to get rid of javadoc error.
     /**
      * Regular expression used to match FUNTAB entries in GNU R names.c code. Example entry:
-     * {@code {"if", do_if, 0, 200, -1, {PP_IF, PREC_FN, 1}} }
+     * <code>{"if", do_if, 0, 200, -1, {PP_IF, PREC_FN, 1}}</code>
      */
     private static final String FUNTAB_REGEXP = "\\{\\s*\\\"(?<name>(\\.|[^\"])+)\\\"\\s*," +
                     "[^,]*,[^,]*,\\s*(?<eval>\\d{1,3})\\s*,\\s*(?<arity>-?\\d+)\\s*," +

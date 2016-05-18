@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.rng.RRNG;
-import com.oracle.truffle.r.runtime.rng.RRNG.RNGException;
 
 public class RNGFunctions {
     @RBuiltin(name = "set.seed", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"seed", "kind", "normal.kind"})
@@ -58,7 +57,7 @@ public class RNGFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull setSeed(RNull seed, RNull kind, RNull normKind) {
-            doSetSeed(RRNG.RESET_SEED, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
+            doSetSeed(RRNG.timeToSeed(), RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
         }
 
@@ -69,16 +68,8 @@ public class RNGFunctions {
             throw RError.error(this, RError.Message.SEED_NOT_VALID_INT);
         }
 
-        private void doSetSeed(Integer newSeed, int kind, int normKind) {
-            try {
-                RRNG.doSetSeed(newSeed, kind, normKind);
-            } catch (RNGException ex) {
-                if (ex.isError()) {
-                    throw RError.error(this, ex);
-                } else {
-                    RError.warning(this, RError.Message.GENERIC, ex.getMessage());
-                }
-            }
+        private static void doSetSeed(int newSeed, int kind, int normKind) {
+            RRNG.doSetSeed(newSeed, kind, normKind);
         }
     }
 
@@ -87,18 +78,11 @@ public class RNGFunctions {
 
         @Specialization
         protected RIntVector doRNGkind(Object kind, Object normKind) {
+            RRNG.getRNGState();
             RIntVector result = getCurrent();
             int kindChange = checkType(kind, "kind");
             int normKindChange = checkType(normKind, "normkind");
-            try {
-                RRNG.doRNGKind(kindChange, normKindChange);
-            } catch (RNGException ex) {
-                if (ex.isError()) {
-                    throw RError.error(this, ex);
-                } else {
-                    RError.warning(this, RError.Message.GENERIC, ex.getMessage());
-                }
-            }
+            RRNG.doRNGKind(kindChange, normKindChange);
             return result;
         }
 

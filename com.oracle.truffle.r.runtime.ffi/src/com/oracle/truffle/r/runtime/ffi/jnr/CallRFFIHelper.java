@@ -67,6 +67,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
+import com.oracle.truffle.r.runtime.rng.RRNG;
 
 /**
  * This class provides methods that match the functionality of the macro/function definitions in the
@@ -752,5 +753,17 @@ public class CallRFFIHelper {
 
     public static void printf(String message) {
         RContext.getInstance().getConsoleHandler().print(message);
+    }
+
+    public static void getRNGstate() {
+        RRNG.getRNGState();
+    }
+
+    public static void putRNGstate() {
+        RRNG.updateDotRandomSeed();
+    }
+
+    public static double unifRand() {
+        return RRNG.unifRand();
     }
 }
