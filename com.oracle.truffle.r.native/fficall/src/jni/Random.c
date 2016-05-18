@@ -44,7 +44,7 @@ void PutRNGstate() {
 
 double unif_rand() {
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticDoubleMethod(thisenv, CallRFFIHelperClass, UnifRand_MethodID);
+	return (*thisenv)->CallStaticDoubleMethod(thisenv, CallRFFIHelperClass, UnifRand_MethodID);
 }
 
 double norm_rand() {
