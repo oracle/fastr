@@ -67,9 +67,8 @@ public final class UserRNG extends RNGInitAdapter {
             RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "seed length must be in 0...625; ignored");
         } else {
             nSeeds = ns;
-            // TODO: if we ever (initially) share iSeed (as GNU R does) we need to assign this
+            // TODO: if we ever (initially) share iSeed (as GNU R does) we may need to assign this
             // generator's iSeed here
-            userRngRFFI.seeds(iSeed);
         }
     }
 
