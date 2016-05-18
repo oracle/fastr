@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
@@ -81,8 +82,11 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
         } else {
             nonPromiseProfile.enter();
         }
-        int frameId = RArguments.getDepth(frame);
-        return factory.createEagerSuppliedPromise(value, alwaysValidAssumption, frameId, this, wrapIndex);
+        RCaller call = RArguments.getCall(frame);
+        while (call.isPromise()) {
+            call = call.getParent();
+        }
+        return factory.createEagerSuppliedPromise(value, alwaysValidAssumption, call, this, wrapIndex);
     }
 
     @Override

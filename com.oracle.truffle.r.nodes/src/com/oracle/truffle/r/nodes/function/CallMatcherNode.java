@@ -103,10 +103,8 @@ public abstract class CallMatcherNode extends RBaseNode {
         return new CallMatcherCachedNode(suppliedSignature, varArgSignatures, function, preparePermutation, permutation, forNextMethod, argsAreEvaluated, next);
     }
 
-    protected Object[] prepareArguments(VirtualFrame frame, Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, DispatchArgs dispatchArgs,
-                    RCaller caller) {
-        return argsNode.execute(function, caller, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), reorderedArgs, reorderedSignature,
-                        dispatchArgs);
+    protected Object[] prepareArguments(Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, DispatchArgs dispatchArgs, RCaller caller) {
+        return argsNode.execute(function, caller, null, reorderedArgs, reorderedSignature, dispatchArgs);
     }
 
     protected final void evaluatePromises(VirtualFrame frame, RFunction function, Object[] args, int varArgIndex) {
@@ -161,7 +159,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             } else {
                 CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, this));
                 // for splitting if necessary
-                if (cachedNode.call != null && RCallNode.needsSplitting(function)) {
+                if (cachedNode.call != null && RCallNode.needsSplitting(function.getTarget())) {
                     cachedNode.call.cloneCallTarget();
                 }
                 return cachedNode.execute(frame, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
@@ -221,9 +219,11 @@ public abstract class CallMatcherNode extends RBaseNode {
                 Object[] reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(permutation, preparedArguments, formals);
                 evaluatePromises(frame, cachedFunction, reorderedArgs, formals.getSignature().getVarArgIndex());
                 if (call != null) {
-                    RCaller caller = functionName == null ? RCallerHelper.InvalidRepresentation.instance
-                                    : new RCallerHelper.Representation(functionName, new RArgsValuesAndNames(reorderedArgs, ArgumentsSignature.empty(reorderedArgs.length)));
-                    Object[] arguments = prepareArguments(frame, reorderedArgs, formals.getSignature(), cachedFunction, dispatchArgs, caller);
+                    RCaller parent = RArguments.getCall(frame).getParent();
+                    RCaller caller = functionName == null ? RCaller.createInvalid(frame, parent)
+                                    : RCaller.create(frame, parent,
+                                                    RCallerHelper.createFromArguments(functionName, new RArgsValuesAndNames(reorderedArgs, ArgumentsSignature.empty(reorderedArgs.length))));
+                    Object[] arguments = prepareArguments(reorderedArgs, formals.getSignature(), cachedFunction, dispatchArgs, caller);
                     return call.call(frame, arguments);
                 } else {
                     applyCasts(reorderedArgs);
@@ -306,9 +306,11 @@ public abstract class CallMatcherNode extends RBaseNode {
             RArgsValuesAndNames reorderedArgs = reorderArguments(suppliedArguments, function, suppliedSignature);
             evaluatePromises(frame, function, reorderedArgs.getArguments(), reorderedArgs.getSignature().getVarArgIndex());
 
-            RCaller caller = functionName == null ? RCallerHelper.InvalidRepresentation.instance
-                            : new RCallerHelper.Representation(functionName, new RArgsValuesAndNames(reorderedArgs.getArguments(), ArgumentsSignature.empty(reorderedArgs.getLength())));
-            Object[] arguments = prepareArguments(frame, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function, dispatchArgs, caller);
+            RCaller parent = RArguments.getCall(frame).getParent();
+            RCaller caller = functionName == null ? RCaller.createInvalid(frame, parent)
+                            : RCaller.create(frame, RCallerHelper.createFromArguments(functionName,
+                                            new RArgsValuesAndNames(reorderedArgs.getArguments(), ArgumentsSignature.empty(reorderedArgs.getLength()))));
+            Object[] arguments = prepareArguments(reorderedArgs.getArguments(), reorderedArgs.getSignature(), function, dispatchArgs, caller);
             return call.call(frame, function.getTarget(), arguments);
         }
 
@@ -372,7 +374,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             RArgsValuesAndNames evaledArgs = new RArgsValuesAndNames(argValues, signature);
 
             // ...to match them against the chosen function's formal arguments
-            RArgsValuesAndNames evaluated = ArgumentMatcher.matchArgumentsEvaluated(function, evaledArgs, this, forNextMethod);
+            RArgsValuesAndNames evaluated = ArgumentMatcher.matchArgumentsEvaluated((RRootNode) function.getRootNode(), evaledArgs, this, forNextMethod);
             return evaluated;
         }
 

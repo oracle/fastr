@@ -158,7 +158,7 @@ public class TestEnvironments extends TestBase {
         assertEval("{ myfunc <- function(i) { sum(i) } ; g <- function() { assign(\"z\", 1);  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
         assertEval("{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
 
-        assertEval(Ignored.ImplementationError, "{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+        assertEval(Ignored.Unstable, "{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
     }
 
     @Test
@@ -283,6 +283,6 @@ public class TestEnvironments extends TestBase {
         assertEval("{ attach(.Platform, 2); r <- file.sep; detach(2); r }");
         assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); r <- x; detach(2); r }");
         assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2); x }");
-        assertEval(Output.ContainsError, "{ detach(\"missing\"); x }");
+        assertEval("{ detach(\"missing\"); x }");
     }
 }

@@ -156,7 +156,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     private static RFunction createFunction(RBuiltinFactory builtinFactory, String methodName) {
         try {
             RootCallTarget callTarget = RBuiltinNode.createArgumentsCallTarget(builtinFactory);
-            RFunction function = RDataFactory.createFunction(builtinFactory.getName(), callTarget, builtinFactory, null, null, false);
+            RFunction function = RDataFactory.createFunction(builtinFactory.getName(), callTarget, builtinFactory, null);
             cachedBuiltinFunctions.put(methodName, function);
             return function;
         } catch (Throwable t) {

@@ -30,6 +30,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RSerialize;
@@ -145,12 +146,12 @@ public interface Engine {
     /**
      * Support for the {@code eval} {@code .Internal}.
      */
-    Object eval(RExpression expr, REnvironment envir, int depth);
+    Object eval(RExpression expr, REnvironment envir, RCaller caller);
 
     /**
-     * Variant of {@link #eval(RExpression, REnvironment, int)} for a single language element.
+     * Variant of {@link #eval(RExpression, REnvironment, RCaller)} for a single language element.
      */
-    Object eval(RLanguage expr, REnvironment envir, int depth);
+    Object eval(RLanguage expr, REnvironment envir, RCaller caller);
 
     /**
      * Evaluate {@code expr} in {@code frame}.

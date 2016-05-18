@@ -28,28 +28,18 @@ import com.oracle.truffle.api.nodes.ControlFlowException;
 public final class ReturnException extends ControlFlowException {
 
     private final Object result;
-    private final int depth;
+    private final RCaller target;
 
     /**
      * Support for the "return" builtin.
      *
      * @param result the value to return
-     * @param depth if not -1, the depth of the frame of the function that the return should go to,
+     * @param target the caller representing the frame of the function that the return should go to,
      *            skipping intermediate frames.
      */
-    public ReturnException(Object result, int depth) {
+    public ReturnException(Object result, RCaller target) {
         this.result = result;
-        this.depth = depth;
-    }
-
-    /**
-     * Support for the "return" builtin.
-     *
-     * @param result the value to return
-     */
-    public ReturnException(Object result) {
-        this.result = result;
-        this.depth = -1;
+        this.target = target;
     }
 
     /**
@@ -59,7 +49,7 @@ public final class ReturnException extends ControlFlowException {
         return result;
     }
 
-    public int getDepth() {
-        return depth;
+    public RCaller getTarget() {
+        return target;
     }
 }

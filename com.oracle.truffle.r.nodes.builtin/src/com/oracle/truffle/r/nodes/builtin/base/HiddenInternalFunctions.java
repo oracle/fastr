@@ -256,8 +256,7 @@ public class HiddenInternalFunctions {
                 RSerialize.CallHook callHook = new RSerialize.CallHook() {
                     @Override
                     public Object eval(Object arg) {
-                        Object[] callArgs = RArguments.create(envhook, (RCaller) getOriginalCall(), null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), new Object[]{arg},
-                                        SIGNATURE, null);
+                        Object[] callArgs = RArguments.create(envhook, RCaller.createInvalid(frame), null, new Object[]{arg}, SIGNATURE, null);
                         return callCache.execute(SubstituteVirtualFrame.create(frame), envhook.getTarget(), callArgs);
                     }
                 };
@@ -381,8 +380,7 @@ public class HiddenInternalFunctions {
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
                 @Override
                 public Object eval(Object arg) {
-                    Object[] callArgs = RArguments.create(hook, (RCaller) getOriginalCall(), null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame), new Object[]{arg}, SIGNATURE,
-                                    null);
+                    Object[] callArgs = RArguments.create(hook, RCaller.createInvalid(frame), null, new Object[]{arg}, SIGNATURE, null);
                     return callCache.execute(SubstituteVirtualFrame.create(frame), hook.getTarget(), callArgs);
                 }
             };

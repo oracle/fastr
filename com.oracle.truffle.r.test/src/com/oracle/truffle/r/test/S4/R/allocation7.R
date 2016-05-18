@@ -1,4 +1,3 @@
-# ContainsError
 # test from Hadley Wickham's book
 
 check_person <- function(object) {

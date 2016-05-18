@@ -22,15 +22,91 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.util.function.Supplier;
+
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Represents the caller of a function and stored in {@link RArguments}. A value of this type never
  * appears in a Truffle execution.
- *
  */
-public interface RCaller {
+public final class RCaller {
 
-    RSyntaxNode getSyntaxNode();
+    private static final Object PROMISE_MARKER = new Object();
 
+    private final int depth;
+    private final RCaller parent;
+    /**
+     * payload can be an RSyntaxNode, a {@link Supplier}, or an PROMISE_MARKER.
+     */
+    private final Object payload;
+
+    private RCaller(Frame callingFrame, Object nodeOrSupplier) {
+        this.depth = depthFromFrame(callingFrame);
+        this.parent = parentFromFrame(callingFrame);
+        this.payload = nodeOrSupplier;
+    }
+
+    private static int depthFromFrame(Frame callingFrame) {
+        return callingFrame == null ? 0 : RArguments.getCall(callingFrame).getDepth() + 1;
+    }
+
+    private static RCaller parentFromFrame(Frame callingFrame) {
+        return callingFrame == null ? null : RArguments.getCall(callingFrame);
+    }
+
+    private RCaller(int depth, RCaller parent, Object nodeOrSupplier) {
+        this.depth = depth;
+        this.parent = parent;
+        this.payload = nodeOrSupplier;
+    }
+
+    public int getDepth() {
+        return depth;
+    }
+
+    public RCaller getParent() {
+        return parent;
+    }
+
+    public RSyntaxNode getSyntaxNode() {
+        assert payload != null && payload != PROMISE_MARKER : payload == null ? "null RCaller" : "promise RCaller";
+        return payload instanceof RSyntaxNode ? (RSyntaxNode) payload : (RSyntaxNode) ((Supplier<?>) payload).get();
+    }
+
+    public boolean isValidCaller() {
+        return payload != null;
+    }
+
+    public boolean isPromise() {
+        return payload == PROMISE_MARKER;
+    }
+
+    public static RCaller createInvalid(Frame callingFrame) {
+        return new RCaller(callingFrame, null);
+    }
+
+    public static RCaller createInvalid(Frame callingFrame, RCaller parent) {
+        return new RCaller(depthFromFrame(callingFrame), parent, null);
+    }
+
+    public static RCaller create(Frame callingFrame, RSyntaxNode node) {
+        assert node != null;
+        return new RCaller(callingFrame, node);
+    }
+
+    public static RCaller create(Frame callingFrame, Supplier<RSyntaxNode> supplier) {
+        assert supplier != null;
+        return new RCaller(callingFrame, supplier);
+    }
+
+    public static RCaller create(Frame callingFrame, RCaller parent, Supplier<RSyntaxNode> supplier) {
+        assert supplier != null;
+        return new RCaller(depthFromFrame(callingFrame), parent, supplier);
+    }
+
+    public static RCaller createForPromise(RCaller original, int newDepth) {
+        return new RCaller(newDepth, original, PROMISE_MARKER);
+    }
 }

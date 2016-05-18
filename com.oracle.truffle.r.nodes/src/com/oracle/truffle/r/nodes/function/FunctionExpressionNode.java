@@ -29,7 +29,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
@@ -88,11 +87,9 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
                 }
                 FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), frame);
             }
-            fastPath = RASTBuilder.createFunctionFastPath(callTarget);
             initialized = true;
         }
-        boolean containsDispatch = ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch();
-        RFunction func = RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, matFrame, fastPath, containsDispatch);
+        RFunction func = RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, matFrame);
         RInstrumentation.checkDebugRequested(func);
         return func;
     }

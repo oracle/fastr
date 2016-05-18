@@ -168,8 +168,8 @@ public class TestStats extends TestBase {
     public void testNaFail() {
         assertEval("na.fail(c(1,2,3))");
         assertEval("na.fail(c(1L, 2L))");
-        assertEval(Output.ContainsError, "na.fail(c(1,NA,3))");
-        assertEval(Output.ContainsError, "na.fail(c(NA, 2L))");
+        assertEval("na.fail(c(1,NA,3))");
+        assertEval("na.fail(c(NA, 2L))");
         assertEval(Output.ContainsError, "na.fail(c())");
         assertEval(Output.ContainsError, "na.fail(NULL)");
     }

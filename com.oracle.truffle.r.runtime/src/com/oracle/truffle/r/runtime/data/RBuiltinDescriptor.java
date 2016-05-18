@@ -46,10 +46,12 @@ public abstract class RBuiltinDescriptor {
     private final int primitiveMethodIndex;
     private final RVisibility visibility;
     @CompilationFinal private final boolean[] evaluatesArgument;
+    private final Class<?> builtinNodeClass;
 
-    public RBuiltinDescriptor(String name, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, boolean alwaysSplit,
-                    RDispatch dispatch) {
+    public RBuiltinDescriptor(String name, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller,
+                    boolean alwaysSplit, RDispatch dispatch) {
         this.name = name.intern();
+        this.builtinNodeClass = builtinNodeClass;
         this.visibility = visibility;
         this.aliases = aliases;
         this.kind = kind;
@@ -118,5 +120,9 @@ public abstract class RBuiltinDescriptor {
 
     public RVisibility getVisibility() {
         return visibility;
+    }
+
+    public Class<?> getBuiltinNodeClass() {
+        return builtinNodeClass;
     }
 }

@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -646,9 +647,9 @@ public class CallRFFIHelper {
         if (expr instanceof RPromise) {
             result = RContext.getRRuntimeASTAccess().forcePromise(expr);
         } else if (expr instanceof RExpression) {
-            result = RContext.getEngine().eval((RExpression) expr, (REnvironment) env, 0);
+            result = RContext.getEngine().eval((RExpression) expr, (REnvironment) env, RCaller.createInvalid(null));
         } else if (expr instanceof RLanguage) {
-            result = RContext.getEngine().eval((RLanguage) expr, (REnvironment) env, 0);
+            result = RContext.getEngine().eval((RLanguage) expr, (REnvironment) env, RCaller.createInvalid(null));
         } else {
             // just return value
             result = expr;

@@ -20,7 +20,7 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-import tempfile, platform, subprocess, sys
+import platform, subprocess, sys
 from os.path import join, sep
 from argparse import ArgumentParser
 import mx
@@ -503,60 +503,20 @@ def unittest(args):
     print "use 'junit --tests testclasses' or 'junitsimple' to run FastR unit tests"
 
 def rbcheck(args):
-    '''check FastR builtins against GnuR'''
-    parser = ArgumentParser(prog='mx rbcheck')
-    parser.add_argument('--check-internal', action='store_const', const='--check-internal', help='check .Internal functions')
-    parser.add_argument('--unknown-to-gnur', action='store_const', const='--unknown-to-gnur', help='list builtins not in GnuR FUNCTAB')
-    parser.add_argument('--todo', action='store_const', const='--todo', help='show unimplemented')
-    parser.add_argument('--no-eval-args', action='store_const', const='--no-eval-args', help='list functions that do not evaluate their args')
-    parser.add_argument('--visibility', action='store_const', const='--visibility', help='list visibility specification')
-    parser.add_argument('--printGnuRFunctions', action='store', help='ask GnuR to "print" value of functions')
-    parser.add_argument('--packageBase', action='store', help='directory to be recursively scanned for R sources (used to get frequencies for builtins)')
-    parser.add_argument('--interactive', action='store_const', const='--interactive', help='interactive querying of the word frequencies')
-    args = parser.parse_args(args)
+    '''Checks FastR builtins against GnuR
 
-    class_map = mx.project('com.oracle.truffle.r.nodes').find_classes_with_matching_source_line(None, lambda line: "@RBuiltin" in line, True)
-    classes = []
-    for className, path in class_map.iteritems():
-        classNameX = className.split("$")[0] if '$' in className else className
+    gnur-only:    GnuR builtins not implemented in FastR (i.e. TODO list).
+    fastr-only:   FastR builtins not implemented in GnuR
+    both-diff:    implemented in both GnuR and FastR, but with difference
+                  in signature (e.g. visibility)
+    both:         implemented in both GnuR and FastR with matching signature
 
-        if not classNameX.endswith('Factory'):
-            classes.append([className, path])
-
-    class_map = mx.project('com.oracle.truffle.r.nodes.builtin').find_classes_with_matching_source_line(None, lambda line: "@RBuiltin" in line, True)
-    for className, path in class_map.iteritems():
-        classNameX = className.split("$")[0] if '$' in className else className
-
-        if not classNameX.endswith('Factory'):
-            classes.append([className, path])
-
-    (_, testfile) = tempfile.mkstemp(".classes", "mx")
-    os.close(_)
-    with open(testfile, 'w') as f:
-        for c in classes:
-            f.write(c[0] + ',' + c[1][0] + '\n')
-    analyzeArgs = []
-    if args.check_internal:
-        analyzeArgs.append(args.check_internal)
-    if args.unknown_to_gnur:
-        analyzeArgs.append(args.unknown_to_gnur)
-    if args.todo:
-        analyzeArgs.append(args.todo)
-    if args.no_eval_args:
-        analyzeArgs.append(args.no_eval_args)
-    if args.visibility:
-        analyzeArgs.append(args.visibility)
-    if args.interactive:
-        analyzeArgs.append(args.interactive)
-    if args.printGnuRFunctions:
-        analyzeArgs.append('--printGnuRFunctions')
-        analyzeArgs.append(args.printGnuRFunctions)
-    if args.packageBase:
-        analyzeArgs.append('--packageBase')
-        analyzeArgs.append(args.packageBase)
-    analyzeArgs.append(testfile)
+    If the option --filter is not given, shows all groups.
+    Multiple groups can be combined: e.g. "--filter gnur-only,fastr-only"'''
     cp = mx.classpath('com.oracle.truffle.r.test')
-    mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.AnalyzeRBuiltin'] + analyzeArgs)
+    args.append("--suite-path")
+    args.append(mx.primary_suite().dir)
+    mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.RBuiltinCheck'] + args)
 
 def rcmplib(args):
     '''compare FastR library R sources against GnuR'''
@@ -611,7 +571,7 @@ _commands = {
     'junitgate' : [junit_gate, ['options']],
     'junitnoapps' : [junit_noapps, ['options']],
     'unittest' : [unittest, ['options']],
-    'rbcheck' : [rbcheck, ['options']],
+    'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
     'rcmplib' : [rcmplib, ['options']],
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'rrepl' : [rrepl, '[options]'],

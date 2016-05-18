@@ -59,7 +59,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
-import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
@@ -83,7 +82,6 @@ import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -316,9 +314,8 @@ final class REngine implements Engine, Engine.Timings {
         RParser<RSyntaxNode> parser = new RParser<>(source, new RASTBuilder());
         try {
             RootCallTarget callTarget = parser.root_function(name);
-            FastPathFactory fastPath = RASTBuilder.createFunctionFastPath(callTarget);
             FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
-            return RDataFactory.createFunction(name, callTarget, null, enclosingFrame, fastPath, ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch());
+            return RDataFactory.createFunction(name, callTarget, null, enclosingFrame);
         } catch (RecognitionException e) {
             throw handleRecognitionException(source, e);
         }
@@ -375,12 +372,12 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
-    public Object eval(RExpression exprs, REnvironment envir, int depth) {
+    public Object eval(RExpression exprs, REnvironment envir, RCaller caller) {
         Object result = RNull.instance;
         for (int i = 0; i < exprs.getLength(); i++) {
             Object obj = RASTUtils.checkForRSymbol(exprs.getDataAt(i));
             if (obj instanceof RLanguage) {
-                result = evalNode(((RLanguage) obj).getRep().asRSyntaxNode(), envir, depth);
+                result = evalNode(((RLanguage) obj).getRep().asRSyntaxNode(), envir, caller);
             } else {
                 result = obj;
             }
@@ -389,8 +386,8 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
-    public Object eval(RLanguage expr, REnvironment envir, int depth) {
-        return evalNode(expr.getRep().asRSyntaxNode(), envir, depth);
+    public Object eval(RLanguage expr, REnvironment envir, RCaller caller) {
+        return evalNode(expr.getRep().asRSyntaxNode(), envir, caller);
     }
 
     @Override
@@ -422,19 +419,16 @@ final class REngine implements Engine, Engine.Timings {
     public Object evalFunction(RFunction func, MaterializedFrame frame, Object... args) {
         ArgumentsSignature argsSig = ((RRootNode) func.getRootNode()).getSignature();
         MaterializedFrame actualFrame = frame == null ? Utils.getActualCurrentFrame().materialize() : frame;
-        Object[] rArgs = RArguments.create(func, actualFrame == null ? null : RArguments.getCall(actualFrame), actualFrame, actualFrame == null ? 1 : RArguments.getDepth(actualFrame) + 1,
-                        actualFrame == null ? null : RArguments.getPromiseFrame(actualFrame),
-                        args, argsSig, null);
+        Object[] rArgs = RArguments.create(func, actualFrame == null ? null : RArguments.getCall(actualFrame), actualFrame, args, argsSig, null);
         return func.getTarget().call(rArgs);
     }
 
-    private Object evalNode(RSyntaxElement exprRep, REnvironment envir, int depth) {
+    private Object evalNode(RSyntaxElement exprRep, REnvironment envir, RCaller caller) {
         // we need to copy the node, otherwise it (and its children) will specialized to a specific
         // frame descriptor and will fail on subsequent re-executions
         RSyntaxNode n = RContext.getASTBuilder().process(exprRep);
         RootCallTarget callTarget = doMakeCallTarget(n.asRNode(), EVAL_FUNCTION_NAME, false, false);
-        RCaller call = RArguments.getCall(envir.getFrame());
-        return evalTarget(callTarget, call, envir, depth);
+        return evalTarget(callTarget, caller, envir);
     }
 
     /**
@@ -447,10 +441,10 @@ final class REngine implements Engine, Engine.Timings {
      * inefficient. In particular, in the case where a {@link VirtualFrame} is available, then the
      * {@code eval} methods that take such a {@link VirtualFrame} should be used in preference.
      */
-    private static Object evalTarget(RootCallTarget callTarget, RCaller call, REnvironment envir, int depth) {
+    private static Object evalTarget(RootCallTarget callTarget, RCaller call, REnvironment envir) {
         // Here we create fake frame that wraps the original frame's context and has an only
         // slightly changed arguments array (function and callSrc).
-        MaterializedFrame vFrame = VirtualEvalFrame.create(envir.getFrame(), (RFunction) null, call, depth);
+        MaterializedFrame vFrame = VirtualEvalFrame.create(envir.getFrame(), (RFunction) null, call);
         return callTarget.call(vFrame);
     }
 
@@ -591,7 +585,8 @@ final class REngine implements Engine, Engine.Timings {
             if (resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                 ((RShareable) resultValue).incRefCount();
             }
-            function.getTarget().call(RArguments.create(function, null, REnvironment.globalEnv().getFrame(), 1, null, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE, null));
+            MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
+            function.getTarget().call(RArguments.create(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE, null));
             if (resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                 ((RShareable) resultValue).decRefCount();
             }

@@ -27,15 +27,12 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
-import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
-import com.oracle.truffle.r.runtime.PromiseEvalFrame;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
@@ -50,9 +47,6 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
     @Child private RNode fallback = null;
     @Child private LocalReadVariableNode readNode;
     private final int wrapIndex;
-
-    private final ConditionProfile promiseEvalFrameProfile = ConditionProfile.createBinaryProfile();
-    private final ValueProfile frameProfile = ValueProfile.createClassProfile();
 
     public OptVariablePromiseBaseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
         super(factory);
@@ -70,13 +64,7 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
     }
 
     @Override
-    public Object execute(VirtualFrame initialFrame) {
-        VirtualFrame frame;
-        if (promiseEvalFrameProfile.profile(initialFrame instanceof PromiseEvalFrame)) {
-            frame = frameProfile.profile(SubstituteVirtualFrame.create(((PromiseEvalFrame) initialFrame).getOriginalFrame()));
-        } else {
-            frame = initialFrame;
-        }
+    public Object execute(VirtualFrame frame) {
         // If the frame slot we're looking for is not present yet, wait for it!
         if (!frameSlotNode.hasValue(frame)) {
             // We don't want to rewrite, as the the frame slot might show up later on (after 1.
@@ -105,11 +93,14 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
 
         // Create EagerPromise with the eagerly evaluated value under the assumption that the
         // value won't be altered until 1. read
-        int frameId = RArguments.getDepth(frame);
+        RCaller call = RArguments.getCall(frame);
+        while (call.isPromise()) {
+            call = call.getParent();
+        }
         if (result instanceof RPromise) {
-            return factory.createPromisedPromise((RPromise) result, notChangedNonLocally, frameId, this);
+            return factory.createPromisedPromise((RPromise) result, notChangedNonLocally, call, this);
         } else {
-            return factory.createEagerSuppliedPromise(result, notChangedNonLocally, frameId, this, wrapIndex);
+            return factory.createEagerSuppliedPromise(result, notChangedNonLocally, call, this, wrapIndex);
         }
     }
 

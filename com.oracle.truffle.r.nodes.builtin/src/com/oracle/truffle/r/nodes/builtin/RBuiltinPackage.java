@@ -161,8 +161,7 @@ public abstract class RBuiltinPackage {
         parameterNames = Arrays.stream(parameterNames).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
         ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
 
-        putBuiltin(new RBuiltinFactory(annotation.name(), annotation.visibility(), annotation.aliases(), annotation.kind(), signature, annotation.nonEvalArgs(), annotation.splitCaller(),
-                        annotation.alwaysSplit(),
-                        annotation.dispatch(), constructor));
+        putBuiltin(new RBuiltinFactory(annotation.name(), builtinClass, annotation.visibility(), annotation.aliases(), annotation.kind(), signature, annotation.nonEvalArgs(), annotation.splitCaller(),
+                        annotation.alwaysSplit(), annotation.dispatch(), constructor));
     }
 }

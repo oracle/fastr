@@ -285,7 +285,7 @@ public class RErrorHandling {
                 RList car = (RList) pList.car();
                 if (exit.equals(restartExit(car))) {
                     errorHandlingState.restartStack = pList.cdr();
-                    throw new ReturnException(args, RArguments.getDepth(restartFrame(restart)));
+                    throw new ReturnException(args, RArguments.getCall(restartFrame(restart)));
                 }
                 errorHandlingState.restartStack = pList.cdr();
             }
@@ -352,7 +352,7 @@ public class RErrorHandling {
         resultData[RESULT_COND] = cond;
         resultData[RESULT_CALL] = call;
         resultData[RESULT_HANDLER] = entry.getDataAt(ENTRY_HANDLER);
-        throw new ReturnException(result, RArguments.getDepth(rho.getFrame()));
+        throw new ReturnException(result, RArguments.getCall(rho.getFrame()));
     }
 
     private static RPairList findSimpleErrorHandler() {

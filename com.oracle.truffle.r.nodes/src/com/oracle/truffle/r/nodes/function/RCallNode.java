@@ -138,13 +138,9 @@ class ForcePromiseNode extends RNode {
     }
 }
 
-interface CallWithCallerFrame extends RCaller {
-    boolean setNeedsCallerFrame();
-}
-
 @NodeInfo(cost = NodeCost.NONE)
 @NodeChild(value = "function", type = ForcePromiseNode.class)
-public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall, RCaller {
+public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
 
     // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
 
@@ -182,16 +178,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
     }
 
-    @Override
-    public RSyntaxNode getSyntaxNode() {
-        return this;
-    }
-
     protected RCaller createCaller(VirtualFrame frame, RFunction function) {
         if (explicitArgs == null) {
-            return this;
+            return RCaller.create(frame, this);
         } else {
-            return new RCallerHelper.Representation(function, (RArgsValuesAndNames) explicitArgs.execute(frame));
+            return RCaller.create(frame, RCallerHelper.createFromArguments(function, (RArgsValuesAndNames) explicitArgs.execute(frame)));
         }
     }
 
@@ -734,14 +725,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return (RCallNode) parent;
     }
 
-    static boolean needsSplitting(RFunction function) {
-        RootNode root = function.getRootNode();
-        if (function.containsDispatch()) {
-            return true;
-        } else if (root instanceof RRootNode) {
-            return ((RRootNode) root).needsSplitting();
-        }
-        return false;
+    static boolean needsSplitting(RootCallTarget target) {
+        RRootNode root = (RRootNode) target.getRootNode();
+        return root.containsDispatch() || root.needsSplitting();
     }
 
     private static final class GetTempNode extends RNode {
@@ -785,36 +771,39 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             this.explicitArgs = explicitArgs;
         }
 
-        protected LeafCallNode createCacheNode(RFunction function) {
+        protected LeafCallNode createCacheNode(RootCallTarget cachedTarget) {
             CompilerAsserts.neverPartOfCompilation();
-            FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
-            if (function.isBuiltin()) {
-                return new BuiltinCallNode(RBuiltinNode.inline(function.getRBuiltin(), null), function.getRBuiltin(), formals, originalCall);
+            RRootNode root = (RRootNode) cachedTarget.getRootNode();
+            FormalArguments formals = root.getFormalArguments();
+            if (root instanceof RBuiltinRootNode) {
+                RBuiltinRootNode builtinRoot = (RBuiltinRootNode) root;
+                return new BuiltinCallNode(RBuiltinNode.inline(builtinRoot.getBuiltin(), null), builtinRoot.getBuiltin(), formals, originalCall);
             } else {
-                return new DispatchedCallNode(function, formals.getSignature(), originalCall);
+                return new DispatchedCallNode(cachedTarget, formals.getSignature(), originalCall);
             }
         }
 
-        protected PrepareArguments createArguments(RFunction function, boolean noOpt) {
+        protected PrepareArguments createArguments(RootCallTarget cachedTarget, boolean noOpt) {
+            RRootNode root = (RRootNode) cachedTarget.getRootNode();
             if (explicitArgs) {
-                return PrepareArguments.createExplicit(function);
+                return PrepareArguments.createExplicit(root);
             } else {
-                CallArgumentsNode args = originalCall.createArguments(dispatchTempIdentifiers, !function.isBuiltin(), true);
-                return PrepareArguments.create(function, args, noOpt);
+                CallArgumentsNode args = originalCall.createArguments(dispatchTempIdentifiers, root.getBuiltin() == null, true);
+                return PrepareArguments.create(root, args, noOpt);
             }
         }
 
-        protected PrepareArguments createArguments(RFunction function) {
-            return createArguments(function, false);
+        protected PrepareArguments createArguments(RootCallTarget cachedTarget) {
+            return createArguments(cachedTarget, false);
         }
 
-        @Specialization(limit = "CACHE_SIZE", guards = "function == cachedFunction")
-        protected Object dispatch(VirtualFrame frame, @SuppressWarnings("unused") RFunction function, Object varArgs, Object s3Args, //
-                        @Cached("function") RFunction cachedFunction, //
-                        @Cached("createCacheNode(cachedFunction)") LeafCallNode leafCall, //
-                        @Cached("createArguments(cachedFunction)") PrepareArguments prepareArguments) {
+        @Specialization(limit = "CACHE_SIZE", guards = "function.getTarget() == cachedTarget")
+        protected Object dispatch(VirtualFrame frame, RFunction function, Object varArgs, Object s3Args, //
+                        @Cached("function.getTarget()") @SuppressWarnings("unused") RootCallTarget cachedTarget, //
+                        @Cached("createCacheNode(cachedTarget)") LeafCallNode leafCall, //
+                        @Cached("createArguments(cachedTarget)") PrepareArguments prepareArguments) {
             Object[] orderedArguments = prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, originalCall);
-            return leafCall.execute(frame, cachedFunction, orderedArguments, (S3Args) s3Args);
+            return leafCall.execute(frame, function, orderedArguments, (S3Args) s3Args);
         }
 
         /*
@@ -823,20 +812,20 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
          */
         protected final class GenericCall extends TruffleBoundaryNode {
 
-            private RFunction cachedFunction;
+            private RootCallTarget cachedTarget;
             @Child private LeafCallNode leafCall;
             @Child private PrepareArguments prepareArguments;
 
             @TruffleBoundary
             public Object execute(MaterializedFrame materializedFrame, RFunction function, Object varArgs, Object s3Args) {
-                if (cachedFunction != function) {
-                    cachedFunction = function;
-                    leafCall = insert(createCacheNode(function));
-                    prepareArguments = insert(createArguments(function, true));
+                if (cachedTarget != function.getTarget()) {
+                    cachedTarget = function.getTarget();
+                    leafCall = insert(createCacheNode(cachedTarget));
+                    prepareArguments = insert(createArguments(cachedTarget));
                 }
                 VirtualFrame frame = SubstituteVirtualFrame.create(materializedFrame);
                 Object[] orderedArguments = prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, originalCall);
-                return leafCall.execute(frame, cachedFunction, orderedArguments, (S3Args) s3Args);
+                return leafCall.execute(frame, function, orderedArguments, (S3Args) s3Args);
             }
         }
 
@@ -945,7 +934,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             }
         }
 
-        @TruffleBoundary
         private static void wrapPromises(RArgsValuesAndNames varArgs) {
             Object[] array = varArgs.getArguments();
             for (int i = 0; i < array.length; i++) {
@@ -975,22 +963,23 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Child private RFastPathNode fastPath;
 
         private final ArgumentsSignature signature;
-        private final RFunction cachedFunction;
+        private final RootCallTarget cachedTarget;
         private final FastPathFactory fastPathFactory;
         private final RVisibility fastPathVisibility;
 
-        DispatchedCallNode(RFunction function, ArgumentsSignature signature, RCallNode originalCall) {
+        DispatchedCallNode(RootCallTarget cachedTarget, ArgumentsSignature signature, RCallNode originalCall) {
             super(originalCall);
-            this.cachedFunction = function;
+            RRootNode root = (RRootNode) cachedTarget.getRootNode();
+            this.cachedTarget = cachedTarget;
             this.signature = signature;
-            this.fastPathFactory = function.getFastPath();
+            this.fastPathFactory = root.getFastPath();
             this.fastPath = fastPathFactory == null ? null : fastPathFactory.create();
             this.fastPathVisibility = fastPathFactory == null ? null : fastPathFactory.getVisibility();
-            originalCall.needsCallerFrame |= cachedFunction.containsDispatch();
+            originalCall.needsCallerFrame |= root.containsDispatch();
         }
 
         @Override
-        public Object execute(VirtualFrame frame, RFunction currentFunction, Object[] orderedArguments, S3Args s3Args) {
+        public Object execute(VirtualFrame frame, RFunction function, Object[] orderedArguments, S3Args s3Args) {
             if (fastPath != null) {
                 Object result = fastPath.execute(frame, orderedArguments);
                 if (result != null) {
@@ -1003,14 +992,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
             if (call == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                call = insert(Truffle.getRuntime().createDirectCallNode(cachedFunction.getTarget()));
-                if (needsSplitting(cachedFunction)) {
+                call = insert(Truffle.getRuntime().createDirectCallNode(cachedTarget));
+                if (needsSplitting(cachedTarget)) {
                     call.cloneCallTarget();
                 }
             }
             MaterializedFrame callerFrame = /* CompilerDirectives.inInterpreter() || */originalCall.needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = RArguments.create(cachedFunction, originalCall.createCaller(frame, cachedFunction), callerFrame, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
-                            orderedArguments, signature, cachedFunction.getEnclosingFrame(), s3Args);
+            Object[] argsObject = RArguments.create(function, originalCall.createCaller(frame, function), callerFrame, orderedArguments, signature, function.getEnclosingFrame(), s3Args);
             return call.call(frame, argsObject);
         }
     }

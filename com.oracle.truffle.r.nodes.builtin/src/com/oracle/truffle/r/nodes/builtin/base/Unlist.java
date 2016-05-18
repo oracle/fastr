@@ -11,18 +11,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.UnlistNodeGen.RecursiveLengthNodeGen;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -31,22 +32,21 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@RBuiltin(name = "unlist", kind = SUBSTITUTE, parameterNames = {"x", "recursive", "use.names"})
-// TODO INTERNAL
+@RBuiltin(name = "unlist", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "recursive", "use.names"})
 public abstract class Unlist extends RBuiltinNode {
 
     // portions of the algorithm were transcribed from GNU R
 
     @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE};
+    protected void createCasts(CastBuilder casts) {
+        casts.firstBoolean(1);
+        casts.firstBoolean(2);
     }
 
     @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
@@ -55,11 +55,8 @@ public abstract class Unlist extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    protected Unlist() {
-    }
-
-    @NodeChild(value = "operand")
-    protected abstract static class RecursiveLength extends RNode {
+    @TypeSystemReference(RTypes.class)
+    protected abstract static class RecursiveLength extends Node {
 
         public abstract int executeInt(VirtualFrame frame, Object vector);
 
@@ -73,7 +70,7 @@ public abstract class Unlist extends RBuiltinNode {
         private void initRecursiveLengthNode() {
             if (recursiveLengthNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                recursiveLengthNode = insert(RecursiveLengthNodeGen.create(null));
+                recursiveLengthNode = insert(RecursiveLengthNodeGen.create());
             }
         }
 
@@ -134,47 +131,44 @@ public abstract class Unlist extends RBuiltinNode {
     private void initRecursiveLengthNode() {
         if (recursiveLengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveLengthNode = insert(RecursiveLengthNodeGen.create(null));
+            recursiveLengthNode = insert(RecursiveLengthNodeGen.create());
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RNull unlist(RNull vector, byte recursive, byte useNames) {
+    protected RNull unlist(RNull vector, boolean recursive, boolean useNames) {
         return RNull.instance;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isVectorList(vector)")
-    protected RAbstractVector unlistVector(RAbstractVector vector, byte recursive, byte useNames) {
+    protected RAbstractVector unlistVector(RAbstractVector vector, boolean recursive, boolean useNames) {
         return vector;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isEmpty(list)")
-    protected RNull unlistEmptyList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
+    protected RNull unlistEmptyList(VirtualFrame frame, RList list, boolean recursive, boolean useNames) {
         return RNull.instance;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isOneNull(list)")
-    protected RNull unlistOneNullList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
+    protected RNull unlistOneNullList(VirtualFrame frame, RList list, boolean recursive, boolean useNames) {
         return RNull.instance;
     }
 
     // TODO: initially unlist was on the slow path - hence initial recursive implementation is on
     // the slow path as well; ultimately we may consider (non-recursive) optimization
     @Specialization(guards = "!isEmpty(list)")
-    protected Object unlistList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
-        boolean isRecursive = RRuntime.fromLogical(recursive);
-        boolean isUseNames = RRuntime.fromLogical(useNames);
-
+    protected Object unlistList(VirtualFrame frame, RList list, boolean recursive, boolean useNames) {
         int precedence = PrecedenceNode.NO_PRECEDENCE;
         int totalSize = 0;
         for (int i = 0; i < list.getLength(); i++) {
             Object data = list.getDataAt(i);
             precedence = Math.max(precedence, precedenceNode.executeInteger(data, recursive));
-            if (isRecursive) {
+            if (recursive) {
                 totalSize += getRecursiveLength(frame, data);
             } else {
                 totalSize += getLength(frame, data);
@@ -184,7 +178,7 @@ public abstract class Unlist extends RBuiltinNode {
         if (precedence == PrecedenceNode.NO_PRECEDENCE) {
             return RNull.instance;
         } else {
-            return unlistHelper(list, isRecursive, isUseNames, precedence, totalSize);
+            return unlistHelper(list, recursive, useNames, precedence, totalSize);
         }
     }
 

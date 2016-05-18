@@ -54,6 +54,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/Menu.java,gn
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/WriteTable.java,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/common/arithmetic_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/coerce_fastr.c,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.native/fficall/src/common/errors_fastr.c,gnu_r.core.copyright
 com.oracle.truffle.r.native/fficall/src/common/inlined_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/print_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/printutils_fastr.c,gnu_r_gentleman_ihaka.copyright
@@ -139,6 +140,7 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/F
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/GetClass.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/GrepFunctions.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/HiddenInternalFunctions.java,gnu_r.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/IsListFactor.java,gnu_r.core.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Inherits.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/LaFunctions.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Lapply.java,purdue.copyright

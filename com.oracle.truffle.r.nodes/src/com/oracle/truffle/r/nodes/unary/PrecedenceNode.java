@@ -64,95 +64,95 @@ public abstract class PrecedenceNode extends RBaseNode {
 
     public static final int NUMBER_OF_PRECEDENCES = 9;
 
-    public abstract int executeInteger(Object object, byte recursive);
+    public abstract int executeInteger(Object object, boolean recursive);
 
     @Specialization
-    protected int doNull(RNull val, byte recursive) {
+    protected int doNull(RNull val, boolean recursive) {
         return NO_PRECEDENCE;
     }
 
     @Specialization
-    protected int doRaw(RRaw val, byte recursive) {
+    protected int doRaw(RRaw val, boolean recursive) {
         return RAW_PRECEDENCE;
     }
 
     @Specialization
-    protected int doRawVector(RRawVector val, byte recursive) {
+    protected int doRawVector(RRawVector val, boolean recursive) {
         return RAW_PRECEDENCE;
     }
 
     @Specialization
-    protected int doLogical(byte val, byte recursive) {
+    protected int doLogical(byte val, boolean recursive) {
         return LOGICAL_PRECEDENCE;
     }
 
     @Specialization
-    protected int doLogical(RLogicalVector val, byte recursive) {
+    protected int doLogical(RLogicalVector val, boolean recursive) {
         return LOGICAL_PRECEDENCE;
     }
 
     @Specialization
-    protected int doInt(int val, byte recursive) {
+    protected int doInt(int val, boolean recursive) {
         return INT_PRECEDENCE;
     }
 
     @Specialization
-    protected int doComplex(RComplex val, byte recursive) {
+    protected int doComplex(RComplex val, boolean recursive) {
         return COMPLEX_PRECEDENCE;
     }
 
     @Specialization
-    protected int doInt(RIntVector val, byte recursive) {
+    protected int doInt(RIntVector val, boolean recursive) {
         return INT_PRECEDENCE;
     }
 
     @Specialization
-    protected int doInt(RIntSequence val, byte recursive) {
+    protected int doInt(RIntSequence val, boolean recursive) {
         return INT_PRECEDENCE;
     }
 
     @Specialization
-    protected int doDouble(double val, byte recursive) {
+    protected int doDouble(double val, boolean recursive) {
         return DOUBLE_PRECEDENCE;
     }
 
     @Specialization
-    protected int doDouble(RDoubleVector val, byte recursive) {
+    protected int doDouble(RDoubleVector val, boolean recursive) {
         return DOUBLE_PRECEDENCE;
     }
 
     @Specialization
-    protected int doDouble(RDoubleSequence val, byte recursive) {
+    protected int doDouble(RDoubleSequence val, boolean recursive) {
         return DOUBLE_PRECEDENCE;
     }
 
     @Specialization
-    protected int doComplex(RComplexVector val, byte recursive) {
+    protected int doComplex(RComplexVector val, boolean recursive) {
         return COMPLEX_PRECEDENCE;
     }
 
     @Specialization
-    protected int doString(String val, byte recursive) {
+    protected int doString(String val, boolean recursive) {
         return STRING_PRECEDENCE;
     }
 
     @Specialization
-    protected int doString(RStringVector val, byte recursive) {
+    protected int doString(RStringVector val, boolean recursive) {
         return STRING_PRECEDENCE;
     }
 
     @Specialization
-    protected int doFunction(RFunction func, byte recursive) {
+    protected int doFunction(RFunction func, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 
     @Specialization
-    protected int doEnvironment(REnvironment env, byte recursive) {
+    protected int doEnvironment(REnvironment env, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 
-    @Specialization(guards = "recursive == LOGICAL_TRUE")
-    protected int doListRecursive(RList val, byte recursive, //
+    @Specialization(guards = "recursive")
+    protected int doListRecursive(RList val, boolean recursive, //
                     @Cached("createRecursive()") PrecedenceNode precedenceNode) {
         int precedence = -1;
         for (int i = 0; i < val.getLength(); i++) {
@@ -166,38 +166,38 @@ public abstract class PrecedenceNode extends RBaseNode {
         return PrecedenceNodeGen.create();
     }
 
-    @Specialization(guards = "recursive != LOGICAL_TRUE")
-    protected int doList(RList val, byte recursive) {
+    @Specialization(guards = "!recursive")
+    protected int doList(RList val, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 
-    @Specialization(guards = "recursive != LOGICAL_TRUE")
-    protected int doPairList(RPairList val, byte recursive) {
+    @Specialization(guards = "!recursive")
+    protected int doPairList(RPairList val, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 
     @Specialization
-    protected int doExpression(RExpression val, byte recursive) {
+    protected int doExpression(RExpression val, boolean recursive) {
         return EXPRESSION_PRECEDENCE;
     }
 
     @Specialization
-    protected int doExpression(RLanguage val, byte recursive) {
+    protected int doExpression(RLanguage val, boolean recursive) {
         return EXPRESSION_PRECEDENCE;
     }
 
     @Specialization
-    protected int doS4Object(RS4Object o, byte recursive) {
+    protected int doS4Object(RS4Object o, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 
     @Specialization
-    protected int doS4Object(RSymbol o, byte recursive) {
+    protected int doS4Object(RSymbol o, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 
-    @Specialization(guards = {"recursive == LOGICAL_FALSE", "args.getLength() == 1"})
-    protected int doArgsValuesAndNames(RArgsValuesAndNames args, byte recursive, @Cached("createRecursive()") PrecedenceNode precedenceNode) {
+    @Specialization(guards = {"!recursive", "args.getLength() == 1"})
+    protected int doArgsValuesAndNames(RArgsValuesAndNames args, boolean recursive, @Cached("createRecursive()") PrecedenceNode precedenceNode) {
         return precedenceNode.executeInteger(args.getArgument(0), recursive);
     }
 }

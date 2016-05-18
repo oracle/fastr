@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -53,22 +52,17 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
     private String name;
     private final RootCallTarget target;
     private final RBuiltinDescriptor builtin;
-    @CompilationFinal private boolean containsDispatch;
-
-    private FastPathFactory fastPath;
 
     private final MaterializedFrame enclosingFrame;
 
-    RFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame, FastPathFactory fastPath, boolean containsDispatch) {
+    RFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame) {
         this.target = target;
         this.builtin = builtin;
         this.name = name;
-        this.fastPath = fastPath;
         if (!isBuiltin() && name != NO_NAME) {
             // If we have a name, propagate it to the rootnode
             RContext.getRRuntimeASTAccess().setFunctionName(getRootNode(), name);
         }
-        this.containsDispatch = containsDispatch;
         this.enclosingFrame = enclosingFrame instanceof VirtualEvalFrame ? ((VirtualEvalFrame) enclosingFrame).getOriginalFrame() : enclosingFrame;
     }
 
@@ -83,10 +77,6 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
 
     public RBuiltinDescriptor getRBuiltin() {
         return builtin;
-    }
-
-    public boolean containsDispatch() {
-        return containsDispatch;
     }
 
     public String getName() {
@@ -122,21 +112,9 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
         return RContext.getRForeignAccessFactory().getForeignAccess(this);
     }
 
-    public FastPathFactory getFastPath() {
-        return fastPath;
-    }
-
-    public void setFastPath(FastPathFactory fastPath) {
-        this.fastPath = fastPath;
-    }
-
-    public void setContainsDispatch(boolean containsDispatch) {
-        this.containsDispatch = containsDispatch;
-    }
-
     @Override
     public RFunction copy() {
-        RFunction newFunction = RDataFactory.createFunction(getName(), getTarget(), getRBuiltin(), getEnclosingFrame(), getFastPath(), containsDispatch());
+        RFunction newFunction = RDataFactory.createFunction(getName(), getTarget(), getRBuiltin(), getEnclosingFrame());
         if (getAttributes() != null) {
             RAttributes newAttributes = newFunction.initAttributes();
             for (RAttribute attr : getAttributes()) {

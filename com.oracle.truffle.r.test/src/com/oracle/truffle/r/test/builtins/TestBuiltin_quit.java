@@ -30,6 +30,6 @@ public class TestBuiltin_quit extends TestBase {
 
     @Test
     public void testQuitErrorSave() {
-        assertEval(Output.ContainsError, "{ quit(\"xx\") }");
+        assertEval("{ quit(\"xx\") }");
     }
 }

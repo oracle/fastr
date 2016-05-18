@@ -28,10 +28,8 @@ import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
-import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -44,6 +42,8 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 abstract class LoadMethod extends RBaseNode {
+
+    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("method", "fname", "envir");
 
     public abstract RFunction executeRFunction(VirtualFrame frame, RAttributable fdef, String fname);
 
@@ -66,9 +66,6 @@ abstract class LoadMethod extends RBaseNode {
     private final ConditionProfile noTargetAttr = ConditionProfile.createBinaryProfile();
     private final ConditionProfile noDefinedAttr = ConditionProfile.createBinaryProfile();
     private final BranchProfile noSourceAttr = BranchProfile.create();
-    // TODO: technically, someone could override loadMethod function and access the caller, but it's
-    // rather unlikely
-    private final RCaller caller = RCallerHelper.InvalidRepresentation.instance;
 
     @Specialization
     protected RFunction loadMethod(VirtualFrame frame, RFunction fdef, String fname, //
@@ -127,9 +124,10 @@ abstract class LoadMethod extends RBaseNode {
                 currentFunction = (RFunction) loadMethodFind.execute(frame, methodsEnv.getFrame(methodsFrameAccessProfile));
             }
             if (cached.profile(currentFunction == loadMethodFunction)) {
-                Object[] args = argsNode.execute(loadMethodFunction, caller, null, RArguments.getDepth(frame) + 1, RArguments.getPromiseFrame(frame),
-                                new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())},
-                                ArgumentsSignature.get("method", "fname", "envir"), null);
+                // TODO: technically, someone could override loadMethod function and access the
+                // caller, but it's rather unlikely
+                Object[] args = argsNode.execute(loadMethodFunction, RCaller.createInvalid(frame), null, new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())}, SIGNATURE,
+                                null);
                 ret = (RFunction) loadMethodCall.call(frame, args);
             } else {
                 // slow path

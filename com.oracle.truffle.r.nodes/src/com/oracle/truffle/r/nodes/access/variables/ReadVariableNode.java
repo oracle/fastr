@@ -86,7 +86,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public final class ReadVariableNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup {
 
-    private static final int MAX_INVALIDATION_COUNT = 2;
+    private static final int MAX_INVALIDATION_COUNT = 3;
 
     private enum ReadKind {
         Normal,
@@ -549,11 +549,16 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         LookupResult lookup = FrameSlotChangeMonitor.lookup(variableFrame, identifier);
         if (lookup != null) {
             try {
-                if (lookup.getValue() == null) {
-                    return new LookupLevel(lookup);
+                if (lookup.getValue() instanceof RPromise) {
+                    evalPromiseSlowPathWithName(frame, (RPromise) lookup.getValue());
                 }
-                if (checkTypeSlowPath(frame, lookup.getValue())) {
-                    return new LookupLevel(lookup);
+                if (lookup != null) {
+                    if (lookup.getValue() == null) {
+                        return new LookupLevel(lookup);
+                    }
+                    if (checkTypeSlowPath(frame, lookup.getValue())) {
+                        return new LookupLevel(lookup);
+                    }
                 }
             } catch (InvalidAssumptionException e) {
                 // immediately invalidated...
@@ -734,6 +739,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     private static Object getValue(boolean[] seenValueKinds, Frame variableFrame, FrameSlot frameSlot) {
+        assert variableFrame.getFrameDescriptor() == frameSlot.getFrameDescriptor();
         Object value = variableFrame.getValue(frameSlot);
         if (variableFrame.isObject(frameSlot)) {
             seenValueKinds[FrameSlotKind.Object.ordinal()] = true;
@@ -748,6 +754,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     static Object profiledGetValue(boolean[] seenValueKinds, Frame variableFrame, FrameSlot frameSlot) {
+        assert variableFrame.getFrameDescriptor() == frameSlot.getFrameDescriptor();
         try {
             if (seenValueKinds[FrameSlotKind.Object.ordinal()] && variableFrame.isObject(frameSlot)) {
                 return variableFrame.getObject(frameSlot);
@@ -846,18 +853,24 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
                     // we recover from a wrong type later
                     return true;
                 } else {
-                    slowPathEvaluationName.set(identifierAsString);
-                    try {
-                        obj = PromiseHelperNode.evaluateSlowPath(frame, promise);
-                    } finally {
-                        slowPathEvaluationName.set(null);
-                    }
+                    obj = evalPromiseSlowPathWithName(frame, promise);
                 }
             } else {
                 obj = promise.getValue();
             }
         }
         return RRuntime.checkType(obj, mode);
+    }
+
+    private Object evalPromiseSlowPathWithName(VirtualFrame frame, RPromise promise) {
+        Object obj;
+        slowPathEvaluationName.set(identifierAsString);
+        try {
+            obj = PromiseHelperNode.evaluateSlowPath(frame, promise);
+        } finally {
+            slowPathEvaluationName.set(null);
+        }
+        return obj;
     }
 
     public static String getSlowPathEvaluationName() {

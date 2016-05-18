@@ -34,7 +34,7 @@ public class TestBuiltin_levelsassign extends TestBase {
 
     @Test
     public void testlevelsassign5() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(FALSE, .Label = FALSE), FALSE);`levels<-`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(FALSE, .Label = FALSE), FALSE);`levels<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -44,6 +44,6 @@ public class TestBuiltin_levelsassign extends TestBase {
 
     @Test
     public void testlevelsassign7() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(), .Label = list()), list());`levels<-`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(), .Label = list()), list());`levels<-`(argv[[1]],argv[[2]]);");
     }
 }
