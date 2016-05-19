@@ -12,6 +12,7 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
@@ -58,6 +59,7 @@ public abstract class UpdateSlotNode extends RNode {
     }
 
     @Specialization(guards = "isData(name)")
+    @TruffleBoundary
     protected Object updateSlotS4Data(RAttributable object, @SuppressWarnings("unused") String name, Object value) {
         // TODO: any way to cache it or use a mechanism similar to overrides?
         REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");

@@ -14,6 +14,7 @@ package com.oracle.truffle.r.runtime;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -136,6 +137,7 @@ public class RErrorHandling {
          */
         private RFunction getDotSignalSimpleWarning() {
             if (dotSignalSimpleWarning == null) {
+                CompilerDirectives.transferToInterpreter();
                 Object f = REnvironment.baseEnv().findFunction(".signalSimpleWarning");
                 dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
             }

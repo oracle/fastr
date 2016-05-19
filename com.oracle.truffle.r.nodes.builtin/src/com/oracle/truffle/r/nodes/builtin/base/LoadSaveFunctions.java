@@ -19,12 +19,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.SerializeFunctions.Adapter;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
@@ -36,7 +37,6 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -176,7 +176,8 @@ public class LoadSaveFunctions {
 
         @Specialization
         protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, RConnection conn, byte asciiLogical, @SuppressWarnings("unused") RNull version, REnvironment envir,
-                        byte evalPromisesLogical) {
+                        byte evalPromisesLogical, //
+                        @Cached("new()") PromiseCheckHelperNode promiseHelper) {
             boolean evalPromises = RRuntime.fromLogical(evalPromisesLogical);
             RPairList prev = null;
             Object toSave = RNull.instance;
@@ -186,8 +187,8 @@ public class LoadSaveFunctions {
                 if (value == null) {
                     throw RError.error(this, RError.Message.UNKNOWN_OBJECT, varName);
                 }
-                if (value instanceof RPromise && evalPromises) {
-                    value = PromiseHelperNode.evaluateSlowPath(frame, (RPromise) value);
+                if (evalPromises) {
+                    value = promiseHelper.checkEvaluate(frame, value);
                 }
                 RPairList pl = RDataFactory.createPairList(value);
                 pl.setTag(RDataFactory.createSymbol(varName.intern()));
