@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -242,6 +243,7 @@ public class PromiseHelperNode extends RBaseNode {
     }
 
     public static Object evaluateSlowPath(VirtualFrame frame, RPromise promise) {
+        CompilerAsserts.neverPartOfCompilation();
         if (promise.isEvaluated()) {
             return promise.getValue();
         }
