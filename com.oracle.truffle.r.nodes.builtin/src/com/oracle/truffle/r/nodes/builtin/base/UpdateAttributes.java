@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -133,7 +132,6 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    @ExplodeLoop
     private void checkAttributeForEmptyValue(RList rlist) {
         RStringVector listNames = rlist.getNames(attrProfiles);
         int length = rlist.getLength();
@@ -146,7 +144,6 @@ public abstract class UpdateAttributes extends RBuiltinNode {
         }
     }
 
-    @ExplodeLoop
     private void setDimAttribute(RAbstractContainer result, RList sourceList) {
         RStringVector listNames = sourceList.getNames(attrProfiles);
         int length = sourceList.getLength();
@@ -168,7 +165,6 @@ public abstract class UpdateAttributes extends RBuiltinNode {
         }
     }
 
-    @ExplodeLoop
     private RAbstractContainer setRemainingAttributes(RAbstractContainer result, RList sourceList) {
         RStringVector listNames = sourceList.getNames(attrProfiles);
         int length = sourceList.getLength();
