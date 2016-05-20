@@ -204,6 +204,17 @@ public abstract class Identical extends RBuiltinNode {
             // trivial case
             return RRuntime.LOGICAL_TRUE;
         } else {
+            boolean xb = x.isBuiltin();
+            boolean yb = y.isBuiltin();
+            if ((xb && !yb) || (yb && !xb)) {
+                return RRuntime.LOGICAL_FALSE;
+            }
+
+            if (xb && yb) {
+                // equal if the factories are
+                return RRuntime.asLogical(x.getRBuiltin() == y.getRBuiltin());
+            }
+
             // compare the structure
             if (!new IdenticalVisitor().accept((RSyntaxNode) x.getRootNode(), (RSyntaxNode) y.getRootNode())) {
                 return RRuntime.LOGICAL_FALSE;
