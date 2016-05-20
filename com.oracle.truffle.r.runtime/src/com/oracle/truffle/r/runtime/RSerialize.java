@@ -28,6 +28,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
@@ -191,6 +192,7 @@ public class RSerialize {
          */
         RFunction getDotDotFindNamespace() {
             if (dotDotFindNamespace == null) {
+                CompilerDirectives.transferToInterpreter();
                 Object f = REnvironment.baseEnv().findFunction("..getNamespace");
                 dotDotFindNamespace = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
             }

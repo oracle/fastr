@@ -63,6 +63,7 @@ public abstract class FastRTreeStats extends RBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected RList treeStats(REnvironment env) {
         RStringVector bindings = env.ls(true, null, true);
         ArrayList<SyntaxNodeCount> sncList = new ArrayList<>();
@@ -114,11 +115,7 @@ public abstract class FastRTreeStats extends RBuiltinNode {
         return RDataFactory.createList(listData, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
     }
 
-    private abstract static class Visitor implements NodeVisitor {
-
-    }
-
-    private static class SyntaxNodeCount extends Visitor {
+    private static final class SyntaxNodeCount implements NodeVisitor {
         private final FunctionDefinitionNode fdn;
         private final String knownName;
         private int nonSyntaxNodeCount;

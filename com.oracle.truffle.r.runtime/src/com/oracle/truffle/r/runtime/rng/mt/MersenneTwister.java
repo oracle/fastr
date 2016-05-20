@@ -83,19 +83,25 @@ public final class MersenneTwister extends RNGInitAdapter {
     /**
      * The array for the state vector. In GnuR, the state array is common to all algorithms (named
      * {@code dummy}), and the zero'th element is the number of seeds, but the algorithm uses
-     * pointer arithmetic to set {@code mt} to {@code dummy + 1}. We can't play pointer arithmetic
-     * games, do we use a variable {@code dummy0} instead.
+     * pointer arithmetic to set {@code mt} to {@code dummy + 1}.
      */
-    private final int[] mt = new int[N];
+    private int getMt(int i) {
+        return iSeed[i + 1];
+    }
 
-    private int dummy0;
+    private void setMt(int i, int val) {
+        iSeed[i + 1] = val;
+    }
+
+    // to keep variable naming (somewhat) consistent with GNU R
+    private int[] dummy = iSeed;
 
     /**
      * Following GnuR this is set to {@code N+1} to indicate unset if MT_genrand is called, although
      * that condition never appears to happen in practice, as {@code RNG_init}, cf. {@link #init} is
      * always called first. N.B. This value has a relationship with {@code dummy0} in that it is
      * always loaded from {@code dummy0} in {@link #genrandDouble(int)} and the updated value is
-     * stored back in {@code dummy0}.
+     * stored back in {@code dummy[0]}.
      */
     private int mti = N + 1;
 
@@ -104,10 +110,7 @@ public final class MersenneTwister extends RNGInitAdapter {
      */
     @Override
     public int[] getSeeds() {
-        int[] result = new int[mt.length + 1];
-        System.arraycopy(mt, 0, result, 1, mt.length);
-        result[0] = dummy0;
-        return result;
+        return iSeed;
     }
 
     /**
@@ -121,31 +124,30 @@ public final class MersenneTwister extends RNGInitAdapter {
     @Override
     public void init(int seedParam) {
         int seed = seedParam;
-
-        /* Initial scrambling, create N+1, discard first. */
-        seed = (69069 * seed + 1);
-        super.init(seed, mt);
+        for (int i = 0; i < getNSeed(); i++) {
+            seed = (69069 * seed + 1);
+            iSeed[i] = seed;
+        }
+        fixupSeeds(true);
     }
 
     @Override
     public void fixupSeeds(boolean initial) {
         if (initial) {
-            dummy0 = N;
+            iSeed[0] = N;
         }
-    }
-
-    @SuppressWarnings("unused")
-    private void sgenrand(int seedParam) {
-        /* transcribed from GNU R, RNG.c (MT_sgenrand) */
-        int i;
-        int seed = seedParam;
-        for (i = 0; i < N; i++) {
-            mt[i] = seed & 0xffff0000;
-            seed = 69069 * seed + 1;
-            mt[i] |= (seed & 0xffff0000) >>> 16;
-            seed = 69069 * seed + 1;
+        if (iSeed[0] <= 0) {
+            iSeed[0] = N;
         }
-        mti = N;
+        boolean notAllZero = false;
+        for (int i = 1; i <= N; i++) {
+            if (iSeed[i] != 0) {
+                notAllZero = true;
+            }
+        }
+        if (!notAllZero) {
+            init(RRNG.timeToSeed());
+        }
     }
 
     /**
@@ -156,7 +158,7 @@ public final class MersenneTwister extends RNGInitAdapter {
      */
     @Override
     public double[] genrandDouble(int count) {
-        int localDummy0 = dummy0;
+        int localDummy0 = dummy[0];
         int localMti = mti;
         double[] result = new double[count];
 
@@ -167,7 +169,7 @@ public final class MersenneTwister extends RNGInitAdapter {
 
         int pos = 0;
         while (pos < count && localMti < N) {
-            int y = mt[localMti++];
+            int y = getMt(localMti++);
             /* Tempering */
             y ^= (y >>> 11);
             y ^= (y << 7) & TEMPERING_MASK_B;
@@ -181,20 +183,20 @@ public final class MersenneTwister extends RNGInitAdapter {
             /* generate N words at one time */
             int kk;
             for (kk = 0; kk < N - M; kk++) {
-                int y2y = (mt[kk] & UPPERMASK) | (mt[kk + 1] & LOWERMASK);
-                mt[kk] = mt[kk + M] ^ (y2y >>> 1) ^ mag01(y2y & 0x1);
+                int y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
+                setMt(kk, getMt(kk + M) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
             }
             for (; kk < N - 1; kk++) {
-                int y2y = (mt[kk] & UPPERMASK) | (mt[kk + 1] & LOWERMASK);
-                mt[kk] = mt[kk + (M - N)] ^ (y2y >>> 1) ^ mag01(y2y & 0x1);
+                int y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
+                setMt(kk, getMt(kk + (M - N)) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
             }
-            int y2y = (mt[N - 1] & UPPERMASK) | (mt[0] & LOWERMASK);
-            mt[N - 1] = mt[M - 1] ^ (y2y >>> 1) ^ mag01(y2y & 0x1);
+            int y2y = (getMt(N - 1) & UPPERMASK) | (getMt(0) & LOWERMASK);
+            setMt(N - 1, getMt(M - 1) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
 
             localMti = 0;
 
             while (pos < count && localMti < N) {
-                int y = mt[localMti++];
+                int y = getMt(localMti++);
                 /* Tempering */
                 y ^= (y >>> 11);
                 y ^= (y << 7) & TEMPERING_MASK_B;
@@ -206,35 +208,12 @@ public final class MersenneTwister extends RNGInitAdapter {
         }
         localDummy0 = localMti;
         mti = localMti;
-        dummy0 = localDummy0;
+        dummy[0] = localDummy0;
         return result;
     }
 
     private static int mag01(int v) {
         return (v & 1) != 0 ? MATRIXA : 0;
-    }
-
-    /* generates a random number on [0,0xffffffff]-interval */
-    private int genrandInt32() {
-
-        /* mag01[x] = x * MATRIX_A for x=0,1 */// see MT_genrand in GnuR RNG.c
-
-        mti = dummy0;
-
-        if (mti >= N) { /* generate N words at one time */
-            generateNewNumbers();
-        }
-
-        int y = mt[mti++];
-
-        /* Tempering */
-        y ^= (y >>> 11);
-        y ^= (y << 7) & TEMPERING_MASK_B;
-        y ^= (y << 15) & TEMPERING_MASK_C;
-        y ^= (y >>> 18);
-        dummy0 = mti;
-
-        return y;
     }
 
     @TruffleBoundary
@@ -247,119 +226,27 @@ public final class MersenneTwister extends RNGInitAdapter {
         RInternalError.guarantee(mti != N + 1);
 
         for (kk = 0; kk < N - M; kk++) {
-            y2y = (mt[kk] & UPPERMASK) | (mt[kk + 1] & LOWERMASK);
-            mt[kk] = mt[kk + M] ^ (y2y >>> 1) ^ mag01(y2y & 0x1);
+            y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
+            setMt(kk, getMt(kk + M) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
         }
         for (; kk < N - 1; kk++) {
-            y2y = (mt[kk] & UPPERMASK) | (mt[kk + 1] & LOWERMASK);
-            mt[kk] = mt[kk + (M - N)] ^ (y2y >>> 1) ^ mag01(y2y & 0x1);
+            y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
+            setMt(kk, getMt(kk + (M - N)) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
         }
-        y2y = (mt[N - 1] & UPPERMASK) | (mt[0] & LOWERMASK);
-        mt[N - 1] = mt[M - 1] ^ (y2y >>> 1) ^ mag01(y2y & 0x1);
+        y2y = (getMt(N - 1) & UPPERMASK) | (getMt(0) & LOWERMASK);
+        setMt(N - 1, getMt(M - 1) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
 
         mti = 0;
-    }
-
-    /*
-     * The following functions are not used, have no GnuR counterparts, and probably could/should be
-     * deleted.
-     */
-
-    /* generates a random number on [0,0x7fffffff]-interval */
-    @SuppressWarnings("unused")
-    private int genrandInt31() {
-        return (genrandInt32() >>> 1);
-    }
-
-    /* generates a random number on [0,1]-real-interval */
-    @SuppressWarnings("unused")
-    private double genrandReal1() {
-        return (genrandInt32() & 0xffffffffL) * (1.0 / 4294967295.0);
-        /* divided by 2^32-1 */
-    }
-
-    /* generates a random number on [0,1)-real-interval */
-    @SuppressWarnings("unused")
-    private double genrandReal2() {
-        return (genrandInt32() & 0xffffffffL) * (1.0 / 4294967296.0);
-        /* divided by 2^32 */
-    }
-
-    /* generates a random number on (0,1)-real-interval */
-    @SuppressWarnings("unused")
-    private double genrandReal3() {
-        return ((genrandInt32() & 0xffffffffL) + 0.5) * (1.0 / 4294967296.0);
-        /* divided by 2^32 */
-    }
-
-    /* generates a random number on [0,1) with 53-bit resolution */
-    @SuppressWarnings("unused")
-    private double genrandRes53() {
-        int a = genrandInt32() >>> 5;
-        int b = genrandInt32() >>> 6;
-        return (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
-    }
-
-    /* These real versions are due to Isaku Wada, 2002/01/09 added */
-
-    /* initializes mt[N] with a seed */
-    private void initGenrand(int s) {
-        mt[0] = s & 0xffffffff;
-        for (mti = 1; mti < N; mti++) {
-            mt[mti] = (1812433253 * (mt[mti - 1] ^ (mt[mti - 1] >>> 30)) + mti);
-            /* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */
-            /* In the previous versions, MSBs of the seed affect */
-            /* only MSBs of the array mt[]. */
-            /* 2002/01/09 modified by Makoto Matsumoto */
-            mt[mti] &= 0xffffffffL;
-            /* for >32 bit machines */
-        }
-    }
-
-    /* initialize by an array with array-length */
-    /* init_key is the array for initializing keys */
-    /* key_length is its length */
-    /* slight change for C++, 2004/2/26 */
-    @SuppressWarnings("unused")
-    private void initByArray(int[] initKey, int keyLength) {
-        int i;
-        int j;
-        int k;
-        initGenrand(19650218);
-        i = 1;
-        j = 0;
-        k = (N > keyLength ? N : keyLength);
-        for (; k != 0; k--) {
-            mt[i] = (mt[i] ^ ((mt[i - 1] ^ (mt[i - 1] >>> 30)) * 1664525)) + initKey[j] + j; /*
-                                                                                              * non
-                                                                                              * linear
-                                                                                              */
-            mt[i] &= 0xffffffffL; /* for WORDSIZE > 32 machines */
-            i++;
-            j++;
-            if (i >= N) {
-                mt[0] = mt[N - 1];
-                i = 1;
-            }
-            if (j >= keyLength) {
-                j = 0;
-            }
-        }
-        for (k = N - 1; k != 0; k--) {
-            mt[i] = (mt[i] ^ ((mt[i - 1] ^ (mt[i - 1] >>> 30)) * 1566083941)) - i; /* non linear */
-            mt[i] &= 0xffffffff; /* for WORDSIZE > 32 machines */
-            i++;
-            if (i >= N) {
-                mt[0] = mt[N - 1];
-                i = 1;
-            }
-        }
-
-        mt[0] = 0x80000000; /* MSB is 1; assuring non-zero initial array */
     }
 
     @Override
     public Kind getKind() {
         return Kind.MERSENNE_TWISTER;
     }
+
+    @Override
+    public int getNSeed() {
+        return 1 + N;
+    }
+
 }
