@@ -104,7 +104,7 @@ public class EvalFunctions {
         @Specialization
         protected Object doEval(VirtualFrame frame, Object expr, Object envir, REnvironment enclos, //
                         @Cached("createCast()") EvalEnvCast envCast) {
-            return doEvalBody(RCaller.createInvalid(frame), expr, envCast.execute(envir, enclos));
+            return doEvalBody(RCaller.create(frame, getOriginalCall()), expr, envCast.execute(envir, enclos));
         }
 
         protected EvalEnvCast createCast() {

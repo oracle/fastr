@@ -220,9 +220,10 @@ public abstract class CallMatcherNode extends RBaseNode {
                 evaluatePromises(frame, cachedFunction, reorderedArgs, formals.getSignature().getVarArgIndex());
                 if (call != null) {
                     RCaller parent = RArguments.getCall(frame).getParent();
-                    RCaller caller = functionName == null ? RCaller.createInvalid(frame, parent)
+                    String genFunctionName = functionName == null ? function.getName() : functionName;
+                    RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent)
                                     : RCaller.create(frame, parent,
-                                                    RCallerHelper.createFromArguments(functionName, new RArgsValuesAndNames(reorderedArgs, ArgumentsSignature.empty(reorderedArgs.length))));
+                                                    RCallerHelper.createFromArguments(genFunctionName, new RArgsValuesAndNames(reorderedArgs, ArgumentsSignature.empty(reorderedArgs.length))));
                     Object[] arguments = prepareArguments(reorderedArgs, formals.getSignature(), cachedFunction, dispatchArgs, caller);
                     return call.call(frame, arguments);
                 } else {
@@ -307,8 +308,9 @@ public abstract class CallMatcherNode extends RBaseNode {
             evaluatePromises(frame, function, reorderedArgs.getArguments(), reorderedArgs.getSignature().getVarArgIndex());
 
             RCaller parent = RArguments.getCall(frame).getParent();
-            RCaller caller = functionName == null ? RCaller.createInvalid(frame, parent)
-                            : RCaller.create(frame, RCallerHelper.createFromArguments(functionName,
+            String genFunctionName = functionName == null ? function.getName() : functionName;
+            RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent)
+                            : RCaller.create(frame, RCallerHelper.createFromArguments(genFunctionName,
                                             new RArgsValuesAndNames(reorderedArgs.getArguments(), ArgumentsSignature.empty(reorderedArgs.getLength()))));
             Object[] arguments = prepareArguments(reorderedArgs.getArguments(), reorderedArgs.getSignature(), function, dispatchArgs, caller);
             return call.call(frame, function.getTarget(), arguments);
