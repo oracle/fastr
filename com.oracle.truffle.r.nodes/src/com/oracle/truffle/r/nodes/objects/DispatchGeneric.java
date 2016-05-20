@@ -20,9 +20,11 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -72,7 +74,7 @@ public abstract class DispatchGeneric extends RBaseNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
             RFunction currentFunction = ReadVariableNode.lookupFunction(".InheritForDispatch", methodsEnv.getFrame(), true);
-            method = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), classes, fdef, mtable);
+            method = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, RASTUtils.getOriginalCall(this)), classes, fdef, mtable);
         }
         method = loadMethod.executeRFunction(frame, method, fname);
         Object ret = executeMethod.executeObject(frame, method, fname);

@@ -706,8 +706,8 @@ public class CallRFFIHelper {
 
     public static int R_computeIdentical(Object x, Object y, int flags) {
         RFunction indenticalBuiltin = RContext.lookupBuiltin("identical");
-        Object res = RContext.getEngine().evalFunction(indenticalBuiltin, null, x, y, RRuntime.asLogical((!((flags & 1) == 0))), RRuntime.asLogical((!((flags & 2) == 0))),
-                        RRuntime.asLogical((!((flags & 4) == 0))), RRuntime.asLogical((!((flags & 8) == 0))), RRuntime.asLogical((!((flags & 16) == 0))));
+        Object res = RContext.getEngine().evalFunction(indenticalBuiltin, null, null, x, y, RRuntime.asLogical((!((flags & 1) == 0))),
+                        RRuntime.asLogical((!((flags & 2) == 0))), RRuntime.asLogical((!((flags & 4) == 0))), RRuntime.asLogical((!((flags & 8) == 0))), RRuntime.asLogical((!((flags & 16) == 0))));
         return (int) res;
     }
 

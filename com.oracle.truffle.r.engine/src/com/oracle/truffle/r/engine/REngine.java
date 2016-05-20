@@ -416,10 +416,11 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     @TruffleBoundary
-    public Object evalFunction(RFunction func, MaterializedFrame frame, Object... args) {
+    public Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, Object... args) {
         ArgumentsSignature argsSig = ((RRootNode) func.getRootNode()).getSignature();
+        assert frame == null || caller != null;
         MaterializedFrame actualFrame = frame == null ? Utils.getActualCurrentFrame().materialize() : frame;
-        Object[] rArgs = RArguments.create(func, actualFrame == null ? null : RArguments.getCall(actualFrame), actualFrame, args, argsSig, null);
+        Object[] rArgs = RArguments.create(func, actualFrame == null ? null : frame == null ? RArguments.getCall(actualFrame) : caller, actualFrame, args, argsSig, null);
         return func.getTarget().call(rArgs);
     }
 

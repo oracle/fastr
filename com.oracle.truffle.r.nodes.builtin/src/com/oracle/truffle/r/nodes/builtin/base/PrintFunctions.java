@@ -92,7 +92,7 @@ public class PrintFunctions {
         @Specialization(guards = "isS4(o)")
         protected Object printDefaultS4(VirtualFrame frame, RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt,
                         @Cached("createShowFunction(frame)") RFunction showFunction) {
-            RContext.getEngine().evalFunction(showFunction, null, o);
+            RContext.getEngine().evalFunction(showFunction, null, null, o);
             return null;
         }
 

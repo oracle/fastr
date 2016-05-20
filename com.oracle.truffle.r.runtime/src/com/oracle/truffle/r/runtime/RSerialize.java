@@ -447,7 +447,7 @@ public class RSerialize {
                      * only used in a warning message in the unlikely event that the namespace
                      * cannot be found.
                      */
-                    Object r = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), null, s, "");
+                    Object r = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), null, null, s, "");
                     return checkResult(addReadRef(r));
                 }
 

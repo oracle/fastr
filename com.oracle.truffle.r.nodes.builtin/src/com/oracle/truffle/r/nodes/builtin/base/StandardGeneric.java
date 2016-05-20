@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.unary.CastStringScalarNode;
 import com.oracle.truffle.r.nodes.unary.CastStringScalarNodeGen;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVisibility;
@@ -80,7 +81,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
             // and this slow path should not be executed again
             REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
             RFunction currentFunction = ReadVariableNode.lookupFunction(".getMethodsTable", methodsEnv.getFrame(), true);
-            mtable = (REnvironment) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), fdef);
+            mtable = (REnvironment) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), fdef);
         }
         RList sigArgs = (RList) readSigARgs.execute(null, fnFrame);
         int sigLength = castIntScalar.executeInt(readSigLength.execute(null, fnFrame));

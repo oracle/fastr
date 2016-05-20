@@ -17,10 +17,13 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.PutAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.PutAttributeNodeGen;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -65,7 +68,8 @@ public abstract class UpdateSlotNode extends RNode {
         REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
         Object f = methodsNamespace.findFunction("setDataPart");
         RFunction dataPart = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
-        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), object, prepareValue(value), RRuntime.LOGICAL_TRUE);
+        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(Utils.getActualCurrentFrame(), RASTUtils.getOriginalCall(this)), object, prepareValue(value),
+                        RRuntime.LOGICAL_TRUE);
     }
 
     protected boolean isData(String name) {

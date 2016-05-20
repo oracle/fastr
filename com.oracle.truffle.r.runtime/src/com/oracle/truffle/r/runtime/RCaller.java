@@ -46,6 +46,9 @@ public final class RCaller {
         this.depth = depthFromFrame(callingFrame);
         this.parent = parentFromFrame(callingFrame);
         this.payload = nodeOrSupplier;
+        if (parent == null || payload == null) {
+            System.console();
+        }
     }
 
     private static int depthFromFrame(Frame callingFrame) {
@@ -60,6 +63,9 @@ public final class RCaller {
         this.depth = depth;
         this.parent = parent;
         this.payload = nodeOrSupplier;
+        if (parent == null || payload == null) {
+            System.console();
+        }
     }
 
     public int getDepth() {
