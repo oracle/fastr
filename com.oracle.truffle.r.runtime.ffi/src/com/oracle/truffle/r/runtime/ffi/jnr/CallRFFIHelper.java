@@ -663,7 +663,7 @@ public class CallRFFIHelper {
         guarantee(symbolObj instanceof RSymbol);
         RSymbol symbol = (RSymbol) symbolObj;
         // Works but not remotely efficient
-        Source source = Source.fromNamedText("get(\"" + symbol.getName() + "\", mode=\"function\")", "<Rf_findfun>");
+        Source source = Source.fromText("get(\"" + symbol.getName() + "\", mode=\"function\")", "<Rf_findfun>");
         try {
             Object result = RContext.getEngine().parseAndEval(source, env.getFrame(), false);
             return result;

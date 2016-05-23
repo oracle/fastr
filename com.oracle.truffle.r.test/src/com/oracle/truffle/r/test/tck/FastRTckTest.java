@@ -165,6 +165,12 @@ public class FastRTckTest extends TruffleTCK {
     }
 
     @Override
+    protected String addToArray() {
+        // TODO not yet supported
+        return null;
+    }
+
+    @Override
     public void readWriteBooleanValue() throws Exception {
         // TODO not yet supported
     }
