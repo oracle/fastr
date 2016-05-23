@@ -242,7 +242,7 @@ public final class FastRSession implements RSession {
                     try {
                         String input = consoleHandler.readLine();
                         while (input != null) {
-                            Source source = Source.fromText(input, "<eval>").withMimeType(TruffleRLanguage.MIME);
+                            Source source = Source.fromText(input, null).withMimeType(TruffleRLanguage.MIME);
                             try {
                                 vm.eval(source);
                                 input = consoleHandler.readLine();
