@@ -25,15 +25,12 @@ package com.oracle.truffle.r.runtime.context;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RErrorHandling;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -165,12 +162,13 @@ public interface Engine {
 
     /**
      * Variant of {@link #eval(RLanguage, MaterializedFrame)} where we already have the
-     * {@link RFunction} and the evaluated arguments, but may not have a frame available (in which
-     * case current frame is used), and we are behind a {@link TruffleBoundary}, so call inlining is
-     * not an issue. This is primarily used for R callbacks from {@link RErrorHandling} and
-     * {@link RSerialize}.
+     * {@link RFunction} and the evaluated arguments. {@code frame} may be {@code null} in which
+     * case the current frame is used). In many cases {@code frame} may not represent the current
+     * call stack, for example many S4-related evaluations set {@code frame} to the {@code methods}
+     * namespace, but the current stack is not empty. So when {@code frame} is not {@code null} a
+     * {@code caller} should be passed to maintain the call stack correctly.
      */
-    Object evalFunction(RFunction func, MaterializedFrame frame, Object... args);
+    Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, Object... args);
 
     /**
      * Checks for the existence of (startup/shutdown) function {@code name} and, if present, invokes

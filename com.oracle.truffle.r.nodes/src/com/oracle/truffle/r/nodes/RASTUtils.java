@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
 import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentBaseNode;
@@ -88,6 +89,18 @@ public class RASTUtils {
         } else {
             return parent;
         }
+    }
+
+    @TruffleBoundary
+    public static RSyntaxNode getOriginalCall(Node node) {
+        Node p = node.getParent();
+        while (p != null) {
+            if (p instanceof RBuiltinNode) {
+                return ((RBuiltinNode) p).getOriginalCall();
+            }
+            p = p.getParent();
+        }
+        return null;
     }
 
     public static RSyntaxNode[] asSyntaxNodes(RNode[] nodes) {

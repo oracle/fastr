@@ -39,8 +39,9 @@ import com.oracle.truffle.r.test.TestBase;
  * framework. We are primarily concerned with detecting installation regressions.
  */
 public class TestRecommendedPackages extends TestRPackages {
-    private static final String[] OK_PACKAGES = new String[]{"MASS", "boot", "class", "cluster", "codetools", "lattice", "nnet", "spatial", "survival"};
-    @SuppressWarnings("unused") private static final String[] PROBLEM_PACKAGES = new String[]{"KernSmooth", "Matrix", "foreign", "nlme", "rpart"};
+    private static final String[] OK_PACKAGES = new String[]{"MASS", "boot", "class", "cluster", "codetools", "lattice", "nnet", "spatial", "survival", "KernSmooth", "Matrix", "foreign", "nlme",
+                    "rpart"};
+    @SuppressWarnings("unused") private static final String[] PROBLEM_PACKAGES = new String[]{};
 
     private static Path getRecommendedPath() {
         return Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.native", "gnur", RVersionNumber.R_HYPHEN_FULL, "src", "library", "Recommended");

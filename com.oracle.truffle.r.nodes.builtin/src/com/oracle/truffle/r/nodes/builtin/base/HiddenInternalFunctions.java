@@ -69,6 +69,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Private, undocumented, {@code .Internal} and {@code .Primitive} functions transcribed from GnuR,
@@ -256,7 +257,7 @@ public class HiddenInternalFunctions {
                 RSerialize.CallHook callHook = new RSerialize.CallHook() {
                     @Override
                     public Object eval(Object arg) {
-                        Object[] callArgs = RArguments.create(envhook, RCaller.createInvalid(frame), null, new Object[]{arg}, SIGNATURE, null);
+                        Object[] callArgs = RArguments.create(envhook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, SIGNATURE, null);
                         return callCache.execute(SubstituteVirtualFrame.create(frame), envhook.getTarget(), callArgs);
                     }
                 };
@@ -380,7 +381,7 @@ public class HiddenInternalFunctions {
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
                 @Override
                 public Object eval(Object arg) {
-                    Object[] callArgs = RArguments.create(hook, RCaller.createInvalid(frame), null, new Object[]{arg}, SIGNATURE, null);
+                    Object[] callArgs = RArguments.create(hook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, SIGNATURE, null);
                     return callCache.execute(SubstituteVirtualFrame.create(frame), hook.getTarget(), callArgs);
                 }
             };

@@ -19,6 +19,7 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
@@ -26,8 +27,10 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -76,7 +79,7 @@ public abstract class AccessSlotNode extends RNode {
                 // TODO: any way to cache it or use a mechanism similar to overrides?
                 REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
                 RFunction dataPart = getDataPartFunction(methodsNamespace);
-                return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), object);
+                return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(Utils.getActualCurrentFrame(), RASTUtils.getOriginalCall(this)), object);
             } else if (name == RRuntime.NAMES_ATTR_KEY && object instanceof RAbstractVector) {
                 assert false; // RS4Object can never be a vector?
                 return RNull.instance;
@@ -134,7 +137,7 @@ public abstract class AccessSlotNode extends RNode {
         // TODO: any way to cache it or use a mechanism similar to overrides?
         REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
         RFunction dataPart = getDataPartFunction(methodsNamespace);
-        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), object);
+        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(Utils.getActualCurrentFrame(), RASTUtils.getOriginalCall(this)), object);
     }
 
     // this is really a fallback specialization but @Fallback does not work here (because of the

@@ -19,15 +19,18 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -123,15 +126,18 @@ abstract class LoadMethod extends RBaseNode {
             } else {
                 currentFunction = (RFunction) loadMethodFind.execute(frame, methodsEnv.getFrame(methodsFrameAccessProfile));
             }
+            RSyntaxNode originalCall = RASTUtils.getOriginalCall(this);
+            RCaller caller = originalCall == null ? RCaller.createInvalid(frame) : RCaller.create(frame, originalCall);
             if (cached.profile(currentFunction == loadMethodFunction)) {
                 // TODO: technically, someone could override loadMethod function and access the
                 // caller, but it's rather unlikely
-                Object[] args = argsNode.execute(loadMethodFunction, RCaller.createInvalid(frame), null, new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())}, SIGNATURE,
+                Object[] args = argsNode.execute(loadMethodFunction, caller, null,
+                                new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())}, SIGNATURE,
                                 null);
                 ret = (RFunction) loadMethodCall.call(frame, args);
             } else {
                 // slow path
-                ret = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), fdef, fname, REnvironment.frameToEnvironment(frame.materialize()));
+                ret = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), caller, fdef, fname, REnvironment.frameToEnvironment(frame.materialize()));
             }
 
         } else {
@@ -139,4 +145,5 @@ abstract class LoadMethod extends RBaseNode {
         }
         return ret;
     }
+
 }

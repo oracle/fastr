@@ -132,6 +132,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     private byte identicalAttr(RAttributable x, RAttributable y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
+        // TODO interpret attribAsSet correctly
         RAttributes xAttributes = x.getAttributes();
         RAttributes yAttributes = y.getAttributes();
         if (xAttributes == null && yAttributes == null) {
@@ -197,10 +198,41 @@ public abstract class Identical extends RBuiltinNode {
         return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
-    @SuppressWarnings("unused")
     @Specialization
     byte doInternalIdentical(RFunction x, RFunction y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        return RRuntime.asLogical(x == y);
+        if (x == y) {
+            // trivial case
+            return RRuntime.LOGICAL_TRUE;
+        } else {
+            return doInternalIdenticalSlowpath(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
+        }
+    }
+
+    @TruffleBoundary
+    private byte doInternalIdenticalSlowpath(RFunction x, RFunction y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
+        boolean xb = x.isBuiltin();
+        boolean yb = y.isBuiltin();
+        if ((xb && !yb) || (yb && !xb)) {
+            return RRuntime.LOGICAL_FALSE;
+        }
+
+        if (xb && yb) {
+            // equal if the factories are
+            return RRuntime.asLogical(x.getRBuiltin() == y.getRBuiltin());
+        }
+
+        // compare the structure
+        if (!new IdenticalVisitor().accept((RSyntaxNode) x.getRootNode(), (RSyntaxNode) y.getRootNode())) {
+            return RRuntime.LOGICAL_FALSE;
+        }
+        // The environments have to match unless ignoreEnvironment == false
+        if (!ignoreEnvironment) {
+            if (x.getEnclosingFrame() != y.getEnclosingFrame()) {
+                return RRuntime.LOGICAL_FALSE;
+            }
+        }
+        // finally check attributes
+        return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
     @Specialization(guards = "!vectorsLists(x, y)")
