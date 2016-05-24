@@ -20,13 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.parser.tools;
+package com.oracle.truffle.r.runtime.nodes;
 
 import java.util.Arrays;
 
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
-import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 final class EvaluatedArgumentsFastPath implements FastPathFactory {
 

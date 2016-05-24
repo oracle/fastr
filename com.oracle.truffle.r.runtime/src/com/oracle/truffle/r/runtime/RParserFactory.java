@@ -52,6 +52,7 @@ public abstract class RParserFactory {
         } catch (Exception ex) {
             // CheckStyle: stop system..print check
             System.err.println("Failed to instantiate class: " + prop);
+            System.exit(1);
         }
     }
 
