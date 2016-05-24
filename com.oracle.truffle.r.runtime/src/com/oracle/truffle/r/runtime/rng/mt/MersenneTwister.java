@@ -122,6 +122,7 @@ public final class MersenneTwister extends RNGInitAdapter {
      *
      */
     @Override
+    @TruffleBoundary
     public void init(int seedParam) {
         int seed = seedParam;
         for (int i = 0; i < getNSeed(); i++) {
@@ -132,6 +133,7 @@ public final class MersenneTwister extends RNGInitAdapter {
     }
 
     @Override
+    @TruffleBoundary
     public void fixupSeeds(boolean initial) {
         if (initial) {
             iSeed[0] = N;
