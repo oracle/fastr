@@ -296,6 +296,7 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.nodes.builtin",
+        "com.oracle.truffle.r.parser",
         "truffle:JLINE",
         "truffle:TRUFFLE_DEBUG",
       ],
