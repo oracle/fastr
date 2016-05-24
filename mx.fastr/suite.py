@@ -300,6 +300,10 @@ suite = {
         "truffle:JLINE",
         "truffle:TRUFFLE_DEBUG",
       ],
+     "generatedDependencies" : [
+        "com.oracle.truffle.r.parser",
+     ],
+
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
