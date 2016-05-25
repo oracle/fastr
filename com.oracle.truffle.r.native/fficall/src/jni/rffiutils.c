@@ -97,11 +97,24 @@ jmp_buf *getErrorJmpBuf() {
 void releaseCopiedVector(JNIEnv *env, CopiedVector cv) {
     if (cv.obj != NULL) {
 	switch (cv.type) {
-	    case INTSXP: case LGLSXP: {
-		    jintArray intArray = (jintArray) cv.jArray;
-		    (*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
-		    break;
-	    }
+        case INTSXP: {
+	        jintArray intArray = (jintArray) cv.jArray;
+	        (*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
+	        break;
+        }
+
+        case LGLSXP: {
+        	// for LOGICAL, we need to convert back to 1-byte elements
+	        jintArray byteArray = (jbyteArray) cv.jArray;
+    	    int len = (*env)->GetArrayLength(env, byteArray);
+    	    jbyte* internalData = (*env)->GetByteArrayElements(env, byteArray, NULL);
+    	    int* data = (int*) cv.data;
+    	    for (int i = 0; i < len; i++) {
+    	    	internalData[i] = data[i] == NA_INTEGER ? 255 : (jbyte) data[i];
+    	    }
+    	    (*env)->ReleaseByteArrayElements(env, byteArray, internalData, 0);
+	        break;
+        }
 
 	    case REALSXP: {
 		    jdoubleArray doubleArray = (jdoubleArray) cv.jArray;
@@ -137,14 +150,14 @@ void invalidateCopiedObject(JNIEnv *env, SEXP oldObj) {
 		CopiedVector cv = copiedVectors[i];
 		if ((*env)->IsSameObject(env, cv.obj, oldObj)) {
 #if TRACE_COPIES
-			printf("invalidateCopiedObject(%p): found\n", x);
+			printf("invalidateCopiedObject(%p): found\n", oldObj);
 #endif
 			releaseCopiedVector(env, cv);
 			copiedVectors[i].obj = NULL;
 		}
 	}
 #if TRACE_COPIES
-	printf("invalidateCopiedObject(%p): not found\n", x);
+	printf("invalidateCopiedObject(%p): not found\n", oldObj);
 #endif
 }
 

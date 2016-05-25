@@ -460,21 +460,11 @@ public class CallRFFIHelper {
         }
     }
 
-    private static int toWideLogical(byte v) {
-        return RRuntime.isNA(v) ? Integer.MIN_VALUE : v;
-    }
-
-    public static int[] LOGICAL(Object x) {
+    public static byte[] LOGICAL(Object x) {
         if (x instanceof RLogicalVector) {
-            // TODO: this should not actually copy...
-            RLogicalVector vector = (RLogicalVector) x;
-            int[] array = new int[vector.getLength()];
-            for (int i = 0; i < vector.getLength(); i++) {
-                array[i] = toWideLogical(vector.getDataAt(i));
-            }
-            return array;
+            return ((RLogicalVector) x).getDataWithoutCopying();
         } else if (x instanceof Byte) {
-            return new int[]{toWideLogical((Byte) x)};
+            return new byte[]{(Byte) x};
         } else {
             throw unimplemented();
         }
