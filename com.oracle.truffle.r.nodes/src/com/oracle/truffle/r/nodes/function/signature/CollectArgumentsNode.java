@@ -52,7 +52,7 @@ public abstract class CollectArgumentsNode extends RBaseNode {
         Node[] reads = new Node[signature.getLength()];
         for (int i = 0; i < signature.getLength(); i++) {
             Object arg = RArguments.getArgument(frame, i);
-            if (arg instanceof RPromise && ((RPromise) arg).isDefault()) {
+            if (arg instanceof RPromise && ((RPromise) arg).isDefaultArgument()) {
                 reads[i] = ConstantNode.create(RMissing.instance);
             } else {
                 reads[i] = LocalReadVariableNode.create(signature.getName(i), false);

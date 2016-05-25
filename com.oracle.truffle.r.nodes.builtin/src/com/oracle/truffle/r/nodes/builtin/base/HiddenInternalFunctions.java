@@ -64,6 +64,8 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -114,7 +116,7 @@ public class HiddenInternalFunctions {
                 try {
                     // We want this call to have a SourceSection
                     RDeparse.ensureSourceSection(expr0);
-                    aenv.put(name, RDataFactory.createPromise(expr0, eenv));
+                    aenv.put(name, RDataFactory.createPromise(PromiseState.Explicit, Closure.create(expr0), eenv.getFrame()));
                 } catch (PutException ex) {
                     /*
                      * When loading the {@code base} package we may encounter a locked binding that

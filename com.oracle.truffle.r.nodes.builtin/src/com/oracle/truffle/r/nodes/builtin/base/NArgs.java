@@ -53,7 +53,7 @@ public abstract class NArgs extends RBuiltinNode {
             if (arg instanceof RPromise) {
                 isPromiseProfile.enter();
                 RPromise promise = (RPromise) arg;
-                if (!promise.isDefault()) {
+                if (!promise.isDefaultArgument()) {
                     result++;
                 }
             } else if (arg instanceof RArgsValuesAndNames) {

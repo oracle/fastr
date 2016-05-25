@@ -34,7 +34,6 @@ import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -42,7 +41,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 /**
  * A optimizing {@link PromiseNode}: It evaluates a constant directly.
  */
-public final class OptForcedEagerPromiseNode extends PromiseNode implements EagerFeedback {
+public final class OptForcedEagerPromiseNode extends PromiseNode {
 
     @Child private RNode expr;
     @Child private PromiseHelperNode promiseHelper;
@@ -86,7 +85,7 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
         while (call.isPromise()) {
             call = call.getParent();
         }
-        return factory.createEagerSuppliedPromise(value, alwaysValidAssumption, call, this, wrapIndex);
+        return factory.createEagerSuppliedPromise(value, alwaysValidAssumption, call, null, wrapIndex);
     }
 
     @Override
@@ -97,15 +96,5 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
     @Override
     public RSyntaxNode getPromiseExpr() {
         return expr.asRSyntaxNode();
-    }
-
-    @Override
-    public void onSuccess(RPromise promise) {
-        // nothing to do
-    }
-
-    @Override
-    public void onFailure(RPromise promise) {
-        // nothing to do
     }
 }

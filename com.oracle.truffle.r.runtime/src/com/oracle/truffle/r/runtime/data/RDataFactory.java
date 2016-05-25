@@ -38,12 +38,10 @@ import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
-import com.oracle.truffle.r.runtime.data.RPromise.OptType;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class RDataFactory {
@@ -374,30 +372,23 @@ public final class RDataFactory {
         return traceDataCreated(new RLanguage(rep));
     }
 
-    public static RPromise createPromise(PromiseType type, MaterializedFrame execFrame, Closure closure) {
+    public static RPromise createPromise(PromiseState state, Closure closure, MaterializedFrame env) {
         assert closure != null;
         assert closure.getExpr() != null;
-        return traceDataCreated(new RPromise(type, OptType.DEFAULT, execFrame, closure));
+        return traceDataCreated(new RPromise(state, env, closure));
     }
 
-    @TruffleBoundary
-    public static RPromise createPromise(RBaseNode rep, REnvironment env) {
-        // TODO Cache closures? Maybe in the callers of this function?
-        Closure closure = Closure.create(rep);
-        return traceDataCreated(new RPromise(PromiseType.NO_ARG, OptType.DEFAULT, env.getFrame(), closure));
+    public static RPromise createEvaluatedPromise(PromiseState state, Closure closure, Object argumentValue) {
+        return traceDataCreated(new RPromise(state, closure, argumentValue));
     }
 
-    public static RPromise createPromise(PromiseType type, OptType opt, RBaseNode expr, Object argumentValue) {
-        return traceDataCreated(new RPromise(type, opt, expr, argumentValue));
+    public static Object createEvaluatedPromise(Closure closure, Object value) {
+        return traceDataCreated(new RPromise(PromiseState.Explicit, closure, value));
     }
 
-    public static RPromise createEagerPromise(PromiseType type, OptType eager, Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback,
+    public static RPromise createEagerPromise(PromiseState state, Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback,
                     int wrapIndex) {
-        return traceDataCreated(new RPromise.EagerPromise(type, eager, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex));
-    }
-
-    public static RPromise createVarargPromise(PromiseType type, RPromise promisedVararg, Closure exprClosure) {
-        return traceDataCreated(new RPromise.VarargPromise(type, promisedVararg, exprClosure));
+        return traceDataCreated(new RPromise.EagerPromise(state, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex));
     }
 
     public static RPairList createPairList() {

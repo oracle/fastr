@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
@@ -32,6 +33,8 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -42,10 +45,11 @@ public abstract class DelayedAssign extends RBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
 
     @Specialization
+    @TruffleBoundary
     protected Object doDelayedAssign(RAbstractStringVector nameVec, Object value, REnvironment evalEnv, REnvironment assignEnv) {
         String name = nameVec.getDataAt(0);
         try {
-            assignEnv.put(name, RDataFactory.createPromise(RASTUtils.createNodeForValue(value), evalEnv));
+            assignEnv.put(name, RDataFactory.createPromise(PromiseState.Explicit, Closure.create(RASTUtils.createNodeForValue(value)), evalEnv.getFrame()));
             return RNull.instance;
         } catch (PutException ex) {
             errorProfile.enter();
