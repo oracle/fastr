@@ -37,6 +37,8 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -132,6 +134,20 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         Object recursiveRight = right;
         if (recursiveRight instanceof RConnection) {
             recursiveRight = RInteger.valueOf(((RConnection) recursiveRight).getDescriptor());
+        }
+        return recursive.execute(frame, recursiveLeft, recursiveRight);
+    }
+
+    @Specialization(guards = {"isRSymbol(left) || isRSymbol(right)"})
+    protected Object doSymbol(VirtualFrame frame, Object left, Object right, //
+                    @Cached("createRecursive()") BinaryBooleanNode recursive) {
+        Object recursiveLeft = left;
+        if (recursiveLeft instanceof RSymbol) {
+            recursiveLeft = RString.valueOf(((RSymbol) recursiveLeft).getName());
+        }
+        Object recursiveRight = right;
+        if (recursiveRight instanceof RSymbol) {
+            recursiveRight = RString.valueOf(((RSymbol) recursiveRight).getName());
         }
         return recursive.execute(frame, recursiveLeft, recursiveRight);
     }
