@@ -138,6 +138,7 @@ public class RRNG {
         /*
          * Similar to GNUR's RNGkind function.
          */
+        @TruffleBoundary
         void updateCurrentGenerator(RandomNumberGenerator newRng, boolean saveState) {
             this.currentGenerator = newRng;
             this.allGenerators[newRng.getKind().ordinal()] = newRng;
@@ -170,6 +171,7 @@ public class RRNG {
         /*
          * Similar to GNUR's Norm_kind function.
          */
+        @TruffleBoundary
         void updateCurrentNormKind(NormKind normKind, boolean saveState) {
             currentNormKind = normKind;
             if (saveState) {
@@ -227,6 +229,7 @@ public class RRNG {
      * @param normKindAsInt {@link #NO_KIND_CHANGE} for no change, else ordinal value of new
      *            {@link NormKind}.
      */
+    @TruffleBoundary
     public static void doSetSeed(int seed, int kindAsInt, int normKindAsInt) {
         getRNGKind(RNull.instance);
         changeKindsAndInitGenerator(seed, kindAsInt, normKindAsInt);
@@ -303,6 +306,7 @@ public class RRNG {
         generator.init(seed);
     }
 
+    @TruffleBoundary
     private static Object getDotRandomSeed() {
         Object seed = REnvironment.globalEnv().get(RANDOM_SEED);
         if (seed instanceof RPromise) {
@@ -311,6 +315,7 @@ public class RRNG {
         return seed;
     }
 
+    @TruffleBoundary
     public static void updateDotRandomSeed() {
         int[] seeds = currentGenerator().getSeeds();
         int lenSeeds = currentGenerator().getNSeed();
@@ -393,6 +398,7 @@ public class RRNG {
         getContextState().updateCurrentNormKind(newNormKind, false);
     }
 
+    @TruffleBoundary
     public static void getRNGState() {
         Object seedsObj = getDotRandomSeed();
         if (seedsObj == null) {
