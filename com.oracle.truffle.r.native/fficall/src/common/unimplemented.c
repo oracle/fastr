@@ -13,6 +13,8 @@
 #include <Rinternals.h>
 #include <stdlib.h>
 
+#include <R_ext/eventloop.h>
+
 Rboolean known_to_be_latin1 = FALSE;
 Rboolean known_to_be_utf8 = FALSE;
 
@@ -54,6 +56,23 @@ SEXP do_getGraphicsEventEnv(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     unimplemented("do_getGraphicsEventEnv");
     return R_NilValue;
+}
+
+void *Rf_AdobeSymbol2utf8(char *work, const char *c0, size_t nwork) {
+    unimplemented("Rf_AdobeSymbol2utf8");
+    return NULL;
+}
+
+size_t Rf_ucstoutf8(char *s, const unsigned int wc) {
+    unimplemented("Rf_ucstoutf8");
+    return 0;
+}
+
+InputHandler *
+addInputHandler(InputHandler *handlers, int fd, InputHandlerProc handler,
+		int activity) {
+    unimplemented("addInputHandler");
+    return NULL;
 }
 
 const char *locale2charset(const char *locale)
