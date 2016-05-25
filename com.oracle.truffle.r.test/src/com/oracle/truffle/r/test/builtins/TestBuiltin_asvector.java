@@ -419,6 +419,9 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval("{ as.vector(NULL) }");
 
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); as.vector(x) }");
+
+        assertEval("as.vector(x~z)");
+        assertEval(Ignored.Unimplemented, "as.vector(file(''))");
     }
 
     @Test

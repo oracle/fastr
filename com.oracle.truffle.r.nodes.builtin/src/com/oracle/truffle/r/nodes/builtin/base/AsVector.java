@@ -59,6 +59,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -193,6 +194,11 @@ public abstract class AsVector extends RBuiltinNode {
             RList result = x.copyWithNewDimensions(null);
             result.copyNamesFrom(attrProfiles, x);
             return result;
+        }
+
+        @Specialization(guards = "modeIsAny(mode)")
+        protected RLanguage asVector(RLanguage x, @SuppressWarnings("unused") String mode) {
+            return x.copy();
         }
 
         @Specialization(guards = "modeIsAny(mode)")
