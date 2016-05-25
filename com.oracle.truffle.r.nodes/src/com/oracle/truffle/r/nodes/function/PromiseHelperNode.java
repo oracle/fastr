@@ -257,21 +257,13 @@ public class PromiseHelperNode extends RBaseNode {
         }
     }
 
-// <<<<<<<HEAD
-
     private static VirtualEvalFrame wrapPromiseFrame(VirtualFrame frame, Frame promiseFrame) {
         return VirtualEvalFrame.create(promiseFrame.materialize(), RArguments.getFunction(promiseFrame),
                         RCaller.createForPromise(RArguments.getCall(promiseFrame), frame == null ? 0 : RArguments.getDepth(frame)));
     }
 
-// private static Object generateValueEagerSlowPath(VirtualFrame frame, OptType optType,
-// EagerPromise promise) {
-// =======
-
     private static Object generateValueEagerSlowPath(VirtualFrame frame, PromiseState state, EagerPromise promise) {
         assert state.isEager() || state == PromiseState.Promised;
-// >>>>>>> a4dddf1... RPromise refactoring: always use Closures, store PromiseType and OptType in
-// one field, remove VarArgsPromise, more assertions
         if (!promise.isDeoptimized()) {
             Assumption eagerAssumption = promise.getIsValidAssumption();
             if (eagerAssumption.isValid()) {
