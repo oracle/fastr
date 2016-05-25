@@ -408,7 +408,6 @@ public class RSerialize {
 
         protected Object readItem(int flags) throws IOException {
             int levs = flags >>> 12;
-            int isObj = (flags & Flags.IS_OBJECT_BIT_MASK) == 0 ? 0 : 1;
             Object result = null;
             SEXPTYPE type = SEXPTYPE.mapInt(Flags.ptype(flags));
 
