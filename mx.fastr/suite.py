@@ -229,7 +229,7 @@ suite = {
     "com.oracle.truffle.r.nodes" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.truffle.r.parser",
+        "com.oracle.truffle.r.runtime",
         "truffle:TRUFFLE_DEBUG",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
@@ -296,9 +296,14 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.nodes.builtin",
+        "com.oracle.truffle.r.parser",
         "truffle:JLINE",
         "truffle:TRUFFLE_DEBUG",
       ],
+     "generatedDependencies" : [
+        "com.oracle.truffle.r.parser",
+     ],
+
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
       ],

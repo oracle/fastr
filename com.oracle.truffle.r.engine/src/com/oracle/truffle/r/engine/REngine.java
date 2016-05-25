@@ -27,11 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.antlr.runtime.MismatchedTokenException;
-import org.antlr.runtime.NoViableAltException;
-import org.antlr.runtime.RecognitionException;
-import org.antlr.runtime.Token;
-
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -62,7 +57,6 @@ import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
-import com.oracle.truffle.r.parser.RParser;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -73,6 +67,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
+import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.ReturnException;
@@ -273,33 +268,8 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     private static List<RSyntaxNode> parseImpl(Source source) throws ParseException {
-        try {
-            try {
-                RParser<RSyntaxNode> parser = new RParser<>(source, new RASTBuilder());
-                return parser.script();
-            } catch (IllegalArgumentException e) {
-                // the lexer will wrap exceptions in IllegalArgumentExceptions
-                if (e.getCause() instanceof RecognitionException) {
-                    throw (RecognitionException) e.getCause();
-                } else {
-                    throw e;
-                }
-            }
-        } catch (RecognitionException e) {
-            throw handleRecognitionException(source, e);
-        }
-    }
-
-    private static ParseException handleRecognitionException(Source source, RecognitionException e) throws IncompleteSourceException, ParseException {
-        String line = e.line <= source.getLineCount() ? source.getCode(e.line) : "";
-        String substring = line.substring(0, Math.min(line.length(), e.charPositionInLine + 1));
-        String token = e.token == null ? (substring.length() == 0 ? "" : substring.substring(substring.length() - 1)) : e.token.getText();
-        if (e.token != null && e.token.getType() == Token.EOF && (e instanceof NoViableAltException || e instanceof MismatchedTokenException)) {
-            // the parser got stuck at the eof, request another line
-            throw new IncompleteSourceException(e, source, token, substring, e.line);
-        } else {
-            throw new ParseException(e, source, token, substring, e.line);
-        }
+        RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
+        return parser.script(source, new RASTBuilder());
     }
 
     @Override
@@ -311,14 +281,10 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws ParseException {
-        RParser<RSyntaxNode> parser = new RParser<>(source, new RASTBuilder());
-        try {
-            RootCallTarget callTarget = parser.root_function(name);
-            FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
-            return RDataFactory.createFunction(name, callTarget, null, enclosingFrame);
-        } catch (RecognitionException e) {
-            throw handleRecognitionException(source, e);
-        }
+        RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
+        RootCallTarget callTarget = parser.rootFunction(source, name, new RASTBuilder());
+        FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
+        return RDataFactory.createFunction(name, callTarget, null, enclosingFrame);
     }
 
     @Override
