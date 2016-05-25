@@ -447,7 +447,7 @@ public class RSerialize {
                      * only used in a warning message in the unlikely event that the namespace
                      * cannot be found.
                      */
-                    Object r = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), null, s, "");
+                    Object r = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), null, null, s, "");
                     return checkResult(addReadRef(r));
                 }
 
@@ -894,7 +894,7 @@ public class RSerialize {
                     source = Source.fromText(deparse, UNKNOWN_PACKAGE_SOURCE_PREFIX + packageName + " deparse>");
                     name = currentFunctionName;
                 } else {
-                    source = Source.fromNamedText(deparse, sourcePath);
+                    source = Source.fromFileName(deparse, sourcePath);
                     // Located a function source file from which we can retrieve the function name
                     name = RPackageSource.decodeName(sourcePath);
                 }

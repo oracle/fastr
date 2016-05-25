@@ -67,7 +67,15 @@ public final class IdenticalVisitor extends RSyntaxArgVisitor<Boolean, RSyntaxEl
     private Boolean compareArguments(RSyntaxElement[] arguments1, RSyntaxElement[] arguments2) {
         assert arguments1.length == arguments2.length;
         for (int i = 0; i < arguments1.length; i++) {
-            if (!accept(arguments1[i], arguments2[i])) {
+            RSyntaxElement arg1 = arguments1[i];
+            RSyntaxElement arg2 = arguments2[i];
+            if (arg1 == null && arg2 == null) {
+                continue;
+            }
+            if ((arg1 == null && arg2 != null) || (arg2 == null && arg1 != null)) {
+                return false;
+            }
+            if (!accept(arg1, arg2)) {
                 return false;
             }
         }

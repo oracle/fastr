@@ -190,7 +190,7 @@ public class RCommand {
     static void readEvalPrint(ContextInfo info) {
         PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
         ConsoleHandler consoleHandler = info.getConsoleHandler();
-        Source source = Source.fromNamedAppendableText(consoleHandler.getInputDescription());
+        Source source = Source.fromAppendableText(consoleHandler.getInputDescription());
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             REPL: for (;;) {

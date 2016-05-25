@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.rng.user;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -47,6 +48,7 @@ public final class UserRNG extends RNGInitAdapter {
     private int nSeeds = 0;
 
     @Override
+    @TruffleBoundary
     public void init(int seed) {
         DLLInfo dllInfo = DLL.findLibraryContainingSymbol(USER_UNIF_RAND);
         if (dllInfo == null) {
@@ -86,6 +88,7 @@ public final class UserRNG extends RNGInitAdapter {
     }
 
     @Override
+    @TruffleBoundary
     public void fixupSeeds(boolean initial) {
         // no fixup
     }

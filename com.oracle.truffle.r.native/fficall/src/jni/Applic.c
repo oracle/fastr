@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,4 +48,14 @@ void vmmin(int n, double *x, double *Fmin,
 	   int *mask, double abstol, double reltol, int nREPORT,
 	   void *ex, int *fncount, int *grcount, int *fail) {
 	unimplemented("vmmin");
+}
+
+void
+optif9(int nr, int n, double *x, fcn_p fcn, fcn_p d1fcn, d2fcn_p d2fcn,
+       void *state, double *typsiz, double fscale, int method,
+       int iexp, int *msg, int ndigit, int itnlim, int iagflg, int iahflg,
+       double dlt, double gradtl, double stepmx, double steptl,
+       double *xpls, double *fpls, double *gpls, int *itrmcd, double *a,
+       double *wrk, int *itncnt) {
+	unimplemented("optif9");
 }

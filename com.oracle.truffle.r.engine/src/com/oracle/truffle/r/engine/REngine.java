@@ -416,10 +416,20 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     @TruffleBoundary
-    public Object evalFunction(RFunction func, MaterializedFrame frame, Object... args) {
+    public Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, Object... args) {
         ArgumentsSignature argsSig = ((RRootNode) func.getRootNode()).getSignature();
-        MaterializedFrame actualFrame = frame == null ? Utils.getActualCurrentFrame().materialize() : frame;
-        Object[] rArgs = RArguments.create(func, actualFrame == null ? null : RArguments.getCall(actualFrame), actualFrame, args, argsSig, null);
+        assert frame == null || caller != null;
+        MaterializedFrame actualFrame = frame;
+        if (actualFrame == null) {
+            Frame current = Utils.getActualCurrentFrame();
+            if (current == null) {
+                // special case, e.g. in parser and an error is thrown
+                actualFrame = REnvironment.globalEnv().getFrame();
+            } else {
+                actualFrame = current.materialize();
+            }
+        }
+        Object[] rArgs = RArguments.create(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, args, argsSig, null);
         return func.getTarget().call(rArgs);
     }
 

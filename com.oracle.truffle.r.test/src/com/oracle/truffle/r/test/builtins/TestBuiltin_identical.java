@@ -217,7 +217,6 @@ public class TestBuiltin_identical extends TestBase {
 
         assertEval("{ identical(quote(if(x) 42), quote(if(x) 7)) }");
         assertEval("{ identical(quote(if(x) 42), quote(if(x) 42)) }");
-        assertEval("{ identical(function() 42, function() 42) }");
 
         assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); y<-new(\"foo\", j=42); identical(x,y) }");
         assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); y<-new(\"foo\", j=7); identical(x,y) }");
@@ -250,5 +249,13 @@ public class TestBuiltin_identical extends TestBase {
         assertEval("{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); attr(y, \"bar\")<-\"bar\"; identical(x, y) }");
         assertEval("{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); identical(x, y) }");
         assertEval("{ x<-expression(1 + 0:9); y<-expression(1 + 0:9); identical(x, y) }");
+
+        // functions
+
+        // GnuR adds a srcref attribute, FastR does not, so we really can't do any comparative
+        // tests.
+        assertEval(Ignored.ImplementationError, "{ f1 <- function() {}; f2 <- function() {}; identical(f1, f2) }");
+        assertEval(Ignored.ImplementationError, "{ identical(function() 42, function() 42) }");
+
     }
 }
