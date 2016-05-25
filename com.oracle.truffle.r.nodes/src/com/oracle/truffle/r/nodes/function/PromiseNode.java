@@ -378,7 +378,7 @@ public abstract class PromiseNode extends RNode {
                 if (ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(nodes[i]))) {
                     this.promised[i] = nodes[i];
                 } else {
-                this.promised[i] = PromisedNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), false, forcedEager);
+                    this.promised[i] = PromisedNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), false, forcedEager);
                 }
             }
             this.signature = signature;
