@@ -49,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -83,7 +84,7 @@ public abstract class Match extends RBuiltinNode {
         return (RAbstractStringVector) castString.execute(operand);
     }
 
-    private Object matchRecursive(Object x, Object table, RAbstractIntVector noMatch, Object incomparables) {
+    private Object matchRecursive(Object x, Object table, Object noMatch, Object incomparables) {
         if (matchRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             matchRecursive = insert(MatchNodeGen.create(null));
@@ -133,6 +134,12 @@ public abstract class Match extends RBuiltinNode {
     protected Object matchFactor(RAbstractVector x, RAbstractIntVector table, RAbstractIntVector nomatchObj, Object incomparables) {
         naCheck.enable(table);
         return matchRecursive(x, RClosures.createFactorToVector(table, true, attrProfiles), nomatchObj, incomparables);
+    }
+
+    @Specialization
+    protected Object matchList(RAbstractListVector x, Object table, Object nomatchObj, Object incomparables, //
+                    @Cached("create()") CastStringNode cast) {
+        return matchRecursive(cast.execute(x), table, nomatchObj, incomparables);
     }
 
     @Specialization

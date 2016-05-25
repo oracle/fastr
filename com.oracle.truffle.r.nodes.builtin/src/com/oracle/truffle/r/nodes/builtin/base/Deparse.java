@@ -31,7 +31,7 @@ public abstract class Deparse extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
+        casts.firstIntegerWithError(1, null, null);
         casts.toLogical(2);
         casts.toInteger(3);
         casts.toInteger(4);

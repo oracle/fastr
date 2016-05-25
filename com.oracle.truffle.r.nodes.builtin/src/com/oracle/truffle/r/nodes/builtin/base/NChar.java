@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -40,6 +41,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -52,6 +54,8 @@ public abstract class NChar extends RBuiltinNode {
     @Child private InheritsCheckNode factorInheritsCheck;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+    public abstract Object execute(Object value, Object type, Object allowNA, Object keepNA);
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -115,6 +119,19 @@ public abstract class NChar extends RBuiltinNode {
             result[i] = vector.getDataAt(i).length();
         }
         return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames(attrProfiles));
+    }
+
+    protected static NChar createRecursive() {
+        return NCharNodeGen.create(null);
+    }
+
+    /*
+     * this builtin is sometimes used with only 3 arguments - keepNA defaults to FALSE.
+     */
+    @Specialization
+    protected Object ncharNoKeepNA(Object obj, Object type, Object allowNA, @SuppressWarnings("unused") RMissing keepNA, //
+                    @Cached("createRecursive()") NChar rec) {
+        return rec.execute(obj, type, allowNA, RRuntime.LOGICAL_FALSE);
     }
 
     @SuppressWarnings("unused")
