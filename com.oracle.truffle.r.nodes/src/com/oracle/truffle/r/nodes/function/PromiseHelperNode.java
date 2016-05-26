@@ -158,8 +158,14 @@ public class PromiseHelperNode extends RBaseNode {
         } else {
             obj = generateValueEager(frame, state, (EagerPromise) promise);
         }
-        setValue(obj, promise);
-        return obj;
+        if (isEvaluated(promise)) {
+            // TODO: this only happens if compilation is in play and, as such, is difficult to track
+            // why (there is no obvious call path...)
+            return promise.getValue();
+        } else {
+            setValue(obj, promise);
+            return obj;
+        }
     }
 
     private Object generateValueDefault(VirtualFrame frame, PromiseState state, RPromise promise) {
