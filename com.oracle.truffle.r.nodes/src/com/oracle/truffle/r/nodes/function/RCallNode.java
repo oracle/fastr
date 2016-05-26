@@ -93,8 +93,7 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.OptType;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -946,7 +945,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         @TruffleBoundary
         private static Object createPromise(Object arg) {
-            return RDataFactory.createPromise(PromiseType.NO_ARG, OptType.PROMISED, ConstantNode.create(arg), arg);
+            return RDataFactory.createEvaluatedPromise(Closure.create(ConstantNode.create(arg)), arg);
         }
 
         @Override

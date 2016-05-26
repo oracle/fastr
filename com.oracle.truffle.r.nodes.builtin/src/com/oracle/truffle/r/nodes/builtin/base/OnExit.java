@@ -77,7 +77,7 @@ public abstract class OnExit extends RBuiltinNode {
         }
 
         // the empty (RNull.instance) expression is used to clear on.exit
-        boolean empty = emptyPromiseProfile.profile(expr.isDefault());
+        boolean empty = emptyPromiseProfile.profile(expr.isDefaultArgument());
 
         assert !empty || expr.getRep() instanceof ConstantNode : "only ConstantNode expected for defaulted promise";
         assert empty || !expr.isEvaluated() : "promise cannot already be evaluated";

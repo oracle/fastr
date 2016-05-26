@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
@@ -95,12 +95,12 @@ public abstract class PromiseNode extends RNode {
 
     /**
      * @param factory {@link #factory}
-     * @return Depending on {@link RPromiseFactory#getType()}, the proper {@link PromiseNode}
+     * @return Depending on {@link RPromiseFactory#getState()}, the proper {@link PromiseNode}
      *         implementation
      */
     @TruffleBoundary
     static RNode create(RPromiseFactory factory, boolean noOpt, boolean forcedEager) {
-        assert factory.getType() != PromiseType.NO_ARG;
+        assert factory.getState() != PromiseState.Explicit;
 
         // For ARG_DEFAULT, expr == defaultExpr!
         RNode arg = (RNode) factory.getExpr();
@@ -116,8 +116,8 @@ public abstract class PromiseNode extends RNode {
             if (optimizableConstant != null) {
                 // As Constants don't care where they are evaluated, we don't need to
                 // distinguish between ARG_DEFAULT and ARG_SUPPLIED
-                return new OptConstantPromiseNode(factory.getType(), expr, optimizableConstant);
-            } else if (factory.getType() == PromiseType.ARG_SUPPLIED) {
+                return new OptConstantPromiseNode(factory.getState(), expr, optimizableConstant);
+            } else if (factory.getState() == PromiseState.Supplied) {
                 if (isVararg(expr)) {
                     return expr;
                 } else if (!noOpt && isOptimizableVariable(expr)) {
@@ -156,7 +156,7 @@ public abstract class PromiseNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            MaterializedFrame execFrame = factory.getType() == PromiseType.ARG_SUPPLIED ? frame.materialize() : null;
+            MaterializedFrame execFrame = factory.getState() == PromiseState.Supplied ? frame.materialize() : null;
             return factory.createPromise(execFrame);
         }
 
@@ -183,12 +183,6 @@ public abstract class PromiseNode extends RNode {
         @Override
         protected RNode createFallback() {
             return new PromisedNode(factory);
-        }
-
-        // @TruffleBoundary
-        @Override
-        public void onSuccess(RPromise promise) {
-            // System.err.println("Opt SUCCESS: " + promise.getOptType());
         }
 
         // @TruffleBoundary
@@ -384,7 +378,7 @@ public abstract class PromiseNode extends RNode {
                 if (ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(nodes[i]))) {
                     this.promised[i] = nodes[i];
                 } else {
-                    this.promised[i] = PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), false, forcedEager);
+                    this.promised[i] = PromisedNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), false, forcedEager);
                 }
             }
             this.signature = signature;

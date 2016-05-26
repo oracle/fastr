@@ -43,61 +43,58 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
- * Denotes an R {@code promise}. Its child classes - namely {@link EagerPromise} and
- * {@link VarargPromise} - are only present for documentation reasons: Because Truffle cannot do
- * proper function dispatch based on inheritance, an additional {@link #optType} is introduced,
- * which is used for manual method dispatch.
+ * Denotes an R {@code promise}.
  */
 @ValueType
 public class RPromise implements RTypedValue {
 
     /**
-     * Different to GNU R, FastR has no additional binding information (a "origin" where the binding
-     * is coming from). This enum is meant to substitute this information.
+     * This enum encodes the source, optimization and current state of a promise.
      */
-    public enum PromiseType {
+    public enum PromiseState {
         /**
          * This promise is created for an argument that has been supplied to the function call and
          * thus has to be evaluated inside the caller frame.
          */
-        ARG_SUPPLIED,
-
+        Supplied,
         /**
          * This promise is created for an argument that was 'missing' at the function call and thus
          * contains it's default value and has to be evaluated inside the _callee_ frame.
          */
-        ARG_DEFAULT,
-
+        Default,
+        /**
+         * A supplied promise that was optimized to eagerly evaluate its value.
+         */
+        EagerSupplied,
+        /**
+         * A default promise that was optimized to eagerly evaluate its value.
+         */
+        EagerDefault,
+        /**
+         * This promise was created to wrap around a parameter value that is a promise itself.
+         */
+        Promised,
         /**
          * This promise is not a function argument at all. (Created by 'delayedAssign', for
          * example).
          */
-        NO_ARG;
+        Explicit,
+        /**
+         * This promise is currently being evaluated. This necessary to avoid cyclic evaluation, and
+         * can by checked via {@link #isUnderEvaluation()}.
+         */
+        UnderEvaluation;
+
+        public boolean isDefaultOpt() {
+            return this == PromiseState.Default || this == PromiseState.Supplied || this == PromiseState.Explicit || this == PromiseState.UnderEvaluation;
+        }
+
+        public boolean isEager() {
+            return this == PromiseState.EagerDefault || this == PromiseState.EagerSupplied;
+        }
     }
 
-    /**
-     * As Truffle cannot inline virtual methods properly, this type was introduced to tell all
-     * {@link RPromise} classes apart and to implement "virtual" method dispatch.
-     *
-     * @see RPromise
-     */
-    public enum OptType {
-        DEFAULT,
-        EAGER,
-        VARARG,
-        PROMISED
-    }
-
-    public static final String CLOSURE_WRAPPER_NAME = new String("<promise>");
-
-    private final RBaseNode rep;
-
-    /**
-     * @see PromiseType
-     */
-    private final PromiseType type;
-
-    private final OptType optType;
+    private PromiseState state;
 
     /**
      * @see #getFrame()
@@ -116,19 +113,10 @@ public class RPromise implements RTypedValue {
     private Object value = null;
 
     /**
-     * A flag which is necessary to avoid cyclic evaluation. Manipulated by
-     * {@link #setUnderEvaluation(boolean)} and can by checked via {@link #isUnderEvaluation()}.
-     */
-    private boolean underEvaluation = false;
-
-    /**
      * This creates a new tuple (expr, env, closure, value=null), which may later be evaluated.
      */
-    RPromise(PromiseType type, OptType optType, MaterializedFrame execFrame, Closure closure) {
-        this.rep = closure.getExpr();
-        assert type != PromiseType.ARG_DEFAULT || execFrame != null;
-        this.type = type;
-        this.optType = optType;
+    RPromise(PromiseState state, MaterializedFrame execFrame, Closure closure) {
+        this.state = state;
         this.execFrame = execFrame;
         this.closure = closure;
     }
@@ -136,32 +124,13 @@ public class RPromise implements RTypedValue {
     /**
      * This creates a new tuple (expr, null, null, value), which is already evaluated.
      */
-    RPromise(PromiseType type, OptType optType, RBaseNode expr, Object value) {
-        this.rep = expr;
+    RPromise(PromiseState state, Closure closure, Object value) {
         assert value != null;
-        this.type = type;
-        this.optType = optType;
+        this.state = state;
+        this.closure = closure;
         this.value = value;
         // Not needed as already evaluated:
         this.execFrame = null;
-        this.closure = null;
-    }
-
-    /**
-     * This creates a new tuple (isEvaluated=false, expr, null, null, value=null). Meant to be
-     * called via {@link VarargPromise#VarargPromise(PromiseType, RPromise, Closure)} only!
-     */
-    private RPromise(PromiseType type, OptType optType, RBaseNode expr) {
-        this.rep = expr;
-        this.type = type;
-        this.optType = optType;
-        // Not needed as already evaluated:
-        this.execFrame = null;
-        this.closure = null;
-    }
-
-    public RBaseNode getRep() {
-        return rep;
     }
 
     @Override
@@ -169,45 +138,13 @@ public class RPromise implements RTypedValue {
         return RType.Promise;
     }
 
-    /**
-     * @return Whether this promise is of {@link #type} {@link PromiseType#ARG_DEFAULT}.
-     */
-    public final boolean isDefault() {
-        return type == PromiseType.ARG_DEFAULT;
+    public final PromiseState getState() {
+        return state;
     }
 
-    public final boolean isNonArgument() {
-        return type == PromiseType.NO_ARG;
-    }
-
-    public final boolean isNullFrame() {
-        return execFrame == null;
-    }
-
-    /**
-     * Used in case the {@link RPromise} is evaluated outside.
-     *
-     * @param newValue
-     */
-    public final void setValue(Object newValue) {
-        assert newValue != null;
-        this.value = newValue;
-    }
-
-    /**
-     * @param frame
-     * @return Whether the given {@link RPromise} is in its origin context and thus can be resolved
-     *         directly inside the AST.
-     */
-    public final boolean isInOriginFrame(VirtualFrame frame) {
-        if (isDefault() && isNullFrame()) {
-            return true;
-        }
-
-        if (frame == null) {
-            return false;
-        }
-        return frame == execFrame;
+    public final void setState(PromiseState state) {
+        assert !isEvaluated();
+        this.state = state;
     }
 
     /**
@@ -217,21 +154,36 @@ public class RPromise implements RTypedValue {
         return closure;
     }
 
-    /**
-     * @return {@link #execFrame}. This might be <code>null</code>! Materialize before.
-     *
-     * @see #execFrame
-     */
-    public final MaterializedFrame getFrame() {
-        return execFrame;
+    public final RBaseNode getRep() {
+        return closure.getExpr();
+    }
+
+    public final boolean isDefaultArgument() {
+        return state == PromiseState.Default || state == PromiseState.EagerDefault;
+    }
+
+    public final boolean isNullFrame() {
+        assert !isEvaluated();
+        return execFrame == null;
     }
 
     /**
      * @return The raw {@link #value}.
      */
     public final Object getValue() {
-        assert value != null;
+        assert isEvaluated();
         return value;
+    }
+
+    /**
+     * Used in case the {@link RPromise} is evaluated outside.
+     *
+     * @param newValue
+     */
+    public final void setValue(Object newValue) {
+        assert !isEvaluated();
+        assert newValue != null;
+        this.value = newValue;
     }
 
     /**
@@ -242,32 +194,44 @@ public class RPromise implements RTypedValue {
     }
 
     /**
-     * @return This instance's {@link OptType}
-     */
-    public final OptType getOptType() {
-        return optType;
-    }
-
-    /**
-     * Used to manipulate {@link #underEvaluation}.
+     * @return {@link #execFrame}. This might be <code>null</code>! Materialize before.
      *
-     * @param underEvaluation The new value to set
+     * @see #execFrame
      */
-    public final void setUnderEvaluation(boolean underEvaluation) {
-        this.underEvaluation = underEvaluation;
+    public final MaterializedFrame getFrame() {
+        assert !isEvaluated();
+        return execFrame;
     }
 
     /**
-     * @return The state of the {@link #underEvaluation} flag.
+     * @param frame
+     * @return Whether the given {@link RPromise} is in its origin context and thus can be resolved
+     *         directly inside the AST.
+     */
+    public final boolean isInOriginFrame(VirtualFrame frame) {
+        assert !isEvaluated();
+        if (isDefaultArgument() && isNullFrame()) {
+            return true;
+        }
+
+        if (frame == null) {
+            return false;
+        }
+        return frame == execFrame;
+    }
+
+    /**
+     * @return The state of the {@code underEvaluation} flag.
      */
     public final boolean isUnderEvaluation() {
-        return underEvaluation;
+        assert !isEvaluated();
+        return state == PromiseState.UnderEvaluation;
     }
 
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return "[" + type + ", " + optType + ", " + execFrame + ", expr=" + getRep() + ", " + value + "]";
+        return "[" + state + ", " + execFrame + ", expr=" + getRep() + ", " + value + "]";
     }
 
     /**
@@ -299,9 +263,9 @@ public class RPromise implements RTypedValue {
          */
         private boolean deoptimized = false;
 
-        EagerPromise(PromiseType type, OptType optType, Closure closure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, int wrapIndex) {
-            super(type, optType, (MaterializedFrame) null, closure);
-            assert type != PromiseType.NO_ARG;
+        EagerPromise(PromiseState state, Closure closure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, int wrapIndex) {
+            super(state, (MaterializedFrame) null, closure);
+            assert state != PromiseState.Explicit;
             this.eagerValue = eagerValue;
             this.notChangedNonLocally = notChangedNonLocally;
             this.targetFrame = targetFrame;
@@ -315,7 +279,7 @@ public class RPromise implements RTypedValue {
         public boolean deoptimize() {
             if (!deoptimized && !isEvaluated()) {
                 deoptimized = true;
-                feedback.onFailure(this);
+                notifyFailure();
                 materialize();
                 return false;
             }
@@ -347,6 +311,7 @@ public class RPromise implements RTypedValue {
         }
 
         public void notifyFailure() {
+            assert feedback != null : "eager promises without feedback should never fail";
             feedback.onFailure(this);
         }
 
@@ -356,32 +321,9 @@ public class RPromise implements RTypedValue {
     }
 
     /**
-     * A {@link RPromise} implementation that knows that it holds a Promise itself (that it has to
-     * respect by evaluating it on it's evaluation).
-     */
-    public static final class VarargPromise extends RPromise {
-        private final RPromise vararg;
-
-        VarargPromise(PromiseType type, RPromise vararg, Closure exprClosure) {
-            super(type, OptType.VARARG, exprClosure.getExpr());
-            this.vararg = vararg;
-        }
-
-        public RPromise getVararg() {
-            return vararg;
-        }
-    }
-
-    /**
      * Used to allow feedback on {@link EagerPromise} evaluation.
      */
     public interface EagerFeedback {
-        /**
-         * Called whenever an optimized {@link EagerPromise} has been evaluated successfully.
-         *
-         * @param promise
-         */
-        void onSuccess(RPromise promise);
 
         /**
          * Whenever an optimized {@link EagerPromise} has been deoptimized, or it's assumption did
@@ -397,19 +339,20 @@ public class RPromise implements RTypedValue {
      */
     public static final class RPromiseFactory {
         private final Closure exprClosure;
-        private final PromiseType type;
+        private final PromiseState state;
 
         /**
          * Create the promise with a representation that allows evaluation later in the "current"
          * frame. The frame may need to be set if the promise is passed as an argument to another
          * function.
          */
-        public static RPromiseFactory create(PromiseType type, Closure suppliedClosure) {
-            return new RPromiseFactory(type, suppliedClosure);
+        public static RPromiseFactory create(PromiseState state, Closure suppliedClosure) {
+            return new RPromiseFactory(state, suppliedClosure);
         }
 
-        private RPromiseFactory(PromiseType type, Closure suppliedClosure) {
-            this.type = type;
+        private RPromiseFactory(PromiseState state, Closure suppliedClosure) {
+            assert state == PromiseState.Default || state == PromiseState.Supplied;
+            this.state = state;
             this.exprClosure = suppliedClosure;
         }
 
@@ -417,7 +360,7 @@ public class RPromise implements RTypedValue {
          * @return A {@link RPromise} from the given parameters
          */
         public RPromise createPromise(MaterializedFrame frame) {
-            return RDataFactory.createPromise(type, frame, exprClosure);
+            return RDataFactory.createPromise(state, exprClosure, frame);
         }
 
         /**
@@ -428,15 +371,13 @@ public class RPromise implements RTypedValue {
          * @return An {@link EagerPromise}
          */
         public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, int wrapIndex) {
-            return RDataFactory.createEagerPromise(type, OptType.EAGER, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex);
-        }
-
-        public RPromise createForcedEagerSuppliedPromise(Object eagerValue) {
-            return RDataFactory.createPromise(PromiseType.ARG_SUPPLIED, OptType.DEFAULT, exprClosure.getExpr(), eagerValue);
+            return RDataFactory.createEagerPromise(state == PromiseState.Default ? PromiseState.EagerDefault : PromiseState.EagerSupplied, exprClosure, eagerValue, notChangedNonLocally, targetFrame,
+                            feedback, wrapIndex);
         }
 
         public RPromise createPromisedPromise(RPromise promisedPromise, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback) {
-            return RDataFactory.createEagerPromise(type, OptType.PROMISED, exprClosure, promisedPromise, notChangedNonLocally, targetFrame, feedback, -1);
+            assert state == PromiseState.Supplied;
+            return RDataFactory.createEagerPromise(PromiseState.Promised, exprClosure, promisedPromise, notChangedNonLocally, targetFrame, feedback, -1);
         }
 
         public Object getExpr() {
@@ -446,13 +387,15 @@ public class RPromise implements RTypedValue {
             return exprClosure.getExpr();
         }
 
-        public PromiseType getType() {
-            return type;
+        public PromiseState getState() {
+            return state;
         }
     }
 
     public static final class Closure {
         private HashMap<FrameDescriptor, RootCallTarget> callTargets;
+
+        public static final String CLOSURE_WRAPPER_NAME = new String("<promise>");
 
         private final RBaseNode expr;
 

@@ -389,6 +389,8 @@ def _junit_r_harness(args, vmArgs, junitArgs):
 
     # on some systems a large Java stack seems necessary
     vmArgs += ['-Xss12m']
+    # no point in printing errors to file when running tests (that contain errors on purpose)
+    vmArgs += ['-DR:-PrintErrorStacktracesToFile']
 
     vmArgs += _graal_options(nocompile=True)
 

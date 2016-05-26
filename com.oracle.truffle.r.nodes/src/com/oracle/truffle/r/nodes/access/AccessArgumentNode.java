@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -156,7 +156,7 @@ public final class AccessArgumentNode extends RNode {
         if (factory == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             Closure defaultClosure = formals.getOrCreateClosure(formals.getDefaultArgument(index));
-            factory = RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure);
+            factory = RPromiseFactory.create(PromiseState.Default, defaultClosure);
         }
     }
 
@@ -173,7 +173,7 @@ public final class AccessArgumentNode extends RNode {
             } else {
                 Object optimizableConstant = getOptimizableConstant(arg);
                 if (optimizableConstant != null) {
-                    optDefaultArgNode = new OptConstantPromiseNode(factory.getType(), arg, optimizableConstant);
+                    optDefaultArgNode = new OptConstantPromiseNode(factory.getState(), arg, optimizableConstant);
                 }
             }
             if (optDefaultArgNode == null) {
@@ -189,10 +189,6 @@ public final class AccessArgumentNode extends RNode {
 
         OptVariableDefaultPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
             super(factory, rvn, wrapIndex);
-        }
-
-        @Override
-        public void onSuccess(RPromise promise) {
         }
 
         @Override

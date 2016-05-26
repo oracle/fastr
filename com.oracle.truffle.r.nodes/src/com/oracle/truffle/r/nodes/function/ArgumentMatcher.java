@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -269,6 +269,7 @@ public class ArgumentMatcher {
      *         and wrapped into the proper {@link PromiseNode}s
      */
     private static RNode[] matchNodes(RRootNode target, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, RBaseNode callingNode, ClosureCache closureCache, boolean noOpt) {
+        CompilerAsserts.neverPartOfCompilation();
         assert suppliedArgs.length == suppliedSignature.getLength();
 
         FormalArguments formals = target.getFormalArguments();
@@ -376,7 +377,6 @@ public class ArgumentMatcher {
         return builtin != null && builtin.evaluatesArg(formalIndex);
     }
 
-    @TruffleBoundary
     private static RNode wrapUnmatched(FormalArguments formals, RBuiltinDescriptor builtin, int formalIndex, boolean noOpt) {
         if (builtin != null && !builtin.evaluatesArg(formalIndex) && formals.getDefaultArgument(formalIndex) != null) {
             /*
@@ -386,12 +386,11 @@ public class ArgumentMatcher {
              */
             RNode defaultArg = formals.getDefaultArgument(formalIndex);
             Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
-            return PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure), noOpt, false);
+            return PromiseNode.create(RPromiseFactory.create(PromiseState.Default, defaultClosure), noOpt, false);
         }
         return ConstantNode.create(formals.getInternalDefaultArgumentAt(formalIndex));
     }
 
-    @TruffleBoundary
     private static RNode wrapMatched(FormalArguments formals, RBuiltinDescriptor builtin, ClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt, FastPathFactory fastPath) {
         // Create promise, unless it's the empty value
         if (suppliedArg instanceof ConstantNode) {
@@ -404,8 +403,8 @@ public class ArgumentMatcher {
             return PromiseNode.createInlined(suppliedArg, formals.getInternalDefaultArgumentAt(formalIndex), builtin == null || builtin.getKind() == RBuiltinKind.PRIMITIVE);
         } else {
             Closure closure = closureCache.getOrCreateClosure(suppliedArg);
-            boolean forcedEager = fastPath != null && fastPath.forcedEagerPromise(formalIndex) && EvaluatedArgumentsVisitor.isSimpleArgument(suppliedArg.asRSyntaxNode());
-            return PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), noOpt, forcedEager);
+            boolean forcedEager = fastPath != null && fastPath.forcedEagerPromise(formalIndex);
+            return PromiseNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), noOpt, forcedEager);
         }
     }
 

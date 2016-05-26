@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -150,10 +151,13 @@ public class RMissingHelper {
                 return true;
             }
 
+            PromiseState state = promise.getState();
             try {
                 if (promise.isEvaluated()) {
                     return false;
                 }
+                promise.setState(PromiseState.UnderEvaluation);
+                // TODO Profile necessary here???
                 if (promise instanceof EagerPromise) {
                     EagerPromise eagerPromise = (EagerPromise) promise;
                     if (!eagerPromise.isDeoptimized()) {
@@ -166,10 +170,9 @@ public class RMissingHelper {
                     }
                 }
                 // promise.materialize(globalMissingPromiseProfile);
-                promise.setUnderEvaluation(true);
                 result = isMissingArgument(promise.getFrame(), rvn.getIdentifier());
             } finally {
-                promise.setUnderEvaluation(false);
+                promise.setState(state);
             }
         }
         return result;

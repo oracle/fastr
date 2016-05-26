@@ -52,6 +52,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -154,6 +155,6 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
 
     @TruffleBoundary
     private static RPromise createArgPromise(MaterializedFrame frame, RBaseNode rep) {
-        return RDataFactory.createPromise(RPromise.PromiseType.ARG_SUPPLIED, frame, RPromise.Closure.create(rep));
+        return RDataFactory.createPromise(PromiseState.Supplied, RPromise.Closure.create(rep), frame);
     }
 }

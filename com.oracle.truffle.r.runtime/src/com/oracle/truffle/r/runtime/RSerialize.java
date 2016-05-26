@@ -55,8 +55,8 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.OptType;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -408,7 +408,6 @@ public class RSerialize {
 
         protected Object readItem(int flags) throws IOException {
             int levs = flags >>> 12;
-            int isObj = (flags & Flags.IS_OBJECT_BIT_MASK) == 0 ? 0 : 1;
             Object result = null;
             SEXPTYPE type = SEXPTYPE.mapInt(Flags.ptype(flags));
 
@@ -619,9 +618,9 @@ public class RSerialize {
                             }
                             if (pl.car() == RUnboundValue.instance) {
                                 REnvironment env = pl.getTag() == RNull.instance ? REnvironment.baseEnv() : (REnvironment) pl.getTag();
-                                result = RDataFactory.createPromise(rep, env);
+                                result = RDataFactory.createPromise(PromiseState.Explicit, Closure.create(rep), env.getFrame());
                             } else {
-                                result = RDataFactory.createPromise(PromiseType.NO_ARG, OptType.PROMISED, rep, pl.car());
+                                result = RDataFactory.createEvaluatedPromise(Closure.create(rep), pl.car());
                             }
                             break;
                         }
