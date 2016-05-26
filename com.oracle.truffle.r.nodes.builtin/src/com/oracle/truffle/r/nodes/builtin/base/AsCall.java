@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -39,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "as.call", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class AsCall extends RBuiltinNode {
@@ -52,8 +54,14 @@ public abstract class AsCall extends RBuiltinNode {
         RArgsValuesAndNames avn = makeNamesAndValues(x);
         if (x.getDataAt(0) instanceof RSymbol) {
             return Call.makeCallSourceUnavailable(((RSymbol) x.getDataAt(0)).getName(), avn);
-        } else {
+        } else if (x.getDataAt(0) instanceof String) {
+            return Call.makeCallSourceUnavailable((String) x.getDataAt(0), avn);
+        } else if (x.getDataAt(0) instanceof RAbstractStringVector) {
+            return Call.makeCallSourceUnavailable(((RAbstractStringVector) x.getDataAt(0)).getDataAt(0), avn);
+        } else if (x.getDataAt(0) instanceof RFunction) {
             return Call.makeCallSourceUnavailable((RFunction) x.getDataAt(0), avn);
+        } else {
+            throw RInternalError.unimplemented();
         }
     }
 

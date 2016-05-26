@@ -56,6 +56,7 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -240,10 +241,12 @@ public abstract class Parse extends RBuiltinNode {
                 RBaseNode node = ((RLanguage) data).getRep();
                 SourceSection ss = node.asRSyntaxNode().getSourceSection();
                 srcrefData[i] = RSrcref.createLloc(ss, srcFile);
+            } else if (data instanceof RSymbol) {
+                srcrefData[i] = RNull.instance;
             } else if (data == RNull.instance) {
                 srcrefData[i] = data;
             } else {
-                throw RInternalError.unimplemented();
+                throw RInternalError.unimplemented("attribute of type " + data.getClass().getSimpleName());
             }
 
         }

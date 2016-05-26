@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
@@ -34,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "formals", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
 public abstract class Formals extends RBuiltinNode {
@@ -64,9 +64,9 @@ public abstract class Formals extends RBuiltinNode {
         FormalArguments formalArgs = fdNode.getFormalArguments();
         Object succ = RNull.instance;
         for (int i = formalArgs.getSignature().getLength() - 1; i >= 0; i--) {
-            RNode def = formalArgs.getDefaultArgument(i);
-            Object defValue = def == null ? RSymbol.MISSING : RDataFactory.createLanguage(def);
-            succ = RDataFactory.createPairList(defValue, succ, RDataFactory.createSymbol(formalArgs.getSignature().getName(i)));
+            Object lang = RASTUtils.createLanguageElement(formalArgs.getDefaultArgument(i));
+            RSymbol name = RDataFactory.createSymbol(formalArgs.getSignature().getName(i));
+            succ = RDataFactory.createPairList(lang, succ, name);
         }
         return succ;
     }
