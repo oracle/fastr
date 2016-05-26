@@ -49,7 +49,7 @@ import com.oracle.truffle.r.test.TestBase;
 
 public final class FastRSession implements RSession {
 
-    private static final int TIMEOUT = System.getProperty("DisableTestTimeout") != null ? Integer.MAX_VALUE : 300000;
+    private static final int TIMEOUT = System.getProperty("DisableTestTimeout") != null ? Integer.MAX_VALUE : 10000;
 
     /**
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for
