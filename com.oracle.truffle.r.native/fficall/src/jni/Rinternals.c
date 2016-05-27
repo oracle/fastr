@@ -627,7 +627,7 @@ SEXP R_FindNamespace(SEXP info) {
 }
 
 SEXP Rf_lengthgets(SEXP x, R_len_t y) {
-	TRACE("%s(%p)", x);
+	TRACE("%s(%p)\n", x);
 	JNIEnv *thisenv = getEnv();
 	invalidateCopiedObject(thisenv, x);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_lengthgetsMethodID, x, y);
@@ -648,6 +648,11 @@ SEXP GetOption1(SEXP tag)
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_GetOption1MethodID, tag);
 	return checkRef(thisenv, result);
+}
+
+SEXP GetOption(SEXP tag, SEXP rho)
+{
+    return GetOption1(tag);
 }
 
 int GetOptionCutoff(void)
@@ -1094,14 +1099,14 @@ SEXP VECTOR_ELT(SEXP x, R_xlen_t i){
 }
 
 void SET_STRING_ELT(SEXP x, R_xlen_t i, SEXP v){
-	TRACE("%s(%p, %d, %p)", x, i, v);
+	TRACE("%s(%p, %d, %p)\n", x, i, v);
 	JNIEnv *thisenv = getEnv();
 	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_STRING_ELT_MethodID, x, i, v);
 }
 
 
 SEXP SET_VECTOR_ELT(SEXP x, R_xlen_t i, SEXP v){
-	TRACE("%s(%p, %d, %p)", x, i, v);
+	TRACE("%s(%p, %d, %p)\n", x, i, v);
 	JNIEnv *thisenv = getEnv();
 	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_VECTOR_ELT_MethodID, x, i, v);
 	return v;
@@ -1246,8 +1251,13 @@ const char *R_CHAR(SEXP charsxp) {
 	char *copyChars = malloc(len + 1);
 	memcpy(copyChars, stringChars, len);
 	copyChars[len] = 0;
-	TRACE("%s(%s)", copyChars);
+	TRACE(" %s(%s)\n", copyChars);
 	return copyChars;
+}
+
+void *(R_DATAPTR)(SEXP x) {
+    unimplemented("R_DATAPTR");
+	return NULL;
 }
 
 void R_qsort_I  (double *v, int *II, int i, int j) {
