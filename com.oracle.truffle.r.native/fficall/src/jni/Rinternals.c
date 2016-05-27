@@ -148,7 +148,7 @@ void init_internals(JNIEnv *env) {
 	SET_VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_VECTOR_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
 	RAW_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "RAW", "(Ljava/lang/Object;)[B", 1);
 	REAL_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "REAL", "(Ljava/lang/Object;)[D", 1);
-	LOGICAL_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "LOGICAL", "(Ljava/lang/Object;)[I", 1);
+	LOGICAL_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "LOGICAL", "(Ljava/lang/Object;)[B", 1);
 	INTEGER_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "INTEGER", "(Ljava/lang/Object;)[I", 1);
 	STRING_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "STRING_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
 	VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "VECTOR_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
@@ -627,7 +627,7 @@ SEXP R_FindNamespace(SEXP info) {
 }
 
 SEXP Rf_lengthgets(SEXP x, R_len_t y) {
-	TRACE("%s(%p)", x);
+	TRACE("%s(%p)\n", x);
 	JNIEnv *thisenv = getEnv();
 	invalidateCopiedObject(thisenv, x);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_lengthgetsMethodID, x, y);
@@ -648,6 +648,11 @@ SEXP GetOption1(SEXP tag)
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_GetOption1MethodID, tag);
 	return checkRef(thisenv, result);
+}
+
+SEXP GetOption(SEXP tag, SEXP rho)
+{
+    return GetOption1(tag);
 }
 
 int GetOptionCutoff(void)
@@ -1024,10 +1029,16 @@ int *LOGICAL(SEXP x){
 	JNIEnv *thisenv = getEnv();
 	jint *data = (jint *) findCopiedObject(thisenv, x);
 	if (data == NULL) {
-	    jintArray intArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, LOGICAL_MethodID, x);
-	    int len = (*thisenv)->GetArrayLength(thisenv, intArray);
-	    data = (*thisenv)->GetIntArrayElements(thisenv, intArray, NULL);
-	    addCopiedObject(thisenv, x, LGLSXP, intArray, data);
+	    jbyteArray byteArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, LOGICAL_MethodID, x);
+	    int len = (*thisenv)->GetArrayLength(thisenv, byteArray);
+	    jbyte* internalData = (*thisenv)->GetByteArrayElements(thisenv, byteArray, NULL);
+	    data = malloc(len * sizeof(int));
+	    for (int i = 0; i < len; i++) {
+	    	char value = internalData[i];
+	    	data[i] = value == 0 ? FALSE : value == 1 ? TRUE : NA_INTEGER;
+	    }
+	    (*thisenv)->ReleaseByteArrayElements(thisenv, byteArray, internalData, JNI_ABORT);
+	    addCopiedObject(thisenv, x, LGLSXP, byteArray, data);
 	}
 	return data;
 }
@@ -1094,14 +1105,14 @@ SEXP VECTOR_ELT(SEXP x, R_xlen_t i){
 }
 
 void SET_STRING_ELT(SEXP x, R_xlen_t i, SEXP v){
-	TRACE("%s(%p, %d, %p)", x, i, v);
+	TRACE("%s(%p, %d, %p)\n", x, i, v);
 	JNIEnv *thisenv = getEnv();
 	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_STRING_ELT_MethodID, x, i, v);
 }
 
 
 SEXP SET_VECTOR_ELT(SEXP x, R_xlen_t i, SEXP v){
-	TRACE("%s(%p, %d, %p)", x, i, v);
+	TRACE("%s(%p, %d, %p)\n", x, i, v);
 	JNIEnv *thisenv = getEnv();
 	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_VECTOR_ELT_MethodID, x, i, v);
 	return v;
@@ -1246,8 +1257,13 @@ const char *R_CHAR(SEXP charsxp) {
 	char *copyChars = malloc(len + 1);
 	memcpy(copyChars, stringChars, len);
 	copyChars[len] = 0;
-	TRACE("%s(%s)", copyChars);
+	TRACE(" %s(%s)\n", copyChars);
 	return copyChars;
+}
+
+void *(R_DATAPTR)(SEXP x) {
+    unimplemented("R_DATAPTR");
+	return NULL;
 }
 
 void R_qsort_I  (double *v, int *II, int i, int j) {

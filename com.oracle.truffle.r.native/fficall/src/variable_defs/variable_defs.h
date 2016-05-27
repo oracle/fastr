@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -94,3 +94,8 @@ Rboolean latin1locale = FALSE;
 int R_dec_min_exponent = -308;
 int max_contour_segments = 25000;
 
+// from sys-std.c
+#include <R_ext/eventloop.h>
+
+static InputHandler BasicInputHandler = {2, -1, NULL};
+InputHandler *R_InputHandlers = &BasicInputHandler;

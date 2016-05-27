@@ -14,6 +14,10 @@ rffi.populateIntVector <- function(n) {
 	.Call("populateIntVector", as.integer(n), PACKAGE = "testrffi")
 }
 
+rffi.populateLogicalVector <- function(n) {
+	.Call("populateLogicalVector", as.integer(n), PACKAGE = "testrffi")
+}
+
 rffi.createExternalPtr <- function(addr, tag, prot) {
 	.Call("createExternalPtr", as.integer(addr), tag, prot, PACKAGE = "testrffi")
 }

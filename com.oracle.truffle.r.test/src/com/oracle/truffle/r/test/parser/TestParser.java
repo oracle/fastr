@@ -24,12 +24,12 @@ package com.oracle.truffle.r.test.parser;
 
 import java.io.File;
 
-import org.antlr.runtime.RecognitionException;
 import org.junit.Test;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.RASTBuilder;
-import com.oracle.truffle.r.parser.RParser;
+import com.oracle.truffle.r.runtime.RParserFactory;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.test.TestBase;
 
 public class TestParser extends TestBase {
@@ -100,9 +100,10 @@ public class TestParser extends TestBase {
             String name = file.getName();
             if (name.endsWith(".r") || name.endsWith(".R")) {
                 Source source = null;
+                RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
                 try {
                     source = Source.fromURL(file.toURL(), file.getName());
-                    new RParser<>(source, new RASTBuilder()).script();
+                    parser.script(source, new RASTBuilder());
                 } catch (Throwable e) {
                     errorCount++;
                     Throwable t = e;
@@ -110,10 +111,9 @@ public class TestParser extends TestBase {
                         t = t.getCause();
                     }
                     System.out.println("Error while parsing " + file.getAbsolutePath());
-                    if (t instanceof RecognitionException) {
-                        RecognitionException rec = (RecognitionException) t;
-                        System.out.println(source.getCode(rec.line));
-                        System.out.printf("%" + rec.charPositionInLine + "s^%n", "");
+                    if (parser.isRecognitionException(t)) {
+                        System.out.println(source.getCode(parser.line(t)));
+                        System.out.printf("%" + parser.charPositionInLine(t) + "s^%n", "");
                     }
                     System.out.println(t);
                     if (!t.getStackTrace()[0].getMethodName().equals("unimplemented")) {

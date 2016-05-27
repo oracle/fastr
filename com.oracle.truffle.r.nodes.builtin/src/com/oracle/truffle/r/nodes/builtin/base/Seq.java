@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -173,6 +174,12 @@ public abstract class Seq extends RBuiltinNode {
             data[length - 1] = to;
             return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
         }
+    }
+
+    @Specialization
+    protected RIntSequence seqFromOneArg(RAbstractListVector start, RMissing to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
+        // GNU R really does that (take the length of start to create a sequence)
+        return RDataFactory.createIntSequence(1, 1, start.getLength());
     }
 
     // int vector start, missing to
