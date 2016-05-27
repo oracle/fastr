@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.function.Supplier;
 
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
@@ -57,7 +58,7 @@ public interface FastPathFactory {
 
         @Override
         public boolean forcedEagerPromise(int index) {
-            return true;
+            return FastROptions.noEagerEval() ? false : true;
         }
     };
 

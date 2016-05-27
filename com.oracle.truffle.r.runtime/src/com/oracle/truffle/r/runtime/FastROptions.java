@@ -222,4 +222,9 @@ public enum FastROptions {
         }
         FastROptions.Debug.value = s;
     }
+
+    public static boolean noEagerEval() {
+        return !(EagerEval.getBooleanValue() || EagerEvalConstants.getBooleanValue() || EagerEvalVariables.getBooleanValue() || EagerEvalDefault.getBooleanValue() ||
+                        EagerEvalExpressions.getBooleanValue());
+    }
 }

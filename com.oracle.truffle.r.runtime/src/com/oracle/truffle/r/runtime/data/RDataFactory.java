@@ -33,7 +33,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -388,10 +390,16 @@ public final class RDataFactory {
 
     public static RPromise createEagerPromise(PromiseState state, Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback,
                     int wrapIndex) {
+        if (FastROptions.noEagerEval()) {
+            throw RInternalError.shouldNotReachHere();
+        }
         return traceDataCreated(new RPromise.EagerPromise(state, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex));
     }
 
     public static RPromise createPromisedPromise(Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback) {
+        if (FastROptions.noEagerEval()) {
+            throw RInternalError.shouldNotReachHere();
+        }
         return traceDataCreated(new RPromise.PromisedPromise(exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback));
     }
 
