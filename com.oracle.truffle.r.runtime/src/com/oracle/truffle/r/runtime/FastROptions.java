@@ -60,7 +60,8 @@ public enum FastROptions {
     EagerEvalConstants("Unconditionally evaluates constants before creating Promises", true),
     EagerEvalVariables("Enables optimistic eager evaluation of single variables reads", true),
     EagerEvalDefault("Enables optimistic eager evaluation of single variables reads (for default parameters)", false),
-    EagerEvalExpressions("Enables optimistic eager evaluation of trivial expressions", false);
+    EagerEvalExpressions("Enables optimistic eager evaluation of trivial expressions", false),
+    PromiseCache("Enables inline caches for promises evaluation", true);
 
     private final String help;
     private final boolean isBoolean;

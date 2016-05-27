@@ -38,6 +38,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -180,7 +181,7 @@ public class PromiseHelperNode extends RBaseNode {
                 promise.setState(PromiseState.UnderEvaluation);
                 if (expressionInlineCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    expressionInlineCache = insert(InlineCacheNode.createExpression(3));
+                    expressionInlineCache = insert(InlineCacheNode.createExpression(FastROptions.PromiseCache.getBooleanValue() ? 3 : 0));
                 }
                 return expressionInlineCache.execute(frame, promise.getRep());
             } else {
@@ -190,7 +191,7 @@ public class PromiseHelperNode extends RBaseNode {
 
                 if (promiseClosureCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseClosureCache = insert(InlineCacheNode.createPromise(3));
+                    promiseClosureCache = insert(InlineCacheNode.createPromise(FastROptions.PromiseCache.getBooleanValue() ? 3 : 0));
                 }
                 promiseFrame = wrapPromiseFrame(frame, promiseFrame);
                 return promiseClosureCache.execute(promiseFrame, promise.getClosure());
