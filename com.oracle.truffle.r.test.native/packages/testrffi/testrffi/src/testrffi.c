@@ -63,6 +63,18 @@ SEXP populateIntVector(SEXP n) {
     return v;
 }
 
+SEXP populateLogicalVector(SEXP n) {
+    SEXP v;
+    int intN = INTEGER_VALUE(n);
+    PROTECT(v = allocVector(LGLSXP, intN));
+    int i;
+    for (i = 0; i < intN; i++) {
+    	LOGICAL(v)[i] = i == 0 ? TRUE : i == 1 ? NA_INTEGER : FALSE;
+    }
+    UNPROTECT(1);
+    return v;
+}
+
 SEXP createExternalPtr(SEXP addr, SEXP tag, SEXP prot) {
 	return R_MakeExternalPtr((void *) (long) INTEGER_VALUE(addr), tag, prot);
 }

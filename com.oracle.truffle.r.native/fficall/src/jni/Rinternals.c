@@ -148,7 +148,7 @@ void init_internals(JNIEnv *env) {
 	SET_VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_VECTOR_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
 	RAW_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "RAW", "(Ljava/lang/Object;)[B", 1);
 	REAL_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "REAL", "(Ljava/lang/Object;)[D", 1);
-	LOGICAL_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "LOGICAL", "(Ljava/lang/Object;)[I", 1);
+	LOGICAL_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "LOGICAL", "(Ljava/lang/Object;)[B", 1);
 	INTEGER_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "INTEGER", "(Ljava/lang/Object;)[I", 1);
 	STRING_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "STRING_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
 	VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "VECTOR_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
@@ -1029,10 +1029,16 @@ int *LOGICAL(SEXP x){
 	JNIEnv *thisenv = getEnv();
 	jint *data = (jint *) findCopiedObject(thisenv, x);
 	if (data == NULL) {
-	    jintArray intArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, LOGICAL_MethodID, x);
-	    int len = (*thisenv)->GetArrayLength(thisenv, intArray);
-	    data = (*thisenv)->GetIntArrayElements(thisenv, intArray, NULL);
-	    addCopiedObject(thisenv, x, LGLSXP, intArray, data);
+	    jbyteArray byteArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, LOGICAL_MethodID, x);
+	    int len = (*thisenv)->GetArrayLength(thisenv, byteArray);
+	    jbyte* internalData = (*thisenv)->GetByteArrayElements(thisenv, byteArray, NULL);
+	    data = malloc(len * sizeof(int));
+	    for (int i = 0; i < len; i++) {
+	    	char value = internalData[i];
+	    	data[i] = value == 0 ? FALSE : value == 1 ? TRUE : NA_INTEGER;
+	    }
+	    (*thisenv)->ReleaseByteArrayElements(thisenv, byteArray, internalData, JNI_ABORT);
+	    addCopiedObject(thisenv, x, LGLSXP, byteArray, data);
 	}
 	return data;
 }
