@@ -249,7 +249,7 @@ public class RPromise implements RTypedValue {
      * originally read from has not been altered in the mean time. If this cannot be guaranteed for
      * any reason, a Promise gets {@link #deoptimize()} (which includes {@link #materialize()}ion).
      */
-    public static final class EagerPromise extends RPromise {
+    public static class EagerPromise extends RPromise {
         private final Object eagerValue;
 
         private final Assumption notChangedNonLocally;
@@ -321,6 +321,17 @@ public class RPromise implements RTypedValue {
     }
 
     /**
+     * It's a variant of an {@link EagerPromise} used to store another promise, distinguished mostly
+     * for accounting purposes.
+     */
+    public static final class PromisedPromise extends EagerPromise {
+
+        PromisedPromise(Closure closure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback) {
+            super(PromiseState.Promised, closure, eagerValue, notChangedNonLocally, targetFrame, feedback, -1);
+        }
+    }
+
+    /**
      * Used to allow feedback on {@link EagerPromise} evaluation.
      */
     public interface EagerFeedback {
@@ -377,7 +388,7 @@ public class RPromise implements RTypedValue {
 
         public RPromise createPromisedPromise(RPromise promisedPromise, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback) {
             assert state == PromiseState.Supplied;
-            return RDataFactory.createEagerPromise(PromiseState.Promised, exprClosure, promisedPromise, notChangedNonLocally, targetFrame, feedback, -1);
+            return RDataFactory.createPromisedPromise(exprClosure, promisedPromise, notChangedNonLocally, targetFrame, feedback);
         }
 
         public Object getExpr() {

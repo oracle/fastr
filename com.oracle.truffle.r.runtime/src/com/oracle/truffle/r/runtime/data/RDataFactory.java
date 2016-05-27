@@ -391,6 +391,10 @@ public final class RDataFactory {
         return traceDataCreated(new RPromise.EagerPromise(state, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex));
     }
 
+    public static RPromise createPromisedPromise(Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback) {
+        return traceDataCreated(new RPromise.PromisedPromise(exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback));
+    }
+
     public static RPairList createPairList() {
         return traceDataCreated(new RPairList());
     }
