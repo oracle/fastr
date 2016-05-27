@@ -47,23 +47,43 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
- * The {@code eval} {@code .Internal} and the {@code withVisible} {@code .Primitive}.
+ * Contains the {@code eval} {@code .Internal} implementation.
  */
 public class EvalFunctions {
 
+    /**
+     * Eval takes two arguments that specify the environment where the expression should be
+     * evaluated: 'envir', 'enclos'. These arguments are pre-processed by the means of default
+     * values in the R stub function, but there is still several combinations of their possible
+     * values that may make it into the internal code. This node handles these. See the
+     * documentation of eval for more details.
+     */
     public abstract static class EvalEnvCast extends RBaseNode {
 
-        public abstract REnvironment execute(Object env, REnvironment enclos);
+        public abstract REnvironment execute(Object env, Object enclos);
 
         private final RAttributeProfiles attributeProfiles = RAttributeProfiles.create();
 
         @Specialization
+        @SuppressWarnings("UnusedParameters")
+        protected REnvironment cast(RNull env, RNull enclos) {
+            return REnvironment.baseEnv();
+        }
+
+        @Specialization
+        protected REnvironment cast(REnvironment env, @SuppressWarnings("unused") RNull enclos) {
+            return env;
+        }
+
+        @Specialization
         protected REnvironment cast(REnvironment env, @SuppressWarnings("unused") REnvironment enclos) {
+            // from the doc: enclos is only relevant when envir is list or pairlist
             return env;
         }
 
         @Specialization
         protected REnvironment cast(@SuppressWarnings("unused") RNull env, REnvironment enclos) {
+            // seems not to be documented, but GnuR works this way
             return enclos;
         }
 
@@ -77,9 +97,21 @@ public class EvalFunctions {
             return REnvironment.createFromList(attributeProfiles, list.toRList(), enclos);
         }
 
+        @Specialization
+        protected REnvironment cast(RList list, RNull enclos) {
+            // This can happen when envir is a list and enclos is explicitly set to NULL
+            return REnvironment.createFromList(attributeProfiles, list, REnvironment.baseEnv());
+        }
+
+        @Specialization
+        protected REnvironment cast(RPairList list, RNull enclos) {
+            // This can happen when envir is a pairlist and enclos is explicitly set to NULL
+            return REnvironment.createFromList(attributeProfiles, list.toRList(), REnvironment.baseEnv());
+        }
+
         @Fallback
         @TruffleBoundary
-        protected REnvironment doEval(@SuppressWarnings("unused") Object env, @SuppressWarnings("unused") REnvironment enclos) {
+        protected REnvironment doEval(@SuppressWarnings("unused") Object env, @SuppressWarnings("unused") Object enclos) {
             throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
@@ -102,20 +134,14 @@ public class EvalFunctions {
         }
 
         @Specialization
-        protected Object doEval(VirtualFrame frame, Object expr, Object envir, REnvironment enclos, //
+        protected Object doEval(VirtualFrame frame, Object expr, Object envir, Object enclos, //
                         @Cached("createCast()") EvalEnvCast envCast) {
+            // Note: fallback for invalid combinations of envir and enclos is in EvalEnvCastNode
             return doEvalBody(RCaller.create(frame, getOriginalCall()), expr, envCast.execute(envir, enclos));
         }
 
         protected EvalEnvCast createCast() {
             return EvalEnvCastNodeGen.create();
-        }
-
-        @SuppressWarnings("unused")
-        @Fallback
-        @TruffleBoundary
-        protected Object doEval(Object expr, Object envir, Object enclos) {
-            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
 }

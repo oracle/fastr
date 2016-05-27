@@ -43,4 +43,12 @@ public class TestBuiltin_parse extends TestBase {
         assertEval("{ typeof(parse(text = \"foo\", keep.source = FALSE, srcfile = NULL)[[1]]) }");
         assertEval("{ parse(text=\"NULL\") }");
     }
+
+    @Test
+    public void testParseIdentifier() {
+        assertEval("parse(text='is.null')");
+        assertEval(Ignored.ImplementationError, "attributes(parse(text='is.null'))");
+        assertEval("parse(text='somethingthatdoesnotexist')");
+        assertEval(Ignored.ImplementationError, "attributes(parse(text='somethingthatdoesnotexist'))");
+    }
 }

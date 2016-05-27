@@ -170,7 +170,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
         /*
          * Unfortunately special behavior for some RTypes are necessary. We should aim for getting
-         * rid of them as much as possible in the future.
+         * rid of them as much as possible in the future. N.B.: because of this 'unwrapping' any
+         * return should call wrapResult(vector, repType) to do the reverse where necessary.
          */
         RAbstractVector vector;
         RLanguage.RepType repType = RLanguage.RepType.UNKNOWN;
@@ -235,7 +236,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (maxOutOfBounds > vectorLength) {
             resizeProfile.enter();
             if (isDeleteElements() && mode.isSubscript()) {
-                return vector;
+                return wrapResult(vector, repType);
             }
             vector = resizeVector(vector, maxOutOfBounds);
             vectorLength = maxOutOfBounds;
@@ -291,6 +292,10 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             updateVectorWithPositionNames(vector, positions);
         }
 
+        return wrapResult(vector, repType);
+    }
+
+    private Object wrapResult(RAbstractVector vector, RLanguage.RepType repType) {
         switch (vectorType) {
             case Language:
                 return RContext.getRRuntimeASTAccess().fromList((RList) vector, repType);
