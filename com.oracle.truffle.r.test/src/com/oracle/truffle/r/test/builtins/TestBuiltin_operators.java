@@ -1674,7 +1674,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators332() {
-        assertEval(Ignored.Unknown,
+        assertEval(Output.ContainsWarning,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`%/%`(argv[[1]]);");
     }
 
@@ -1946,6 +1946,9 @@ public class TestBuiltin_operators extends TestBase {
         assertEval("{ `|`(TRUE, FALSE) }");
         assertEval("{ `&`(TRUE, FALSE) }");
         assertEval("{ `%*%`(3,5) }");
+
+        assertEval("as.symbol('asdf') == as.symbol('fdsa')");
+        assertEval("as.symbol('asdf') + as.symbol('fdsa')");
     }
 
     @Test
