@@ -257,7 +257,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * Denote whether the result of an expression should be printed in the shell or not. This value
      * will be modified by many operations like builtins, block statements, etc.
      */
-    private boolean resultVisible = true;
+    private boolean resultVisible = false;
 
     /**
      * A context-specific value that is checked in {@code HiddenInternalFunctions} to avoid an error
