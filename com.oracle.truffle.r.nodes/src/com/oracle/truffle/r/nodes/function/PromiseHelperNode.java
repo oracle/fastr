@@ -174,16 +174,17 @@ public class PromiseHelperNode extends RBaseNode {
             throw RError.error(RError.SHOW_CALLER, RError.Message.PROMISE_CYCLE);
         }
         try {
-            // Evaluate guarded by underEvaluation
-            promise.setState(PromiseState.UnderEvaluation);
-
             if (isInOriginFrame(frame, promise)) {
+                // state change must happen inside of conditional as isInOriginalFrame checks the
+                // state
+                promise.setState(PromiseState.UnderEvaluation);
                 if (expressionInlineCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     expressionInlineCache = insert(InlineCacheNode.createExpression(3));
                 }
                 return expressionInlineCache.execute(frame, promise.getRep());
             } else {
+                promise.setState(PromiseState.UnderEvaluation);
                 Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
                 assert promiseFrame != null;
 
