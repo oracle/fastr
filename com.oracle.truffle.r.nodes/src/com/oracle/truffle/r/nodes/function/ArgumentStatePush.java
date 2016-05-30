@@ -50,7 +50,7 @@ public abstract class ArgumentStatePush extends RNode {
 
     private final int index;
     @CompilationFinal private int mask = 0;
-    @Child WriteLocalFrameVariableNode writeArgNode;
+    @Child private WriteLocalFrameVariableNode writeArgNode;
 
     public static final int MAX_COUNTED_ARGS = 8;
     public static final int INVALID_INDEX = -1;

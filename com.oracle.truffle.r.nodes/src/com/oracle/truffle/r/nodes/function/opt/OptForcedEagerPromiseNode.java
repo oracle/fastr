@@ -47,6 +47,7 @@ public final class OptForcedEagerPromiseNode extends PromiseNode {
     @Child private PromiseHelperNode promiseHelper;
 
     private final BranchProfile nonPromiseProfile = BranchProfile.create();
+    private final BranchProfile promiseCallerProfile = BranchProfile.create();
     private final RPromiseFactory factory;
     private final int wrapIndex;
 
@@ -83,6 +84,7 @@ public final class OptForcedEagerPromiseNode extends PromiseNode {
         }
         RCaller call = RArguments.getCall(frame);
         while (call.isPromise()) {
+            promiseCallerProfile.enter();
             call = call.getParent();
         }
         return factory.createEagerSuppliedPromise(value, alwaysValidAssumption, call, null, wrapIndex);
