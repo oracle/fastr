@@ -417,7 +417,7 @@ def junit(args):
     if os.environ.has_key('R_PROFILE_USER'):
         mx.abort('unset R_PROFILE_USER before running unit tests')
 
-    return mx.junit(args, _junit_r_harness, parser=parser)
+    return mx.junit(args, _junit_r_harness, parser=parser, jdk=args.jdk)
 
 def junit_simple(args):
     return mx.command_function('junit')(['--tests', _simple_unit_tests()] + args)
