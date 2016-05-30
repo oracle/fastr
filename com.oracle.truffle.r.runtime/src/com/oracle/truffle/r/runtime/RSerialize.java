@@ -557,7 +557,8 @@ public class RSerialize {
                             if (FastROptions.debugMatches("printUclosure")) {
                                 Debug.printClosure(rpl);
                             }
-                            String deparse = RDeparse.deparseDeserialize(rpl);
+                            Map<String, Object> constants = new HashMap<>();
+                            String deparse = RDeparse.deparseDeserialize(constants, rpl);
                             try {
                                 /*
                                  * The tag of result is the enclosing environment (from
@@ -566,7 +567,7 @@ public class RSerialize {
                                  * the enclosing frame up on return.
                                  */
                                 MaterializedFrame enclosingFrame = ((REnvironment) rpl.getTag()).getFrame();
-                                RFunction func = parseFunction(deparse, enclosingFrame, currentFunctionName);
+                                RFunction func = parseFunction(constants, deparse, enclosingFrame, currentFunctionName);
 
                                 copyAttributes(func, rpl.getAttributes());
                                 result = func;
@@ -586,8 +587,9 @@ public class RSerialize {
                              */
                             if (closureDepth == 0 && langDepth == 0) {
                                 RPairList pl = (RPairList) result;
-                                String deparse = RDeparse.deparseDeserialize(pl);
-                                RExpression expr = parse(deparse);
+                                Map<String, Object> constants = new HashMap<>();
+                                String deparse = RDeparse.deparseDeserialize(constants, pl);
+                                RExpression expr = parse(constants, deparse);
                                 assert expr.getLength() == 1;
                                 result = expr.getDataAt(0);
                                 RAttributes attrs = pl.getAttributes();
@@ -604,8 +606,9 @@ public class RSerialize {
                              * tag: environment for eval (or RNull if evaluated), car: value:
                              * RUnboundValue if not evaluated, cdr: expression
                              */
-                            String deparse = RDeparse.deparseDeserialize(pl.cdr());
-                            RExpression expr = parse(deparse);
+                            Map<String, Object> constants = new HashMap<>();
+                            String deparse = RDeparse.deparseDeserialize(constants, pl.cdr());
+                            RExpression expr = parse(constants, deparse);
                             assert expr.getLength() == 1;
                             RBaseNode rep;
                             if (expr.getDataAt(0) instanceof RLanguage) {
@@ -855,10 +858,10 @@ public class RSerialize {
             }
         }
 
-        private RExpression parse(String deparseRaw) throws IOException {
+        private RExpression parse(Map<String, Object> constants, String deparseRaw) throws IOException {
             try {
                 Source source = Source.fromText(deparseRaw, UNKNOWN_PACKAGE_SOURCE_PREFIX + packageName + " deparse>");
-                return RContext.getEngine().parse(source);
+                return RContext.getEngine().parse(constants, source);
             } catch (Throwable ex) {
                 /*
                  * Denotes a deparse/eval error, which is an unrecoverable bug, except in the
@@ -873,7 +876,7 @@ public class RSerialize {
             }
         }
 
-        private RFunction parseFunction(String deparseRaw, MaterializedFrame enclosingFrame, String currentFunctionName) throws IOException {
+        private RFunction parseFunction(Map<String, Object> constants, String deparseRaw, MaterializedFrame enclosingFrame, String currentFunctionName) throws IOException {
             try {
                 String sourcePath = null;
                 String deparse = deparseRaw;
@@ -897,7 +900,7 @@ public class RSerialize {
                     // Located a function source file from which we can retrieve the function name
                     name = RPackageSource.decodeName(sourcePath);
                 }
-                return RContext.getEngine().parseFunction(name, source, enclosingFrame);
+                return RContext.getEngine().parseFunction(constants, name, source, enclosingFrame);
             } catch (Throwable ex) {
                 /*
                  * Denotes a deparse/eval error, which is an unrecoverable bug, except in the
@@ -908,7 +911,7 @@ public class RSerialize {
                     throw new RInternalError(ex, "internal deparse error - see file DEPARSE_ERROR");
                 } else {
                     try {
-                        return RContext.getEngine().parseFunction("", FAILED_DEPARSE_FUNCTION_SOURCE, enclosingFrame);
+                        return RContext.getEngine().parseFunction(constants, "", FAILED_DEPARSE_FUNCTION_SOURCE, enclosingFrame);
                     } catch (ParseException e) {
                         throw RInternalError.shouldNotReachHere();
                     }

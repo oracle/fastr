@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -225,7 +226,7 @@ public class RDeparse {
     public static void ensureSourceSection(RSyntaxElement node) {
         SourceSection ss = node.getSourceSection();
         if (ss == RSyntaxNode.EAGER_DEPARSE) {
-            new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(node).fixupSources();
+            new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0, null).append(node).fixupSources();
         }
     }
 
@@ -281,11 +282,14 @@ public class RDeparse {
         private int indent = 0;
         private int lastLineStart = 0;
 
-        DeparseVisitor(boolean storeSource, int cutoff, boolean backtick, int opts, int nlines) {
+        private final Map<String, Object> constants;
+
+        DeparseVisitor(boolean storeSource, int cutoff, boolean backtick, int opts, int nlines, Map<String, Object> constants) {
             this.cutoff = cutoff;
             this.backtick = backtick;
             this.opts = opts;
             this.nlines = nlines;
+            this.constants = constants;
             this.sources = storeSource ? new ArrayList<>() : null;
         }
 
@@ -531,9 +535,12 @@ public class RDeparse {
                                 }
                                 return null;
                             case SUBSET:
-                                appendWithParens(args[0], info, true);
-                                append(func.op, lhs).appendArgs(call.getSyntaxSignature(), args, 1, false).append(func.closeOp);
-                                return null;
+                                if (args.length > 0) {
+                                    appendWithParens(args[0], info, true);
+                                    append(func.op, lhs).appendArgs(call.getSyntaxSignature(), args, 1, false).append(func.closeOp);
+                                    return null;
+                                }
+                                break;
                         }
                     }
                     if ("::".equals(symbol) || ":::".equals(symbol)) {
@@ -569,6 +576,13 @@ public class RDeparse {
             protected Void visit(RSyntaxConstant constant) {
                 // coerce scalar values to vectors and unwrap data frames and factors:
                 Object value = RRuntime.asAbstractVector(constant.getValue());
+
+                if (constants != null && !(value instanceof RAbstractVector)) {
+                    String name = "C.." + constants.size();
+                    constants.put(name, value);
+                    append(name);
+                    return null;
+                }
 
                 if (value instanceof RExpression) {
                     append("expression(").appendListContents(((RExpression) value).getList()).append(')');
@@ -789,6 +803,8 @@ public class RDeparse {
         }
 
         private static RSyntaxElement wrapFunctionExpression(RPairList fun) {
+            // assert fun.getTag() == RNull.instance : "function expression with non-null
+            // environment";
             Arguments<RSyntaxElement> args = wrapArguments(fun.car());
             RSyntaxElement body;
             Object cdr = fun.cdr();
@@ -1027,7 +1043,7 @@ public class RDeparse {
      * string.
      */
     @TruffleBoundary
-    public static String deparseDeserialize(Object obj) {
+    public static String deparseDeserialize(Map<String, Object> constants, Object obj) {
         Object root = obj;
         if (root instanceof RPairList) {
             RPairList pl = (RPairList) root;
@@ -1036,22 +1052,22 @@ public class RDeparse {
                 root = list.getDataAtAsObject(0);
             }
         }
-        return new DeparseVisitor(false, 80, true, 0, -1).process(root).getContents();
+        return new DeparseVisitor(false, 80, true, 0, -1, constants).process(root).getContents();
     }
 
     @TruffleBoundary
     public static String deparseSyntaxElement(RSyntaxElement element) {
-        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, 0, -1).append(element).getContents();
+        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, 0, -1, null).append(element).getContents();
     }
 
     @TruffleBoundary
     public static String deparse(Object expr) {
-        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, 0, -1).process(expr).getContents();
+        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, 0, -1, null).process(expr).getContents();
     }
 
     @TruffleBoundary
     public static String deparse(Object expr, int cutoff, boolean backtick, int opts, int nlines) {
-        return new DeparseVisitor(false, cutoff, backtick, opts, nlines).process(expr).getContents();
+        return new DeparseVisitor(false, cutoff, backtick, opts, nlines, null).process(expr).getContents();
     }
 
     // TODO: this should use the DoubleVectorPrinter

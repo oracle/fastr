@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
@@ -76,6 +77,16 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  *
  */
 public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
+
+    private final Map<String, Object> constants;
+
+    public RASTBuilder() {
+        this.constants = null;
+    }
+
+    public RASTBuilder(Map<String, Object> constants) {
+        this.constants = constants;
+    }
 
     @Override
     public RSyntaxNode process(RSyntaxElement original) {
@@ -452,6 +463,12 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     @Override
     public RSyntaxNode lookup(SourceSection sourceIn, String symbol, boolean functionLookup) {
+        if (constants != null && symbol.startsWith("C")) {
+            Object object = constants.get(symbol);
+            if (object != null) {
+                return ConstantNode.create(sourceIn, object);
+            }
+        }
         /*
          * TODO Ideally, sourceIn != null always, however ReplacementNodes can cause this on the
          * rewrite nodes.

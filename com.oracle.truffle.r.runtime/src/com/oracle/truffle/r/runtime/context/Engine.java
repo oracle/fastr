@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.context;
 
 import java.io.IOException;
+import java.util.Map;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.RootCallTarget;
@@ -117,9 +118,11 @@ public interface Engine {
 
     /**
      * Parse an R expression and return an {@link RExpression} object representing the Truffle ASTs
-     * for the components.
+     * for the components. The {Code constants} map can be used to replace some names in the source
+     * code with specific constants, which can be used to parse code that has no proper textual
+     * representation.
      */
-    RExpression parse(Source source) throws ParseException;
+    RExpression parse(Map<String, Object> constants, Source source) throws ParseException;
 
     /**
      * This is the external interface from {@link PolyglotEngine#eval(Source)}. It is required to
@@ -196,5 +199,9 @@ public interface Engine {
 
     String toString(Object value);
 
-    RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws ParseException;
+    /**
+     * This function a special fast path to create functions from code directly, without executing
+     * the intermediate "function" expression.
+     */
+    RFunction parseFunction(Map<String, Object> constants, String name, Source source, MaterializedFrame enclosingFrame) throws ParseException;
 }

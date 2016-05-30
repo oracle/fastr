@@ -153,7 +153,7 @@ public abstract class Parse extends RBuiltinNode {
         }
         try {
             Source source = srcFile != RNull.instance ? createSource(srcFile, coalescedLines) : createSource(conn, coalescedLines);
-            RExpression exprs = RContext.getEngine().parse(source);
+            RExpression exprs = RContext.getEngine().parse(null, source);
             if (n > 0 && n > exprs.getLength()) {
                 RList list = exprs.getList();
                 Object[] listData = list.getDataCopy();
