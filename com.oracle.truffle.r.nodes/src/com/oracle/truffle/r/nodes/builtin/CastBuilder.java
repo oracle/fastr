@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Arrays;
@@ -30,10 +31,13 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
 import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastFunctions.MapNode;
 import com.oracle.truffle.r.nodes.unary.CastFunctionsFactory;
@@ -41,11 +45,16 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNode;
+import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalScalarNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastNode.Samples;
 import com.oracle.truffle.r.nodes.unary.CastNode.TypeExpr;
+import com.oracle.truffle.r.nodes.unary.CastStringBaseNode;
+import com.oracle.truffle.r.nodes.unary.CastStringBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
@@ -217,6 +226,11 @@ public final class CastBuilder {
         return this;
     }
 
+    public CastBuilder output(OutputStream o) {
+        out = new PrintWriter(o);
+        return this;
+    }
+
     public static Object[] substituteArgPlaceholder(Object arg, Object[] messageArgs) {
         int argPlaceholderIndex = -1;
         for (int i = 0; i < messageArgs.length; i++) {
@@ -270,8 +284,24 @@ public final class CastBuilder {
             return CastDoubleBaseNodeGen.create(false, false, false);
         }
 
+        public static CastDoubleNode asDoubleVector() {
+            return CastDoubleNodeGen.create(false, false, false);
+        }
+
+        public static CastStringBaseNode asString() {
+            return CastStringBaseNodeGen.create(false, false, false);
+        }
+
         public static CastStringNode asStringVector() {
             return CastStringNodeGen.create(false, false, false, false);
+        }
+
+        public static CastLogicalBaseNode asLogical() {
+            return CastLogicalBaseNodeGen.create(false, false, false);
+        }
+
+        public static CastLogicalNode asLogicalVector() {
+            return CastLogicalNodeGen.create(false, false, false);
         }
 
         public static MapNode asBoolean() {
@@ -444,7 +474,8 @@ public final class CastBuilder {
         public static final ValuePredicateArgumentMapper<Byte, Boolean> toBoolean = ValuePredicateArgumentMapper.fromLambda(x -> RRuntime.fromLogical(x), x -> RRuntime.asLogical(x), Boolean.class);
 
         public static ValuePredicateArgumentMapper<String, Integer> charAt0(int defaultValue) {
-            return ValuePredicateArgumentMapper.fromLambda(x -> x == null || x.isEmpty() ? defaultValue : (int) x.charAt(0),
+            final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+            return ValuePredicateArgumentMapper.fromLambda(x -> profile.profile(x == null || x.isEmpty()) ? defaultValue : (int) x.charAt(0),
                             x -> x == null ? "" + (char) defaultValue : "" + (char) x.intValue(), Integer.class);
         }
 
@@ -472,8 +503,14 @@ public final class CastBuilder {
 
             return new ArgumentMapper<T, T>() {
 
+                final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
                 public T map(T arg) {
-                    return arg == RNull.instance || arg == null ? defVal : arg;
+                    if (profile.profile(arg == RNull.instance || arg == null)) {
+                        return defVal;
+                    } else {
+                        return arg;
+                    }
                 }
 
                 public TypeExpr resultTypes() {
@@ -493,6 +530,10 @@ public final class CastBuilder {
     interface ArgCastBuilder<T, THIS> {
 
         ArgCastBuilderState state();
+
+        default CastBuilder builder() {
+            return state().castBuilder();
+        }
 
         default THIS defaultError(RError.Message message, Object... args) {
             state().setDefaultError(message, args);
@@ -676,6 +717,12 @@ public final class CastBuilder {
             return state().factory.newInitialPhaseBuilder(this);
         }
 
+        default <S, R> InitialPhaseBuilder<S> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.ConditionalMapNodeGen.create(argFilter, trueBranchNode, null));
+
+            return state().factory.newInitialPhaseBuilder(this);
+        }
+
         default <S, R> InitialPhaseBuilder<T> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper, ArgumentMapper<T, T> falseBranchMapper) {
             state().castBuilder().insert(
                             state().index(),
@@ -812,6 +859,12 @@ public final class CastBuilder {
 
         default <S, R> HeadPhaseBuilder<S> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper) {
             state().castBuilder().insert(state().index(), CastFunctionsFactory.ConditionalMapNodeGen.create(argFilter, CastFunctionsFactory.MapNodeGen.create(trueBranchMapper), null));
+
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
+        default <S, R> HeadPhaseBuilder<S> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode) {
+            state().castBuilder().insert(state().index(), CastFunctionsFactory.ConditionalMapNodeGen.create(argFilter, trueBranchNode, null));
 
             return state().factory.newHeadPhaseBuilder(this);
         }

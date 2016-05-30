@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.util.Set;
-
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 

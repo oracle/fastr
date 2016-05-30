@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -47,6 +48,8 @@ public abstract class ColSums extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
 
+    private final ConditionProfile removeNA = ConditionProfile.createBinaryProfile();
+
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("X").mustBe(numericValue, RError.Message.X_NUMERIC);
@@ -65,10 +68,11 @@ public abstract class ColSums extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector colSums(RDoubleVector x, int rowNum, int colNum, boolean rna) {
+    protected RDoubleVector colSums(RDoubleVector x, int rowNum, int colNum, boolean rnaParam) {
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
+        final boolean rna = removeNA.profile(rnaParam);
         double[] data = x.getDataWithoutCopying();
         int pos = 0;
         nextCol: for (int c = 0; c < colNum; c++) {

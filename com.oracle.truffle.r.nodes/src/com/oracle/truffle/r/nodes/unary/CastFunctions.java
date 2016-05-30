@@ -31,7 +31,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
@@ -49,6 +52,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class CastFunctions {
 
+    @TruffleBoundary
     public static void handleArgumentError(Object arg, CastNode node, RError.Message message, Object[] messageArgs) {
         if (RContext.getRRuntimeASTAccess() == null) {
             throw new IllegalArgumentException(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg, messageArgs)));
@@ -57,6 +61,7 @@ public class CastFunctions {
         }
     }
 
+    @TruffleBoundary
     public static void handleArgumentWarning(Object arg, CastNode node, RError.Message message, Object[] messageArgs, PrintWriter out) {
         if (message == null) {
             return;
@@ -65,7 +70,8 @@ public class CastFunctions {
         if (out != null) {
             out.printf(message.message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
         } else if (RContext.getRRuntimeASTAccess() == null) {
-            System.err.println(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg, messageArgs)));
+            System.err.println(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg,
+                            messageArgs)));
         } else {
             RError.warning(node, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
         }
@@ -82,6 +88,8 @@ public class CastFunctions {
         private final PrintWriter out;
         private final TypeExpr resType;
 
+        private final BranchProfile warningProfile = BranchProfile.create();
+
         @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNodeGen.create();
 
         protected FilterNode(ArgumentFilter<?, ?> filter, boolean isWarning, RError.Message message, Object[] messageArgs, boolean boxPrimitives, PrintWriter out) {
@@ -94,17 +102,31 @@ public class CastFunctions {
             this.resType = filter.allowedTypes();
         }
 
-        @Specialization
-        protected Object evalCondition(Object x) {
-            Object y = boxPrimitives ? boxPrimitiveNode.execute(x) : x;
-            if (!filter.test(y)) {
-                if (isWarning) {
+        private void handleMessage(Object x) {
+            if (isWarning) {
+                if (message != null) {
+                    warningProfile.enter();
                     handleArgumentWarning(x, this, message, messageArgs, out);
-                } else {
-                    handleArgumentError(x, this, message, messageArgs);
                 }
+            } else {
+                handleArgumentError(x, this, message, messageArgs);
             }
+        }
+
+        @Specialization(guards = "evalCondition(x)")
+        protected Object onTrue(Object x) {
             return x;
+        }
+
+        @Fallback
+        protected Object onFalse(Object x) {
+            handleMessage(x);
+            return x;
+        }
+
+        protected boolean evalCondition(Object x) {
+            Object y = boxPrimitives ? boxPrimitiveNode.execute(x) : x;
+            return filter.test(y);
         }
 
         @Override
@@ -231,6 +253,8 @@ public class CastFunctions {
         private final PrintWriter out;
         private final Object defaultValue;
 
+        private final BranchProfile warningProfile = BranchProfile.create();
+
         protected FindFirstNode(Class<?> elementClass, RError.Message message, Object[] messageArgs, PrintWriter out, Object defaultValue) {
             this.elementClass = elementClass;
             this.defaultValue = defaultValue;
@@ -265,7 +289,10 @@ public class CastFunctions {
 
         private Object handleMissingElement(Object x) {
             if (defaultValue != null) {
-                handleArgumentWarning(x, this, message, messageArgs, out);
+                if (message != null) {
+                    warningProfile.enter();
+                    handleArgumentWarning(x, this, message, messageArgs, out);
+                }
                 return defaultValue;
             } else {
                 handleArgumentError(x, this, message, messageArgs);
@@ -337,6 +364,8 @@ public class CastFunctions {
         private final PrintWriter out;
         private final Object naReplacement;
 
+        private final BranchProfile warningProfile = BranchProfile.create();
+
         protected NonNANode(RError.Message message, Object[] messageArgs, PrintWriter out, Object naReplacement) {
             this.message = message;
             this.messageArgs = messageArgs;
@@ -350,7 +379,10 @@ public class CastFunctions {
 
         private Object handleNA(Object arg) {
             if (naReplacement != null) {
-                handleArgumentWarning(arg, this, message, messageArgs, out);
+                if (message != null) {
+                    warningProfile.enter();
+                    handleArgumentWarning(arg, this, message, messageArgs, out);
+                }
                 return naReplacement;
             } else {
                 handleArgumentError(arg, this, message, messageArgs);
@@ -363,9 +395,18 @@ public class CastFunctions {
             return inputType;
         }
 
-        @Specialization
-        protected Object onLogical(byte x) {
-            return RRuntime.isNA(x) ? handleNA(x) : x;
+        @Specialization(guards = "!isLogicalNA(x)")
+        protected Object onLogicalNonNA(byte x) {
+            return x;
+        }
+
+        @Specialization(guards = "isLogicalNA(x)")
+        protected Object onLogicalNA(byte x) {
+            return handleNA(x);
+        }
+
+        protected boolean isLogicalNA(byte x) {
+            return RRuntime.isNA(x);
         }
 
         @Specialization
@@ -373,24 +414,60 @@ public class CastFunctions {
             return x;
         }
 
-        @Specialization
-        protected Object onInteger(int x) {
-            return RRuntime.isNA(x) ? handleNA(x) : x;
+        @Specialization(guards = "!isIntegerNA(x)")
+        protected Object onIntegerNonNA(int x) {
+            return x;
         }
 
-        @Specialization
-        protected Object onDouble(double x) {
-            return RRuntime.isNAorNaN(x) ? handleNA(x) : x;
+        @Specialization(guards = "isIntegerNA(x)")
+        protected Object onIntegerNA(int x) {
+            return handleNA(x);
         }
 
-        @Specialization
+        protected boolean isIntegerNA(int x) {
+            return RRuntime.isNA(x);
+        }
+
+        @Specialization(guards = "!isDoubleNA(x)")
+        protected Object onDoubleNonNA(double x) {
+            return x;
+        }
+
+        @Specialization(guards = "isDoubleNA(x)")
+        protected Object onDoubleNA(double x) {
+            return handleNA(x);
+        }
+
+        protected boolean isDoubleNA(double x) {
+            return RRuntime.isNAorNaN(x);
+        }
+
+        @Specialization(guards = "!isComplexNA(x)")
+        protected Object onComplexNonNA(RComplex x) {
+            return x;
+        }
+
+        @Specialization(guards = "isComplexNA(x)")
         protected Object onComplex(RComplex x) {
-            return RRuntime.isNA(x) ? handleNA(x) : x;
+            return handleNA(x);
         }
 
-        @Specialization
-        protected Object onString(String x) {
-            return RRuntime.isNA(x) ? handleNA(x) : x;
+        protected boolean isComplexNA(RComplex x) {
+            return RRuntime.isNA(x);
+        }
+
+        @Specialization(guards = "!isStringNA(x)")
+        protected Object onStringNonNA(String x) {
+            return x;
+        }
+
+        @Specialization(guards = "isStringNA(x)")
+        protected Object onStringNA(String x) {
+            return handleNA(x);
+        }
+
+        protected boolean isStringNA(String x) {
+            return RRuntime.isNA(x);
         }
 
         @Specialization
