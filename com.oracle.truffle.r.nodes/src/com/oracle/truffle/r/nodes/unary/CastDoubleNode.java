@@ -207,11 +207,6 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return ret;
     }
 
-    @Override
-    protected Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
-        return downStreamSamples;
-    }
-
     public static CastDoubleNode create() {
         return CastDoubleNodeGen.create(true, true, true);
     }

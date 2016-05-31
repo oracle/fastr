@@ -10,25 +10,12 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import java.util.Arrays;
-
 import org.junit.Test;
 
-import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.ColSums;
-import com.oracle.truffle.r.nodes.builtin.base.ColSumsNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastNode.Samples;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
@@ -123,32 +110,4 @@ public class TestBuiltin_colSums extends TestBase {
             return builtinNode.execute(frame);
         }
     }
-
-    @Test
-    public void autoTestColSums() {
-        RBuiltin annotation = ColSums.class.getAnnotation(RBuiltin.class);
-        String[] parameterNames = annotation.parameterNames();
-        parameterNames = Arrays.stream(parameterNames).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
-        ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
-
-        int total = signature.getLength();
-        RNode[] args = new RNode[total];
-        for (int i = 0; i < total; i++) {
-            args[i] = AccessArgumentNode.create(i);
-        }
-        ColSums builtinNode = ColSumsNodeGen.create(args.clone());
-
-        Samples<?> s0 = builtinNode.getCasts()[0].collectSamples();
-        System.out.println("Samples:\n" + s0);
-        Samples<?> s1 = builtinNode.getCasts()[1].collectSamples();
-        System.out.println("Samples:\n" + s1);
-        Samples<?> s2 = builtinNode.getCasts()[2].collectSamples();
-        System.out.println("Samples:\n" + s2);
-        Samples<?> s3 = builtinNode.getCasts()[3].collectSamples();
-        System.out.println("Samples:\n" + s3);
-
-        RootCallTarget builtinNodeCallTarget = Truffle.getRuntime().createCallTarget(new RBuiltinRootNode(builtinNode));
-        builtinNodeCallTarget.call(RArguments.createUnitialized(1.0, 3, 1, 1));
-    }
-
 }

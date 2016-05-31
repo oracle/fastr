@@ -208,7 +208,7 @@ public class TestCasts extends TestBase {
 
             protected Root(String name, boolean mustBeResultCompilationConstant) {
                 super(name, new CastBuilder().arg(0).
-                                mapIf(scalarIntegerValue, constant(10)).
+                                mapIf(scalarIntegerValue(), constant(10)).
                                 builder().getCasts()[0]);
                 this.mustBeResultCompilationConstant = mustBeResultCompilationConstant;
             }
@@ -322,15 +322,17 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).
-                                mustBe(numericValue).
-                                asVector().
-                                mustBe(singleElement()).
-                                findFirst().
-                                mustBe(nullValue().not()).
-                                shouldBe(ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Object.class), Message.NON_POSITIVE_FILL).
-                                mapIf(scalarLogicalValue, asBoolean(), asInteger()).
-                                builder().getCasts()[0]);
+                super(name,
+                                new CastBuilder().output(NullStream.INSTANCE).arg(0).
+                                                mustBe(numericValue()).
+                                                asVector().
+                                                mustBe(singleElement()).
+                                                findFirst().
+                                                mustBe(nullValue().not()).
+                                                shouldBe(ValuePredicateArgumentFilterSampler.omLambdaWithResTypes(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Object.class),
+                                                                Message.NON_POSITIVE_FILL).
+                                                mapIf(scalarLogicalValue(), asBoolean(), asInteger()).
+                                                builder().getCasts()[0]);
             }
 
             @Override
@@ -368,6 +370,91 @@ public class TestCasts extends TestBase {
         }
         testCompilation(new Object[]{RDataFactory.createStringVectorFromScalar("")}, new Root("ComplexPipeline2EmptyString"));
         testCompilation(new Object[]{RDataFactory.createStringVectorFromScalar("a")}, new Root("ComplexPipeline2OneCharString"));
+    }
+
+    @Test
+    public void testFilterOrExpression() {
+        class Root extends TestRootNode<CastNode> {
+
+            protected Root(String name) {
+                super(name, new CastBuilder().arg(0).
+                                mustBe(stringValue().or(integerValue())).
+                                builder().getCasts()[0]);
+            }
+
+            @Override
+            protected Object execute(VirtualFrame frame, Object value) {
+                Object res = node.execute(value);
+                return null;
+            }
+        }
+        testCompilation(new Object[]{1, 2, 3}, new Root("FilterOrExpressionInt"));
+        testCompilation(new Object[]{"aaa", "bbb", "ccc"}, new Root("FilterOrString"));
+    }
+
+    @Test
+    public void testFilterAndExpression() {
+        class Root extends TestRootNode<CastNode> {
+
+            protected Root(String name) {
+                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).
+                                mustBe(scalarIntegerValue()).
+                                shouldBe(gt0().and(lt(10))).
+                                builder().getCasts()[0]);
+            }
+
+            @Override
+            protected Object execute(VirtualFrame frame, Object value) {
+                Object res = node.execute(value);
+                return null;
+            }
+        }
+        testCompilation(new Object[]{-1, 20, -3}, new Root("FilterAndExpressionOutOfRange"));
+    }
+
+    @Test
+    public void testFilterNotAndExpression() {
+        class Root extends TestRootNode<CastNode> {
+
+            protected Root(String name) {
+                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).
+                                mustBe(scalarIntegerValue()).
+                                shouldBe(gt0().and(lt(10)).not()).
+                                builder().getCasts()[0]);
+            }
+
+            @Override
+            protected Object execute(VirtualFrame frame, Object value) {
+                Object res = node.execute(value);
+                return null;
+            }
+        }
+        testCompilation(new Object[]{1, 2, 3}, new Root("FilterNotAndExpressionOutOfRange"));
+    }
+
+    @Test
+    public void testComplexPipeline3() {
+        class Root extends TestRootNode<CastNode> {
+
+            protected Root(String name) {
+                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).
+                                mustBe(numericValue()).
+                                asVector().
+                                mustBe(singleElement()).
+                                findFirst().
+                                mustBe(nullValue().not()).
+                                shouldBe(instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())), Message.NON_POSITIVE_FILL).
+                                mapIf(scalarLogicalValue(), asBoolean(), asInteger()).
+                                builder().getCasts()[0]);
+            }
+
+            @Override
+            protected Object execute(VirtualFrame frame, Object value) {
+                Object res = node.execute(value);
+                return null;
+            }
+        }
+        testCompilation(new Object[]{RDataFactory.createIntVectorFromScalar(1)}, new Root("ComplexPipeline3SingleInt"));
     }
 
     static class NullStream extends OutputStream {

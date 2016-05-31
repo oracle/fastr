@@ -22,40 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentValueFilter;
 
 public class ValuePredicateArgumentFilter<T> extends AbstractPredicateArgumentFilter<T, T> implements ArgumentValueFilter<T> {
 
-    public ValuePredicateArgumentFilter(Predicate<? super T> valuePredicate, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples, Set<Class<?>> allowedTypeSet, boolean isNullable) {
-        super(valuePredicate, positiveSamples, negativeSamples, allowedTypeSet, isNullable);
+    public ValuePredicateArgumentFilter(Predicate<? super T> valuePredicate, boolean isNullable) {
+        super(valuePredicate, isNullable);
     }
 
-    public static <T> ValuePredicateArgumentFilter<T> fromLambda(Predicate<? super T> predicate, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples,
-                    Class<?> resultClass) {
-        return new ValuePredicateArgumentFilter<>(predicate, positiveSamples, negativeSamples, Collections.singleton(resultClass), false);
-    }
-
-    public static <T> ValuePredicateArgumentFilter<T> fromLambda(Predicate<T> predicate, Class<?>... resultClass) {
-        return new ValuePredicateArgumentFilter<>(predicate, Collections.emptySet(), Collections.emptySet(), Arrays.asList(resultClass).stream().collect(Collectors.toSet()), false);
-    }
-
-    public static <T> ValuePredicateArgumentFilter<T> fromLambda(Predicate<T> predicate, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples) {
-        return new ValuePredicateArgumentFilter<>(predicate, positiveSamples, negativeSamples, Collections.emptySet(), false);
-    }
-
-    public static <T> ValuePredicateArgumentFilter<T> fromLambda(Predicate<T> predicate) {
-        return new ValuePredicateArgumentFilter<>(predicate, Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), false);
-    }
-
-    public static <T> ValuePredicateArgumentFilter<T> fromLambda(Predicate<T> predicate, Set<T> negativeSamples,
-                    @SuppressWarnings("unused") Class<T> commonAncestorClass, Set<Class<?>> resultClasses) {
-        return new ValuePredicateArgumentFilter<>(predicate, Collections.emptySet(), negativeSamples, resultClasses, false);
+    public static <T> ValuePredicateArgumentFilter<T> fromLambda(Predicate<? super T> predicate) {
+        return new ValuePredicateArgumentFilter<>(predicate, false);
     }
 
 }

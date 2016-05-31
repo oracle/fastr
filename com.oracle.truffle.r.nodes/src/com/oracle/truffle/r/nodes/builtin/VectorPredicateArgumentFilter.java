@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import java.util.Collections;
 import java.util.function.Predicate;
 
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -30,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public class VectorPredicateArgumentFilter<T extends RAbstractVector> extends ValuePredicateArgumentFilter<T> {
 
     public VectorPredicateArgumentFilter(Predicate<T> valuePredicate, boolean isNullable) {
-        super(valuePredicate, CastBuilder.samples(), CastBuilder.samples(), Collections.emptySet(), isNullable);
+        super(valuePredicate, isNullable);
     }
 
 }

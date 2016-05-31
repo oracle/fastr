@@ -46,16 +46,6 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     public abstract boolean isEmptyVectorConvertedToNull();
 
-    @Override
-    protected TypeExpr resultTypes(TypeExpr inputType) {
-        TypeExpr rt = super.resultTypes(inputType);
-        if (isEmptyVectorConvertedToNull()) {
-            return rt.or(TypeExpr.union(RNull.class));
-        } else {
-            return rt;
-        }
-    }
-
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
@@ -94,11 +84,6 @@ public abstract class CastStringNode extends CastStringBaseNode {
     @Specialization
     protected String doRSymbol(RSymbol s) {
         return s.getName();
-    }
-
-    @Override
-    protected Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
-        return downStreamSamples;
     }
 
     public static CastStringNode create() {

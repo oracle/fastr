@@ -44,7 +44,7 @@ public abstract class NGetText extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("n").asIntegerVector().
                         findFirst().
-                        mustBe(gte0);
+                        mustBe(gte0());
 
         casts.arg("msg1").defaultError(RError.Message.MUST_BE_STRING, "msg1").
                         mustBe(nullValue().not().and(stringValue())).

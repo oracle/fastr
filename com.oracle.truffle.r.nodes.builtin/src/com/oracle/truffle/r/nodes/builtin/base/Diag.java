@@ -38,13 +38,13 @@ public abstract class Diag extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("nrow").asIntegerVector().
                         findFirst().
-                        mustBe(notIntNA, Message.INVALID_LARGE_NA_VALUE, "nrow").
-                        mustBe(gte0, Message.INVALID_NEGATIVE_VALUE, "nrow");
+                        mustBe(notIntNA(), Message.INVALID_LARGE_NA_VALUE, "nrow").
+                        mustBe(gte0(), Message.INVALID_NEGATIVE_VALUE, "nrow");
 
         casts.arg("ncol").asIntegerVector().
                         findFirst().
-                        mustBe(notIntNA, Message.INVALID_LARGE_NA_VALUE, "ncol").
-                        mustBe(gte0, Message.INVALID_NEGATIVE_VALUE, "ncol");
+                        mustBe(notIntNA(), Message.INVALID_LARGE_NA_VALUE, "ncol").
+                        mustBe(gte0(), Message.INVALID_NEGATIVE_VALUE, "ncol");
     }
 
     private static int checkX(RAbstractVector x, int nrow, int ncol) {

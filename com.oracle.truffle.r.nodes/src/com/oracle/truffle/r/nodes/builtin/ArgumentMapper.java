@@ -22,15 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import com.oracle.truffle.r.nodes.unary.CastNode.Samples;
-import com.oracle.truffle.r.nodes.unary.CastNode.TypeExpr;
-
 public interface ArgumentMapper<T, R> {
 
     R map(T arg);
-
-    TypeExpr resultTypes();
-
-    Samples<T> collectSamples(Samples<R> downStreamSamples);
 
 }

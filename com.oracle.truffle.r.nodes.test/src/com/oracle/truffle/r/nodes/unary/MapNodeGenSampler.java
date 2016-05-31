@@ -20,33 +20,38 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin;
+package com.oracle.truffle.r.nodes.unary;
 
-import java.util.function.Predicate;
-
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.NarrowingArgumentFilter;
+import com.oracle.truffle.r.nodes.casts.ArgumentMapperSampler;
+import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
+import com.oracle.truffle.r.nodes.casts.Samples;
+import com.oracle.truffle.r.nodes.casts.TypeExpr;
+import com.oracle.truffle.r.nodes.casts.CastUtils.Cast.Coverage;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-public abstract class AbstractPredicateArgumentFilter<T, R extends T> implements NarrowingArgumentFilter<T, R> {
+@SuppressWarnings({"rawtypes", "unchecked"})
+public class MapNodeGenSampler extends CastNodeSampler<MapNodeGen> {
 
-    private final Predicate<? super T> valuePredicate;
-    private final boolean isNullable;
+    private final ArgumentMapperSampler mapFn;
 
-    private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
-
-    public AbstractPredicateArgumentFilter(Predicate<? super T> valuePredicate, boolean isNullable) {
-        this.valuePredicate = valuePredicate;
-        this.isNullable = isNullable;
+    public MapNodeGenSampler(MapNodeGen castNode) {
+        super(castNode);
+        assert castNode.getMapper() instanceof ArgumentMapperSampler;
+        this.mapFn = (ArgumentMapperSampler) castNode.getMapper();
     }
 
     @Override
-    public boolean test(T arg) {
-        if (profile.profile(!isNullable && (arg == RNull.instance || arg == null))) {
-            return false;
+    public TypeExpr resultTypes(TypeExpr inputType) {
+        if (inputType.coverageFrom(RNull.class, true) == Coverage.none) {
+            return mapFn.resultTypes().and(TypeExpr.atom(RNull.class).not());
         } else {
-            return valuePredicate.test(arg);
+            return mapFn.resultTypes().or(TypeExpr.atom(RNull.class));
         }
+    }
+
+    @Override
+    public Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
+        return mapFn.collectSamples(downStreamSamples);
     }
 
 }

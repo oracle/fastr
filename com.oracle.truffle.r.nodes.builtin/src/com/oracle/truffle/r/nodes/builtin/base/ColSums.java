@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -52,7 +51,7 @@ public abstract class ColSums extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("X").mustBe(numericValue, RError.Message.X_NUMERIC);
+        casts.arg("X").mustBe(numericValue(), RError.Message.X_NUMERIC);
 
         casts.arg("m").asIntegerVector().
                         findFirst().
@@ -64,7 +63,7 @@ public abstract class ColSums extends RBuiltinNode {
 
         casts.arg("na.rm").asLogicalVector().
                         findFirst().
-                        map(toBoolean);
+                        map(toBoolean());
     }
 
     @Specialization

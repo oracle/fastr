@@ -23,8 +23,6 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -43,7 +41,6 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
@@ -169,11 +166,6 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     @TruffleBoundary
     protected int doOther(Object operand) {
         throw new ConversionFailedException(operand.getClass().getName());
-    }
-
-    @Override
-    protected Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
-        return downStreamSamples;
     }
 
     public static CastLogicalNode createNonPreserving() {

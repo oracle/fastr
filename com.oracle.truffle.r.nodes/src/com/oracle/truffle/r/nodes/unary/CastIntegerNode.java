@@ -224,11 +224,6 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return arg instanceof RIntVector;
     }
 
-    @Override
-    protected Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
-        return downStreamSamples;
-    }
-
     @Fallback
     @TruffleBoundary
     protected int doOther(Object operand) {

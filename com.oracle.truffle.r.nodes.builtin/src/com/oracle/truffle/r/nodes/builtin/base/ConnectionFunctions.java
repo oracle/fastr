@@ -140,15 +140,15 @@ public abstract class ConnectionFunctions {
 
             casts.arg("blocking").asLogicalVector().
                             findFirst().
-                            map(toBoolean).
-                            mustBe(trueValue, RError.Message.NYI, "non-blocking mode not supported");
+                            map(toBoolean()).
+                            mustBe(trueValue(), RError.Message.NYI, "non-blocking mode not supported");
 
             casts.arg("encoding").asStringVector().
                             findFirst();
 
             casts.arg("raw").asLogicalVector().
                             findFirst().
-                            map(toBoolean);
+                            map(toBoolean());
         }
 
         @Specialization

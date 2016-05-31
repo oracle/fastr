@@ -24,7 +24,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.CastUtils.Cast;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -136,28 +135,28 @@ public abstract class Scan extends RBuiltinNode {
 
         casts.arg("flush").asLogicalVector().
                         findFirst(RRuntime.LOGICAL_NA).
-                        map(toBoolean);
+                        map(toBoolean());
 
         casts.arg("fill").asLogicalVector().
                         findFirst(RRuntime.LOGICAL_NA).
-                        map(toBoolean);
+                        map(toBoolean());
 
         casts.arg("strip.white").mustBe(logicalValue());
 
         casts.arg("quiet").asLogicalVector().
                         findFirst(RRuntime.LOGICAL_FALSE).
                         notNA(RRuntime.LOGICAL_FALSE).
-                        map(toBoolean);
+                        map(toBoolean());
 
         casts.arg("blank.lines.skip").asLogicalVector().
                         findFirst(RRuntime.LOGICAL_TRUE).
                         notNA(RRuntime.LOGICAL_TRUE).
-                        map(toBoolean);
+                        map(toBoolean());
 
         casts.arg("multi.line").asLogicalVector().
                         findFirst(RRuntime.LOGICAL_TRUE).
                         notNA(RRuntime.LOGICAL_TRUE).
-                        map(toBoolean);
+                        map(toBoolean());
 
         casts.arg("comment.char").mustBe(stringValue()).
                         asStringVector().
@@ -170,7 +169,7 @@ public abstract class Scan extends RBuiltinNode {
         casts.arg("allowEscapes").asLogicalVector().
                         findFirst().
                         notNA().
-                        map(toBoolean);
+                        map(toBoolean());
 
         casts.arg("encoding").mustBe(stringValue()).
                         asStringVector().
@@ -180,7 +179,7 @@ public abstract class Scan extends RBuiltinNode {
         casts.arg("skipNull").asLogicalVector().
                         findFirst().
                         notNA().
-                        map(toBoolean);
+                        map(toBoolean());
     }
 
     @Specialization

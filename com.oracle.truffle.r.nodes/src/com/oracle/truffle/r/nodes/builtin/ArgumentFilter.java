@@ -22,43 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import com.oracle.truffle.r.nodes.unary.CastNode.Samples;
-import com.oracle.truffle.r.nodes.unary.CastNode.TypeExpr;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 public interface ArgumentFilter<T, R> {
 
     boolean test(T arg);
-
-    Samples<R> collectSamples(Samples<? extends R> downStreamSamples);
-
-    TypeExpr allowedTypes();
 
     interface NarrowingArgumentFilter<T, R extends T> extends ArgumentFilter<T, R> {
 
         default <S extends T> ArgumentTypeFilter<T, T> or(ArgumentFilter<T, S> other) {
             return new ArgumentTypeFilter<T, T>() {
 
+                private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
                 public boolean test(T arg) {
-                    if (NarrowingArgumentFilter.this.test(arg)) {
+                    if (profile.profile(NarrowingArgumentFilter.this.test(arg))) {
                         return true;
                     } else {
                         return other.test(arg);
                     }
-                }
-
-                public TypeExpr allowedTypes() {
-                    return NarrowingArgumentFilter.this.allowedTypes().or(other.allowedTypes());
-                }
-
-                @Override
-                public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
-                    Samples<R> downStreamSamplesForThis = downStreamSamples.filter(x -> NarrowingArgumentFilter.this.allowedTypes().isInstance(x)).map(x -> (R) x, x -> x);
-                    Samples<R> thisSamples = NarrowingArgumentFilter.this.collectSamples(downStreamSamplesForThis);
-
-                    Samples<S> downStreamSamplesForOther = downStreamSamples.filter(x -> other.allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
-                    Samples<S> otherSamples = other.collectSamples(downStreamSamplesForOther);
-
-                    return Samples.<T> empty().or(thisSamples).or(otherSamples);
                 }
 
             };
@@ -71,42 +53,32 @@ public interface ArgumentFilter<T, R> {
         default ArgumentValueFilter<T> and(ArgumentValueFilter<T> other) {
             return new ArgumentValueFilter<T>() {
 
+                private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
                 public boolean test(T arg) {
-                    return ArgumentValueFilter.this.test(arg) && other.test(arg);
+                    if (profile.profile(!ArgumentValueFilter.this.test(arg))) {
+                        return false;
+                    } else {
+                        return other.test(arg);
+                    }
                 }
 
-                public TypeExpr allowedTypes() {
-                    return ArgumentValueFilter.this.allowedTypes().and(other.allowedTypes());
-                }
-
-                @Override
-                public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
-                    Samples<T> thisSamples = ArgumentValueFilter.this.collectSamples(downStreamSamples);
-                    Samples<T> otherSamples = other.collectSamples(downStreamSamples);
-
-                    return thisSamples.and(otherSamples);
-                }
             };
         }
 
         default <S extends T> ArgumentTypeFilter<T, S> and(ArgumentTypeFilter<T, S> other) {
             return new ArgumentTypeFilter<T, S>() {
 
+                private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
                 public boolean test(T arg) {
-                    return ArgumentValueFilter.this.test(arg) && other.test(arg);
+                    if (profile.profile(!ArgumentValueFilter.this.test(arg))) {
+                        return false;
+                    } else {
+                        return other.test(arg);
+                    }
                 }
 
-                public TypeExpr allowedTypes() {
-                    return ArgumentValueFilter.this.allowedTypes().and(other.allowedTypes());
-                }
-
-                @Override
-                public Samples<S> collectSamples(Samples<? extends S> downStreamSamples) {
-                    Samples<S> thisSamples = ArgumentValueFilter.this.collectSamples(downStreamSamples).filter(x -> allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
-                    Samples<S> otherSamples = other.collectSamples(downStreamSamples);
-
-                    return thisSamples.and(otherSamples);
-                }
             };
         }
 
@@ -117,15 +89,6 @@ public interface ArgumentFilter<T, R> {
                     return !ArgumentValueFilter.this.test(arg);
                 }
 
-                public TypeExpr allowedTypes() {
-                    return ArgumentValueFilter.this.allowedTypes();
-                }
-
-                @Override
-                public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
-                    Samples<T> thisSamples = ArgumentValueFilter.this.collectSamples(downStreamSamples);
-                    return thisSamples.swap().filter(x -> allowedTypes().isInstance(x)).map(x -> (T) x, x -> x);
-                }
             };
         }
 
@@ -136,42 +99,34 @@ public interface ArgumentFilter<T, R> {
         default <S extends R> ArgumentTypeFilter<T, S> and(ArgumentTypeFilter<R, S> other) {
             return new ArgumentTypeFilter<T, S>() {
 
+                private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
+                @SuppressWarnings({"unchecked"})
                 public boolean test(T arg) {
-                    return ArgumentTypeFilter.this.test(arg) && other.test((R) arg);
+                    if (profile.profile(!ArgumentTypeFilter.this.test(arg))) {
+                        return false;
+                    } else {
+                        return other.test((R) arg);
+                    }
                 }
 
-                public TypeExpr allowedTypes() {
-                    return ArgumentTypeFilter.this.allowedTypes().and(other.allowedTypes());
-                }
-
-                @Override
-                public Samples<S> collectSamples(Samples<? extends S> downStreamSamples) {
-                    Samples<S> thisSamples = ArgumentTypeFilter.this.collectSamples(downStreamSamples).filter(x -> other.allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
-                    Samples<S> otherSamples = other.collectSamples(downStreamSamples);
-
-                    return thisSamples.and(otherSamples);
-                }
             };
         }
 
-        default ArgumentTypeFilter<T, R> and(ArgumentValueFilter<T> other) {
+        default ArgumentTypeFilter<T, R> and(ArgumentValueFilter<R> other) {
             return new ArgumentTypeFilter<T, R>() {
 
+                private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
+                @SuppressWarnings({"unchecked"})
                 public boolean test(T arg) {
-                    return ArgumentTypeFilter.this.test(arg) && other.test(arg);
+                    if (profile.profile(!ArgumentTypeFilter.this.test(arg))) {
+                        return false;
+                    } else {
+                        return other.test((R) arg);
+                    }
                 }
 
-                public TypeExpr allowedTypes() {
-                    return ArgumentTypeFilter.this.allowedTypes().and(other.allowedTypes());
-                }
-
-                @Override
-                public Samples<R> collectSamples(Samples<? extends R> downStreamSamples) {
-                    Samples<R> thisSamples = ArgumentTypeFilter.this.collectSamples(downStreamSamples);
-                    Samples<R> otherSamples = other.collectSamples(downStreamSamples).filter(x -> ArgumentTypeFilter.this.allowedTypes().isInstance(x)).map(x -> (R) x, x -> x);
-
-                    return thisSamples.and(otherSamples);
-                }
             };
         }
 
@@ -193,17 +148,6 @@ public interface ArgumentFilter<T, R> {
             return !orig.test(arg);
         }
 
-        public TypeExpr allowedTypes() {
-            return orig.allowedTypes().not();
-        }
-
-        @Override
-        public Samples<Object> collectSamples(Samples<?> downStreamSamples) {
-            Samples<R> swappedSamples = downStreamSamples.swap().filter(x -> orig.allowedTypes().isInstance(x)).map(x -> (R) x, x -> x);
-            Samples<R> thisSamples = orig.collectSamples(swappedSamples);
-            return thisSamples.swap();
-        }
-
         public ArgumentTypeFilter<T, R> not() {
             return orig;
         }
@@ -211,42 +155,33 @@ public interface ArgumentFilter<T, R> {
         public <S extends T> ArgumentTypeFilter<T, S> and(ArgumentTypeFilter<T, S> other) {
             return new ArgumentTypeFilter<T, S>() {
 
+                private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
+                @SuppressWarnings({"cast", "unchecked"})
                 public boolean test(T arg) {
-                    return InverseArgumentFilter.this.test(arg) && other.test(arg);
+                    if (profile.profile(!InverseArgumentFilter.this.test(arg))) {
+                        return false;
+                    } else {
+                        return other.test((R) arg);
+                    }
                 }
 
-                public TypeExpr allowedTypes() {
-                    return InverseArgumentFilter.this.allowedTypes().and(other.allowedTypes());
-                }
-
-                @Override
-                public Samples<S> collectSamples(Samples<? extends S> downStreamSamples) {
-                    Samples<S> thisSamples = InverseArgumentFilter.this.collectSamples(downStreamSamples).filter(x -> other.allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
-                    Samples<S> otherSamples = other.collectSamples(downStreamSamples);
-
-                    return thisSamples.and(otherSamples);
-                }
             };
         }
 
         public <S extends T> ArgumentValueFilter<S> and(ArgumentValueFilter<S> other) {
             return new ArgumentValueFilter<S>() {
 
+                private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
                 public boolean test(S arg) {
-                    return InverseArgumentFilter.this.test(arg) && other.test(arg);
+                    if (profile.profile(!InverseArgumentFilter.this.test(arg))) {
+                        return false;
+                    } else {
+                        return other.test(arg);
+                    }
                 }
 
-                public TypeExpr allowedTypes() {
-                    return InverseArgumentFilter.this.allowedTypes().and(other.allowedTypes());
-                }
-
-                @Override
-                public Samples<S> collectSamples(Samples<? extends S> downStreamSamples) {
-                    Samples<S> thisSamples = InverseArgumentFilter.this.collectSamples(downStreamSamples).filter(x -> other.allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
-                    Samples<S> otherSamples = other.collectSamples(downStreamSamples);
-
-                    return thisSamples.and(otherSamples);
-                }
             };
         }
 

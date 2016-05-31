@@ -20,20 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin;
+package com.oracle.truffle.r.nodes.casts;
 
-import java.util.function.Predicate;
+import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
 
-import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
+public interface ArgumentMapperSampler<T, R> extends ArgumentMapper<T, R> {
 
-public class TypePredicateArgumentFilter<T, R extends T> extends AbstractPredicateArgumentFilter<T, R> implements ArgumentTypeFilter<T, R> {
+    TypeExpr resultTypes();
 
-    public TypePredicateArgumentFilter(Predicate<? super T> valuePredicate, boolean isNullable) {
-        super(valuePredicate, isNullable);
-    }
-
-    public static <T, R extends T> TypePredicateArgumentFilter<T, R> fromLambda(Predicate<? super T> predicate) {
-        return new TypePredicateArgumentFilter<>(predicate, false);
-    }
+    Samples<T> collectSamples(Samples<R> downStreamSamples);
 
 }

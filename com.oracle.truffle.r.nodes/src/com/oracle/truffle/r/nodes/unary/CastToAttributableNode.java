@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.util.Collections;
-import java.util.Set;
-
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -67,10 +64,5 @@ public abstract class CastToAttributableNode extends CastBaseNode {
     @Specialization
     protected RAttributable cast(RS4Object object) {
         return object;
-    }
-
-    @Override
-    protected Samples<?> collectSamples(TypeExpr inputTypes, Samples<?> downStreamSamples) {
-        return downStreamSamples;
     }
 }

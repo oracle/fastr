@@ -20,11 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin;
+package com.oracle.truffle.r.nodes.casts;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,15 +33,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeCheck;
-import com.oracle.truffle.r.nodes.builtin.CastUtils.Cast.Coverage;
-import com.oracle.truffle.r.nodes.unary.CastNode.Not;
-import com.oracle.truffle.r.nodes.unary.CastNode.TypeAndInstanceCheck;
-import com.oracle.truffle.r.nodes.unary.CastNode.TypeConjunction;
-import com.oracle.truffle.r.nodes.unary.CastNode.TypeExpr;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -577,7 +569,6 @@ public class CastUtils {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
     public static Set<?> sampleValuesForType(Type t) {
         HashSet<Object> samples = new HashSet<>();
 
@@ -677,7 +668,7 @@ public class CastUtils {
         return CastUtils.sampledClasses.stream().filter(c -> c != cls).flatMap(c -> sampleValuesForType(c).stream()).collect(Collectors.toSet());
     }
 
-    public static final Set<Class<?>> sampledClasses = Collections.unmodifiableSet(CastBuilder.samples(Integer.class, Double.class, Byte.class, RComplex.class, String.class));
+    public static final Set<Class<?>> sampledClasses = Collections.unmodifiableSet(samples(Integer.class, Double.class, Byte.class, RComplex.class, String.class));
 
     public static Set<Object> pseudoValuesForClass(Class<?> cls) {
         HashSet<Object> samples = new HashSet<>();
@@ -689,6 +680,21 @@ public class CastUtils {
         samples.remove(null);
 
         return samples;
+    }
+
+    @SafeVarargs
+    public static <T> Set<? extends T> samples(T samplesHead, T... samplesTail) {
+        HashSet<T> sampleSet = new HashSet<>(Arrays.asList(samplesTail));
+        sampleSet.add(samplesHead);
+        return sampleSet;
+    }
+
+    public static <T> Set<? extends T> samples(T s) {
+        return Collections.singleton(s);
+    }
+
+    public static <T> Set<? extends T> samples() {
+        return Collections.emptySet();
     }
 
 }

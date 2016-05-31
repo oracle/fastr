@@ -22,13 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastUtils.Cast;
-import com.oracle.truffle.r.nodes.builtin.CastUtils.Casts;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -41,26 +36,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class CastToVectorNode extends CastNode {
 
     public abstract boolean isNonVectorPreserved();
-
-    @Override
-    protected TypeExpr resultTypes(TypeExpr inputType) {
-        List<Cast> castList;
-        if (isNonVectorPreserved()) {
-            castList = Arrays.asList(new Cast(RNull.class, RNull.class),
-                            new Cast(RMissing.class, RNull.class),
-                            new Cast(RFunction.class, RFunction.class),
-                            new Cast(RAbstractVector.class, RAbstractVector.class),
-                            new Cast(RExpression.class, RList.class));
-        } else {
-            castList = Arrays.asList(new Cast(RNull.class, RList.class),
-                            new Cast(RMissing.class, RList.class),
-                            new Cast(RFunction.class, RList.class),
-                            new Cast(RAbstractVector.class, RAbstractVector.class),
-                            new Cast(RExpression.class, RList.class));
-        }
-        TypeExpr narrowed = Casts.createCasts(castList).narrow(inputType);
-        return narrowed;
-    }
 
     @Specialization
     protected Object castNull(@SuppressWarnings("unused") RNull rnull) {
@@ -97,11 +72,6 @@ public abstract class CastToVectorNode extends CastNode {
     @Specialization
     protected RList cast(RExpression expression) {
         return expression.getList();
-    }
-
-    @Override
-    protected Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
-        return downStreamSamples;
     }
 
     public static CastToVectorNode create() {

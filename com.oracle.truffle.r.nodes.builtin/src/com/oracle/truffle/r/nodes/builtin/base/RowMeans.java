@@ -48,7 +48,7 @@ public abstract class RowMeans extends RBuiltinNode {
 
         casts.arg("na.rm").asLogicalVector().
                         findFirst().
-                        map(toBoolean);
+                        map(toBoolean());
     }
 
     @Specialization(guards = "!naRm")

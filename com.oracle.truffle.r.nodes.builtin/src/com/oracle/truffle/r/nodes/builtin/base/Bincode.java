@@ -23,7 +23,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -41,11 +40,11 @@ public abstract class Bincode extends RBuiltinNode {
 
         casts.arg("right").asLogicalVector().
                         findFirst().
-                        map(toBoolean);
+                        map(toBoolean());
 
         casts.arg("include.lowest").asLogicalVector().
                         findFirst().
-                        map(toBoolean);
+                        map(toBoolean());
     }
 
     @Specialization

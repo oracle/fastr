@@ -22,30 +22,46 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node.Child;
+import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 
-@NodeInfo(cost = NodeCost.NONE)
-public final class ChainedCastNode extends CastNode {
+@SuppressWarnings({"rawtypes", "unchecked"})
+public abstract class ConditionalMapNode extends CastNode {
 
-    @Child private CastNode firstCast;
-    @Child private CastNode secondCast;
+    private final ArgumentFilter argFilter;
+    @Child private CastNode trueBranch;
+    @Child private CastNode falseBranch;
 
-    public ChainedCastNode(CastNode firstCast, CastNode secondCast) {
-        this.firstCast = firstCast;
-        this.secondCast = secondCast;
+    protected ConditionalMapNode(ArgumentFilter<?, ?> argFilter, CastNode trueBranch, CastNode falseBranch) {
+        this.argFilter = argFilter;
+        this.trueBranch = trueBranch;
+        this.falseBranch = falseBranch;
     }
 
-    @Override
-    public Object execute(Object value) {
-        return secondCast.execute(firstCast.execute(value));
+    public ArgumentFilter getFilter() {
+        return argFilter;
     }
 
-    public CastNode getFirstCast() {
-        return firstCast;
+    public CastNode getTrueBranch() {
+        return trueBranch;
     }
 
-    public CastNode getSecondCast() {
-        return secondCast;
+    public CastNode getFalseBranch() {
+        return falseBranch;
+    }
+
+    protected boolean doMap(Object x) {
+        return argFilter.test(x);
+    }
+
+    @Specialization(guards = "doMap(x)")
+    protected Object map(Object x) {
+        return trueBranch.execute(x);
+    }
+
+    @Specialization(guards = "!doMap(x)")
+    protected Object noMap(Object x) {
+        return x;
     }
 }

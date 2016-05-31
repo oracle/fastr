@@ -36,7 +36,7 @@ public abstract class ColMeans extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("X").mustBe(numericValue, RError.Message.X_NUMERIC);
+        casts.arg("X").mustBe(numericValue(), RError.Message.X_NUMERIC);
 
         casts.arg("m").asIntegerVector().
                         findFirst().
@@ -48,7 +48,7 @@ public abstract class ColMeans extends RBuiltinNode {
 
         casts.arg("na.rm").asLogicalVector().
                         findFirst().
-                        map(toBoolean);
+                        map(toBoolean());
     }
 
     @Specialization(guards = "!naRm")

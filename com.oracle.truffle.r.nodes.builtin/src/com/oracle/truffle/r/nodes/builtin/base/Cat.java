@@ -25,6 +25,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asBoolean;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt0;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogicalValue;
@@ -40,7 +42,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentFilter;
 import com.oracle.truffle.r.nodes.unary.ToStringNode;
 import com.oracle.truffle.r.nodes.unary.ToStringNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -78,13 +79,13 @@ public abstract class Cat extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("sep").mustBe(stringValue(), RError.Message.INVALID_SEP);
 
-        casts.arg("fill").mustBe(numericValue).
+        casts.arg("fill").mustBe(numericValue()).
                         asVector().
                         mustBe(singleElement()).
                         findFirst().
                         mustBe(nullValue().not()).
-                        shouldBe(ValuePredicateArgumentFilter.fromLambda(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Object.class), Message.NON_POSITIVE_FILL).
-                        mapIf(scalarLogicalValue, asBoolean(), asInteger());
+                        shouldBe(instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())), Message.NON_POSITIVE_FILL).
+                        mapIf(scalarLogicalValue(), asBoolean(), asInteger());
 
         casts.arg("labels").map(defaultValue(RDataFactory.createStringVector(0))).
                         mustBe(stringValue()).
@@ -93,7 +94,7 @@ public abstract class Cat extends RBuiltinNode {
         // append is interpreted in the calling closure, but GnuR still checks for NA
         casts.arg("append").asLogicalVector().
                         findFirst().
-                        map(toBoolean);
+                        map(toBoolean());
     }
 
     @Specialization

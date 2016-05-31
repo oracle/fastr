@@ -20,20 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin;
+package com.oracle.truffle.r.nodes.unary;
 
-import java.util.function.Predicate;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
+import com.oracle.truffle.r.runtime.data.RNull;
 
-import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
+@SuppressWarnings({"rawtypes", "unchecked"})
+public abstract class MapNode extends CastNode {
 
-public class TypePredicateArgumentFilter<T, R extends T> extends AbstractPredicateArgumentFilter<T, R> implements ArgumentTypeFilter<T, R> {
+    private final ArgumentMapper mapFn;
 
-    public TypePredicateArgumentFilter(Predicate<? super T> valuePredicate, boolean isNullable) {
-        super(valuePredicate, isNullable);
+    protected MapNode(ArgumentMapper<?, ?> mapFn) {
+        this.mapFn = mapFn;
     }
 
-    public static <T, R extends T> TypePredicateArgumentFilter<T, R> fromLambda(Predicate<? super T> predicate) {
-        return new TypePredicateArgumentFilter<>(predicate, false);
+    public ArgumentMapper getMapper() {
+        return mapFn;
     }
 
+    @Specialization
+    protected Object mapNull(RNull x) {
+        Object res = mapFn.map(null);
+        return res == null ? x : res;
+    }
+
+    @Specialization
+    protected Object map(Object x) {
+        return mapFn.map(x);
+    }
 }

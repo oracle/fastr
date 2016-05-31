@@ -22,30 +22,35 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
+import com.oracle.truffle.r.nodes.casts.Samples;
+import com.oracle.truffle.r.nodes.casts.TypeExpr;
 
-@NodeInfo(cost = NodeCost.NONE)
-public final class ChainedCastNode extends CastNode {
+public final class ChainedCastNodeSampler extends CastNodeSampler<ChainedCastNode> {
 
-    @Child private CastNode firstCast;
-    @Child private CastNode secondCast;
+    private final CastNodeSampler<?> firstCast;
+    private final CastNodeSampler<?> secondCast;
 
-    public ChainedCastNode(CastNode firstCast, CastNode secondCast) {
-        this.firstCast = firstCast;
-        this.secondCast = secondCast;
+    public ChainedCastNodeSampler(ChainedCastNode castNode) {
+        super(castNode);
+
+        firstCast = createSampler(castNode.getFirstCast());
+        secondCast = createSampler(castNode.getSecondCast());
     }
 
     @Override
-    public Object execute(Object value) {
-        return secondCast.execute(firstCast.execute(value));
+    public TypeExpr resultTypes(TypeExpr inputTypes) {
+        return secondCast.resultTypes(firstCast.resultTypes(inputTypes));
     }
 
-    public CastNode getFirstCast() {
-        return firstCast;
+    @Override
+    public String toString() {
+        return firstCast.toString();
     }
 
-    public CastNode getSecondCast() {
-        return secondCast;
+    @Override
+    public Samples<?> collectSamples(TypeExpr inputTypes, Samples<?> downStreamSamples) {
+        TypeExpr rt1 = firstCast.resultTypes(inputTypes);
+        return firstCast.collectSamples(inputTypes, secondCast.collectSamples(rt1, downStreamSamples));
     }
 }
