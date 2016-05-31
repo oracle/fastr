@@ -339,7 +339,7 @@ def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
     return join(mx.project(tp).dir, 'src', tp.replace('.', sep))
 
-def _junit_r_harness(args, vmArgs, junitArgs):
+def _junit_r_harness(args, vmArgs, jdk, junitArgs):
     # always pass the directory where the expected output file should reside
     runlistener_arg = 'expected=' + _test_srcdir()
     # there should not be any unparsed arguments at this stage
@@ -395,11 +395,6 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     vmArgs += _graal_options(nocompile=True)
 
     setREnvironment()
-    jdk = args.jdk
-    if not jdk:
-        jdk = get_default_jdk()
-    else:
-        jdk = mx.get_jdk(tag=args.jdk)
     vmArgs = _sanitize_vmArgs(jdk, vmArgs)
 
     return mx.run_java(vmArgs + junitArgs, nonZeroIsFatal=False, jdk=jdk)
@@ -413,7 +408,6 @@ def junit(args):
     parser.add_argument('--check-expected-output', action='store_true', help='check but do not update expected test output file')
     parser.add_argument('--gen-fastr-output', action='store', metavar='<path>', help='generate FastR test output file')
     parser.add_argument('--gen-diff-output', action='store', metavar='<path>', help='generate difference test output file ')
-    parser.add_argument('--jdk', action='store', help='jdk to use')
     # parser.add_argument('--test-methods', action='store', help='pattern to match test methods in test classes')
 
     if os.environ.has_key('R_PROFILE_USER'):
