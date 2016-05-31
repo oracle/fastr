@@ -201,6 +201,10 @@ public class ForeignFunctions {
             }
             return libName;
         }
+
+        protected static RExternalBuiltinNode getExternalModelBuiltinNode(String name) {
+            return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(StatsUtil.class, "model.R"), name);
+        }
     }
 
     /**
@@ -559,7 +563,7 @@ public class ForeignFunctions {
                 case "download":
                     return new Download();
                 case "termsform":
-                    return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(StatsUtil.class, "model.R"), "termsform");
+                    return getExternalModelBuiltinNode("termsform");
                 case "unzip":
                 case "Rprof":
                 case "Rprofmem":
@@ -640,6 +644,9 @@ public class ForeignFunctions {
                     return TypeConvertNodeGen.create();
                 case "C_parseRd":
                     return C_ParseRdNodeGen.create();
+                case "modelmatrix":
+                case "modelframe":
+                    return getExternalModelBuiltinNode(name);
                 default:
                     return null;
             }

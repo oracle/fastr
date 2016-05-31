@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -64,7 +65,7 @@ public final class RInternalCode {
 
     private REnvironment evaluate() {
         try {
-            RExpression parsedCode = context.getThisEngine().parse(source);
+            RExpression parsedCode = context.getThisEngine().parse(Collections.emptyMap(), source);
             REnvironment statsPackage = REnvironment.getRegisteredNamespace(context, basePackage);
             evaluatedEnvironment = RDataFactory.createNewEnv(null, true, 10);
             evaluatedEnvironment.setParent(statsPackage);
