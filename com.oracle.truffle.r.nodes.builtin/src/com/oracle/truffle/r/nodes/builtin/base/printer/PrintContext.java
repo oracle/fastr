@@ -33,6 +33,7 @@ final class PrintContext {
     private final PrintParameters params;
     private final PrettyPrintWriter out;
     private final Map<String, Object> attrs = new HashMap<>();
+    private StringBuffer tagbuf;
 
     private static final ThreadLocal<ArrayDeque<PrintContext>> printCtxTL = new ThreadLocal<>();
 
@@ -40,6 +41,18 @@ final class PrintContext {
         this.pn = printerNode;
         this.params = parameters;
         this.out = output;
+    }
+
+    /**
+     * TagBuffer is part of {@link PrintContext} and represents a prefix that should be printed
+     * before any value. This value reflects global variable {@code tagbuf} in GnuR. In FastR we can
+     * have more parallel buffers.
+     */
+    public StringBuffer getTagBuffer() {
+        if (tagbuf == null) {
+            tagbuf = new StringBuffer();
+        }
+        return tagbuf;
     }
 
     public PrintParameters parameters() {

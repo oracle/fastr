@@ -73,5 +73,6 @@ public class TestBuiltin_print extends TestBase {
         assertEval("{ y<-c(\"a\",\"b\",\"c\",\"d\");dim(y)<-c(1,2,2);print(y,quote=FALSE)}");
         assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; y<-tapply(1:n, fac, sum); y }");
         assertEval("{ nql <- noquote(letters); nql}");
+        assertEval("{ x <- 42; attr(x,'myattr') <- list(k=3); attributes(x) }");
     }
 }
