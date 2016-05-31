@@ -46,5 +46,6 @@ public class TestBuiltin_environment extends TestBase {
         assertEval("environment(a~b)");
         assertEval("environment(function(x) 1)");
         assertEval("environment(NULL)");
+        assertEval("{ f <- y~z; class(f) <- c('myclass', class(f)); environment(f) }");
     }
 }
