@@ -132,7 +132,7 @@ def _sanitize_vmArgs(jdk, vmArgs):
 
 def _graal_options(nocompile=False):
     if _mx_jvmci and not mx_jvm().get_vm().endswith('nojvmci'):
-        result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
+        result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:NMethodSizeLimit=1000000']
         if nocompile:
             result += ['-Dgraal.TruffleCompilationThreshold=100000']
         return result
