@@ -212,7 +212,7 @@ public class PromiseHelperNode extends RBaseNode {
                     return getEagerValue(frame, promise);
                 }
             } else {
-                fallbackProfile.enter();
+                CompilerDirectives.transferToInterpreter();
                 promise.notifyFailure();
 
                 // Fallback: eager evaluation failed, now take the slow path
@@ -347,7 +347,6 @@ public class PromiseHelperNode extends RBaseNode {
     private final ConditionProfile isOptEagerProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isOptPromisedProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isDeoptimizedProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile fallbackProfile = BranchProfile.create();
     private final ValueProfile eagerValueProfile = ValueProfile.createClassProfile();
 
     public PromiseHelperNode() {
