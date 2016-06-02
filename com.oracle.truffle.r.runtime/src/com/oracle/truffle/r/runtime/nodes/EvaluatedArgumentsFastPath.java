@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.nodes;
 import java.util.Arrays;
 
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 
 final class EvaluatedArgumentsFastPath implements FastPathFactory {
@@ -47,7 +48,7 @@ final class EvaluatedArgumentsFastPath implements FastPathFactory {
 
     @Override
     public boolean forcedEagerPromise(int index) {
-        return forcedArguments[index];
+        return FastROptions.noEagerEval() ? false : forcedArguments[index];
     }
 
     public String toString(ArgumentsSignature signature) {

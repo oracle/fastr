@@ -60,7 +60,8 @@ public enum FastROptions {
     EagerEvalConstants("Unconditionally evaluates constants before creating Promises", true),
     EagerEvalVariables("Enables optimistic eager evaluation of single variables reads", true),
     EagerEvalDefault("Enables optimistic eager evaluation of single variables reads (for default parameters)", false),
-    EagerEvalExpressions("Enables optimistic eager evaluation of trivial expressions", false);
+    EagerEvalExpressions("Enables optimistic eager evaluation of trivial expressions", false),
+    PromiseCacheSize("Enables inline caches for promises evaluation", "3", true);
 
     private final String help;
     private final boolean isBoolean;
@@ -99,6 +100,25 @@ public enum FastROptions {
             System.exit(2);
             return "";
         }
+    }
+
+    public int getNonNegativeIntValue() {
+        assert !isBoolean;
+        if (value instanceof String) {
+            try {
+                int res = Integer.decode((String) value);
+                if (res >= 0) {
+                    return res;
+                } // else fall through to error message
+            } catch (NumberFormatException x) {
+                // fall through to error message
+            }
+        }
+
+        System.out.println("non negative integer option value expected with " + name());
+        System.exit(2);
+        return -1;
+
     }
 
     private static FastROptions[] VALUES = values();
@@ -220,5 +240,10 @@ public enum FastROptions {
             s = s + "," + element;
         }
         FastROptions.Debug.value = s;
+    }
+
+    public static boolean noEagerEval() {
+        return !(EagerEval.getBooleanValue() || EagerEvalConstants.getBooleanValue() || EagerEvalVariables.getBooleanValue() || EagerEvalDefault.getBooleanValue() ||
+                        EagerEvalExpressions.getBooleanValue());
     }
 }

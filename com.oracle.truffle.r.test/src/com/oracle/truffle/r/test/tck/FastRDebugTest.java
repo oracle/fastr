@@ -46,7 +46,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.EventConsumer;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Value;
-import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.EagerPromiseBase;
 
 public class FastRDebugTest {
     private Debugger debugger;
@@ -282,8 +282,8 @@ public class FastRDebugTest {
 
     Object getRValue(Object value) {
         // This will only work in simple cases
-        if (value instanceof EagerPromise) {
-            return ((EagerPromise) value).getValue();
+        if (value instanceof EagerPromiseBase) {
+            return ((EagerPromiseBase) value).getValue();
         }
         return value;
     }

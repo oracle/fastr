@@ -38,6 +38,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -45,6 +46,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.EagerPromiseBase;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -116,7 +118,7 @@ public class PromiseHelperNode extends RBaseNode {
         private boolean deoptimize(RPromise promise) {
             if (!promise.getState().isDefaultOpt()) {
                 deoptimizeProfile.enter();
-                EagerPromise eager = (EagerPromise) promise;
+                EagerPromiseBase eager = (EagerPromiseBase) promise;
                 return eager.deoptimize();
             }
 
@@ -156,7 +158,7 @@ public class PromiseHelperNode extends RBaseNode {
         if (state.isDefaultOpt()) {
             obj = generateValueDefault(frame, state, promise);
         } else {
-            obj = generateValueEager(frame, state, (EagerPromise) promise);
+            obj = generateValueEager(frame, state, (EagerPromiseBase) promise);
         }
         if (isEvaluated(promise)) {
             // TODO: this only happens if compilation is in play and, as such, is difficult to track
@@ -174,22 +176,23 @@ public class PromiseHelperNode extends RBaseNode {
             throw RError.error(RError.SHOW_CALLER, RError.Message.PROMISE_CYCLE);
         }
         try {
-            // Evaluate guarded by underEvaluation
-            promise.setState(PromiseState.UnderEvaluation);
-
             if (isInOriginFrame(frame, promise)) {
+                // state change must happen inside of conditional as isInOriginalFrame checks the
+                // state
+                promise.setState(PromiseState.UnderEvaluation);
                 if (expressionInlineCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    expressionInlineCache = insert(InlineCacheNode.createExpression(3));
+                    expressionInlineCache = insert(InlineCacheNode.createExpression(FastROptions.PromiseCacheSize.getNonNegativeIntValue()));
                 }
                 return expressionInlineCache.execute(frame, promise.getRep());
             } else {
+                promise.setState(PromiseState.UnderEvaluation);
                 Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
                 assert promiseFrame != null;
 
                 if (promiseClosureCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseClosureCache = insert(InlineCacheNode.createPromise(3));
+                    promiseClosureCache = insert(InlineCacheNode.createPromise(FastROptions.PromiseCacheSize.getNonNegativeIntValue()));
                 }
                 promiseFrame = wrapPromiseFrame(frame, promiseFrame);
                 return promiseClosureCache.execute(promiseFrame, promise.getClosure());
@@ -199,7 +202,7 @@ public class PromiseHelperNode extends RBaseNode {
         }
     }
 
-    private Object generateValueEager(VirtualFrame frame, PromiseState state, EagerPromise promise) {
+    private Object generateValueEager(VirtualFrame frame, PromiseState state, EagerPromiseBase promise) {
         assert state.isEager() || state == PromiseState.Promised;
         if (!isDeoptimized(promise)) {
             Assumption eagerAssumption = isValidAssumptionProfile.profile(promise.getIsValidAssumption());
@@ -209,7 +212,7 @@ public class PromiseHelperNode extends RBaseNode {
                     return checkNextNode().evaluate(frame, nextPromise);
                 } else {
                     assert state.isEager();
-                    return getEagerValue(frame, promise);
+                    return getEagerValue(frame, (EagerPromise) promise);
                 }
             } else {
                 CompilerDirectives.transferToInterpreter();
@@ -235,7 +238,7 @@ public class PromiseHelperNode extends RBaseNode {
             // Evaluate guarded by underEvaluation
             obj = generateValueDefaultSlowPath(frame, state, promise);
         } else {
-            obj = generateValueEagerSlowPath(frame, state, (EagerPromise) promise);
+            obj = generateValueEagerSlowPath(frame, state, (EagerPromiseBase) promise);
         }
         promise.setValue(obj);
         return obj;
@@ -268,7 +271,7 @@ public class PromiseHelperNode extends RBaseNode {
                         RCaller.createForPromise(RArguments.getCall(promiseFrame), frame == null ? 0 : RArguments.getDepth(frame)));
     }
 
-    private static Object generateValueEagerSlowPath(VirtualFrame frame, PromiseState state, EagerPromise promise) {
+    private static Object generateValueEagerSlowPath(VirtualFrame frame, PromiseState state, EagerPromiseBase promise) {
         assert state.isEager() || state == PromiseState.Promised;
         if (!promise.isDeoptimized()) {
             Assumption eagerAssumption = promise.getIsValidAssumption();
@@ -301,7 +304,7 @@ public class PromiseHelperNode extends RBaseNode {
      */
     public void materialize(RPromise promise) {
         if (isOptEagerProfile.profile(promise.getState().isEager()) || isOptPromisedProfile.profile(promise.getState() == PromiseState.Promised)) {
-            EagerPromise eager = (EagerPromise) promise;
+            EagerPromiseBase eager = (EagerPromiseBase) promise;
             eager.materialize();
         }
         // otherwise: already the generic and slow RPromise
@@ -319,7 +322,7 @@ public class PromiseHelperNode extends RBaseNode {
         return isNullFrameProfile.profile(promise.isNullFrame());
     }
 
-    private boolean isDeoptimized(EagerPromise promise) {
+    private boolean isDeoptimized(EagerPromiseBase promise) {
         return isDeoptimizedProfile.profile(promise.isDeoptimized());
     }
 
