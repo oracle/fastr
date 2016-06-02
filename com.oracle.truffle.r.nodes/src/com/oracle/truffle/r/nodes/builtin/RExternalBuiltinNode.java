@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.unary.CastComplexNode;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
@@ -51,7 +52,11 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @TypeSystemReference(RTypes.class)
 public abstract class RExternalBuiltinNode extends RBaseNode {
 
-    public abstract Object call(RArgsValuesAndNames args);
+    public Object call(@SuppressWarnings("unused") VirtualFrame frame, RArgsValuesAndNames args) {
+        return call(args);
+    }
+
+    protected abstract Object call(RArgsValuesAndNames args);
 
     protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
         // nothing to do

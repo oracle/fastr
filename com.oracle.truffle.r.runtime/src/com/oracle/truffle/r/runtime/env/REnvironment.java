@@ -541,7 +541,14 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * namespace.
      */
     public static REnvironment getRegisteredNamespace(String name) {
-        return (REnvironment) RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(name);
+        return getRegisteredNamespace(RContext.getInstance(), name);
+    }
+
+    /**
+     * @see #getRegisteredNamespace(String)
+     */
+    public static REnvironment getRegisteredNamespace(RContext context, String name) {
+        return (REnvironment) context.stateREnvironment.getNamespaceRegistry().get(name);
     }
 
     /**

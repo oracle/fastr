@@ -20,6 +20,7 @@
 #include <Rinternals.h>
 
 #define UNIMPLEMENTED { error("unimplemented function at %s:%d", __FILE__, __LINE__); return NULL; }
+#define RINTERNAL_CODE { error("function shoul be implemented in R code at %s:%d", __FILE__, __LINE__); return NULL; }
 
 /* auxiliary */
 SEXP getListElement(SEXP list, char *str) UNIMPLEMENTED
@@ -157,9 +158,9 @@ SEXP do_rmultinom(SEXP sn, SEXP ssize, SEXP sprob) UNIMPLEMENTED
 SEXP compcases(SEXP args) UNIMPLEMENTED
 SEXP doD(SEXP args) UNIMPLEMENTED
 SEXP deriv(SEXP args) UNIMPLEMENTED
-SEXP modelframe(SEXP call, SEXP op, SEXP args, SEXP rho) UNIMPLEMENTED
-SEXP modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho) UNIMPLEMENTED
-SEXP termsform(SEXP args) UNIMPLEMENTED
+SEXP modelframe(SEXP call, SEXP op, SEXP args, SEXP rho) RINTERNAL_CODE
+SEXP modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho) RINTERNAL_CODE
+SEXP termsform(SEXP args) RINTERNAL_CODE
 SEXP do_fmin(SEXP call, SEXP op, SEXP args, SEXP rho) UNIMPLEMENTED
 SEXP nlm(SEXP call, SEXP op, SEXP args, SEXP rho) UNIMPLEMENTED
 SEXP zeroin2(SEXP call, SEXP op, SEXP args, SEXP rho) UNIMPLEMENTED

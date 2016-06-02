@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -56,7 +55,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 @RBuiltin(name = "assign", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "value", "envir", "inherits"})
 public abstract class Assign extends RBuiltinNode {
 
-    @CompilationFinal private final BranchProfile[] slotFoundOnIteration = {BranchProfile.create(), BranchProfile.create(), BranchProfile.create()};
     private final BranchProfile errorProfile = BranchProfile.create();
     private final BranchProfile warningProfile = BranchProfile.create();
 
