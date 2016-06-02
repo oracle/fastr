@@ -132,7 +132,7 @@ def _sanitize_vmArgs(jdk, vmArgs):
 
 def _graal_options(nocompile=False):
     if _mx_jvmci and not mx_jvm().get_vm().endswith('nojvmci'):
-        result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:NMethodSizeLimit=1000000']
+        result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3']
         if nocompile:
             result += ['-Dgraal.TruffleCompilationThreshold=100000']
         return result
@@ -339,7 +339,10 @@ def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
     return join(mx.project(tp).dir, 'src', tp.replace('.', sep))
 
-def _junit_r_harness(args, vmArgs, jdk, junitArgs):
+def _junit_r_harness(args, vmArgs, junitArgs):
+    return _junit_r_harness_with_jdk(args, vmArgs, mx.get_jdk(), junitArgs)
+
+def _junit_r_harness_with_jdk(args, vmArgs, jdk, junitArgs):
     # always pass the directory where the expected output file should reside
     runlistener_arg = 'expected=' + _test_srcdir()
     # there should not be any unparsed arguments at this stage
