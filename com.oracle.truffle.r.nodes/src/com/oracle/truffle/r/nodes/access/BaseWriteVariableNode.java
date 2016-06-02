@@ -69,7 +69,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * replacement forms of vector updates where a vector is assigned to a temporary (visible)
      * variable and then, again, to the original variable (which would cause the vector to be copied
      * each time); (non-Javadoc)
-     * 
+     *
      * @see com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode#shareObjectValue(com.oracle.
      * truffle .api.frame.Frame, com.oracle.truffle.api.frame.FrameSlot, java.lang.Object,
      * com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode.Mode, boolean)
@@ -77,7 +77,6 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
     protected final Object shareObjectValue(Frame frame, FrameSlot frameSlot, Object value, Mode mode, boolean isSuper) {
         CompilerAsserts.compilationConstant(mode);
         CompilerAsserts.compilationConstant(isSuper);
-        Object newValue = value;
         // for the meaning of INVISIBLE mode see the comment preceding the current method;
         // also change state when assigning to the enclosing frame as there must
         // be a distinction between variables with the same name defined in
@@ -85,11 +84,17 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
         // x<-1:3; f<-function() { x[2]<-10; x[2]<<-100; x[2]<-1000 }; f()
         // or
         // x<-c(1); f<-function() { x[[1]]<<-x[[1]] + 1; x }; a<-f(); b<-f(); c(a,b)
-        if ((mode != Mode.INVISIBLE || isSuper) && !isCurrentProfile.profile(isCurrentValue(frame, frameSlot, value))) {
+        if ((mode != Mode.INVISIBLE || isSuper)) {
             if (isShareableProfile.profile(value instanceof RShareable)) {
+
+                // this comparison does not work consistently for boxing objects, so it's important
+                // to do the RShareable check first.
+                if (isCurrentProfile.profile(isCurrentValue(frame, frameSlot, value))) {
+                    return value;
+                }
                 RShareable rShareable = (RShareable) shareableProfile.profile(value);
                 if (mode == Mode.COPY) {
-                    newValue = rShareable.copy();
+                    return rShareable.copy();
                 } else {
                     if (isRefCountUpdateable.profile(!rShareable.isSharedPermanent())) {
                         if (isSuper) {
@@ -104,7 +109,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
                 }
             }
         }
-        return newValue;
+        return value;
     }
 
     private static boolean isCurrentValue(Frame frame, FrameSlot frameSlot, Object value) {

@@ -495,6 +495,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
         private final LookupResult lookup;
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
+        private final ConditionProfile nullValueProfile = kind == ReadKind.Silent ? null : ConditionProfile.createBinaryProfile();
 
         private LookupLevel(LookupResult lookup) {
             this.lookup = lookup;
@@ -509,7 +510,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
             } else {
                 value = lookup.getValue();
             }
-            if (kind != ReadKind.Silent && value == null) {
+            if (kind != ReadKind.Silent && nullValueProfile.profile(value == null)) {
                 throw RError.error(RError.SHOW_CALLER, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
             }
             return value;
