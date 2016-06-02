@@ -132,7 +132,7 @@ def _sanitize_vmArgs(jdk, vmArgs):
 
 def _graal_options(nocompile=False):
     if _mx_jvmci and not mx_jvm().get_vm().endswith('nojvmci'):
-        result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3']
+        result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
         if nocompile:
             result += ['-Dgraal.TruffleCompilationThreshold=100000']
         return result
@@ -232,59 +232,6 @@ def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
     run_r(args, 'rrepl')
 
-def process_bm_args(args):
-    '''
-    Analyze args for those specific to the rhome of this suite for benchmarks.
-    Return a dict with keys:
-      'suite': this suite
-      'printname': print name for suite
-      'args': non-rhome-specific args
-      'rhome_args: rhome-specific-args
-      'executor': function to execute a command using the rhome
-    Other keys can be stored based on the analysis
-    '''
-    def getVmArgValue(key, args, i):
-        if i < len(args) - 1:
-            return args[i + 1]
-        else:
-            mx.abort('value expected after ' + key)
-
-    non_rhome_args = []
-    rhome_args = []
-    rhome_args.append('-Xmx6g')
-    # This turns off all visibility support
-    rhome_args.append('-DR:+IgnoreVisibility')
-    # Evidently these options are specific to Graal but do_run_r filters inappropriate options
-    # if we are running under a different VM
-#    rhome_args.append('-Dgraal.TruffleCompilationExceptionsAreFatal=true')
-    rhome_args.append('-Dgraal.TraceTruffleCompilation=true')
-    rhome_args += ['-da', '-dsa']
-    error_args = []
-    i = 0
-    jdk = None
-    while i < len(args):
-        arg = args[i]
-        if arg == '--J':
-            argslist = mx.split_j_args([getVmArgValue(arg, args, i)])
-            rhome_args += argslist
-            i = i + 1
-        elif arg == '--jdk':
-            jdk = getVmArgValue(arg, args, i)
-            i = i + 1
-        elif args == '--print-internal-errors':
-            # Non-interactively we don't want exceptions going to fastr_errors.log
-            error_args = ['-DR:+PrintErrorStacktraces', '-DR:-PrintErrorStacktracesToFile']
-        else:
-            non_rhome_args.append(arg)
-        i = i + 1
-    return {'suite': _fastr_suite, 'printname': 'FastR',
-            'args': non_rhome_args, 'rhome-args': rhome_args + error_args,
-            'executor': _bm_runner,
-            'jdk': jdk}
-
-def _bm_runner(command, rhome_dict, out, err, nonZeroIsFatal=False):
-    return do_run_r(command, 'R', nonZeroIsFatal=False, extraVmArgs=rhome_dict['rhome-args'], jdk=rhome_dict['jdk'], out=out, err=out)
-
 def build(args):
     '''FastR build'''
     # workaround for Hotspot Mac OS X build problem
@@ -339,10 +286,7 @@ def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
     return join(mx.project(tp).dir, 'src', tp.replace('.', sep))
 
-def _junit_r_harness(args, vmArgs, junitArgs):
-    return _junit_r_harness_with_jdk(args, vmArgs, mx.get_jdk(), junitArgs)
-
-def _junit_r_harness_with_jdk(args, vmArgs, jdk, junitArgs):
+def _junit_r_harness(args, vmArgs, jdk, junitArgs):
     # always pass the directory where the expected output file should reside
     runlistener_arg = 'expected=' + _test_srcdir()
     # there should not be any unparsed arguments at this stage
@@ -416,7 +360,7 @@ def junit(args):
     if os.environ.has_key('R_PROFILE_USER'):
         mx.abort('unset R_PROFILE_USER before running unit tests')
 
-    return mx.junit(args, _junit_r_harness, parser=parser)
+    return mx.junit(args, _junit_r_harness, parser=parser, jdk_default = get_default_jdk())
 
 def junit_simple(args):
     return mx.command_function('junit')(['--tests', _simple_unit_tests()] + args)
