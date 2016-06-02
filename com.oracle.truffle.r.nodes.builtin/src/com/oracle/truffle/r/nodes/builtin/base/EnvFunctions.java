@@ -330,7 +330,8 @@ public class EnvFunctions {
         @Specialization(guards = "isRFormula(formula)")
         protected Object environment(RLanguage formula, //
                         @Cached("create()") RAttributeProfiles attrProfiles) {
-            return formula.getAttr(attrProfiles, RRuntime.DOT_ENVIRONMENT);
+            Object result = formula.getAttr(attrProfiles, RRuntime.DOT_ENVIRONMENT);
+            return result == null ? RNull.instance : result;
         }
 
         @Specialization(guards = {"!isRNull(fun)", "!isRFunction(fun)", "!isRFormula(fun)"})

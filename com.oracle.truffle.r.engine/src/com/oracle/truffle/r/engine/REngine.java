@@ -25,6 +25,7 @@ package com.oracle.truffle.r.engine;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.CallTarget;
@@ -55,7 +56,6 @@ import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.nodes.function.SubstituteVirtualFrame;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
@@ -71,6 +71,7 @@ import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
@@ -238,7 +239,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public Object parseAndEval(Source source, MaterializedFrame frame, boolean printResult) throws ParseException {
-        List<RSyntaxNode> list = parseImpl(source);
+        List<RSyntaxNode> list = parseImpl(null, source);
         try {
             Object lastValue = RNull.instance;
             for (RSyntaxNode node : list) {
@@ -267,29 +268,29 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
-    private static List<RSyntaxNode> parseImpl(Source source) throws ParseException {
+    private static List<RSyntaxNode> parseImpl(Map<String, Object> constants, Source source) throws ParseException {
         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
-        return parser.script(source, new RASTBuilder());
+        return parser.script(source, new RASTBuilder(constants));
     }
 
     @Override
-    public RExpression parse(Source source) throws ParseException {
-        List<RSyntaxNode> list = parseImpl(source);
+    public RExpression parse(Map<String, Object> constants, Source source) throws ParseException {
+        List<RSyntaxNode> list = parseImpl(constants, source);
         Object[] data = list.stream().map(node -> RASTUtils.createLanguageElement(node.asRNode())).toArray();
         return RDataFactory.createExpression(RDataFactory.createList(data));
     }
 
     @Override
-    public RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws ParseException {
+    public RFunction parseFunction(Map<String, Object> constants, String name, Source source, MaterializedFrame enclosingFrame) throws ParseException {
         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
-        RootCallTarget callTarget = parser.rootFunction(source, name, new RASTBuilder());
+        RootCallTarget callTarget = parser.rootFunction(source, name, new RASTBuilder(constants));
         FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
         return RDataFactory.createFunction(name, callTarget, null, enclosingFrame);
     }
 
     @Override
     public CallTarget parseToCallTarget(Source source) throws ParseException {
-        List<RSyntaxNode> statements = parseImpl(source);
+        List<RSyntaxNode> statements = parseImpl(null, source);
         return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements));
     }
 

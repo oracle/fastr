@@ -50,6 +50,7 @@ import com.oracle.truffle.r.library.stats.RunifNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
 import com.oracle.truffle.r.library.stats.StatsFunctionsFactory;
+import com.oracle.truffle.r.library.stats.StatsUtil;
 import com.oracle.truffle.r.library.tools.C_ParseRdNodeGen;
 import com.oracle.truffle.r.library.tools.DirChmodNodeGen;
 import com.oracle.truffle.r.library.tools.Rmd5NodeGen;
@@ -65,15 +66,18 @@ import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -197,6 +201,10 @@ public class ForeignFunctions {
             }
             return libName;
         }
+
+        protected static RExternalBuiltinNode getExternalModelBuiltinNode(String name) {
+            return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(StatsUtil.class, "model.R"), name);
+        }
     }
 
     /**
@@ -225,10 +233,10 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(RList f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, //
+        protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
-            return builtin.call(args);
+            return builtin.call(frame, args);
         }
 
         @Specialization(guards = "lookupBuiltin(symbol) == null")
@@ -493,10 +501,10 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(RList f, RArgsValuesAndNames args, RMissing packageName, //
+        protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
-            return builtin.call(args);
+            return builtin.call(frame, args);
         }
 
         @Specialization
@@ -554,6 +562,8 @@ public class ForeignFunctions {
                     return new ReadTableHead();
                 case "download":
                     return new Download();
+                case "termsform":
+                    return getExternalModelBuiltinNode("termsform");
                 case "unzip":
                 case "Rprof":
                 case "Rprofmem":
@@ -573,10 +583,10 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(RList f, RArgsValuesAndNames args, RMissing packageName, //
+        protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
-            return builtin.call(args);
+            return builtin.call(frame, args);
         }
 
         @Specialization
@@ -634,6 +644,9 @@ public class ForeignFunctions {
                     return TypeConvertNodeGen.create();
                 case "C_parseRd":
                     return C_ParseRdNodeGen.create();
+                case "modelmatrix":
+                case "modelframe":
+                    return getExternalModelBuiltinNode(name);
                 default:
                     return null;
             }
@@ -641,10 +654,10 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(RList f, RArgsValuesAndNames args, RMissing packageName, //
+        protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
-            return builtin.call(args);
+            return builtin.call(frame, args);
         }
 
         @Specialization
@@ -699,10 +712,10 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(RList f, RArgsValuesAndNames args, RMissing packageName, //
+        protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
-            return builtin.call(args);
+            return builtin.call(frame, args);
         }
 
         @Specialization
@@ -755,10 +768,10 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(RList f, RArgsValuesAndNames args, RMissing packageName, //
+        protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName, //
                         @Cached("f") RList cached, //
                         @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
-            return builtin.call(args);
+            return builtin.call(frame, args);
         }
 
         @Specialization

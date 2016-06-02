@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
+import com.oracle.truffle.r.runtime.RInternalCode.ContextStateImpl;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.RProfile;
@@ -257,7 +258,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * Denote whether the result of an expression should be printed in the shell or not. This value
      * will be modified by many operations like builtins, block statements, etc.
      */
-    private boolean resultVisible = true;
+    private boolean resultVisible = false;
 
     /**
      * A context-specific value that is checked in {@code HiddenInternalFunctions} to avoid an error
@@ -362,6 +363,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public final RSerialize.ContextStateImpl stateRSerialize;
     public final LazyDBCache.ContextStateImpl stateLazyDBCache;
     public final TraceState.ContextStateImpl stateTraceHandling;
+    public final ContextStateImpl stateInternalCode;
 
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize,
@@ -430,6 +432,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateRSerialize = RSerialize.ContextStateImpl.newContext(this);
         stateLazyDBCache = LazyDBCache.ContextStateImpl.newContext(this);
         stateTraceHandling = TraceState.newContext(this);
+        stateInternalCode = ContextStateImpl.newContext(this);
         engine.activate(stateREnvironment);
 
         if (info.getKind() == ContextKind.SHARE_PARENT_RW) {

@@ -316,6 +316,9 @@ public class TestBuiltin_deparse extends TestBase {
         // should deparse as structure(...
         assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
         assertEval("{ deparse(function (a1, a2, a3) if (!(a1 || a2) && a3) 42 else 7) }");
+
+        assertEval("unserialize(serialize(quote(!(a <- TRUE)), NULL))");
+        assertEval("unserialize(serialize(quote(a[a <- TRUE]), NULL))");
     }
 
     @Test

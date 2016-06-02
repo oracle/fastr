@@ -17,8 +17,6 @@ import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-//Transcribed from GnuR, src/main/print.c
-
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -37,6 +35,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+
+//Transcribed from GnuR, src/main/print.c
 
 final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
 
@@ -159,38 +159,9 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         final PrintParameters pp = printCtx.parameters();
         final PrintWriter out = printCtx.output();
 
-        class TagBuf {
-            final int tagStartMark = buffer().length();
-
-            private StringBuilder buffer() {
-                StringBuilder buf = (StringBuilder) printCtx.getAttribute(ListPrinter.class.getName());
-                if (buf == null) {
-                    buf = new StringBuilder();
-                    printCtx.setAttribute(ListPrinter.class.getName(), buf);
-                }
-                return buf;
-            }
-
-            int taglen() {
-                return buffer().length();
-            }
-
-            void appendTag(String tag) {
-                buffer().append(tag);
-            }
-
-            void removeTag() {
-                buffer().delete(tagStartMark, buffer().length());
-            }
-
-            @Override
-            public String toString() {
-                return buffer().toString();
-            }
-
-        }
-        final TagBuf tagbuf = new TagBuf();
-        int taglen = tagbuf.taglen();
+        final StringBuffer tagbuf = printCtx.getTagBuffer();
+        // save the original length so that we can restore the original value
+        int taglen = tagbuf.length();
 
         int ns = s.getLength();
 
@@ -212,7 +183,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                      */
                     if (taglen + ss.length() > TAGBUFLEN) {
                         if (taglen <= TAGBUFLEN) {
-                            tagbuf.appendTag("$...");
+                            tagbuf.append("$...");
                         }
                     } else {
                         /*
@@ -220,21 +191,21 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                          * non-syntactic) name
                          */
                         if (ss == RRuntime.STRING_NA) {
-                            tagbuf.appendTag("$<NA>");
+                            tagbuf.append("$<NA>");
                         } else if (RDeparse.isValidName(ss)) {
-                            tagbuf.appendTag(String.format("$%s", ss));
+                            tagbuf.append(String.format("$%s", ss));
                         } else {
-                            tagbuf.appendTag(String.format("$`%s`", ss));
+                            tagbuf.append(String.format("$`%s`", ss));
                         }
                     }
 
                 } else {
                     if (taglen + indexWidth(i) > TAGBUFLEN) {
                         if (taglen <= TAGBUFLEN) {
-                            tagbuf.appendTag("$...");
+                            tagbuf.append("$...");
                         }
                     } else {
-                        tagbuf.appendTag(String.format("[[%d]]", i + 1));
+                        tagbuf.append(String.format("[[%d]]", i + 1));
                     }
                 }
 
@@ -246,7 +217,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                     ValuePrinters.INSTANCE.println(si, printCtx);
                 }
 
-                tagbuf.removeTag();
+                tagbuf.setLength(taglen); // reset tag buffer to the original value
             }
 
             if (npr < ns) {

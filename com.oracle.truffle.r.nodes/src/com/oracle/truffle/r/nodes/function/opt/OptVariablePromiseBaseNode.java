@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -42,6 +43,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class OptVariablePromiseBaseNode extends PromiseNode implements EagerFeedback {
+    private final BranchProfile promiseCallerProfile = BranchProfile.create();
     private final ReadVariableNode originalRvn;
     @Child private FrameSlotNode frameSlotNode;
     @Child private RNode fallback = null;
@@ -95,6 +97,7 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
         // value won't be altered until 1. read
         RCaller call = RArguments.getCall(frame);
         while (call.isPromise()) {
+            promiseCallerProfile.enter();
             call = call.getParent();
         }
         if (result instanceof RPromise) {
