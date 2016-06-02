@@ -232,59 +232,6 @@ def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
     run_r(args, 'rrepl')
 
-def process_bm_args(args):
-    '''
-    Analyze args for those specific to the rhome of this suite for benchmarks.
-    Return a dict with keys:
-      'suite': this suite
-      'printname': print name for suite
-      'args': non-rhome-specific args
-      'rhome_args: rhome-specific-args
-      'executor': function to execute a command using the rhome
-    Other keys can be stored based on the analysis
-    '''
-    def getVmArgValue(key, args, i):
-        if i < len(args) - 1:
-            return args[i + 1]
-        else:
-            mx.abort('value expected after ' + key)
-
-    non_rhome_args = []
-    rhome_args = []
-    rhome_args.append('-Xmx6g')
-    # This turns off all visibility support
-    rhome_args.append('-DR:+IgnoreVisibility')
-    # Evidently these options are specific to Graal but do_run_r filters inappropriate options
-    # if we are running under a different VM
-#    rhome_args.append('-Dgraal.TruffleCompilationExceptionsAreFatal=true')
-    rhome_args.append('-Dgraal.TraceTruffleCompilation=true')
-    rhome_args += ['-da', '-dsa']
-    error_args = []
-    i = 0
-    jdk = None
-    while i < len(args):
-        arg = args[i]
-        if arg == '--J':
-            argslist = mx.split_j_args([getVmArgValue(arg, args, i)])
-            rhome_args += argslist
-            i = i + 1
-        elif arg == '--jdk':
-            jdk = getVmArgValue(arg, args, i)
-            i = i + 1
-        elif args == '--print-internal-errors':
-            # Non-interactively we don't want exceptions going to fastr_errors.log
-            error_args = ['-DR:+PrintErrorStacktraces', '-DR:-PrintErrorStacktracesToFile']
-        else:
-            non_rhome_args.append(arg)
-        i = i + 1
-    return {'suite': _fastr_suite, 'printname': 'FastR',
-            'args': non_rhome_args, 'rhome-args': rhome_args + error_args,
-            'executor': _bm_runner,
-            'jdk': jdk}
-
-def _bm_runner(command, rhome_dict, out, err, nonZeroIsFatal=False):
-    return do_run_r(command, 'R', nonZeroIsFatal=False, extraVmArgs=rhome_dict['rhome-args'], jdk=rhome_dict['jdk'], out=out, err=out)
-
 def build(args):
     '''FastR build'''
     # workaround for Hotspot Mac OS X build problem
@@ -339,7 +286,7 @@ def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
     return join(mx.project(tp).dir, 'src', tp.replace('.', sep))
 
-def _junit_r_harness(args, vmArgs, junitArgs):
+def _junit_r_harness(args, vmArgs, jdk, junitArgs):
     # always pass the directory where the expected output file should reside
     runlistener_arg = 'expected=' + _test_srcdir()
     # there should not be any unparsed arguments at this stage
@@ -395,9 +342,6 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     vmArgs += _graal_options(nocompile=True)
 
     setREnvironment()
-    jdk = args.jdk
-    if not jdk:
-        jdk = get_default_jdk()
     vmArgs = _sanitize_vmArgs(jdk, vmArgs)
 
     return mx.run_java(vmArgs + junitArgs, nonZeroIsFatal=False, jdk=jdk)
@@ -411,13 +355,12 @@ def junit(args):
     parser.add_argument('--check-expected-output', action='store_true', help='check but do not update expected test output file')
     parser.add_argument('--gen-fastr-output', action='store', metavar='<path>', help='generate FastR test output file')
     parser.add_argument('--gen-diff-output', action='store', metavar='<path>', help='generate difference test output file ')
-    parser.add_argument('--jdk', action='store', help='jdk to use')
     # parser.add_argument('--test-methods', action='store', help='pattern to match test methods in test classes')
 
     if os.environ.has_key('R_PROFILE_USER'):
         mx.abort('unset R_PROFILE_USER before running unit tests')
 
-    return mx.junit(args, _junit_r_harness, parser=parser)
+    return mx.junit(args, _junit_r_harness, parser=parser, jdk_default=get_default_jdk())
 
 def junit_simple(args):
     return mx.command_function('junit')(['--tests', _simple_unit_tests()] + args)
