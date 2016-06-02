@@ -59,7 +59,7 @@ public final class FrameSlotChangeMonitor {
      * result based on the system's knowledge about the hierarchy of environments and the stable
      * values of certain bindings. Most function lookups can be answered based only on this
      * information.
-     * 
+     *
      * These lookups are stored for caching and invalidation, i.e., to save on repeated lookups and
      * to invalidate lookups in case the environment hierarchy changes.
      */
@@ -458,18 +458,44 @@ public final class FrameSlotChangeMonitor {
             return stableValue != null;
         }
 
+        /*
+         * Special cases for primitive types to force value (instead of identity) comparison.
+         */
+
+        public void setValue(byte value, FrameSlot slot) {
+            if (stableValue != null && (!(stableValue.getValue() instanceof Byte) || ((byte) stableValue.getValue()) != value)) {
+                invalidateStableValue(value, slot);
+            }
+        }
+
+        public void setValue(int value, FrameSlot slot) {
+            if (stableValue != null && (!(stableValue.getValue() instanceof Integer) || ((int) stableValue.getValue()) != value)) {
+                invalidateStableValue(value, slot);
+            }
+        }
+
+        public void setValue(double value, FrameSlot slot) {
+            if (stableValue != null && (!(stableValue.getValue() instanceof Double) || ((double) stableValue.getValue()) != value)) {
+                invalidateStableValue(value, slot);
+            }
+        }
+
         public void setValue(Object value, FrameSlot slot) {
             if (stableValue != null && stableValue.getValue() != value) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                stableValue.getAssumption().invalidate();
-                if (invalidationCount > 0) {
-                    invalidationCount--;
-                    out("setting singleton value %s = %s", slot.getIdentifier(), value == null ? "null" : value.getClass());
-                    stableValue = new StableValue<>(value, String.valueOf(slot.getIdentifier()));
-                } else {
-                    out("setting non-singleton value %s", slot.getIdentifier());
-                    stableValue = null;
-                }
+                invalidateStableValue(value, slot);
+            }
+        }
+
+        private void invalidateStableValue(Object value, FrameSlot slot) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            stableValue.getAssumption().invalidate();
+            if (invalidationCount > 0) {
+                invalidationCount--;
+                out("setting singleton value %s = %s", slot.getIdentifier(), value == null ? "null" : value.getClass());
+                stableValue = new StableValue<>(value, String.valueOf(slot.getIdentifier()));
+            } else {
+                out("setting non-singleton value %s", slot.getIdentifier());
+                stableValue = null;
             }
         }
 
@@ -520,12 +546,8 @@ public final class FrameSlotChangeMonitor {
      *            {@link RInternalError} otherwise
      * @param invalidateProfile Used to guard the invalidation code.
      */
-    private static void checkAndInvalidate(Frame curFrame, FrameSlot slot, boolean isNonLocal, Object newValue, BranchProfile invalidateProfile) {
+    private static void checkAndInvalidate(Frame curFrame, FrameSlot slot, boolean isNonLocal, BranchProfile invalidateProfile) {
         assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
-        FrameSlotInfoImpl info = getFrameSlotInfo(slot);
-        if (info.needsInvalidation()) {
-            info.setValue(newValue, slot);
-        }
 
         if (getNotChangedNonLocallyAssumption(slot).isValid()) {
             // Check whether current frame is used outside a regular stack
@@ -542,22 +564,38 @@ public final class FrameSlotChangeMonitor {
 
     public static void setByteAndInvalidate(Frame frame, FrameSlot frameSlot, byte newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         frame.setByte(frameSlot, newValue);
-        checkAndInvalidate(frame, frameSlot, isNonLocal, newValue, invalidateProfile);
+        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+        if (info.needsInvalidation()) {
+            info.setValue(newValue, frameSlot);
+        }
+        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
     }
 
     public static void setIntAndInvalidate(Frame frame, FrameSlot frameSlot, int newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         frame.setInt(frameSlot, newValue);
-        checkAndInvalidate(frame, frameSlot, isNonLocal, newValue, invalidateProfile);
+        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+        if (info.needsInvalidation()) {
+            info.setValue(newValue, frameSlot);
+        }
+        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
     }
 
     public static void setDoubleAndInvalidate(Frame frame, FrameSlot frameSlot, double newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         frame.setDouble(frameSlot, newValue);
-        checkAndInvalidate(frame, frameSlot, isNonLocal, newValue, invalidateProfile);
+        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+        if (info.needsInvalidation()) {
+            info.setValue(newValue, frameSlot);
+        }
+        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
     }
 
     public static void setObjectAndInvalidate(Frame frame, FrameSlot frameSlot, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         frame.setObject(frameSlot, newValue);
-        checkAndInvalidate(frame, frameSlot, isNonLocal, newValue, invalidateProfile);
+        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+        if (info.needsInvalidation()) {
+            info.setValue(newValue, frameSlot);
+        }
+        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
     }
 
     /**
