@@ -181,7 +181,7 @@ public class PromiseHelperNode extends RBaseNode {
                 promise.setState(PromiseState.UnderEvaluation);
                 if (expressionInlineCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    expressionInlineCache = insert(InlineCacheNode.createExpression(FastROptions.PromiseCache.getBooleanValue() ? 3 : 0));
+                    expressionInlineCache = insert(InlineCacheNode.createExpression(FastROptions.PromiseCacheSize.getNonNegativeIntValue()));
                 }
                 return expressionInlineCache.execute(frame, promise.getRep());
             } else {
@@ -191,7 +191,7 @@ public class PromiseHelperNode extends RBaseNode {
 
                 if (promiseClosureCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseClosureCache = insert(InlineCacheNode.createPromise(FastROptions.PromiseCache.getBooleanValue() ? 3 : 0));
+                    promiseClosureCache = insert(InlineCacheNode.createPromise(FastROptions.PromiseCacheSize.getNonNegativeIntValue()));
                 }
                 promiseFrame = wrapPromiseFrame(frame, promiseFrame);
                 return promiseClosureCache.execute(promiseFrame, promise.getClosure());
