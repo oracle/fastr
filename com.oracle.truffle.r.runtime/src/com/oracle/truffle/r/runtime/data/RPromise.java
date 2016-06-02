@@ -249,7 +249,7 @@ public class RPromise implements RTypedValue {
      * originally read from has not been altered in the mean time. If this cannot be guaranteed for
      * any reason, a Promise gets {@link #deoptimize()} (which includes {@link #materialize()}ion).
      */
-    public static class EagerPromise extends RPromise {
+    public static class EagerPromiseBase extends RPromise {
         private final Object eagerValue;
 
         private final Assumption notChangedNonLocally;
@@ -263,7 +263,7 @@ public class RPromise implements RTypedValue {
          */
         private boolean deoptimized = false;
 
-        EagerPromise(PromiseState state, Closure closure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, int wrapIndex) {
+        EagerPromiseBase(PromiseState state, Closure closure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, int wrapIndex) {
             super(state, (MaterializedFrame) null, closure);
             assert state != PromiseState.Explicit;
             this.eagerValue = eagerValue;
@@ -321,10 +321,19 @@ public class RPromise implements RTypedValue {
     }
 
     /**
-     * It's a variant of an {@link EagerPromise} used to store another promise, distinguished mostly
-     * for accounting purposes.
+     * This is a "proper" eager promise.
      */
-    public static final class PromisedPromise extends EagerPromise {
+    public static final class EagerPromise extends EagerPromiseBase {
+        EagerPromise(PromiseState state, Closure closure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, int wrapIndex) {
+            super(state, closure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex);
+        }
+    }
+
+    /**
+     * It's a variant of an eager promise used to store another promise, distinguished mostly for
+     * accounting purposes.
+     */
+    public static final class PromisedPromise extends EagerPromiseBase {
 
         PromisedPromise(Closure closure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback) {
             super(PromiseState.Promised, closure, eagerValue, notChangedNonLocally, targetFrame, feedback, -1);
