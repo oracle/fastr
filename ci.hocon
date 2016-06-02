@@ -13,6 +13,13 @@ common : {
   }
   environment : {
   }
+  logs : [
+    "com.oracle.truffle.r.native/gnur/R-*/gnur_configure.log"
+    "com.oracle.truffle.r.native/gnur/R-*/gnur_make.log"
+    "com.oracle.truffle.r.native/gnur/R-*/Makeconf"
+    "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_configure.log"
+    "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_make.log"
+  ]
   timelimit : "1:00:00"
 }
 
