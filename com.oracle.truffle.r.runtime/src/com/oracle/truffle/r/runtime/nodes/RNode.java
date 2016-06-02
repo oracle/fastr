@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
@@ -290,11 +289,7 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
 
     protected static boolean isRFormula(Object value) {
         if (value instanceof RLanguage) {
-            RAttributes attrs = ((RLanguage) value).getAttributes();
-            if (attrs != null) {
-                RStringVector klass = (RStringVector) attrs.get(RRuntime.CLASS_ATTR_KEY);
-                return klass.getDataAt(0).equals(RRuntime.FORMULA_CLASS);
-            }
+            return ((RAttributable) value).hasClass(RRuntime.FORMULA_CLASS);
         }
         return false;
     }

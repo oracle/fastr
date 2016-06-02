@@ -28,7 +28,7 @@ import org.junit.Test;
 import com.oracle.truffle.r.test.TestBase;
 
 /**
- * Tests {@link com.oracle.truffle.r.nodes.access.vector.CachedReplaceVectorNode} special handling
+ * Tests {@code com.oracle.truffle.r.nodes.access.vector.CachedReplaceVectorNode} special handling
  * for Language objects.
  */
 public class TestBuiltin_extract_dollar_assign_language extends TestBase {

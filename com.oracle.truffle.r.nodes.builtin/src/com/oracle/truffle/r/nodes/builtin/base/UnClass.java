@@ -38,7 +38,6 @@ public abstract class UnClass extends RBuiltinNode {
             RVector resultVector = arg.materialize();
             if (!resultVector.isTemporary()) {
                 resultVector = resultVector.copy();
-                assert resultVector.isTemporary();
                 resultVector.incRefCount();
             }
             return RVector.setVectorClassAttr(resultVector, null);
@@ -53,7 +52,6 @@ public abstract class UnClass extends RBuiltinNode {
             RLanguage resultLang = arg;
             if (!resultLang.isTemporary()) {
                 resultLang = resultLang.copy();
-                resultLang.isTemporary();
                 resultLang.incRefCount();
             }
             resultLang.removeAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
@@ -69,7 +67,6 @@ public abstract class UnClass extends RBuiltinNode {
             RS4Object resultS4 = arg;
             if (!resultS4.isTemporary()) {
                 resultS4 = resultS4.copy();
-                resultS4.isTemporary();
                 resultS4.incRefCount();
             }
             resultS4.removeAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);

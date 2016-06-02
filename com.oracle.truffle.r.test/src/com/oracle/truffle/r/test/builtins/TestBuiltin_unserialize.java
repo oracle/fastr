@@ -42,5 +42,6 @@ public class TestBuiltin_unserialize extends TestBase {
     public void testserializeAndUnserializeClosure() {
         // N.B.: FastR does not preserve code formatting like GNU R does
         assertEval(Ignored.OutputFormatting, "unserialize(serialize(function (x) { x }, NULL))");
+        assertEval("f <- function() x; e <- new.env(); e$x <- 123; environment(f) <- e; expr <- substitute({ FUN() }, list(FUN=f)); eval(expr); expr <- unserialize(serialize(expr, NULL)); eval(expr)");
     }
 }
