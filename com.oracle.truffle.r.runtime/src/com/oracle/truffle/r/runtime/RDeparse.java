@@ -675,6 +675,9 @@ public class RDeparse {
             if (func != null) {
                 PPInfo arginfo = func.info;
                 switch (arginfo.kind) {
+                    case ASSIGN:
+                        needsParens = true;
+                        break;
                     case BINARY:
                     case BINARY2:
                         RSyntaxElement[] subArgs = ((RSyntaxCall) arg).getSyntaxArguments();
