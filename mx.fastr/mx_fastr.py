@@ -70,6 +70,13 @@ _repl_command = 'com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient'
 _command_class_dict = {'r': _r_command_project + ".shell.RCommand",
                        'rscript': _r_command_project + ".shell.RscriptCommand",
                         'rrepl': _repl_command}
+# benchmarking support
+def r_path():
+    return join(_fastr_suite.dir, 'bin', 'R')
+
+def r_version():
+    # Could figure this out dynamically
+    return 'R-3.2.4'
 
 def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     '''
