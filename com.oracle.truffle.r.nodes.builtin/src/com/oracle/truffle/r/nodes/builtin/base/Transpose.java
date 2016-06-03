@@ -63,14 +63,12 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization(guards = "isEmpty2D(vector)")
-    @TruffleBoundary
     protected RAbstractVector transpose(RAbstractVector vector) {
         int[] dim = vector.getDimensions();
         return vector.copyWithNewDimensions(new int[]{dim[1], dim[0]});
     }
 
     @Specialization(guards = "!isEmpty2D(vector)")
-    @TruffleBoundary
     protected RIntVector transpose(RAbstractIntVector vector) {
         return performAbstractIntVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
@@ -97,7 +95,6 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isEmpty2D(vector)")
-    @TruffleBoundary
     protected RDoubleVector transpose(RAbstractDoubleVector vector) {
         return performAbstractDoubleVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
@@ -124,7 +121,6 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isEmpty2D(vector)")
-    @TruffleBoundary
     protected RStringVector transpose(RAbstractStringVector vector) {
         return performAbstractStringVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
