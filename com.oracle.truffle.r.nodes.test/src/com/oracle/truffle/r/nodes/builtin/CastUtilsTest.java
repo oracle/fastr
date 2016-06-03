@@ -51,7 +51,7 @@ public class CastUtilsTest {
         argTypeSets.add(TypeExpr.union(Integer.class, RInteger.class));
         argTypeSets.add(TypeExpr.union(Double.class, RDouble.class));
 
-        Set<List<Type>> powerSet = CastUtils.argumentPowerSet(argTypeSets);
+        Set<List<Type>> powerSet = CastUtils.argumentProductSet(argTypeSets);
         Assert.assertEquals(4, powerSet.size());
         Assert.assertTrue(powerSet.contains(Arrays.asList(Integer.class, Double.class)));
         Assert.assertTrue(powerSet.contains(Arrays.asList(RInteger.class, Double.class)));

@@ -50,6 +50,7 @@ public interface ArgumentFilter<T, R> {
 
     interface ArgumentValueFilter<T> extends NarrowingArgumentFilter<T, T> {
 
+        @SuppressWarnings("overloads")
         default ArgumentValueFilter<T> and(ArgumentValueFilter<T> other) {
             return new ArgumentValueFilter<T>() {
 
@@ -66,6 +67,7 @@ public interface ArgumentFilter<T, R> {
             };
         }
 
+        @SuppressWarnings("overloads")
         default <S extends T> ArgumentTypeFilter<T, S> and(ArgumentTypeFilter<T, S> other) {
             return new ArgumentTypeFilter<T, S>() {
 
@@ -96,6 +98,7 @@ public interface ArgumentFilter<T, R> {
 
     interface ArgumentTypeFilter<T, R extends T> extends NarrowingArgumentFilter<T, R> {
 
+        @SuppressWarnings("overloads")
         default <S extends R> ArgumentTypeFilter<T, S> and(ArgumentTypeFilter<R, S> other) {
             return new ArgumentTypeFilter<T, S>() {
 
@@ -113,6 +116,7 @@ public interface ArgumentFilter<T, R> {
             };
         }
 
+        @SuppressWarnings("overloads")
         default ArgumentTypeFilter<T, R> and(ArgumentValueFilter<R> other) {
             return new ArgumentTypeFilter<T, R>() {
 
@@ -152,6 +156,7 @@ public interface ArgumentFilter<T, R> {
             return orig;
         }
 
+        @SuppressWarnings("overloads")
         public <S extends T> ArgumentTypeFilter<T, S> and(ArgumentTypeFilter<T, S> other) {
             return new ArgumentTypeFilter<T, S>() {
 
@@ -169,6 +174,7 @@ public interface ArgumentFilter<T, R> {
             };
         }
 
+        @SuppressWarnings("overloads")
         public <S extends T> ArgumentValueFilter<S> and(ArgumentValueFilter<S> other) {
             return new ArgumentValueFilter<S>() {
 

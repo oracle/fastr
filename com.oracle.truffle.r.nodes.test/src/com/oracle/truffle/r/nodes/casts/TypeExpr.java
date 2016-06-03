@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.nodes.casts.CastUtils.Cast;
@@ -63,6 +64,13 @@ public final class TypeExpr {
 
     public TypeExpr map(Function<Type, Type> typeMapper) {
         Set<Set<? extends Type>> newDisjNormForm = disjNormForm.stream().map(conj -> conj.stream().map(typeMapper).collect(Collectors.toSet())).collect(Collectors.toSet());
+        return new TypeExpr(newDisjNormForm);
+    }
+
+    public TypeExpr filter(Predicate<Type> filterPred) {
+        Set<Set<? extends Type>> newDisjNormForm = disjNormForm.stream().map(conjSet -> {
+            return conjSet.stream().filter(filterPred).collect(Collectors.toSet());
+        }).filter(newConjSet -> !newConjSet.isEmpty()).collect(Collectors.toSet());
         return new TypeExpr(newDisjNormForm);
     }
 

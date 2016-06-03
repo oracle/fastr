@@ -419,13 +419,13 @@ public class CastUtils {
 
     }
 
-    public static Set<List<Type>> argumentPowerSet(List<TypeExpr> argTypeSets) {
+    public static Set<List<Type>> argumentProductSet(List<TypeExpr> argTypeSets) {
         if (argTypeSets.isEmpty()) {
             return Collections.emptySet();
         } else if (argTypeSets.size() == 1) {
             return argTypeSets.get(0).normalize().stream().map((Type t) -> Collections.singletonList(t)).collect(Collectors.toSet());
         } else {
-            Set<List<Type>> tailPowerSet = argumentPowerSet(argTypeSets.subList(1, argTypeSets.size()));
+            Set<List<Type>> tailPowerSet = argumentProductSet(argTypeSets.subList(1, argTypeSets.size()));
             TypeExpr headArgSet = argTypeSets.get(0);
             Set<List<Type>> resultSet = new HashSet<>();
             for (Type headType : headArgSet.normalize()) {
@@ -682,6 +682,7 @@ public class CastUtils {
         return samples;
     }
 
+    @SuppressWarnings("varargs")
     @SafeVarargs
     public static <T> Set<? extends T> samples(T samplesHead, T... samplesTail) {
         HashSet<T> sampleSet = new HashSet<>(Arrays.asList(samplesTail));

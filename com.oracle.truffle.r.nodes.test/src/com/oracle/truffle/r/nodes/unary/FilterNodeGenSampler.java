@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.PredefFilters;
 import com.oracle.truffle.r.nodes.casts.ArgumentFilterSampler;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.CastUtils;

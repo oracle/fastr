@@ -429,6 +429,24 @@ def rbcheck(args):
     args.append(mx.primary_suite().dir)
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.RBuiltinCheck'] + args)
 
+def rbdiag(args):
+    '''Diagnoses FastR builtins
+
+	-v	Verbose output including the list of unimplemented specializations
+	-n	Ignore RNull as an argument type
+	-m	Ignore RMissing as an argument type
+	
+	If no builtin is specified, all registered builtins are diagnosed.
+	
+	Examples:
+	
+    	mx rbdiag
+		mx rbdiag colSums colMeans -v
+		mx rbdiag scan -m -n
+    '''
+    cp = mx.classpath('com.oracle.truffle.r.nodes.test')
+    mx.run_java(['-cp', cp, 'com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics'] + args)
+
 def rcmplib(args):
     '''compare FastR library R sources against GnuR'''
     parser = ArgumentParser(prog='mx rcmplib')
@@ -482,6 +500,7 @@ _commands = {
     'junitnoapps' : [junit_noapps, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
+    'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m]'],
     'rcmplib' : [rcmplib, ['options']],
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'rrepl' : [rrepl, '[options]'],

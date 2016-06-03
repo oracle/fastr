@@ -139,7 +139,7 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
 
     interface ArgumentTypeFilterSampler<T, R extends T> extends ArgumentTypeFilter<T, R>, NarrowingArgumentFilterSampler<T, R> {
 
-        default <S extends R> ArgumentTypeFilter<T, S> and(ArgumentTypeFilter<R, S> o) {
+        default <S extends R> ArgumentTypeFilterSampler<T, S> and(ArgumentTypeFilter<R, S> o) {
             final ArgumentTypeFilterSampler<R, S> other = (ArgumentTypeFilterSampler<R, S>) o;
 
             return new ArgumentTypeFilterSampler<T, S>() {
@@ -189,8 +189,8 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
             };
         }
 
-        default InverseArgumentFilter<T, R> not() {
-            return new InverseArgumentFilter<>(this);
+        default InverseArgumentFilterSampler<T, R> not() {
+            return new InverseArgumentFilterSampler<>(this);
         }
 
     }
