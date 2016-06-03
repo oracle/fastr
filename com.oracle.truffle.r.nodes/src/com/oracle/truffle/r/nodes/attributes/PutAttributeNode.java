@@ -55,6 +55,10 @@ public abstract class PutAttributeNode extends RBaseNode {
         return PutAttributeNodeGen.create(RRuntime.DIM_ATTR_KEY);
     }
 
+    public static PutAttributeNode createDimNames() {
+        return PutAttributeNodeGen.create(RRuntime.DIMNAMES_ATTR_KEY);
+    }
+
     public abstract void execute(RAttributes attr, Object value);
 
     protected boolean nameMatches(RAttributes attr, int index) {
