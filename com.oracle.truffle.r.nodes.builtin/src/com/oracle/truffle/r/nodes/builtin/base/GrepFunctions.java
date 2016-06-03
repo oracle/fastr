@@ -574,6 +574,7 @@ public class GrepFunctions {
             for (int i = 0; i < vector.getLength(); i++) {
                 result[i] = findIndex(pattern, vector.getDataAt(i), ignoreCase, fixedL == RRuntime.LOGICAL_TRUE).get(0);
             }
+            // TODO attribute as per spec
             return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
         }
 
@@ -614,13 +615,15 @@ public class GrepFunctions {
         @TruffleBoundary
         @Override
         protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCaseL, byte perlL, byte fixedL, byte useBytesL) {
-            checkExtraArgs(RRuntime.LOGICAL_FALSE, perlL, fixedL, useBytesL, RRuntime.LOGICAL_FALSE);
+            checkExtraArgs(RRuntime.LOGICAL_FALSE, perlL, RRuntime.LOGICAL_FALSE, useBytesL, RRuntime.LOGICAL_FALSE);
             boolean ignoreCase = RRuntime.fromLogical(ignoreCaseL);
             String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
+            boolean fixed = RRuntime.fromLogical(fixedL);
             Object[] result = new Object[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
-                int[] data = toIntArray(findIndex(pattern, vector.getDataAt(i), ignoreCase, true));
+                int[] data = toIntArray(findIndex(pattern, vector.getDataAt(i), ignoreCase, fixed));
                 result[i] = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+                // TODO attributes as per spec
             }
             return RDataFactory.createList(result);
         }
