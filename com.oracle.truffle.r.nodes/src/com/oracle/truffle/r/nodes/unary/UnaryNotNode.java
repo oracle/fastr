@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -62,6 +63,10 @@ public abstract class UnaryNotNode extends RBuiltinNode {
 
     private static byte not(double operand) {
         return RRuntime.asLogical(operand == 0);
+    }
+
+    private static byte not(RComplex operand) {
+        return RRuntime.asLogical(operand.getRealPart() == 0 && operand.getImaginaryPart() == 0);
     }
 
     private static byte notRaw(RRaw operand) {
@@ -146,6 +151,25 @@ public abstract class UnaryNotNode extends RBuiltinNode {
     }
 
     @Specialization
+    protected RLogicalVector doComplexVector(RAbstractComplexVector vector) {
+        int length = vector.getLength();
+        byte[] result;
+        if (zeroLengthProfile.profile(length == 0)) {
+            result = new byte[0];
+        } else {
+            na.enable(vector);
+            result = new byte[length];
+            for (int i = 0; i < length; i++) {
+                RComplex value = vector.getDataAt(i);
+                result[i] = na.check(value) ? RRuntime.LOGICAL_NA : not(value);
+            }
+        }
+        RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
+        resultVector.copyNamesDimsDimNamesFrom(attrProfiles, vector, this);
+        return resultVector;
+    }
+
+    @Specialization
     protected RRawVector doRawVector(RRawVector vector) {
         int length = vector.getLength();
         byte[] result;
@@ -164,11 +188,6 @@ public abstract class UnaryNotNode extends RBuiltinNode {
 
     @Specialization(guards = {"vector.getLength() == 0"})
     protected RLogicalVector doStringVector(@SuppressWarnings("unused") RAbstractStringVector vector) {
-        return RDataFactory.createEmptyLogicalVector();
-    }
-
-    @Specialization(guards = {"vector.getLength() == 0"})
-    protected RLogicalVector doComplexVector(@SuppressWarnings("unused") RAbstractComplexVector vector) {
         return RDataFactory.createEmptyLogicalVector();
     }
 
