@@ -68,6 +68,7 @@ public class TestSimpleIfEvaluator extends TestBase {
         assertEval("{ if (FALSE==1) TRUE else FALSE }");
         assertEval("{ f <- function(v) { if (FALSE==v) TRUE else FALSE } ; f(TRUE) ; f(1) }");
         assertEval(Output.ContainsError, Output.ContainsWarning, "{ x<-list(1,2); if (x) 7 else 42 }");
+        assertEval("{ if (!(7+42i)) TRUE else FALSE }");
     }
 
     @Test
