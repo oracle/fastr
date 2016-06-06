@@ -51,7 +51,7 @@ public class TestBuiltin_eval extends TestBase {
     @Test
     public void testWithEnvirAndEnclose() {
         // note: symbol 'list' is from base environment
-        assertEval(Output.ContainsError, "a <- 1; lang <- quote(list(a)); eval(lang, data.frame(), NULL)");
+        assertEval("a <- 1; lang <- quote(list(a)); eval(lang, data.frame(), NULL)");
         assertEval("a <- 1; lang <- quote(list(a)); eval(lang, NULL, NULL)");
         assertEval("a <- 1; lang <- quote(list(a)); eval(lang, new.env(), new.env())");
     }
