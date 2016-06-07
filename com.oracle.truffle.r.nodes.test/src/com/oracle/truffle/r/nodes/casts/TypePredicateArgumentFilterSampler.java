@@ -53,6 +53,7 @@ public class TypePredicateArgumentFilterSampler<T, R extends T> extends TypePred
         return allowedTypes;
     }
 
+    @Override
     public Samples<R> collectSamples(Samples<? extends R> downStreamSamples) {
         Set<R> allowedPositiveValues = downStreamSamples.positiveSamples().stream().filter(x -> test(x)).collect(Collectors.toSet());
         Set<R> forbiddenPositiveValues = downStreamSamples.positiveSamples().stream().filter(x -> !test(x)).collect(Collectors.toSet());

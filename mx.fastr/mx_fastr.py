@@ -435,11 +435,11 @@ def rbdiag(args):
 	-v	Verbose output including the list of unimplemented specializations
 	-n	Ignore RNull as an argument type
 	-m	Ignore RMissing as an argument type
-	
+
 	If no builtin is specified, all registered builtins are diagnosed.
-	
+
 	Examples:
-	
+
     	mx rbdiag
 		mx rbdiag colSums colMeans -v
 		mx rbdiag scan -m -n

@@ -33,32 +33,39 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 public final class PredefMappersSamplers implements PredefMappers {
 
+    @Override
     public ValuePredicateArgumentMapperSampler<Byte, Boolean> toBoolean() {
         return ValuePredicateArgumentMapperSampler.fromLambda(x -> RRuntime.fromLogical(x), x -> RRuntime.asLogical(x), Boolean.class);
     }
 
+    @Override
     public ValuePredicateArgumentMapperSampler<String, Integer> charAt0(int defaultValue) {
         final ConditionProfile profile = ConditionProfile.createBinaryProfile();
         return ValuePredicateArgumentMapperSampler.fromLambda(x -> profile.profile(x == null || x.isEmpty()) ? defaultValue : (int) x.charAt(0),
                         x -> x == null ? "" + (char) defaultValue : "" + (char) x.intValue(), Integer.class);
     }
 
+    @Override
     public ValuePredicateArgumentMapperSampler<String, String> constant(String s) {
         return ValuePredicateArgumentMapperSampler.<String, String> fromLambda((String x) -> s, (String x) -> null, samples(s), CastUtils.<String> samples(), String.class);
     }
 
+    @Override
     public ValuePredicateArgumentMapperSampler<Integer, Integer> constant(int i) {
         return ValuePredicateArgumentMapperSampler.fromLambda(x -> i, x -> null, samples(i), CastUtils.<Integer> samples(), Integer.class);
     }
 
+    @Override
     public ValuePredicateArgumentMapperSampler<Double, Double> constant(double d) {
         return ValuePredicateArgumentMapperSampler.fromLambda(x -> d, x -> null, samples(d), CastUtils.<Double> samples(), Double.class);
     }
 
+    @Override
     public ValuePredicateArgumentMapperSampler<Byte, Byte> constant(byte l) {
         return ValuePredicateArgumentMapperSampler.fromLambda(x -> l, x -> null, samples(l), CastUtils.<Byte> samples(), Byte.class);
     }
 
+    @Override
     public <T> ArgumentMapperSampler<T, T> defaultValue(T defVal) {
 
         assert (defVal != null);
@@ -69,6 +76,7 @@ public final class PredefMappersSamplers implements PredefMappers {
 
             final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
+            @Override
             public T map(T arg) {
                 if (profile.profile(arg == RNull.instance || arg == null)) {
                     return defVal;
@@ -77,10 +85,12 @@ public final class PredefMappersSamplers implements PredefMappers {
                 }
             }
 
+            @Override
             public TypeExpr resultTypes() {
                 return defType;
             }
 
+            @Override
             public Samples<T> collectSamples(Samples<T> downStreamSamples) {
                 HashSet<T> posSamples = new HashSet<>(downStreamSamples.positiveSamples());
                 posSamples.add(defVal);

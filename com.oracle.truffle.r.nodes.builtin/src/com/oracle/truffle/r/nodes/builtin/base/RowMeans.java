@@ -38,17 +38,11 @@ public abstract class RowMeans extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("m").asIntegerVector().
-                        findFirst().
-                        notNA();
+        casts.arg("m").asIntegerVector().findFirst().notNA();
 
-        casts.arg("n").asIntegerVector().
-                        findFirst().
-                        notNA();
+        casts.arg("n").asIntegerVector().findFirst().notNA();
 
-        casts.arg("na.rm").asLogicalVector().
-                        findFirst().
-                        map(toBoolean());
+        casts.arg("na.rm").asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Specialization(guards = "!naRm")

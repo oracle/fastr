@@ -38,13 +38,9 @@ public abstract class Bincode extends RBuiltinNode {
 
         casts.arg("breaks").asDoubleVector();
 
-        casts.arg("right").asLogicalVector().
-                        findFirst().
-                        map(toBoolean());
+        casts.arg("right").asLogicalVector().findFirst().map(toBoolean());
 
-        casts.arg("include.lowest").asLogicalVector().
-                        findFirst().
-                        map(toBoolean());
+        casts.arg("include.lowest").asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Specialization

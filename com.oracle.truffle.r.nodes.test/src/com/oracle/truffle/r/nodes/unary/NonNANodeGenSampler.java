@@ -54,11 +54,7 @@ public class NonNANodeGenSampler extends CastNodeSampler<NonNANodeGen> {
             defaultNegativeSamples = Collections.emptySet();
             defaultPositiveSamples = Collections.singleton(naReplacement);
         } else {
-            defaultNegativeSamples = inputTypes.normalize().stream().
-                            filter(t -> t instanceof Class).
-                            map(t -> CastUtils.naValue((Class<?>) t)).
-                            filter(x -> x != null).
-                            collect(Collectors.toSet());
+            defaultNegativeSamples = inputTypes.normalize().stream().filter(t -> t instanceof Class).map(t -> CastUtils.naValue((Class<?>) t)).filter(x -> x != null).collect(Collectors.toSet());
             defaultPositiveSamples = Collections.emptySet();
         }
 

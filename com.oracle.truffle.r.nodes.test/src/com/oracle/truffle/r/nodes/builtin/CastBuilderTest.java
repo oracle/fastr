@@ -400,7 +400,8 @@ public class CastBuilderTest {
     @Test
     public void testSample4() {
         // the predicate is attached to the error message
-        cb.arg(0).mustBe(ValuePredicateArgumentFilterSampler.omLambdaWithResTypes(x -> x instanceof RAbstractIntVector || x instanceof Integer, Object.class), Message.SEED_NOT_VALID_INT).asIntegerVector();
+        cb.arg(0).mustBe(ValuePredicateArgumentFilterSampler.omLambdaWithResTypes(x -> x instanceof RAbstractIntVector || x instanceof Integer, Object.class),
+                        Message.SEED_NOT_VALID_INT).asIntegerVector();
         testPipeline();
 
         cast(RDataFactory.createIntVector(new int[]{1, 2}, true));
@@ -416,13 +417,9 @@ public class CastBuilderTest {
     public void testSample5() {
         ArgumentTypeFilter<Object, Object> complexOrExpr = integerValue().or(doubleValue()).or(complexValue()).or(logicalValue());
         Assert.assertTrue(complexOrExpr instanceof ArgumentFilterSampler);
-        cb.arg(0).defaultError(RError.Message.INVALID_ARGUMENT, "fill").
-                        mustBe(numericValue().or(logicalValue())).
-                        asVector().
-                        mustBe(singleElement()).
-                        findFirst().
-                        shouldBe(ValuePredicateArgumentFilterSampler.omLambdaWithResTypes(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0), Message.NON_POSITIVE_FILL).
-                        mapIf(scalarLogicalValue(), toBoolean());
+        cb.arg(0).defaultError(RError.Message.INVALID_ARGUMENT, "fill").mustBe(numericValue().or(logicalValue())).asVector().mustBe(singleElement()).findFirst().shouldBe(
+                        ValuePredicateArgumentFilterSampler.omLambdaWithResTypes(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0), Message.NON_POSITIVE_FILL).mapIf(
+                                        scalarLogicalValue(), toBoolean());
         testPipeline();
 
         assertEquals(true, cast(RRuntime.LOGICAL_TRUE));
@@ -451,9 +448,7 @@ public class CastBuilderTest {
 
     @Test
     public void testSample6() {
-        cb.arg(0).map(defaultValue(RDataFactory.createStringVector(0))).
-                        mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "labels").
-                        asStringVector();
+        cb.arg(0).map(defaultValue(RDataFactory.createStringVector(0))).mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "labels").asStringVector();
         testPipeline();
 
         assertEquals("abc", cast("abc"));
@@ -485,9 +480,7 @@ public class CastBuilderTest {
 
     @Test
     public void testSample7() {
-        cb.arg(0, "justify").asIntegerVector().
-                        findFirst().
-                        mustBe(gte(2).and(lte(5)).not());
+        cb.arg(0, "justify").asIntegerVector().findFirst().mustBe(gte(2).and(lte(5)).not());
 
         testPipeline(true);
 
@@ -533,10 +526,10 @@ public class CastBuilderTest {
             }
         }
 
-// RootCallTarget builtinNodeCallTarget = Truffle.getRuntime().createCallTarget(new
-// RBuiltinRootNode(builtinNode));
-// builtinNodeCallTarget.call(RArguments.createUnitialized(RDataFactory.createIntVector(new
-// int[]{1}, true), 1, 1, 1));
+        // RootCallTarget builtinNodeCallTarget = Truffle.getRuntime().createCallTarget(new
+        // RBuiltinRootNode(builtinNode));
+        // builtinNodeCallTarget.call(RArguments.createUnitialized(RDataFactory.createIntVector(new
+        // int[]{1}, true), 1, 1, 1));
     }
 
     private Object cast(Object arg) {
@@ -552,13 +545,13 @@ public class CastBuilderTest {
     private void testPipeline(boolean positiveMustNotBeEmpty) {
         CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(cb.getCasts()[0]);
         System.out.println(sampler);
-// Samples<?> samples = sampler.collectSamples();
-//
-// if (positiveMustNotBeEmpty) {
-// Assert.assertFalse(samples.positiveSamples().isEmpty());
-// }
-//
-// testPipeline(samples);
+        // Samples<?> samples = sampler.collectSamples();
+        //
+        // if (positiveMustNotBeEmpty) {
+        // Assert.assertFalse(samples.positiveSamples().isEmpty());
+        // }
+        //
+        // testPipeline(samples);
     }
 
     private void testPipeline(Samples<?> samples) {

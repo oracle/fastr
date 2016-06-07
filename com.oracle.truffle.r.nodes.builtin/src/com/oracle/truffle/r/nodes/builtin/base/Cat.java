@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -79,22 +78,13 @@ public abstract class Cat extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("sep").mustBe(stringValue(), RError.Message.INVALID_SEP);
 
-        casts.arg("fill").mustBe(numericValue()).
-                        asVector().
-                        mustBe(singleElement()).
-                        findFirst().
-                        mustBe(nullValue().not()).
-                        shouldBe(instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())), Message.NON_POSITIVE_FILL).
-                        mapIf(scalarLogicalValue(), asBoolean(), asInteger());
+        casts.arg("fill").mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())),
+                        Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(), asInteger());
 
-        casts.arg("labels").map(defaultValue(RDataFactory.createStringVector(0))).
-                        mustBe(stringValue()).
-                        asStringVector();
+        casts.arg("labels").map(defaultValue(RDataFactory.createStringVector(0))).mustBe(stringValue()).asStringVector();
 
         // append is interpreted in the calling closure, but GnuR still checks for NA
-        casts.arg("append").asLogicalVector().
-                        findFirst().
-                        map(toBoolean());
+        casts.arg("append").asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Specialization

@@ -155,9 +155,7 @@ public final class RBuiltinDiagnostics {
     private static Set<List<Type>> combineArguments(List<TypeExpr> argResultSets, HashMap<Method, List<Set<Cast>>> convResultTypePerSpec) {
         Set<List<Type>> specPowerSetCombined = new HashSet<>();
         for (Map.Entry<Method, List<Set<Cast>>> entry : convResultTypePerSpec.entrySet()) {
-            List<TypeExpr> actualArgTypeSets = entry.getValue().stream().
-                            map(argCasts -> Casts.inputsAsTypeExpr(argCasts)).
-                            collect(Collectors.toList());
+            List<TypeExpr> actualArgTypeSets = entry.getValue().stream().map(argCasts -> Casts.inputsAsTypeExpr(argCasts)).collect(Collectors.toList());
             Set<List<Type>> specPowerSet = CastUtils.argumentProductSet(actualArgTypeSets);
             specPowerSetCombined.addAll(specPowerSet);
         }

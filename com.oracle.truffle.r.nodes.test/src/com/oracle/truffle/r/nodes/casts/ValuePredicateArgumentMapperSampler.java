@@ -43,6 +43,7 @@ public class ValuePredicateArgumentMapperSampler<T, R> extends ValuePredicateArg
         this.negativeSamples = negativeSamples;
     }
 
+    @Override
     public TypeExpr resultTypes() {
         return allowedTypes;
     }

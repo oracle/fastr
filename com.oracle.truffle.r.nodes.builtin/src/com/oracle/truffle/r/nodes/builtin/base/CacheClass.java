@@ -29,10 +29,7 @@ public abstract class CacheClass extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("class").defaultError(RError.Message.GENERIC, "invalid class argument to internal .class_cache").
-                        mustBe(stringValue()).
-                        asStringVector().
-                        findFirst();
+        casts.arg("class").defaultError(RError.Message.GENERIC, "invalid class argument to internal .class_cache").mustBe(stringValue()).asStringVector().findFirst();
     }
 
     @TruffleBoundary

@@ -1,11 +1,24 @@
 /*
- * please DO NOT PUSH this file to fastr/master without further discussion.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * example command line:
- * mx --J @'-Dgraal.Dump=HighTier:1 -Dgraal.MethodFilter=*TestCasts* -Dgraal.TraceTruffleCompilation=true -Dgraal.PrintBackendCFG=false'  junits --tests TestCasts
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * of course, Graal needs to be imported for this to work:
- * DEFAULT_DYNAMIC_IMPORTS=graal-core (or graal-enterprise)
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.oracle.truffle.r.nodes.casts;
 
@@ -55,6 +68,14 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
+/*
+ *
+ * example command line:
+ * mx --J @'-Dgraal.Dump=HighTier:1 -Dgraal.MethodFilter=*TestCasts* -Dgraal.TraceTruffleCompilation=true -Dgraal.PrintBackendCFG=false'  junits --tests TestCasts
+ *
+ * of course, Graal needs to be imported for this to work:
+ * DEFAULT_DYNAMIC_IMPORTS=graal-core (or graal-enterprise)
+ */
 public class TestCasts extends TestBase {
 
     private static final int TIMEOUT = 15000;
@@ -164,9 +185,7 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().arg(0).
-                                mustBe(integerValue()).
-                                builder().getCasts()[0]);
+                super(name, new CastBuilder().arg(0).mustBe(integerValue()).builder().getCasts()[0]);
             }
 
             @Override
@@ -184,9 +203,7 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().arg(0).
-                                map(defaultValue("X")).
-                                builder().getCasts()[0]);
+                super(name, new CastBuilder().arg(0).map(defaultValue("X")).builder().getCasts()[0]);
             }
 
             @Override
@@ -204,10 +221,7 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().arg(0).
-                                mustBe(String.class).
-                                map(charAt0(0)).
-                                builder().getCasts()[0]);
+                super(name, new CastBuilder().arg(0).mustBe(String.class).map(charAt0(0)).builder().getCasts()[0]);
             }
 
             @Override
@@ -227,9 +241,7 @@ public class TestCasts extends TestBase {
             final boolean mustBeResultCompilationConstant;
 
             protected Root(String name, boolean mustBeResultCompilationConstant) {
-                super(name, new CastBuilder().arg(0).
-                                mapIf(scalarIntegerValue(), constant(10)).
-                                builder().getCasts()[0]);
+                super(name, new CastBuilder().arg(0).mapIf(scalarIntegerValue(), constant(10)).builder().getCasts()[0]);
                 this.mustBeResultCompilationConstant = mustBeResultCompilationConstant;
             }
 
@@ -253,9 +265,7 @@ public class TestCasts extends TestBase {
             private final Object constant;
 
             protected Root(String name, Object constant) {
-                super(name, new CastBuilder().arg(0).
-                                mustBe(integerValue()).
-                                builder().getCasts()[0]);
+                super(name, new CastBuilder().arg(0).mustBe(integerValue()).builder().getCasts()[0]);
                 this.constant = constant;
             }
 
@@ -276,11 +286,8 @@ public class TestCasts extends TestBase {
             private final Object constant;
 
             protected Root(String name, Object constant) {
-                super(name, new CastBuilder().arg(0).
-                                mapIf(stringValue(), asStringVector()).
-                                mapIf(integerValue(), asIntegerVector()).
-                                mapIf(logicalValue(), asLogicalVector(), asDoubleVector()).
-                                builder().getCasts()[0]);
+                super(name, new CastBuilder().arg(0).mapIf(stringValue(), asStringVector()).mapIf(integerValue(), asIntegerVector()).mapIf(logicalValue(), asLogicalVector(),
+                                asDoubleVector()).builder().getCasts()[0]);
                 this.constant = constant;
             }
 
@@ -304,11 +311,8 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().arg(0).
-                                mapIf(stringValue(), asStringVector()).
-                                mapIf(doubleValue(), asDoubleVector()).
-                                mapIf(logicalValue(), asLogicalVector(), asIntegerVector()).
-                                builder().getCasts()[0]);
+                super(name, new CastBuilder().arg(0).mapIf(stringValue(), asStringVector()).mapIf(doubleValue(), asDoubleVector()).mapIf(logicalValue(), asLogicalVector(),
+                                asIntegerVector()).builder().getCasts()[0]);
             }
 
             @Override
@@ -320,17 +324,17 @@ public class TestCasts extends TestBase {
         testCompilation(new Object[]{1, 2, 3}, new Root("ConditionalMapChainFedByInteger1"), 1.1, "abc", RRuntime.LOGICAL_FALSE);
         testCompilation(new Object[]{1, RDataFactory.createIntVector(new int[]{55, 66}, true),
                         RDataFactory.createIntVectorFromScalar(77)}, new Root(
-                        "ConditionalMapChainFedByInteger2"), 1.1, "abc", RRuntime.LOGICAL_FALSE);
+                                        "ConditionalMapChainFedByInteger2"),
+                        1.1, "abc", RRuntime.LOGICAL_FALSE);
         testCompilation(new Object[]{1.1, 2.2, 3.3}, new Root("ConditionalMapChainFedByDouble1"), 1, "abc", RRuntime.LOGICAL_FALSE);
         testCompilation(new Object[]{1.1, RDataFactory.createDoubleVector(new double[]{55.55, 66.66},
                         true), RDataFactory.createDoubleVectorFromScalar(77.77)}, new Root(
-                        "ConditionalMapChainFedByDouble2"), 1, "abc", RRuntime.LOGICAL_FALSE);
+                                        "ConditionalMapChainFedByDouble2"),
+                        1, "abc", RRuntime.LOGICAL_FALSE);
         testCompilation(new Object[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE,
                         RRuntime.LOGICAL_TRUE}, new Root("ConditionalMapChainFedByLogical1"), 1, "abc", 1.1);
-        testCompilation(new Object[]{RRuntime.LOGICAL_FALSE, RDataFactory.createLogicalVector(new
-                        byte[]{RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_TRUE}, true),
-                        RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE)}, new
-                        Root("ConditionalMapChainFedByLogical2"), 1, "abc", 1.1);
+        testCompilation(new Object[]{RRuntime.LOGICAL_FALSE, RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_TRUE}, true),
+                        RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE)}, new Root("ConditionalMapChainFedByLogical2"), 1, "abc", 1.1);
         testCompilation(new Object[]{"", "abc", "xyz"}, new Root("ConditionalMapChainFedByString1"), 1.1, 1, RRuntime.LOGICAL_FALSE);
         testCompilation(new Object[]{"abc", RDataFactory.createStringVector(new String[]{"", "xyz"},
                         true),
@@ -343,16 +347,9 @@ public class TestCasts extends TestBase {
 
             protected Root(String name) {
                 super(name,
-                                new CastBuilder().output(NullStream.INSTANCE).arg(0).
-                                                mustBe(numericValue()).
-                                                asVector().
-                                                mustBe(singleElement()).
-                                                findFirst().
-                                                mustBe(nullValue().not()).
-                                                shouldBe(ValuePredicateArgumentFilterSampler.omLambdaWithResTypes(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Object.class),
-                                                                Message.NON_POSITIVE_FILL).
-                                                mapIf(scalarLogicalValue(), asBoolean(), asInteger()).
-                                                builder().getCasts()[0]);
+                                new CastBuilder().output(NullStream.INSTANCE).arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(
+                                                ValuePredicateArgumentFilterSampler.omLambdaWithResTypes(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Object.class),
+                                                Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(), asInteger()).builder().getCasts()[0]);
             }
 
             @Override
@@ -371,15 +368,8 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).
-                                mustBe(stringValue()).
-                                asStringVector().
-                                mustBe(singleElement()).
-                                findFirst().
-                                mustBe(lengthLte(1)).
-                                map(charAt0(RRuntime.INT_NA)).
-                                notNA(100000).
-                                builder().getCasts()[0]);
+                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(lengthLte(1)).map(
+                                charAt0(RRuntime.INT_NA)).notNA(100000).builder().getCasts()[0]);
             }
 
             @Override
@@ -397,9 +387,7 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().arg(0).
-                                mustBe(stringValue().or(integerValue())).
-                                builder().getCasts()[0]);
+                super(name, new CastBuilder().arg(0).mustBe(stringValue().or(integerValue())).builder().getCasts()[0]);
             }
 
             @Override
@@ -417,10 +405,7 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).
-                                mustBe(scalarIntegerValue()).
-                                shouldBe(gt0().and(lt(10))).
-                                builder().getCasts()[0]);
+                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).mustBe(scalarIntegerValue()).shouldBe(gt0().and(lt(10))).builder().getCasts()[0]);
             }
 
             @Override
@@ -437,10 +422,7 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).
-                                mustBe(scalarIntegerValue()).
-                                shouldBe(gt0().and(lt(10)).not()).
-                                builder().getCasts()[0]);
+                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).mustBe(scalarIntegerValue()).shouldBe(gt0().and(lt(10)).not()).builder().getCasts()[0]);
             }
 
             @Override
@@ -457,15 +439,9 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).
-                                mustBe(numericValue()).
-                                asVector().
-                                mustBe(singleElement()).
-                                findFirst().
-                                mustBe(nullValue().not()).
-                                shouldBe(instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())), Message.NON_POSITIVE_FILL).
-                                mapIf(scalarLogicalValue(), asBoolean(), asInteger()).
-                                builder().getCasts()[0]);
+                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(
+                                instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())), Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(),
+                                                asInteger()).builder().getCasts()[0]);
             }
 
             @Override

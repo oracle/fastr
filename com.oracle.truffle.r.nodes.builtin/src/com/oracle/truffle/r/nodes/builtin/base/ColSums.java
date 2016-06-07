@@ -53,17 +53,11 @@ public abstract class ColSums extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("X").mustBe(numericValue(), RError.Message.X_NUMERIC);
 
-        casts.arg("m").asIntegerVector().
-                        findFirst().
-                        notNA();
+        casts.arg("m").asIntegerVector().findFirst().notNA();
 
-        casts.arg("n").asIntegerVector().
-                        findFirst().
-                        notNA();
+        casts.arg("n").asIntegerVector().findFirst().notNA();
 
-        casts.arg("na.rm").asLogicalVector().
-                        findFirst().
-                        map(toBoolean());
+        casts.arg("na.rm").asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Specialization

@@ -310,18 +310,12 @@ public class CastUtils {
                     return TypeExpr.atom(c.resultType());
                 }).reduce((res, te) -> res.or(te)).orElse(TypeExpr.NOTHING);
             } else {
-                Casts positiveCasts = new Casts(cs.stream().
-                                filter(c -> existsConvertibleActualType(actualInputTypes, c.inputType(), true)).collect(Collectors.toList()));
-                TypeExpr positive = positiveCasts.casts().stream().
-                                map(c -> TypeExpr.atom(c.resultType())).
-                                reduce((res, te) -> res.or(te)).orElse(TypeExpr.NOTHING);
+                Casts positiveCasts = new Casts(cs.stream().filter(c -> existsConvertibleActualType(actualInputTypes, c.inputType(), true)).collect(Collectors.toList()));
+                TypeExpr positive = positiveCasts.casts().stream().map(c -> TypeExpr.atom(c.resultType())).reduce((res, te) -> res.or(te)).orElse(TypeExpr.NOTHING);
 
-                Casts negativeCasts = new Casts(cs.stream().
-                                filter(c -> !positiveCasts.resultTypes().contains(c.resultType()) &&
-                                                !existsConvertibleActualType(actualInputTypes, c.inputType(), true)).collect(Collectors.toList()));
-                TypeExpr negative = negativeCasts.casts().stream().
-                                map(c -> TypeExpr.atom(c.resultType()).not()).
-                                reduce((res, te) -> res.and(te)).orElse(TypeExpr.ANYTHING);
+                Casts negativeCasts = new Casts(cs.stream().filter(c -> !positiveCasts.resultTypes().contains(c.resultType()) &&
+                                !existsConvertibleActualType(actualInputTypes, c.inputType(), true)).collect(Collectors.toList()));
+                TypeExpr negative = negativeCasts.casts().stream().map(c -> TypeExpr.atom(c.resultType()).not()).reduce((res, te) -> res.and(te)).orElse(TypeExpr.ANYTHING);
 
                 return positive.and(negative);
             }
@@ -330,8 +324,7 @@ public class CastUtils {
         public Casts findCasts(Type fromType, Type toType, boolean includeImplicits) {
             return new Casts(cs.stream().filter(
                             c -> isConvertible(fromType, c.inputType(), includeImplicits) == Cast.Coverage.full &&
-                                            isConvertible(c.resultType(), toType, includeImplicits) == Cast.Coverage.full).
-                            collect(Collectors.toList()));
+                                            isConvertible(c.resultType(), toType, includeImplicits) == Cast.Coverage.full).collect(Collectors.toList()));
         }
 
         public static boolean existsConvertibleActualType(TypeExpr actualInputTypes, Type formalInputCls, boolean includeImplicits) {
@@ -341,8 +334,8 @@ public class CastUtils {
 
         public static Set<Cast> findConvertibleActualType(TypeExpr actualInputTypes, Type formalInputCls, boolean includeImplicits) {
             Set<Type> normActTypes = actualInputTypes.normalize();
-            return normActTypes.stream().map(actualInputCls -> new Cast(actualInputCls, formalInputCls, isConvertible(actualInputCls, formalInputCls, includeImplicits))).
-                            filter(c -> c.coverage != Cast.Coverage.none).collect(Collectors.toSet());
+            return normActTypes.stream().map(actualInputCls -> new Cast(actualInputCls, formalInputCls, isConvertible(actualInputCls, formalInputCls, includeImplicits))).filter(
+                            c -> c.coverage != Cast.Coverage.none).collect(Collectors.toSet());
         }
 
         public static Cast.Coverage isConvertible(Type actualInputType, Type formalInputType, boolean includeImplicits) {

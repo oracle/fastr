@@ -209,7 +209,7 @@ public final class CastBuilder {
                 return i;
             }
         }
-		throw RInternalError.shouldNotReachHere(String.format("Argument %s not found in builtin %s", argumentName, builtinNode.getRBuiltin().name()));
+        throw RInternalError.shouldNotReachHere(String.format("Argument %s not found in builtin %s", argumentName, builtinNode.getRBuiltin().name()));
     }
 
     /**
@@ -375,210 +375,262 @@ public final class CastBuilder {
 
     public static final class DefaultPredefFilters implements PredefFilters {
 
+        @Override
         public <T> ValuePredicateArgumentFilter<T> sameAs(T x) {
             return ValuePredicateArgumentFilter.fromLambda(arg -> arg == x);
         }
 
+        @Override
         public <T> ValuePredicateArgumentFilter<T> equalTo(T x) {
             return ValuePredicateArgumentFilter.fromLambda(arg -> Objects.equals(arg, x));
         }
 
+        @Override
         public <T, R extends T> TypePredicateArgumentFilter<T, R> nullValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x == RNull.instance || x == null);
         }
 
+        @Override
         public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> notEmpty() {
             return new VectorPredicateArgumentFilter<>(x -> x.getLength() > 0, false);
         }
 
+        @Override
         public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> singleElement() {
             return new VectorPredicateArgumentFilter<>(x -> x.getLength() == 1, false);
         }
 
+        @Override
         public <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilter<T> size(int s) {
             return new VectorPredicateArgumentFilter<>(x -> x.getLength() == s, false);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Boolean> trueValue() {
             return ValuePredicateArgumentFilter.fromLambda(x -> x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Boolean> falseValue() {
             return ValuePredicateArgumentFilter.fromLambda(x -> x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Byte> logicalTrue() {
             return ValuePredicateArgumentFilter.fromLambda(x -> RRuntime.LOGICAL_TRUE == x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Byte> logicalFalse() {
             return ValuePredicateArgumentFilter.fromLambda(x -> RRuntime.LOGICAL_FALSE == x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Integer> intNA() {
             return ValuePredicateArgumentFilter.fromLambda((Integer x) -> RRuntime.isNA(x));
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Integer> notIntNA() {
             return ValuePredicateArgumentFilter.fromLambda((Integer x) -> !RRuntime.isNA(x));
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Byte> logicalNA() {
             return ValuePredicateArgumentFilter.fromLambda((Byte x) -> RRuntime.isNA(x));
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Byte> notLogicalNA() {
             return ValuePredicateArgumentFilter.fromLambda((Byte x) -> !RRuntime.isNA(x));
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Double> doubleNA() {
             return ValuePredicateArgumentFilter.fromLambda((Double x) -> RRuntime.isNA(x));
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Double> notDoubleNA() {
             return ValuePredicateArgumentFilter.fromLambda((Double x) -> !RRuntime.isNA(x));
         }
 
+        @Override
         public ValuePredicateArgumentFilter<String> stringNA() {
             return ValuePredicateArgumentFilter.fromLambda((String x) -> RRuntime.isNA(x));
         }
 
+        @Override
         public ValuePredicateArgumentFilter<String> notStringNA() {
             return ValuePredicateArgumentFilter.fromLambda((String x) -> !RRuntime.isNA(x));
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Integer> eq(int x) {
             return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg != null && arg.intValue() == x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Double> eq(double x) {
             return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg != null && arg.doubleValue() == x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Integer> neq(int x) {
             return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg == null || arg.intValue() != x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Double> neq(double x) {
             return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg == null || arg.doubleValue() != x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Integer> gt(int x) {
             return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg > x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Double> gt(double x) {
             return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg > x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Integer> gte(int x) {
             return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg >= x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Double> gte(double x) {
             return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg >= x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Integer> lt(int x) {
             return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg < x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Double> lt(double x) {
             return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg < x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Integer> lte(int x) {
             return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg <= x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Double> lte(double x) {
             return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg <= x);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<String> length(int l) {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() == l);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<String> isEmpty() {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.isEmpty());
         }
 
+        @Override
         public ValuePredicateArgumentFilter<String> lengthGt(int l) {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() > l);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<String> lengthGte(int l) {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() >= l);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<String> lengthLt(int l) {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() < l);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<String> lengthLte(int l) {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() <= l);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Integer> gt0() {
             return ValuePredicateArgumentFilter.fromLambda((Integer x) -> x > 0);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Integer> gte0() {
             return ValuePredicateArgumentFilter.fromLambda((Integer x) -> x >= 0);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Integer> gt1() {
             return ValuePredicateArgumentFilter.fromLambda((Integer x) -> x > 1);
         }
 
+        @Override
         public ValuePredicateArgumentFilter<Integer> gte1() {
             return ValuePredicateArgumentFilter.fromLambda((Integer x) -> x >= 1);
         }
 
+        @Override
         public <R> TypePredicateArgumentFilter<Object, R> instanceOf(Class<R> cls) {
             return TypePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x));
         }
 
+        @Override
         public <R extends RAbstractIntVector> TypePredicateArgumentFilter<Object, R> integerValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Integer || x instanceof RAbstractIntVector);
         }
 
+        @Override
         public <R extends RAbstractStringVector> TypePredicateArgumentFilter<Object, R> stringValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof String || x instanceof RAbstractStringVector);
         }
 
+        @Override
         public <R extends RAbstractDoubleVector> TypePredicateArgumentFilter<Object, R> doubleValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Double || x instanceof RAbstractDoubleVector);
         }
 
+        @Override
         public <R extends RAbstractLogicalVector> TypePredicateArgumentFilter<Object, R> logicalValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Byte || x instanceof RAbstractLogicalVector);
         }
 
+        @Override
         public <R extends RAbstractComplexVector> TypePredicateArgumentFilter<Object, R> complexValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RComplex || x instanceof RAbstractComplexVector);
         }
 
+        @Override
         public TypePredicateArgumentFilter<Object, String> scalarStringValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof String);
         }
 
+        @Override
         public TypePredicateArgumentFilter<Object, Integer> scalarIntegerValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Integer);
         }
 
+        @Override
         public TypePredicateArgumentFilter<Object, Double> scalarDoubleValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Double);
         }
 
+        @Override
         public TypePredicateArgumentFilter<Object, Byte> scalarLogicalValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Byte);
         }
 
+        @Override
         public TypePredicateArgumentFilter<Object, RComplex> scalarComplexValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RComplex);
         }
 
+        @Override
         public TypePredicateArgumentFilter<Object, RMissing> missingValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> RMissing.instance == x);
         }
@@ -586,31 +638,39 @@ public final class CastBuilder {
     }
 
     public static final class DefaultPredefMappers implements PredefMappers {
+
+        @Override
         public ValuePredicateArgumentMapper<Byte, Boolean> toBoolean() {
             return ValuePredicateArgumentMapper.fromLambda(x -> RRuntime.fromLogical(x));
         }
 
+        @Override
         public ValuePredicateArgumentMapper<String, Integer> charAt0(int defaultValue) {
             final ConditionProfile profile = ConditionProfile.createBinaryProfile();
             return ValuePredicateArgumentMapper.fromLambda(x -> profile.profile(x == null || x.isEmpty()) ? defaultValue : (int) x.charAt(0));
         }
 
+        @Override
         public ValuePredicateArgumentMapper<String, String> constant(String s) {
             return ValuePredicateArgumentMapper.<String, String> fromLambda((String x) -> s);
         }
 
+        @Override
         public ValuePredicateArgumentMapper<Integer, Integer> constant(int i) {
             return ValuePredicateArgumentMapper.fromLambda(x -> i);
         }
 
+        @Override
         public ValuePredicateArgumentMapper<Double, Double> constant(double d) {
             return ValuePredicateArgumentMapper.fromLambda(x -> d);
         }
 
+        @Override
         public ValuePredicateArgumentMapper<Byte, Byte> constant(byte l) {
             return ValuePredicateArgumentMapper.fromLambda(x -> l);
         }
 
+        @Override
         public <T> ArgumentMapper<T, T> defaultValue(T defVal) {
 
             assert (defVal != null);
@@ -619,6 +679,7 @@ public final class CastBuilder {
 
                 final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
+                @Override
                 public T map(T arg) {
                     if (profile.profile(arg == RNull.instance || arg == null)) {
                         return defVal;
@@ -1098,6 +1159,7 @@ public final class CastBuilder {
             this.st = state;
         }
 
+        @Override
         public ArgCastBuilderState state() {
             return st;
         }
@@ -1353,18 +1415,22 @@ public final class CastBuilder {
             this.argumentName = argumentName;
         }
 
+        @Override
         public InitialPhaseBuilderImpl<Object> newInitialPhaseBuilder() {
             return new InitialPhaseBuilderImpl<>();
         }
 
+        @Override
         public <T> InitialPhaseBuilderImpl<T> newInitialPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder) {
             return new InitialPhaseBuilderImpl<>(currentBuilder.state());
         }
 
+        @Override
         public <T extends RAbstractVector, S> CoercedPhaseBuilderImpl<T, S> newCoercedPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder, Class<?> elementClass) {
             return new CoercedPhaseBuilderImpl<>(currentBuilder.state(), elementClass);
         }
 
+        @Override
         public <T> HeadPhaseBuilderImpl<T> newHeadPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder) {
             return new HeadPhaseBuilderImpl<>(currentBuilder.state());
         }

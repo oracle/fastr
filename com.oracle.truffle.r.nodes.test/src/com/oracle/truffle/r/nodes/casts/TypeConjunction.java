@@ -42,9 +42,8 @@ public final class TypeConjunction implements WildcardType, TypeAndInstanceCheck
     }
 
     public static TypeConjunction create(Type... types) {
-        Set<Type> upperBounds = Arrays.asList(types).stream().
-                        flatMap(t -> (t instanceof TypeConjunction ? ((TypeConjunction) t).upperBounds : Collections.singleton(t)).stream()).
-                        collect(Collectors.toSet());
+        Set<Type> upperBounds = Arrays.asList(types).stream().flatMap(t -> (t instanceof TypeConjunction ? ((TypeConjunction) t).upperBounds : Collections.singleton(t)).stream()).collect(
+                        Collectors.toSet());
         return new TypeConjunction(upperBounds);
     }
 
@@ -56,10 +55,12 @@ public final class TypeConjunction implements WildcardType, TypeAndInstanceCheck
         }
     }
 
+    @Override
     public Type[] getUpperBounds() {
         return upperBounds.toArray(new Type[upperBounds.size()]);
     }
 
+    @Override
     public Type[] getLowerBounds() {
         return new Type[0];
     }
@@ -70,18 +71,13 @@ public final class TypeConjunction implements WildcardType, TypeAndInstanceCheck
     }
 
     public Coverage coverageFrom(TypeConjunction from, boolean includeImplicits) {
-        return upperBounds.stream().
-                        map(ubt -> from.coverageTo(ubt, includeImplicits)).
-                        reduce((res, cvg) -> cvg.and(res)).
-                        orElse(Coverage.none);
+        return upperBounds.stream().map(ubt -> from.coverageTo(ubt, includeImplicits)).reduce((res, cvg) -> cvg.and(res)).orElse(Coverage.none);
     }
 
     public Coverage coverageTo(Type to, boolean includeImplicits) {
         assert to instanceof Not || to instanceof Class;
-        return upperBounds.stream().
-                        map(ubt -> TypeAndInstanceCheck.coverage(ubt, to, includeImplicits)).
-                        reduce((res, cvg) -> res == Coverage.none || cvg == Coverage.none ? Coverage.none : cvg.or(res)).
-                        orElse(Coverage.none);
+        return upperBounds.stream().map(ubt -> TypeAndInstanceCheck.coverage(ubt, to, includeImplicits)).reduce(
+                        (res, cvg) -> res == Coverage.none || cvg == Coverage.none ? Coverage.none : cvg.or(res)).orElse(Coverage.none);
     }
 
     @Override

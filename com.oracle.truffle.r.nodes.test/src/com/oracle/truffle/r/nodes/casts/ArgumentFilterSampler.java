@@ -32,11 +32,13 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
 
     interface NarrowingArgumentFilterSampler<T, R extends T> extends NarrowingArgumentFilter<T, R>, ArgumentFilterSampler<T, R> {
 
+        @Override
         default <S extends T> ArgumentTypeFilterSampler<T, T> or(ArgumentFilter<T, S> o) {
             final ArgumentFilterSampler<T, S> other = (ArgumentFilterSampler<T, S>) o;
 
             return new ArgumentTypeFilterSampler<T, T>() {
 
+                @Override
                 public boolean test(T arg) {
                     if (NarrowingArgumentFilterSampler.this.test(arg)) {
                         return true;
@@ -45,6 +47,7 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
                     }
                 }
 
+                @Override
                 public TypeExpr allowedTypes() {
                     return NarrowingArgumentFilterSampler.this.allowedTypes().or(other.allowedTypes());
                 }
@@ -68,15 +71,18 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
 
     interface ArgumentValueFilterSampler<T> extends ArgumentValueFilter<T>, NarrowingArgumentFilterSampler<T, T> {
 
+        @Override
         default ArgumentValueFilterSampler<T> and(ArgumentValueFilter<T> o) {
             final ArgumentValueFilterSampler<T> other = (ArgumentValueFilterSampler<T>) o;
 
             return new ArgumentValueFilterSampler<T>() {
 
+                @Override
                 public boolean test(T arg) {
                     return ArgumentValueFilterSampler.this.test(arg) && other.test(arg);
                 }
 
+                @Override
                 public TypeExpr allowedTypes() {
                     return ArgumentValueFilterSampler.this.allowedTypes().and(other.allowedTypes());
                 }
@@ -91,15 +97,18 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
             };
         }
 
+        @Override
         default <S extends T> ArgumentTypeFilterSampler<T, S> and(ArgumentTypeFilter<T, S> o) {
             final ArgumentTypeFilterSampler<T, S> other = (ArgumentTypeFilterSampler<T, S>) o;
 
             return new ArgumentTypeFilterSampler<T, S>() {
 
+                @Override
                 public boolean test(T arg) {
                     return ArgumentValueFilterSampler.this.test(arg) && other.test(arg);
                 }
 
+                @Override
                 public TypeExpr allowedTypes() {
                     return ArgumentValueFilterSampler.this.allowedTypes().and(other.allowedTypes());
                 }
@@ -115,13 +124,16 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
             };
         }
 
+        @Override
         default ArgumentValueFilterSampler<T> not() {
             return new ArgumentValueFilterSampler<T>() {
 
+                @Override
                 public boolean test(T arg) {
                     return !ArgumentValueFilterSampler.this.test(arg);
                 }
 
+                @Override
                 public TypeExpr allowedTypes() {
                     return ArgumentValueFilterSampler.this.allowedTypes();
                 }
@@ -139,16 +151,19 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
 
     interface ArgumentTypeFilterSampler<T, R extends T> extends ArgumentTypeFilter<T, R>, NarrowingArgumentFilterSampler<T, R> {
 
+        @Override
         default <S extends R> ArgumentTypeFilterSampler<T, S> and(ArgumentTypeFilter<R, S> o) {
             final ArgumentTypeFilterSampler<R, S> other = (ArgumentTypeFilterSampler<R, S>) o;
 
             return new ArgumentTypeFilterSampler<T, S>() {
 
                 @SuppressWarnings("unchecked")
+                @Override
                 public boolean test(T arg) {
                     return ArgumentTypeFilterSampler.this.test(arg) && other.test((R) arg);
                 }
 
+                @Override
                 public TypeExpr allowedTypes() {
                     return ArgumentTypeFilterSampler.this.allowedTypes().and(other.allowedTypes());
                 }
@@ -164,16 +179,19 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
             };
         }
 
+        @Override
         default ArgumentTypeFilter<T, R> and(ArgumentValueFilter<R> o) {
             final ArgumentValueFilterSampler<R> other = (ArgumentValueFilterSampler<R>) o;
 
             return new ArgumentTypeFilterSampler<T, R>() {
 
                 @SuppressWarnings("unchecked")
+                @Override
                 public boolean test(T arg) {
                     return ArgumentTypeFilterSampler.this.test(arg) && other.test((R) arg);
                 }
 
+                @Override
                 public TypeExpr allowedTypes() {
                     return ArgumentTypeFilterSampler.this.allowedTypes().and(other.allowedTypes());
                 }
@@ -189,6 +207,7 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
             };
         }
 
+        @Override
         default InverseArgumentFilterSampler<T, R> not() {
             return new InverseArgumentFilterSampler<>(this);
         }
@@ -204,6 +223,7 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
             this.orig = (ArgumentTypeFilterSampler<T, R>) o;
         }
 
+        @Override
         public TypeExpr allowedTypes() {
             return orig.allowedTypes().not();
         }
@@ -227,10 +247,12 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
 
             return new ArgumentTypeFilterSampler<T, S>() {
 
+                @Override
                 public boolean test(T arg) {
                     return InverseArgumentFilterSampler.this.test(arg) && other.test(arg);
                 }
 
+                @Override
                 public TypeExpr allowedTypes() {
                     return InverseArgumentFilterSampler.this.allowedTypes().and(other.allowedTypes());
                 }
@@ -252,10 +274,12 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
 
             return new ArgumentValueFilterSampler<S>() {
 
+                @Override
                 public boolean test(S arg) {
                     return InverseArgumentFilterSampler.this.test(arg) && other.test(arg);
                 }
 
+                @Override
                 public TypeExpr allowedTypes() {
                     return InverseArgumentFilterSampler.this.allowedTypes().and(other.allowedTypes());
                 }

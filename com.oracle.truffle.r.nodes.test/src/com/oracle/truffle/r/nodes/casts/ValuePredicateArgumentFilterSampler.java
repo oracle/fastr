@@ -38,7 +38,8 @@ public class ValuePredicateArgumentFilterSampler<T> extends ValuePredicateArgume
     private final Set<?> negativeSamples;
     private final TypeExpr allowedTypes;
 
-    public ValuePredicateArgumentFilterSampler(Predicate<? super T> valuePredicate, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples, Set<Class<?>> allowedTypeSet, boolean isNullable) {
+    public ValuePredicateArgumentFilterSampler(Predicate<? super T> valuePredicate, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples, Set<Class<?>> allowedTypeSet,
+                    boolean isNullable) {
         super(valuePredicate, isNullable);
 
         this.allowedTypes = allowedTypeSet.isEmpty() ? TypeExpr.ANYTHING : TypeExpr.union(allowedTypeSet);
@@ -53,6 +54,7 @@ public class ValuePredicateArgumentFilterSampler<T> extends ValuePredicateArgume
         return allowedTypes;
     }
 
+    @Override
     public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
         Set<T> allowedPositiveValues = downStreamSamples.positiveSamples().stream().filter(x -> test(x)).collect(Collectors.toSet());
         Set<T> forbiddenPositiveValues = downStreamSamples.positiveSamples().stream().filter(x -> !test(x)).collect(Collectors.toSet());

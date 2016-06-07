@@ -32,6 +32,7 @@ public class ValuePredicateArgumentMapper<T, R> implements ArgumentMapper<T, R> 
         this.mapper = mapper;
     }
 
+    @Override
     public R map(T arg) {
         return mapper.apply(arg);
     }

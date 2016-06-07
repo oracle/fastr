@@ -35,6 +35,7 @@ public interface ArgumentFilter<T, R> {
 
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
+                @Override
                 public boolean test(T arg) {
                     if (profile.profile(NarrowingArgumentFilter.this.test(arg))) {
                         return true;
@@ -56,6 +57,7 @@ public interface ArgumentFilter<T, R> {
 
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
+                @Override
                 public boolean test(T arg) {
                     if (profile.profile(!ArgumentValueFilter.this.test(arg))) {
                         return false;
@@ -73,6 +75,7 @@ public interface ArgumentFilter<T, R> {
 
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
+                @Override
                 public boolean test(T arg) {
                     if (profile.profile(!ArgumentValueFilter.this.test(arg))) {
                         return false;
@@ -87,6 +90,7 @@ public interface ArgumentFilter<T, R> {
         default ArgumentValueFilter<T> not() {
             return new ArgumentValueFilter<T>() {
 
+                @Override
                 public boolean test(T arg) {
                     return !ArgumentValueFilter.this.test(arg);
                 }
@@ -105,6 +109,7 @@ public interface ArgumentFilter<T, R> {
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
                 @SuppressWarnings({"unchecked"})
+                @Override
                 public boolean test(T arg) {
                     if (profile.profile(!ArgumentTypeFilter.this.test(arg))) {
                         return false;
@@ -123,6 +128,7 @@ public interface ArgumentFilter<T, R> {
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
                 @SuppressWarnings({"unchecked"})
+                @Override
                 public boolean test(T arg) {
                     if (profile.profile(!ArgumentTypeFilter.this.test(arg))) {
                         return false;
@@ -148,6 +154,7 @@ public interface ArgumentFilter<T, R> {
             this.orig = orig;
         }
 
+        @Override
         public boolean test(T arg) {
             return !orig.test(arg);
         }
@@ -163,6 +170,7 @@ public interface ArgumentFilter<T, R> {
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
                 @SuppressWarnings({"cast", "unchecked"})
+                @Override
                 public boolean test(T arg) {
                     if (profile.profile(!InverseArgumentFilter.this.test(arg))) {
                         return false;
@@ -180,6 +188,7 @@ public interface ArgumentFilter<T, R> {
 
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
+                @Override
                 public boolean test(S arg) {
                     if (profile.profile(!InverseArgumentFilter.this.test(arg))) {
                         return false;

@@ -127,28 +127,15 @@ public abstract class ConnectionFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("description").mustBe(stringValue()).
-                            asStringVector().
-                            shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").
-                            findFirst().
-                            notNA();
+            casts.arg("description").mustBe(stringValue()).asStringVector().shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").findFirst().notNA();
 
-            casts.arg("open").mustBe(stringValue()).
-                            asStringVector().
-                            findFirst().
-                            notNA();
+            casts.arg("open").mustBe(stringValue()).asStringVector().findFirst().notNA();
 
-            casts.arg("blocking").asLogicalVector().
-                            findFirst().
-                            map(toBoolean()).
-                            mustBe(trueValue(), RError.Message.NYI, "non-blocking mode not supported");
+            casts.arg("blocking").asLogicalVector().findFirst().map(toBoolean()).mustBe(trueValue(), RError.Message.NYI, "non-blocking mode not supported");
 
-            casts.arg("encoding").asStringVector().
-                            findFirst();
+            casts.arg("encoding").asStringVector().findFirst();
 
-            casts.arg("raw").asLogicalVector().
-                            findFirst().
-                            map(toBoolean());
+            casts.arg("raw").asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization

@@ -44,23 +44,13 @@ public abstract class EncodeString extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("x").mustBe(stringValue(), RError.Message.CHAR_VEC_ARGUMENT);
 
-        casts.arg("width").asIntegerVector().
-                        findFirst().
-                        mustBe(intNA().or(gte0()));
+        casts.arg("width").asIntegerVector().findFirst().mustBe(intNA().or(gte0()));
 
-        casts.arg("quote").mustBe(stringValue()).
-                        asStringVector().
-                        mustBe(singleElement()).findFirst();
+        casts.arg("quote").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
 
-        casts.arg("justify").asIntegerVector().
-                        findFirst().
-                        mustBe(gte(JUSTIFY.LEFT.ordinal()).
-                                        and(lte(JUSTIFY.NONE.ordinal())));
+        casts.arg("justify").asIntegerVector().findFirst().mustBe(gte(JUSTIFY.LEFT.ordinal()).and(lte(JUSTIFY.NONE.ordinal())));
 
-        casts.arg("na.encode").asLogicalVector().
-                        findFirst(RRuntime.LOGICAL_FALSE).
-                        mustBe(notLogicalNA()).
-                        map(toBoolean());
+        casts.arg("na.encode").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).mustBe(notLogicalNA()).map(toBoolean());
     }
 
     private int computeWidth(RAbstractStringVector x, int width, final String quote) {

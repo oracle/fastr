@@ -70,8 +70,7 @@ public class ConditionalMapNodeGenSampler extends CastNodeSampler<ConditionalMap
         Samples definedFalseBranchSamples = downStreamSamples.filter(x -> falseBranchResultType.isInstance(x));
 
         Samples unmappedTrueBranchDefinedSamples = argFilter.collectSamples(trueBranch.collectSamples(conditionType.and(inputType), definedTrueBranchSamples));
-        Samples unmappedFalseBranchDefinedSamples = falseBranch == null ? definedFalseBranchSamples :
-                        falseBranch.collectSamples(inputType.and(conditionType.not()), definedFalseBranchSamples);
+        Samples unmappedFalseBranchDefinedSamples = falseBranch == null ? definedFalseBranchSamples : falseBranch.collectSamples(inputType.and(conditionType.not()), definedFalseBranchSamples);
 
         return unmappedTrueBranchDefinedSamples.or(unmappedFalseBranchDefinedSamples);
     }

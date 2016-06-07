@@ -118,10 +118,7 @@ public final class TypeExpr {
     }
 
     public Set<Type> normalize() {
-        return disjNormForm.stream().
-                        map(conj -> normalize(conj)).
-                        filter(t -> !t.equals(Not.NOTHING)).
-                        collect(Collectors.toSet());
+        return disjNormForm.stream().map(conj -> normalize(conj)).filter(t -> !t.equals(Not.NOTHING)).collect(Collectors.toSet());
     }
 
     private static Type normalize(Set<? extends Type> conj) {
@@ -162,11 +159,7 @@ public final class TypeExpr {
     }
 
     public Set<Class<?>> classify() {
-        return normalize().stream().
-                        map(t -> classify(t)).
-                        filter(ot -> ot.isPresent()).
-                        map(ot -> ot.get()).
-                        collect(Collectors.toSet());
+        return normalize().stream().map(t -> classify(t)).filter(ot -> ot.isPresent()).map(ot -> ot.get()).collect(Collectors.toSet());
     }
 
     private static Optional<Class<?>> classify(Type t) {

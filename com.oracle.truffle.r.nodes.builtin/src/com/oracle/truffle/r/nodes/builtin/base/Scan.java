@@ -97,89 +97,42 @@ public abstract class Scan extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("file").mustBe(RConnection.class);
 
-        casts.arg("what").mustBe(RAbstractVector.class);
+        casts.arg("what").asVector();
 
-        casts.arg("nmax").asIntegerVector().
-                        findFirst(0).
-                        notNA(0).
-                        mapIf(lt(0), constant(0));
+        casts.arg("nmax").asIntegerVector().findFirst(0).notNA(0).mapIf(lt(0), constant(0));
 
-        casts.arg("sep").mustBe(nullValue().or(stringValue())).
-                        asStringVector().
-                        findFirst("").
-                        mustBe(lengthLte(1), RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
+        casts.arg("sep").mustBe(nullValue().or(stringValue())).asStringVector().findFirst("").mustBe(lengthLte(1), RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
 
-        casts.arg("dec").defaultError(RError.Message.INVALID_DECIMAL_SEP).
-                        mustBe(nullValue().or(stringValue())).
-                        asStringVector().
-                        findFirst(".").
-                        mustBe(length(1), RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
+        casts.arg("dec").defaultError(RError.Message.INVALID_DECIMAL_SEP).mustBe(nullValue().or(stringValue())).asStringVector().findFirst(".").mustBe(length(1), RError.Message.MUST_BE_ONE_BYTE,
+                        "'sep' value");
 
-        casts.arg("quote").defaultError(RError.Message.INVALID_QUOTE_SYMBOL).
-                        mapIf(nullValue(), constant("")).
-                        mustBe(stringValue()).
-                        asStringVector().
-                        findFirst("");
+        casts.arg("quote").defaultError(RError.Message.INVALID_QUOTE_SYMBOL).mapIf(nullValue(), constant("")).mustBe(stringValue()).asStringVector().findFirst("");
 
-        casts.arg("skip").asIntegerVector().
-                        findFirst(0).
-                        notNA(0).
-                        mapIf(lt(0), constant(0));
+        casts.arg("skip").asIntegerVector().findFirst(0).notNA(0).mapIf(lt(0), constant(0));
 
-        casts.arg("nlines").asIntegerVector().
-                        findFirst(0).
-                        notNA(0).
-                        mapIf(lt(0), constant(0));
+        casts.arg("nlines").asIntegerVector().findFirst(0).notNA(0).mapIf(lt(0), constant(0));
 
         casts.arg("na.strings").mustBe(stringValue());
 
-        casts.arg("flush").asLogicalVector().
-                        findFirst(RRuntime.LOGICAL_NA).
-                        map(toBoolean());
+        casts.arg("flush").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
 
-        casts.arg("fill").asLogicalVector().
-                        findFirst(RRuntime.LOGICAL_NA).
-                        map(toBoolean());
+        casts.arg("fill").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
 
         casts.arg("strip.white").mustBe(logicalValue());
 
-        casts.arg("quiet").asLogicalVector().
-                        findFirst(RRuntime.LOGICAL_FALSE).
-                        notNA(RRuntime.LOGICAL_FALSE).
-                        map(toBoolean());
+        casts.arg("quiet").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA(RRuntime.LOGICAL_FALSE).map(toBoolean());
 
-        casts.arg("blank.lines.skip").asLogicalVector().
-                        findFirst(RRuntime.LOGICAL_TRUE).
-                        notNA(RRuntime.LOGICAL_TRUE).
-                        map(toBoolean());
+        casts.arg("blank.lines.skip").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).notNA(RRuntime.LOGICAL_TRUE).map(toBoolean());
 
-        casts.arg("multi.line").asLogicalVector().
-                        findFirst(RRuntime.LOGICAL_TRUE).
-                        notNA(RRuntime.LOGICAL_TRUE).
-                        map(toBoolean());
+        casts.arg("multi.line").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).notNA(RRuntime.LOGICAL_TRUE).map(toBoolean());
 
-        casts.arg("comment.char").mustBe(stringValue()).
-                        asStringVector().
-                        mustBe(singleElement()).
-                        findFirst().
-                        mustBe(lengthLte(1)).
-                        map(charAt0(RRuntime.INT_NA)).
-                        notNA(NO_COMCHAR);
+        casts.arg("comment.char").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(lengthLte(1)).map(charAt0(RRuntime.INT_NA)).notNA(NO_COMCHAR);
 
-        casts.arg("allowEscapes").asLogicalVector().
-                        findFirst().
-                        notNA().
-                        map(toBoolean());
+        casts.arg("allowEscapes").asLogicalVector().findFirst().notNA().map(toBoolean());
 
-        casts.arg("encoding").mustBe(stringValue()).
-                        asStringVector().
-                        mustBe(singleElement()).
-                        findFirst();
+        casts.arg("encoding").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
 
-        casts.arg("skipNull").asLogicalVector().
-                        findFirst().
-                        notNA().
-                        map(toBoolean());
+        casts.arg("skipNull").asLogicalVector().findFirst().notNA().map(toBoolean());
     }
 
     @Specialization
