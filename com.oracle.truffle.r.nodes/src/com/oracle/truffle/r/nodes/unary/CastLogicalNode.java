@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
-import com.oracle.truffle.r.nodes.unary.CastNode.Samples;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplexVector;

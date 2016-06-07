@@ -192,7 +192,7 @@ public final class CastBuilder {
     }
 
     public InitialPhaseBuilder<Object> arg(int argumentIndex) {
-        return arg(argumentIndex, builtinNode == null ? null : builtinNode.getBuiltin().getSignature().getName(argumentIndex));
+        return arg(argumentIndex, builtinNode == null ? null : builtinNode.getRBuiltin().parameterNames()[argumentIndex]);
     }
 
     public InitialPhaseBuilder<Object> arg(String argumentName) {
@@ -203,14 +203,13 @@ public final class CastBuilder {
         if (builtinNode == null) {
             throw new IllegalArgumentException("No builtin node associated with cast builder");
         }
-        ArgumentsSignature signature = builtinNode.getBuiltin().getSignature();
-        for (int i = 0; i < signature.getLength(); i++) {
-            if (argumentName.equals(signature.getName(i))) {
+        String[] parameterNames = builtinNode.getRBuiltin().parameterNames();
+        for (int i = 0; i < parameterNames.length; i++) {
+            if (argumentName.equals(parameterNames[i])) {
                 return i;
             }
         }
-
-        throw RInternalError.shouldNotReachHere(String.format("Argument %s not found in builtin %s", argumentName, builtinNode.getRBuiltin().name()));
+		throw RInternalError.shouldNotReachHere(String.format("Argument %s not found in builtin %s", argumentName, builtinNode.getRBuiltin().name()));
     }
 
     /**

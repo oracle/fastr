@@ -104,8 +104,6 @@ public abstract class NChar extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected RIntVector ncharInt(RAbstractIntVector vector, String type, byte allowNA, byte keepNA) {
-        controlVisibility();
-
         int len = vector.getLength();
         int[] result = new int[len];
         for (int i = 0; i < len; i++) {
