@@ -397,7 +397,6 @@ public class ForeignFunctions {
                 case "logit_mu_eta":
                 case "binomial_dev_resids":
                 case "rWishart":
-                case "Cdqrls":
                 case "Cdist":
                 case "updateform":
                 case "mvfft":
@@ -440,6 +439,9 @@ public class ForeignFunctions {
                 case "chisq_sim":
                 case "d2x2xk":
                     return new UnimplementedExternal(name);
+
+                case "Cdqrls":
+                    return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(StatsUtil.class, "lm.R"), "Cdqrls");
 
                 // tools
                 case "doTabExpand":
