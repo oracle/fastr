@@ -230,7 +230,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             value = ((RAbstractVector) value).castSafe(castType, valueIsNA);
         }
 
-        vector = share(vector);
+        vector = share(vector, value);
 
         int maxOutOfBounds = positionsCheckNode.getMaxOutOfBounds(positionProfiles);
         if (maxOutOfBounds > vectorLength) {
@@ -239,7 +239,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 return wrapResult(vector, repType);
             }
             vector = resizeVector(vector, maxOutOfBounds);
-            vectorLength = maxOutOfBounds;
         }
         vector = vector.materialize();
 
@@ -467,16 +466,18 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
     private final ValueProfile sharedClassProfile = ValueProfile.createClassProfile();
 
+    private final ConditionProfile valueEqualsVectorProfile = ConditionProfile.createBinaryProfile();
+
     /*
      * TODO (chumer) share code between {@link #share(RAbstractVector)} and {@link
      * #copyValueOnAssignment(RAbstractContainer)}
      */
-    private RAbstractVector share(RAbstractVector vector) {
+    private RAbstractVector share(RAbstractVector vector, Object value) {
         RAbstractVector returnVector = vector;
         if (returnVector instanceof RShareable) {
             RShareable shareable = (RShareable) returnVector;
             // TODO find out if we need to copy always in the recursive case
-            if (sharedConditionProfile.profile(shareable.isShared()) || recursive) {
+            if (sharedConditionProfile.profile(shareable.isShared()) || recursive || valueEqualsVectorProfile.profile(vector == value)) {
                 sharedProfile.enter();
                 shareable = (RShareable) returnVector.copy();
                 returnVector = (RAbstractVector) shareable;
