@@ -107,6 +107,7 @@ com.oracle.truffle.r.native/library/utils/src/utils_dummy.c,no.copyright
 com.oracle.truffle.r.native/run/R.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rscript_exec.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rscript.sh,oracle_bash.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/fastr/FastrDqrls.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/APerm.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/BaseGammaFunctions.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/BaseVariables.java,gnu_r.copyright

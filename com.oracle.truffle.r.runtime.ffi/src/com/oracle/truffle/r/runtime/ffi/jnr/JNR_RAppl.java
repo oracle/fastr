@@ -38,6 +38,8 @@ public class JNR_RAppl implements RApplRFFI {
         void dqrdc2_(double[] x, @In int[] ldx, @In int[] n, @In int[] p, @In double[] tol, int[] rank, double[] qraux, int[] pivot, @Out double[] work);
 
         void dqrcf_(double[] x, @In int[] n, @In int[] k, double[] qraux, double[] y, @In int[] ny, double[] b, int[] info);
+
+        void dqrls_(double[] x, int[] n, int[] p, double[] y, int[] ny, double[] tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work);
     }
 
     private static class LinpackProvider {
@@ -71,5 +73,11 @@ public class JNR_RAppl implements RApplRFFI {
     @TruffleBoundary
     public void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info) {
         linpack().dqrcf_(x, wrapInt(n), wrapInt(k), qraux, y, wrapInt(ny), b, info);
+    }
+
+    @Override
+    @TruffleBoundary
+    public void dqrls(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work) {
+        linpack().dqrls_(x, wrapInt(n), wrapInt(p), y, wrapInt(ny), wrapDouble(tol), b, rsd, qty, k, jpvt, qraux, work);
     }
 }
