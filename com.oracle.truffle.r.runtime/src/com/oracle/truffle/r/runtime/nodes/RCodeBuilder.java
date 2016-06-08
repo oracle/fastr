@@ -89,7 +89,7 @@ public interface RCodeBuilder<T> {
      * names - if it is non-null, it represents the left hand side that this function is assigned
      * to.
      */
-    T function(SourceSection source, List<Argument<T>> arguments, T body, T assignedTo);
+    T function(SourceSection source, List<Argument<T>> arguments, T body, Object assignedTo);
 
     /**
      * Creates a new call target from a given function expression literal.
