@@ -39,7 +39,8 @@ public class JNR_RAppl implements RApplRFFI {
 
         void dqrcf_(double[] x, @In int[] n, @In int[] k, double[] qraux, double[] y, @In int[] ny, double[] b, int[] info);
 
-        void dqrls_(double[] x, int[] n, int[] p, double[] y, int[] ny, double[] tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work);
+        void dqrls_(double[] x, @In int[] n, @In int[] p, @In double[] y, @In int[] ny, @In double[] tol, @Out double[] b, @Out double[] rsd, @Out double[] qty, @Out int[] k, int[] jpvt,
+                        @Out double[] qraux, @In double[] work);
     }
 
     private static class LinpackProvider {
