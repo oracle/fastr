@@ -52,7 +52,7 @@ final class PreProcessArgumentsNode extends RNode {
     static PreProcessArgumentsNode create(int length) {
         ArgumentStatePush[] argStatePushNodes = new ArgumentStatePush[length];
         for (int i = 0; i < length; i++) {
-            argStatePushNodes[i] = ArgumentStatePushNodeGen.create(i, null);
+            argStatePushNodes[i] = ArgumentStatePushNodeGen.create(i);
         }
         return new PreProcessArgumentsNode(argStatePushNodes);
     }
