@@ -554,10 +554,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
                     evalPromiseSlowPathWithName(frame, (RPromise) lookup.getValue());
                 }
                 if (lookup != null) {
-                    if (lookup.getValue() == null) {
-                        return new LookupLevel(lookup);
-                    }
-                    if (checkTypeSlowPath(frame, lookup.getValue())) {
+                    if (lookup.getValue() == null || checkTypeSlowPath(frame, lookup.getValue())) {
                         return new LookupLevel(lookup);
                     }
                 }
