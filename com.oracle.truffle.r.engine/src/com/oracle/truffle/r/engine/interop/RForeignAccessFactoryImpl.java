@@ -78,6 +78,8 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             case "RList":
                 foreignAccess = RListMRForeign.createAccess();
                 break;
+            case "RPairList":
+                foreignAccess = RPairListMRForeign.createAccess();
             case "RFunction":
                 foreignAccess = RFunctionMRForeign.createAccess();
                 break;

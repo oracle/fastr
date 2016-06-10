@@ -63,6 +63,7 @@ public class RFunctionMR {
         @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier);
         @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
+        @SuppressWarnings("try")
         protected Object access(@SuppressWarnings("unused") VirtualFrame frame, RFunction receiver, Object[] arguments) {
             Object[] dummyFrameArgs = RArguments.createUnitialized();
             VirtualFrame dummyFrame = Truffle.getRuntime().createVirtualFrame(dummyFrameArgs, emptyFrameDescriptor);
