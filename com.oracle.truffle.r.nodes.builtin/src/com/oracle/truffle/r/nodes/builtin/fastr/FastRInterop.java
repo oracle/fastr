@@ -66,16 +66,12 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        protected Object debugSource(Object name, RTypedValue value) {
+        protected Object exportSymbol(Object name, RTypedValue value) {
             String stringName = RRuntime.asString(name);
             if (stringName == null) {
                 throw RError.error(this, RError.Message.INVALID_ARG_TYPE, "name");
             }
-            if (value instanceof TruffleObject) {
-                RContext.getInstance().getExportedSymbols().put(stringName, (TruffleObject) value);
-            } else {
-                throw RError.error(this, RError.Message.NO_INTEROP, "value", value.getClass().getSimpleName());
-            }
+            RContext.getInstance().getExportedSymbols().put(stringName, value);
             return RNull.instance;
         }
     }
@@ -85,7 +81,7 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        protected Object debugSource(Object name) {
+        protected Object importSymbol(Object name) {
             String stringName = RRuntime.asString(name);
             if (stringName == null) {
                 throw RError.error(this, RError.Message.INVALID_ARG_TYPE, "name");

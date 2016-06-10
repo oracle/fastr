@@ -24,8 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RType;
@@ -45,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
  * {@link #enclosingFrame}.
  * </ul>
  */
-public final class RFunction extends RSharingAttributeStorage implements RTypedValue, TruffleObject {
+public final class RFunction extends RSharingAttributeStorage implements RTypedValue {
 
     public static final String NO_NAME = new String("");
 
@@ -108,11 +106,6 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
     }
 
     @Override
-    public ForeignAccess getForeignAccess() {
-        return RContext.getRForeignAccessFactory().getForeignAccess(this);
-    }
-
-    @Override
     public RFunction copy() {
         RFunction newFunction = RDataFactory.createFunction(getName(), getTarget(), getRBuiltin(), getEnclosingFrame());
         if (getAttributes() != null) {
@@ -125,4 +118,5 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
         newFunction.typedValueInfo = typedValueInfo;
         return newFunction;
     }
+
 }
