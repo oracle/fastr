@@ -75,11 +75,15 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
         ForeignAccess foreignAccess = null;
         String name = clazz.getSimpleName();
         switch (name) {
+            case "RNull":
+                foreignAccess = RNullMRForeign.createAccess();
+                break;
             case "RList":
                 foreignAccess = RListMRForeign.createAccess();
                 break;
             case "RPairList":
                 foreignAccess = RPairListMRForeign.createAccess();
+                break;
             case "RFunction":
                 foreignAccess = RFunctionMRForeign.createAccess();
                 break;
