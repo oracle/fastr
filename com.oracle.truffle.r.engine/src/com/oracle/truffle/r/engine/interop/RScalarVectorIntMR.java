@@ -29,35 +29,35 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.data.RScalarVector;
+import com.oracle.truffle.r.runtime.data.RInteger;
 
-@MessageResolution(receiverType = RScalarVector.class, language = TruffleRLanguage.class)
-public class RScalarVectorMR {
+@MessageResolution(receiverType = RInteger.class, language = TruffleRLanguage.class)
+public class RScalarVectorIntMR {
     @Resolve(message = "IS_BOXED")
-    public abstract static class RScalarVectorIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RScalarVector receiver) {
+    public abstract static class RScalarVectorIntIsBoxedNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RInteger receiver) {
             return false;
         }
     }
 
     @Resolve(message = "HAS_SIZE")
-    public abstract static class RScalarVectorHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RScalarVector receiver) {
+    public abstract static class RScalarVectorIntHasSizeNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RInteger receiver) {
             return true;
         }
     }
 
     @Resolve(message = "IS_NULL")
-    public abstract static class RScalarVectorIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RScalarVector receiver) {
+    public abstract static class RScalarVectorIntIsNullNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RInteger receiver) {
             return false;
         }
     }
 
     @Resolve(message = "READ")
-    public abstract static class RScalarVectorReadNode extends Node {
+    public abstract static class RScalarVectorIntReadNode extends Node {
 
-        protected Object access(RScalarVector receiver, Integer index) {
+        protected Object access(RInteger receiver, Integer index) {
             if (index != 1) {
                 throw RError.error(RError.NO_CALLER, RError.Message.SUBSCRIPT_BOUNDS);
             }
@@ -69,7 +69,7 @@ public class RScalarVectorMR {
     public abstract static class RScalarVectorCheck extends Node {
 
         protected static boolean test(TruffleObject receiver) {
-            return receiver instanceof RScalarVector;
+            return receiver instanceof RInteger;
         }
     }
 

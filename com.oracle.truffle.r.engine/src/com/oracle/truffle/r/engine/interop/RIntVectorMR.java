@@ -32,60 +32,60 @@ import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RVector;
 
-@MessageResolution(receiverType = RVector.class, language = TruffleRLanguage.class)
-public class RVectorMR {
+@MessageResolution(receiverType = RIntVector.class, language = TruffleRLanguage.class)
+public class RIntVectorMR {
     @Resolve(message = "IS_BOXED")
-    public abstract static class RVectorIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RVector receiver) {
+    public abstract static class RIntVectorIsBoxedNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RIntVector receiver) {
             return false;
         }
     }
 
     @Resolve(message = "HAS_SIZE")
-    public abstract static class RVectorHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RVector receiver) {
+    public abstract static class RIntVectorHasSizeNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RIntVector receiver) {
             return true;
         }
     }
 
     @Resolve(message = "GET_SIZE")
-    public abstract static class RVectorGetSizeNode extends Node {
+    public abstract static class RIntVectorGetSizeNode extends Node {
         @Child private RLengthNode lengthNode = RLengthNode.create();
 
-        protected Object access(VirtualFrame frame, RVector receiver) {
+        protected Object access(VirtualFrame frame, RIntVector receiver) {
             return lengthNode.executeInteger(frame, receiver);
         }
     }
 
     @Resolve(message = "IS_NULL")
-    public abstract static class RVectorIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RVector receiver) {
+    public abstract static class RIntVectorIsNullNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RIntVector receiver) {
             return false;
         }
     }
 
     @Resolve(message = "READ")
-    public abstract static class RVectorReadNode extends Node {
+    public abstract static class RIntVectorReadNode extends Node {
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
 
-        protected Object access(VirtualFrame frame, RVector receiver, String field) {
+        protected Object access(VirtualFrame frame, RIntVector receiver, String field) {
             return extract.applyAccessField(frame, receiver, field);
         }
 
-        protected Object access(VirtualFrame frame, RVector receiver, Integer index) {
+        protected Object access(VirtualFrame frame, RIntVector receiver, Integer index) {
             return extract.apply(frame, receiver, new Object[]{index}, RLogical.valueOf(false), RMissing.instance);
         }
     }
 
     @CanResolve
-    public abstract static class RVectorCheck extends Node {
+    public abstract static class RIntVectorCheck extends Node {
 
         protected static boolean test(TruffleObject receiver) {
-            return receiver instanceof RVector;
+            return receiver instanceof RIntVector;
         }
     }
 
