@@ -83,8 +83,9 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             case "RInteger":
                 foreignAccess = RScalarVectorIntMRForeign.createAccess();
                 break;
-            case "RInVector":
+            case "RIntVector":
                 foreignAccess = RIntVectorMRForeign.createAccess();
+                break;
             default:
                 throw RInternalError.unimplemented("foreignAccess: " + name);
 
