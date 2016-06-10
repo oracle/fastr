@@ -286,7 +286,6 @@ def _junit_r_harness(args, vmArgs, jdk, junitArgs):
     vmArgs += _graal_options(nocompile=True)
 
     setREnvironment()
-    vmArgs = _sanitize_vmArgs(jdk, vmArgs)
 
     return mx.run_java(vmArgs + junitArgs, nonZeroIsFatal=False, jdk=jdk)
 
