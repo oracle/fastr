@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RForeignAccessFactory;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
 
@@ -80,14 +81,12 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             case "RFunction":
                 foreignAccess = RFunctionMRForeign.createAccess();
                 break;
-            case "RInteger":
-                foreignAccess = RScalarVectorIntMRForeign.createAccess();
-                break;
-            case "RIntVector":
-                foreignAccess = RIntVectorMRForeign.createAccess();
-                break;
             default:
-                throw RInternalError.unimplemented("foreignAccess: " + name);
+                if (RAbstractVector.class.isAssignableFrom(clazz)) {
+                    foreignAccess = ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
+                } else {
+                    throw RInternalError.unimplemented("foreignAccess: " + name);
+                }
 
         }
         TableEntry te = new TableEntry(clazz, foreignAccess);

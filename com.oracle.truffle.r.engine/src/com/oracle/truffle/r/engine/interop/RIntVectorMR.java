@@ -34,7 +34,6 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.RMissing;
 
 @MessageResolution(receiverType = RIntVector.class, language = TruffleRLanguage.class)
 public class RIntVectorMR {
@@ -77,7 +76,7 @@ public class RIntVectorMR {
         }
 
         protected Object access(VirtualFrame frame, RIntVector receiver, Integer index) {
-            return extract.apply(frame, receiver, new Object[]{index}, RLogical.valueOf(false), RMissing.instance);
+            return extract.apply(frame, receiver, new Object[]{index}, RLogical.TRUE, RLogical.TRUE);
         }
     }
 
