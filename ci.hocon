@@ -37,7 +37,7 @@ java8Downloads : {
 
 gateTest : ${common} ${java8Downloads} {
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,BuildNative,UnitTests: ExpectedTestOutput file check,UnitTests"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,UnitTests: ExpectedTestOutput file check,UnitTests"]
   ]
 }
 
@@ -59,7 +59,7 @@ gateStyle : ${common} {
 
 rbcheck : ${common} ${java8Downloads} {
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,BuildNative"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac"]
     ["mx", "rbcheck"]
   ]
 }
