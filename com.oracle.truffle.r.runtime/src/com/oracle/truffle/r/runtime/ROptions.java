@@ -115,26 +115,25 @@ public class ROptions {
                     "browserNLdisabled", "CBoundsCheck"));
 
     private static void applyDefaults(HashMap<String, Object> map, RCmdOptions options, REnvVars envVars) {
-        map.put("add.smooth", RDataFactory.createLogicalVectorFromScalar(true));
-        map.put("check.bounds", RDataFactory.createLogicalVectorFromScalar(false));
-        map.put("continue", RDataFactory.createStringVector("+ "));
-        map.put("deparse.cutoff", RDataFactory.createIntVectorFromScalar(60));
-        map.put("digits", RDataFactory.createIntVectorFromScalar(7));
-        map.put("echo", RDataFactory.createLogicalVectorFromScalar(options.getBoolean(RCmdOption.SLAVE) ? false : true));
-        map.put("encoding", RDataFactory.createStringVector("native.enc"));
-        map.put("expressions", RDataFactory.createIntVectorFromScalar(5000));
-        boolean keepPkgSource = optionFromEnvVar("R_KEEP_PKG_SOURCE", envVars);
-        map.put("keep.source", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
-        map.put("keep.source.pkgs", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
-        map.put("OutDec", RDataFactory.createStringVector("."));
-        map.put("prompt", RDataFactory.createStringVector("> "));
-        map.put("verbose", RDataFactory.createLogicalVectorFromScalar(false));
-        map.put("nwarnings", RDataFactory.createIntVectorFromScalar(50));
-        map.put("warning.length", RDataFactory.createIntVectorFromScalar(1000));
-        map.put("width", RDataFactory.createIntVectorFromScalar(80));
-        map.put("browserNLdisabled", RDataFactory.createLogicalVectorFromScalar(false));
-        boolean cBoundsCheck = optionFromEnvVar("R_C_BOUNDS_CHECK", envVars);
-        map.put("CBoundsCheck", RDataFactory.createLogicalVectorFromScalar(cBoundsCheck));
+        map.put("add.smooth", RRuntime.asLogical(true));
+        map.put("check.bounds", RRuntime.asLogical(false));
+        map.put("continue", "+ ");
+        map.put("deparse.cutoff", 60);
+        map.put("digits", 7);
+        map.put("echo", RRuntime.asLogical(!options.getBoolean(RCmdOption.SLAVE)));
+        map.put("encoding", "native.enc");
+        map.put("expressions", 5000);
+        byte keepPkgSource = RRuntime.asLogical(optionFromEnvVar("R_KEEP_PKG_SOURCE", envVars));
+        map.put("keep.source", keepPkgSource);
+        map.put("keep.source.pkgs", keepPkgSource);
+        map.put("OutDec", ".");
+        map.put("prompt", "> ");
+        map.put("verbose", RRuntime.asLogical(false));
+        map.put("nwarnings", 50);
+        map.put("warning.length", 1000);
+        map.put("width", 80);
+        map.put("browserNLdisabled", RRuntime.asLogical(false));
+        map.put("CBoundsCheck", RRuntime.asLogical(optionFromEnvVar("R_C_BOUNDS_CHECK", envVars)));
     }
 
     private static boolean optionFromEnvVar(String envVar, REnvVars envVars) {
