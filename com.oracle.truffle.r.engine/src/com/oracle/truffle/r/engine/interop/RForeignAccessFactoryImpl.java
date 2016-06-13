@@ -30,6 +30,10 @@ import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RForeignAccessFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -74,26 +78,20 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
     private ForeignAccess createForeignAccess(Class<? extends RTruffleObject> clazz) {
         ForeignAccess foreignAccess = null;
         String name = clazz.getSimpleName();
-        switch (name) {
-            case "RNull":
-                foreignAccess = RNullMRForeign.createAccess();
-                break;
-            case "RList":
-                foreignAccess = RListMRForeign.createAccess();
-                break;
-            case "RPairList":
-                foreignAccess = RPairListMRForeign.createAccess();
-                break;
-            case "RFunction":
-                foreignAccess = RFunctionMRForeign.createAccess();
-                break;
-            default:
-                if (RAbstractVector.class.isAssignableFrom(clazz)) {
-                    foreignAccess = ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
-                } else {
-                    throw RInternalError.unimplemented("foreignAccess: " + name);
-                }
-
+        if (RNull.class.isAssignableFrom(clazz)) {
+            foreignAccess = RNullMRForeign.createAccess();
+        } else if (RList.class.isAssignableFrom(clazz)) {
+            foreignAccess = RListMRForeign.createAccess();
+        } else if (RPairList.class.isAssignableFrom(clazz)) {
+            foreignAccess = RPairListMRForeign.createAccess();
+        } else if (RFunction.class.isAssignableFrom(clazz)) {
+            foreignAccess = RFunctionMRForeign.createAccess();
+        } else {
+            if (RAbstractVector.class.isAssignableFrom(clazz)) {
+                foreignAccess = ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
+            } else {
+                throw RInternalError.unimplemented("foreignAccess: " + name);
+            }
         }
         TableEntry te = new TableEntry(clazz, foreignAccess);
         table[tableIndex++] = te;
