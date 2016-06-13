@@ -46,7 +46,12 @@ public interface RShareable extends RTypedValue {
 
     boolean isSharedPermanent();
 
-    void makeSharedPermanent();
+    /**
+     * Turns off reference counting for this object.
+     * 
+     * @return {@code this}
+     */
+    RShareable makeSharedPermanent();
 
     RTypedValue getNonShared();
 
