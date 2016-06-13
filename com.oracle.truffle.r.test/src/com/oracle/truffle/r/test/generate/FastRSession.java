@@ -268,10 +268,12 @@ public final class FastRSession implements RSession {
                     if (t instanceof RError) {
                         // nothing to do
                     } else {
-                        if (!TestBase.ProcessFailedTests && t instanceof RInternalError) {
-                            RInternalError.reportError(t);
+                        if (!TestBase.ProcessFailedTests) {
+                            if (t instanceof RInternalError) {
+                                RInternalError.reportError(t);
+                            }
+                            t.printStackTrace();
                         }
-                        t.printStackTrace();
                         killedByException = t;
                     }
                 } finally {
