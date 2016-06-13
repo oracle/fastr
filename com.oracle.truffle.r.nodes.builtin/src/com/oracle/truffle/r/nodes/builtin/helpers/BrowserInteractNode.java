@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -87,8 +86,8 @@ public abstract class BrowserInteractNode extends RNode {
                     input = input.trim();
                 }
                 if (input == null || input.length() == 0) {
-                    RLogicalVector browserNLdisabledVec = (RLogicalVector) RContext.getInstance().stateROptions.getValue("browserNLdisabled");
-                    if (!RRuntime.fromLogical(browserNLdisabledVec.getDataAt(0))) {
+                    byte browserNLdisabledVec = RRuntime.asLogicalObject(RContext.getInstance().stateROptions.getValue("browserNLdisabled"));
+                    if (!RRuntime.fromLogical(browserNLdisabledVec)) {
                         input = lastEmptyLineCommand;
                     }
                 }

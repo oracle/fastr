@@ -24,20 +24,21 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
@@ -794,40 +795,40 @@ public class RRuntime {
     }
 
     /**
-     * Java equivalent of GnuR asInteger fur use outside Truffle boundary. TODO support for warnings
+     * Java equivalent of GnuR asLogical for use outside Truffle boundary. TODO support for warnings
+     */
+    public static byte asLogicalObject(Object objArg) {
+        Object obj = asAbstractVector(objArg);
+        if (obj instanceof RAbstractIntVector) {
+            return int2logical(((RAbstractIntVector) obj).getDataAt(0));
+        } else if (obj instanceof RAbstractDoubleVector) {
+            return double2logical(((RAbstractDoubleVector) obj).getDataAt(0));
+        } else if (obj instanceof RAbstractLogicalVector) {
+            return ((RAbstractLogicalVector) obj).getDataAt(0);
+        } else if (obj instanceof RAbstractComplexVector) {
+            return complex2logical(((RAbstractComplexVector) obj).getDataAt(0));
+        } else if (obj instanceof RAbstractStringVector) {
+            return string2logical(((RAbstractStringVector) obj).getDataAt(0));
+        } else {
+            return LOGICAL_NA;
+        }
+    }
+
+    /**
+     * Java equivalent of GnuR asInteger for use outside Truffle boundary. TODO support for warnings
      */
     public static int asInteger(Object objArg) {
         Object obj = asAbstractVector(objArg);
-        if (obj instanceof RIntVector) {
-            int v = ((RIntVector) obj).getDataAt(0);
-            return v;
-        } else if (obj instanceof RDoubleVector) {
-            double d = ((RDoubleVector) obj).getDataAt(0);
-            if (isNAorNaN(d)) {
-                return INT_NA;
-            } else {
-                return (int) d;
-            }
-        } else if (obj instanceof RLogicalVector) {
-            byte v = ((RLogicalVector) obj).getDataAt(0);
-            if (isNA(v)) {
-                return INT_NA;
-            } else {
-                return v;
-            }
-        } else if (obj instanceof RComplexVector) {
-            RComplex v = ((RComplexVector) obj).getDataAt(0);
-            if (isNAorNaN(v.getRealPart()) || isNAorNaN(v.getImaginaryPart())) {
-                return INT_NA;
-            } else {
-                return (int) v.getRealPart();
-            }
-        } else if (obj instanceof RStringVector) {
-            try {
-                return Integer.parseInt(((RStringVector) obj).getDataAt(0));
-            } catch (NumberFormatException ex) {
-                return INT_NA;
-            }
+        if (obj instanceof RAbstractIntVector) {
+            return ((RAbstractIntVector) obj).getDataAt(0);
+        } else if (obj instanceof RAbstractDoubleVector) {
+            return double2int(((RAbstractDoubleVector) obj).getDataAt(0));
+        } else if (obj instanceof RAbstractLogicalVector) {
+            return logical2int(((RAbstractLogicalVector) obj).getDataAt(0));
+        } else if (obj instanceof RAbstractComplexVector) {
+            return complex2int(((RAbstractComplexVector) obj).getDataAt(0));
+        } else if (obj instanceof RAbstractStringVector) {
+            return string2int(((RAbstractStringVector) obj).getDataAt(0));
         } else {
             return INT_NA;
         }

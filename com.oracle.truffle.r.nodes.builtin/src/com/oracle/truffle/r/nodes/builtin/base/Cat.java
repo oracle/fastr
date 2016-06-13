@@ -102,7 +102,7 @@ public abstract class Cat extends RBuiltinNode {
         checkFillLength(fill);
         int fillWidth = -1;
         if (RRuntime.fromLogical(fill.getDataAt(0))) {
-            fillWidth = ((RIntVector) RContext.getInstance().stateROptions.getValue("width")).getDataAt(0);
+            fillWidth = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("width"));
         }
         return output(args, conn, sepVec, fillWidth, checkLabels(labels), append);
     }
