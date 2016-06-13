@@ -30,8 +30,7 @@ public class TestBuiltin_listfiles extends TestBase {
     @Test
     public void testlistfiles3() {
         // FastR bug; not recursing in to "."
-        assertEval(Ignored.Unknown,
-                        "argv <- list('.', '^CITATION.*', FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); .Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        assertEval("argv <- list('.', '^CITATION.*', FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); .Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test

@@ -34,9 +34,9 @@ public class TestFunctions extends TestBase {
         assertEval("{ sum <- 1; sum(1,2) }");
         assertEval("{ sum <- 1; `sum`(1,2) }");
         assertEval("{ sum <- 1; 'sum'(1,2) }");
-        assertEval(Ignored.ImplementationError, "{ sum <- 1; (sum)(1,2) }");
+        assertEval("{ sum <- 1; (sum)(1,2) }");
         assertEval("{ sum <- 1; ('sum')(1,2) }");
-        assertEval(Ignored.ImplementationError, "{ sum <- 1; (`sum`)(1,2) }");
+        assertEval("{ sum <- 1; (`sum`)(1,2) }");
     }
 
     @Test
