@@ -54,7 +54,7 @@ public class TestBuiltin_min extends TestBase {
 
     @Test
     public void testmin8() {
-        assertEval(Output.ContainsError, "argv <- list(structure(c(3L, 2L, 1L), .Label = c('A', 'B', 'C'), class = c('ordered', 'factor')), na.rm = FALSE);min(argv[[1]],argv[[2]]);");
+        assertEval(Output.IgnoreErrorContext, "argv <- list(structure(c(3L, 2L, 1L), .Label = c('A', 'B', 'C'), class = c('ordered', 'factor')), na.rm = FALSE);min(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -148,17 +148,17 @@ public class TestBuiltin_min extends TestBase {
         assertEval("{ is.logical(min(TRUE, FALSE)) }");
         assertEval("{ is.logical(min(TRUE)) }");
         assertEval("{ min(as.raw(42), as.raw(7)) }");
-        assertEval(Output.ContainsError, "{ min(42+42i, 7+7i) }");
+        assertEval(Output.IgnoreErrorContext, "{ min(42+42i, 7+7i) }");
         assertEval("{ min(\"42\", \"7\") }");
 
         assertEval("{ min(as.double(NA), na.rm=FALSE) }");
-        assertEval(Output.ContainsWarning, "{ min(as.double(NA), as.double(NA), na.rm=TRUE) }");
+        assertEval(Output.IgnoreWarningContext, "{ min(as.double(NA), as.double(NA), na.rm=TRUE) }");
         assertEval("{ min(as.double(NA), as.double(NA), na.rm=FALSE) }");
         assertEval("{ min(as.integer(NA), na.rm=FALSE) }");
         assertEval("{ min(as.integer(NA), as.integer(NA), na.rm=FALSE) }");
-        assertEval(Output.ContainsWarning, "{ min(as.character(NA), na.rm=TRUE) }");
+        assertEval(Output.IgnoreWarningContext, "{ min(as.character(NA), na.rm=TRUE) }");
         assertEval("{ min(as.character(NA), na.rm=FALSE) }");
-        assertEval(Output.ContainsWarning, "{ min(as.character(NA), as.character(NA), na.rm=TRUE) }");
+        assertEval(Output.IgnoreWarningContext, "{ min(as.character(NA), as.character(NA), na.rm=TRUE) }");
         assertEval("{ min(as.character(NA), as.character(NA), na.rm=FALSE) }");
         assertEval("{ min(42L, as.integer(NA), na.rm=TRUE) }");
         assertEval("{ min(42L, as.integer(NA), na.rm=FALSE) }");
@@ -173,10 +173,10 @@ public class TestBuiltin_min extends TestBase {
         assertEval("{ min(\"42\", as.character(NA), \"7\", na.rm=TRUE) }");
         assertEval("{ min(\"42\", as.character(NA), \"7\", na.rm=FALSE) }");
 
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ min(integer(0)) }");
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ min(integer()) }");
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ min(as.double(NA), na.rm=TRUE) }");
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ min(as.integer(NA), na.rm=TRUE) }");
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ min(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ min(integer(0)) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ min(integer()) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ min(as.double(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ min(as.integer(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ min(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
     }
 }

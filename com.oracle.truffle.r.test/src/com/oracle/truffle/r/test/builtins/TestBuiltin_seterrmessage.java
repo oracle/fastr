@@ -19,7 +19,7 @@ public class TestBuiltin_seterrmessage extends TestBase {
 
     @Test
     public void testseterrmessage1() {
-        assertEval(Output.ContainsError, "argv <- list('Error in cor(rnorm(10), NULL) : \\n  supply both 'x' and 'y' or a matrix-like 'x'\\n'); .Internal(seterrmessage(argv[[1]]))");
+        assertEval(Output.IgnoreErrorContext, "argv <- list('Error in cor(rnorm(10), NULL) : \\n  supply both 'x' and 'y' or a matrix-like 'x'\\n'); .Internal(seterrmessage(argv[[1]]))");
     }
 
     @Test

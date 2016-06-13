@@ -54,8 +54,8 @@ public class TestSimpleSequences extends TestBase {
         assertEval("{ 1:(1:3) }");
 
         // these two test need proper handling of parentheses
-        assertEval(Output.ContainsWarning, "{ (1:3):3 }");
-        assertEval(Output.ContainsWarning, "{ (1:3):(1:3) }");
+        assertEval(Output.IgnoreWarningContext, "{ (1:3):3 }");
+        assertEval(Output.IgnoreWarningContext, "{ (1:3):(1:3) }");
     }
 
     @Test

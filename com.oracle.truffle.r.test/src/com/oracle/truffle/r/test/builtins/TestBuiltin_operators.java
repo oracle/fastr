@@ -34,13 +34,13 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators4() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`*`(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testoperators5() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`*`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`*`(argv[[1]]);");
     }
 
     @Test
@@ -183,12 +183,12 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators33() {
-        assertEval(Output.ContainsWarning, "argv <- list(c(20.8, 11.2, 6.2, 12.8, 43.4), c(10.4, 5.6, 3.1, 6.4, 21.7, 0, 10.4, 5.6, 3.1, 6.4, 21.7));`+`(argv[[1]],argv[[2]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(c(20.8, 11.2, 6.2, 12.8, 43.4), c(10.4, 5.6, 3.1, 6.4, 21.7, 0, 10.4, 5.6, 3.1, 6.4, 21.7));`+`(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testoperators34() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`+`(argv[[1]],argv[[2]]);");
     }
 
@@ -199,7 +199,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators36() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`+`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`+`(argv[[1]]);");
     }
 
     @Test
@@ -311,7 +311,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators58() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 1L);`-`(argv[[1]],argv[[2]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 1L);`-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -341,7 +341,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators64() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`-`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`-`(argv[[1]]);");
     }
 
     @Test
@@ -366,7 +366,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators69() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`-`(argv[[1]],argv[[2]]);");
     }
 
@@ -438,7 +438,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators84() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`<`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`<`(argv[[1]]);");
     }
 
     @Test
@@ -448,7 +448,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators86() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 1L);`<`(argv[[1]],argv[[2]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 1L);`<`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -530,7 +530,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators102() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 0L);`<=`(argv[[1]],argv[[2]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 0L);`<=`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -545,7 +545,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators105() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`<=`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`<=`(argv[[1]]);");
     }
 
     @Test
@@ -582,7 +582,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators112() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`!`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`!`(argv[[1]]);");
     }
 
     @Test
@@ -745,7 +745,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators144() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`>`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`>`(argv[[1]]);");
     }
 
     @Test
@@ -770,7 +770,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators149() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`>=`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`>=`(argv[[1]]);");
     }
 
     @Test
@@ -810,7 +810,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators157() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`%%`(argv[[1]],argv[[2]]);");
     }
 
@@ -866,7 +866,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators168() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`%%`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`%%`(argv[[1]]);");
     }
 
     @Test
@@ -1523,7 +1523,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators303() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`^`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`^`(argv[[1]]);");
     }
 
     @Test
@@ -1674,13 +1674,13 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators332() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`%/%`(argv[[1]]);");
     }
 
     @Test
     public void testoperators333() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`%/%`(argv[[1]],argv[[2]]);");
     }
 
@@ -1696,7 +1696,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators336() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`&`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`&`(argv[[1]]);");
     }
 
     @Test
@@ -1923,7 +1923,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testDispatchToOpsSpecializations() {
-        assertEval(Output.ContainsError, "factor(c(\"a\",\"b\",\"c\")) == factor(c(1,2,3))");
+        assertEval(Output.IgnoreErrorContext, "factor(c(\"a\",\"b\",\"c\")) == factor(c(1,2,3))");
         assertEval("data.frame(factor(c(1,2,3))) == data.frame(factor(c(1,2,3)))");
         assertEval("data.frame(factor(c(1,2,1))) == data.frame(factor(c(1,2,2)))");
     }

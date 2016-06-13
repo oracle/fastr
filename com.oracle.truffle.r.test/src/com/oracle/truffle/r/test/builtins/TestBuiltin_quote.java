@@ -30,8 +30,8 @@ public class TestBuiltin_quote extends TestBase {
         assertEval("{ quote(x <- x + 1) }");
         assertEval("{ typeof(quote(x)) }");
 
-        assertEval(Output.ContainsError, "{ l <- quote(a[3] <- 4) ; f <- function() { eval(l) } ; f() }");
-        assertEval(Output.ContainsError, "{ l <- quote(a[3] <- 4) ; eval(l) ; f() }");
+        assertEval(Output.IgnoreErrorContext, "{ l <- quote(a[3] <- 4) ; f <- function() { eval(l) } ; f() }");
+        assertEval(Output.IgnoreErrorContext, "{ l <- quote(a[3] <- 4) ; eval(l) ; f() }");
 
         assertEval("{ l <- quote(x[1,1] <- 10) ; f <- function() { eval(l) } ; x <- matrix(1:4,nrow=2) ; f() ; x }");
         assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) } ; x <- 10 ; f() ; x }");

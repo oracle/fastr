@@ -89,10 +89,10 @@ public class TestSimpleArrays extends TestBase {
 
         // negative length vectors are not allowed is the error reported by gnu-r
         // negative dims not allowed by R, special GNU message
-        assertEval(Output.ContainsError, "{ array(NA, dim=c(-2,2)); }");
+        assertEval(Output.IgnoreErrorContext, "{ array(NA, dim=c(-2,2)); }");
 
         // negative dims not allowed
-        assertEval(Output.ContainsError, "{ array(NA, dim=c(-2,-2)); }");
+        assertEval(Output.IgnoreErrorContext, "{ array(NA, dim=c(-2,-2)); }");
 
         // zero dimension array has length 0
         assertEval("{ length(array(NA, dim=c(1,0,2,3))) }");
@@ -352,7 +352,7 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ x<-as.double(1:8); dim(x)<-c(2,2,2); x[1,1,1]<-42L; x }");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,1:2,0]<-y); x }");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,1:2,c(0,0)]<-y); x }");
-        assertEval(Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[0,5,1] <- y); x }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[0,5,1] <- y); x }");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2, c(1, NA), 1] <- y); x }");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x }");
         assertEval("{ x<-1.1:8.8; dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x }");
@@ -387,7 +387,7 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ a <- 1:9 ; a[1, 1, 1] <- 10L }");
 
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[[1, 1]] <- integer() }");
-        assertEval(Output.ContainsAmbiguousError, "{ m <- matrix(1:6, nrow=2) ; m[[1:2, 1]] <- integer() }");
+        assertEval(Output.IgnoreErrorMessage, "{ m <- matrix(1:6, nrow=2) ; m[[1:2, 1]] <- integer() }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[1, 2] <- integer() }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[1, 2] <- 1:3 }");
 
@@ -400,7 +400,7 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1,c(-1,-10)) ; m <- f(-1,2) ; m }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(2,1:3) ; m <- f(1,-2) ; m }");
 
-        assertEval(Output.ContainsAmbiguousError, "{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,NA),1]<-y); x }");
+        assertEval(Output.IgnoreErrorMessage, "{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,NA),1]<-y); x }");
 
         assertEval("{ m <- matrix(1:6, nrow=3) ; m[2] <- list(100) ; m }");
 
@@ -414,8 +414,8 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{  m <- array(1:3, dim=c(3,1,1)) ; f <- function(x,v) { x[[2,1,1]] <- v ; x } ; f(m,10L) ; f(m,10) ; x <- f(m,11L) ; c(x[1],x[2],x[3]) }");
 
         // error reporting
-        assertEval(Output.ContainsError, "{ m <- matrix(1:6, nrow=2) ; m[[1:2,1]] <- 1 }");
-        assertEval(Output.ContainsError, "{ m <- matrix(1:6, nrow=2) ; m[[integer(),1]] <- 1 }");
+        assertEval(Output.IgnoreErrorContext, "{ m <- matrix(1:6, nrow=2) ; m[[1:2,1]] <- 1 }");
+        assertEval(Output.IgnoreErrorContext, "{ m <- matrix(1:6, nrow=2) ; m[[integer(),1]] <- 1 }");
 
         // recovery from scalar selection update
         assertEval("{ m <- matrix(as.double(1:6), nrow=2) ; mi <- matrix(1:6, nrow=2) ; f <- function(v,i,j) { v[i,j] <- 100 ; v[i,j] * i * j } ; f(m, 1L, 2L) ; f(m,1L,TRUE)  }");

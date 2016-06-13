@@ -139,7 +139,7 @@ public class TestBuiltin_seqint extends TestBase {
 
     @Test
     public void testseqint26() {
-        assertEval(Output.ContainsError, "argv <- list(NaN, NaN);do.call('seq.int', argv)");
+        assertEval(Output.IgnoreErrorContext, "argv <- list(NaN, NaN);do.call('seq.int', argv)");
     }
 
     @Test
@@ -154,6 +154,6 @@ public class TestBuiltin_seqint extends TestBase {
 
     @Test
     public void testseqint29() {
-        assertEval(Output.ContainsError, "argv <- list(NaN);do.call('seq.int', argv)");
+        assertEval(Output.IgnoreErrorContext, "argv <- list(NaN);do.call('seq.int', argv)");
     }
 }

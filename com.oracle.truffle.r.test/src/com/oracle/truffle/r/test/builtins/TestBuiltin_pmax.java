@@ -91,19 +91,19 @@ public class TestBuiltin_pmax extends TestBase {
     public void testPMax() {
         assertEval("{ pmax(c(1L, 7L), c(42L, 1L)) }");
         assertEval("{ pmax(c(1L, 7L), integer()) }");
-        assertEval(Output.ContainsWarning, "{ pmax(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }");
+        assertEval(Output.IgnoreWarningContext, "{ pmax(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }");
         assertEval("{ pmax(c(1L, 7L), c(42L, as.integer(NA))) }");
         assertEval("{ pmax(c(1L, 7L), c(42L, as.integer(NA)), na.rm=TRUE) }");
 
         assertEval("{ pmax(c(1, 7), c(42, 1)) }");
         assertEval("{ pmax(c(1, 7), double()) }");
-        assertEval(Output.ContainsWarning, "{ pmax(c(1, 7, 8), c(1), c(42, 1)) }");
+        assertEval(Output.IgnoreWarningContext, "{ pmax(c(1, 7, 8), c(1), c(42, 1)) }");
         assertEval("{ pmax(c(1, 7), c(42, as.double(NA))) }");
         assertEval("{ pmax(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }");
 
         assertEval("{ pmax(c(\"1\", \"7\"), c(\"42\", \"1\")) }");
         assertEval("{ pmax(c(\"1\", \"7\"), character()) }");
-        assertEval(Output.ContainsWarning, "{ pmax(c(\"1\", \"7\", \"8\"), c(\"1\"), c(\"42\", \"1\")) }");
+        assertEval(Output.IgnoreWarningContext, "{ pmax(c(\"1\", \"7\", \"8\"), c(\"1\"), c(\"42\", \"1\")) }");
         assertEval("{ pmax(c(\"1\", \"7\"), c(\"42\", as.character(NA))) }");
         assertEval("{ pmax(c(\"1\", \"7\"), c(\"42\", as.character(NA)), na.rm=TRUE) }");
         assertEval("{ pmax(c(\"1\", as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
@@ -113,7 +113,7 @@ public class TestBuiltin_pmax extends TestBase {
         assertEval("{ pmax(c(FALSE, TRUE), logical()) }");
         assertEval("{ pmax(c(FALSE, TRUE), c(FALSE, NA)) }");
 
-        assertEval(Output.ContainsError, "{ pmax(as.raw(42)) }");
-        assertEval(Output.ContainsError, "{ pmax(7+42i) }");
+        assertEval(Output.IgnoreErrorContext, "{ pmax(as.raw(42)) }");
+        assertEval(Output.IgnoreErrorContext, "{ pmax(7+42i) }");
     }
 }

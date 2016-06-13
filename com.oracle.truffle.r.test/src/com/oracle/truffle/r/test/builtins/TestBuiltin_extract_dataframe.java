@@ -46,7 +46,7 @@ public class TestBuiltin_extract_dataframe extends TestBase {
 
     @Test
     public void undefinedColumnGivesError() {
-        assertEval(Output.ContainsError, "mtcars[42]");
+        assertEval(Output.IgnoreErrorContext, "mtcars[42]");
     }
 
     @Test
@@ -60,6 +60,6 @@ public class TestBuiltin_extract_dataframe extends TestBase {
         assertEval("{ fr <- data.frame(1:3,4:6); attr(fr,'names') <- NULL; fr[1,2] }");
         // N.B.: this warning is surprisingly formatted with extra new line before the contents of
         // warning(...) invoked from R code
-        assertEval(Output.ContainsWarning, "{ fr <- data.frame(1:3,4:6); attr(fr,'names') <- NULL; fr['col'] }");
+        assertEval(Output.IgnoreWarningContext, "{ fr <- data.frame(1:3,4:6); attr(fr,'names') <- NULL; fr['col'] }");
     }
 }

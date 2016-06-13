@@ -65,9 +65,9 @@ public class TestBuiltin_matchfun extends TestBase {
         assertEval("min <- 1; f <- function(min) { match.fun(min, descend=T)}; f(min)");
         assertEval("min <- 1; f <- function(min) { match.fun(min, descend=F)}; f(min)");
 
-        assertEval(Output.ContainsError, "min <- 1; f <- function(min) { match.fun(min)}; f(baz)");
-        assertEval(Output.ContainsError, "min <- 1; f <- function(min) { match.fun(min, descend=T)}; f(baz)");
-        assertEval(Output.ContainsError, "min <- 1; f <- function(min) { match.fun(min, descend=F)}; f(baz)");
+        assertEval(Output.IgnoreErrorContext, "min <- 1; f <- function(min) { match.fun(min)}; f(baz)");
+        assertEval(Output.IgnoreErrorContext, "min <- 1; f <- function(min) { match.fun(min, descend=T)}; f(baz)");
+        assertEval(Output.IgnoreErrorContext, "min <- 1; f <- function(min) { match.fun(min, descend=F)}; f(baz)");
 
         assertEval("min <- 1; f <- function(x) { match.fun(x)}; f(c('min'))");
         assertEval("min <- 1; f <- function(x) { match.fun(x)}; f(c('min', 'max'))");

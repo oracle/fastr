@@ -60,6 +60,6 @@ public class TestBuiltin_rowMeans extends TestBase {
 
         // Error message mismatch
         assertEval(Ignored.Unknown, "{rowMeans(matrix(NA,NA,NA),TRUE)}");
-        assertEval(Output.ContainsError, "{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
+        assertEval(Output.IgnoreErrorContext, "{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
     }
 }

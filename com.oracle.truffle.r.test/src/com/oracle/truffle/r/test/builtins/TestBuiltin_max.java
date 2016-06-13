@@ -59,7 +59,7 @@ public class TestBuiltin_max extends TestBase {
 
     @Test
     public void testmax9() {
-        assertEval(Output.ContainsError,
+        assertEval(Output.IgnoreErrorContext,
                         "argv <- list(structure(list(x = c(-1, 1, 1, -1, -1, 1, 1, -1), y = c(-0.701149425287356, -0.701149425287356, -0.701149425287356, -0.701149425287356, 0.701149425287356, 0.701149425287356, 0.701149425287356, 0.701149425287356), z = c(-0.4, -0.4, 0.4, 0.4, -0.4, -0.4, 0.4, 0.4)), .Names = c('x', 'y', 'z'), row.names = c(NA, -8L), class = 'data.frame'), na.rm = FALSE);max(argv[[1]],argv[[2]]);");
     }
 
@@ -100,7 +100,7 @@ public class TestBuiltin_max extends TestBase {
 
     @Test
     public void testmax17() {
-        assertEval(Output.ContainsError, "argv <- list(structure(c(3L, 2L, 1L), .Label = c('A', 'B', 'C'), class = c('ordered', 'factor')), na.rm = FALSE);max(argv[[1]],argv[[2]]);");
+        assertEval(Output.IgnoreErrorContext, "argv <- list(structure(c(3L, 2L, 1L), .Label = c('A', 'B', 'C'), class = c('ordered', 'factor')), na.rm = FALSE);max(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -181,17 +181,17 @@ public class TestBuiltin_max extends TestBase {
         assertEval("{ is.logical(max(TRUE, FALSE)) }");
         assertEval("{ is.logical(max(TRUE)) }");
         assertEval("{ max(as.raw(42), as.raw(7)) }");
-        assertEval(Output.ContainsError, "{ max(42+42i, 7+7i) }");
+        assertEval(Output.IgnoreErrorContext, "{ max(42+42i, 7+7i) }");
         assertEval("{ max(\"42\", \"7\") }");
 
         assertEval("{ max(as.double(NA), na.rm=FALSE) }");
-        assertEval(Output.ContainsWarning, "{ max(as.double(NA), as.double(NA), na.rm=TRUE) }");
+        assertEval(Output.IgnoreWarningContext, "{ max(as.double(NA), as.double(NA), na.rm=TRUE) }");
         assertEval("{ max(as.double(NA), as.double(NA), na.rm=FALSE) }");
         assertEval("{ max(as.integer(NA), na.rm=FALSE) }");
         assertEval("{ max(as.integer(NA), as.integer(NA), na.rm=FALSE) }");
-        assertEval(Output.ContainsWarning, "{ max(as.character(NA), na.rm=TRUE) }");
+        assertEval(Output.IgnoreWarningContext, "{ max(as.character(NA), na.rm=TRUE) }");
         assertEval("{ max(as.character(NA), na.rm=FALSE) }");
-        assertEval(Output.ContainsWarning, "{ max(as.character(NA), as.character(NA), na.rm=TRUE) }");
+        assertEval(Output.IgnoreWarningContext, "{ max(as.character(NA), as.character(NA), na.rm=TRUE) }");
         assertEval("{ max(as.character(NA), as.character(NA), na.rm=FALSE) }");
         assertEval("{ max(42L, as.integer(NA), na.rm=TRUE) }");
         assertEval("{ max(42L, as.integer(NA), na.rm=FALSE) }");
@@ -215,10 +215,10 @@ public class TestBuiltin_max extends TestBase {
 
         assertEval("max(v<-42)");
 
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(integer(0)) }");
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(integer()) }");
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(as.double(NA), na.rm=TRUE) }");
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(as.integer(NA), na.rm=TRUE) }");
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(integer(0)) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(integer()) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(as.double(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(as.integer(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
     }
 }

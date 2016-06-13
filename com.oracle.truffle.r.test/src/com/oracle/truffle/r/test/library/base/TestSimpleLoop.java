@@ -49,7 +49,7 @@ public class TestSimpleLoop extends TestBase {
 
     @Test
     public void testLoopsErrors() {
-        assertEval(Output.ContainsError, "{ while (1 < NA) { 1 } }");
+        assertEval(Output.IgnoreErrorContext, "{ while (1 < NA) { 1 } }");
 
         assertEval("{ break; }");
         assertEval("{ next; }");
@@ -61,9 +61,9 @@ public class TestSimpleLoop extends TestBase {
 
     @Test
     public void testLoopsErrorsIgnore() {
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ l <- quote(for(i in s) { x <- i }) ; s <- 1:3 ; eval(l) ; s <- function(){} ; eval(l) ; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ l <- function(s) { for(i in s) { x <- i } ; x } ; l(1:3) ; s <- function(){} ; l(s) ; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ l <- quote({ for(i in s) { x <- i } ; x }) ; f <- function(s) { eval(l) } ; f(1:3) ; s <- function(){} ; f(s) ; x }");
+        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ l <- quote(for(i in s) { x <- i }) ; s <- 1:3 ; eval(l) ; s <- function(){} ; eval(l) ; x }");
+        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ l <- function(s) { for(i in s) { x <- i } ; x } ; l(1:3) ; s <- function(){} ; l(s) ; x }");
+        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ l <- quote({ for(i in s) { x <- i } ; x }) ; f <- function(s) { eval(l) } ; f(1:3) ; s <- function(){} ; f(s) ; x }");
     }
 
     @Test
