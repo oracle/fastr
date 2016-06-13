@@ -56,7 +56,7 @@ public class RS4Object extends RSharingAttributeStorage {
                 newAttributes.put(attr.getName(), attr.getValue());
             }
         }
-        resultS4.typedValueInfo = typedValueInfo;
+        resultS4.setTypedValueInfo(getTypedValueInfo());
         return resultS4;
     }
 }

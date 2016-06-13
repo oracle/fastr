@@ -193,7 +193,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
         if (this.attributes != null) {
             l.attributes = attributes.copy();
         }
-        l.typedValueInfo = typedValueInfo;
+        l.setTypedValueInfo(getTypedValueInfo());
         return l;
     }
 

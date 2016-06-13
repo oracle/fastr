@@ -552,7 +552,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         RVector result = internalCopy();
         setAttributes(result);
         incCopyCount();
-        result.typedValueInfo = typedValueInfo;
+        result.setTypedValueInfo(getTypedValueInfo());
         return result;
     }
 
