@@ -29,17 +29,37 @@ import com.oracle.truffle.r.runtime.RInternalError;
 public abstract class RScalar implements RTypedValue {
 
     @Override
-    public int getTypedValueInfo() {
+    public final int getTypedValueInfo() {
         throw RInternalError.shouldNotReachHere();
     }
 
     @Override
-    public void setTypedValueInfo(int value) {
+    public final void setTypedValueInfo(int value) {
         throw RInternalError.shouldNotReachHere();
     }
 
     @Override
-    public boolean isS4() {
+    public final int getGPBits() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public final void setGPBits(int gpbits) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public final boolean isS4() {
         return false;
+    }
+
+    @Override
+    public final void setS4() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public final void unsetS4() {
+        throw RInternalError.shouldNotReachHere();
     }
 }

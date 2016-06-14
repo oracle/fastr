@@ -39,7 +39,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector5() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(NA_integer_, .Label = c('Australia', 'UK', 'US'), class = 'factor'), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(NA_integer_, .Label = c('Australia', 'UK', 'US'), class = 'factor'), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -300,8 +300,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector59() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(`character(0)` = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'character(0)', row.names = character(0), class = 'data.frame'), 'character'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(list(`character(0)` = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'character(0)', row.names = character(0), class = 'data.frame'), 'character'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -363,7 +362,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector73() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(NA_integer_, .Label = c('no', 'yes'), class = 'factor'), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(NA_integer_, .Label = c('no', 'yes'), class = 'factor'), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test

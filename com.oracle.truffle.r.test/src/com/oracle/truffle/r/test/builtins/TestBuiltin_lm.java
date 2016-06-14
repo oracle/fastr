@@ -20,18 +20,18 @@ public class TestBuiltin_lm extends TestBase {
 
     @Test
     public void testlm1() {
-        assertEval(Ignored.Unknown, "require(stats); ctl <- c(4.17,5.58,5.18,6.11,4.50,4.61,5.17,4.53,5.33,5.14); trt <- c(4.81,4.17,4.41,3.59,5.87,3.83,6.03,4.89,4.32,4.69); " +
+        assertEval("require(stats); ctl <- c(4.17,5.58,5.18,6.11,4.50,4.61,5.17,4.53,5.33,5.14); trt <- c(4.81,4.17,4.41,3.59,5.87,3.83,6.03,4.89,4.32,4.69); " +
                         "group <- gl(2,10,20, labels=c(\"Ctl\",\"Trt\")); weight <- c(ctl, trt); lm(formula = weight ~ group)");
     }
 
     @Test
     public void testlm112() {
-        assertEval(Ignored.Unknown, "require(stats);" + "lm(formula = weight ~ group - 1)");
+        assertEval("require(stats);" + "lm(formula = weight ~ group - 1)");
     }
 
     @Test
     public void testlm223() {
-        assertEval(Ignored.Unknown, "require(stats);" + "lm(formula = weight ~ group, method = 'model.frame')");
+        assertEval("require(stats);" + "lm(formula = weight ~ group, method = 'model.frame')");
     }
 
     @Test
@@ -56,17 +56,17 @@ public class TestBuiltin_lm extends TestBase {
 
     @Test
     public void testlm877() {
-        assertEval(Ignored.Unknown, "require(stats); lm(data = npk, formula = yield ~ block, method = 'qr', qr = TRUE, singular.ok = TRUE)");
+        assertEval("require(stats); lm(data = npk, formula = yield ~ block, method = 'qr', qr = TRUE, singular.ok = TRUE)");
     }
 
     @Test
     public void testlm879() {
-        assertEval(Ignored.Unknown, "require(stats); lm(data = npk, formula = yield ~ N + P + K + N:P + N:K + P:K + N:P:K, method = 'model.frame', singular.ok = TRUE)");
+        assertEval("require(stats); lm(data = npk, formula = yield ~ N + P + K + N:P + N:K + P:K + N:P:K, method = 'model.frame', singular.ok = TRUE)");
     }
 
     @Test
     public void testlm880() {
-        assertEval(Ignored.Unknown, "require(stats); lm(formula = y ~ x)");
+        assertEval("require(stats); lm(formula = y ~ x)");
     }
 
     @Test

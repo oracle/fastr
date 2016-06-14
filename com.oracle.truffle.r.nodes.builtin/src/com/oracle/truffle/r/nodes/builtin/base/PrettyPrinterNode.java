@@ -471,27 +471,8 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     private static int getMaxPrintLength() {
-        int maxPrint = -1; // infinity
-        Object maxPrintObj = RContext.getInstance().stateROptions.getValue("max.print");
-        if (maxPrintObj != null) {
-
-            if (maxPrintObj instanceof Integer) {
-                return (int) maxPrintObj;
-            } else if (maxPrintObj instanceof Double) {
-                return RRuntime.double2int(((double) maxPrintObj));
-            } else if (maxPrintObj instanceof RAbstractVector) {
-                RAbstractVector maxPrintVec = (RAbstractVector) maxPrintObj;
-                if (maxPrintVec.getLength() > 0) {
-                    if (maxPrintObj instanceof RAbstractIntVector) {
-                        maxPrint = ((RAbstractIntVector) maxPrintVec).getDataAt(0);
-                    }
-                    if (maxPrintObj instanceof RAbstractDoubleVector) {
-                        maxPrint = RRuntime.double2int(((RAbstractDoubleVector) maxPrintVec).getDataAt(0));
-                    }
-                }
-            }
-        }
-        return maxPrint;
+        int maxPrint = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("max.print"));
+        return RRuntime.isNA(maxPrint) ? -1 : maxPrint;
     }
 
     private String printVector(RAbstractVector vector, String[] values, boolean isStringVector, boolean isRawVector) {

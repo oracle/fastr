@@ -196,8 +196,8 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public void makeSharedPermanent() {
-        data.makeSharedPermanent();
+    public RShareable makeSharedPermanent() {
+        return data.makeSharedPermanent();
     }
 
     @Override

@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.frame.NSBaseMaterializedFrame;
 import com.oracle.truffle.r.runtime.env.frame.REnvEmptyFrameAccess;
 import com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess;
@@ -103,7 +102,7 @@ import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
  * {@link com.oracle.truffle.r.runtime.context.RContext.ContextKind} is encapsulated in the
  * {@link #createContext} method.
  */
-public abstract class REnvironment extends RAttributeStorage implements RTypedValue {
+public abstract class REnvironment extends RAttributeStorage {
 
     private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar(RType.Environment.getName());
 

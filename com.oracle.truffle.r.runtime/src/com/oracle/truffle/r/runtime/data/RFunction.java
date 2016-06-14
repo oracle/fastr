@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
  * {@link #enclosingFrame}.
  * </ul>
  */
-public final class RFunction extends RSharingAttributeStorage implements RTypedValue, TruffleObject {
+public final class RFunction extends RSharingAttributeStorage implements TruffleObject {
 
     public static final String NO_NAME = new String("");
 
@@ -122,7 +122,7 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
             }
             newFunction.initAttributes(newAttributes);
         }
-        newFunction.typedValueInfo = typedValueInfo;
+        newFunction.setTypedValueInfo(getTypedValueInfo());
         return newFunction;
     }
 }

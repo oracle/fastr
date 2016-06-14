@@ -125,8 +125,7 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testunclass21() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(325, 285, 706, 885), .Dim = c(1L, 4L), row.vars = structure(list(), .Names = character(0)), col.vars = structure(list(Class = c('1st', '2nd', '3rd', 'Crew')), .Names = 'Class')));unclass(argv[[1]]);");
+        assertEval("argv <- list(structure(c(325, 285, 706, 885), .Dim = c(1L, 4L), row.vars = structure(list(), .Names = character(0)), col.vars = structure(list(Class = c('1st', '2nd', '3rd', 'Crew')), .Names = 'Class')));unclass(argv[[1]]);");
     }
 
     @Test

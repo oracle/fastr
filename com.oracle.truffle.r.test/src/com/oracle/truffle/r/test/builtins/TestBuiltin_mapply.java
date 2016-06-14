@@ -26,8 +26,8 @@ public class TestBuiltin_mapply extends TestBase {
     public void testmapply() {
         assertEval("mapply(rep, 1:4, 4:1)");
         assertEval("mapply(function(x, y) seq_len(x) + y, c(a =  1, b = 2, c = 3),  c(A = 10, B = 0, C = -10))");
-        assertEval(Ignored.Unimplemented, "mapply(rep, times = 1:4, MoreArgs = list(x = 42))");
-        assertEval(Ignored.Unimplemented, "word <- function(C, k) paste(rep.int(C, k), collapse = \"\"); utils::str(mapply(word, LETTERS[1:6], 6:1, SIMPLIFY = FALSE))");
+        assertEval("mapply(rep, times = 1:4, MoreArgs = list(x = 42))");
+        assertEval("word <- function(C, k) paste(rep.int(C, k), collapse = \"\"); utils::str(mapply(word, LETTERS[1:6], 6:1, SIMPLIFY = FALSE))");
         assertEval("{ mapply(rep.int, 42, MoreArgs = list(4)) }");
         assertEval("{ mapply(rep, times = 1:4, x = 4:1) }");
         assertEval("{ mapply(rep, times = 1:4, MoreArgs = list(x = 42)) }");
