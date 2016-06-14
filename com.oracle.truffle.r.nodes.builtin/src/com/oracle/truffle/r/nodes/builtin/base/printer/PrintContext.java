@@ -33,7 +33,7 @@ final class PrintContext {
     private final PrintParameters params;
     private final PrettyPrintWriter out;
     private final Map<String, Object> attrs = new HashMap<>();
-    private StringBuffer tagbuf;
+    private StringBuilder tagbuf;
 
     private static final ThreadLocal<ArrayDeque<PrintContext>> printCtxTL = new ThreadLocal<>();
 
@@ -48,11 +48,27 @@ final class PrintContext {
      * before any value. This value reflects global variable {@code tagbuf} in GnuR. In FastR we can
      * have more parallel buffers.
      */
-    public StringBuffer getTagBuffer() {
+    public StringBuilder getOrCreateTagBuffer() {
         if (tagbuf == null) {
-            tagbuf = new StringBuffer();
+            tagbuf = new StringBuilder();
         }
         return tagbuf;
+    }
+
+    /**
+     * Version of {@link #getOrCreateTagBuffer()} that does not create the buffer if it is
+     * {@code null}.
+     */
+    public StringBuilder getTagBuffer() {
+        return tagbuf;
+    }
+
+    public void resetTagBuffer() {
+        tagbuf = null;
+    }
+
+    public void setTagBuffer(StringBuilder buffer) {
+        tagbuf = buffer;
     }
 
     public PrintParameters parameters() {

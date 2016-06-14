@@ -40,6 +40,8 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
             return;
         }
 
+        final StringBuilder savedBuffer = printCtx.getTagBuffer();
+        printCtx.resetTagBuffer();
         for (RAttribute a : attrs) {
             if (useSlots && RRuntime.CLASS_SYMBOL.equals(a.getName())) {
                 continue;
@@ -85,8 +87,9 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
             }
             out.println(tag);
 
-            int origLen = printCtx.getTagBuffer().length();
-            printCtx.getTagBuffer().append(tag);
+            StringBuilder buff = printCtx.getOrCreateTagBuffer();
+            int origLen = buff.length();
+            buff.append(tag);
 
             if (RContext.getInstance().isMethodTableDispatchOn() && utils.isS4(a.getValue())) {
                 S4ObjectPrinter.printS4(printCtx, a.getValue());
@@ -96,7 +99,9 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
             }
 
             // restore tag buffer to its original value
-            printCtx.getTagBuffer().setLength(origLen);
+            buff.setLength(origLen);
         }
+
+        printCtx.setTagBuffer(savedBuffer);
     }
 }
