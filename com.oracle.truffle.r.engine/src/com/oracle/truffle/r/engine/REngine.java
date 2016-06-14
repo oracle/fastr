@@ -396,7 +396,7 @@ final class REngine implements Engine, Engine.Timings {
                 actualFrame = current.materialize();
             }
         }
-        Object[] rArgs = RArguments.create(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, args, argsSig, null);
+        Object[] rArgs = RArguments.create(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, args, null);
         return func.getTarget().call(rArgs);
     }
 
@@ -545,8 +545,6 @@ final class REngine implements Engine, Engine.Timings {
         return true;
     }
 
-    private static final ArgumentsSignature PRINT_SIGNATURE = ArgumentsSignature.get("x", "...");
-
     @Override
     @TruffleBoundary
     public void printResult(Object result) {
@@ -563,7 +561,7 @@ final class REngine implements Engine, Engine.Timings {
                 ((RShareable) resultValue).incRefCount();
             }
             MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
-            function.getTarget().call(RArguments.create(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE, null));
+            function.getTarget().call(RArguments.create(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, null));
             if (resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                 ((RShareable) resultValue).decRefCount();
             }
