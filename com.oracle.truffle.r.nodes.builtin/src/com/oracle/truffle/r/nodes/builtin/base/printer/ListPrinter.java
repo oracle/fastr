@@ -159,7 +159,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         final PrintParameters pp = printCtx.parameters();
         final PrintWriter out = printCtx.output();
 
-        final StringBuffer tagbuf = printCtx.getTagBuffer();
+        final StringBuilder tagbuf = printCtx.getOrCreateTagBuffer();
         // save the original length so that we can restore the original value
         int taglen = tagbuf.length();
 
@@ -211,11 +211,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
 
                 out.println(tagbuf);
                 Object si = s.getDataAtAsObject(i);
-                if (printCtx.printerNode().isObject(si)) {
-                    ValuePrinters.INSTANCE.println(si, printCtx);
-                } else {
-                    ValuePrinters.INSTANCE.println(si, printCtx);
-                }
+                ValuePrinters.INSTANCE.println(si, printCtx);
 
                 tagbuf.setLength(taglen); // reset tag buffer to the original value
             }
