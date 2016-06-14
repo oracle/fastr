@@ -39,7 +39,6 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
@@ -204,8 +203,6 @@ public class HiddenInternalFunctions {
             return lazyLoadDBFetch(frame, key, datafile, castIntNode.doLogicalVector(compressed), envhook);
         }
 
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("n");
-
         @TruffleBoundary
         private Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
             if (CompilerDirectives.inInterpreter()) {
@@ -258,7 +255,7 @@ public class HiddenInternalFunctions {
                 RSerialize.CallHook callHook = new RSerialize.CallHook() {
                     @Override
                     public Object eval(Object arg) {
-                        Object[] callArgs = RArguments.create(envhook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, SIGNATURE, null);
+                        Object[] callArgs = RArguments.create(envhook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, null);
                         return callCache.execute(SubstituteVirtualFrame.create(frame), envhook.getTarget(), callArgs);
                     }
                 };
@@ -360,7 +357,6 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "lazyLoadDBinsertValue", kind = INTERNAL, parameterNames = {"value", "file", "ascii", "compsxp", "hook"})
     public abstract static class LazyLoadDBinsertValue extends RBuiltinNode {
 
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("e");
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
 
         @Override
@@ -382,7 +378,7 @@ public class HiddenInternalFunctions {
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
                 @Override
                 public Object eval(Object arg) {
-                    Object[] callArgs = RArguments.create(hook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, SIGNATURE, null);
+                    Object[] callArgs = RArguments.create(hook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, null);
                     return callCache.execute(SubstituteVirtualFrame.create(frame), hook.getTarget(), callArgs);
                 }
             };

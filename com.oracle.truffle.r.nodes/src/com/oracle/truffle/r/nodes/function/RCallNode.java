@@ -998,9 +998,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 }
             }
             MaterializedFrame callerFrame = /* CompilerDirectives.inInterpreter() || */originalCall.needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = RArguments.create(function, originalCall.createCaller(frame, function), callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(), signature,
-                            function.getEnclosingFrame(),
-                            s3Args);
+            Object[] argsObject = RArguments.create(function, originalCall.createCaller(frame, function), callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(),
+                            function.getEnclosingFrame(), s3Args);
             return call.call(frame, argsObject);
         }
     }
