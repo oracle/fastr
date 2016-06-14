@@ -92,12 +92,17 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * the function that is ultimately selected. Both functions can have a different list of formal
  * arguments and may require running a separate argument matching procedure. For example, in the
  * following piece of R code, the name of argument b must be available when executing the call to
- * g() for proper argument reordering:
+ * f.numeric() for proper argument reordering:
  *
  * f<-function(a,b) { UseMethod("f") }; f.numeric<-function(b,a) { a - b }; f(b=1,2)
  *
  * Consequently, argument names passed to the "dispatch" function are preserved as part of the
  * {@link RArguments} object and made this way available when executing the selected function.
+ * Moreover, we also need to preserve the original signature to distinguish between positional and
+ * named parameters. This is also stored using {@link RArguments} as "supplied signature". Note:
+ * this is only supplied signatures matched to formal parameter, if an actual parameter is
+ * considered to be part of varargs (...) its name will be preserved as part of
+ * {@link RArgsValuesAndNames}, see below.
  * </p>
  *
  * <p>
@@ -129,7 +134,7 @@ public class ArgumentMatcher {
      * @return A fresh {@link MatchedArguments} containing the arguments in correct order and
      *         wrapped in {@link PromiseNode}s
      */
-    public static RNode[] matchArguments(RRootNode target, UnmatchedArguments suppliedArgs, RBaseNode callingNode, boolean noOpt) {
+    public static MatchedArguments matchArguments(RRootNode target, UnmatchedArguments suppliedArgs, RBaseNode callingNode, boolean noOpt) {
         return matchNodes(target, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callingNode, suppliedArgs, noOpt);
     }
 
@@ -143,10 +148,10 @@ public class ArgumentMatcher {
         return rootNode.getFormalArguments().getSignature();
     }
 
-    public static Object[] matchArgumentsEvaluated(MatchPermutation match, Object[] evaluatedArgs, FormalArguments formals) {
+    public static RArgsValuesAndNames matchArgumentsEvaluated(MatchPermutation match, Object[] evaluatedArgs, FormalArguments formals) {
         Object[] evaledArgs = new Object[match.resultPermutation.length];
         permuteArguments(formals, match, evaluatedArgs, evaledArgs);
-        return evaledArgs;
+        return new RArgsValuesAndNames(evaledArgs, match.resultSignature);
     }
 
     @ExplodeLoop
@@ -265,9 +270,10 @@ public class ArgumentMatcher {
      * @param callingNode The {@link RBaseNode} initiating the match
      * @param closureCache The {@link ClosureCache} for the supplied arguments
      * @return A list of {@link RNode}s which consist of the given arguments in the correct order
-     *         and wrapped into the proper {@link PromiseNode}s
+     *         and wrapped into the proper {@link PromiseNode}s and the supplied signature reordered
+     *         accordingly.
      */
-    private static RNode[] matchNodes(RRootNode target, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, RBaseNode callingNode, ClosureCache closureCache, boolean noOpt) {
+    private static MatchedArguments matchNodes(RRootNode target, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, RBaseNode callingNode, ClosureCache closureCache, boolean noOpt) {
         CompilerAsserts.neverPartOfCompilation();
         assert suppliedArgs.length == suppliedSignature.getLength();
 
@@ -357,7 +363,7 @@ public class ArgumentMatcher {
                 resArgs[formalIndex] = wrapMatched(formals, builtin, closureCache, suppliedArgs[suppliedIndex], formalIndex, noOpt, fastPath);
             }
         }
-        return resArgs;
+        return MatchedArguments.create(resArgs, match.resultSignature);
     }
 
     /**
@@ -415,8 +421,17 @@ public class ArgumentMatcher {
         @CompilationFinal private final int[] varargsPermutation;
         private final ArgumentsSignature varargsSignature;
 
-        private MatchPermutation(int[] resultPermutation, int[] varargsPermutation, ArgumentsSignature varargsSignature) {
+        /**
+         * For each formal argument we keep the its original call-site name. For example, when
+         * formal named 'x' in 'foo <- function(x) {}' was invoked as 'foo(42)' we remember that 'x'
+         * did not have explicit name, i.e. its signature would be {@code null}. This array is
+         * ordered according to the formal signature.
+         */
+        private final ArgumentsSignature resultSignature;
+
+        private MatchPermutation(int[] resultPermutation, ArgumentsSignature resultSignature, int[] varargsPermutation, ArgumentsSignature varargsSignature) {
             this.resultPermutation = resultPermutation;
+            this.resultSignature = resultSignature;
             this.varargsPermutation = varargsPermutation;
             this.varargsSignature = varargsSignature;
         }
@@ -444,6 +459,7 @@ public class ArgumentMatcher {
 
         // MATCH by exact name
         int[] resultPermutation = new int[formalSignature.getLength()];
+        String[] resultSignature = new String[formalSignature.getLength()];
         Arrays.fill(resultPermutation, MatchPermutation.UNMATCHED);
 
         boolean[] matchedSuppliedArgs = new boolean[signature.getLength()];
@@ -457,6 +473,7 @@ public class ArgumentMatcher {
                             errorString, builtin);
             if (formalIndex != MatchPermutation.UNMATCHED) {
                 resultPermutation[formalIndex] = suppliedIndex;
+                resultSignature[formalIndex] = signature.getName(suppliedIndex);
                 matchedSuppliedArgs[suppliedIndex] = true;
             }
         }
@@ -487,6 +504,7 @@ public class ArgumentMatcher {
                     }
                 }
                 resultPermutation[formalIndex] = suppliedIndex;
+                resultSignature[formalIndex] = signature.getName(suppliedIndex);
 
                 // set formal status AND "remove" supplied arg from list
                 matchedSuppliedArgs[suppliedIndex] = true;
@@ -516,7 +534,7 @@ public class ArgumentMatcher {
             namesArray = Arrays.copyOf(namesArray, pos);
 
             resultPermutation[varArgIndex] = MatchPermutation.VARARGS;
-            return new MatchPermutation(resultPermutation, varArgsPermutation, ArgumentsSignature.get(namesArray));
+            return new MatchPermutation(resultPermutation, ArgumentsSignature.get(resultSignature), varArgsPermutation, ArgumentsSignature.get(namesArray));
         } else {
             // Error check: Unused argument? (can only happen when there are no varargs)
 
@@ -529,7 +547,7 @@ public class ArgumentMatcher {
                 int leftoverCount = signature.getLength() - cardinality(matchedSuppliedArgs);
                 if (leftoverCount == 1) {
                     if (isVarSuppliedVarargs.test(suppliedIndex)) {
-                        return new MatchPermutation(resultPermutation, null, null);
+                        return new MatchPermutation(resultPermutation, ArgumentsSignature.get(resultSignature), null, null);
                     }
 
                     // one unused argument
@@ -551,7 +569,7 @@ public class ArgumentMatcher {
                 }
                 throw RError.error(callingNode, RError.Message.UNUSED_ARGUMENTS, str);
             }
-            return new MatchPermutation(resultPermutation, null, null);
+            return new MatchPermutation(resultPermutation, ArgumentsSignature.get(resultSignature), null, null);
         }
     }
 

@@ -61,6 +61,13 @@ public class TestS3Dispatch extends TestBase {
     }
 
     @Test
+    public void testUseMethodArgsMatchingAfterDispatch() {
+        assertEval("{ foo.default <- function(y, ...) { y }; foo <- function(x, ...) { UseMethod('foo') }; foo(42); }");
+        assertEval("{ foo.default <- function(y, ...) { y }; foo <- function(x, ...) { UseMethod('foo') }; foo(1,2,y=3); }");
+        assertEval("{ foo.default <- function(a,b,c) { print(list(a=a,b=b,c=c)) }; foo <- function(c,a,b) { UseMethod('foo') }; foo('a','b','c'); }");
+    }
+
+    @Test
     public void testNextMethod() {
         assertEval("{ g<-function(){ x<-1; class(x)<-c(\"a\",\"b\",\"c\"); f<-function(x){UseMethod(\"f\")}; f.a<-function(x){cat(\"a\");NextMethod(\"f\",x)}; f.b<-function(x){cat(\"b\")}; f(x); }; g() }");
         assertEval("{ g<-function(){ x<-1; class(x)<-c(\"a\",\"b\",\"c\"); f<-function(x){UseMethod(\"f\")}; f.a<-function(x){cat(\"a\");NextMethod(\"f\",x, 42)}; f.b<-function(x, y=7){cat(\"b\", y)}; f(x); }; g(); }");

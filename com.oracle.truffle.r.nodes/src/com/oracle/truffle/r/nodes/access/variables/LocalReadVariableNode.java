@@ -61,6 +61,7 @@ public final class LocalReadVariableNode extends Node {
     }
 
     private LocalReadVariableNode(Object identifier, boolean forceResult) {
+        assert identifier != null : "LocalReadVariableNode identifier is null";
         this.identifier = identifier;
         this.forceResult = forceResult;
     }
