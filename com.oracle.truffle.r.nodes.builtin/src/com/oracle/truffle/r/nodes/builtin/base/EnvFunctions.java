@@ -43,7 +43,6 @@ import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
-import com.oracle.truffle.r.nodes.builtin.RList2EnvNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -89,8 +88,6 @@ public class EnvFunctions {
 
     @RBuiltin(name = "as.environment", kind = PRIMITIVE, parameterNames = {"fun"}, dispatch = INTERNAL_GENERIC)
     public abstract static class AsEnvironment extends Adapter {
-
-        @Child private RList2EnvNode list2EnvNode;
 
         @Specialization
         protected REnvironment asEnvironment(@SuppressWarnings("unused") RNull rnull) {
@@ -148,19 +145,12 @@ public class EnvFunctions {
             throw RError.error(this, RError.Message.NO_ITEM_NAMED, name);
         }
 
-        private REnvironment list2Env(RList list, REnvironment env) {
-            if (list2EnvNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                list2EnvNode = insert(RList2EnvNodeGen.create());
-            }
-            return list2EnvNode.execute(list, env);
-        }
-
         @Specialization
-        protected REnvironment asEnvironment(RList list) {
+        protected REnvironment asEnvironment(RList list, //
+                        @Cached("new()") RList2EnvNode list2Env) {
             REnvironment env = RDataFactory.createNewEnv(null);
             env.setParent(REnvironment.emptyEnv());
-            return list2Env(list, env);
+            return list2Env.execute(list, env);
         }
 
         @Specialization

@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
@@ -31,7 +30,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
@@ -79,16 +77,6 @@ public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, 
             state.serializeNodeSetCar(sequence[i]);
         }
         state.linkPairList(sequence.length + 1);
-    }
-
-    @TruffleBoundary
-    @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        RNode[] sequenceSubs = new RNode[sequence.length];
-        for (int i = 0; i < sequence.length; i++) {
-            sequenceSubs[i] = sequence[i].substitute(env).asRNode();
-        }
-        return new BlockNode(RSyntaxNode.EAGER_DEPARSE, sequenceSubs);
     }
 
     @Override

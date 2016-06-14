@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode;
 import com.oracle.truffle.api.nodes.Node;
@@ -40,14 +39,12 @@ import com.oracle.truffle.r.nodes.function.WrapArgumentBaseNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -250,67 +247,6 @@ public class RASTUtils {
     }
 
     @TruffleBoundary
-    /**
-     * The heart of the {@code substitute} function, where we look up the value of {@code name} in
-     * {@code env} and, if bound, return whatever value it had (as an {@link RSyntaxNode},or
-     * {@code null} if not bound.
-     *
-     * N.B. It is <b>very</b> important that the result is cloned or created as otherwise we risk
-     * accidental sharing between ASTs.
-     */
-    public static RSyntaxNode substituteName(String name, REnvironment env) {
-        Object val = env.get(name);
-        if (val == null) {
-            // not bound in env,
-            return null;
-        } else if (val instanceof RMissing) {
-            // strange special case, mimics GnuR behavior
-            return RASTUtils.createReadVariableNode("");
-        } else if (val instanceof RPromise) {
-            return (RSyntaxNode) RASTUtils.cloneNode(RASTUtils.unwrap(((RPromise) val).getRep()));
-        } else if (val instanceof RLanguage) {
-            return (RSyntaxNode) RASTUtils.cloneNode(((RLanguage) val).getRep());
-        } else if (val instanceof RSymbol) {
-            return RASTUtils.createReadVariableNode(((RSymbol) val).getName());
-        } else if (val instanceof RArgsValuesAndNames) {
-            // this is '...'
-            RArgsValuesAndNames rva = (RArgsValuesAndNames) val;
-            if (rva.isEmpty()) {
-                return new MissingDotsNode();
-            }
-            Object[] values = rva.getArguments();
-            RSyntaxNode[] expandedNodes = new RSyntaxNode[values.length];
-            for (int i = 0; i < values.length; i++) {
-                Object argval = values[i];
-                while (argval instanceof RPromise) {
-                    RPromise promise = (RPromise) argval;
-                    Node unwrap = RASTUtils.unwrap(promise.getRep());
-                    if (unwrap instanceof VarArgNode) {
-                        VarArgNode varArgNode = (VarArgNode) unwrap;
-                        try {
-                            RArgsValuesAndNames v = (RArgsValuesAndNames) promise.getFrame().getObject(promise.getFrame().getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME));
-                            argval = v.getArguments()[varArgNode.getIndex()];
-                        } catch (FrameSlotTypeException e) {
-                            throw RInternalError.shouldNotReachHere();
-                        }
-                    }
-                    break;
-                }
-                if (argval instanceof RPromise) {
-                    RPromise promise = (RPromise) argval;
-                    expandedNodes[i] = (RSyntaxNode) RASTUtils.cloneNode(RASTUtils.unwrap(promise.getRep()));
-                } else {
-                    expandedNodes[i] = ConstantNode.create(argval);
-                }
-            }
-            return values.length > 1 ? new ExpandedDotsNode(expandedNodes) : expandedNodes[0];
-        } else {
-            // An actual value
-            return ConstantNode.create(val);
-        }
-    }
-
-    @TruffleBoundary
     public static String expectName(RNode node) {
         if (node instanceof ConstantNode) {
             Object c = ((ConstantNode) node).getValue();
@@ -325,63 +261,6 @@ public class RASTUtils {
             return ((ReadVariableNode) node).getIdentifier();
         } else {
             throw RInternalError.unimplemented();
-        }
-    }
-
-    /**
-     * Marker class for special '...' handling.
-     */
-    private abstract static class DotsNode extends RNode implements RSyntaxNode {
-
-        @Override
-        public RSyntaxNode substituteImpl(REnvironment env) {
-            throw RInternalError.unimplemented();
-        }
-
-        @Override
-        public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
-            throw RInternalError.unimplemented();
-        }
-
-        @Override
-        public void setSourceSection(SourceSection sourceSection) {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public SourceSection getSourceSection() {
-            throw RInternalError.shouldNotReachHere();
-        }
-    }
-
-    /**
-     * A temporary {@link RNode} type that exists only during substitution to hold the expanded
-     * array of values from processing '...'. Allows {@link RSyntaxNode#substituteImpl} to always
-     * return a single node.
-     */
-    public static final class ExpandedDotsNode extends DotsNode {
-
-        public final RSyntaxNode[] nodes;
-
-        private ExpandedDotsNode(RSyntaxNode[] nodes) {
-            this.nodes = nodes;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            assert false;
-            return null;
-        }
-    }
-
-    /**
-     * Denotes a '...' usage that was "missing".
-     */
-    public static class MissingDotsNode extends DotsNode {
-        @Override
-        public Object execute(VirtualFrame frame) {
-            assert false;
-            return null;
         }
     }
 }

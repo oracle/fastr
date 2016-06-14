@@ -277,7 +277,7 @@ public class RPromise implements RTypedValue {
          * @return Whether the promise has been deoptimized before
          */
         public boolean deoptimize() {
-            if (!deoptimized && !isEvaluated()) {
+            if (!deoptimized && !isEvaluated() && feedback != null) {
                 deoptimized = true;
                 notifyFailure();
                 materialize();

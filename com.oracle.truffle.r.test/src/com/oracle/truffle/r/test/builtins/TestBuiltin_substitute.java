@@ -76,5 +76,7 @@ public class TestBuiltin_substitute extends TestBase {
         assertEval("f<-function(..., list=character()) { substitute(list(...))[-1L] }; as.character(f(\"config\"))");
 
         assertEval("{ substitute({class(y) <- x; y}, list(x=42)) }");
+
+        assertEval("f<-function(...) { print(typeof(get('...'))); environment() }; e <- f(c(1,2), b=15, c=44); substitute(foo2({...}), e)");
     }
 }

@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -110,11 +109,6 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         state.serializeNodeSetCar(getBody());
         state.linkPairList(3);
         state.setCdr(state.closePairList());
-    }
-
-    @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        return create(RSyntaxNode.EAGER_DEPARSE, (WriteVariableNode) getCvar().substitute(env), getRange().substitute(env), getBody().substitute(env));
     }
 
     private ForRepeatingNode getForRepeatingNode() {

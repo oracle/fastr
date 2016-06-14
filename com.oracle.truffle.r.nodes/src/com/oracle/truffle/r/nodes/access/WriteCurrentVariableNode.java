@@ -26,11 +26,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -79,20 +77,6 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
     @Override
     public void serializeImpl(RSerialize.State state) {
         serializeHelper(state, "<-");
-    }
-
-    @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        String name = getName().toString();
-        RSyntaxNode nameSub = RASTUtils.substituteName(name, env);
-        if (nameSub != null) {
-            name = RASTUtils.expectName(nameSub.asRNode());
-        }
-        RNode rhsSub = null;
-        if (getRhs() != null) {
-            rhsSub = getRhs().substitute(env).asRNode();
-        }
-        return create(RSyntaxNode.EAGER_DEPARSE, name, rhsSub);
     }
 
     @Override
