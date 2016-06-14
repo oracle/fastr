@@ -111,4 +111,11 @@ public class TestS3Dispatch extends TestBase {
     public void testComplexGroupDispatch() {
         assertEval("{x<--7+2i;class(x)<-\"foo\";Complex.foo<-function(z){1;};Im(x);}");
     }
+
+    @Test
+    public void testMethodTableDispatch() {
+        // this test ensures that print.ts is found in the method table before print.foo is found in
+        // the calling environment
+        assertEval("t <- ts(1:3); class(t) <- c('ts', 'foo'); print.foo <- function(x, ...) 'foo'; print(t)");
+    }
 }
