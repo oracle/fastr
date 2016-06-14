@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
  * symbol).
  */
 public final class ContextInfo implements TruffleObject {
-    static final String GLOBAL_SYMBOL = "fastrContextInfo";
+    public static final String GLOBAL_SYMBOL = "fastrContextInfo";
 
     private static final ConcurrentHashMap<Integer, ContextInfo> contextInfos = new ConcurrentHashMap<>();
     private static final AtomicInteger contextInfoIds = new AtomicInteger();

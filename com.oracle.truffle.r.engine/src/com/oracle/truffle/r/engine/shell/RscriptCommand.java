@@ -31,10 +31,10 @@ import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.VERSION;
 
 import java.util.ArrayList;
 
+import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVersionNumber;
-import com.oracle.truffle.r.runtime.context.ContextInfo;
 
 /**
  * Emulates the (Gnu)Rscript command as precisely as possible. in GnuR, Rscript is a genuine wrapper
@@ -101,9 +101,9 @@ public class RscriptCommand {
         // Handle --help and --version specially, as they exit.
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.RSCRIPT, args);
         preprocessRScriptOptions(options);
-        ContextInfo info = RCommand.createContextInfoFromCommandLine(options);
+        PolyglotEngine vm = RCommand.createContextInfoFromCommandLine(options);
         // never returns
-        RCommand.readEvalPrint(info);
+        RCommand.readEvalPrint(vm);
         throw RInternalError.shouldNotReachHere();
     }
 

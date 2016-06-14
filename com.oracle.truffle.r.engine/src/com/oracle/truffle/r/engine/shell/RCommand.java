@@ -78,15 +78,34 @@ public class RCommand {
     // CheckStyle: stop system..print check
 
     public static void main(String[] args) {
-        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args);
-        options.printHelpAndVersion();
-        ContextInfo info = createContextInfoFromCommandLine(options);
+        PolyglotEngine vm = createPolyglotEngine(args);
         // never returns
-        readEvalPrint(info);
+        readEvalPrint(vm);
         throw RInternalError.shouldNotReachHere();
     }
 
-    static ContextInfo createContextInfoFromCommandLine(RCmdOptions options) {
+    /**
+     * This exists as a separate method to support the Rembedded API.
+     */
+    static PolyglotEngine createPolyglotEngine(String[] args) {
+        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args);
+        options.printHelpAndVersion();
+        PolyglotEngine vm = createContextInfoFromCommandLine(options);
+        return vm;
+    }
+
+    /**
+     * Creates the PolyglotEngine and initializes it. Called from native code when FastR is
+     * embedded.
+     */
+    static PolyglotEngine initialize(String[] args) {
+        PolyglotEngine vm = createPolyglotEngine(args);
+        // Any expression will do to initialize the engine.
+        doEcho(vm);
+        return vm;
+    }
+
+    static PolyglotEngine createContextInfoFromCommandLine(RCmdOptions options) {
         if (options.getBoolean(SLAVE)) {
             options.setValue(QUIET, true);
             options.setValue(NO_SAVE, true);
@@ -170,7 +189,7 @@ public class RCommand {
                 consoleHandler = new DefaultConsoleHandler(consoleInput, consoleOutput);
             }
         }
-        return ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
+        return ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler).apply(PolyglotEngine.newBuilder()).build();
     }
 
     private static final Source GET_ECHO = Source.fromText("invisible(getOption('echo'))", RInternalSourceDescriptions.GET_ECHO).withMimeType(TruffleRLanguage.MIME);
@@ -187,9 +206,8 @@ public class RCommand {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    static void readEvalPrint(ContextInfo info) {
-        PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
-        ConsoleHandler consoleHandler = info.getConsoleHandler();
+    static void readEvalPrint(PolyglotEngine vm) {
+        ConsoleHandler consoleHandler = getContextInfo(vm).getConsoleHandler();
         Source source = Source.fromAppendableText(consoleHandler.getInputDescription());
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
@@ -277,6 +295,14 @@ public class RCommand {
             }
         } finally {
             vm.dispose();
+        }
+    }
+
+    private static ContextInfo getContextInfo(PolyglotEngine vm) {
+        try {
+            return (ContextInfo) vm.findGlobalSymbol(ContextInfo.GLOBAL_SYMBOL).get();
+        } catch (IOException ex) {
+            throw RInternalError.shouldNotReachHere();
         }
     }
 

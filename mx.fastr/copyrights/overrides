@@ -1,3 +1,4 @@
+com.oracle.truffle.r.engine/src/com/oracle/truffle/r/engine/shell/RStartParams.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/graphics/BaseGraphicsSystem.java,gnu_r_graphics.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/graphics/core/AbstractGraphicsSystem.java,gnu_r_graphics.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/graphics/core/drawables/CoordinatesDrawableObject.java,gnu_r_graphics.copyright
@@ -75,6 +76,7 @@ com.oracle.truffle.r.native/fficall/src/include/rlocale.h,gnu_r_gentleman_ihaka.
 com.oracle.truffle.r.native/fficall/src/variable_defs/variable_defs.h,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/jni/Memory.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/jni/Rdynload_fastr.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/src/jni/Rembedded.c,gnu_r.copyright
 com.oracle.truffle.r.native/include/src/libintl.h,no.copyright
 com.oracle.truffle.r.native/library/base/src/registration.c,no.copyright
 com.oracle.truffle.r.native/library/grDevices/src/gzio.c,gnu_r_gentleman_ihaka.copyright
