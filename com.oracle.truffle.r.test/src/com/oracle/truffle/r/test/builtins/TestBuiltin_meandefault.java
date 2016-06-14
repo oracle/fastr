@@ -20,6 +20,7 @@ public class TestBuiltin_meandefault extends TestBase {
 
     @Test
     public void testmeandefault1() {
-        assertEval(Output.IgnoreWarningContext, "argv <- structure(list(x = structure(c(2L, 1L, 2L, 2L), .Label = c('FALSE',     'TRUE'), class = 'factor')), .Names = 'x');do.call('mean.default', argv)");
+        assertEval(Output.IgnoreWarningContext,
+                        "argv <- structure(list(x = structure(c(2L, 1L, 2L, 2L), .Label = c('FALSE',     'TRUE'), class = 'factor')), .Names = 'x');do.call('mean.default', argv)");
     }
 }
