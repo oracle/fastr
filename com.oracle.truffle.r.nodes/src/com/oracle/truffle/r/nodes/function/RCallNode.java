@@ -401,6 +401,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createUninitializedExplicitCall()") FunctionDispatch call) {
 
         Object[] args = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getArguments() : callArguments.evaluateFlattenObjects(frame, lookupVarArgs(frame));
+        ArgumentsSignature argsSignature = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getSignature() : callArguments.flattenNames(lookupVarArgs(frame));
 
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         RDispatch dispatch = builtin.getDispatch();
@@ -464,7 +465,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             }
             resultFunction = result.function;
         }
-        ArgumentsSignature argsSignature = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getSignature() : callArguments.flattenNames(lookupVarArgs(frame));
         return call.execute(frame, resultFunction, new RArgsValuesAndNames(args, argsSignature), s3Args);
     }
 
