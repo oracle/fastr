@@ -24,27 +24,24 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * A {@link ArgumentStatePush} is used to bump up state transition for function arguments.
  */
-@NodeChild(value = "op")
-public abstract class ArgumentStatePush extends RNode {
+public abstract class ArgumentStatePush extends Node {
 
-    public abstract Object executeObject(VirtualFrame frame, Object shareable);
+    public abstract void executeObject(VirtualFrame frame, Object shareable);
 
     private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
@@ -64,7 +61,8 @@ public abstract class ArgumentStatePush extends RNode {
         return mask > 0;
     }
 
-    private void transitionStateExp(VirtualFrame frame, RShareable shareable) {
+    @Specialization
+    public void transitionState(VirtualFrame frame, RShareable shareable) {
         if (isRefCountUpdateable.profile(!shareable.isSharedPermanent())) {
             shareable.incRefCount();
         }
@@ -114,14 +112,8 @@ public abstract class ArgumentStatePush extends RNode {
         }
     }
 
-    @Specialization
-    public RNull transitionState(VirtualFrame frame, RShareable shareable) {
-        transitionStateExp(frame, shareable);
-        return RNull.instance;
-    }
-
     @Specialization(guards = "!isShareable(o)")
-    public RNull transitionStateNonShareable(VirtualFrame frame, @SuppressWarnings("unused") Object o) {
+    public void transitionStateNonShareable(VirtualFrame frame, @SuppressWarnings("unused") Object o) {
         if (mask > 0) {
             // this argument used to be reference counted but is no longer
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -133,7 +125,6 @@ public abstract class ArgumentStatePush extends RNode {
             fdn.getArgPostProcess().transArgsBitSet = transArgsBitSet & (~mask);
             mask = -1;
         }
-        return RNull.instance;
     }
 
     protected boolean isShareable(Object o) {

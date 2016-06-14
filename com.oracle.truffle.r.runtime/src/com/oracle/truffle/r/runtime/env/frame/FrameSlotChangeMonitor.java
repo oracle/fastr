@@ -46,6 +46,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.StableValue;
+import com.oracle.truffle.r.runtime.data.RPromise;
 
 /**
  * This class maintains information about the current hierarchy of environments in the system. This
@@ -84,6 +85,7 @@ public final class FrameSlotChangeMonitor {
 
     private static final class StableValueLookupResult extends LookupResult {
         private final StableValue<Object> value;
+        @CompilationFinal private Object unwrappedValue;
 
         private StableValueLookupResult(String identifier, StableValue<Object> value) {
             super(identifier);
@@ -100,7 +102,20 @@ public final class FrameSlotChangeMonitor {
             assumption.check();
             StableValue<Object> result = value;
             result.getAssumption().check();
-            return result.getValue();
+            if (unwrappedValue == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                Object resultValue = result.getValue();
+                if (resultValue instanceof RPromise) {
+                    if (((RPromise) resultValue).isEvaluated()) {
+                        unwrappedValue = ((RPromise) resultValue).getValue();
+                    } else {
+                        return resultValue;
+                    }
+                } else {
+                    unwrappedValue = resultValue;
+                }
+            }
+            return unwrappedValue;
         }
     }
 

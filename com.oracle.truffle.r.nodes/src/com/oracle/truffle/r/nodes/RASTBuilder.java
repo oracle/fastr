@@ -118,8 +118,15 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
             @Override
             protected RSyntaxNode visit(RSyntaxFunction element) {
+                String assignedFrom = null;
+                if (element instanceof FunctionExpressionNode) {
+                    FunctionExpressionNode function = (FunctionExpressionNode) element;
+                    if (function.getParent() instanceof WriteVariableNode) {
+                        assignedFrom = ((WriteVariableNode) function.getParent()).getName().toString();
+                    }
+                }
                 ArrayList<Argument<RSyntaxNode>> params = createArguments(element.getSyntaxSignature(), element.getSyntaxArgumentDefaults());
-                return function(element.getSourceSection(), params, accept(element.getSyntaxBody()), null);
+                return function(element.getSourceSection(), params, accept(element.getSyntaxBody()), assignedFrom);
             }
         }.accept(original);
     }
@@ -210,8 +217,10 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         return signature;
     }
 
-    private static String getFunctionDescription(SourceSection source, RSyntaxNode assignedTo) {
-        if (assignedTo instanceof RSyntaxLookup) {
+    private static String getFunctionDescription(SourceSection source, Object assignedTo) {
+        if (assignedTo instanceof String) {
+            return (String) assignedTo;
+        } else if (assignedTo instanceof RSyntaxLookup) {
             return ((RSyntaxLookup) assignedTo).getIdentifier();
         } else {
             String functionBody = source.getCode();
@@ -382,7 +391,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     }
 
     @Override
-    public RSyntaxNode function(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, RSyntaxNode assignedTo) {
+    public RSyntaxNode function(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, Object assignedTo) {
         String description = getFunctionDescription(source, assignedTo);
         RootCallTarget callTarget = rootFunction(source, params, body, description);
         return FunctionExpressionNode.create(source, callTarget);
