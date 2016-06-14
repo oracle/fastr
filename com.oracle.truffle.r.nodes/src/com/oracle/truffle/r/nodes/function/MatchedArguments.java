@@ -22,11 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -34,10 +31,6 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * This class denotes a list of name/argument pairs which are in the order of the
  * {@link FormalArguments} of a function. Each argument is either filled with the supplied argument,
  * the default argument or <code>null</code>, if neither is provided.
- * </p>
- * <p>
- * The {@link #doExecuteArray(VirtualFrame)} method executes the argument nodes and converts them
- * into a form that can be passed into functions.
  * </p>
  */
 public final class MatchedArguments extends Arguments<RNode> {
@@ -52,22 +45,5 @@ public final class MatchedArguments extends Arguments<RNode> {
      */
     static MatchedArguments create(RNode[] arguments, ArgumentsSignature signature) {
         return new MatchedArguments(arguments, signature);
-    }
-
-    /**
-     * This method converts the list of arguments this list represents into an <code>Object[]</code>
-     * which then can be passed into {@link RArguments} and used for a function call.
-     *
-     * @param frame
-     * @return The <code>Object[]</code> containing the values of the arguments this class
-     *         represents
-     */
-    @ExplodeLoop
-    Object[] doExecuteArray(VirtualFrame frame) {
-        Object[] result = new Object[getArguments().length];
-        for (int i = 0; i < getArguments().length; i++) {
-            result[i] = getArguments()[i].execute(frame);
-        }
-        return result;
     }
 }

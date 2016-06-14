@@ -802,7 +802,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                         @Cached("function.getTarget()") @SuppressWarnings("unused") RootCallTarget cachedTarget, //
                         @Cached("createCacheNode(cachedTarget)") LeafCallNode leafCall, //
                         @Cached("createArguments(cachedTarget)") PrepareArguments prepareArguments) {
-            Object[] orderedArguments = prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, originalCall);
+            RArgsValuesAndNames orderedArguments = prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, originalCall);
             return leafCall.execute(frame, function, orderedArguments, (S3Args) s3Args);
         }
 
@@ -824,7 +824,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     prepareArguments = insert(createArguments(cachedTarget));
                 }
                 VirtualFrame frame = SubstituteVirtualFrame.create(materializedFrame);
-                Object[] orderedArguments = prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, originalCall);
+                RArgsValuesAndNames orderedArguments = prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, originalCall);
                 return leafCall.execute(frame, function, orderedArguments, (S3Args) s3Args);
             }
         }
@@ -855,7 +855,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return originalCall;
         }
 
-        public abstract Object execute(VirtualFrame frame, RFunction function, Object[] orderedArguments, S3Args s3Args);
+        public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames orderedArguments, S3Args s3Args);
     }
 
     @NodeInfo(cost = NodeCost.NONE)
@@ -950,8 +950,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         @Override
-        public Object execute(VirtualFrame frame, RFunction currentFunction, Object[] orderedArguments, S3Args s3Args) {
-            Object result = builtin.execute(frame, castArguments(frame, orderedArguments));
+        public Object execute(VirtualFrame frame, RFunction currentFunction, RArgsValuesAndNames orderedArguments, S3Args s3Args) {
+            Object result = builtin.execute(frame, castArguments(frame, orderedArguments.getArguments()));
             RContext.getInstance().setVisible(builtinDescriptor.getVisibility());
             return result;
         }
@@ -979,9 +979,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         @Override
-        public Object execute(VirtualFrame frame, RFunction function, Object[] orderedArguments, S3Args s3Args) {
+        public Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames orderedArguments, S3Args s3Args) {
             if (fastPath != null) {
-                Object result = fastPath.execute(frame, orderedArguments);
+                Object result = fastPath.execute(frame, orderedArguments.getArguments());
                 if (result != null) {
                     RContext.getInstance().setVisible(this.fastPathVisibility);
                     return result;
@@ -998,7 +998,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 }
             }
             MaterializedFrame callerFrame = /* CompilerDirectives.inInterpreter() || */originalCall.needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = RArguments.create(function, originalCall.createCaller(frame, function), callerFrame, orderedArguments, signature, function.getEnclosingFrame(), s3Args);
+            Object[] argsObject = RArguments.create(function, originalCall.createCaller(frame, function), callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(), signature,
+                            function.getEnclosingFrame(),
+                            s3Args);
             return call.call(frame, argsObject);
         }
     }

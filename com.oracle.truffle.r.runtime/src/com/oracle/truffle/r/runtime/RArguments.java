@@ -58,6 +58,8 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  *                            +--------------------+
  * INDEX_SIGNATURE         -> | ArgumentsSignature |
  *                            +--------------------+
+ * INDEX_SUPPLIED_SIGNATURE-> | ArgumentsSignature |
+ *                            +--------------------+
  * INDEX_ARGUMENTS         -> | arg_0              |
  *                            | arg_1              |
  *                            | ...                |
@@ -75,6 +77,10 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  * The INDEX_ENVIRONMENT slot is typically not set for frames associated with function evaluations,
  * because such environment instances are only created on demand. It is however, set for frames
  * associated with packages and the global environment.
+ *
+ * The INDEX_SUPPLIED_SIGNATURE is set to the permutation of the supplied signature that corresponds
+ * to how the supplied arguments were permuted. The purpose of this slot is to store the names in the
+ * original signature (especially positional vs. named) for later use in UseMethod.
  *
  * N.B. The depth is always a monotonically increasing value and unique across the active set of stack frames.
  * Promise evaluation requires some special support as the stack must reflect the "logical" stack depth,
@@ -136,7 +142,8 @@ public final class RArguments {
     static final int INDEX_DISPATCH_ARGS = 5;
     static final int INDEX_IS_IRREGULAR = 6;
     static final int INDEX_SIGNATURE = 7;
-    static final int INDEX_ARGUMENTS = 8;
+    static final int INDEX_SUPPLIED_SIGNATURE = 8;
+    static final int INDEX_ARGUMENTS = 9;
 
     /**
      * At the least, the array contains the function, enclosing frame, and numbers of arguments and
@@ -155,14 +162,23 @@ public final class RArguments {
         return ((HasSignature) function.getRootNode()).getSignature();
     }
 
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature signature,
+    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature signature, DispatchArgs dispatchArgs) {
+        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length), signature, dispatchArgs);
+    }
+
+    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature, ArgumentsSignature signature,
                     DispatchArgs dispatchArgs) {
         CompilerAsserts.neverPartOfCompilation();
-        return create(functionObj, call, callerFrame, evaluatedArgs, signature, functionObj.getEnclosingFrame(), dispatchArgs);
+        return create(functionObj, call, callerFrame, evaluatedArgs, suppliedSignature, signature, functionObj.getEnclosingFrame(), dispatchArgs);
+    }
+
+    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature signature, MaterializedFrame enclosingFrame,
+                    DispatchArgs dispatchArgs) {
+        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length), signature, enclosingFrame, dispatchArgs);
     }
 
     public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
-                    ArgumentsSignature signature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
+                    ArgumentsSignature suppliedSignature, ArgumentsSignature signature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
         assert evaluatedArgs != null && signature != null : evaluatedArgs + " " + signature;
         assert evaluatedArgs.length == signature.getLength() : Arrays.toString(evaluatedArgs) + " " + signature;
         assert signature == getSignature(functionObj) : signature + " vs. " + getSignature(functionObj);
@@ -179,6 +195,7 @@ public final class RArguments {
         a[INDEX_DISPATCH_ARGS] = dispatchArgs;
         a[INDEX_IS_IRREGULAR] = false;
         a[INDEX_SIGNATURE] = signature;
+        a[INDEX_SUPPLIED_SIGNATURE] = suppliedSignature;
         System.arraycopy(evaluatedArgs, 0, a, INDEX_ARGUMENTS, evaluatedArgs.length);
         // assert envFunctionInvariant(a);
         return a;
@@ -263,6 +280,10 @@ public final class RArguments {
 
     public static ArgumentsSignature getSignature(Frame frame) {
         return (ArgumentsSignature) frame.getArguments()[INDEX_SIGNATURE];
+    }
+
+    public static ArgumentsSignature getSuppliedSignature(Frame frame) {
+        return (ArgumentsSignature) frame.getArguments()[INDEX_SUPPLIED_SIGNATURE];
     }
 
     public static void setEnvironment(Frame frame, REnvironment env) {

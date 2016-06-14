@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
 import com.oracle.truffle.r.nodes.function.CallArgumentsNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
+import com.oracle.truffle.r.nodes.function.MatchedArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.UnmatchedArguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -47,7 +48,7 @@ public abstract class PrepareArguments extends Node {
 
     private static final int CACHE_SIZE = 4;
 
-    public abstract Object[] execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call);
+    public abstract RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call);
 
     public static PrepareArguments create(RRootNode target, CallArgumentsNode args, boolean noOpt) {
         return new UninitializedPrepareArguments(target, args, noOpt);
@@ -55,6 +56,19 @@ public abstract class PrepareArguments extends Node {
 
     public static PrepareArguments createExplicit(RRootNode target) {
         return new UninitializedExplicitPrepareArguments(target);
+    }
+
+    @ExplodeLoop
+    private static RArgsValuesAndNames executeArgs(RNode[] arguments, ArgumentsSignature suppliedSignature, VirtualFrame frame) {
+        Object[] result = new Object[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            result[i] = arguments[i].execute(frame);
+        }
+        return new RArgsValuesAndNames(result, suppliedSignature);
+    }
+
+    private static RArgsValuesAndNames executeArgs(MatchedArguments matched, VirtualFrame frame) {
+        return executeArgs(matched.getArguments(), matched.getSignature(), frame);
     }
 
     private static final class UninitializedPrepareArguments extends PrepareArguments {
@@ -71,7 +85,7 @@ public abstract class PrepareArguments extends Node {
         }
 
         @Override
-        public Object[] execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call) {
+        public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             PrepareArguments next;
             if (depth-- > 0) {
@@ -87,24 +101,23 @@ public abstract class PrepareArguments extends Node {
 
         @Child private PrepareArguments next;
         @Children private final RNode[] matchedArguments;
+        private final ArgumentsSignature matchedSuppliedSignature;
         private final ArgumentsSignature cachedVarArgSignature;
 
         CachedPrepareArguments(PrepareArguments next, RRootNode target, RCallNode call, CallArgumentsNode args, ArgumentsSignature varArgSignature, boolean noOpt) {
             this.next = next;
             cachedVarArgSignature = varArgSignature;
-            matchedArguments = ArgumentMatcher.matchArguments(target, args.unrollArguments(varArgSignature), call, noOpt);
+            MatchedArguments matched = ArgumentMatcher.matchArguments(target, args.unrollArguments(varArgSignature), call, noOpt);
+            this.matchedArguments = matched.getArguments();
+            this.matchedSuppliedSignature = matched.getSignature();
         }
 
         @Override
         @ExplodeLoop
-        public Object[] execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call) {
+        public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call) {
             assert (cachedVarArgSignature != null) == (varArgs != null);
             if (cachedVarArgSignature == null || cachedVarArgSignature == varArgs.getSignature()) {
-                Object[] result = new Object[matchedArguments.length];
-                for (int i = 0; i < matchedArguments.length; i++) {
-                    result[i] = matchedArguments[i].execute(frame);
-                }
-                return result;
+                return executeArgs(matchedArguments, matchedSuppliedSignature, frame);
             }
             return next.execute(frame, varArgs, call);
         }
@@ -121,16 +134,12 @@ public abstract class PrepareArguments extends Node {
         }
 
         @Override
-        public Object[] execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call) {
+        public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call) {
             CompilerDirectives.transferToInterpreter();
             ArgumentsSignature varArgSignature = varArgs == null ? null : varArgs.getSignature();
             UnmatchedArguments argsValuesAndNames = args.unrollArguments(varArgSignature);
-            RNode[] matchedArgs = ArgumentMatcher.matchArguments(target, argsValuesAndNames, RError.ROOTNODE, true);
-            Object[] result = new Object[matchedArgs.length];
-            for (int i = 0; i < matchedArgs.length; i++) {
-                result[i] = matchedArgs[i].execute(frame);
-            }
-            return result;
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(target, argsValuesAndNames, RError.ROOTNODE, true);
+            return executeArgs(matchedArgs, frame);
         }
     }
 
@@ -144,7 +153,7 @@ public abstract class PrepareArguments extends Node {
         }
 
         @Override
-        public Object[] execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, RCallNode call) {
+        public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, RCallNode call) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             PrepareArguments next;
             if (depth-- > 0) {
@@ -172,7 +181,7 @@ public abstract class PrepareArguments extends Node {
         }
 
         @Override
-        public Object[] execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, RCallNode call) {
+        public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, RCallNode call) {
             if (cachedExplicitArgSignature == explicitArgs.getSignature()) {
                 return ArgumentMatcher.matchArgumentsEvaluated(permutation, explicitArgs.getArguments(), formals);
             }
@@ -189,10 +198,10 @@ public abstract class PrepareArguments extends Node {
         }
 
         @Override
-        public Object[] execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, RCallNode call) {
+        public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, RCallNode call) {
             CompilerDirectives.transferToInterpreter();
             // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
-            return ArgumentMatcher.matchArgumentsEvaluated(target, explicitArgs, RError.ROOTNODE, false).getArguments();
+            return ArgumentMatcher.matchArgumentsEvaluated(target, explicitArgs, RError.ROOTNODE, false);
         }
     }
 }
