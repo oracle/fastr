@@ -144,18 +144,13 @@ public class TestMiscBuiltins extends TestBase {
         assertEval("{ m <- { matrix( as.raw(11:16), nrow=2 ) } ; diag(m) <- c(as.raw(1),as.raw(2)) ; m }");
     }
 
-    //@formatter:off
     private static final String[] BASIC_TYPES = new String[]{
-        "call", "character", "complex", "double", "expression", "function", "integer", "list",
-        "logical", "name", "symbol", "null", "pairlist", "raw",
+                    "call", "character", "complex", "double", "expression", "function", "integer", "list", "logical", "name", "symbol", "null", "pairlist", "raw",
     };
 
     private static final String[] BASIC_TYPE_VALUES = new String[]{
-        "call(\"foo\")", "\"1\"", "1i", "1", "expression(x + 1)", "function() { }",
-        "1L", "list()", "TRUE", "quote(x)", "NULL", "pairlist()", "raw()"
+                    "call(\"foo\")", "\"1\"", "1i", "1", "expression(x + 1)", "function() { }", "1L", "list()", "TRUE", "quote(x)", "NULL", "pairlist()", "raw()"
     };
-
-    //@formatter:on
 
     @Test
     public void testBasicTypes() {

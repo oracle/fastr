@@ -43,8 +43,7 @@ public class TestBuiltin_setS4Object extends TestBase {
 
     @Test
     public void testsetS4Object5() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c('nonStructure', 'ANY', 'ANY', 'ANY'), .Names = c(NA_character_, NA_character_, NA_character_, NA_character_), package = character(0), class = structure('signature', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(c('nonStructure', 'ANY', 'ANY', 'ANY'), .Names = c(NA_character_, NA_character_, NA_character_, NA_character_), package = character(0), class = structure('signature', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
