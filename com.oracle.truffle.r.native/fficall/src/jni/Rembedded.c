@@ -23,6 +23,9 @@ static int initialized = 0;
 static jclass rembeddedClass;
 static jclass rStartParamsClass;
 
+int R_running_as_main_program;
+int R_SignalHandlers;
+
 typedef jint (JNICALL *JNI_CreateJavaVMFunc)
 	      (JavaVM **pvm, void **penv, void *args);
 
