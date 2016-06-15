@@ -69,7 +69,9 @@ _r_command_project = 'com.oracle.truffle.r.engine'
 _repl_command = 'com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient'
 _command_class_dict = {'r': _r_command_project + ".shell.RCommand",
                        'rscript': _r_command_project + ".shell.RscriptCommand",
-                        'rrepl': _repl_command}
+                        'rrepl': _repl_command,
+                        'rembed': _r_command_project + ".shell.REmbedded",
+                    }
 # benchmarking support
 def r_path():
     return join(_fastr_suite.dir, 'bin', 'R')
@@ -238,6 +240,9 @@ def rscript(args, parser=None, **kwargs):
 def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
     run_r(args, 'rrepl')
+
+def rembed(args, nonZeroIsFatal=True, extraVmArgs=None):
+    run_r(args, 'rembed')
 
 def build(args):
     '''FastR build'''
@@ -527,6 +532,7 @@ _commands = {
     'rcmplib' : [rcmplib, ['options']],
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'rrepl' : [rrepl, '[options]'],
+    'rembed' : [rembed, '[options]'],
     'installpkgs' : [installpkgs, '[options]'],
     'installcran' : [installpkgs, '[options]'],
     }

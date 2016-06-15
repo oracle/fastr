@@ -62,7 +62,6 @@ import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
-import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -70,6 +69,7 @@ import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.ThreadTimings;
@@ -179,9 +179,9 @@ final class REngine implements Engine, Engine.Timings {
                     throw new RInternalError(e, "error while parsing user profile from %s", userProfile.getName());
                 }
             }
-            if (!(context.getOptions().getBoolean(RCmdOption.NO_RESTORE) || context.getOptions().getBoolean(RCmdOption.NO_RESTORE_DATA))) {
+            if (!(context.getStartParams().getRestoreAction() == SA_TYPE.NORESTORE)) {
                 // call sys.load.image(".RData", RCmdOption.QUIET
-                checkAndRunStartupShutdownFunction("sys.load.image", new String[]{"\".RData\"", context.getOptions().getBoolean(RCmdOption.QUIET) ? "TRUE" : "FALSE"});
+                checkAndRunStartupShutdownFunction("sys.load.image", new String[]{"\".RData\"", context.getStartParams().getQuiet() ? "TRUE" : "FALSE"});
                 context.getConsoleHandler().setHistoryFrom(new File("./.Rhistory"));
             }
             checkAndRunStartupShutdownFunction(".First");

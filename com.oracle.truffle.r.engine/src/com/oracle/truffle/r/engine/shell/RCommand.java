@@ -25,15 +25,11 @@ package com.oracle.truffle.r.engine.shell;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.EXPR;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.FILE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.INTERACTIVE;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_ENVIRON;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_INIT_FILE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_READLINE;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_RESTORE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_SAVE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.QUIET;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SAVE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SILENT;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SLAVE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.VANILLA;
 
 import java.io.Console;
@@ -54,8 +50,10 @@ import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
@@ -78,53 +76,24 @@ public class RCommand {
     // CheckStyle: stop system..print check
 
     public static void main(String[] args) {
-        PolyglotEngine vm = createPolyglotEngine(args);
+        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
+        options.printHelpAndVersion();
+        PolyglotEngine vm = createContextInfoFromCommandLine(options, false);
         // never returns
         readEvalPrint(vm);
         throw RInternalError.shouldNotReachHere();
     }
 
-    /**
-     * This exists as a separate method to support the Rembedded API.
-     */
-    static PolyglotEngine createPolyglotEngine(String[] args) {
-        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args);
-        options.printHelpAndVersion();
-        PolyglotEngine vm = createContextInfoFromCommandLine(options);
-        return vm;
-    }
-
-    /**
-     * Creates the PolyglotEngine and initializes it. Called from native code when FastR is
-     * embedded.
-     */
-    static PolyglotEngine initialize(String[] args) {
-        PolyglotEngine vm = createPolyglotEngine(args);
-        // Any expression will do to initialize the engine.
-        doEcho(vm);
-        return vm;
-    }
-
-    static PolyglotEngine createContextInfoFromCommandLine(RCmdOptions options) {
-        if (options.getBoolean(SLAVE)) {
-            options.setValue(QUIET, true);
-            options.setValue(NO_SAVE, true);
-        }
-
-        if (options.getBoolean(VANILLA)) {
-            options.setValue(NO_SAVE, true);
-            options.setValue(NO_ENVIRON, true);
-            options.setValue(NO_INIT_FILE, true);
-            options.setValue(NO_RESTORE, true);
-        }
+    static PolyglotEngine createContextInfoFromCommandLine(RCmdOptions options, boolean embedded) {
+        RStartParams rsp = new RStartParams(options, embedded);
 
         String fileArg = options.getString(FILE);
         if (fileArg != null) {
             if (options.getStringList(EXPR) != null) {
                 Utils.fatalError("cannot use -e with -f or --file");
             }
-            if (!options.getBoolean(SLAVE)) {
-                options.setValue(NO_SAVE, true);
+            if (!rsp.getSlave()) {
+                rsp.setSaveAction(SA_TYPE.NOSAVE);
             }
             if (fileArg.equals("-")) {
                 // means stdin, but still implies NO_SAVE
@@ -156,8 +125,8 @@ public class RCommand {
             consoleHandler = new StringConsoleHandler(lines, System.out, filePath);
         } else if (options.getStringList(EXPR) != null) {
             List<String> exprs = options.getStringList(EXPR);
-            if (!options.getBoolean(SLAVE)) {
-                options.setValue(NO_SAVE, true);
+            if (!rsp.getSlave()) {
+                rsp.setSaveAction(SA_TYPE.NOSAVE);
             }
             consoleHandler = new StringConsoleHandler(exprs, System.out, RInternalSourceDescriptions.EXPRESSION_INPUT);
         } else {
@@ -189,7 +158,7 @@ public class RCommand {
                 consoleHandler = new DefaultConsoleHandler(consoleInput, consoleOutput);
             }
         }
-        return ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler).apply(PolyglotEngine.newBuilder()).build();
+        return ContextInfo.create(rsp, ContextKind.SHARE_NOTHING, null, consoleHandler).apply(PolyglotEngine.newBuilder()).build();
     }
 
     private static final Source GET_ECHO = Source.fromText("invisible(getOption('echo'))", RInternalSourceDescriptions.GET_ECHO).withMimeType(TruffleRLanguage.MIME);
@@ -298,7 +267,7 @@ public class RCommand {
         }
     }
 
-    private static ContextInfo getContextInfo(PolyglotEngine vm) {
+    static ContextInfo getContextInfo(PolyglotEngine vm) {
         try {
             return (ContextInfo) vm.findGlobalSymbol(ContextInfo.GLOBAL_SYMBOL).get();
         } catch (IOException ex) {

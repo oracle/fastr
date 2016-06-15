@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
@@ -351,9 +352,9 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * could do this more dynamically with a registration process, perhaps driven by an annotation
      * processor, but the set is relatively small, so we just enumerate them here.
      */
-    public final REnvVars stateREnvVars;
-    public final RProfile stateRProfile;
-    public final ROptions.ContextStateImpl stateROptions;
+    public REnvVars stateREnvVars;
+    public RProfile stateRProfile;
+    public ROptions.ContextStateImpl stateROptions;
     public final REnvironment.ContextStateImpl stateREnvironment;
     public final RErrorHandling.ContextStateImpl stateRErrorHandling;
     public final ConnectionSupport.ContextStateImpl stateRConnection;
@@ -365,6 +366,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public final TraceState.ContextStateImpl stateTraceHandling;
     public final ContextStateImpl stateInternalCode;
 
+    private final boolean embedded;
+
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize,
                         stateLazyDBCache, stateTraceHandling};
@@ -373,7 +376,12 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     private RContext(Env env, Instrumenter instrumenter, boolean isInitial) {
         ContextInfo initialInfo = (ContextInfo) env.importSymbol(ContextInfo.GLOBAL_SYMBOL);
         if (initialInfo == null) {
-            this.info = ContextInfo.create(RCmdOptions.parseArguments(Client.R, new String[0]), ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env.in(), env.out()));
+            /*
+             * This implies that FastR is being invoked initially from another Truffle language and
+             * not via RCommand/RscriptCommand.
+             */
+            this.info = ContextInfo.create(new RStartParams(RCmdOptions.parseArguments(Client.R, new String[0], false), false), ContextKind.SHARE_NOTHING, null,
+                            new DefaultConsoleHandler(env.in(), env.out()));
         } else {
             this.info = initialInfo;
         }
@@ -420,9 +428,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         assert !active;
         active = true;
         attachThread();
-        stateREnvVars = REnvVars.newContext(this);
-        stateRProfile = RProfile.newContext(this, stateREnvVars);
-        stateROptions = ROptions.ContextStateImpl.newContext(this, stateREnvVars);
+        embedded = info.getStartParams().getEmbedded();
+        if (!embedded) {
+            doEnvOptionsProfileInitialization();
+        }
         stateREnvironment = REnvironment.ContextStateImpl.newContext(this);
         stateRErrorHandling = RErrorHandling.ContextStateImpl.newContext(this);
         stateRConnection = ConnectionSupport.ContextStateImpl.newContext(this);
@@ -433,7 +442,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateLazyDBCache = LazyDBCache.ContextStateImpl.newContext(this);
         stateTraceHandling = TraceState.newContext(this);
         stateInternalCode = ContextStateImpl.newContext(this);
-        engine.activate(stateREnvironment);
+
+        if (!embedded) {
+            validateContextStates();
+            engine.activate(stateREnvironment);
+        }
 
         if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
             if (info.getParent().sharedChild != null) {
@@ -444,11 +457,31 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             // that methods package is loaded
             this.methodTableDispatchOn = info.getParent().methodTableDispatchOn;
         }
+        if (isInitial && !embedded) {
+            initialContextInitialized = true;
+        }
+    }
+
+    /**
+     * Factored out for embedded setup, where this initialization may be customized after the
+     * context is created but before VM really starts execution.
+     */
+    private void doEnvOptionsProfileInitialization() {
+        stateREnvVars = REnvVars.newContext(this);
+        stateROptions = ROptions.ContextStateImpl.newContext(this, stateREnvVars);
+        stateRProfile = RProfile.newContext(this, stateREnvVars);
+    }
+
+    public void completeEmbeddedInitialization() {
+        doEnvOptionsProfileInitialization();
+        validateContextStates();
+        engine.activate(stateREnvironment);
+        initialContextInitialized = true;
+    }
+
+    private void validateContextStates() {
         for (ContextState state : contextStates()) {
             assert state != null;
-        }
-        if (isInitial) {
-            initialContextInitialized = true;
         }
     }
 
@@ -537,7 +570,12 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public void setVisible(boolean v) {
         if (!FastROptions.IgnoreVisibility.getBooleanValue()) {
-            resultVisible = v;
+            /*
+             * Prevent printing the dummy expression used to force creation of initial context
+             */
+            if (initialContextInitialized || !embedded) {
+                resultVisible = v;
+            }
         }
     }
 
@@ -642,8 +680,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         return foreignAccessFactory;
     }
 
-    public RCmdOptions getOptions() {
-        return info.getOptions();
+    public RStartParams getStartParams() {
+        return info.getStartParams();
     }
 
     @Override

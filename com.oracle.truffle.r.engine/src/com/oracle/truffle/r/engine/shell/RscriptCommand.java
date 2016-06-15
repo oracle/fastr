@@ -99,9 +99,9 @@ public class RscriptCommand {
     public static void main(String[] args) {
         // Since many of the options are shared parse them from an RSCRIPT perspective.
         // Handle --help and --version specially, as they exit.
-        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.RSCRIPT, args);
+        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.RSCRIPT, args, false);
         preprocessRScriptOptions(options);
-        PolyglotEngine vm = RCommand.createContextInfoFromCommandLine(options);
+        PolyglotEngine vm = RCommand.createContextInfoFromCommandLine(options, false);
         // never returns
         RCommand.readEvalPrint(vm);
         throw RInternalError.shouldNotReachHere();

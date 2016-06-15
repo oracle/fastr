@@ -278,11 +278,12 @@ public final class RCmdOptions {
      * The spec for {@code commandArgs()} states that it returns the executable by which R was
      * invoked in element 0, which is consistent with the C {@code main} function, but defines the
      * exact form to be platform independent. Java does not provide the executable (for obvious
-     * reasons) so we use "FastR".
+     * reasons) so we use "FastR". However, embedded mode does pass the executable in
+     * {@code args[0]} and we do not want to parse that!
      */
-    public static RCmdOptions parseArguments(Client client, String[] args) {
+    public static RCmdOptions parseArguments(Client client, String[] args, boolean embedded) {
         EnumMap<RCmdOption, Object> options = new EnumMap<>(RCmdOption.class);
-        int i = 0;
+        int i = embedded ? 1 : 0;
         int firstNonOptionArgIndex = args.length;
         while (i < args.length) {
             final String arg = args[i];
@@ -327,9 +328,14 @@ public final class RCmdOptions {
                 }
             }
         }
-        String[] xargs = new String[args.length + 1];
-        xargs[0] = "FastR";
-        System.arraycopy(args, 0, xargs, 1, args.length);
+        String[] xargs;
+        if (embedded) {
+            xargs = args;
+        } else {
+            xargs = new String[args.length + 1];
+            xargs[0] = "FastR";
+            System.arraycopy(args, 0, xargs, 1, args.length);
+        }
 
         // adjust for inserted executable name
         return new RCmdOptions(options, xargs, firstNonOptionArgIndex + 1);

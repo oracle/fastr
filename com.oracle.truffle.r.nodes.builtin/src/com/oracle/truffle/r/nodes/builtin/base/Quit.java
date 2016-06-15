@@ -31,8 +31,8 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
@@ -71,7 +71,7 @@ public abstract class Quit extends RBuiltinNode {
         // Quit does not divert its output to sink
         ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         if (save.equals("default")) {
-            if (RContext.getInstance().getOptions().getBoolean(RCmdOption.NO_SAVE)) {
+            if (RContext.getInstance().getStartParams().getSaveAction() == SA_TYPE.NOSAVE) {
                 save = "no";
             } else {
                 if (consoleHandler.isInteractive()) {

@@ -20,7 +20,7 @@ static JNIEnv *jniEnv;
 static jobject engine;
 static int initialized = 0;
 
-static jclass rcommandClass;
+static jclass rembeddedClass;
 static jclass rStartParamsClass;
 
 typedef jint (JNICALL *JNI_CreateJavaVMFunc)
@@ -33,6 +33,21 @@ static void *dlopen_jvmlib(char *libpath) {
 		exit(1);
 	}
 	return handle;
+}
+
+// separate vm args from user args
+static int process_vmargs(int argc, char *argv[], char *vmargv[], char *uargv[]) {
+	int vcount = 0;
+	int ucount = 0;
+	for (int i = 0; i < argc; i++) {
+		char *arg = argv[i];
+		if (arg[0] == '-' && arg[1] == 'X') {
+			vmargv[vcount++] = arg;
+		} else {
+			uargv[ucount++] = arg;
+		}
+	}
+	return vcount;
 }
 
 int Rf_initialize_R(int argc, char *argv[]) {
@@ -71,7 +86,6 @@ int Rf_initialize_R(int argc, char *argv[]) {
 	}
 
 	// TODO getting the correct classpath is hard, need a helper program
-	JavaVMOption vm_options[1];
 	char *vm_cp = getenv("FASTR_CLASSPATH");
 	if (vm_cp == NULL) {
 		printf("Rf_initialize_R: FASTR_CLASSPATH env var not set\n");
@@ -82,13 +96,24 @@ int Rf_initialize_R(int argc, char *argv[]) {
 	char *cp = malloc(cplen + 32);
 	strcpy(cp, "-Djava.class.path=");
 	strcat(cp, vm_cp);
+
+	char **vmargs = malloc(argc * sizeof(char*));
+	char **uargs = malloc(argc * sizeof(char*));
+	int vmargc = process_vmargs(argc, argv, vmargs, uargs);
+	argc -= vmargc;
+	argv = uargs;
+	JavaVMOption vm_options[1 + vmargc];
+
 	vm_options[0].optionString = cp;
+	for (int i = 0; i < vmargc; i++) {
+		vm_options[i + 1].optionString = vmargs[i];
+	}
 
 	printf("creating vm\n");
 
 	JavaVMInitArgs vm_args;
 	vm_args.version = JNI_VERSION_1_8;
-	vm_args.nOptions = 1;
+	vm_args.nOptions = 1 + vmargc;
 	vm_args.options = vm_options;
 	vm_args.ignoreUnrecognized = JNI_TRUE;
 
@@ -99,22 +124,25 @@ int Rf_initialize_R(int argc, char *argv[]) {
 		return 1;
 	}
 
-	rcommandClass = checkFindClass(jniEnv, "com/oracle/truffle/r/engine/shell/RCommand");
-	rStartParamsClass = checkFindClass(jniEnv, "com/oracle/truffle/r/engine/shell/RStartParams");
+	rembeddedClass = checkFindClass(jniEnv, "com/oracle/truffle/r/engine/shell/REmbedded");
+	rStartParamsClass = checkFindClass(jniEnv, "com/oracle/truffle/r/runtime/RStartParams");
 	jclass stringClass = checkFindClass(jniEnv, "java/lang/String");
-	jmethodID initializeMethod = checkGetMethodID(jniEnv, rcommandClass, "initialize",
+	jmethodID initializeMethod = checkGetMethodID(jniEnv, rembeddedClass, "initializeR",
 			"([Ljava/lang/String;)Lcom/oracle/truffle/api/vm/PolyglotEngine;", 1);
-	int argLength = 0;
-	jobjectArray argsArray = (*jniEnv)->NewObjectArray(jniEnv, argLength, stringClass, NULL);
+	jobjectArray argsArray = (*jniEnv)->NewObjectArray(jniEnv, argc, stringClass, NULL);
+	for (int i = 0; i < argc; i++) {
+		jstring arg = (*jniEnv)->NewStringUTF(jniEnv, argv[i]);
+		(*jniEnv)->SetObjectArrayElement(jniEnv, argsArray, i, arg);
+	}
 
-	engine = checkRef(jniEnv, (*jniEnv)->CallStaticObjectMethod(jniEnv, rcommandClass, initializeMethod, argsArray));
+	engine = checkRef(jniEnv, (*jniEnv)->CallStaticObjectMethod(jniEnv, rembeddedClass, initializeMethod, argsArray));
 	initialized++;
 	return 0;
 }
 
 void setup_Rmainloop(void) {
-	// In GnuR R_initialize_R and setup_Rmainloop do different things.
-	// In FastR we don't (yet?) have the distinction, so there is nothing more to do here
+	jmethodID setupMethod = checkGetMethodID(jniEnv, rembeddedClass, "setupRmainloop", "(Lcom/oracle/truffle/api/vm/PolyglotEngine;)V", 1);
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, setupMethod, engine);
 }
 
 void R_DefParams(Rstart rs) {
@@ -138,12 +166,10 @@ void R_DefParams(Rstart rs) {
 }
 
 void R_SetParams(Rstart rs) {
-	jmethodID setParamsMethodID = checkGetMethodID(jniEnv, rStartParamsClass, "setParams", "(Lcom/oracle/truffle/r/engine/shell/RStartParams;)V", 1);
-	jmethodID consMethodID = checkGetMethodID(jniEnv, rStartParamsClass, "<init>", "(ZZZZZZZIIZ)V", 0);
-	jobject javaRSParams = (*jniEnv)->NewObject(jniEnv, rStartParamsClass, consMethodID, rs->R_Quiet, rs->R_Slave, rs->R_Interactive,
+	jmethodID setParamsMethodID = checkGetMethodID(jniEnv, rStartParamsClass, "setParams", "(ZZZZZZZIIZ)V", 1);
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, rStartParamsClass, setParamsMethodID, rs->R_Quiet, rs->R_Slave, rs->R_Interactive,
 			rs->R_Verbose, rs->LoadSiteFile, rs->LoadInitFile, rs->DebugInitFile,
 			rs->RestoreAction, rs->SaveAction, rs->NoRenviron);
-	(*jniEnv)->CallStaticVoidMethod(jniEnv, rStartParamsClass, setParamsMethodID, javaRSParams);
 }
 
 void R_SizeFromEnv(Rstart rs) {
@@ -172,8 +198,13 @@ void Rf_endEmbeddedR(int fatal) {
 }
 
 void Rf_mainloop(void) {
-	jmethodID readEvalPrintMethod = checkGetMethodID(jniEnv, rcommandClass, "readEvalPrint", "(Lcom/oracle/truffle/api/vm/PolyglotEngine;)V", 1);
-	(*jniEnv)->CallStaticVoidMethod(jniEnv, rcommandClass, readEvalPrintMethod, engine);
+	jmethodID mainloopMethod = checkGetMethodID(jniEnv, rembeddedClass, "mainloop", "(Lcom/oracle/truffle/api/vm/PolyglotEngine;)V", 1);
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, mainloopMethod, engine);
+}
+
+void run_Rmainloop(void) {
+	jmethodID mainloopMethod = checkGetMethodID(jniEnv, rembeddedClass, "runRmainloop", "(Lcom/oracle/truffle/api/vm/PolyglotEngine;)V", 1);
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, mainloopMethod, engine);
 }
 
 // function ptrs that can be assigned by an embedded client to change behavior

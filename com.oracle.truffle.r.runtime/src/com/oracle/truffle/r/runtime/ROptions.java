@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -90,7 +89,7 @@ public class ROptions {
         public static ContextStateImpl newContext(RContext context, REnvVars envVars) {
             HashMap<String, Object> map = new HashMap<>();
             if (context.getKind() == ContextKind.SHARE_NOTHING) {
-                applyDefaults(map, context.getOptions(), envVars);
+                applyDefaults(map, context.getStartParams(), envVars);
             } else {
                 map.putAll(context.getParent().stateROptions.map);
             }
@@ -114,13 +113,13 @@ public class ROptions {
                     "rl_word_breaks", "warnPartialMatchDollar", "warnPartialMatchArgs", "warnPartialMatchAttr", "showWarnCalls", "showErrorCalls", "showNCalls", "par.ask.default",
                     "browserNLdisabled", "CBoundsCheck"));
 
-    private static void applyDefaults(HashMap<String, Object> map, RCmdOptions options, REnvVars envVars) {
+    private static void applyDefaults(HashMap<String, Object> map, RStartParams startParams, REnvVars envVars) {
         map.put("add.smooth", RDataFactory.createLogicalVectorFromScalar(true));
         map.put("check.bounds", RDataFactory.createLogicalVectorFromScalar(false));
         map.put("continue", RDataFactory.createStringVector("+ "));
         map.put("deparse.cutoff", RDataFactory.createIntVectorFromScalar(60));
         map.put("digits", RDataFactory.createIntVectorFromScalar(7));
-        map.put("echo", RDataFactory.createLogicalVectorFromScalar(options.getBoolean(RCmdOption.SLAVE) ? false : true));
+        map.put("echo", RDataFactory.createLogicalVectorFromScalar(startParams.getSlave() ? false : true));
         map.put("encoding", RDataFactory.createStringVector("native.enc"));
         map.put("expressions", RDataFactory.createIntVectorFromScalar(5000));
         boolean keepPkgSource = optionFromEnvVar("R_KEEP_PKG_SOURCE", envVars);

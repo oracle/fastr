@@ -1,4 +1,3 @@
-com.oracle.truffle.r.engine/src/com/oracle/truffle/r/engine/shell/RStartParams.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/graphics/BaseGraphicsSystem.java,gnu_r_graphics.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/graphics/core/AbstractGraphicsSystem.java,gnu_r_graphics.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/graphics/core/drawables/CoordinatesDrawableObject.java,gnu_r_graphics.copyright
@@ -189,6 +188,7 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/InheritsNode.jav
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/IsFactorNode.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/R.g,purdue.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RSrcref.java,gnu_r.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RStartParams.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/data/RTypedValue.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ffi/DLL.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/gnur/SEXPTYPE.java,gnu_r.copyright

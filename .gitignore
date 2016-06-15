@@ -113,3 +113,4 @@ test_gnur
 test_fastr
 lib.install.cran*
 package.blacklist
+com.oracle.truffle.r.test.native/embedded/main

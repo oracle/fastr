@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
@@ -69,8 +70,8 @@ public class FastRContext {
         protected int create(RAbstractStringVector args, RAbstractStringVector kindVec) {
             try {
                 RContext.ContextKind kind = RContext.ContextKind.valueOf(kindVec.getDataAt(0));
-                RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, args.materialize().getDataCopy());
-                return ContextInfo.createDeferred(options, kind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
+                RStartParams startParams = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, args.materialize().getDataCopy(), false), embedded);
+                return ContextInfo.createDeferred(startParams, kind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
             } catch (IllegalArgumentException ex) {
                 throw RError.error(this, RError.Message.GENERIC, "invalid kind argument");
             }

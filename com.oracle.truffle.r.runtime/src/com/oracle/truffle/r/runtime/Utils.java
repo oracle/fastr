@@ -50,7 +50,6 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.nodes.GraphPrintVisitor;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -153,7 +152,7 @@ public final class Utils {
          * polyglot context are.
          */
         RPerfStats.report();
-        if (RContext.getInstance() != null && RContext.getInstance().getOptions() != null && RContext.getInstance().getOptions().getString(RCmdOption.DEBUGGER) != null) {
+        if (RContext.getInstance() != null && RContext.getInstance().getStartParams() != null && RContext.getInstance().getStartParams().getDebugInitFile()) {
             throw new DebugExitException();
         } else {
             try {
