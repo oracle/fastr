@@ -26,32 +26,41 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.CallInlineCacheNode;
 import com.oracle.truffle.r.nodes.CallInlineCacheNodeGen;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
+import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
+import com.oracle.truffle.r.nodes.objects.GetS4DataSlotNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -126,41 +135,77 @@ public class GetFunctions {
         }
     }
 
+    public static final class S4ToEnvNode extends Node {
+
+        @Child private GetS4DataSlot getS4Data = GetS4DataSlotNodeGen.create(RType.Environment);
+
+        public REnvironment execute(RS4Object obj) {
+            assert obj.isS4() : "unexpected non-S4 RS4Object";
+            Object value = getS4Data.executeObject(obj);
+            if (value == RNull.instance) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(RError.SHOW_CALLER, Message.USE_NULL_ENV_DEFUNCT);
+            }
+            return (REnvironment) value;
+        }
+    }
+
     @RBuiltin(name = "get", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"})
     public abstract static class Get extends Adapter {
 
-        @Specialization(guards = "!isInherits(inherits)")
-        protected Object getNonInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
-            RType modeType = typeFromMode.execute(mode);
-            return getAndCheck(frame, xv, envir, modeType, true);
+        private final ConditionProfile inheritsProfile = ConditionProfile.createBinaryProfile();
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.firstBoolean(3);
         }
 
-        @Specialization(guards = "isInherits(inherits)")
-        protected Object getInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
-            Object result = getInherits(frame, xv, envir, mode, true);
-            return result;
+        @Specialization
+        protected Object get(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, boolean inherits) {
+            if (inheritsProfile.profile(inherits)) {
+                return getInherits(frame, xv, envir, mode, true);
+            } else {
+                RType modeType = typeFromMode.execute(mode);
+                return getAndCheck(frame, xv, envir, modeType, true);
+            }
+        }
+
+        @Specialization
+        protected Object get(VirtualFrame frame, RAbstractStringVector xv, RS4Object envir, String mode, boolean inherits, //
+                        @Cached("new()") S4ToEnvNode s4ToEnv) {
+            return get(frame, xv, s4ToEnv.execute(envir), mode, inherits);
         }
     }
 
     @RBuiltin(name = "get0", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits", "ifnotfound"})
     public abstract static class Get0 extends Adapter {
-        @Specialization(guards = "!isInherits(inherits)")
-        protected Object get0NonInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits, Object ifnotfound) {
-            RType modeType = typeFromMode.execute(mode);
-            Object result = getAndCheck(frame, xv, envir, modeType, false);
+
+        private final ConditionProfile inheritsProfile = ConditionProfile.createBinaryProfile();
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.firstBoolean(3);
+        }
+
+        @Specialization
+        protected Object get0(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, boolean inherits, Object ifnotfound) {
+            Object result;
+            if (inheritsProfile.profile(inherits)) {
+                result = getInherits(frame, xv, envir, mode, false);
+            } else {
+                RType modeType = typeFromMode.execute(mode);
+                result = getAndCheck(frame, xv, envir, modeType, false);
+            }
             if (result == null) {
                 result = ifnotfound;
             }
             return result;
         }
 
-        @Specialization(guards = "isInherits(inherits)")
-        protected Object get0Inherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits, Object ifnotfound) {
-            Object result = getInherits(frame, xv, envir, mode, false);
-            if (result == null) {
-                result = ifnotfound;
-            }
-            return result;
+        @Specialization
+        protected Object get0(VirtualFrame frame, RAbstractStringVector xv, RS4Object envir, String mode, boolean inherits, Object ifnotfound, //
+                        @Cached("new()") S4ToEnvNode s4ToEnv) {
+            return get0(frame, xv, s4ToEnv.execute(envir), mode, inherits, ifnotfound);
         }
     }
 

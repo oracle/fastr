@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 @RBuiltin(name = "setS4Object", kind = INTERNAL, parameterNames = {"object", "flag", "complete"})
 public abstract class SetS4Object extends RBuiltinNode {
 
-    @Child private AsS4 asS4 = AsS4NodeGen.create(null, null, null);
+    @Child private AsS4 asS4 = AsS4NodeGen.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
