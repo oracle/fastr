@@ -31,39 +31,59 @@ import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.RContext;
 
+/**
+ * Support for embedding FastR in a C/C++ application according to {@code Rembedded.h}. The
+ * embedding interface consists of several functions and can be used in several ways. Since it is
+ * not specified other than by example, we only have existing use-cases to work from. This is the
+ * sequence used by {@code RStudio}.
+ *
+ * <pre>
+ * Rf_initialize_R(argv, args);
+ * Rstart rs;
+ * // set some rs fields
+ * R_SetParams(rs);
+ * // set some Rinterface function callbacks
+ * ptr_R_WriteConsole = local_R_WriteConsole
+ * Rf_mainloop();
+ * </pre>
+ *
+ * {@code Rf_initialize_R} invokes {@link #initializeR(String[])}. This creates an
+ * {@link RStartParams} object in {@code embedded} mode that is recorded in the {@link ContextInfo}
+ * object which is itself stored as a global symbol in the associated {@link PolyglotEngine}
+ * instance. The FastR {@link PolyglotEngine} is then partially initialized. The call to
+ * {@code R_SetParams} will adjust the values stored in the {@link RStartParams} object and then
+ * {@code Rf_mainloop}, which calls {@link #mainloop(PolyglotEngine)} will complete the FastR
+ * initialization and enter the read-eval-print loop.
+ */
 public class REmbedded {
 
     /**
      * Creates the {@link PolyglotEngine} and initializes it. Called from native code when FastR is
-     * embedded. Corresponds to FFI method {@code Rf_initialize_R}. N.B. This does not actually
-     * initialize FastR as that happens indirectly when the {@link PolyglotEngine} does the first
-     * {@code eval} and we cannot do that until the embedding system has had a chance to adjust the
-     * {@link RStartParams}.
+     * embedded. Corresponds to FFI method {@code Rf_initialize_R}. N.B. This does not completely
+     * initialize FastR as we cannot do that until the embedding system has had a chance to adjust
+     * the {@link RStartParams}, which happens after this call returns.
      */
     private static PolyglotEngine initializeR(String[] args) {
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, true);
         PolyglotEngine vm = RCommand.createContextInfoFromCommandLine(options, true);
+        try {
+            vm.eval(INIT);
+        } catch (IOException ex) {
+            Utils.fatalError("initializeR");
+        }
         return vm;
     }
 
     private static final Source INIT = Source.fromText("1", RInternalSourceDescriptions.GET_ECHO).withMimeType(TruffleRLanguage.MIME);
 
     /**
-     * Upcall from native code to prepare for the main read-eval-print loop, Since we are in
-     * embedded mode we first do a dummy eval that has the important side effect of creating the
-     * {@link RContext}. Then we use that to complete the initialization that was deferred.
-     *
-     * @param vm
+     * GnuR distinguishes {@code setup_Rmainloop} and {@code run_Rmainloop}. Currently we don't have
+     * the equivalent separation in FastR.
      */
     private static void setupRmainloop(PolyglotEngine vm) {
-        try {
-            vm.eval(INIT);
-            RContext.getInstance().completeEmbeddedInitialization();
-        } catch (IOException ex) {
-            Utils.fatalError("setupRmainloop");
-        }
     }
 
     private static void mainloop(PolyglotEngine vm) {
@@ -71,7 +91,12 @@ public class REmbedded {
         runRmainloop(vm);
     }
 
+    /**
+     * This is where we can complete the initialization based on what modifications were made by the
+     * native code after {@link #initializeR} returned.
+     */
     private static void runRmainloop(PolyglotEngine vm) {
+        RContext.getInstance().completeEmbeddedInitialization();
         RCommand.readEvalPrint(vm);
     }
 
