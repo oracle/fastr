@@ -58,12 +58,6 @@ SEXP FASTR_NamespaceRegistry() {
 	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getNamespaceRegistryMethodID);
 }
 
-Rboolean FASTR_IsInteractive() {
-	JNIEnv *env = getEnv();
-	return (*env)->CallStaticIntMethod(env, CallRFFIHelperClass, isInteractiveMethodID);
-}
-
-
 void init_variables(JNIEnv *env, jobjectArray initialValues) {
 	// initialValues is an array of enums
 	jclass enumClass = (*env)->GetObjectClass(env, (*env)->GetObjectArrayElement(env, initialValues, 0));

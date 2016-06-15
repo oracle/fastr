@@ -13,6 +13,7 @@
 #include <sys/utsname.h>
 #include <rffiutils.h>
 #include <R_ext/RStartup.h>
+#include <Rinterface.h>
 
 
 static JavaVM *javaVM;
@@ -25,6 +26,9 @@ static jclass rStartParamsClass;
 
 int R_running_as_main_program;
 int R_SignalHandlers;
+FILE * R_Consolefile;
+FILE * R_Outputfile;
+
 
 typedef jint (JNICALL *JNI_CreateJavaVMFunc)
 	      (JavaVM **pvm, void **penv, void *args);
@@ -190,7 +194,7 @@ void R_set_command_line_arguments(int argc, char **argv) {
 
 int Rf_initEmbeddedR(int argc, char *argv[]) {
 	Rf_initialize_R(argc, argv);
-//	R_Interactive = TRUE;
+	R_Interactive = TRUE;
     setup_Rmainloop();
     return 1;
 }
