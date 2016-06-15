@@ -53,7 +53,7 @@ public abstract class Choose extends RBuiltinNode {
 
     @Specialization
     protected RAbstractDoubleVector doDoubleInt(RAbstractDoubleVector n, RAbstractIntVector k) {
-        return choose(n.getLength(), idx -> (double) n.getDataAt(idx), k.getLength(), idx -> k.getDataAt(idx));
+        return choose(n.getLength(), idx -> n.getDataAt(idx), k.getLength(), idx -> k.getDataAt(idx));
     }
 
     // In the cases where 'k' is real vector we round values in 'k' to integers. Warning is shown
