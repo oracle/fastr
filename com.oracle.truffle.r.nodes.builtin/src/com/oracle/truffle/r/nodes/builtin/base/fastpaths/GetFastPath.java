@@ -40,13 +40,13 @@ public abstract class GetFastPath extends RFastPathNode {
     @Specialization
     @SuppressWarnings("unused")
     protected Object getNonInherit(VirtualFrame frame, RAbstractStringVector x, RMissing pos, REnvironment envir, RMissing mode, byte inherits) {
-        return get.execute(frame, x, envir, "any", inherits);
+        return get.execute(frame, x, envir, "any", RRuntime.fromLogical(inherits));
     }
 
     @Specialization
     @SuppressWarnings("unused")
     protected Object getNonInherit(VirtualFrame frame, RAbstractStringVector x, RMissing pos, REnvironment envir, RMissing mode, RMissing inherits) {
-        return get.execute(frame, x, envir, "any", RRuntime.LOGICAL_TRUE);
+        return get.execute(frame, x, envir, "any", true);
     }
 
     @Fallback
