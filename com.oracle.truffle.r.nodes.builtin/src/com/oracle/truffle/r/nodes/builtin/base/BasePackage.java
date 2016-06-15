@@ -149,6 +149,7 @@ public class BasePackage extends RBuiltinPackage {
         add(BaseGammaFunctions.Gamma.class, BaseGammaFunctionsFactory.GammaNodeGen::create);
         add(BaseGammaFunctions.Lgamma.class, BaseGammaFunctionsFactory.LgammaNodeGen::create);
         add(BaseGammaFunctions.TriGamma.class, BaseGammaFunctionsFactory.TriGammaNodeGen::create);
+        add(Choose.class, ChooseNodeGen::create);
         add(Bincode.class, BincodeNodeGen::create);
         add(Bind.CbindInternal.class, BindNodeGen.CbindInternalNodeGen::create);
         add(Bind.RbindInternal.class, BindNodeGen.RbindInternalNodeGen::create);
