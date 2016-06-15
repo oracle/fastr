@@ -235,7 +235,7 @@ public class FrameFunctions {
             CallArgumentsNode callArgs = callNode.createArguments(null, false, false);
             ArgumentsSignature inputVarArgSignature = callArgs.containsVarArgsSymbol() ? CallArgumentsNode.getVarargsAndNames(cframe).getSignature() : null;
             UnmatchedArguments executeFlatten = callArgs.unrollArguments(inputVarArgSignature);
-            RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), executeFlatten, null, true);
+            RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), executeFlatten, null, true).getArguments();
             ArgumentsSignature sig = ((HasSignature) definition.getRootNode()).getSignature();
             // expand any varargs
             ArrayList<RNode> nodes = new ArrayList<>();

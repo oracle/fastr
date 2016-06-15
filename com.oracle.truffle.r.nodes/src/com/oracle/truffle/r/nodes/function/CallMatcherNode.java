@@ -216,7 +216,7 @@ public abstract class CallMatcherNode extends RBaseNode {
 
                 Object[] preparedArguments = prepareSuppliedArgument(preparePermutation, suppliedArguments);
 
-                Object[] reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(permutation, preparedArguments, formals);
+                Object[] reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(permutation, preparedArguments, formals).getArguments();
                 evaluatePromises(frame, cachedFunction, reorderedArgs, formals.getSignature().getVarArgIndex());
                 if (call != null) {
                     RCaller parent = RArguments.getCall(frame).getParent();
