@@ -96,7 +96,7 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist16() {
-        assertEval(Output.ContainsAmbiguousError,
+        assertEval(Output.IgnoreErrorMessage,
                         "argv <- list(structure('print(.leap.seconds, tz = \\\'PST8PDT\\\')  # and in Seattle's\\n', Rd_tag = 'RCODE'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 

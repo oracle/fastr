@@ -65,18 +65,18 @@ public class TestParser extends TestBase {
         assertEval("y <- 2; z <- 5; x <- (y *\n  z)");
         assertEval("y <- 2; z <- 5; x <- (y \n * z)");
         assertEval("y <- 2; z <- 5; x <- ({y *\n  z})");
-        assertEval(Output.ContainsAmbiguousError, "y <- 2; z <- 5; x <- ({y \n * z})");
+        assertEval(Output.IgnoreErrorMessage, "y <- 2; z <- 5; x <- ({y \n * z})");
         assertEval("y <- 2; z <- 5; x <- ({(y *\n  z)})");
         assertEval("y <- 2; z <- 5; x <- ({(y \n * z)})");
         assertEval("a <- 1:100; y <- 2; z <- 5; x <- ({(a[y *\n  z])})");
         assertEval("a <- 1:100; y <- 2; z <- 5; x <- ({(a[[y \n * z]])})");
-        assertEval(Output.ContainsAmbiguousError, "a <- 1:100; y <- 2; z <- 5; x <- (a[[{y \n * z}]])");
+        assertEval(Output.IgnoreErrorMessage, "a <- 1:100; y <- 2; z <- 5; x <- (a[[{y \n * z}]])");
     }
 
     @Test
     public void testLexerError() {
         // FastR provides a more accurate error message
-        assertEval(Output.ContainsAmbiguousError, "%0");
+        assertEval(Output.IgnoreErrorMessage, "%0");
     }
 
     /**

@@ -164,6 +164,6 @@ public class TestBuiltin_repint extends TestBase {
         assertEval("{ rep.int(c(1,2,3),c(2,8,3)) }");
         assertEval("{ rep.int(seq_len(2), rep.int(8, 2)) }");
 
-        assertEval(Output.ContainsError, "{ rep.int(c(1,2,3),c(2,8)) }");
+        assertEval(Output.IgnoreErrorContext, "{ rep.int(c(1,2,3),c(2,8)) }");
     }
 }

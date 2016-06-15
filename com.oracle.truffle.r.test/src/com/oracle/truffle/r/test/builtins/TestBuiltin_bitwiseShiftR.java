@@ -28,7 +28,7 @@ public class TestBuiltin_bitwiseShiftR extends TestBase {
         assertEval("{ bitwShiftR(c(100,200,300), 1) }");
         assertEval("{ bitwShiftR(c(25,57,66), c(10,20,30,40,50,60)) }");
 
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ bitwShiftR(c(3,2,4), c(3+3i)) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ bitwShiftR(c(3,2,4), c(3+3i)) }");
 
         // No warning message printed for NAs produced by coercion
         assertEval(Ignored.Unknown, "{ bitwShiftR(c(1,2,3,4), c(\"Hello\")) }");

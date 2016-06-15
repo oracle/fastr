@@ -152,7 +152,7 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna29() {
-        assertEval(Output.ContainsWarning, "argv <- list(NULL);is.na(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(NULL);is.na(argv[[1]]);");
     }
 
     @Test
@@ -253,7 +253,7 @@ public class TestBuiltin_isna extends TestBase {
         assertEval("{ is.na(1[10]) }");
         assertEval("{ is.na(c(1[10],2[10],3)) }");
         assertEval("{ is.na(list(1[10],1L[10],list(),integer())) }");
-        assertEval(Output.ContainsWarning, "is.na(quote(x()))");
+        assertEval(Output.IgnoreWarningContext, "is.na(quote(x()))");
         assertEval("is.na(is.na))");
 
         // Note: is.na.data.frame calls do.call("cbind", lapply(x, "is.na")) - there is the error

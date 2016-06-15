@@ -28,6 +28,6 @@ public class TestBuiltin_bitwiseXor extends TestBase {
         assertEval("{ bitwXor(c(25,57,66), c(10,20,30,40,50,60)) }");
         assertEval("{ bitwXor(20,30) }");
 
-        assertEval(Output.ContainsError, "{ bitwXor(c(\"r\"), c(16,17)) }");
+        assertEval(Output.IgnoreErrorContext, "{ bitwXor(c(\"r\"), c(16,17)) }");
     }
 }

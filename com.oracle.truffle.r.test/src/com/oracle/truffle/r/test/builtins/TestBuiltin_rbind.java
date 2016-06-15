@@ -44,7 +44,7 @@ public class TestBuiltin_rbind extends TestBase {
         assertEval("{ rbind(1:3,1:3) }");
         assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(m, 11:12) }");
         assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(11:12, m) }");
-        assertEval(Output.ContainsWarning, "{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
+        assertEval(Output.IgnoreWarningContext, "{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
 
         assertEval("{ rbind(c(1,2)) }");
         assertEval("{ rbind(a=c(b=1,c=2)) }");

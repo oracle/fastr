@@ -76,7 +76,7 @@ public class TestFunctions extends TestBase {
 
         assertEval("{ matrix(x=1) }");
         assertEval("{ set.seed(4357); round( rnorm(1,), digits = 5 ) }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ max(1,2,) }");
+        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ max(1,2,) }");
     }
 
     @Test
@@ -147,11 +147,11 @@ public class TestFunctions extends TestBase {
         assertEval("{ x<-function(){1} ; x(y=1) }");
         assertEval("{ f <- function(a,b,c,d) { a + b } ; f(1,x=1,2,3,4) }");
 
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-function(y, b){1} ; x(y=1, 2, 3, z = 5) }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-function(a){1} ; x(1,) }");
+        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ x<-function(y, b){1} ; x(y=1, 2, 3, z = 5) }");
+        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ x<-function(a){1} ; x(1,) }");
 
         // note exactly GNU-R message
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(a,a) {1} }");
+        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(a,a) {1} }");
     }
 
     @Test
@@ -252,8 +252,8 @@ public class TestFunctions extends TestBase {
         assertEval("{ f.numeric<-function(x, row.names = NULL, optional = FALSE, ..., nm = NULL) { print(optional); print(nm) }; f<-function(x, row.names = NULL, optional = FALSE, ...) { UseMethod(\"f\") }; f(c(1,2), row.names = \"r1\", nm=\"bar\") }");
         // Checkstyle: resume line length check
 
-        assertEval(Output.ContainsError, "{ f <- function(x) { ..1 } ;  f(10) }");
-        assertEval(Output.ContainsError, "{ f <- function(...) { ..1 } ;  f() }");
+        assertEval(Output.IgnoreErrorContext, "{ f <- function(x) { ..1 } ;  f(10) }");
+        assertEval(Output.IgnoreErrorContext, "{ f <- function(...) { ..1 } ;  f() }");
 
         assertEval("{ fn1 <- function (a, b) a + b; fn2 <- function (a, b, ...) fn1(a, b, ...); fn2(1, 1) }");
         assertEval("{ asdf <- function(x,...) UseMethod(\"asdf\",x); asdf.numeric <- function(x, ...) print(paste(\"num:\", x, ...)); asdf(1) }");
@@ -263,7 +263,7 @@ public class TestFunctions extends TestBase {
         assertEval("{ f <- function(...) { g <- function() { ..1 } ; g() } ; f(a=2) }");
         assertEval("{ f <- function(...) { ..1 <- 2 ; ..1 } ; f(z = 1) }");
         assertEval("{ f <- function(...) { ..1 <- 2 ; get(\"..1\") } ; f(1,2,3,4) }");
-        assertEval(Output.ContainsError, "{ f <- function(...) { get(\"..1\") } ; f(1,2,3,4) }");
+        assertEval(Output.IgnoreErrorContext, "{ f <- function(...) { get(\"..1\") } ; f(1,2,3,4) }");
 
         assertEval("{ g <- function(a,b) { a + b } ; f <- function(...) { g(...) }  ; f(1,2) }");
         assertEval("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(...,x=4) }  ; f(b=1,a=2) }");
@@ -273,7 +273,7 @@ public class TestFunctions extends TestBase {
         assertEval("{ g <- function(a,b,aa,bb) { a ; x <<- 10 ; aa ; c(a, aa) } ; f <- function(...) {  g(..., ...) } ; x <- 1; y <- 2; f(x, y) }");
         assertEval("{ f <- function(a, b) { a - b } ; g <- function(...) { f(1, ...) } ; g(a = 2) }");
 
-        assertEval(Output.ContainsError, "{ f <- function(...) { ..3 } ; f(1,2) }");
+        assertEval(Output.IgnoreErrorContext, "{ f <- function(...) { ..3 } ; f(1,2) }");
 
         assertEval("{ f <- function() { dummy() } ; f() }");
         assertEval("{ f <- function() { if (FALSE) { dummy <- 2 } ; dummy() } ; f() }");
@@ -328,12 +328,12 @@ public class TestFunctions extends TestBase {
 
         assertEval(Ignored.Unknown, "{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
 
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ lapply(1:3, \"dummy\") }");
+        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ lapply(1:3, \"dummy\") }");
 
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2,z=3) } ; g(1) }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...,,,) } ; g(1) }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(...) { ..2 + ..2 } ; f(1,,2) }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(...) { ..1 + ..2 } ; f(1,,3) }");
+        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2,z=3) } ; g(1) }");
+        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...,,,) } ; g(1) }");
+        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(...) { ..2 + ..2 } ; f(1,,2) }");
+        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(...) { ..1 + ..2 } ; f(1,,3) }");
     }
 
     @Test
@@ -375,8 +375,8 @@ public class TestFunctions extends TestBase {
 
     @Test
     public void testDefaultArgs() {
-        assertEval(Output.ContainsError, "{ array(dim=c(-2,2)); }");
-        assertEval(Output.ContainsError, "{ array(dim=c(-2,-2)); }");
+        assertEval(Output.IgnoreErrorContext, "{ array(dim=c(-2,2)); }");
+        assertEval(Output.IgnoreErrorContext, "{ array(dim=c(-2,-2)); }");
         assertEval("{ length(array(dim=c(1,0,2,3))) }");
         assertEval("{ dim(array(dim=c(2.1,2.9,3.1,4.7))) }");
     }

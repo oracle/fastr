@@ -83,8 +83,8 @@ public class TestBuiltin_ascomplex extends TestBase {
         assertEval("{ as.complex(\"-1-5i\") }");
         assertEval("{ as.complex(0/0) }");
         assertEval("{ as.complex(c(0/0, 0/0)) }");
-        assertEval(Output.ContainsWarning, "{ as.complex(c(\"1\",\"hello\")) }");
-        assertEval(Output.ContainsWarning, "{ as.complex(\"TRUE\") }");
+        assertEval(Output.IgnoreWarningContext, "{ as.complex(c(\"1\",\"hello\")) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.complex(\"TRUE\") }");
         assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.complex(x); attributes(y) }");
         assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.complex(x); attributes(y) }");
         assertEval("{ as.complex(\"Inf\") }");

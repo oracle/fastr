@@ -77,7 +77,7 @@ public class TestBuiltin_cbind extends TestBase {
         assertEval("{ cbind(matrix(1:4, nrow=2), z=c(m=8,n=9)) }");
 
         assertEval("{ cbind(list(1,2), TRUE, \"a\") }");
-        assertEval(Output.ContainsWarning, "{ cbind(1:3,1:2) }");
+        assertEval(Output.IgnoreWarningContext, "{ cbind(1:3,1:2) }");
         assertEval("{ cbind(2,3, complex(3,3,2));}");
         assertEval("{ cbind(2,3, c(1,1,1)) }");
         assertEval("{ cbind(2.1:10,32.2) }");

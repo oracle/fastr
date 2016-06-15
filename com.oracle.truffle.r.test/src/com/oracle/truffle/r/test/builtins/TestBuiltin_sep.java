@@ -39,7 +39,7 @@ public class TestBuiltin_sep extends TestBase {
 
     @Test
     public void testsep5() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`/`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`/`(argv[[1]]);");
     }
 
     @Test
@@ -81,7 +81,7 @@ public class TestBuiltin_sep extends TestBase {
 
     @Test
     public void testsep13() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`/`(argv[[1]],argv[[2]]);");
     }
 

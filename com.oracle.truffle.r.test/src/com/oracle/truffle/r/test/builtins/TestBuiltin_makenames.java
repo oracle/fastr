@@ -89,8 +89,8 @@ public class TestBuiltin_makenames extends TestBase {
         assertEval("{ make.names(\"else\")}");
         assertEval("{ make.names(\"NA_integer_\", allow_=FALSE) }");
 
-        assertEval(Output.ContainsError, "{ make.names(\"a_a\", allow_=\"a\") }");
-        assertEval(Output.ContainsError, "{ make.names(\"a_a\", allow_=logical()) }");
-        assertEval(Output.ContainsError, "{ make.names(\"a_a\", allow_=NULL) }");
+        assertEval(Output.IgnoreErrorContext, "{ make.names(\"a_a\", allow_=\"a\") }");
+        assertEval(Output.IgnoreErrorContext, "{ make.names(\"a_a\", allow_=logical()) }");
+        assertEval(Output.IgnoreErrorContext, "{ make.names(\"a_a\", allow_=NULL) }");
     }
 }

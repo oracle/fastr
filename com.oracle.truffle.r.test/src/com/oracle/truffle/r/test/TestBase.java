@@ -63,11 +63,11 @@ public class TestBase {
     public static final boolean ProcessFailedTests = Boolean.getBoolean("ProcessFailedTests");
 
     public enum Output implements TestTrait {
-        ContainsError, // the error context is ignored (e.g., "a+b" vs. "a + b")
-        ContainsAmbiguousError, // the actual error message is ignored
-        ContainsWarning, // the warning context is ignored
-        MayContainError,
-        MayContainWarning,
+        IgnoreErrorContext, // the error context is ignored (e.g., "a+b" vs. "a + b")
+        IgnoreErrorMessage, // the actual error message is ignored
+        IgnoreWarningContext, // the warning context is ignored
+        MayIgnoreErrorContext,
+        MayIgnoreWarningContext,
         IgnoreWhitespace;
     }
 
@@ -346,8 +346,8 @@ public class TestBase {
     protected static final String WARNING = "Warning message";
 
     /**
-     * If this is set to {@code true}, {@link Output#ContainsError} will compare the full output
-     * instead of truncating leading "Error" strings and such. This means it will behave like
+     * If this is set to {@code true}, {@link Output#IgnoreErrorContext} will compare the full
+     * output instead of truncating leading "Error" strings and such. This means it will behave like
      * {@link #assertEval}.
      */
     private static final boolean FULL_COMPARE_ERRORS = false;
@@ -452,11 +452,11 @@ public class TestBase {
 
         boolean ignored = TestTrait.contains(traits, Ignored.class) ^ (ProcessFailedTests && !(TestTrait.contains(traits, Ignored.Unstable) || TestTrait.contains(traits, Ignored.SideEffects)));
 
-        boolean containsWarning = TestTrait.contains(traits, Output.ContainsWarning);
-        boolean containsError = (!FULL_COMPARE_ERRORS && (TestTrait.contains(traits, Output.ContainsError) || TestTrait.contains(traits, Output.ContainsAmbiguousError)));
-        boolean mayContainWarning = TestTrait.contains(traits, Output.MayContainWarning);
-        boolean mayContainError = TestTrait.contains(traits, Output.MayContainError);
-        boolean ambiguousError = TestTrait.contains(traits, Output.ContainsAmbiguousError);
+        boolean containsWarning = TestTrait.contains(traits, Output.IgnoreWarningContext);
+        boolean containsError = (!FULL_COMPARE_ERRORS && (TestTrait.contains(traits, Output.IgnoreErrorContext) || TestTrait.contains(traits, Output.IgnoreErrorMessage)));
+        boolean mayContainWarning = TestTrait.contains(traits, Output.MayIgnoreWarningContext);
+        boolean mayContainError = TestTrait.contains(traits, Output.MayIgnoreErrorContext);
+        boolean ambiguousError = TestTrait.contains(traits, Output.IgnoreErrorMessage);
         boolean ignoreWhitespace = TestTrait.contains(traits, Output.IgnoreWhitespace);
         boolean nonSharedContext = TestTrait.contains(traits, Context.NonShared);
 

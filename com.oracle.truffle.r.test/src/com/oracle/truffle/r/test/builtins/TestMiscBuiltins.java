@@ -42,7 +42,7 @@ public class TestMiscBuiltins extends TestBase {
     public void testCasts() {
         // shortcuts in views (only some combinations)
         assertEval("{ as.complex(as.character(c(1+1i,1+1i))) }");
-        assertEval(Output.ContainsWarning, "{ as.complex(as.integer(c(1+1i,1+1i))) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.complex(as.integer(c(1+1i,1+1i))) }");
         assertEval("{ as.complex(as.logical(c(1+1i,1+1i))) }");
 
         assertEval("{ as.double(as.logical(c(10,10))) }");
@@ -99,8 +99,8 @@ public class TestMiscBuiltins extends TestBase {
         assertEval("{ x <- 1:3; z <- as.matrix(x); x }");
         assertEval("{ x <- 1:3 ; attr(x,\"my\") <- 10 ; attributes(as.matrix(x)) }");
 
-        assertEval(Output.ContainsWarning, "{ as.complex(as.double(c(1+1i,1+1i))) }");
-        assertEval(Output.ContainsWarning, "{ as.complex(as.raw(c(1+1i,1+1i))) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.complex(as.double(c(1+1i,1+1i))) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.complex(as.raw(c(1+1i,1+1i))) }");
     }
 
     @Test
@@ -247,8 +247,8 @@ public class TestMiscBuiltins extends TestBase {
     @Test
     public void testWorkingDirectory() {
         assertEval("{ cur <- getwd(); cur1 <- setwd(getwd()) ; cur2 <- getwd() ; cur == cur1 && cur == cur2 }");
-        assertEval(Output.ContainsError, "{ setwd(1) }");
-        assertEval(Output.ContainsError, "{ setwd(character()) }");
+        assertEval(Output.IgnoreErrorContext, "{ setwd(1) }");
+        assertEval(Output.IgnoreErrorContext, "{ setwd(character()) }");
         assertEval("{ cur <- getwd(); cur1 <- setwd(c(cur, \"dummy\")) ; cur2 <- getwd() ; cur == cur1  }");
     }
 
@@ -269,7 +269,7 @@ public class TestMiscBuiltins extends TestBase {
     @Test
     public void testSimpleRm() {
         assertEval("{ x <- 200 ; rm(\"x\") ; x }");
-        assertEval(Output.ContainsWarning, "{ rm(\"ieps\") }");
+        assertEval(Output.IgnoreWarningContext, "{ rm(\"ieps\") }");
         assertEval("{ x <- 200 ; rm(\"x\") }");
         assertEval("{ x<-200; y<-100; rm(\"x\", \"y\"); x }");
         assertEval("{ x<-200; y<-100; rm(\"x\", \"y\"); y }");

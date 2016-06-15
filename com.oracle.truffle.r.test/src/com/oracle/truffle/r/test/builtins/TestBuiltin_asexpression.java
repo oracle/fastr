@@ -32,7 +32,7 @@ public class TestBuiltin_asexpression extends TestBase {
         assertEval("{ as.expression(c(1,2)) }");
         assertEval("{ as.expression(list(1,2)) }");
         assertEval("{ as.expression(list(\"x\" = 1, \"y\" = 2)) }");
-        assertEval(Output.ContainsError, "{ as.expression(sum) }");
+        assertEval(Output.IgnoreErrorContext, "{ as.expression(sum) }");
         assertEval("{ as.expression(function()) }");
     }
 }
