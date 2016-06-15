@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
@@ -58,7 +59,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
          * Some package C code calls these functions and, therefore, expects the linpack symbols to
          * be available, which will not be the case unless one of the functions has already been
          * called from R code. So we eagerly load the library to define the symbols.
-         * 
+         *
          * There is an additional problem when running without a *_LIBRARY_PATH being set which is
          * mandated by Mac OSX El Capitan, which is we must tell JNR where to find the libraries.
          */
@@ -198,4 +199,15 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
         }
         return pcreRFFI;
     }
+
+    private REmbedRFFI rEmbedRFFI;
+
+    @Override
+    public REmbedRFFI getREmbedRFFI() {
+        if (rEmbedRFFI == null) {
+            rEmbedRFFI = new JNI_REmbed();
+        }
+        return rEmbedRFFI;
+    }
+
 }

@@ -60,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class Utils {
@@ -176,8 +177,12 @@ public final class Utils {
         throw Utils.exit(2);
     }
 
-    public static RuntimeException fatalError(String msg) {
-        System.err.println("Fatal error: " + msg);
+    public static RuntimeException rSuicide(String msg) {
+        if (RInterfaceCallbacks.R_Suicide.isOverridden()) {
+            RFFIFactory.getRFFI().getREmbedRFFI().suicide(msg);
+        } else {
+            System.err.println("Fatal error: " + msg);
+        }
         throw Utils.exit(2);
     }
 

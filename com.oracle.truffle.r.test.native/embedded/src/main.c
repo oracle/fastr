@@ -64,10 +64,30 @@ typedef void (*R_DefParamsFunc)(Rstart);
 typedef void (*R_SetParamsFunc)(Rstart);
 
 void (*ptr_stdR_CleanUp)(SA_TYPE, int, int);
+void (*ptr_stdR_Suicide)(const char *);
 
 void testR_CleanUp(SA_TYPE x, int y, int z) {
 	printf("test Cleanup\n");
 	(ptr_stdR_CleanUp)(x, y, z);
+}
+
+void testR_Suicide(const char *msg) {
+	printf("testR_Suicide: %s\n",msg);
+}
+
+int  testR_ReadConsole(const char *prompt, unsigned char *buf, int len, int h) {
+	fputs(prompt, stdout);
+	fflush(stdout); /* make sure prompt is output */
+	if (fgets((char *)buf, len, stdin) == NULL) {
+		return 0;
+	} else {
+	    return 1;
+	}
+}
+
+void testR_WriteConsole(const char *buf, int len) {
+    printf("%s", buf);
+    fflush(stdout);
 }
 
 int main(int argc, char **argv) {
@@ -107,7 +127,11 @@ int main(int argc, char **argv) {
    Rp->SaveAction = SA_NOSAVE;
    R_SetParamsFunc setp = (R_SetParamsFunc) dlsym(handle, "R_SetParams");
    (*setp)(Rp);
+   ptr_stdR_CleanUp = ptr_R_CleanUp;
    ptr_R_CleanUp = &testR_CleanUp;
+   ptr_R_Suicide = &testR_Suicide;
+   ptr_R_ReadConsole = &testR_ReadConsole;
+   ptr_R_WriteConsole = &testR_WriteConsole;
   (*mainloop)();
   (*end)(0);
 }

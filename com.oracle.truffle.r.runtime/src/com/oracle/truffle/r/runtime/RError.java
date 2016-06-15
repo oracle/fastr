@@ -192,7 +192,7 @@ public final class RError extends RuntimeException {
 
     /**
      * A temporary error that indicates an unimplemented feature where terminating the VM using
-     * {@link Utils#fatalError(String)} would be inappropriate.
+     * {@link Utils#rSuicide(String)} would be inappropriate.
      */
     @TruffleBoundary
     public static RError nyi(RBaseNode node, String msg) {

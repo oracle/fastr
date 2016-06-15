@@ -29,6 +29,7 @@ import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
@@ -55,8 +56,9 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * object which is itself stored as a global symbol in the associated {@link PolyglotEngine}
  * instance. The FastR {@link PolyglotEngine} is then partially initialized. The call to
  * {@code R_SetParams} will adjust the values stored in the {@link RStartParams} object and then
- * {@code Rf_mainloop}, which calls {@link #mainloop(PolyglotEngine)} will complete the FastR
- * initialization and enter the read-eval-print loop.
+ * {@code Rf_mainloop}, which calls {@link #setupRmainloop(PolyglotEngine)} and then
+ * {@link #runRmainloop(PolyglotEngine)}, which will complete the FastR initialization and enter the
+ * read-eval-print loop.
  */
 public class REmbedded {
 
@@ -72,7 +74,7 @@ public class REmbedded {
         try {
             vm.eval(INIT);
         } catch (IOException ex) {
-            Utils.fatalError("initializeR");
+            Utils.rSuicide("initializeR");
         }
         return vm;
     }
@@ -83,12 +85,7 @@ public class REmbedded {
      * GnuR distinguishes {@code setup_Rmainloop} and {@code run_Rmainloop}. Currently we don't have
      * the equivalent separation in FastR.
      */
-    private static void setupRmainloop(PolyglotEngine vm) {
-    }
-
-    private static void mainloop(PolyglotEngine vm) {
-        setupRmainloop(vm);
-        runRmainloop(vm);
+    private static void setupRmainloop(@SuppressWarnings("unused") PolyglotEngine vm) {
     }
 
     /**
@@ -97,6 +94,9 @@ public class REmbedded {
      */
     private static void runRmainloop(PolyglotEngine vm) {
         RContext.getInstance().completeEmbeddedInitialization();
+        if (!RContext.getInstance().getStartParams().getQuiet()) {
+            RContext.getInstance().getConsoleHandler().println(RRuntime.WELCOME_MESSAGE);
+        }
         RCommand.readEvalPrint(vm);
     }
 
@@ -109,7 +109,8 @@ public class REmbedded {
         startParams.setEmbedded();
         startParams.setLoadInitFile(false);
         startParams.setNoRenviron(true);
-        mainloop(vm);
+        setupRmainloop(vm);
+        runRmainloop(vm);
     }
 
 }

@@ -70,7 +70,7 @@ public class FastRContext {
         protected int create(RAbstractStringVector args, RAbstractStringVector kindVec) {
             try {
                 RContext.ContextKind kind = RContext.ContextKind.valueOf(kindVec.getDataAt(0));
-                RStartParams startParams = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, args.materialize().getDataCopy(), false), embedded);
+                RStartParams startParams = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, args.materialize().getDataCopy(), false), false);
                 return ContextInfo.createDeferred(startParams, kind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
             } catch (IllegalArgumentException ex) {
                 throw RError.error(this, RError.Message.GENERIC, "invalid kind argument");

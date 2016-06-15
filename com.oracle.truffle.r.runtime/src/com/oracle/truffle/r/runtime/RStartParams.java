@@ -15,6 +15,8 @@ import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.RESTORE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_READLINE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_RESTORE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_RESTORE_DATA;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.QUIET;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SILENT;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SAVE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_SAVE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SLAVE;
@@ -67,6 +69,9 @@ public class RStartParams {
         this.arguments = options.getArguments();
         this.embedded = embedded;
 
+        if (options.getBoolean(QUIET) || options.getBoolean(SILENT)) {
+            this.quiet = true;
+        }
         if (options.getBoolean(SAVE)) {
             this.saveAction = SA_TYPE.SAVE;
         }

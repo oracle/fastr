@@ -25,13 +25,6 @@ package com.oracle.truffle.r.engine.shell;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.EXPR;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.FILE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.INTERACTIVE;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_READLINE;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_SAVE;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.QUIET;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SAVE;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SILENT;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.VANILLA;
-
 import java.io.Console;
 import java.io.EOFException;
 import java.io.File;
@@ -90,7 +83,7 @@ public class RCommand {
         String fileArg = options.getString(FILE);
         if (fileArg != null) {
             if (options.getStringList(EXPR) != null) {
-                Utils.fatalError("cannot use -e with -f or --file");
+                Utils.rSuicide("cannot use -e with -f or --file");
             }
             if (!rsp.getSlave()) {
                 rsp.setSaveAction(SA_TYPE.NOSAVE);
@@ -101,7 +94,12 @@ public class RCommand {
             }
         }
 
-        if (!(options.getBoolean(QUIET) || options.getBoolean(SILENT))) {
+        /*
+         * Outputting the welcome message here has the virtue that the VM initialization delay
+         * occurs later. However, it does not work in embedded mode as console redirects have not
+         * been installed at this point. So we do it later in REmbedded.
+         */
+        if (!rsp.getQuiet() && !embedded) {
             System.out.println(RRuntime.WELCOME_MESSAGE);
         }
         /*
@@ -120,7 +118,7 @@ public class RCommand {
                 lines = Files.readAllLines(file.toPath());
                 filePath = file.getCanonicalPath();
             } catch (IOException e) {
-                throw Utils.fatalError("cannot open file '" + fileArg + "': " + e.getMessage());
+                throw Utils.rSuicide("cannot open file '" + fileArg + "': " + e.getMessage());
             }
             consoleHandler = new StringConsoleHandler(lines, System.out, filePath);
         } else if (options.getStringList(EXPR) != null) {
@@ -136,7 +134,7 @@ public class RCommand {
              * redirected from a pipe/file etc.
              */
             Console sysConsole = System.console();
-            boolean useReadLine = !options.getBoolean(NO_READLINE);
+            boolean useReadLine = !rsp.getNoReadline();
             ConsoleReader consoleReader = null;
             if (useReadLine) {
                 try {
@@ -148,14 +146,17 @@ public class RCommand {
                 }
             }
             boolean isInteractive = options.getBoolean(INTERACTIVE) || sysConsole != null;
-            if (!isInteractive && !options.getBoolean(SAVE) && !options.getBoolean(NO_SAVE) && !options.getBoolean(VANILLA)) {
-                throw Utils.fatalError("you must specify '--save', '--no-save' or '--vanilla'");
+            if (!isInteractive && rsp.getSaveAction() != SA_TYPE.SAVE && rsp.getSaveAction() != SA_TYPE.NOSAVE) {
+                throw Utils.rSuicide("you must specify '--save', '--no-save' or '--vanilla'");
             }
             // long start = System.currentTimeMillis();
             if (useReadLine) {
                 consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
             } else {
                 consoleHandler = new DefaultConsoleHandler(consoleInput, consoleOutput);
+            }
+            if (embedded) {
+                consoleHandler = new EmbeddedConsoleHandler(consoleHandler);
             }
         }
         return ContextInfo.create(rsp, ContextKind.SHARE_NOTHING, null, consoleHandler).apply(PolyglotEngine.newBuilder()).build();

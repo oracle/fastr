@@ -298,7 +298,7 @@ public class DLL {
                 if (RContext.isInitialContextInitialized()) {
                     throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, dlError);
                 } else {
-                    throw Utils.fatalError("error loading default package: " + path + "\n" + dlError);
+                    throw Utils.rSuicide("error loading default package: " + path + "\n" + dlError);
                 }
             }
             String name = file.getName();
@@ -338,7 +338,7 @@ public class DLL {
                     if (RContext.isInitialContextInitialized()) {
                         throw new DLLException(RError.Message.DLL_RINIT_ERROR);
                     } else {
-                        throw Utils.fatalError(RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
+                        throw Utils.rSuicide(RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
                     }
                 }
             } catch (InterruptedException ex) {

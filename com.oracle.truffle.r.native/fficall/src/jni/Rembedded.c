@@ -23,6 +23,7 @@ static int initialized = 0;
 
 static jclass rembeddedClass;
 static jclass rStartParamsClass;
+static jclass rInterfaceCallbacksClass;
 
 int R_running_as_main_program;
 int R_SignalHandlers;
@@ -131,6 +132,7 @@ int Rf_initialize_R(int argc, char *argv[]) {
 		return 1;
 	}
 
+	rInterfaceCallbacksClass = checkFindClass(jniEnv, "com/oracle/truffle/r/runtime/RInterfaceCallbacks");
 	rembeddedClass = checkFindClass(jniEnv, "com/oracle/truffle/r/engine/shell/REmbedded");
 	rStartParamsClass = checkFindClass(jniEnv, "com/oracle/truffle/r/runtime/RStartParams");
 	jclass stringClass = checkFindClass(jniEnv, "java/lang/String");
@@ -145,11 +147,6 @@ int Rf_initialize_R(int argc, char *argv[]) {
 	engine = checkRef(jniEnv, (*jniEnv)->CallStaticObjectMethod(jniEnv, rembeddedClass, initializeMethod, argsArray));
 	initialized++;
 	return 0;
-}
-
-void setup_Rmainloop(void) {
-	jmethodID setupMethod = checkGetMethodID(jniEnv, rembeddedClass, "setupRmainloop", "(Lcom/oracle/truffle/api/vm/PolyglotEngine;)V", 1);
-	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, setupMethod, engine);
 }
 
 void R_DefParams(Rstart rs) {
@@ -205,14 +202,22 @@ void Rf_endEmbeddedR(int fatal) {
 	//TODO fatal
 }
 
-void Rf_mainloop(void) {
-	jmethodID mainloopMethod = checkGetMethodID(jniEnv, rembeddedClass, "mainloop", "(Lcom/oracle/truffle/api/vm/PolyglotEngine;)V", 1);
-	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, mainloopMethod, engine);
+static void setupOverrides(void);
+
+void setup_Rmainloop(void) {
+	jmethodID setupMethod = checkGetMethodID(jniEnv, rembeddedClass, "setupRmainloop", "(Lcom/oracle/truffle/api/vm/PolyglotEngine;)V", 1);
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, setupMethod, engine);
 }
 
 void run_Rmainloop(void) {
+	setupOverrides();
 	jmethodID mainloopMethod = checkGetMethodID(jniEnv, rembeddedClass, "runRmainloop", "(Lcom/oracle/truffle/api/vm/PolyglotEngine;)V", 1);
 	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, mainloopMethod, engine);
+}
+
+void Rf_mainloop(void) {
+	setup_Rmainloop();
+	run_Rmainloop();
 }
 
 // functions that can be assigned by an embedded client to change behavior
@@ -222,14 +227,18 @@ void uR_Suicide(const char *x) {
 }
 
 void uR_ShowMessage(const char *x) {
-	unimplemented("");
-}
-
-void uR_ReadConsole(const char *a, unsigned char *b, int c, int d) {
 	unimplemented("R_ShowMessage");
 }
 
+int uR_ReadConsole(const char *a, unsigned char *b, int c, int d) {
+	return (int) unimplemented("R_ReadConsole");
+}
+
 void uR_WriteConsole(const char *x, int y) {
+	unimplemented("R_WriteConsole");
+}
+
+void uR_WriteConsoleEx(const char *x, int y, int z) {
 	unimplemented("R_WriteConsole");
 }
 
@@ -300,28 +309,79 @@ void uR_ProcessEvents(void) {
 
 
 void (*ptr_R_Suicide)(const char *) = uR_Suicide;
-void (*ptr_R_ShowMessage)(const char *);
-int  (*ptr_R_ReadConsole)(const char *, unsigned char *, int, int);
-void (*ptr_R_WriteConsole)(const char *, int);
-void (*ptr_R_WriteConsoleEx)(const char *, int, int);
-void (*ptr_R_ResetConsole)(void);
-void (*ptr_R_FlushConsole)(void);
-void (*ptr_R_ClearerrConsole)(void);
-void (*ptr_R_Busy)(int);
-void (*ptr_R_CleanUp)(SA_TYPE, int, int);
+void (*ptr_R_ShowMessage)(const char *) = uR_ShowMessage;
+int  (*ptr_R_ReadConsole)(const char *, unsigned char *, int, int) = uR_ReadConsole;
+void (*ptr_R_WriteConsole)(const char *, int) = uR_WriteConsole;
+void (*ptr_R_WriteConsoleEx)(const char *, int, int) = uR_WriteConsoleEx;
+void (*ptr_R_ResetConsole)(void) = uR_ResetConsole;
+void (*ptr_R_FlushConsole)(void) = uR_FlushConsole;
+void (*ptr_R_ClearerrConsole)(void) = uR_ClearerrConsole;
+void (*ptr_R_Busy)(int) = uR_Busy;
+void (*ptr_R_CleanUp)(SA_TYPE, int, int) = uR_CleanUp;
 int  (*ptr_R_ShowFiles)(int, const char **, const char **,
-			       const char *, Rboolean, const char *);
-int  (*ptr_R_ChooseFile)(int, char *, int);
-int  (*ptr_R_EditFile)(const char *);
-void (*ptr_R_loadhistory)(SEXP, SEXP, SEXP, SEXP);
-void (*ptr_R_savehistory)(SEXP, SEXP, SEXP, SEXP);
-void (*ptr_R_addhistory)(SEXP, SEXP, SEXP, SEXP);
+			       const char *, Rboolean, const char *) = uR_ShowFiles;
+int  (*ptr_R_ChooseFile)(int, char *, int) = uR_ChooseFile;
+int  (*ptr_R_EditFile)(const char *) = uR_EditFile;
+void (*ptr_R_loadhistory)(SEXP, SEXP, SEXP, SEXP) = uR_loadhistory;
+void (*ptr_R_savehistory)(SEXP, SEXP, SEXP, SEXP) = uR_savehistory;
+void (*ptr_R_addhistory)(SEXP, SEXP, SEXP, SEXP) = uR_addhistory;
 
-int  (*ptr_R_EditFiles)(int, const char **, const char **, const char *);
+int  (*ptr_R_EditFiles)(int, const char **, const char **, const char *) = uR_EditFiles;
 
-SEXP (*ptr_do_selectlist)(SEXP, SEXP, SEXP, SEXP);
-SEXP (*ptr_do_dataentry)(SEXP, SEXP, SEXP, SEXP);
-SEXP (*ptr_do_dataviewer)(SEXP, SEXP, SEXP, SEXP);
-void (*ptr_R_ProcessEvents)();
+SEXP (*ptr_do_selectlist)(SEXP, SEXP, SEXP, SEXP) = udo_selectlist;
+SEXP (*ptr_do_dataentry)(SEXP, SEXP, SEXP, SEXP) = udo_dataentry;
+SEXP (*ptr_do_dataviewer)(SEXP, SEXP, SEXP, SEXP) = udo_dataviewer;
+void (*ptr_R_ProcessEvents)() = uR_ProcessEvents;
 
+void setupOverrides(void) {
+	jmethodID ovrMethodID = checkGetMethodID(jniEnv, rInterfaceCallbacksClass, "override", "(Ljava/lang/String;)V", 1);
+	jstring name;
+	if (ptr_R_Suicide != uR_Suicide) {
+		name = (*jniEnv)->NewStringUTF(jniEnv, "R_Suicide");
+		(*jniEnv)->CallStaticVoidMethod(jniEnv, rInterfaceCallbacksClass, ovrMethodID, name);
+	}
+	if (*ptr_R_CleanUp != uR_CleanUp) {
+		name = (*jniEnv)->NewStringUTF(jniEnv, "R_CleanUp");
+		(*jniEnv)->CallStaticVoidMethod(jniEnv, rInterfaceCallbacksClass, ovrMethodID, name);
+	}
+	if (*ptr_R_ReadConsole != uR_ReadConsole) {
+		name = (*jniEnv)->NewStringUTF(jniEnv, "R_ReadConsole");
+		(*jniEnv)->CallStaticVoidMethod(jniEnv, rInterfaceCallbacksClass, ovrMethodID, name);
+	}
+	if (*ptr_R_WriteConsole != uR_WriteConsole) {
+		name = (*jniEnv)->NewStringUTF(jniEnv, "R_WriteConsole");
+		(*jniEnv)->CallStaticVoidMethod(jniEnv, rInterfaceCallbacksClass, ovrMethodID, name);
+	}
+}
+
+static void REmbed_nativeWriteConsole(JNIEnv *env, jclass c, jstring string, int otype) {
+	int len = (*jniEnv)->GetStringUTFLength(jniEnv, string);
+	const char *cbuf =  (*jniEnv)->GetStringUTFChars(jniEnv, string, NULL);
+	if (ptr_R_WriteConsole == NULL) {
+		(*ptr_R_WriteConsoleEx)(cbuf, len, otype);
+	} else {
+	    (*ptr_R_WriteConsole)(cbuf, len);
+	}
+	(*jniEnv)->ReleaseStringUTFChars(jniEnv, string, cbuf);
+}
+
+JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeWriteConsole(JNIEnv *env, jclass c, jstring string) {
+	REmbed_nativeWriteConsole(jniEnv, c, string, 0);
+}
+
+JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeWriteErrConsole(JNIEnv *env, jclass c, jstring string) {
+	REmbed_nativeWriteConsole(jniEnv, c, string, 1);
+}
+
+
+
+JNIEXPORT jstring JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeReadConsole(JNIEnv *env, jclass c, jstring prompt) {
+	const char *cprompt =  (*jniEnv)->GetStringUTFChars(jniEnv, prompt, NULL);
+	unsigned char cbuf[1024];
+	int n = (*ptr_R_ReadConsole)(cprompt, cbuf, 1024, 0);
+	jstring result;
+	result = (*jniEnv)->NewStringUTF(jniEnv, (const char *)cbuf);
+	(*jniEnv)->ReleaseStringUTFChars(jniEnv, prompt, cprompt);
+	return result;
+}
 
