@@ -87,6 +87,8 @@ import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -96,6 +98,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
@@ -746,7 +749,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 RBuiltinRootNode builtinRoot = (RBuiltinRootNode) root;
                 return new BuiltinCallNode(RBuiltinNode.inline(builtinRoot.getBuiltin(), null), builtinRoot.getBuiltin(), formals, originalCall);
             } else {
-                return new DispatchedCallNode(cachedTarget, formals.getSignature(), originalCall);
+                return new DispatchedCallNode(cachedTarget, originalCall);
             }
         }
 
@@ -929,16 +932,14 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Child private DirectCallNode call;
         @Child private RFastPathNode fastPath;
 
-        private final ArgumentsSignature signature;
         private final RootCallTarget cachedTarget;
         private final FastPathFactory fastPathFactory;
         private final RVisibility fastPathVisibility;
 
-        DispatchedCallNode(RootCallTarget cachedTarget, ArgumentsSignature signature, RCallNode originalCall) {
+        DispatchedCallNode(RootCallTarget cachedTarget, RCallNode originalCall) {
             super(originalCall);
             RRootNode root = (RRootNode) cachedTarget.getRootNode();
             this.cachedTarget = cachedTarget;
-            this.signature = signature;
             this.fastPathFactory = root.getFastPath();
             this.fastPath = fastPathFactory == null ? null : fastPathFactory.create();
             this.fastPathVisibility = fastPathFactory == null ? null : fastPathFactory.getVisibility();
