@@ -117,8 +117,6 @@ int Rf_initialize_R(int argc, char *argv[]) {
 		vm_options[i + 1].optionString = vmargs[i];
 	}
 
-	printf("creating vm\n");
-
 	JavaVMInitArgs vm_args;
 	vm_args.version = JNI_VERSION_1_8;
 	vm_args.nOptions = 1 + vmargc;
