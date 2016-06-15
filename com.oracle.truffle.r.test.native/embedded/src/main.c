@@ -53,6 +53,8 @@
 #include <dlfcn.h>
 #include <sys/utsname.h>
 #include <string.h>
+#define R_INTERFACE_PTRS 1
+#include <Rinterface.h>
 
 
 typedef int (*Rf_initEmbeddedRFunc)(int, char**);
@@ -60,6 +62,13 @@ typedef void (*Rf_endEmbeddedRFunc)(int);
 typedef void (*Rf_mainloopFunc)(void);
 typedef void (*R_DefParamsFunc)(Rstart);
 typedef void (*R_SetParamsFunc)(Rstart);
+
+void (*ptr_stdR_CleanUp)(SA_TYPE, int, int);
+
+void testR_CleanUp(SA_TYPE x, int y, int z) {
+	printf("test Cleanup\n");
+	(ptr_stdR_CleanUp)(x, y, z);
+}
 
 int main(int argc, char **argv) {
   struct utsname utsname;
@@ -98,6 +107,7 @@ int main(int argc, char **argv) {
    Rp->SaveAction = SA_NOSAVE;
    R_SetParamsFunc setp = (R_SetParamsFunc) dlsym(handle, "R_SetParams");
    (*setp)(Rp);
+   ptr_R_CleanUp = &testR_CleanUp;
   (*mainloop)();
   (*end)(0);
 }

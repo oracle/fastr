@@ -25,6 +25,8 @@ ifeq ($(TOPDIR),)
     TOPDIR = $(abspath ..)
 endif
 
+FASTR_LIB_DIR = $(abspath ../../lib)
+
 NATIVE_PROJECT = $(subst test.native,native,$(TOPDIR))
 
 .PHONY: all clean
@@ -43,7 +45,7 @@ $(OBJ):
 	mkdir -p $(OBJ)
 
 $(OBJ)/main: $(SRC)/main.c
-	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o main -ldl
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o main -L $(FASTR_LIB_DIR) -ldl -lR
 
 clean:
 	rm -rf $(OBJ)

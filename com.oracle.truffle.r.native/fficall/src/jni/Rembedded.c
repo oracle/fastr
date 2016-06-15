@@ -153,7 +153,8 @@ void setup_Rmainloop(void) {
 }
 
 void R_DefParams(Rstart rs) {
-//	jmethodID getActiveMethod = checkGetMethodId(jniEnv, rStartParamsClass, "getActive", "(V)Lcom/oracle/truffle/r/engine/shell/RStartParams;", 1);
+    // These are the GnuR defaults and correspond to the settings in RStartParams
+	// None of the size params make any sense for FastR
     rs->R_Quiet = FALSE;
     rs->R_Slave = FALSE;
     rs->R_Interactive = TRUE;
@@ -214,8 +215,91 @@ void run_Rmainloop(void) {
 	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, mainloopMethod, engine);
 }
 
-// function ptrs that can be assigned by an embedded client to change behavior
-void (*ptr_R_Suicide)(const char *);
+// functions that can be assigned by an embedded client to change behavior
+
+void uR_Suicide(const char *x) {
+	unimplemented("R_Suicide");
+}
+
+void uR_ShowMessage(const char *x) {
+	unimplemented("");
+}
+
+void uR_ReadConsole(const char *a, unsigned char *b, int c, int d) {
+	unimplemented("R_ShowMessage");
+}
+
+void uR_WriteConsole(const char *x, int y) {
+	unimplemented("R_WriteConsole");
+}
+
+void uR_ResetConsole(void) {
+	unimplemented("R_ResetConsole");
+}
+
+void uR_FlushConsole(void) {
+	unimplemented("R_FlushConsole");
+}
+
+void uR_ClearerrConsole(void) {
+	unimplemented("R_ClearerrConsole");
+}
+
+void uR_Busy(int x) {
+	unimplemented("R_Busy");
+}
+
+void uR_CleanUp(SA_TYPE x, int y, int z) {
+	unimplemented("R_CleanUp");
+}
+
+int uR_ShowFiles(int a, const char **b, const char **c,
+	       const char *d, Rboolean e, const char *f) {
+	return (int) unimplemented("R_ShowFiles");
+}
+
+int uR_ChooseFile(int a, char *b, int c) {
+	return (int) unimplemented("R_ChooseFile");
+}
+
+int uR_EditFile(const char *a) {
+	return (int) unimplemented("R_EditFile");
+}
+
+void uR_loadhistory(SEXP a, SEXP b, SEXP c, SEXP d) {
+	unimplemented("uR_loadhistory");
+}
+
+void uR_savehistory(SEXP a, SEXP b, SEXP c, SEXP d) {
+	unimplemented("R_savehistory");
+}
+
+void uR_addhistory(SEXP a, SEXP b, SEXP c, SEXP d) {
+	unimplemented("R_addhistory");
+}
+
+int  uR_EditFiles(int a, const char **b, const char **c, const char *d) {
+	return (int)unimplemented("");
+}
+
+SEXP udo_selectlist(SEXP a, SEXP b, SEXP c, SEXP d) {
+	return unimplemented("R_EditFiles");
+}
+
+SEXP udo_dataentry(SEXP a, SEXP b, SEXP c, SEXP d) {
+	return unimplemented("do_dataentry");
+}
+
+SEXP udo_dataviewer(SEXP a, SEXP b, SEXP c, SEXP d) {
+	return unimplemented("do_dataviewer");
+}
+
+void uR_ProcessEvents(void) {
+	unimplemented("R_ProcessEvents");
+}
+
+
+void (*ptr_R_Suicide)(const char *) = uR_Suicide;
 void (*ptr_R_ShowMessage)(const char *);
 int  (*ptr_R_ReadConsole)(const char *, unsigned char *, int, int);
 void (*ptr_R_WriteConsole)(const char *, int);
@@ -239,4 +323,5 @@ SEXP (*ptr_do_selectlist)(SEXP, SEXP, SEXP, SEXP);
 SEXP (*ptr_do_dataentry)(SEXP, SEXP, SEXP, SEXP);
 SEXP (*ptr_do_dataviewer)(SEXP, SEXP, SEXP, SEXP);
 void (*ptr_R_ProcessEvents)();
+
 
