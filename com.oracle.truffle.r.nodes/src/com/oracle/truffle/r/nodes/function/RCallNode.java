@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.function;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -97,7 +96,6 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
@@ -601,37 +599,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return name.equals("::") || name.equals(":::");
         }
         return false;
-    }
-
-    @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        RNode functionSub = getFunctionNode().substitute(env).asRNode();
-
-        Arguments<RSyntaxNode> argsSub = substituteArguments(env, arguments, signature);
-        return RASTUtils.createCall(functionSub, false, argsSub.getSignature(), argsSub.getArguments());
-    }
-
-    static Arguments<RSyntaxNode> substituteArguments(REnvironment env, RSyntaxNode[] arguments, ArgumentsSignature signature) {
-        ArrayList<RSyntaxNode> newArguments = new ArrayList<>();
-        ArrayList<String> newNames = new ArrayList<>();
-        for (int i = 0; i < arguments.length; i++) {
-            RSyntaxNode argNodeSubs = arguments[i].substituteImpl(env);
-            if (argNodeSubs instanceof RASTUtils.MissingDotsNode) {
-                // nothing to do
-            } else if (argNodeSubs instanceof RASTUtils.ExpandedDotsNode) {
-                RASTUtils.ExpandedDotsNode expandedDotsNode = (RASTUtils.ExpandedDotsNode) argNodeSubs;
-                newArguments.addAll(Arrays.asList(expandedDotsNode.nodes));
-                for (int j = 0; j < expandedDotsNode.nodes.length; j++) {
-                    newNames.add(null);
-                }
-            } else {
-                newArguments.add(argNodeSubs);
-                newNames.add(signature.getName(i));
-            }
-        }
-        RSyntaxNode[] newArgumentsArray = newArguments.stream().toArray(RSyntaxNode[]::new);
-        String[] newNamesArray = newNames.stream().toArray(String[]::new);
-        return new Arguments<>(newArgumentsArray, ArgumentsSignature.get(newNamesArray));
     }
 
     /**

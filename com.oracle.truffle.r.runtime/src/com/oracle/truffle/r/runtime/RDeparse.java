@@ -827,7 +827,7 @@ public class RDeparse {
                 body = wrap(cdr, false);
             }
 
-            return RSyntaxFunction.createDummyFunction(null, args.getSignature(), args.getArguments(), body);
+            return RSyntaxFunction.createDummyFunction(null, args.getSignature(), args.getArguments(), body, null);
         }
 
         private static Arguments<RSyntaxElement> wrapArguments(Object args) {

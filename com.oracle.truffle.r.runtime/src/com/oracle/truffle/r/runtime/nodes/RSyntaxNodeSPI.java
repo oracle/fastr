@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RSerialize.State;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * The following methods must be implemented by all implementors of {@link RSyntaxNode}. However,
@@ -33,14 +32,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  *
  */
 interface RSyntaxNodeSPI {
-
-    /**
-     * Support for the {@code substitute} builtin function. Assert: {this.isSyntax() == true}. N.B.
-     * this method only needs to operate on pristine (uninitialized) ASTs. The AST is cloned prior
-     * to the substitution; therefore there is no need to create a new node if it can be determined
-     * that no changes were made.
-     */
-    RSyntaxNode substituteImpl(REnvironment env);
 
     /**
      * Support for serializing closures. The relevant methods in {@link State} should be called to

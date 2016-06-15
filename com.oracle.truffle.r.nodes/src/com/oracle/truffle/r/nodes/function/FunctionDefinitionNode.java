@@ -395,15 +395,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return description == null ? "<no source>" : description;
     }
 
-    @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        FrameDescriptor frameDesc = new FrameDescriptor();
-
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<substituted function>", frameDesc);
-        return new FunctionDefinitionNode(RSyntaxNode.EAGER_DEPARSE, frameDesc, null, saveArguments, body.substitute(env), getFormalArguments(), null,
-                        argPostProcess, FunctionUIDFactory.get().createUID());
-    }
-
     /**
      * Serialize a function. On entry {@code state} has an active pairlist, whose {@code tag} is the
      * enclosing {@link REnvironment}. The {@code car} must be set to the pairlist representing the
@@ -495,5 +486,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public RSyntaxElement getSyntaxBody() {
         return getBody();
+    }
+
+    @Override
+    public String getSyntaxDebugName() {
+        return description;
     }
 }

@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 
 /**
  * Implementers of this interface can be used to generate a representation of an R closure.
@@ -100,7 +102,40 @@ public interface RCodeBuilder<T> {
      * This method returns a newly created AST fragment for the given original element. This
      * functionality can be used to quickly create new AST snippets for existing code.
      */
-    T process(RSyntaxElement original);
+    default T process(RSyntaxElement original) {
+        return new RSyntaxVisitor<T>() {
+
+            @Override
+            protected T visit(RSyntaxCall element) {
+                ArrayList<Argument<T>> args = createArguments(element.getSyntaxSignature(), element.getSyntaxArguments());
+                return call(element.getSourceSection(), accept(element.getSyntaxLHS()), args);
+            }
+
+            private ArrayList<Argument<T>> createArguments(ArgumentsSignature signature, RSyntaxElement[] arguments) {
+                ArrayList<Argument<T>> args = new ArrayList<>(arguments.length);
+                for (int i = 0; i < arguments.length; i++) {
+                    args.add(RCodeBuilder.argument(arguments[i] == null ? null : arguments[i].getSourceSection(), signature.getName(i), arguments[i] == null ? null : accept(arguments[i])));
+                }
+                return args;
+            }
+
+            @Override
+            protected T visit(RSyntaxConstant element) {
+                return constant(element.getSourceSection(), element.getValue());
+            }
+
+            @Override
+            protected T visit(RSyntaxLookup element) {
+                return lookup(element.getSourceSection(), element.getIdentifier(), element.isFunctionLookup());
+            }
+
+            @Override
+            protected T visit(RSyntaxFunction element) {
+                ArrayList<Argument<T>> params = createArguments(element.getSyntaxSignature(), element.getSyntaxArgumentDefaults());
+                return function(element.getSourceSection(), params, accept(element.getSyntaxBody()), element.getSyntaxDebugName());
+            }
+        }.accept(original);
+    }
 
     /**
      * Helper function: create a call with no arguments.

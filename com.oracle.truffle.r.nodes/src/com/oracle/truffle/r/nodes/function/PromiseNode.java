@@ -53,7 +53,6 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
@@ -308,12 +307,6 @@ public abstract class PromiseNode extends RNode {
         @Override
         public Object execute(VirtualFrame frame) {
             return getVarargsAndNames(frame).getArgument(index);
-        }
-
-        @Override
-        public RSyntaxNode substituteImpl(REnvironment env) {
-            Object obj = ((RArgsValuesAndNames) env.get(ArgumentsSignature.VARARG_NAME)).getArgument(index);
-            return obj instanceof RPromise ? (RSyntaxNode) ((RPromise) obj).getRep() : ConstantNode.create(obj);
         }
 
         public int getIndex() {
