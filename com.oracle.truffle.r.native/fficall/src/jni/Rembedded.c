@@ -29,7 +29,9 @@ int R_running_as_main_program;
 int R_SignalHandlers;
 FILE * R_Consolefile;
 FILE * R_Outputfile;
-
+int R_DirtyImage; // TODO update this
+void *R_GlobalContext; // TODO what?
+SA_TYPE SaveAction; // ??
 
 typedef jint (JNICALL *JNI_CreateJavaVMFunc)
 	      (JavaVM **pvm, void **penv, void *args);
@@ -145,6 +147,18 @@ int Rf_initialize_R(int argc, char *argv[]) {
 	engine = checkRef(jniEnv, (*jniEnv)->CallStaticObjectMethod(jniEnv, rembeddedClass, initializeMethod, argsArray));
 	initialized++;
 	return 0;
+}
+
+char *R_HomeDir(void) {
+	return (char*) unimplemented("R_HomeDir");
+}
+
+void R_SaveGlobalEnvToFile(const char *f) {
+	unimplemented("R_SaveGlobalEnvToFile");
+}
+
+void R_Suicide(const char *x) {
+	unimplemented("R_Suicide");
 }
 
 void R_DefParams(Rstart rs) {
@@ -371,8 +385,6 @@ JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nat
 	REmbed_nativeWriteConsole(jniEnv, c, string, 1);
 }
 
-
-
 JNIEXPORT jstring JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeReadConsole(JNIEnv *env, jclass c, jstring prompt) {
 	const char *cprompt =  (*jniEnv)->GetStringUTFChars(jniEnv, prompt, NULL);
 	unsigned char cbuf[1024];
@@ -383,3 +395,24 @@ JNIEXPORT jstring JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_
 	return result;
 }
 
+void uR_PolledEvents(void) {
+	unimplemented("R_PolledEvents");
+}
+
+void (* R_PolledEvents)(void) = uR_PolledEvents;
+
+void Rf_jump_to_toplevel() {
+	unimplemented("Rf_jump_to_toplevel");
+}
+
+#include <R_ext/eventloop.h>
+
+fd_set *R_checkActivity(int usec, int ignore_stdin) {
+	return (fd_set*) unimplemented("R_checkActivity");
+}
+
+void R_runHandlers(InputHandler *handlers, fd_set *mask) {
+	unimplemented("R_runHandlers");
+}
+
+int R_wait_usec;

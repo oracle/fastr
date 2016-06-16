@@ -140,3 +140,7 @@ SEXP interactive(void) {
 	return ScalarLogical(R_Interactive);
 }
 
+SEXP tryEval(SEXP expr, SEXP env) {
+}
+
+}

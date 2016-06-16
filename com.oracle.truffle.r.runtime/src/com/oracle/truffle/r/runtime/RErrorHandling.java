@@ -177,6 +177,17 @@ public class RErrorHandling {
         return getRErrorHandlingState().restartStack;
     }
 
+    /**
+     * Resets the handler stacks for a "top-level" evaluation ({@code Rf_tryEval} in the R FFI. This
+     * must be preceded by calls to {@link #getHandlerStack} and {@link #getRestartStack()} and
+     * followed by {@link #restoreStacks} after the evaluation completes.
+     */
+    public static void resetStacks() {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        errorHandlingState.handlerStack = RNull.instance;
+        errorHandlingState.restartStack = RNull.instance;
+    }
+
     public static void restoreStacks(Object savedHandlerStack, Object savedRestartStack) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         errorHandlingState.handlerStack = savedHandlerStack;

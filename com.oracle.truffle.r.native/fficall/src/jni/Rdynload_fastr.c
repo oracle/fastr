@@ -141,3 +141,7 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg,
     unimplemented("R_FindSymbol");
     return NULL;
 }
+
+DllInfo *R_getEmbeddingDllInfo(void) {
+	return (DllInfo*) unimplemented("R_getEmbeddingDllInfo");
+}

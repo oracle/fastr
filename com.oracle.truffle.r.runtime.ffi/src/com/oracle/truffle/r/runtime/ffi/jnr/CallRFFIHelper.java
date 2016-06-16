@@ -711,6 +711,31 @@ public class CallRFFIHelper {
         throw unimplemented();
     }
 
+    private static class TryEvalResult {
+        @SuppressWarnings("unused") final Object value;
+        @SuppressWarnings("unused") final boolean error;
+
+        TryEvalResult(Object value, boolean error) {
+            this.value = value;
+            this.error = error;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static TryEvalResult R_tryEval(Object expr, Object env, boolean silent) {
+        Object handlerStack = RErrorHandling.getHandlerStack();
+        Object restartStack = RErrorHandling.getRestartStack();
+        try {
+            // TODO handle silent
+            RErrorHandling.resetStacks();
+            Object result = Rf_eval(expr, env);
+            // TODO did an error occur?
+            return new TryEvalResult(result, false);
+        } finally {
+            RErrorHandling.restoreStacks(handlerStack, restartStack);
+        }
+    }
+
     // Checkstyle: resume method name check
 
     public static Object validate(Object x) {
