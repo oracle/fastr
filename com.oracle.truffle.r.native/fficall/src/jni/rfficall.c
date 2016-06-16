@@ -1233,5 +1233,13 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_callVoid0(JNIEnv *env, j
 	callExit(env);
 }
 
+#include <Rinterface.h>
+
+JNIEXPORT void JNICALL
+Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_nativeSetInteractive(JNIEnv *env, jclass c, jboolean interactive) {
+	R_Interactive = interactive;
+}
+
+
 
 

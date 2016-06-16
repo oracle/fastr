@@ -80,9 +80,11 @@ int R_NaInt;	/* NA_INTEGER:= INT_MIN currently */
 const char* R_Home;
 const char* R_TempDir;
 
+// Set by a down call based on the setting in the initial context
+Rboolean R_Interactive;
+
 // various ignored flags and variables:
 Rboolean R_Visible;
-Rboolean R_Interactive;
 Rboolean R_interrupts_suspended;
 int R_interrupts_pending;
 Rboolean mbcslocale;

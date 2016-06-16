@@ -71,6 +71,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.RFFIContextStateFactory;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.TraceState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -458,6 +459,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             this.methodTableDispatchOn = info.getParent().methodTableDispatchOn;
         }
         if (isInitial && !embedded) {
+            RFFIFactory.getRFFI().getCallRFFI().setInteractive(isInteractive());
             initialContextInitialized = true;
         }
     }

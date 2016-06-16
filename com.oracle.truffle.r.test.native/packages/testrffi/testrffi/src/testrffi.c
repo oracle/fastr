@@ -26,6 +26,7 @@
 #include <R.h>
 #include <Rdefines.h>
 #include <Rinternals.h>
+#include <Rinterface.h>
 
 void dotCModifiedArguments(int* len, int* idata, double* rdata, int* ldata) {
     for (int i = 0; i < len[0]; i++) {
@@ -134,3 +135,8 @@ SEXP invoke_isString(SEXP s) {
 SEXP invoke12(SEXP a1, SEXP a2, SEXP a3, SEXP a4, SEXP a5, SEXP a6, SEXP a7, SEXP a8, SEXP a9, SEXP a10, SEXP a11, SEXP a12) {
 	return a12;
 }
+
+SEXP interactive(void) {
+	return ScalarLogical(R_Interactive);
+}
+

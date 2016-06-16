@@ -47,4 +47,9 @@ public interface CallRFFI {
      * call sets the value.
      */
     void setTempDir(String tempDir);
+
+    /**
+     * Sets the {@code R_Interactive} FFI variable. Similar rationale to {#link setTmpDir}.
+     */
+    void setInteractive(boolean interactive);
 }

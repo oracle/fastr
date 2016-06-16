@@ -104,6 +104,8 @@ public class JNI_CallRFFI implements CallRFFI {
 
     private static native void nativeSetTempDir(String tempDir);
 
+    private static native void nativeSetInteractive(boolean interactive);
+
     private static native Object call(long address, Object[] args);
 
     private static native Object call0(long address);
@@ -163,4 +165,17 @@ public class JNI_CallRFFI implements CallRFFI {
             inCritical.release();
         }
     }
+
+    @Override
+    public void setInteractive(boolean interactive) {
+        traceCall("setInteractive", interactive);
+        try {
+            inCritical.acquire();
+            nativeSetInteractive(interactive);
+        } catch (InterruptedException ex) {
+        } finally {
+            inCritical.release();
+        }
+    }
+
 }
