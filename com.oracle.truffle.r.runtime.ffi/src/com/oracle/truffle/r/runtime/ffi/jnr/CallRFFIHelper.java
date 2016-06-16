@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -734,6 +735,11 @@ public class CallRFFIHelper {
         } finally {
             RErrorHandling.restoreStacks(handlerStack, restartStack);
         }
+    }
+
+    @SuppressWarnings("unused")
+    private static String R_HomeDir() {
+        return REnvVars.rHome();
     }
 
     // Checkstyle: resume method name check

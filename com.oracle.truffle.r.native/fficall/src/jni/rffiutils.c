@@ -42,7 +42,7 @@ static jmethodID unimplementedMethodID;
 jmethodID createSymbolMethodID;
 static jmethodID validateMethodID;
 
-JNIEnv *curenv = NULL;
+static JNIEnv *curenv = NULL;
 jmp_buf *callErrorJmpBuf;
 
 #define DEBUG_CACHE 0
@@ -82,6 +82,18 @@ void init_utils(JNIEnv *env) {
 	copiedVectors = malloc(sizeof(CopiedVector) * COPIED_VECTORS_INITIAL_SIZE);
 	copiedVectorsLength = COPIED_VECTORS_INITIAL_SIZE;
 	copiedVectorsIndex = 0;
+}
+
+const char *stringToChars(JNIEnv *jniEnv, jstring string) {
+	// This is nasty:
+	// 1. the resulting character array has to be copied and zero-terminated.
+	// 2. It causes an (inevitable?) memory leak
+	jsize len = (*jniEnv)->GetStringUTFLength(jniEnv, string);
+	const char *stringChars = (*jniEnv)->GetStringUTFChars(jniEnv, string, NULL);
+	char *copyChars = malloc(len + 1);
+	memcpy(copyChars, stringChars, len);
+	copyChars[len] = 0;
+	return copyChars;
 }
 
 void callEnter(JNIEnv *env, jmp_buf *jmpbuf) {

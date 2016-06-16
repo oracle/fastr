@@ -95,4 +95,7 @@ extern jclass RRuntimeClass;
 
 #define _(Source) (Source)
 
+// convert a string into a char*
+const char *stringToChars(JNIEnv *jniEnv, jstring string);
+
 #endif /* RFFIUTILS_H */

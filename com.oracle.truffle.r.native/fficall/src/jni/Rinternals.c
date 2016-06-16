@@ -1262,15 +1262,8 @@ char *dngettext(const char *domainname, const char *msgid, const char * msgid_pl
 const char *R_CHAR(SEXP charsxp) {
 	TRACE("%s(%p)", charsxp);
 	JNIEnv *thisenv = getEnv();
-	// This is nasty:
-	// 1. the resulting character array has to be copied and zero-terminated.
-	// 2. It causes an (inevitable?) memory leak
 	jstring string = stringFromCharSXP(thisenv, charsxp);
-	jsize len = (*thisenv)->GetStringUTFLength(thisenv, string);
-	const char *stringChars = (*thisenv)->GetStringUTFChars(thisenv, string, NULL);
-	char *copyChars = malloc(len + 1);
-	memcpy(copyChars, stringChars, len);
-	copyChars[len] = 0;
+	char *copyChars = stringToChars(thisenv, string);
 	TRACE(" %s(%s)\n", copyChars);
 	return copyChars;
 }
