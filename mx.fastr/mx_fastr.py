@@ -94,9 +94,32 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     if extraVmArgs:
         vmArgs += extraVmArgs
 
+    vmArgs = _sanitize_vmArgs(jdk, vmArgs)
     if command:
         vmArgs.append(_command_class_dict[command.lower()])
     return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
+
+def _sanitize_vmArgs(jdk, vmArgs):
+    '''
+    jdk dependent analysis of vmArgs to remove those that are not appropriate for the
+    chosen jdk. It is easier to allow clients to set anything they want and filter them
+    out here.
+    '''
+    jvmci_jdk = jdk.tag == 'jvmci'
+    jvmci_disabled = '-XX:-EnableJVMCI' in vmArgs
+
+    xargs = []
+    i = 0
+    while i < len(vmArgs):
+        vmArg = vmArgs[i]
+        if vmArg != '-XX:-EnableJVMCI':
+            if 'graal' in vmArg or 'JVMCI' in vmArg:
+                if not jvmci_jdk or jvmci_disabled:
+                    i = i + 1
+                    continue
+        xargs.append(vmArg)
+        i = i + 1
+    return xargs
 
 def _graal_options(nocompile=False):
     if _mx_graal:
