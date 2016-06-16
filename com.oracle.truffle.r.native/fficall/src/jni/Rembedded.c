@@ -17,7 +17,6 @@
 
 
 static JavaVM *javaVM;
-static JNIEnv *jniEnv;
 static jobject engine;
 static int initialized = 0;
 
@@ -125,6 +124,7 @@ int Rf_initialize_R(int argc, char *argv[]) {
 	vm_args.options = vm_options;
 	vm_args.ignoreUnrecognized = JNI_TRUE;
 
+	JNIEnv *jniEnv;
 	jint flag = (*createJavaVMFunc)(&javaVM, (void**)
 			&jniEnv, &vm_args);
 	if (flag == JNI_ERR) {
@@ -132,6 +132,7 @@ int Rf_initialize_R(int argc, char *argv[]) {
 		return 1;
 	}
 
+	setEnv(jniEnv);
 	rInterfaceCallbacksClass = checkFindClass(jniEnv, "com/oracle/truffle/r/runtime/RInterfaceCallbacks");
 	rembeddedClass = checkFindClass(jniEnv, "com/oracle/truffle/r/engine/shell/REmbedded");
 	rStartParamsClass = checkFindClass(jniEnv, "com/oracle/truffle/r/runtime/RStartParams");
@@ -150,7 +151,11 @@ int Rf_initialize_R(int argc, char *argv[]) {
 }
 
 char *R_HomeDir(void) {
-	return (char*) unimplemented("R_HomeDir");
+	JNIEnv *jniEnv = getEnv();
+	jmethodID R_HomeDirMethodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_HomeDir", "()Ljava/lang/String;", 1);
+	jstring homeDir = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, R_HomeDirMethodID);
+	const char *homeDirChars = stringToChars(jniEnv, homeDir);
+	return homeDirChars;
 }
 
 void R_SaveGlobalEnvToFile(const char *f) {
@@ -183,6 +188,7 @@ void R_DefParams(Rstart rs) {
 }
 
 void R_SetParams(Rstart rs) {
+	JNIEnv *jniEnv = getEnv();
 	jmethodID setParamsMethodID = checkGetMethodID(jniEnv, rStartParamsClass, "setParams", "(ZZZZZZZIIZ)V", 1);
 	(*jniEnv)->CallStaticVoidMethod(jniEnv, rStartParamsClass, setParamsMethodID, rs->R_Quiet, rs->R_Slave, rs->R_Interactive,
 			rs->R_Verbose, rs->LoadSiteFile, rs->LoadInitFile, rs->DebugInitFile,
@@ -217,11 +223,13 @@ void Rf_endEmbeddedR(int fatal) {
 static void setupOverrides(void);
 
 void setup_Rmainloop(void) {
+	JNIEnv *jniEnv = getEnv();
 	jmethodID setupMethod = checkGetMethodID(jniEnv, rembeddedClass, "setupRmainloop", "(Lcom/oracle/truffle/api/vm/PolyglotEngine;)V", 1);
 	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, setupMethod, engine);
 }
 
 void run_Rmainloop(void) {
+	JNIEnv *jniEnv = getEnv();
 	setupOverrides();
 	jmethodID mainloopMethod = checkGetMethodID(jniEnv, rembeddedClass, "runRmainloop", "(Lcom/oracle/truffle/api/vm/PolyglotEngine;)V", 1);
 	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, mainloopMethod, engine);
@@ -346,6 +354,7 @@ SEXP (*ptr_do_dataviewer)(SEXP, SEXP, SEXP, SEXP) = udo_dataviewer;
 void (*ptr_R_ProcessEvents)() = uR_ProcessEvents;
 
 void setupOverrides(void) {
+	JNIEnv *jniEnv = getEnv();
 	jmethodID ovrMethodID = checkGetMethodID(jniEnv, rInterfaceCallbacksClass, "override", "(Ljava/lang/String;)V", 1);
 	jstring name;
 	if (ptr_R_Suicide != uR_Suicide) {
@@ -366,7 +375,7 @@ void setupOverrides(void) {
 	}
 }
 
-static void REmbed_nativeWriteConsole(JNIEnv *env, jclass c, jstring string, int otype) {
+static void REmbed_nativeWriteConsole(JNIEnv *jniEnv, jclass c, jstring string, int otype) {
 	int len = (*jniEnv)->GetStringUTFLength(jniEnv, string);
 	const char *cbuf =  (*jniEnv)->GetStringUTFChars(jniEnv, string, NULL);
 	if (ptr_R_WriteConsole == NULL) {
@@ -377,15 +386,15 @@ static void REmbed_nativeWriteConsole(JNIEnv *env, jclass c, jstring string, int
 	(*jniEnv)->ReleaseStringUTFChars(jniEnv, string, cbuf);
 }
 
-JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeWriteConsole(JNIEnv *env, jclass c, jstring string) {
+JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeWriteConsole(JNIEnv *jniEnv, jclass c, jstring string) {
 	REmbed_nativeWriteConsole(jniEnv, c, string, 0);
 }
 
-JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeWriteErrConsole(JNIEnv *env, jclass c, jstring string) {
+JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeWriteErrConsole(JNIEnv *jniEnv, jclass c, jstring string) {
 	REmbed_nativeWriteConsole(jniEnv, c, string, 1);
 }
 
-JNIEXPORT jstring JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeReadConsole(JNIEnv *env, jclass c, jstring prompt) {
+JNIEXPORT jstring JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeReadConsole(JNIEnv *jniEnv, jclass c, jstring prompt) {
 	const char *cprompt =  (*jniEnv)->GetStringUTFChars(jniEnv, prompt, NULL);
 	unsigned char cbuf[1024];
 	int n = (*ptr_R_ReadConsole)(cprompt, cbuf, 1024, 0);
