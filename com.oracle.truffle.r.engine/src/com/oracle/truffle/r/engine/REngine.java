@@ -49,7 +49,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.library.graphics.RGraphics;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
@@ -57,7 +56,6 @@ import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -384,7 +382,6 @@ final class REngine implements Engine, Engine.Timings {
     @Override
     @TruffleBoundary
     public Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, Object... args) {
-        ArgumentsSignature argsSig = ((RRootNode) func.getRootNode()).getSignature();
         assert frame == null || caller != null;
         MaterializedFrame actualFrame = frame;
         if (actualFrame == null) {
