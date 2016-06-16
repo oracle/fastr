@@ -442,6 +442,8 @@ public class ForeignFunctions {
 
                 case "Cdqrls":
                     return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(StatsUtil.class, "lm.R"), "Cdqrls");
+                case "dnorm":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new Dnorm4());
 
                 // tools
                 case "doTabExpand":
