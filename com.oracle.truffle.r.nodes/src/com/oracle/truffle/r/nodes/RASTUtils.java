@@ -227,9 +227,7 @@ public class RASTUtils {
             fn = ((ConstantNode) fn).getValue();
         }
         SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.EAGER_DEPARSE;
-        if (fn instanceof String) {
-            return RCallNode.createCall(sourceSection, RASTUtils.createReadVariableNode(((String) fn)), signature, arguments);
-        } else if (fn instanceof ReadVariableNode) {
+        if (fn instanceof ReadVariableNode) {
             return RCallNode.createCall(sourceSection, (ReadVariableNode) fn, signature, arguments);
         } else if (fn instanceof NamedRNode) {
             return RCallNode.createCall(RSyntaxNode.SOURCE_UNAVAILABLE, (NamedRNode) fn, signature, arguments);
