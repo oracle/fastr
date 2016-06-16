@@ -171,9 +171,9 @@ void init_internals(JNIEnv *env) {
 	isS4ObjectMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isS4Object", "(Ljava/lang/Object;)I", 1);
 	logObject_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "logObject", "(Ljava/lang/Object;)V", 1);
 	TryEvalResultClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper$TryEvalResult");
-	R_tryEvalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_tryEval", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	TryEvalResultValueFieldID = checkGetFieldID(env, TryEvalResultClass, "value", "Ljava/lang/Object", 0);
-	TryEvalResultErrorFieldID = checkGetFieldID(env, TryEvalResultClass, "error", "Ljava/lang/Object", 0);
+	R_tryEvalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_tryEval", "(Ljava/lang/Object;Ljava/lang/Object;Z)Lcom/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper$TryEvalResult;", 1);
+	TryEvalResultValueFieldID = checkGetFieldID(env, TryEvalResultClass, "value", "Ljava/lang/Object;", 0);
+	TryEvalResultErrorFieldID = checkGetFieldID(env, TryEvalResultClass, "error", "Z", 0);
 
 	RExternalPtrClass = checkFindClass(env, "com/oracle/truffle/r/runtime/data/RExternalPtr");
 	createExternalPtrMethodID = checkGetMethodID(env, RDataFactoryClass, "createExternalPtr", "(JLjava/lang/Object;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RExternalPtr;", 1);
