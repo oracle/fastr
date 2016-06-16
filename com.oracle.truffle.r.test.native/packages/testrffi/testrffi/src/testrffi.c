@@ -144,3 +144,8 @@ SEXP tryEval(SEXP expr, SEXP env) {
 	return R_tryEval(expr, env, NULL);
 }
 
+SEXP rHomeDir() {
+	char *dir = R_HomeDir();
+	return ScalarString(mkChar(dir));
+}
+

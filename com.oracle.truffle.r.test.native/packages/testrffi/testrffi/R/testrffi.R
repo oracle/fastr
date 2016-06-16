@@ -54,3 +54,7 @@ rffi.tryEval <- function(expr, env) {
 	.Call("tryEval", expr, env, PACKAGE = "testrffi")
 }
 
+rffi.rhome_dir <- function() {
+	.Call("rHomeDir", PACKAGE = "testrffi")
+}
+
