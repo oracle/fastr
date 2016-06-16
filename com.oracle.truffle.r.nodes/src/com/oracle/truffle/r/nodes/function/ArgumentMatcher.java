@@ -34,6 +34,7 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
@@ -310,7 +311,7 @@ public class ArgumentMatcher {
 
         // Rearrange arguments
         MatchPermutation match = permuteArguments(suppliedSignature, formals.getSignature(), callingNode, false,
-                        index -> ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(suppliedArgs[index])), index -> getErrorForArgument(suppliedArgs, suppliedSignature, index),
+                        index -> RASTUtils.isLookup(suppliedArgs[index], ArgumentsSignature.VARARG_NAME), index -> getErrorForArgument(suppliedArgs, suppliedSignature, index),
                         target.getBuiltin());
 
         RNode[] resArgs = new RNode[match.resultPermutation.length];

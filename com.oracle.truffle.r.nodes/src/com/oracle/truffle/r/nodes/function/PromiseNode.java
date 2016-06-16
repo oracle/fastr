@@ -368,7 +368,7 @@ public abstract class PromiseNode extends RNode {
             for (int i = 0; i < nodes.length; i++) {
                 Closure closure = closureCache.getOrCreateClosure(nodes[i]);
                 this.closures[i] = closure;
-                if (ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(nodes[i]))) {
+                if (RASTUtils.isLookup(nodes[i], ArgumentsSignature.VARARG_NAME)) {
                     this.promised[i] = nodes[i];
                 } else {
                     this.promised[i] = PromisedNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), false, forcedEager);

@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -209,7 +209,7 @@ public final class RBuiltinDiagnostics {
         int total = signature.getLength();
         RNode[] args = new RNode[total];
         for (int i = 0; i < total; i++) {
-            args[i] = AccessArgumentNode.create(i);
+            args[i] = ReadVariableNode.create("dummy");
         }
         RBuiltinNode builtinNode = builtinFactory.getConstructor().apply(args.clone());
 
