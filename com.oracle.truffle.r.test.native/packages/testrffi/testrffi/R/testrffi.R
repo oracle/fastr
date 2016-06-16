@@ -49,3 +49,8 @@ rffi.invoke12 <- function() {
 rffi.interactive <- function() {
 	.Call("interactive", PACKAGE = "testrffi");
 }
+
+rffi.tryEval <- function(expr, env) {
+	.Call("tryEval", expr, env, PACKAGE = "testrffi")
+}
+

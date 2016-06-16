@@ -141,6 +141,6 @@ SEXP interactive(void) {
 }
 
 SEXP tryEval(SEXP expr, SEXP env) {
+	return R_tryEval(expr, env, NULL);
 }
 
-}
