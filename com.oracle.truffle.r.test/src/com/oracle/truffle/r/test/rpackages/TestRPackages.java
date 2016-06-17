@@ -187,14 +187,16 @@ public abstract class TestRPackages extends TestBase {
         if (!checkOnly()) {
             TestBase.deleteDir(installDir());
             installDir().toFile().mkdirs();
+            System.out.printf(".begin install.");
             for (String p : testPackages) {
                 // Takes time, provide user feedback
-                System.out.printf(".install pkg: %s.", p);
+                System.out.printf(".pkg: %s.", p);
                 PackagePaths packagePaths = getPackagePaths(p, resolver.getPath(p));
                 if (!packagePaths.installPackage()) {
                     throw new AssertionError();
                 }
             }
+            System.out.printf(".end install.");
         }
     }
 

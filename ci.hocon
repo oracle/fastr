@@ -1,5 +1,6 @@
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
-java8 : {name : oraclejdk, version : "8u66", platformspecific: true}
+#java8 : {name : oraclejdk, version : "8u66", platformspecific: true}
+java8 : {name : labsjdk, version : "8u92-jvmci-0.14", platformspecific: true}
 
 common : {
   packages : {
@@ -36,7 +37,7 @@ java8Downloads : {
 
 gateTest : ${common} ${java8Downloads} {
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,BuildNative,UnitTests: ExpectedTestOutput file check,UnitTests"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,UnitTests: ExpectedTestOutput file check,UnitTests"]
   ]
 }
 
@@ -58,7 +59,7 @@ gateStyle : ${common} {
 
 rbcheck : ${common} ${java8Downloads} {
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,BuildNative"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac"]
     ["mx", "rbcheck"]
   ]
 }
