@@ -87,10 +87,7 @@ static jmethodID OBJECT_MethodID;
 static jmethodID DUPLICATE_ATTRIB_MethodID;
 static jmethodID isS4ObjectMethodID;
 static jmethodID logObject_MethodID;
-static jclass TryEvalResultClass;
 static jmethodID R_tryEvalMethodID;
-static jfieldID TryEvalResultValueFieldID;
-static jfieldID TryEvalResultErrorFieldID;
 
 static jclass RExternalPtrClass;
 static jmethodID createExternalPtrMethodID;
@@ -170,10 +167,7 @@ void init_internals(JNIEnv *env) {
 	DUPLICATE_ATTRIB_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "DUPLICATE_ATTRIB", "(Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	isS4ObjectMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isS4Object", "(Ljava/lang/Object;)I", 1);
 	logObject_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "logObject", "(Ljava/lang/Object;)V", 1);
-	TryEvalResultClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper$TryEvalResult");
-	R_tryEvalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_tryEval", "(Ljava/lang/Object;Ljava/lang/Object;Z)Lcom/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper$TryEvalResult;", 1);
-	TryEvalResultValueFieldID = checkGetFieldID(env, TryEvalResultClass, "value", "Ljava/lang/Object;", 0);
-	TryEvalResultErrorFieldID = checkGetFieldID(env, TryEvalResultClass, "error", "Z", 0);
+	R_tryEvalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_tryEval", "(Ljava/lang/Object;Ljava/lang/Object;Z)Ljava/lang/Object;", 1);
 
 	RExternalPtrClass = checkFindClass(env, "com/oracle/truffle/r/runtime/data/RExternalPtr");
 	createExternalPtrMethodID = checkGetMethodID(env, RDataFactoryClass, "createExternalPtr", "(JLjava/lang/Object;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RExternalPtr;", 1);
@@ -1380,19 +1374,12 @@ SEXP Rf_asS4(SEXP x, Rboolean b, int i) {
 static SEXP R_tryEvalInternal(SEXP x, SEXP y, int *ErrorOccurred, jboolean silent) {
 	JNIEnv *thisenv = getEnv();
 	jobject tryResult =  (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_tryEvalMethodID, x, y, silent);
-	SEXP value = (*thisenv)->GetObjectField(thisenv, tryResult, TryEvalResultValueFieldID);
-	jboolean error = (*thisenv)->GetBooleanField(thisenv, tryResult, TryEvalResultErrorFieldID);
+	// If tryResult is NULL, an error occurred
 	if (ErrorOccurred) {
-		*ErrorOccurred = error = JNI_TRUE;
+		*ErrorOccurred = tryResult == NULL;
 	}
-	if (error == JNI_TRUE) {
-		return NULL;
-	} else {
-		return value;
-	}
+	return tryResult;
 }
-
-
 
 SEXP R_tryEval(SEXP x, SEXP y, int *ErrorOccurred) {
 	return R_tryEvalInternal(x, y, ErrorOccurred, JNI_FALSE);

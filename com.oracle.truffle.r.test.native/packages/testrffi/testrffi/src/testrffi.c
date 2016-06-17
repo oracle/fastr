@@ -141,7 +141,17 @@ SEXP interactive(void) {
 }
 
 SEXP tryEval(SEXP expr, SEXP env) {
-	return R_tryEval(expr, env, NULL);
+	int error;
+	SEXP r = R_tryEval(expr, env, &error);
+	SEXP v;
+	PROTECT(v = allocVector(VECSXP, 2));
+	if (error) {
+		r = R_NilValue;
+	}
+	SET_VECTOR_ELT(v, 0, r);
+	SET_VECTOR_ELT(v, 1, ScalarLogical(error));
+	UNPROTECT(v);
+	return v;
 }
 
 SEXP rHomeDir() {
