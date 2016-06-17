@@ -28,7 +28,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.base.Quit;
-import com.oracle.truffle.r.runtime.BrowserQuitException;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSrcref;
@@ -109,7 +109,7 @@ public abstract class BrowserInteractNode extends RNode {
                         exitMode = FINISH;
                         break LW;
                     case "Q":
-                        throw new BrowserQuitException();
+                        throw new JumpToTopLevelException();
                     case "where": {
                         if (RArguments.getDepth(mFrame) > 1) {
                             Object stack = Utils.createTraceback(0);

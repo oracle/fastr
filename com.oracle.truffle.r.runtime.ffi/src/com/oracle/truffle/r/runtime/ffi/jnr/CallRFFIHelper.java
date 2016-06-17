@@ -27,12 +27,14 @@ import java.nio.charset.StandardCharsets;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RCleanUp;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -731,6 +733,11 @@ public class CallRFFIHelper {
     @SuppressWarnings("unused")
     private static String R_HomeDir() {
         return REnvVars.rHome();
+    }
+
+    @SuppressWarnings("unused")
+    private static void R_CleanUp(int sa, int status, int runlast) {
+        RCleanUp.stdCleanUp(SA_TYPE.values()[sa], status, runlast != 0);
     }
 
     // Checkstyle: resume method name check

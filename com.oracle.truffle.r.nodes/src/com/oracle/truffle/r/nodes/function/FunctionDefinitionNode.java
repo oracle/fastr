@@ -49,7 +49,7 @@ import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.BrowserQuitException;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
@@ -280,7 +280,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         } catch (RError e) {
             CompilerDirectives.transferToInterpreter();
             throw e;
-        } catch (DebugExitException | BrowserQuitException e) {
+        } catch (DebugExitException | JumpToTopLevelException e) {
             /*
              * These relate to the debugging support. exitHandlers must be suppressed and the
              * exceptions must pass through unchanged; they are not errors
