@@ -460,6 +460,7 @@ public class TestBase {
         boolean ambiguousError = TestTrait.contains(traits, Output.ContainsAmbiguousError);
         boolean ignoreWhitespace = TestTrait.contains(traits, Output.IgnoreWhitespace);
         boolean nonSharedContext = TestTrait.contains(traits, Context.NonShared);
+        boolean longTimeout = TestTrait.contains(traits, Context.LongTimeout);
 
         ContextInfo contextInfo = nonSharedContext ? fastROutputManager.fastRSession.createContextInfo(ContextKind.SHARE_NOTHING) : null;
 
@@ -470,7 +471,7 @@ public class TestBase {
             if (ignored || generatingExpected()) {
                 ignoredInputCount++;
             } else {
-                String result = fastREval(input, contextInfo);
+                String result = fastREval(input, contextInfo, longTimeout);
                 if (ignoreWhitespace) {
                     expected = expected.replaceAll("\\s+", "");
                     result = result.replaceAll("\\s+", "");
@@ -662,11 +663,11 @@ public class TestBase {
      * Evaluate {@code input} in FastR, returning all (virtual) console output that was produced. If
      * {@code nonShared} then this must evaluate in a new, non-shared, {@link RContext}.
      */
-    protected static String fastREval(String input, ContextInfo contextInfo) {
+    protected static String fastREval(String input, ContextInfo contextInfo, boolean longTimeout) {
         microTestInfo.expression = input;
         String result;
         try {
-            result = fastROutputManager.fastRSession.eval(input, contextInfo, false);
+            result = fastROutputManager.fastRSession.eval(input, contextInfo, longTimeout);
         } catch (Throwable e) {
             String clazz;
             if (e instanceof RInternalError && e.getCause() != null) {
