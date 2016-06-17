@@ -113,7 +113,7 @@ def _sanitize_vmArgs(jdk, vmArgs):
     while i < len(vmArgs):
         vmArg = vmArgs[i]
         if vmArg != '-XX:-EnableJVMCI':
-            if 'graal' in vmArg or 'JVMCI' in vmArg:
+            if vmArg.startswith("-") and '-Dgraal' in vmArg or 'JVMCI' in vmArg:
                 if not jvmci_jdk or jvmci_disabled:
                     i = i + 1
                     continue
