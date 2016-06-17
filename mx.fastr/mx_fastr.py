@@ -30,40 +30,17 @@ import os
 
 '''
 This is the launchpad for all the functions available for building/running/testing/analyzing
-FastR. Ideally this code would be completely VM agnostic, i.e., be able to build/run with a variety
-of VMs without change. That is currently not feasible due to the requirement that building
-must use an pre-existing VM and running (for performance testing) must use a Graal-enabled VM.
-It would require separate build/run steps to finesse this. However, running under a standards
-VM is supported by dynamically checking if the jvmci suite is available
+FastR. FastR can run with or without the Graal compiler enabled. As a convenience if the
+graal-core suite is detected then the use of the Graal compiler is enabled without any
+additional command line options being required to the mx command, i.e. it is as if --jdk jvmci
+was passed as an mx global option.
 '''
 
 _fastr_suite = mx.suite('fastr')
 '''
 If this is None, then we run under the standard VM in interpreted mode only.
-Even if this is not None the global mx option --vm original forces interpreted mode
 '''
-_mx_jvmci = mx.suite("jvmci", fatalIfMissing=False)
-
-class FakeJVMCI:
-    def get_vm(self):
-        # should only happen if jvmci vm selected
-        mx.abort('FakeJVMCI.get_vm called')
-
-    def get_jvmci_jdk(self):
-        return mx.get_jdk()
-
-    def build(self, args):
-        return mx.build(args)
-
-def mx_jvm():
-    '''
-    Check if the jvmci suite is available and if not return a fake one
-    that uses the standard vm
-    '''
-    if not _mx_jvmci:
-        return FakeJVMCI()
-    else:
-        return _mx_jvmci.extensions
+_mx_graal = mx.suite("graal-core", fatalIfMissing=False)
 
 _r_command_project = 'com.oracle.truffle.r.engine'
 _repl_command = 'com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient'
@@ -77,6 +54,13 @@ def r_path():
 def r_version():
     # Could figure this out dynamically
     return 'R-3.2.4'
+
+def get_default_jdk():
+    if _mx_graal:
+        tag = 'jvmci'
+    else:
+        tag = None
+    return mx.get_jdk(tag=tag)
 
 def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     '''
@@ -117,28 +101,28 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
 
 def _sanitize_vmArgs(jdk, vmArgs):
     '''
-    jdk/vm dependent analysis of vmArgs to remove those that are not appropriate for the
-    chosen jdk/vm. It is easier to allow clients to set anything they want and filter them
+    jdk dependent analysis of vmArgs to remove those that are not appropriate for the
+    chosen jdk. It is easier to allow clients to set anything they want and filter them
     out here.
     '''
-    if jdk.tag == 'jvmci':
-        vm = mx_jvm().get_vm()
-    else:
-        vm = None
+    jvmci_jdk = jdk.tag == 'jvmci'
+    jvmci_disabled = '-XX:-EnableJVMCI' in vmArgs
+
     xargs = []
     i = 0
     while i < len(vmArgs):
         vmArg = vmArgs[i]
-        if 'graal' in vmArg or 'JVMCI' in vmArg:
-            if vm and vm == "original":
-                i = i + 1
-                continue
+        if vmArg != '-XX:-EnableJVMCI':
+            if vmArg.startswith("-") and '-Dgraal' in vmArg or 'JVMCI' in vmArg:
+                if not jvmci_jdk or jvmci_disabled:
+                    i = i + 1
+                    continue
         xargs.append(vmArg)
         i = i + 1
     return xargs
 
 def _graal_options(nocompile=False):
-    if _mx_jvmci and not mx_jvm().get_vm().endswith('nojvmci'):
+    if _mx_graal:
         result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
         if nocompile:
             result += ['-Dgraal.TruffleCompilationThreshold=100000']
@@ -188,15 +172,6 @@ def setREnvironment(env=None):
 
         env[lib_env] = lib_value
 
-def get_default_jdk():
-    '''
-    Returns the (default) jdk under which to run.
-    N.B. The jvmci jdk actually comes in three variants and the choice
-    is controlled either by the DEFAULT_VM environment variable (recommended) or
-    the --vm global option to mx.
-    '''
-    return mx_jvm().get_jvmci_jdk()
-
 def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, **kwargs):
     '''
     Common function for running either R, Rscript (or rrepl).
@@ -239,16 +214,6 @@ def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
     run_r(args, 'rrepl')
 
-def build(args):
-    '''FastR build'''
-    # workaround for Hotspot Mac OS X build problem
-    osname = platform.system()
-    if osname == 'Darwin':
-        os.environ['COMPILER_WARNINGS_FATAL'] = 'false'
-        os.environ['USE_CLANG'] = 'true'
-        os.environ['LFLAGS'] = '-Xlinker -lstdc++'
-    return mx_jvm().build(args)
-
 def _fastr_gate_runner(args, tasks):
     # Until fixed, we call Checkstyle here and limit to primary
     with mx_gate.Task('Checkstyle check', tasks) as t:
@@ -261,11 +226,6 @@ def _fastr_gate_runner(args, tasks):
         if t:
             if mx.checkcopyrights(['--primary']) != 0:
                 t.abort('copyright errors')
-
-    # build the native projects (GnuR/VM)
-    with mx_gate.Task('BuildNative', tasks) as t:
-        if t:
-            build([])
 
     # check that the expected test output file is up to date
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks) as t:
@@ -349,7 +309,6 @@ def _junit_r_harness(args, vmArgs, jdk, junitArgs):
     vmArgs += _graal_options(nocompile=True)
 
     setREnvironment()
-    vmArgs = _sanitize_vmArgs(jdk, vmArgs)
 
     return mx.run_java(vmArgs + junitArgs, nonZeroIsFatal=False, jdk=jdk)
 
@@ -515,7 +474,6 @@ _commands = {
     'Rscript' : [rscript, '[options]'],
     'rtestgen' : [testgen, ''],
     'originalgate' : [original_gate, '[options]'],
-    'build' : [build, ''],
     'gate' : [gate, ''],
     'junit' : [junit, ['options']],
     'junitsimple' : [junit_simple, ['options']],
