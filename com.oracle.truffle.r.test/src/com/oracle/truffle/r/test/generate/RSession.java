@@ -33,8 +33,9 @@ public interface RSession {
      *
      * If {@code contextInfo is non-null} it is used for the evaluation, else the choice is left to
      * the implementation.
+     * @param longTimeout TODO
      */
-    String eval(String expression, ContextInfo contextInfo) throws Throwable;
+    String eval(String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable;
 
     /**
      * A name to identify the session.
