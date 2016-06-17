@@ -97,7 +97,8 @@ public class TestBase {
     }
 
     public enum Context implements TestTrait {
-        NonShared; // Test requires a new non-shared {@link RContext}.
+        NonShared, // Test requires a new non-shared {@link RContext}.
+        LongTimeout; // Test requires a long timeout
     }
 
     /**
@@ -665,7 +666,7 @@ public class TestBase {
         microTestInfo.expression = input;
         String result;
         try {
-            result = fastROutputManager.fastRSession.eval(input, contextInfo);
+            result = fastROutputManager.fastRSession.eval(input, contextInfo, false);
         } catch (Throwable e) {
             String clazz;
             if (e instanceof RInternalError && e.getCause() != null) {
