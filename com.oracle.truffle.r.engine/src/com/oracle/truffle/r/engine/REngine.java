@@ -58,7 +58,7 @@ import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.BrowserQuitException;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -249,7 +249,7 @@ final class REngine implements Engine, Engine.Timings {
             return lastValue;
         } catch (ReturnException ex) {
             return ex.getResult();
-        } catch (DebugExitException | BrowserQuitException e) {
+        } catch (DebugExitException | JumpToTopLevelException e) {
             throw e;
         } catch (RError e) {
             // RError prints the correct result on the console during construction
@@ -324,7 +324,7 @@ final class REngine implements Engine, Engine.Timings {
                 return lastValue;
             } catch (ReturnException ex) {
                 return ex.getResult();
-            } catch (DebugExitException | BrowserQuitException e) {
+            } catch (DebugExitException | JumpToTopLevelException e) {
                 throw e;
             } catch (RError e) {
                 // TODO normal error reporting is done by the runtime
@@ -510,7 +510,7 @@ final class REngine implements Engine, Engine.Timings {
                     // there can be an outer loop
                     throw cfe;
                 }
-            } catch (DebugExitException | BrowserQuitException e) {
+            } catch (DebugExitException | JumpToTopLevelException e) {
                 CompilerDirectives.transferToInterpreter();
                 throw e;
             } catch (Throwable e) {

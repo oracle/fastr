@@ -39,7 +39,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.nodes.builtin.base.Quit;
-import com.oracle.truffle.r.runtime.BrowserQuitException;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -228,7 +228,7 @@ public class RCommand {
                              * them explicitly
                              */
                             Throwable cause = e.getCause();
-                            if (cause instanceof BrowserQuitException) {
+                            if (cause instanceof JumpToTopLevelException) {
                                 // drop through to continue REPL
                             } else if (cause instanceof DebugExitException) {
                                 throw (RuntimeException) cause;
@@ -255,7 +255,7 @@ public class RCommand {
                     // interrupted by ctrl-c
                 }
             }
-        } catch (BrowserQuitException e) {
+        } catch (JumpToTopLevelException e) {
             // can happen if user profile invokes browser (unlikely but possible)
         } catch (EOFException ex) {
             try {

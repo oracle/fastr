@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,9 +23,10 @@
 package com.oracle.truffle.r.runtime;
 
 /**
- * Thrown in response to the "Q" command in the browser.
+ * Thrown whenever the system wants to return to the top level, e.g. "Q" in browser, "c" in the
+ * {@code quit} builtin.
  */
-public class BrowserQuitException extends RuntimeException {
+public class JumpToTopLevelException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 

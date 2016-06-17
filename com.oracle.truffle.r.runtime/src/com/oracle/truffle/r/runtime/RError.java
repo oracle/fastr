@@ -673,6 +673,9 @@ public final class RError extends RuntimeException {
         BROWSER_QUIT("cannot quit from browser"),
         QUIT_ASK("one of \"yes\", \"no\", \"ask\" or \"default\" expected."),
         QUIT_SAVE("unrecognized value of 'save'"),
+        QUIT_ASK_INTERACTIVE("save=\"ask\" in non-interactive use: command-line default will be used"),
+        QUIT_INVALID_STATUS("invalid 'status', 0 assumed"),
+        QUIT_INVALID_RUNLAST("invalid 'runLast', FALSE assumed"),
         ENVIRONMENTS_COERCE("environments cannot be coerced to other types"),
         CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'");
 

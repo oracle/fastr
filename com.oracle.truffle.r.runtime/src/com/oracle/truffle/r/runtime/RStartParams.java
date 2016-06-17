@@ -30,13 +30,34 @@ import com.oracle.truffle.r.runtime.context.RContext;
 public class RStartParams {
 
     public enum SA_TYPE {
-        NORESTORE,
-        RESTORE,
-        DEFAULT,
-        NOSAVE,
-        SAVE,
-        SAVEASK,
-        SUICIDE
+        NORESTORE(null),
+        RESTORE(null),
+        DEFAULT("default"),
+        NOSAVE("no"),
+        SAVE("yes"),
+        SAVEASK("ask"),
+        SUICIDE(null);
+
+        private String userName;
+
+        private SA_TYPE(String userName) {
+            this.userName = userName;
+        }
+
+        public static final String[] SAVE_VALUES = new String[]{"yes", "no", "ask", "default"};
+
+        public String getUserName() {
+            return userName;
+        }
+
+        public static SA_TYPE fromString(String s) {
+            for (SA_TYPE t : values()) {
+                if (t.userName != null && t.userName.equals(s)) {
+                    return t;
+                }
+            }
+            return null;
+        }
     }
 
     private boolean quiet;

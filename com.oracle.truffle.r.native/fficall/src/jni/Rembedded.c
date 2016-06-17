@@ -155,7 +155,7 @@ char *R_HomeDir(void) {
 	jmethodID R_HomeDirMethodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_HomeDir", "()Ljava/lang/String;", 1);
 	jstring homeDir = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, R_HomeDirMethodID);
 	const char *homeDirChars = stringToChars(jniEnv, homeDir);
-	return homeDirChars;
+	return (char *)homeDirChars;
 }
 
 void R_SaveGlobalEnvToFile(const char *f) {
@@ -279,7 +279,9 @@ void uR_Busy(int x) {
 }
 
 void uR_CleanUp(SA_TYPE x, int y, int z) {
-	unimplemented("R_CleanUp");
+	JNIEnv *jniEnv = getEnv();
+	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_CleanUp", "(III)V", 1);
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, CallRFFIHelperClass, methodID, x, y, z);
 }
 
 int uR_ShowFiles(int a, const char **b, const char **c,
@@ -403,6 +405,11 @@ JNIEXPORT jstring JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_
 	(*jniEnv)->ReleaseStringUTFChars(jniEnv, prompt, cprompt);
 	return result;
 }
+
+JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeCleanUp(JNIEnv *jniEnv, jclass c, jint x, jint y, jint z) {
+	(*ptr_R_CleanUp)(x, y, z);
+}
+
 
 void uR_PolledEvents(void) {
 	unimplemented("R_PolledEvents");

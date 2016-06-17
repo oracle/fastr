@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
    Rstart Rp = &rp;
    R_DefParamsFunc defp = (R_DefParamsFunc) dlsym(handle, "R_DefParams");
    (*defp)(Rp);
-   Rp->SaveAction = SA_NOSAVE;
+   Rp->SaveAction = SA_SAVEASK;
    R_SetParamsFunc setp = (R_SetParamsFunc) dlsym(handle, "R_SetParams");
    (*setp)(Rp);
    ptr_stdR_CleanUp = ptr_R_CleanUp;

@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.BrowserQuitException;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
@@ -55,7 +55,7 @@ public abstract class FastRThrowIt extends RBuiltinNode {
                 throw new Utils.DebugExitException();
             case "Q":
             case "BRQ":
-                throw new BrowserQuitException();
+                throw new JumpToTopLevelException();
             default:
                 throw RError.error(this, RError.Message.GENERIC, "unknown case: " + name);
         }
