@@ -32,8 +32,8 @@ public interface RSession {
      * Returns the result of evaluating {@code expression} including errors and warnings.
      *
      * If {@code contextInfo is non-null} it is used for the evaluation, else the choice is left to
-     * the implementation.
-     * @param longTimeout TODO
+     * the implementation. If the implementation uses timeouts, {@code longTimeout} indicates that
+     * this evaluation is expected to take (much) longer than normal.
      */
     String eval(String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable;
 
