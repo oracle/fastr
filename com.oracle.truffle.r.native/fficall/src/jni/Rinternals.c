@@ -64,6 +64,8 @@ static jmethodID CDR_MethodID;
 static jmethodID SET_TAG_MethodID;
 static jmethodID SETCAR_MethodID;
 static jmethodID SETCDR_MethodID;
+static jmethodID SYMVALUE_MethodID;
+static jmethodID SET_SYMVALUE_MethodID;
 static jmethodID SET_STRING_ELT_MethodID;
 static jmethodID SET_VECTOR_ELT_MethodID;
 static jmethodID RAW_MethodID;
@@ -145,6 +147,8 @@ void init_internals(JNIEnv *env) {
 	SET_TAG_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_TAG", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	SETCAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCAR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	SETCDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCDR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	SYMVALUE_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SYMVALUE", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	SET_SYMVALUE_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_SYMVALUE", "(Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	SET_STRING_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_STRING_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
 	SET_VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_VECTOR_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
 	RAW_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "RAW", "(Ljava/lang/Object;)[B", 1);
@@ -889,7 +893,9 @@ void SET_CLOENV(SEXP x, SEXP v) {
 }
 
 SEXP SYMVALUE(SEXP x) {
-	return unimplemented("SYMVALUE");
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SYMVALUE_MethodID, x);
+    return checkRef(thisenv, result);
 }
 
 SEXP INTERNAL(SEXP x) {
@@ -906,13 +912,13 @@ void SET_DDVAL(SEXP x, int v) {
 }
 
 void SET_SYMVALUE(SEXP x, SEXP v) {
-    unimplemented("SET_SYMVALUE");
+	JNIEnv *thisenv = getEnv();
+	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_SYMVALUE_MethodID, x, v);
 }
 
 void SET_INTERNAL(SEXP x, SEXP v) {
     unimplemented("SET_INTERNAL");
 }
-
 
 SEXP FRAME(SEXP x) {
 	return unimplemented("FRAME");
