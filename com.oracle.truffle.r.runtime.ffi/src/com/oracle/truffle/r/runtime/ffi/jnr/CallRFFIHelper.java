@@ -629,6 +629,25 @@ public class CallRFFIHelper {
         return x; // TODO check or y?
     }
 
+    public static Object SYMVALUE(Object x) {
+        if (!(x instanceof RSymbol)) {
+            throw RInternalError.shouldNotReachHere();
+        }
+        Object res = REnvironment.baseEnv().get(((RSymbol) x).getName());
+        if (res == null) {
+            return RUnboundValue.instance;
+        } else {
+            return res;
+        }
+    }
+
+    public static void SET_SYMVALUE(Object x, Object v) {
+        if (!(x instanceof RSymbol)) {
+            throw RInternalError.shouldNotReachHere();
+        }
+        REnvironment.baseEnv().safePut(((RSymbol) x).getName(), v);
+    }
+
     public static Object R_FindNamespace(Object name) {
         Object result = RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(RRuntime.asString(name));
         return result;
