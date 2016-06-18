@@ -15,12 +15,16 @@ import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.RESTORE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_READLINE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_RESTORE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_RESTORE_DATA;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_ENVIRON;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_SITE_FILE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_INIT_FILE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.QUIET;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SILENT;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SAVE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_SAVE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SLAVE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.VANILLA;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.VERBOSE;
 
 import com.oracle.truffle.r.runtime.context.RContext;
 
@@ -62,6 +66,11 @@ public class RStartParams {
 
     private boolean quiet;
     private boolean slave;
+    /**
+     * The setting of this value in GNU R is unusual and not simply based on the value of the
+     * --interactive option, so we do not check the option in
+     * {@link #RStartParams(RCmdOptions, boolean)}, but later in {@code RCommand}.
+     */
     private boolean interactive = true;
     private boolean verbose;
     private boolean loadSiteFile = true;
@@ -89,9 +98,20 @@ public class RStartParams {
     public RStartParams(RCmdOptions options, boolean embedded) {
         this.arguments = options.getArguments();
         this.embedded = embedded;
-
+        if (options.getBoolean(VERBOSE)) {
+            this.verbose = true;
+        }
         if (options.getBoolean(QUIET) || options.getBoolean(SILENT)) {
             this.quiet = true;
+        }
+        if (options.getBoolean(NO_SITE_FILE)) {
+            this.loadSiteFile = false;
+        }
+        if (options.getBoolean(NO_INIT_FILE)) {
+            this.loadInitFile = false;
+        }
+        if (options.getBoolean(NO_ENVIRON)) {
+            this.noRenviron = true;
         }
         if (options.getBoolean(SAVE)) {
             this.saveAction = SA_TYPE.SAVE;
