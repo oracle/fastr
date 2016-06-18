@@ -77,6 +77,13 @@ public class RCommand {
         throw RInternalError.shouldNotReachHere();
     }
 
+    /**
+     * The standard R script escapes spaces to "~+~" in "-e" and "-f" commands.
+     */
+    private static String unescapeSpace(String input) {
+        return input.replace("~+~", " ");
+    }
+
     static PolyglotEngine createContextInfoFromCommandLine(RCmdOptions options, boolean embedded) {
         RStartParams rsp = new RStartParams(options, embedded);
 
@@ -91,6 +98,8 @@ public class RCommand {
             if (fileArg.equals("-")) {
                 // means stdin, but still implies NO_SAVE
                 fileArg = null;
+            } else {
+                fileArg = unescapeSpace(fileArg);
             }
         }
 
@@ -123,6 +132,9 @@ public class RCommand {
             consoleHandler = new StringConsoleHandler(lines, System.out, filePath);
         } else if (options.getStringList(EXPR) != null) {
             List<String> exprs = options.getStringList(EXPR);
+            for (int i = 0; i < exprs.size(); i++) {
+                exprs.set(i, unescapeSpace(exprs.get(i)));
+            }
             if (!rsp.getSlave()) {
                 rsp.setSaveAction(SA_TYPE.NOSAVE);
             }
