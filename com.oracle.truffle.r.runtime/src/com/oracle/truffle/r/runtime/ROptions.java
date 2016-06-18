@@ -127,7 +127,7 @@ public class ROptions {
         map.put("keep.source.pkgs", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
         map.put("OutDec", RDataFactory.createStringVector("."));
         map.put("prompt", RDataFactory.createStringVector("> "));
-        map.put("verbose", RDataFactory.createLogicalVectorFromScalar(false));
+        map.put("verbose", RDataFactory.createLogicalVectorFromScalar(startParams.getVerbose()));
         map.put("nwarnings", RDataFactory.createIntVectorFromScalar(50));
         map.put("warning.length", RDataFactory.createIntVectorFromScalar(1000));
         map.put("width", RDataFactory.createIntVectorFromScalar(80));

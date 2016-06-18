@@ -101,6 +101,8 @@ public class RCommand {
             } else {
                 fileArg = unescapeSpace(fileArg);
             }
+            // cf GNU R
+            rsp.setInteractive(false);
         }
 
         /*
@@ -138,6 +140,8 @@ public class RCommand {
             if (!rsp.getSlave()) {
                 rsp.setSaveAction(SA_TYPE.NOSAVE);
             }
+            // cf GNU R
+            rsp.setInteractive(false);
             consoleHandler = new StringConsoleHandler(exprs, System.out, RInternalSourceDescriptions.EXPRESSION_INPUT);
         } else {
             /*
