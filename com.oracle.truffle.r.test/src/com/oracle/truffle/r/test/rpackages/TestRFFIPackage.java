@@ -46,26 +46,39 @@ public class TestRFFIPackage extends TestRPackages {
     }
 
     @Test
-    public void testLoadTestRFFICall() {
-        assertEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.addInt(2L, 3L);  detach(\"package:testrffi\"); list(r1) }",
+    public void testLoadTestRFFISimple() {
+        assertEval(TestBase.template(
+                        "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.addInt(2L, 3L); r2 <- rffi.addDouble(2, 3); r3 <- rffi.populateIntVector(5); " +
+                                        "r4 <- rffi.populateLogicalVector(5); detach(\"package:testrffi\"); list(r1, r2, r3, r4) }",
                         new String[]{TestRPackages.libLoc()}));
         assertEval(TestBase.template(
-                        "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.addInt(2L, 3L); r2 <- rffi.addDouble(2, 3); v <- rffi.populateIntVector(5); v2 <- rffi.dotCModifiedArguments(c(0,1,2,3)); " +
-                                        "v3<-rffi.isRString(character(0)); v4 <- rffi.populateLogicalVector(5); detach(\"package:testrffi\"); list(r1, r2, v, v2, v3, v4) }",
+                        "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.mkStringFromChar(); r2 <- rffi.mkStringFromBytes(); r3 <- rffi.null(); " +
+                                        "r4 <-rffi.isRString(character(0)); detach(\"package:testrffi\"); list(r1, r2, r3, r4) }",
+                        new String[]{TestRPackages.libLoc()}));
+        assertEval(TestBase.template(
+                        "{ library(\"testrffi\", lib.loc = \"%0\"); c3 <- c(1L,2L,3L); r1 <- rffi.iterate_iarray(c3); r2 <- rffi.iterate_iptr(c3); " +
+                                        "detach(\"package:testrffi\"); list(r1, r2) }",
+                        new String[]{TestRPackages.libLoc()}));
+    }
+
+    @Test
+    public void testLoadTestRFFIDotC() {
+        assertEval(TestBase.template(
+                        "{ library(\"testrffi\", lib.loc = \"%0\"); v2 <- rffi.dotCModifiedArguments(c(0,1,2,3)); r1 }",
                         new String[]{TestRPackages.libLoc()}));
     }
 
     @Test
     public void testLoadTestRFFIExternal() {
         assertEval(TestBase.template(
-                        "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.dotExternalAccessArgs(1L, 3, c(1,2,3), c('a', 'b'), 'b', TRUE, as.raw(12)); detach(\"package:testrffi\"); list(r1) }",
+                        "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.dotExternalAccessArgs(1L, 3, c(1,2,3), c('a', 'b'), 'b', TRUE, as.raw(12)); detach(\"package:testrffi\"); r1 }",
                         new String[]{TestRPackages.libLoc()}));
     }
 
     @Test
     public void testLoadTestRFFIExternalWithNames() {
         assertEval(TestBase.template(
-                        "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.dotExternalAccessArgs(x=1L, 3, c(1,2,3), y=c('a', 'b'), 'b', TRUE, as.raw(12)); detach(\"package:testrffi\"); list(r1) }",
+                        "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.dotExternalAccessArgs(x=1L, 3, c(1,2,3), y=c('a', 'b'), 'b', TRUE, as.raw(12)); detach(\"package:testrffi\"); r1 }",
                         new String[]{TestRPackages.libLoc()}));
     }
 

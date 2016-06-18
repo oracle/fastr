@@ -25,6 +25,7 @@
 
 #include <R.h>
 #include <Rdefines.h>
+#include <Rinterface.h>
 #include <Rinternals.h>
 
 void dotCModifiedArguments(int* len, int* idata, double* rdata, int* ldata) {
@@ -91,40 +92,55 @@ SEXP invoke_error() {
 	error("invoke_error in testrffi");
 }
 
+// returns a
 SEXP dot_external_access_args(SEXP args) {
-    args = CDR(args);
-    int index = 0;
-    for (; args != R_NilValue; args = CDR(args)) {
-	index++;
-	SEXP tag = TAG(args);
-	const char *name = isNull(tag) ? "" : CHAR(PRINTNAME(tag));
-	SEXP value = CAR(args);
-	if (length(value) == 0) {
-	    Rprintf("%d: '%s' length 0\n", index, name);
-	    continue;
+	args = CDR(args);
+	int index = 0;
+	SEXP list;
+	PROTECT(list = allocVector(VECSXP, length(args)));
+	for (; args != R_NilValue; args = CDR(args)) {
+		SEXP tag = TAG(args);
+		SEXP value = CAR(args);
+		SEXP listElement;
+		PROTECT(listElement = allocVector(VECSXP, 2));
+		SET_VECTOR_ELT(listElement, 0, tag);
+		SEXP firstValue = R_NilValue;
+		if (length(value) == 0) {
+			firstValue = PROTECT(R_NilValue);
+		} else {
+			switch (TYPEOF(value)) {
+			case LGLSXP:
+			case INTSXP:{
+				PROTECT(firstValue = allocVector(INTSXP, 1));
+				INTEGER(firstValue)[0] = INTEGER(value)[0];
+				break;
+			}
+			case REALSXP: {
+				PROTECT(firstValue = allocVector(REALSXP, 1));
+				REAL(firstValue)[0] = REAL(value)[0];
+				break;
+			}
+			case STRSXP:
+				PROTECT(firstValue = ScalarString(STRING_ELT(value, 0)));
+				break;
+			case RAWSXP: {
+				PROTECT(firstValue = allocVector(RAWSXP, 1));
+				RAW(firstValue)[0] = RAW(value)[0];
+				break;
+			}
+			default:
+				firstValue = PROTECT(R_NilValue);
+			}
+		}
+
+		SET_VECTOR_ELT(listElement, 1, firstValue);
+		SET_VECTOR_ELT(list, index, listElement);
+		UNPROTECT(1); // firstValue
+		UNPROTECT(1); // listElement
+		index++;
 	}
-	switch (TYPEOF(value)) {
-	case LGLSXP:
-	case INTSXP:
-	    Rprintf("%d: '%s' %d\n", index, name, INTEGER(value)[0]);
-	    break;
-	case REALSXP:
-	    Rprintf("%d: '%s' %f\n", index, name, REAL(value)[0]);
-	    break;
-	case CPLXSXP: {
-	    Rcomplex complexValue = COMPLEX(value)[0];
-	    Rprintf("%d: '%s' %f+%fi\n", index, name, complexValue.r,
-		    complexValue.i);
-	    break;
-	}
-	case STRSXP:
-	    Rprintf("%d: '%s' %s\n", index, name, CHAR(STRING_ELT(value, 0)));
-	    break;
-	default:
-	    Rprintf("%d: %s other\n", index, name);
-	}
-    }
-    return R_NilValue;
+	UNPROTECT(1); // list
+	return list;
 }
 
 SEXP invoke_isString(SEXP s) {
@@ -134,3 +150,51 @@ SEXP invoke_isString(SEXP s) {
 SEXP invoke12(SEXP a1, SEXP a2, SEXP a3, SEXP a4, SEXP a5, SEXP a6, SEXP a7, SEXP a8, SEXP a9, SEXP a10, SEXP a11, SEXP a12) {
 	return a12;
 }
+
+SEXP r_home(void) {
+	return mkString(R_Home);
+}
+
+SEXP mkStringFromChar(void) {
+	return mkString("hello");
+}
+
+SEXP mkStringFromBytes(void) {
+	char *helloworld = "hello world";
+	return ScalarString(mkCharLen(helloworld, 5));
+}
+
+SEXP null(void) {
+	return R_NilValue;
+}
+
+SEXP iterate_iarray(SEXP x) {
+	int *cx = INTEGER(x);
+	int len = LENGTH(x);
+    SEXP v;
+    PROTECT(v = allocVector(INTSXP, len));
+    int *iv = INTEGER(v);
+    int i;
+    for (i = 0; i < len; i++) {
+    	iv[i] = cx[i];
+    }
+    UNPROTECT(1);
+    return v;
+}
+
+SEXP iterate_iptr(SEXP x) {
+	int *cx = INTEGER(x);
+	int len = LENGTH(x);
+    SEXP v;
+    PROTECT(v = allocVector(INTSXP, len));
+    int *iv = INTEGER(v);
+    int i;
+    for (i = 0; i < len; i++) {
+    	*iv++ = *cx++;
+    }
+    UNPROTECT(1);
+    return v;
+}
+
+
+

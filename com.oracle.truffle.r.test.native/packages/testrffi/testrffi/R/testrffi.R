@@ -45,3 +45,28 @@ rffi.isRString <- function(s) {
 rffi.invoke12 <- function() {
 	.Call("invoke12", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, PACKAGE = "testrffi")
 }
+
+rffi.r_home <- function() {
+	.Call("r_home", PACKAGE = "testrffi")
+}
+
+rffi.mkStringFromChar <- function() {
+	.Call("mkStringFromChar", PACKAGE = "testrffi")
+}
+
+rffi.mkStringFromBytes <- function() {
+	.Call("mkStringFromBytes", PACKAGE = "testrffi")
+}
+
+rffi.null <- function() {
+	.Call("null", PACKAGE = "testrffi")
+}
+
+rffi.iterate_iarray <- function(x) {
+	.Call("iterate_iarray", x, PACKAGE = "testrffi")
+}
+
+rffi.iterate_iptr <- function(x) {
+	.Call("iterate_iptr", x, PACKAGE = "testrffi")
+}
+
