@@ -35,11 +35,13 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -48,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -58,6 +61,7 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Child private BinaryMapArithmeticFunctionNode mult = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.MULTIPLY.create());
     @Child private BinaryMapArithmeticFunctionNode add = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.ADD.create());
+    private final boolean promoteDimNames;
 
     private final BranchProfile errorProfile = BranchProfile.create();
     private final LoopConditionProfile mainLoopProfile = LoopConditionProfile.createCountingProfile();
@@ -66,12 +70,21 @@ public abstract class MatMult extends RBuiltinNode {
     private final ConditionProfile notOneRow = ConditionProfile.createBinaryProfile();
     private final ConditionProfile notOneColumn = ConditionProfile.createBinaryProfile();
 
+    private final RAttributeProfiles aDimAttributeProfile = RAttributeProfiles.create();
+    private final RAttributeProfiles bDimAttributeProfile = RAttributeProfiles.create();
+    private final ConditionProfile noDimAttributes = ConditionProfile.createBinaryProfile();
+
     protected abstract Object executeObject(Object a, Object b);
 
     private final NACheck na;
 
-    public MatMult() {
+    public MatMult(boolean promoteDimNames) {
+        this.promoteDimNames = promoteDimNames;
         this.na = NACheck.create();
+    }
+
+    public static MatMult create(RNode[] arguments) {
+        return MatMultNodeGen.create(true, arguments);
     }
 
     @Specialization(guards = "bothZeroDim(a, b)")
@@ -198,7 +211,23 @@ public abstract class MatMult extends RBuiltinNode {
             fixNARows(dataA, aRows, bRows, bCols, aRowStride, aColStride, result);
             complete = false;
         }
-        return RDataFactory.createDoubleVector(result, complete, new int[]{aRows, bCols});
+
+        RDoubleVector resultVec = RDataFactory.createDoubleVector(result, complete, new int[]{aRows, bCols});
+        RList aDimNames = a.getDimNames(aDimAttributeProfile);
+        RList bDimNames = b.getDimNames(bDimAttributeProfile);
+        if (!promoteDimNames || noDimAttributes.profile(aDimNames == null && bDimNames == null)) {
+            return resultVec;
+        }
+
+        Object[] newDimsNames = new Object[2];
+        if (aDimNames != null && aDimNames.getLength() > 0) {
+            newDimsNames[0] = aDimNames.getDataAt(0);
+        }
+        if (bDimNames != null && bDimNames.getLength() > 1) {
+            newDimsNames[1] = bDimNames.getDataAt(1);
+        }
+        resultVec.setDimNames(RDataFactory.createList(newDimsNames));
+        return resultVec;
     }
 
     private static void fixNARows(double[] dataA, int aRows, int aCols, int bCols, int aRowStride, int aColStride, double[] result) {
