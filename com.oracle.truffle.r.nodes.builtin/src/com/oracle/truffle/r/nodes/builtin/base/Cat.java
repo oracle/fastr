@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -92,7 +93,7 @@ public abstract class Cat extends RBuiltinNode {
     protected RNull cat(RList args, RConnection conn, RAbstractStringVector sepVec, boolean fill, RAbstractStringVector labels, boolean append) {
         int fillWidth = -1;
         if (fill) {
-            fillWidth = ((RIntVector) RContext.getInstance().stateROptions.getValue("width")).getDataAt(0);
+            fillWidth = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("width"));
         }
         return output(args, conn, sepVec, fillWidth, labels, append);
     }
