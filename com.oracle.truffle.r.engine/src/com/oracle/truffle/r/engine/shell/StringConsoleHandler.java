@@ -100,11 +100,6 @@ class StringConsoleHandler implements ConsoleHandler {
     }
 
     @Override
-    public int getWidth() {
-        return RContext.CONSOLE_WIDTH;
-    }
-
-    @Override
     public String getInputDescription() {
         return inputDescription;
     }
