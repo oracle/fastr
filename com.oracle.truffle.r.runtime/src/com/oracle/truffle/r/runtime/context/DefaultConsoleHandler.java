@@ -88,11 +88,6 @@ public class DefaultConsoleHandler implements ConsoleHandler {
     }
 
     @Override
-    public int getWidth() {
-        return 80;
-    }
-
-    @Override
     public String getInputDescription() {
         return "<PolyglotEngine env input>";
     }

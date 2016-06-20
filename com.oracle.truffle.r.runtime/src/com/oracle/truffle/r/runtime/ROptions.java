@@ -130,7 +130,7 @@ public class ROptions {
         map.put("verbose", RDataFactory.createLogicalVectorFromScalar(startParams.getVerbose()));
         map.put("nwarnings", RDataFactory.createIntVectorFromScalar(50));
         map.put("warning.length", RDataFactory.createIntVectorFromScalar(1000));
-        map.put("width", RDataFactory.createIntVectorFromScalar(80));
+        map.put("width", RDataFactory.createIntVectorFromScalar(RContext.CONSOLE_WIDTH));
         map.put("browserNLdisabled", RDataFactory.createLogicalVectorFromScalar(false));
         boolean cBoundsCheck = optionFromEnvVar("R_C_BOUNDS_CHECK", envVars);
         map.put("CBoundsCheck", RDataFactory.createLogicalVectorFromScalar(cBoundsCheck));

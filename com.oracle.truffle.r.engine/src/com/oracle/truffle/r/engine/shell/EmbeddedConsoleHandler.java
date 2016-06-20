@@ -23,7 +23,9 @@
 package com.oracle.truffle.r.engine.shell;
 
 import com.oracle.truffle.r.runtime.RInterfaceCallbacks;
+import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.DefaultConsoleHandler;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
@@ -31,26 +33,42 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  * In embedded mode the console functions as defined in {@code Rinterface.h} can be overridden. This
  * class supports that, delegating to a standard console handler if not redirected.
  *
+ * N.B. At the time the constructor is created, we do not know if the console is overridden so we
+ * have be lazy about that.
+ *
  */
 public class EmbeddedConsoleHandler implements ConsoleHandler {
 
+    private final RStartParams startParams;
+    /**
+     * Only not {@code null} when console is not overridden.
+     */
     private ConsoleHandler delegate;
     private REmbedRFFI rEmbedRFFI;
+    private String prompt;
 
-    EmbeddedConsoleHandler(ConsoleHandler delegate) {
-        this.delegate = delegate;
+    EmbeddedConsoleHandler(RStartParams startParams) {
+        this.startParams = startParams;
     }
 
     private REmbedRFFI getREmbedRFFI() {
         if (rEmbedRFFI == null) {
             rEmbedRFFI = RFFIFactory.getRFFI().getREmbedRFFI();
+            if (!(RInterfaceCallbacks.R_WriteConsole.isOverridden() || RInterfaceCallbacks.R_ReadConsole.isOverridden())) {
+                if (startParams.getNoReadline()) {
+                    delegate = new DefaultConsoleHandler(System.in, System.out);
+                } else {
+                    delegate = new JLineConsoleHandler(startParams);
+                }
+            }
         }
         return rEmbedRFFI;
     }
 
     @Override
     public void println(String s) {
-        if (RInterfaceCallbacks.R_WriteConsole.isOverridden()) {
+        getREmbedRFFI();
+        if (delegate == null) {
             getREmbedRFFI().writeConsole(s);
             getREmbedRFFI().writeConsole("\n");
         } else {
@@ -61,8 +79,9 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
 
     @Override
     public void print(String s) {
-        if (RInterfaceCallbacks.R_WriteConsole.isOverridden()) {
-            getREmbedRFFI().writeConsole(s);
+        getREmbedRFFI();
+        if (delegate == null) {
+            rEmbedRFFI.writeConsole(s);
         } else {
             delegate.print(s);
         }
@@ -71,9 +90,10 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
 
     @Override
     public void printErrorln(String s) {
-        if (RInterfaceCallbacks.R_WriteConsole.isOverridden()) {
-            getREmbedRFFI().writeErrConsole(s);
-            getREmbedRFFI().writeErrConsole("\n");
+        getREmbedRFFI();
+        if (delegate == null) {
+            rEmbedRFFI.writeErrConsole(s);
+            rEmbedRFFI.writeErrConsole("\n");
         } else {
             delegate.printErrorln(s);
         }
@@ -82,8 +102,9 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
 
     @Override
     public void printError(String s) {
-        if (RInterfaceCallbacks.R_WriteConsole.isOverridden()) {
-            getREmbedRFFI().writeErrConsole(s);
+        getREmbedRFFI();
+        if (delegate == null) {
+            rEmbedRFFI.writeErrConsole(s);
         } else {
             delegate.printError(s);
         }
@@ -92,8 +113,9 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
 
     @Override
     public String readLine() {
-        if (RInterfaceCallbacks.R_ReadConsole.isOverridden()) {
-            return getREmbedRFFI().readConsole(delegate.getPrompt());
+        getREmbedRFFI();
+        if (delegate == null) {
+            return rEmbedRFFI.readConsole(prompt);
         } else {
             return delegate.readLine();
         }
@@ -101,28 +123,26 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
 
     @Override
     public boolean isInteractive() {
-        return delegate.isInteractive();
+        return startParams.getInteractive();
     }
 
     @Override
     public String getPrompt() {
-        return delegate.getPrompt();
+        return prompt;
     }
 
     @Override
     public void setPrompt(String prompt) {
-        delegate.setPrompt(prompt);
+        this.prompt = prompt;
+        if (delegate != null) {
+            delegate.setPrompt(prompt);
+        }
 
-    }
-
-    @Override
-    public int getWidth() {
-        return delegate.getWidth();
     }
 
     @Override
     public String getInputDescription() {
-        return delegate.getInputDescription();
+        return "<embedded input>";
     }
 
 }

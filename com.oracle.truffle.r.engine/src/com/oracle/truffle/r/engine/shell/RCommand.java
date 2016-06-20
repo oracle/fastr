@@ -29,8 +29,6 @@ import java.io.Console;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.List;
 
@@ -58,7 +56,6 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
-import jline.console.ConsoleReader;
 import jline.console.UserInterruptException;
 
 /**
@@ -119,8 +116,6 @@ public class RCommand {
          * checked.
          */
         ConsoleHandler consoleHandler;
-        InputStream consoleInput = System.in;
-        OutputStream consoleOutput = System.out;
         if (fileArg != null) {
             List<String> lines;
             String filePath;
@@ -148,31 +143,25 @@ public class RCommand {
              * GnuR behavior differs from the manual entry for {@code interactive} in that {@code
              * --interactive} never applies to {@code -e/-f}, only to console input that has been
              * redirected from a pipe/file etc.
+             *
+             * If we are in embedded mode, the creation of ConsoleReader and the ConsoleHandler
+             * should be lazy, as these may not be necessary and can cause hangs if stdin has been
+             * redirected.
              */
             Console sysConsole = System.console();
-            boolean useReadLine = !rsp.getNoReadline();
-            ConsoleReader consoleReader = null;
-            if (useReadLine) {
-                try {
-                    consoleReader = new ConsoleReader(consoleInput, consoleOutput);
-                    consoleReader.setHandleUserInterrupt(true);
-                    consoleReader.setExpandEvents(false);
-                } catch (IOException ex) {
-                    throw Utils.fail("unexpected error opening console reader");
-                }
-            }
             boolean isInteractive = options.getBoolean(INTERACTIVE) || sysConsole != null;
             if (!isInteractive && rsp.getSaveAction() != SA_TYPE.SAVE && rsp.getSaveAction() != SA_TYPE.NOSAVE) {
                 throw Utils.rSuicide("you must specify '--save', '--no-save' or '--vanilla'");
             }
-            // long start = System.currentTimeMillis();
-            if (useReadLine) {
-                consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
-            } else {
-                consoleHandler = new DefaultConsoleHandler(consoleInput, consoleOutput);
-            }
             if (embedded) {
-                consoleHandler = new EmbeddedConsoleHandler(consoleHandler);
+                consoleHandler = new EmbeddedConsoleHandler(rsp);
+            } else {
+                boolean useReadLine = !rsp.getNoReadline();
+                if (useReadLine) {
+                    consoleHandler = new JLineConsoleHandler(rsp);
+                } else {
+                    consoleHandler = new DefaultConsoleHandler(System.in, System.out);
+                }
             }
         }
         return ContextInfo.create(rsp, ContextKind.SHARE_NOTHING, null, consoleHandler).apply(PolyglotEngine.newBuilder()).build();
