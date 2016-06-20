@@ -526,7 +526,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 maxPositionLength = intString(vector.getLength()).length();
                 leftWidth = maxPositionLength + 2; // There is [] around the number.
             }
-            int forColumns = RContext.getInstance().getConsoleHandler().getWidth() - leftWidth;
+            int forColumns = (int) RContext.getInstance().stateROptions.getValue("width") - leftWidth;
             int numberOfColumns = Math.max(1, forColumns / columnWidth);
 
             int index = 0;
