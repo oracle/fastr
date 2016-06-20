@@ -281,6 +281,7 @@ public final class RError extends RuntimeException {
         NON_NUMERIC_MATRIX_EXTENT("non-numeric matrix extent"),
         NON_CONFORMABLE_ARRAYS("non-conformable arrays"),
         UNKNOWN_UNNAMED_OBJECT("object not found"),
+        CHOOSE_ROUNDING_WARNING("'k' (%g) must be integer, rounded to %d"),
         ONLY_MATRIX_DIAGONALS("only matrix diagonals can be replaced"),
         REPLACEMENT_DIAGONAL_LENGTH("replacement diagonal has wrong length"),
         NA_INTRODUCED_COERCION("NAs introduced by coercion"),
