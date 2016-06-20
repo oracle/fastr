@@ -38,7 +38,6 @@ import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -71,7 +70,7 @@ public abstract class Args extends RBuiltinNode {
             parentFrameNode = insert(ParentFrameNodeGen.create(null));
 
         }
-        return args((RFunction) getNode.execute(frame, funName, (REnvironment) parentFrameNode.execute(frame, 1), RType.Function.getName(), RRuntime.LOGICAL_TRUE));
+        return args((RFunction) getNode.execute(frame, funName, parentFrameNode.execute(frame, 1), RType.Function.getName(), true));
     }
 
     @Specialization

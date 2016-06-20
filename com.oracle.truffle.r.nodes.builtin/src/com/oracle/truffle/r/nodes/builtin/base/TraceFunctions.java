@@ -50,7 +50,7 @@ public class TraceFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getNode = insert(GetNodeGen.create(null));
             }
-            return getNode.execute(frame, funcName, RContext.getInstance().stateREnvironment.getGlobalEnv(), RType.Function.getName(), RRuntime.LOGICAL_TRUE);
+            return getNode.execute(frame, funcName, RContext.getInstance().stateREnvironment.getGlobalEnv(), RType.Function.getName(), true);
         }
     }
 

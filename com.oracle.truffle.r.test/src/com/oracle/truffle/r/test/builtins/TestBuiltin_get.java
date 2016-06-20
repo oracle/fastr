@@ -30,5 +30,9 @@ public class TestBuiltin_get extends TestBase {
         assertEval("{ get(\".Platform\", globalenv())$endian }");
         assertEval("{ get(\".Platform\")$endian }");
         assertEval(Output.IgnoreErrorContext, "{y<-function(){y<-2;get(\"y\",mode=\"closure\",inherits=FALSE);};y();}");
+
+        // behavior specific to RS4Object as environment:
+        assertEval("setClass('foo', representation(x='numeric')); f <- new('foo'); e <- new.env(); e$x <- 1; attr(f, '.xData') <- e; get('x', envir=f)");
+        assertEval("setClass('foo', representation(x='numeric')); f <- new('foo'); e <- new.env(); e$x <- 1; attr(f, '.Data') <- e; get('x', envir=f)");
     }
 }

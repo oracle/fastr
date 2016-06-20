@@ -82,7 +82,7 @@ public class FastRTrace {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getNode = insert(GetNodeGen.create(null));
             }
-            return getNode.execute(frame, what, where, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
+            return getNode.execute(frame, what, where, RType.Function.getName(), true);
         }
 
         protected void checkWhat(Object what) {

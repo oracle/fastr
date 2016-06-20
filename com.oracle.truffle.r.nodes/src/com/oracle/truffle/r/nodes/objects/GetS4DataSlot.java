@@ -13,9 +13,8 @@
 package com.oracle.truffle.r.nodes.objects;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
@@ -33,34 +32,35 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 // transcribed from src/main/attrib.c
-@NodeChildren({@NodeChild(value = "obj", type = RNode.class), @NodeChild(value = "type", type = RNode.class)})
-abstract class GetS4DataSlot extends RNode {
+public abstract class GetS4DataSlot extends Node {
 
-    public abstract RTypedValue executeObject(RAttributable attObj, RType type);
+    public abstract RTypedValue executeObject(RAttributable attObj);
 
     @Child private AttributeAccess s3ClassAttrAccess;
-    @Child private AttributeAccess dotDataAttrAccess;
-    @Child private AttributeAccess dotXDataAttrAccess;
     @Child private RemoveAttributeNode s3ClassAttrRemove;
     @Child private CastToVectorNode castToVector;
+    @Child private AttributeAccess dotDataAttrAccess;
+    @Child private AttributeAccess dotXDataAttrAccess;
     @Child private TypeofNode typeOf = TypeofNodeGen.create();
 
-    private final BranchProfile nonNullAttr = BranchProfile.create();
-    private final BranchProfile stillNonNullAttr = BranchProfile.create();
     private final BranchProfile shareable = BranchProfile.create();
 
+    private final RType type;
+
+    protected GetS4DataSlot(RType type) {
+        this.type = type;
+    }
+
     @Specialization
-    protected RTypedValue doNewObject(RAttributable attrObj, RType type) {
+    protected RTypedValue doNewObject(RAttributable attrObj) {
         RAttributable obj = attrObj;
         Object value = null;
         if (!(obj instanceof RS4Object) || type == RType.S4Object) {
             Object s3Class = null;
             RAttributes attributes = obj.getAttributes();
             if (attributes != null) {
-                nonNullAttr.enter();
                 if (s3ClassAttrAccess == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     s3ClassAttrAccess = insert(AttributeAccessNodeGen.create(RRuntime.DOT_S3_CLASS));
@@ -95,7 +95,6 @@ abstract class GetS4DataSlot extends RNode {
         } else {
             RAttributes attributes = obj.getAttributes();
             if (attributes != null) {
-                stillNonNullAttr.enter(); // could have been initialized
                 if (dotDataAttrAccess == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     dotDataAttrAccess = insert(AttributeAccessNodeGen.create(RRuntime.DOT_DATA));
@@ -106,7 +105,6 @@ abstract class GetS4DataSlot extends RNode {
         if (value == null) {
             RAttributes attributes = obj.getAttributes();
             if (attributes != null) {
-                stillNonNullAttr.enter(); // could have been initialized
                 if (dotXDataAttrAccess == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     dotXDataAttrAccess = insert(AttributeAccessNodeGen.create(RRuntime.DOT_XDATA));
