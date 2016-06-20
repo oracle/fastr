@@ -25,6 +25,12 @@ ifeq ($(TOPDIR),)
     TOPDIR = $(abspath ..)
 endif
 
+OSNAME := $(shell uname)
+
+ifeq ($(OSNAME), Linux)
+  LD_FLAGS :=  -Wl,--unresolved-symbols=ignore-all
+endif
+
 FASTR_LIB_DIR = $(abspath ../../lib)
 
 NATIVE_PROJECT = $(subst test.native,native,$(TOPDIR))
@@ -41,11 +47,14 @@ INCLUDE_DIR := $(NATIVE_PROJECT)/include
 
 all: $(OBJ)/main
 
+$(OBJ)/main: | $(OBJ)
+
 $(OBJ):
 	mkdir -p $(OBJ)
 
+
 $(OBJ)/main: $(SRC)/main.c
-	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o main -L $(FASTR_LIB_DIR) -ldl -lR
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(OBJ)/main -L $(FASTR_LIB_DIR) -ldl -lR $(LD_FLAGS)
 
 clean:
 	rm -rf $(OBJ)

@@ -116,11 +116,6 @@ public final class FastRSession implements RSession {
         }
 
         @Override
-        public int getWidth() {
-            return RContext.CONSOLE_WIDTH;
-        }
-
-        @Override
         public String getInputDescription() {
             return "<test input>";
         }
