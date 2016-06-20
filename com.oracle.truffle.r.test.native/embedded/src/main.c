@@ -50,18 +50,14 @@
 // A simple test program for FastR embedded mode.
 // compile with "gcc -I include main.c -ldl
 
+#include <stdio.h>
 #include <dlfcn.h>
 #include <sys/utsname.h>
 #include <string.h>
 #define R_INTERFACE_PTRS 1
 #include <Rinterface.h>
+#include <Rembedded.h>
 
-
-typedef int (*Rf_initEmbeddedRFunc)(int, char**);
-typedef void (*Rf_endEmbeddedRFunc)(int);
-typedef void (*Rf_mainloopFunc)(void);
-typedef void (*R_DefParamsFunc)(Rstart);
-typedef void (*R_SetParamsFunc)(Rstart);
 
 void (*ptr_stdR_CleanUp)(SA_TYPE, int, int);
 void (*ptr_stdR_Suicide)(const char *);
@@ -91,47 +87,22 @@ void testR_WriteConsole(const char *buf, int len) {
 }
 
 int main(int argc, char **argv) {
-  struct utsname utsname;
-  uname(&utsname);
-  char *r_home = getenv("R_HOME");
-  if (r_home == NULL) {
-    printf("R_HOME must be set\n");
-    exit(1);
-  }
-
-  char libr_path[256];
-  strcpy(libr_path, r_home);
-  if (strcmp(utsname.sysname, "Linux") == 0) {
-    strcat(libr_path, "lib/libR.so");
-  } else if (strcmp(utsname.sysname, "Darwin") == 0) {
-    strcat(libr_path, "lib/libR.dylib");
-  }
-
-  void *handle = dlopen(libr_path, RTLD_LAZY | RTLD_GLOBAL);
-  if (handle == NULL) {
-    printf("failed to open libR: %s\n", dlerror());
-    exit(1);
-  }
-  Rf_initEmbeddedRFunc init = (Rf_initEmbeddedRFunc) dlsym(handle, "Rf_initEmbeddedR");
-  Rf_mainloopFunc mainloop = (Rf_mainloopFunc) dlsym(handle, "run_Rmainloop");
-  Rf_endEmbeddedRFunc end = (Rf_endEmbeddedRFunc) dlsym(handle, "Rf_endEmbeddedR");
-  if (init == NULL || mainloop == NULL || end == NULL) {
-    printf("failed to find R embedded functions\n");
-    exit(1);
-  }
-  (*init)(argc, argv);
-     structRstart rp;
-   Rstart Rp = &rp;
-   R_DefParamsFunc defp = (R_DefParamsFunc) dlsym(handle, "R_DefParams");
-   (*defp)(Rp);
-   Rp->SaveAction = SA_SAVEASK;
-   R_SetParamsFunc setp = (R_SetParamsFunc) dlsym(handle, "R_SetParams");
-   (*setp)(Rp);
-   ptr_stdR_CleanUp = ptr_R_CleanUp;
-   ptr_R_CleanUp = &testR_CleanUp;
-   ptr_R_Suicide = &testR_Suicide;
-   ptr_R_ReadConsole = &testR_ReadConsole;
-   ptr_R_WriteConsole = &testR_WriteConsole;
-  (*mainloop)();
-  (*end)(0);
+	char *r_home = getenv("R_HOME");
+	if (r_home == NULL) {
+		printf("R_HOME must be set\n");
+		exit(1);
+	}
+	Rf_initialize_R(argc, argv);
+	structRstart rp;
+	Rstart Rp = &rp;
+	R_DefParams(Rp);
+	Rp->SaveAction = SA_SAVEASK;
+	R_SetParams(Rp);
+	ptr_stdR_CleanUp = ptr_R_CleanUp;
+	ptr_R_CleanUp = &testR_CleanUp;
+	ptr_R_Suicide = &testR_Suicide;
+	ptr_R_ReadConsole = &testR_ReadConsole;
+	ptr_R_WriteConsole = &testR_WriteConsole;
+	Rf_mainloop();
+	Rf_endEmbeddedR(0);
 }
