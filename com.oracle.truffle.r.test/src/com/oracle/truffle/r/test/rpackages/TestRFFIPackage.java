@@ -64,7 +64,7 @@ public class TestRFFIPackage extends TestRPackages {
     @Test
     public void testLoadTestRFFIDotC() {
         assertEval(TestBase.template(
-                        "{ library(\"testrffi\", lib.loc = \"%0\"); v2 <- rffi.dotCModifiedArguments(c(0,1,2,3)); r1 }",
+                        "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.dotCModifiedArguments(c(0,1,2,3)); r1 }",
                         new String[]{TestRPackages.libLoc()}));
     }
 
