@@ -28,7 +28,7 @@ endif
 OSNAME := $(shell uname)
 
 ifeq ($(OSNAME), Linux)
-  LD_FLAGS :=  -Wl,--ignore-unresolved-symbols=ignore-all
+  LD_FLAGS :=  -Wl,--unresolved-symbols=ignore-all
 endif
 
 FASTR_LIB_DIR = $(abspath ../../lib)
