@@ -62,7 +62,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     @Specialization(guards = "operand.getLength() != 0")
-    protected RAbstractContainer doIntVector(RAbstractContainer operand) {
+    protected RStringVector doIntVector(RAbstractContainer operand) {
         String[] sdata = new String[operand.getLength()];
         // conversions to character will not introduce new NAs
         for (int i = 0; i < operand.getLength(); i++) {

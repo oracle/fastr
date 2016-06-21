@@ -40,4 +40,12 @@ public final class ChainedCastNode extends CastNode {
     public Object execute(Object value) {
         return secondCast.execute(firstCast.execute(value));
     }
+
+    public CastNode getFirstCast() {
+        return firstCast;
+    }
+
+    public CastNode getSecondCast() {
+        return secondCast;
+    }
 }

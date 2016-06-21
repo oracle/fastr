@@ -10,6 +10,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -21,7 +24,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -34,12 +36,17 @@ public abstract class ColMeans extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
-        casts.toInteger(2);
+        casts.arg("X").mustBe(numericValue(), RError.Message.X_NUMERIC);
+
+        casts.arg("m").asIntegerVector().findFirst().notNA();
+
+        casts.arg("n").asIntegerVector().findFirst().notNA();
+
+        casts.arg("na.rm").asLogicalVector().findFirst().map(toBoolean());
     }
 
-    @Specialization(guards = "!isNaRm(naRm)")
-    protected RDoubleVector colMeansNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    @Specialization(guards = "!naRm")
+    protected RDoubleVector colMeansNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
@@ -63,8 +70,8 @@ public abstract class ColMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA() && isComplete);
     }
 
-    @Specialization(guards = "isNaRm(naRm)")
-    protected RDoubleVector colMeansNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    @Specialization(guards = "naRm")
+    protected RDoubleVector colMeansNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
@@ -88,8 +95,8 @@ public abstract class ColMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, isComplete);
     }
 
-    @Specialization(guards = "!isNaRm(naRm)")
-    protected RDoubleVector colMeansNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    @Specialization(guards = "!naRm")
+    protected RDoubleVector colMeansNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         double[] result = new double[colNum];
         na.enable(x);
         nextCol: for (int c = 0; c < colNum; c++) {
@@ -107,8 +114,8 @@ public abstract class ColMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
-    @Specialization(guards = "isNaRm(naRm)")
-    protected RDoubleVector colMeansNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    @Specialization(guards = "naRm")
+    protected RDoubleVector colMeansNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
@@ -132,8 +139,8 @@ public abstract class ColMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, isComplete);
     }
 
-    @Specialization(guards = "!isNaRm(naRm)")
-    protected RDoubleVector colMeansNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    @Specialization(guards = "!naRm")
+    protected RDoubleVector colMeansNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         double[] result = new double[colNum];
         na.enable(x);
         nextCol: for (int c = 0; c < colNum; c++) {
@@ -151,8 +158,8 @@ public abstract class ColMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
-    @Specialization(guards = "isNaRm(naRm)")
-    protected RDoubleVector colMeansNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    @Specialization(guards = "naRm")
+    protected RDoubleVector colMeansNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
@@ -176,13 +183,4 @@ public abstract class ColMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, isComplete);
     }
 
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RDoubleVector colMeans(RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
-        throw RError.error(this, RError.Message.X_NUMERIC);
-    }
-
-    protected boolean isNaRm(byte naRm) {
-        return naRm == RRuntime.LOGICAL_TRUE;
-    }
 }

@@ -22,12 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -58,6 +57,10 @@ public abstract class Assign extends RBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
     private final BranchProfile warningProfile = BranchProfile.create();
 
+    /**
+     * TODO: This method becomes obsolete when Assign and AssignFastPaths are modified to have the
+     * (String, Object, REnvironment, boolean) signature.
+     */
     private String checkVariable(RAbstractStringVector xVec) {
         int len = xVec.getLength();
         if (len == 1) {
@@ -74,7 +77,13 @@ public abstract class Assign extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toLogical(3);
+        casts.arg("x").asStringVector().shouldBe(singleElement(), RError.Message.ONLY_FIRST_VARIABLE_NAME).findFirst(RError.Message.INVALID_FIRST_ARGUMENT);
+
+        casts.arg("envir").mustBe(nullValue().not(), RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, RError.Message.INVALID_ARGUMENT, "envir");
+
+        // this argument could be made Boolean unless there were AssignFastPath relying upon the
+        // byte argument
+        casts.arg("inherits").asLogicalVector().findFirst().notNA();
     }
 
     /**
@@ -85,7 +94,7 @@ public abstract class Assign extends RBuiltinNode {
                     @Cached("createBinaryProfile()") ConditionProfile inheritsProfile) {
         String x = checkVariable(xVec);
         REnvironment env = envir;
-        if (inheritsProfile.profile(inherits == RRuntime.LOGICAL_TRUE)) {
+        if (inheritsProfile.profile(RRuntime.fromLogical(inherits))) {
             while (env != REnvironment.emptyEnv()) {
                 if (env.get(x) != null) {
                     break;
@@ -111,18 +120,5 @@ public abstract class Assign extends RBuiltinNode {
             throw RError.error(this, ex);
         }
         return value;
-    }
-
-    @SuppressWarnings("unused")
-    @Fallback
-    @TruffleBoundary
-    protected Object assignFallback(Object xVec, Object value, Object envir, Object inherits) {
-        if (RRuntime.asString(xVec) == null) {
-            throw RError.error(this, RError.Message.INVALID_FIRST_ARGUMENT);
-        } else if (!(envir instanceof REnvironment)) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "pos");
-        } else {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "inherits");
-        }
     }
 }

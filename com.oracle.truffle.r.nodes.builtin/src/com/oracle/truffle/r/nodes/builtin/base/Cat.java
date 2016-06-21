@@ -22,40 +22,48 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asBoolean;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt0;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.ToStringNode;
 import com.oracle.truffle.r.nodes.unary.ToStringNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * The {@code cat .Internal}.
  */
-@RBuiltin(name = "cat", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"})
+@RBuiltin(name = "cat", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"})
 public abstract class Cat extends RBuiltinNode {
 
     @Child private ToStringNode toString;
@@ -69,72 +77,40 @@ public abstract class Cat extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toLogical(5);
-    }
+        casts.arg("sep").mustBe(stringValue(), RError.Message.INVALID_SEP);
 
-    private void checkFillLength(RAbstractVector fill) throws RError {
-        if (fill.getLength() > 1) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "fill");
-        }
-    }
+        casts.arg("fill").mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())),
+                        Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(), asInteger());
 
-    private RStringVector checkLabels(Object labels) throws RError {
-        if (labels == RNull.instance) {
-            return null;
-        } else {
-            if (labels instanceof String) {
-                return RDataFactory.createStringVectorFromScalar((String) labels);
-            } else if (labels instanceof RStringVector) {
-                return (RStringVector) labels;
-            } else {
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "labels");
-            }
-        }
-    }
+        casts.arg("labels").map(defaultValue(RDataFactory.createStringVector(0))).mustBe(stringValue()).asStringVector();
 
-    public boolean numericFill(RAbstractVector fill) {
-        return fill instanceof RIntVector || fill instanceof RDoubleVector;
+        // append is interpreted in the calling closure, but GnuR still checks for NA
+        casts.arg("append").asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Specialization
     @TruffleBoundary
-    protected RNull cat(RList args, RConnection conn, RAbstractStringVector sepVec, RAbstractLogicalVector fill, Object labels, byte append) {
-        checkFillLength(fill);
+    protected RNull cat(RList args, RConnection conn, RAbstractStringVector sepVec, boolean fill, RAbstractStringVector labels, boolean append) {
         int fillWidth = -1;
-        if (RRuntime.fromLogical(fill.getDataAt(0))) {
+        if (fill) {
             fillWidth = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("width"));
         }
-        return output(args, conn, sepVec, fillWidth, checkLabels(labels), append);
+        return output(args, conn, sepVec, fillWidth, labels, append);
     }
 
-    @Specialization(guards = "numericFill(fill)")
     @TruffleBoundary
-    protected RNull cat(RList args, RConnection conn, RAbstractStringVector sepVec, RAbstractVector fill, Object labels, byte append) {
-        checkFillLength(fill);
+    @Specialization
+    protected RNull cat(RList args, RConnection conn, RAbstractStringVector sepVec, int givenFillWidth, RAbstractStringVector labels, boolean append) {
         int fillWidth = -1;
-        int givenFillWidth = RRuntime.asInteger(fill);
-        if (givenFillWidth < 1) {
-            RError.warning(this, RError.Message.NON_POSITIVE_FILL);
-        } else {
+        if (givenFillWidth >= 1) {
             fillWidth = givenFillWidth;
         }
-        return output(args, conn, sepVec, fillWidth, checkLabels(labels), append);
-    }
-
-    @SuppressWarnings("unused")
-    @Fallback
-    @TruffleBoundary
-    protected RNull cat(Object args, Object conn, Object sepVec, Object fillObj, Object labels, Object append) {
-        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        return output(args, conn, sepVec, fillWidth, labels, append);
     }
 
     @TruffleBoundary
-    private RNull output(RList args, RConnection conn, RAbstractStringVector sepVec, int fillWidth, RStringVector labels, byte append) {
+    private RNull output(RList args, RConnection conn, RAbstractStringVector sepVec, int fillWidth, RAbstractStringVector labels, @SuppressWarnings("unused") boolean append) {
         boolean filling = fillWidth > 0;
-        // append is interpreted in the calling closure, but GnuR still checks for NA
-        if (RRuntime.isNA(append)) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "append");
-        }
         ensureToString();
         /*
          * cat converts its arguments to character vectors, concatenates them to a single character

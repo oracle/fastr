@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,42 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import java.io.PrintWriter;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.context.RContext;
+
 /**
  * Cast nodes behave like unary nodes, but in many cases it is useful to have a specific type for
  * casts.
  */
 public abstract class CastNode extends UnaryNode {
+
+    @TruffleBoundary
+    public static void handleArgumentError(Object arg, CastNode node, RError.Message message, Object[] messageArgs) {
+        if (RContext.getRRuntimeASTAccess() == null) {
+            throw new IllegalArgumentException(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg, messageArgs)));
+        } else {
+            throw RError.error(node, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
+        }
+    }
+
+    @TruffleBoundary
+    public static void handleArgumentWarning(Object arg, CastNode node, RError.Message message, Object[] messageArgs, PrintWriter out) {
+        if (message == null) {
+            return;
+        }
+
+        if (out != null) {
+            out.printf(message.message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
+        } else if (RContext.getRRuntimeASTAccess() == null) {
+            System.err.println(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg,
+                            messageArgs)));
+        } else {
+            RError.warning(node, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
+        }
+    }
 
 }

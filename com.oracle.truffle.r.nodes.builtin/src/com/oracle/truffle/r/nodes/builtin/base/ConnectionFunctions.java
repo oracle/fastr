@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.trueValue;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.getBaseConnection;
 import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.removeFileURLPrefix;
@@ -120,22 +124,27 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "raw"})
     public abstract static class File extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("description").mustBe(stringValue()).asStringVector().shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").findFirst().notNA();
+
+            casts.arg("open").mustBe(stringValue()).asStringVector().findFirst().notNA();
+
+            casts.arg("blocking").asLogicalVector().findFirst().map(toBoolean()).mustBe(trueValue(), RError.Message.NYI, "non-blocking mode not supported");
+
+            casts.arg("encoding").asStringVector().findFirst();
+
+            casts.arg("raw").asLogicalVector().findFirst().map(toBoolean());
+        }
+
         @Specialization
         @TruffleBoundary
         @SuppressWarnings("unused")
-        protected Object file(RAbstractStringVector description, RAbstractStringVector openVec, byte blocking, RAbstractStringVector encoding, byte raw) {
-            if (!RRuntime.fromLogical(blocking)) {
-                throw RError.nyi(this, "non-blocking mode not supported");
-            }
-            if (description.getLength() > 1) {
-                RError.warning(this, RError.Message.ARGUMENT_ONLY_FIRST_1, "description");
-            }
-            if (openVec.getLength() > 1) {
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "open");
-            }
+        protected Object file(String description, String openArg, boolean blocking, String encoding, boolean raw) {
+            String open = openArg;
             // TODO handle http/ftp prefixes and redirect
-            String path = removeFileURLPrefix(description.getDataAt(0));
-            String open = openVec.getDataAt(0);
+            String path = removeFileURLPrefix(description);
             if (path.length() == 0) {
                 // special case, temp file opened in "w+" or "w+b" only
                 if (open.length() == 0) {
@@ -150,7 +159,7 @@ public abstract class ConnectionFunctions {
             try {
                 return new FileRConnection(path, open);
             } catch (IOException ex) {
-                RError.warning(this, RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
+                RError.warning(this, RError.Message.CANNOT_OPEN_FILE, description, ex.getMessage());
                 throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
