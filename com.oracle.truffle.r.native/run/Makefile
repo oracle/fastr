@@ -38,12 +38,15 @@
 .PHONY: bindir all rcmd
 
 FASTR_BIN_DIR := $(FASTR_R_HOME)/bin
+FASTR_DOC_DIR := $(FASTR_R_HOME)/doc
 FASTR_ETC_DIR := $(FASTR_R_HOME)/etc
 FASTR_SHARE_DIR := $(FASTR_R_HOME)/share
 FASTR_INCLUDE_DIR := $(FASTR_R_HOME)/include
 
 R_SCRIPT := $(addprefix $(GNUR_HOME)/bin/,R)
 SUPPORT_SCRIPTS := $(addprefix $(GNUR_HOME)/bin/,BATCH COMPILE INSTALL SHLIB Rcmd config javareconf)
+
+DOC_FILES := $(wildcard $(GNUR_HOME)/doc/*)
 
 # Not all of these work unchanged
 ETC_FILES := $(addprefix $(GNUR_HOME)/etc/,javaconf ldpaths Renviron repositories)
@@ -54,6 +57,7 @@ all: rundirs rcmds includedir
 
 rundirs:
 	mkdir -p $(FASTR_BIN_DIR)
+	mkdir -p $(FASTR_DOC_DIR)
 	mkdir -p $(FASTR_BIN_DIR)/exec
 	mkdir -p $(FASTR_BIN_DIR)/execRscript
 	mkdir -p $(FASTR_ETC_DIR)
@@ -81,6 +85,8 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh
 	ed Makeconf.etc < edMakeconf.etc
 	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf
 	cp -r $(SHARE_FILES) $(FASTR_SHARE_DIR)
+	# TODO may need filtering
+	cp -r $(DOC_FILES) $(FASTR_DOC_DIR)
 	# overrides
 	cp examples-header.R examples-footer.R $(FASTR_SHARE_DIR)/R
 
