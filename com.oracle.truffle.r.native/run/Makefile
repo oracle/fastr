@@ -65,7 +65,8 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh
 	cp R.sh $(FASTR_BIN_DIR)/exec/R
 	cp Rscript_exec.sh $(FASTR_BIN_DIR)/execRscript/Rscript
 	cp Rscript.sh $(FASTR_BIN_DIR)/Rscript
-	chmod +x $(FASTR_BIN_DIR)/exec/R $(FASTR_BIN_DIR)/execRscript/Rscript $(FASTR_BIN_DIR)/Rscript
+	cp Rclasspath.sh $(FASTR_BIN_DIR)/exec/Rclasspath
+	chmod +x $(FASTR_BIN_DIR)/exec/R $(FASTR_BIN_DIR)/execRscript/Rscript $(FASTR_BIN_DIR)/Rscript $(FASTR_BIN_DIR)/exec/Rclasspath
 	cp $(SUPPORT_SCRIPTS) $(FASTR_BIN_DIR)
 	sed -e 's!^\(R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
 	chmod +x $(FASTR_BIN_DIR)/R 
