@@ -67,8 +67,8 @@ rbcheck : ${common} ${java8Downloads} {
 # currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
 
 builds = [
-  ${gateTest}       {capabilities : [linux, amd64, gate, post-merge],   name: "gate-test-linux-amd64"}
-  ${gateStyle}      {capabilities : [linux, amd64, gate, post-merge],   name: "gate-style-linux-amd64"}
-  ${rbcheck}        {capabilities : [linux, amd64, gate, post-merge],   name: "gate-rbcheck-linux-amd64"}
-#  ${gateTest}      {capabilities : [linux, sparcv9, gate, post-merge], name: "gate-test-linux-sparcv9"}
+  ${gateTest}       {capabilities : [linux, amd64],  targets : [gate, post-merge],  name: "gate-test-linux-amd64"}
+  ${gateStyle}      {capabilities : [linux, amd64],   targets : [gate, post-merge],  name: "gate-style-linux-amd64"}
+  ${rbcheck}        {capabilities : [linux, amd64],   targets : [gate, post-merge],  name: "gate-rbcheck-linux-amd64"}
+#  ${gateTest}      {capabilities : [linux, sparcv9], targets : [gate, post-merge],  name: "gate-test-linux-sparcv9"}
 ]
