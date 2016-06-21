@@ -117,6 +117,9 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
         vmArgs.append(_command_class_dict[command.lower()])
     return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
 
+def r_classpath(args):
+    print mx.classpath(_r_command_project)
+
 def _sanitize_vmArgs(jdk, vmArgs):
     '''
     jdk/vm dependent analysis of vmArgs to remove those that are not appropriate for the
@@ -535,6 +538,7 @@ _commands = {
     'rembed' : [rembed, '[options]'],
     'installpkgs' : [installpkgs, '[options]'],
     'installcran' : [installpkgs, '[options]'],
+    'r-cp' : [r_classpath, '[options]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)

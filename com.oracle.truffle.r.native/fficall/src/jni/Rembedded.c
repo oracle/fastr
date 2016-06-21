@@ -35,6 +35,7 @@ SA_TYPE SaveAction; // ??
 typedef jint (JNICALL *JNI_CreateJavaVMFunc)
 	      (JavaVM **pvm, void **penv, void *args);
 
+
 static void *dlopen_jvmlib(char *libpath) {
 	void *handle = dlopen(libpath, RTLD_GLOBAL | RTLD_NOW);
 	if (handle == NULL) {
@@ -59,9 +60,16 @@ static int process_vmargs(int argc, char *argv[], char *vmargv[], char *uargv[])
 	return vcount;
 }
 
+char *get_classpath(char *r_home);
+
 int Rf_initialize_R(int argc, char *argv[]) {
 	if (initialized) {
 		fprintf(stderr, "%s", "R is already initialized\n");
+		exit(1);
+	}
+	char *r_home = getenv("R_HOME");
+	if (r_home == NULL) {
+		printf("R_HOME must be set\n");
 		exit(1);
 	}
 	struct utsname utsname;
@@ -94,17 +102,8 @@ int Rf_initialize_R(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	// TODO getting the correct classpath is hard, need a helper program
-	char *vm_cp = getenv("FASTR_CLASSPATH");
-	if (vm_cp == NULL) {
-		printf("Rf_initialize_R: FASTR_CLASSPATH env var not set\n");
-		exit(1);
-	}
-	int cplen = (int) strlen(vm_cp);
-
-	char *cp = malloc(cplen + 32);
-	strcpy(cp, "-Djava.class.path=");
-	strcat(cp, vm_cp);
+	char *vm_cp = get_classpath(r_home);
+	//printf("cp %s\n", vm_cp);
 
 	char **vmargs = malloc(argc * sizeof(char*));
 	char **uargs = malloc(argc * sizeof(char*));
@@ -113,7 +112,7 @@ int Rf_initialize_R(int argc, char *argv[]) {
 	argv = uargs;
 	JavaVMOption vm_options[1 + vmargc];
 
-	vm_options[0].optionString = cp;
+	vm_options[0].optionString = vm_cp;
 	for (int i = 0; i < vmargc; i++) {
 		vm_options[i + 1].optionString = vmargs[i];
 	}
@@ -432,3 +431,70 @@ void R_runHandlers(InputHandler *handlers, fd_set *mask) {
 }
 
 int R_wait_usec;
+
+#include <unistd.h>
+#include <errno.h>
+
+void perror_exit(char *msg) {
+	perror(msg);
+	exit(1);
+}
+
+// support for getting the correct classpath for the VM
+// We use $R_HOME/bin/exec/Rclasspath to do this to emulate what happens
+// during normal execution
+char *get_classpath(char *r_home) {
+	int pipefd[2];
+	if (pipe(pipefd) == -1) {
+		perror_exit("pipe");
+	}
+	pid_t pid = fork();
+	if (pid == -1) {
+		perror("fork");
+	}
+	if (pid == 0) {
+		// child
+		char path[1024];
+		strcpy(path, r_home);
+		strcat(path, "/bin/exec/Rclasspath");
+		while ((dup2(pipefd[1], STDOUT_FILENO) == -1) && (errno == EINTR)) {}
+		close(pipefd[1]);
+		close(pipefd[0]);
+		int rc = execl(path, (char *)NULL);
+		if (rc == -1) {
+			perror_exit("exec");
+		}
+		return NULL;
+	} else {
+		// parent
+		const char *cpdef = "-Djava.class.path=";
+		char *buf = malloc(4096);
+		strcpy(buf, cpdef);
+		char *bufptr = buf + strlen(cpdef);
+		int max = 4096 - strlen(cpdef);
+		close(pipefd[1]);
+		while (1) {
+			int count = read(pipefd[0], bufptr, max);
+			if (count == -1) {
+				if (errno == EINTR) {
+					continue;
+				} else {
+					perror_exit("read");
+				}
+			} else if (count == 0) {
+			    // scrub any newline
+			    bufptr--;
+			    if (*bufptr != '\n') {
+			        bufptr++;
+			    }
+				*bufptr = 0;
+				break;
+			} else {
+				bufptr += count;
+			}
+		}
+		close(pipefd[0]);
+		wait(NULL);
+		return buf;
+	}
+}
