@@ -40,6 +40,7 @@ static jmethodID Rf_findfunMethodID;
 static jmethodID Rf_defineVarMethodID;
 static jmethodID Rf_findVarMethodID;
 static jmethodID Rf_findVarInFrameMethodID;
+static jmethodID Rf_findVarInFrame3MethodID;
 static jmethodID Rf_getAttribMethodID;
 static jmethodID Rf_setAttribMethodID;
 static jmethodID Rf_isStringMethodID;
@@ -128,6 +129,7 @@ void init_internals(JNIEnv *env) {
 	Rf_defineVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_defineVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	Rf_findVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVar", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_findVarInFrameMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVarInFrame", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	Rf_findVarInFrame3MethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVarInFrame3", "(Ljava/lang/Object;Ljava/lang/Object;I)Ljava/lang/Object;", 1);
 	Rf_getAttribMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_getAttrib", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_setAttribMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_setAttrib", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	Rf_isStringMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_isString", "(Ljava/lang/Object;)I", 1);
@@ -322,20 +324,22 @@ SEXP Rf_findFun(SEXP symbol, SEXP rho) {
 	return checkRef(thisenv, result);
 }
 
-SEXP Rf_findVar(SEXP symbol, SEXP rho) {
+SEXP Rf_findVar(SEXP sym, SEXP rho) {
 	JNIEnv *thisenv = getEnv();
-	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarMethodID, symbol, rho);
+	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarMethodID, sym, rho);
     return checkRef(thisenv, result);
 }
 
-SEXP Rf_findVarInFrame(SEXP symbol, SEXP rho) {
+SEXP Rf_findVarInFrame(SEXP rho, SEXP sym) {
 	JNIEnv *thisenv = getEnv();
-	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarInFrameMethodID, symbol, rho);
+	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarInFrameMethodID, rho, sym);
     return checkRef(thisenv, result);
 }
 
-SEXP Rf_findVarInFrame3(SEXP symbol, SEXP rho, Rboolean b) {
-	return unimplemented("Rf_findVarInFrame3");
+SEXP Rf_findVarInFrame3(SEXP rho, SEXP sym, Rboolean b) {
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarInFrame3MethodID, rho, sym, b);
+    return checkRef(thisenv, result);
 }
 
 SEXP Rf_getAttrib(SEXP vec, SEXP name) {
