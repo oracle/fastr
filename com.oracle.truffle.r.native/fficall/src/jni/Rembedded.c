@@ -456,7 +456,7 @@ static void perror_exit(char *msg) {
 }
 
 // support for getting the correct classpath for the VM
-// We use $R_HOME/bin/exec/Rclasspath to do this to emulate what happens
+// We use $R_HOME/bin/execRextras/Rclasspath to do this to emulate what happens
 // during normal execution
 static char *get_classpath(char *r_home) {
 	char **env = update_environ_with_java_home();
@@ -473,7 +473,7 @@ static char *get_classpath(char *r_home) {
 		// child
 		char path[1024];
 		strcpy(path, r_home);
-		strcat(path, "/bin/exec/Rclasspath");
+		strcat(path, "/bin/execRextras/Rclasspath");
 		while ((dup2(pipefd[1], STDOUT_FILENO) == -1) && (errno == EINTR)) {}
 		close(pipefd[1]);
 		close(pipefd[0]);

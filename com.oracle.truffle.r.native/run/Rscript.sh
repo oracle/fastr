@@ -24,10 +24,11 @@
 
 # In GnuR Rscript is an executable in the bin directory.
 # In FastR Rscript and R are combined in the same image. For consistency
-# Rscript is a script in the bin directory that simply invokes bin/exec/Rscript
+# Rscript is a script in the bin directory that simply invokes bin/execRextras/Rscript
+# N.B. This can't be in bin/exec as then it is treated as a sub0architecture
 
 source="${BASH_SOURCE[0]}"
 while [ -h "$source" ] ; do source="$(readlink "$source")"; done
 here="$( cd -P "$( dirname "$source" )" && pwd )"
 
-exec $here/execRscript/Rscript "$@"
+exec $here/execRextras/Rscript "$@"
