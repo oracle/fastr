@@ -407,6 +407,10 @@ public final class RDataFactory {
         return traceDataCreated(new RPairList());
     }
 
+    public static RPairList createPairList(int n) {
+        return traceDataCreated(RPairList.create(n));
+    }
+
     public static RPairList createPairList(Object car) {
         return traceDataCreated(new RPairList(car, RNull.instance, RNull.instance, null));
     }

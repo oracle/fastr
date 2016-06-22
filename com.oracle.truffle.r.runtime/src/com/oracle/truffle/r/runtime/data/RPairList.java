@@ -72,6 +72,25 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
         this.type = type;
     }
 
+    /**
+     * Creates a pairlist of length {@code n > 0}.
+     */
+    public static RPairList create(int n) {
+        assert n > 0;
+        RPairList head = null;
+        RPairList pl = null;
+        for (int i = 0; i < n; i++) {
+            RPairList next = new RPairList();
+            if (pl == null) {
+                head = next;
+            } else {
+                pl.cdr = next;
+            }
+            pl = next;
+        }
+        return head;
+    }
+
     @Override
     public RType getRType() {
         return RType.PairList;
