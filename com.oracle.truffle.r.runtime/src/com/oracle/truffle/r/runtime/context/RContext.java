@@ -478,6 +478,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         doEnvOptionsProfileInitialization();
         validateContextStates();
         engine.activate(stateREnvironment);
+        stateROptions.updateDotOptions();
         initialContextInitialized = true;
     }
 
