@@ -94,6 +94,7 @@ static jmethodID RDEBUGMethodID;
 static jmethodID SET_RDEBUGMethodID;
 static jmethodID RSTEPMethodID;
 static jmethodID SET_RSTEPMethodID;
+static jmethodID ENCLOSMethodID;
 
 static jclass rErrorHandlingClass;
 static jclass handlerStacksClass;
@@ -185,6 +186,7 @@ void init_internals(JNIEnv *env) {
 	SET_RDEBUGMethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_RDEBUG", "(Ljava/lang/Object;I)V", 1);
 	RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "RSTEP", "(Ljava/lang/Object;)I", 1);
 	SET_RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_RSTEP", "(Ljava/lang/Object;I)V", 1);
+	ENCLOSMethodID = checkGetMethodID(env, CallRFFIHelperClass, "ENCLOS", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 
 	rErrorHandlingClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RErrorHandling");
 	handlerStacksClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RErrorHandling$HandlerStacks");
@@ -945,7 +947,8 @@ SEXP FRAME(SEXP x) {
 }
 
 SEXP ENCLOS(SEXP x) {
-	return unimplemented("ENCLOS");
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, ENCLOSMethodID, x);
 }
 
 SEXP HASHTAB(SEXP x) {

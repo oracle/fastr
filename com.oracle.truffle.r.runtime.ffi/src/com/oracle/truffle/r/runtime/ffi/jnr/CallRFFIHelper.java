@@ -841,14 +841,19 @@ public class CallRFFIHelper {
 
     public static int RSTEP(Object x) {
         RFFIUtils.traceUpCall("RSTEP", x);
-        REnvironment func = guaranteeInstanceOf(x, REnvironment.class);
+        REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
         throw RInternalError.unimplemented("RSTEP");
     }
 
     public static void SET_RSTEP(Object x, int v) {
         RFFIUtils.traceUpCall("SET_RSTEP", x, v);
-        REnvironment func = guaranteeInstanceOf(x, REnvironment.class);
+        REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
         throw RInternalError.unimplemented("SET_RSTEP");
+    }
+
+    public static Object ENCLOS(Object x) {
+        REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
+        return env.getParent();
     }
 
     @SuppressWarnings("unused")
