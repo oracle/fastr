@@ -568,6 +568,9 @@ public class CallRFFIHelper {
     public static Object VECTOR_ELT(Object x, int i) {
         RFFIUtils.traceUpCall("VECTOR_ELT", x, i);
         Object vec = x;
+        if (vec instanceof RExpression) {
+            return ((RExpression) vec).getDataAt(i);
+        }
         RAbstractListVector list = guaranteeInstanceOf(RRuntime.asAbstractVector(vec), RAbstractListVector.class);
         return list.getDataAt(i);
     }
