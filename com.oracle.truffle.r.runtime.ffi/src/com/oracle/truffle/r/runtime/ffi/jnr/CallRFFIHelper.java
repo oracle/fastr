@@ -852,8 +852,11 @@ public class CallRFFIHelper {
     }
 
     public static Object ENCLOS(Object x) {
+        RFFIUtils.traceUpCall("ENCLOS", x);
         REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
-        return env.getParent();
+        REnvironment result = env.getParent();
+        assert result != null;
+        return result;
     }
 
     @SuppressWarnings("unused")
