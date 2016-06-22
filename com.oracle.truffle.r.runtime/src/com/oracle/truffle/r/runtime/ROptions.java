@@ -28,7 +28,9 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Central location for all R options, that is for the {@code options(...)} and {@code getOption}
@@ -51,6 +53,7 @@ public class ROptions {
 
         private ContextStateImpl(HashMap<String, Object> map) {
             this.map = map;
+            // cannot call updateDotOptions here
         }
 
         public Set<Entry<String, Object>> getValues() {
@@ -83,6 +86,7 @@ public class ROptions {
             } else {
                 map.put(name, coercedValue);
             }
+            updateDotOptions();
             return previous;
         }
 
@@ -94,6 +98,25 @@ public class ROptions {
                 map.putAll(context.getParent().stateROptions.map);
             }
             return new ContextStateImpl(map);
+        }
+
+        /**
+         * Creates/updates the {@code .Options} variable in {@code baseenv}.
+         */
+        public void updateDotOptions() {
+            // TODO make incremental?
+            RPairList ppl = null;
+            RPairList head = null;
+            for (Map.Entry<String, Object> entry : getValues()) {
+                RPairList pl = RDataFactory.createPairList(entry.getValue(), RNull.instance, RDataFactory.createSymbol(entry.getKey()));
+                if (ppl != null) {
+                    ppl.setCdr(pl);
+                } else {
+                    head = pl;
+                }
+                ppl = pl;
+            }
+            REnvironment.baseEnv().safePut(DOT_OPTIONS, head);
         }
     }
 
@@ -107,6 +130,11 @@ public class ROptions {
             return new OptionsException(RError.Message.INVALID_VALUE_FOR, name);
         }
     }
+
+    /**
+     * S compatibility - pair list of the options
+     */
+    private static final String DOT_OPTIONS = ".Options";
 
     private static final Set<String> CHECKED_OPTIONS_SET = new HashSet<>(Arrays.asList("width", "deparse.cutoff", "digits", "expressions", "keep.source", "editor", "continue", "prompt", "contrasts",
                     "check.bounds", "warn", "warning.length", "warning.expression", "max.print", "nwarnings", "error", "show.error.messages", "echo", "OutDec", "max.contour.segments",
