@@ -39,6 +39,6 @@ void init_parse(JNIEnv *env) {
 SEXP R_ParseVector(SEXP text, int n, ParseStatus *z, SEXP srcfile) {
 	JNIEnv *env = getEnv();
 	jobject result = (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, parseMethodID, text, n, srcfile);
-	*z = (*env)->GetObjectField(env, result, parseStatusFieldID);
+	*z = (*env)->GetIntField(env, result, parseStatusFieldID);
     return (*env)->GetObjectField(env, result, parseExprFieldID);
 }
