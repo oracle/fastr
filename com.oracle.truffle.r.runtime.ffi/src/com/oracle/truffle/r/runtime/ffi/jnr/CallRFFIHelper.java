@@ -420,6 +420,12 @@ public class CallRFFIHelper {
                 return RDataFactory.createRawVector(new byte[n]);
             case VECSXP:
                 return RDataFactory.createList(n);
+            case LANGSXP:
+                if (n == 0) {
+                    return RNull.instance;
+                } else {
+                    return RDataFactory.createPairList(n);
+                }
             default:
                 throw unimplemented("unexpected SEXPTYPE " + type);
         }
