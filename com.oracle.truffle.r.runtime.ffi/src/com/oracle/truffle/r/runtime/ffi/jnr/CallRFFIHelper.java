@@ -876,6 +876,42 @@ public class CallRFFIHelper {
         return result;
     }
 
+    private enum ParseStatus {
+        PARSE_NULL,
+        PARSE_OK,
+        PARSE_INCOMPLETE,
+        PARSE_ERROR,
+        PARSE_EOF
+    }
+
+    private static class ParseResult {
+        @SuppressWarnings("unused") private final int parseStatus;
+        @SuppressWarnings("unused") private final Object expr;
+
+        private ParseResult(int parseStatus, Object expr) {
+            this.parseStatus = parseStatus;
+            this.expr = expr;
+        }
+    }
+
+    public static Object R_ParseVector(Object text, int n, Object srcFile) {
+        // TODO general case
+        assert n == 1;
+        assert srcFile == RNull.instance;
+        String textString = RRuntime.asString(text);
+        assert textString != null;
+
+        try {
+            Source source = Source.fromText(textString, "<R_ParseVector>");
+            RExpression exprs = RContext.getEngine().parse(null, source);
+            return new ParseResult(ParseStatus.PARSE_OK.ordinal(), exprs);
+        } catch (ParseException ex) {
+            // TODO incomplete
+            return new ParseResult(ParseStatus.PARSE_ERROR.ordinal(), RNull.instance);
+        }
+
+    }
+
     @SuppressWarnings("unused")
     private static String R_HomeDir() {
         RFFIUtils.traceUpCall("R_HomeDir");
