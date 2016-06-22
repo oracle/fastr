@@ -898,6 +898,7 @@ public class CallRFFIHelper {
     }
 
     public static Object R_ParseVector(Object text, int n, Object srcFile) {
+        RFFIUtils.traceUpCall("R_ParseVector", text, n, srcFile);
         // TODO general case
         assert n == 1;
         assert srcFile == RNull.instance;
