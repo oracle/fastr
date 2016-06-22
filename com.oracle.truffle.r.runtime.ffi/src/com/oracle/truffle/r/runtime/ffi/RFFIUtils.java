@@ -22,14 +22,22 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public class RFFIUtils {
+    /**
+     * Set this to {@code true} when it is not possible to set {@link FastROptions}.
+     */
+    private static boolean alwaysTrace;
+
     public static byte[] wrapChar(char v) {
         return new byte[]{(byte) v};
     }
@@ -47,25 +55,69 @@ public class RFFIUtils {
         throw new IOException(errMsg);
     }
 
-    public static void traceCall(String name, Object... args) {
-        if (FastROptions.TraceNativeCalls.getBooleanValue()) {
-            System.out.print("CallRFFI " + name + ": ");
-            printArgs(args);
-            System.out.println();
+    /**
+     * Places in /tmp because in embedded mode can't trust that cwd is writeable. Also, tag with
+     * time in event of multiple concurrent instances.
+     */
+    private static final String tracePathPrefix = "/tmp/fastr_trace_nativecalls.log-";
+    private static PrintWriter traceWriter;
+
+    private static void initialize() {
+        if (traceWriter == null) {
+            String tracePath = tracePathPrefix + Long.toString(System.currentTimeMillis());
+            try {
+                traceWriter = new PrintWriter(new FileWriter(tracePath));
+            } catch (IOException ex) {
+                System.err.println(ex.getMessage());
+                System.exit(1);
+            }
         }
     }
 
-    private static void printArgs(Object[] args) {
+    public static void traceUpCall(String name, Object... args) {
+        traceCall(false, name, args);
+    }
+
+    public static void traceDownCall(String name, Object... args) {
+        traceCall(true, name, args);
+    }
+
+    private static void traceCall(boolean down, String name, Object... args) {
+        if (alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue()) {
+            initialize();
+            StringBuffer sb = new StringBuffer();
+            sb.append("CallRFFI[");
+            sb.append(down ? "Down" : "Up");
+            sb.append(']');
+            sb.append(name);
+            sb.append('(');
+            printArgs(sb, args);
+            sb.append(')');
+            traceWriter.println(sb.toString());
+            traceWriter.flush();
+        }
+    }
+
+    private static void printArgs(StringBuffer sb, Object[] args) {
+        boolean first = true;
         for (Object arg : args) {
-            System.out.print(" ");
-            System.out.print(arg == null ? "" : arg.getClass().getSimpleName());
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+            sb.append(arg == null ? "" : arg.getClass().getSimpleName());
             if (arg instanceof RPairList) {
-                System.out.print("[");
-                printArgs(((RPairList) arg).toRList().getDataCopy());
-                System.out.print("]");
+                sb.append("[");
+                printArgs(sb, ((RPairList) arg).toRList().getDataCopy());
+                sb.append("]");
+            }
+            if (arg instanceof RSymbol) {
+                RSymbol symbol = (RSymbol) arg;
+                sb.append("\"" + symbol.getName() + "\")");
             }
             if (!(arg instanceof RTypedValue)) {
-                System.out.print("(" + arg + ")");
+                sb.append("(" + arg + ")");
             }
         }
     }

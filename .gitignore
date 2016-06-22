@@ -81,6 +81,7 @@ scratch/
 bin/
 share/
 etc/
+doc/
 src_gen/
 /local/
 /.hgtip
@@ -113,4 +114,5 @@ test_gnur
 test_fastr
 lib.install.cran*
 package.blacklist
-com.oracle.truffle.r.test.native/embedded/main
+com.oracle.truffle.r.test.native/embedded/lib
+

@@ -223,7 +223,7 @@ public class RInstrumentation {
             FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
             for (String debugFunctionName : debugFunctionNames) {
                 if (debugFunctionName.equals(fdn.toString())) {
-                    RContext.getRRuntimeASTAccess().enableDebug(func);
+                    RContext.getRRuntimeASTAccess().enableDebug(func, false);
                 }
             }
         }

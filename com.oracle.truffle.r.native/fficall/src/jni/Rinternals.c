@@ -90,6 +90,11 @@ static jmethodID DUPLICATE_ATTRIB_MethodID;
 static jmethodID isS4ObjectMethodID;
 static jmethodID logObject_MethodID;
 static jmethodID R_tryEvalMethodID;
+static jmethodID RDEBUGMethodID;
+static jmethodID SET_RDEBUGMethodID;
+static jmethodID RSTEPMethodID;
+static jmethodID SET_RSTEPMethodID;
+
 
 static jclass RExternalPtrClass;
 static jmethodID createExternalPtrMethodID;
@@ -172,6 +177,10 @@ void init_internals(JNIEnv *env) {
 	isS4ObjectMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isS4Object", "(Ljava/lang/Object;)I", 1);
 	logObject_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "logObject", "(Ljava/lang/Object;)V", 1);
 	R_tryEvalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_tryEval", "(Ljava/lang/Object;Ljava/lang/Object;Z)Ljava/lang/Object;", 1);
+	RDEBUGMethodID = checkGetMethodID(env, CallRFFIHelperClass, "RDEBUG", "(Ljava/lang/Object;)I", 1);
+	SET_RDEBUGMethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_RDEBUG", "(Ljava/lang/Object;I)V", 1);
+	RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "RSTEP", "(Ljava/lang/Object;)I", 1);
+	SET_RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_RSTEP", "(Ljava/lang/Object;I)V", 1);
 
 	RExternalPtrClass = checkFindClass(env, "com/oracle/truffle/r/runtime/data/RExternalPtr");
 	createExternalPtrMethodID = checkGetMethodID(env, RDataFactoryClass, "createExternalPtr", "(JLjava/lang/Object;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RExternalPtr;", 1);
@@ -854,13 +863,13 @@ SEXP CLOENV(SEXP x) {
 }
 
 int RDEBUG(SEXP x) {
-    unimplemented("RDEBUG");
-    return 0;
+    JNIEnv *thisenv = getEnv();
+    return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, RDEBUGMethodID, x);
 }
 
 int RSTEP(SEXP x) {
-	unimplemented("RSTEP");
-    return 0;
+    JNIEnv *thisenv = getEnv();
+    return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, RSTEPMethodID, x);
 }
 
 int RTRACE(SEXP x) {
@@ -869,11 +878,13 @@ int RTRACE(SEXP x) {
 }
 
 void SET_RDEBUG(SEXP x, int v) {
-    unimplemented("SET_RDEBUG");
+    JNIEnv *thisenv = getEnv();
+    (*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_RDEBUGMethodID, x, v);
 }
 
 void SET_RSTEP(SEXP x, int v) {
-    unimplemented("SET_RSTEP");
+    JNIEnv *thisenv = getEnv();
+    (*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_RSTEPMethodID, x, v);
 }
 
 void SET_RTRACE(SEXP x, int v) {

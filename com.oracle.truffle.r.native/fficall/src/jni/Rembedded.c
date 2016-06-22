@@ -11,14 +11,17 @@
  */
 #include <dlfcn.h>
 #include <sys/utsname.h>
+#include <sys/stat.h>
 #include <rffiutils.h>
 #include <R_ext/RStartup.h>
 #include <Rinterface.h>
 
+extern char **environ;
 
 static JavaVM *javaVM;
 static jobject engine;
 static int initialized = 0;
+static char *java_home;
 
 static jclass rembeddedClass;
 static jclass rStartParamsClass;
@@ -51,7 +54,7 @@ static int process_vmargs(int argc, char *argv[], char *vmargv[], char *uargv[])
 	int ucount = 0;
 	for (int i = 0; i < argc; i++) {
 		char *arg = argv[i];
-		if (arg[0] == '-' && arg[1] == 'X') {
+		if ((arg[0] == '-' && arg[1] == 'X') || (arg[0] == '-' && arg[1] == 'D')) {
 			vmargv[vcount++] = arg;
 		} else {
 			uargv[ucount++] = arg;
@@ -60,13 +63,16 @@ static int process_vmargs(int argc, char *argv[], char *vmargv[], char *uargv[])
 	return vcount;
 }
 
-char *get_classpath(char *r_home);
+static char **update_environ_with_java_home(void);
+static void print_environ(char **env);
+static char *get_classpath(char *r_home);
 
 int Rf_initialize_R(int argc, char *argv[]) {
 	if (initialized) {
 		fprintf(stderr, "%s", "R is already initialized\n");
 		exit(1);
 	}
+	// print_environ(environ);
 	char *r_home = getenv("R_HOME");
 	if (r_home == NULL) {
 		printf("R_HOME must be set\n");
@@ -75,10 +81,19 @@ int Rf_initialize_R(int argc, char *argv[]) {
 	struct utsname utsname;
 	uname(&utsname);
 	char jvmlib_path[256];
-	char *java_home = getenv("JAVA_HOME");
+	java_home = getenv("JAVA_HOME");
 	if (java_home == NULL) {
-		printf("Rf_initialize_R: can't find JAVA_HOME");
-		exit(1);
+		if (strcmp(utsname.sysname, "Linux") == 0) {
+			char *jvmdir = "/usr/java/latest";
+			struct stat statbuf;
+			if (stat(jvmdir, &statbuf) == 0) {
+				java_home = jvmdir;
+			}
+		}
+		if (java_home == NULL) {
+			printf("Rf_initialize_R: can't find a JAVA_HOME\n");
+			exit(1);
+		}
 	}
 	strcpy(jvmlib_path, java_home);
 	if (strcmp(utsname.sysname, "Linux") == 0) {
@@ -435,7 +450,7 @@ int R_wait_usec;
 #include <unistd.h>
 #include <errno.h>
 
-void perror_exit(char *msg) {
+static void perror_exit(char *msg) {
 	perror(msg);
 	exit(1);
 }
@@ -443,7 +458,9 @@ void perror_exit(char *msg) {
 // support for getting the correct classpath for the VM
 // We use $R_HOME/bin/exec/Rclasspath to do this to emulate what happens
 // during normal execution
-char *get_classpath(char *r_home) {
+static char *get_classpath(char *r_home) {
+	char **env = update_environ_with_java_home();
+	//print_environ(env);
 	int pipefd[2];
 	if (pipe(pipefd) == -1) {
 		perror_exit("pipe");
@@ -460,7 +477,7 @@ char *get_classpath(char *r_home) {
 		while ((dup2(pipefd[1], STDOUT_FILENO) == -1) && (errno == EINTR)) {}
 		close(pipefd[1]);
 		close(pipefd[0]);
-		int rc = execl(path, (char *)NULL);
+		int rc = execle(path, path, (char *)NULL, env);
 		if (rc == -1) {
 			perror_exit("exec");
 		}
@@ -498,3 +515,46 @@ char *get_classpath(char *r_home) {
 		return buf;
 	}
 }
+
+// debugging
+static void print_environ(char **env) {
+	printf("## Environment variables at %p\n", env);
+	char **e = env;
+	while (*e != NULL) {
+		printf("%s\n", *e);
+		e++;
+	}
+}
+
+static char **update_environ(char *def) {
+	int count = 0;
+	char **e = environ;
+	while (*e != NULL) {
+		e++;
+		count++;
+	}
+	char **new_env = malloc(sizeof(char *) * (count + 2));
+	e = environ;
+	char **ne = new_env;
+	while (*e != NULL) {
+		*ne++ = *e++;
+	}
+	*ne++ = def;
+	*ne = (char*) NULL;
+	return new_env;
+}
+
+static char **update_environ_with_java_home(void) {
+	char **e = environ;
+	while (*e != NULL) {
+		if (strstr(*e, "JAVA_HOME=")) {
+			return environ;
+		}
+		e++;
+	}
+	char *java_home_env = malloc(strlen(java_home) + 10);
+	strcpy(java_home_env, "JAVA_HOME=");
+	strcat(java_home_env, java_home);
+	return update_environ(java_home_env);
+}
+
