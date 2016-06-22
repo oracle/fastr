@@ -73,7 +73,7 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
     }
 
     /**
-     * Creates a pairlist of length {@code n > 0}.
+     * Creates a pairlist of length {@code n > 0} of type {@code LANGSXP}.
      */
     public static RPairList create(int n) {
         assert n > 0;
@@ -88,6 +88,7 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
             }
             pl = next;
         }
+        head.type = SEXPTYPE.LANGSXP;
         return head;
     }
 
