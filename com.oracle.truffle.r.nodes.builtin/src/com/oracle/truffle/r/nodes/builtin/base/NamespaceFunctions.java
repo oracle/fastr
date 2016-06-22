@@ -88,6 +88,11 @@ public class NamespaceFunctions {
         protected byte doIsNamespaceEnv(REnvironment env) {
             return RRuntime.asLogical(env.isNamespaceEnv());
         }
+
+        @Specialization
+        protected byte doIsNamespaceEnv(RNull env) {
+            return RRuntime.LOGICAL_FALSE;
+        }
     }
 
     @RBuiltin(name = "getNamespaceRegistry", kind = INTERNAL, parameterNames = {})
