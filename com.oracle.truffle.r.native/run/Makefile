@@ -27,7 +27,7 @@
 # but in FastR it is just a slight variant of "R". However, we cannot put
 # a FastR-specific Rscript in "exec" because the install_packages code
 # treats everything in there except "R" as a sub-architecture, so we put in
-# execRscript.
+# execRextras.
 #
 # The R script defines the R_HOME environment variable from R_HOME_DIR
 # which is set in the script during the GnuR build. This has to be changed.
@@ -59,18 +59,18 @@ rundirs:
 	mkdir -p $(FASTR_BIN_DIR)
 	mkdir -p $(FASTR_DOC_DIR)
 	mkdir -p $(FASTR_BIN_DIR)/exec
-	mkdir -p $(FASTR_BIN_DIR)/execRscript
+	mkdir -p $(FASTR_BIN_DIR)/execRextras
 	mkdir -p $(FASTR_ETC_DIR)
 	mkdir -p $(FASTR_SHARE_DIR)
 	
 rcmds: $(FASTR_BIN_DIR)/R
 
-$(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh
+$(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cp R.sh $(FASTR_BIN_DIR)/exec/R
-	cp Rscript_exec.sh $(FASTR_BIN_DIR)/execRscript/Rscript
+	cp Rscript_exec.sh $(FASTR_BIN_DIR)/execRextras/Rscript
 	cp Rscript.sh $(FASTR_BIN_DIR)/Rscript
-	cp Rclasspath.sh $(FASTR_BIN_DIR)/exec/Rclasspath
-	chmod +x $(FASTR_BIN_DIR)/exec/R $(FASTR_BIN_DIR)/execRscript/Rscript $(FASTR_BIN_DIR)/Rscript $(FASTR_BIN_DIR)/exec/Rclasspath
+	cp Rclasspath.sh $(FASTR_BIN_DIR)/execRextras/Rclasspath
+	chmod +x $(FASTR_BIN_DIR)/exec/R $(FASTR_BIN_DIR)/execRextras/Rscript $(FASTR_BIN_DIR)/Rscript $(FASTR_BIN_DIR)/execRextras/Rclasspath
 	cp $(SUPPORT_SCRIPTS) $(FASTR_BIN_DIR)
 	sed -e 's!^\(R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
 	chmod +x $(FASTR_BIN_DIR)/R 

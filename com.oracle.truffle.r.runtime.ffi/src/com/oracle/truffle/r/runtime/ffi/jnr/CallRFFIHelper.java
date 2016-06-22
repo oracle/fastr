@@ -815,29 +815,39 @@ public class CallRFFIHelper {
 
     public static int RDEBUG(Object x) {
         RFFIUtils.traceUpCall("RDEBUG", x);
-        RFunction func = guaranteeInstanceOf(x, RFunction.class);
-        return RContext.getRRuntimeASTAccess().isDebugged(func) ? 1 : 0;
+        REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
+        if (env instanceof REnvironment.Function) {
+            REnvironment.Function funcEnv = (REnvironment.Function) env;
+            RFunction func = RArguments.getFunction(funcEnv.getFrame());
+            return RContext.getRRuntimeASTAccess().isDebugged(func) ? 1 : 0;
+        } else {
+            return 0;
+        }
     }
 
     public static void SET_RDEBUG(Object x, int v) {
         RFFIUtils.traceUpCall("SET_RDEBUG", x, v);
-        RFunction func = guaranteeInstanceOf(x, RFunction.class);
-        if (v == 1) {
-            RContext.getRRuntimeASTAccess().enableDebug(func, false);
-        } else {
-            RContext.getRRuntimeASTAccess().disableDebug(func);
+        REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
+        if (env instanceof REnvironment.Function) {
+            REnvironment.Function funcEnv = (REnvironment.Function) env;
+            RFunction func = RArguments.getFunction(funcEnv.getFrame());
+            if (v == 1) {
+                RContext.getRRuntimeASTAccess().enableDebug(func, false);
+            } else {
+                RContext.getRRuntimeASTAccess().disableDebug(func);
+            }
         }
     }
 
     public static int RSTEP(Object x) {
         RFFIUtils.traceUpCall("RSTEP", x);
-        RFunction func = guaranteeInstanceOf(x, RFunction.class);
+        REnvironment func = guaranteeInstanceOf(x, REnvironment.class);
         throw RInternalError.unimplemented("RSTEP");
     }
 
     public static void SET_RSTEP(Object x, int v) {
         RFFIUtils.traceUpCall("SET_RSTEP", x, v);
-        RFunction func = guaranteeInstanceOf(x, RFunction.class);
+        REnvironment func = guaranteeInstanceOf(x, REnvironment.class);
         throw RInternalError.unimplemented("SET_RSTEP");
     }
 

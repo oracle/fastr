@@ -95,6 +95,10 @@ static jmethodID SET_RDEBUGMethodID;
 static jmethodID RSTEPMethodID;
 static jmethodID SET_RSTEPMethodID;
 
+static jclass rErrorHandlingClass;
+static jclass handlerStacksClass;
+static jmethodID resetAndGetHandlerStacksMethodID;
+static jmethodID restoreHandlerStacksMethodID;
 
 static jclass RExternalPtrClass;
 static jmethodID createExternalPtrMethodID;
@@ -181,6 +185,11 @@ void init_internals(JNIEnv *env) {
 	SET_RDEBUGMethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_RDEBUG", "(Ljava/lang/Object;I)V", 1);
 	RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "RSTEP", "(Ljava/lang/Object;)I", 1);
 	SET_RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_RSTEP", "(Ljava/lang/Object;I)V", 1);
+
+	rErrorHandlingClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RErrorHandling");
+	handlerStacksClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RErrorHandling$HandlerStacks");
+	resetAndGetHandlerStacksMethodID = checkGetMethodID(env, rErrorHandlingClass, "resetAndGetHandlerStacks", "()Lcom/oracle/truffle/r/runtime/RErrorHandling$HandlerStacks;", 1);
+	restoreHandlerStacksMethodID = checkGetMethodID(env, rErrorHandlingClass, "restoreHandlerStacks", "(Lcom/oracle/truffle/r/runtime/RErrorHandling$HandlerStacks;)V", 1);
 
 	RExternalPtrClass = checkFindClass(env, "com/oracle/truffle/r/runtime/data/RExternalPtr");
 	createExternalPtrMethodID = checkGetMethodID(env, RDataFactoryClass, "createExternalPtr", "(JLjava/lang/Object;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RExternalPtr;", 1);
@@ -1309,7 +1318,12 @@ void UNSET_S4_OBJECT(SEXP x) {
 }
 
 Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
-	return (Rboolean) unimplemented("R_ToplevelExec");
+	JNIEnv *env = getEnv();
+	jobject handlerStacks = (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, resetAndGetHandlerStacksMethodID);
+	fun(data);
+	(*env)->CallStaticVoidMethod(env, CallRFFIHelperClass, restoreHandlerStacksMethodID, handlerStacks);
+	// TODO how do we detect error
+	return TRUE;
 }
 
 SEXP R_ExecWithCleanup(SEXP (*fun)(void *), void *data,
