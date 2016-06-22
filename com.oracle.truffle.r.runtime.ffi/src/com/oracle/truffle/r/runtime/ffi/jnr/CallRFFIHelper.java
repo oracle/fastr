@@ -245,16 +245,24 @@ public class CallRFFIHelper {
     }
 
     public static Object Rf_findVar(Object symbolArg, Object envArg) {
+        // WARNING: argument order reversed from Rf_findVarInFrame!
         RFFIUtils.traceUpCall("Rf_findVar", symbolArg, envArg);
-        return findVarInFrameHelper(symbolArg, envArg, true);
+        return findVarInFrameHelper(envArg, symbolArg, true);
     }
 
-    public static Object Rf_findVarInFrame(Object symbolArg, Object envArg) {
-        RFFIUtils.traceUpCall("Rf_findVarInFrame", symbolArg, envArg);
-        return findVarInFrameHelper(symbolArg, envArg, false);
+    public static Object Rf_findVarInFrame(Object envArg, Object symbolArg) {
+        RFFIUtils.traceUpCall("Rf_findVarInFrame", envArg, symbolArg);
+        return findVarInFrameHelper(envArg, symbolArg, false);
     }
 
-    private static Object findVarInFrameHelper(Object symbolArg, Object envArg, boolean inherits) {
+    public static Object Rf_findVarInFrame3(Object envArg, Object symbolArg, @SuppressWarnings("unused") int doGet) {
+        // GNU R has code for IS_USER_DATBASE that uses doGet
+        // This is a lookup in the single environment (envArg) only, i.e. inherits=false
+        RFFIUtils.traceUpCall("Rf_findVarInFrame3", envArg, symbolArg);
+        return findVarInFrameHelper(envArg, symbolArg, false);
+    }
+
+    private static Object findVarInFrameHelper(Object envArg, Object symbolArg, boolean inherits) {
         if (envArg == RNull.instance) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.USE_NULL_ENV_DEFUNCT);
         }
@@ -269,6 +277,7 @@ public class CallRFFIHelper {
                 return value;
             }
             if (!inherits) {
+                // simgle frame lookup
                 break;
             }
             env = env.getParent();
@@ -854,8 +863,10 @@ public class CallRFFIHelper {
     public static Object ENCLOS(Object x) {
         RFFIUtils.traceUpCall("ENCLOS", x);
         REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
-        REnvironment result = env.getParent();
-        assert result != null;
+        Object result = env.getParent();
+        if (result == null) {
+            result = RNull.instance;
+        }
         return result;
     }
 
