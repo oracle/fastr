@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
-import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceDownCall;
 
 import java.util.concurrent.Semaphore;
 
@@ -66,7 +66,7 @@ public class JNI_CallRFFI implements CallRFFI {
             throw new RInternalError(ex, "error while loading " + librffiPath);
         }
         System.load(librffiPath);
-        traceCall("initialize");
+        traceDownCall("initialize");
         initialize(RFFIVariables.values());
     }
 
@@ -74,7 +74,7 @@ public class JNI_CallRFFI implements CallRFFI {
 
     @Override
     public Object invokeCall(long address, String name, Object[] args) {
-        traceCall(name, args);
+        traceDownCall(name, args);
         try {
             inCritical.acquire();
             switch (args.length) {
@@ -130,7 +130,7 @@ public class JNI_CallRFFI implements CallRFFI {
 
     @Override
     public void invokeVoidCall(long address, String name, Object[] args) {
-        traceCall(name, args);
+        traceDownCall(name, args);
         try {
             inCritical.acquire();
             switch (args.length) {
@@ -155,7 +155,7 @@ public class JNI_CallRFFI implements CallRFFI {
 
     @Override
     public void setTempDir(String tempDir) {
-        traceCall("setTempDir", tempDir);
+        traceDownCall("setTempDir", tempDir);
         try {
             inCritical.acquire();
             RFFIVariables.setTempDir(tempDir);
@@ -168,7 +168,7 @@ public class JNI_CallRFFI implements CallRFFI {
 
     @Override
     public void setInteractive(boolean interactive) {
-        traceCall("setInteractive", interactive);
+        traceDownCall("setInteractive", interactive);
         try {
             inCritical.acquire();
             nativeSetInteractive(interactive);

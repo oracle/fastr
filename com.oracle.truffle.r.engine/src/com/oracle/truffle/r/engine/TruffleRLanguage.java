@@ -76,7 +76,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             RPackageSource.initialize();
             RContext.initialize(new RASTBuilder(), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), new RForeignAccessFactoryImpl());
         } catch (Throwable t) {
-            System.out.println("error during engine initialization:");
+            System.err.println("error during engine initialization: " + t);
             t.printStackTrace();
             System.exit(-1);
         }

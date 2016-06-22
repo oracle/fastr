@@ -171,11 +171,6 @@ public interface RRuntimeASTAccess {
     void traceAllFunctions();
 
     /**
-     * Project circularity workaround.
-     */
-    void enableDebug(RFunction func);
-
-    /**
      * Project circularity workaround. Equivalent to
      * RASTUtils.unwrap(promise.getRep()).asRSyntaxNode().
      */
@@ -189,5 +184,11 @@ public interface RRuntimeASTAccess {
     RBaseNode createReadVariableNode(String name);
 
     RBaseNode createConstantNode(Object o);
+
+    boolean enableDebug(RFunction func, boolean once);
+
+    boolean disableDebug(RFunction func);
+
+    boolean isDebugged(RFunction func);
 
 }
