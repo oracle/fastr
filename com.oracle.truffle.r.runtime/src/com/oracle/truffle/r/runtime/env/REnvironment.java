@@ -1052,6 +1052,11 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         }
 
         @Override
+        public REnvironment getParent() {
+            return null;
+        }
+
+        @Override
         public void put(String key, Object value) throws PutException {
             throw new PutException(RError.Message.ENV_ASSIGN_EMPTY);
         }
