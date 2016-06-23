@@ -41,7 +41,6 @@ import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -90,7 +89,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getNode = insert(GetNodeGen.create(null));
             }
-            func = (RFunction) getNode.execute(frame, what, env, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
+            func = (RFunction) getNode.execute(frame, what, env, RType.Function.getName(), true);
         } else {
             errorProfile.enter();
             throw RError.error(this, RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");

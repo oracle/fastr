@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
@@ -23,7 +24,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "bincode", kind = INTERNAL, parameterNames = {"x", "breaks", "right", "include.lowest"})
@@ -34,25 +34,19 @@ public abstract class Bincode extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toDouble(0);
-        casts.toDouble(1);
+        casts.arg("x").asDoubleVector();
+
+        casts.arg("breaks").asDoubleVector();
+
+        casts.arg("right").asLogicalVector().findFirst().map(toBoolean());
+
+        casts.arg("include.lowest").asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Specialization
-    RIntVector formatC(RAbstractDoubleVector x, RAbstractDoubleVector breaks, RAbstractLogicalVector rightVec, RAbstractLogicalVector includeLowestVec) {
+    RIntVector formatC(RAbstractDoubleVector x, RAbstractDoubleVector breaks, boolean right, boolean includeBorder) {
         int n = x.getLength();
         int nb = breaks.getLength();
-        if (rightVec.getLength() == 0) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "right");
-        }
-        boolean right = RRuntime.fromLogical(rightVec.getDataAt(0));
-
-        if (includeLowestVec.getLength() == 0) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "include.lowest");
-        }
-        boolean includeBorder = RRuntime.fromLogical(includeLowestVec.getDataAt(0));
 
         int lo;
         int hi;

@@ -96,7 +96,7 @@ public class TestBuiltin_asinteger extends TestBase {
 
     @Test
     public void testasinteger17() {
-        assertEval(Ignored.Unknown, Output.ContainsWarning,
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext,
                         "argv <- list(structure(c(100, -1e-13, Inf, -Inf, NaN, 3.14159265358979, NA), .Names = c(' 100', '-1e-13', ' Inf', '-Inf', ' NaN', '3.14', '  NA')));as.integer(argv[[1]]);");
     }
 
@@ -124,8 +124,8 @@ public class TestBuiltin_asinteger extends TestBase {
         assertEval("{ as.integer(0/0) }");
         assertEval("{ as.integer(-0/0) }");
         assertEval("{ as.integer(as.raw(c(1,2,3,4))) }");
-        assertEval(Output.ContainsWarning, "{ as.integer(10+2i) }");
-        assertEval(Output.ContainsWarning, "{ as.integer(c(3+3i, 4+4i)) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.integer(10+2i) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.integer(c(3+3i, 4+4i)) }");
         assertEval("{ as.integer(10000000000000) }");
         assertEval("{ as.integer(list(c(1),2,3)) }");
         assertEval("{ as.integer(list(integer(),2,3)) }");
@@ -133,8 +133,8 @@ public class TestBuiltin_asinteger extends TestBase {
         assertEval("{ as.integer(list(1,2,3,list())) }");
         assertEval("{ as.integer(10000000000) }");
         assertEval("{ as.integer(-10000000000) }");
-        assertEval(Output.ContainsWarning, "{ as.integer(c(\"1\",\"hello\")) }");
-        assertEval(Output.ContainsWarning, "{ as.integer(\"TRUE\") }");
+        assertEval(Output.IgnoreWarningContext, "{ as.integer(c(\"1\",\"hello\")) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.integer(\"TRUE\") }");
         assertEval("{ as.integer(as.raw(1)) }");
         assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.integer(x); attributes(y) }");
         assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.integer(x); attributes(y) }");

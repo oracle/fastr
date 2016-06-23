@@ -93,7 +93,7 @@ public class GnuROneShotRSession implements RSession {
     }
 
     @Override
-    public String eval(String expression, ContextInfo contextInfo) {
+    public String eval(String expression, ContextInfo contextInfo, boolean longTimeout) {
         if (expression.contains("library(") && !TestBase.generatingExpected()) {
             System.out.println("==============================================");
             System.out.println("LIBRARY LOADING WHILE CREATING EXPECTED OUTPUT");

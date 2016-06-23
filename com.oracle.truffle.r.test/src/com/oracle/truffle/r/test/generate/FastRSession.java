@@ -49,7 +49,8 @@ import com.oracle.truffle.r.test.TestBase;
 
 public final class FastRSession implements RSession {
 
-    private static final int TIMEOUT = System.getProperty("DisableTestTimeout") != null ? Integer.MAX_VALUE : 20000;
+    private static final int DEFAULT_TIMEOUT = System.getProperty("DisableTestTimeout") != null ? Integer.MAX_VALUE : 10000;
+    private static final int LONG_TIMEOUT = System.getProperty("DisableTestTimeout") != null ? Integer.MAX_VALUE : 60000;
 
     /**
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for
@@ -176,7 +177,7 @@ public final class FastRSession implements RSession {
 
     @Override
     @SuppressWarnings("deprecation")
-    public String eval(String expression, ContextInfo contextInfo) throws Throwable {
+    public String eval(String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
         consoleHandler.reset();
 
         EvalThread thread = evalThread;
@@ -190,7 +191,7 @@ public final class FastRSession implements RSession {
         thread.push(expression);
 
         try {
-            if (!thread.await(TIMEOUT)) {
+            if (!thread.await(longTimeout ? LONG_TIMEOUT : DEFAULT_TIMEOUT)) {
                 consoleHandler.println("<timeout>");
                 thread.stop();
                 evalThread = null;
@@ -268,10 +269,12 @@ public final class FastRSession implements RSession {
                     if (t instanceof RError) {
                         // nothing to do
                     } else {
-                        if (!TestBase.ProcessFailedTests && t instanceof RInternalError) {
-                            RInternalError.reportError(t);
+                        if (!TestBase.ProcessFailedTests) {
+                            if (t instanceof RInternalError) {
+                                RInternalError.reportError(t);
+                            }
+                            t.printStackTrace();
                         }
-                        t.printStackTrace();
                         killedByException = t;
                     }
                 } finally {

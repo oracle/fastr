@@ -65,8 +65,7 @@ public class EvalFunctions {
         private final RAttributeProfiles attributeProfiles = RAttributeProfiles.create();
 
         @Specialization
-        @SuppressWarnings("UnusedParameters")
-        protected REnvironment cast(RNull env, RNull enclos) {
+        protected REnvironment cast(@SuppressWarnings("unused") RNull env, @SuppressWarnings("unused") RNull enclos) {
             return REnvironment.baseEnv();
         }
 
@@ -98,13 +97,13 @@ public class EvalFunctions {
         }
 
         @Specialization
-        protected REnvironment cast(RList list, RNull enclos) {
+        protected REnvironment cast(RList list, @SuppressWarnings("unused") RNull enclos) {
             // This can happen when envir is a list and enclos is explicitly set to NULL
             return REnvironment.createFromList(attributeProfiles, list, REnvironment.baseEnv());
         }
 
         @Specialization
-        protected REnvironment cast(RPairList list, RNull enclos) {
+        protected REnvironment cast(RPairList list, @SuppressWarnings("unused") RNull enclos) {
             // This can happen when envir is a pairlist and enclos is explicitly set to NULL
             return REnvironment.createFromList(attributeProfiles, list.toRList(), REnvironment.baseEnv());
         }

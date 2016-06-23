@@ -77,11 +77,15 @@ public class TestBuiltin_cbind extends TestBase {
         assertEval("{ cbind(matrix(1:4, nrow=2), z=c(m=8,n=9)) }");
 
         assertEval("{ cbind(list(1,2), TRUE, \"a\") }");
-        assertEval(Output.ContainsWarning, "{ cbind(1:3,1:2) }");
+        assertEval(Output.IgnoreWarningContext, "{ cbind(1:3,1:2) }");
         assertEval("{ cbind(2,3, complex(3,3,2));}");
         assertEval("{ cbind(2,3, c(1,1,1)) }");
         assertEval("{ cbind(2.1:10,32.2) }");
 
         assertEval("{ x<-list(a=7, b=NULL, c=42); y<-as.data.frame(do.call(cbind,x)); y }");
+
+        // Note: CachedExtractVectorNode replaces vector 'a', 'b', with a scalar 'b', which caused
+        // cbind to fail
+        assertEval("x <- matrix(1:20, 10, 2); dimnames(x) <- list(1:10, c('a','b')); cbind(1, x[,-1,drop=FALSE]);");
     }
 }

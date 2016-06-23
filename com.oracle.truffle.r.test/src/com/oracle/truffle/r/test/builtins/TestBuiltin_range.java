@@ -54,12 +54,12 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange8() {
-        assertEval(Output.ContainsError, "argv <- list(structure(c(3L, 2L, 1L), .Label = c('A', 'B', 'C'), class = c('ordered', 'factor')), na.rm = FALSE);range(argv[[1]],argv[[2]]);");
+        assertEval(Output.IgnoreErrorContext, "argv <- list(structure(c(3L, 2L, 1L), .Label = c('A', 'B', 'C'), class = c('ordered', 'factor')), na.rm = FALSE);range(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testrange9() {
-        assertEval(Output.ContainsError,
+        assertEval(Output.IgnoreErrorContext,
                         "argv <- list(structure(list(sec = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), min = c(40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L, 50L, 0L, 10L, 20L, 30L, 40L), hour = c(8L, 8L, 9L, 9L, 9L, 9L, 9L, 9L, 10L, 10L, 10L, 10L, 10L, 10L, 11L, 11L, 11L, 11L, 11L, 11L, 12L, 12L, 12L, 12L, 12L, 12L, 13L, 13L, 13L, 13L, 13L, 13L, 14L, 14L, 14L, 14L, 14L, 14L, 15L, 15L, 15L, 15L, 15L, 15L, 16L, 16L, 16L, 16L, 16L, 16L, 17L, 17L, 17L, 17L, 17L, 17L, 18L, 18L, 18L, 18L, 18L, 18L, 19L, 19L, 19L, 19L, 19L, 19L, 20L, 20L, 20L, 20L, 20L, 20L, 21L, 21L, 21L, 21L, 21L, 21L, 22L, 22L, 22L, 22L, 22L, 23L, 23L, 23L, 23L, 23L, 23L, 0L, 0L, 0L, 0L, 0L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 3L), mday = c(12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L, 13L), mon = c(11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L), year = c(90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L, 90L), wday = c(3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L), yday = c(345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 345L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L, 346L), isdst = c(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L)), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt')), na.rm = FALSE);range(argv[[1]],argv[[2]]);");
     }
 
@@ -70,7 +70,7 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange11() {
-        assertEval(Output.ContainsError,
+        assertEval(Output.IgnoreErrorContext,
                         "argv <- list(structure(c(4L, 5L, 1L, 5L, 3L, 4L, 5L, 3L, 2L, 4L), .Label = c('a', 'c', 'i', 's', 't'), class = c('ordered', 'factor')), structure(c(4L, 2L, 3L, 5L, 4L, 3L, 5L, 1L, 5L, 4L), .Label = c('a', 'c', 'i', 's', 't'), class = c('ordered', 'factor')), na.rm = FALSE);range(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
@@ -136,7 +136,7 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange24() {
-        assertEval(Output.ContainsWarning, "range( );");
+        assertEval(Output.IgnoreWarningContext, "range( );");
     }
 
     @Test

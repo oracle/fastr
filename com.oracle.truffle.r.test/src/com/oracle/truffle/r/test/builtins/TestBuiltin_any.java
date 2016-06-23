@@ -119,9 +119,9 @@ public class TestBuiltin_any extends TestBase {
         assertEval("{ any(NULL); }");
 
         // FIXME coercion warning missing
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ any(1) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ any(1) }");
         // FIXME coercion warning missing
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ any(0) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ any(0) }");
 
         assertEval("{ d<-data.frame(c(1L,2L), c(10L, 20L)); any(d) }");
     }

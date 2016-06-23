@@ -1,4 +1,4 @@
-# ContainsError
+# IgnoreErrorContext
 # test from Hadley Wickham's book
 
 setClass("Person", representation(name = "character", age = "numeric"))

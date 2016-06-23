@@ -293,32 +293,65 @@ public final class RDataFactory {
         return traceDataCreated(new RRaw(value));
     }
 
-    public static RStringVector createStringVectorFromScalar(String operand) {
-        return createStringVector(new String[]{operand}, !RRuntime.isNA(operand));
+    public static RStringVector createStringVectorFromScalar(String value) {
+        return createStringVector(new String[]{value}, !RRuntime.isNA(value));
     }
 
-    public static RLogicalVector createLogicalVectorFromScalar(boolean data) {
-        return createLogicalVector(new byte[]{data ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE}, COMPLETE_VECTOR);
+    public static RLogicalVector createLogicalVectorFromScalar(boolean value) {
+        return createLogicalVector(new byte[]{value ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE}, COMPLETE_VECTOR);
     }
 
-    public static RLogicalVector createLogicalVectorFromScalar(byte operand) {
-        return createLogicalVector(new byte[]{operand}, !RRuntime.isNA(operand));
+    public static RLogicalVector createLogicalVectorFromScalar(byte value) {
+        return createLogicalVector(new byte[]{value}, !RRuntime.isNA(value));
     }
 
-    public static RIntVector createIntVectorFromScalar(int operand) {
-        return createIntVector(new int[]{operand}, !RRuntime.isNA(operand));
+    public static RIntVector createIntVectorFromScalar(int value) {
+        return createIntVector(new int[]{value}, !RRuntime.isNA(value));
     }
 
-    public static RDoubleVector createDoubleVectorFromScalar(double operand) {
-        return createDoubleVector(new double[]{operand}, !RRuntime.isNA(operand));
+    public static RDoubleVector createDoubleVectorFromScalar(double value) {
+        return createDoubleVector(new double[]{value}, !RRuntime.isNA(value));
     }
 
-    public static RComplexVector createComplexVectorFromScalar(RComplex operand) {
-        return createComplexVector(new double[]{operand.getRealPart(), operand.getImaginaryPart()}, !operand.isNA());
+    public static RComplexVector createComplexVectorFromScalar(RComplex value) {
+        return createComplexVector(new double[]{value.getRealPart(), value.getImaginaryPart()}, !value.isNA());
     }
 
-    public static RRawVector createRawVectorFromScalar(RRaw operand) {
-        return createRawVector(new byte[]{operand.getValue()});
+    public static RRawVector createRawVectorFromScalar(RRaw value) {
+        return createRawVector(new byte[]{value.getValue()});
+    }
+
+    /*
+     * Shared scalar conversion functions: these need to be replaced with
+     * createXyzVectorFromScalar(...).makeSharedPermanent() if scalar types are removed.
+     */
+
+    public static Object createSharedStringVectorFromScalar(String value) {
+        return value;
+    }
+
+    public static Object createSharedLogicalVectorFromScalar(boolean value) {
+        return RRuntime.asLogical(value);
+    }
+
+    public static Object createSharedLogicalVectorFromScalar(byte value) {
+        return value;
+    }
+
+    public static Object createSharedIntVectorFromScalar(int value) {
+        return value;
+    }
+
+    public static Object createSharedDoubleVectorFromScalar(double value) {
+        return value;
+    }
+
+    public static Object createSharedComplexVectorFromScalar(RComplex value) {
+        return value;
+    }
+
+    public static Object createSharedRawVectorFromScalar(RRaw value) {
+        return value;
     }
 
     public static RComplex createComplexRealOne() {

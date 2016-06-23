@@ -86,7 +86,7 @@ public class TestBuiltin_isfinite extends TestBase {
 
     @Test
     public void testisfinite14() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(2L, .Label = c('Northeast', 'South', 'North Central', 'West'), class = 'factor'));is.finite(argv[[1]]);");
+        assertEval("argv <- list(structure(2L, .Label = c('Northeast', 'South', 'North Central', 'West'), class = 'factor'));is.finite(argv[[1]]);");
     }
 
     @Test

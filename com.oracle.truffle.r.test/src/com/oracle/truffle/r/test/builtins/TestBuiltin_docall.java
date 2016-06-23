@@ -24,8 +24,8 @@ public class TestBuiltin_docall extends TestBase {
         assertEval("{ do.call(quote, list(quote(1)))}");
         assertEval("{ do.call(quote, list(quote(x)))}");
         assertEval("{ do.call(quote, list(quote(x+1)))}");
-        assertEval(Output.ContainsError, "{ f <- function(x) x; do.call(f, list(quote(y)))}");
-        assertEval(Output.ContainsError, "{ f <- function(x) x; do.call(f, list(quote(y + 1)))}");
+        assertEval(Output.IgnoreErrorContext, "{ f <- function(x) x; do.call(f, list(quote(y)))}");
+        assertEval(Output.IgnoreErrorContext, "{ f <- function(x) x; do.call(f, list(quote(y + 1)))}");
         assertEval("{ do.call(\"+\", list(quote(1), 2))}");
         assertEval("v1 <- as.numeric_version('3.0.0'); v2 <- as.numeric_version('3.1.0'); do.call('<', list(v1, v2))");
         assertEval("v1 <- as.numeric_version('3.0.0'); v2 <- as.numeric_version('3.1.0'); do.call('<', list(quote(v1), quote(v2)))");

@@ -23,33 +23,27 @@
 package com.oracle.truffle.r.library.methods;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
-import com.oracle.truffle.r.nodes.builtin.RList2EnvNodeGen;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RSubstitute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
-    @Child private RList2EnvNode list2EnvNode;
 
     @Specialization
     @TruffleBoundary
-    protected Object substituteDirect(Object object, REnvironment env) {
+    protected static Object substituteDirect(Object object, REnvironment env) {
         if (object instanceof RLanguage) {
             RLanguage lang = (RLanguage) object;
-            RSyntaxNode snode = lang.getRep().asRSyntaxNode();
-            RSyntaxNode subRNode = snode.substituteImpl(env);
-            // create source for entire tree
-            RDeparse.ensureSourceSection(subRNode);
-            return RASTUtils.createLanguageElement(subRNode.asRNode());
+            return RASTUtils.createLanguageElement(RSubstitute.substitute(env, lang.getRep()).asRNode());
         } else {
             return object;
         }
@@ -57,23 +51,16 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    protected Object substituteDirect(Object object, RList list) {
+    protected static Object substituteDirect(Object object, RList list, //
+                    @Cached("new()") RList2EnvNode list2Env) {
         REnvironment env = RDataFactory.createNewEnv(null);
         env.setParent(REnvironment.baseEnv());
-        list2Env(list, env);
+        list2Env.execute(list, env);
         return substituteDirect(object, env);
     }
 
-    @SuppressWarnings("unused")
     @Fallback
-    protected Object substituteDirect(Object object, Object env) {
+    protected Object substituteDirect(@SuppressWarnings("unused") Object object, @SuppressWarnings("unused") Object env) {
         throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
-    }
-
-    private REnvironment list2Env(RList list, REnvironment env) {
-        if (list2EnvNode == null) {
-            list2EnvNode = insert(RList2EnvNodeGen.create());
-        }
-        return list2EnvNode.execute(list, env);
     }
 }

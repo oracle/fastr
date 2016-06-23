@@ -83,10 +83,10 @@ public class TestRBase extends TestBase {
                     l = l.trim();
                     if (l.startsWith("#")) {
                         // check the first line for configuration options
-                        if (l.contains("ContainsError")) {
-                            testTrait = Output.ContainsError;
-                        } else if (l.contains("ContainsWarning")) {
-                            testTrait = Output.ContainsWarning;
+                        if (l.contains("IgnoreErrorContext")) {
+                            testTrait = Output.IgnoreErrorContext;
+                        } else if (l.contains("IgnoreWarningContext")) {
+                            testTrait = Output.IgnoreWarningContext;
                         }
                     }
                 }

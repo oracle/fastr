@@ -500,7 +500,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             } else {
                 val.incRefCount();
             }
-            return (RTypedValue) val;
+            return val;
         }
         return value;
     }

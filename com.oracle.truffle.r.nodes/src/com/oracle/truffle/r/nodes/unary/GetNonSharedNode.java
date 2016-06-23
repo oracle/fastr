@@ -31,7 +31,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -49,11 +48,6 @@ public abstract class GetNonSharedNode extends RNode implements RSyntaxNode {
     @Fallback
     protected Object getNonShared(Object o) {
         return o;
-    }
-
-    @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        throw RInternalError.unimplemented("substituteImpl");
     }
 
     @Override

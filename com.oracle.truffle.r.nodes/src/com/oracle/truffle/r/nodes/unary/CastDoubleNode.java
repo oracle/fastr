@@ -25,9 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import java.util.function.IntToDoubleFunction;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -39,8 +37,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -49,19 +45,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
-public abstract class CastDoubleNode extends CastBaseNode {
+public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
     private final NACheck naCheck = NACheck.create();
     private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile warningBranch = BranchProfile.create();
-
-    public abstract Object executeDouble(int o);
-
-    public abstract Object executeDouble(double o);
-
-    public abstract Object executeDouble(byte o);
-
-    public abstract Object executeDouble(Object o);
 
     @Child private CastDoubleNode recursiveCastDouble;
 
@@ -71,58 +59,6 @@ public abstract class CastDoubleNode extends CastBaseNode {
             recursiveCastDouble = insert(CastDoubleNodeGen.create(isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
         }
         return recursiveCastDouble.executeDouble(o);
-    }
-
-    @Specialization
-    protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
-        return RNull.instance;
-    }
-
-    @Specialization
-    protected double doInt(int operand) {
-        naCheck.enable(operand);
-        return naCheck.convertIntToDouble(operand);
-    }
-
-    @Specialization
-    protected double doDouble(double operand) {
-        return operand;
-    }
-
-    @Specialization
-    protected double doDouble(RComplex operand) {
-        naCheck.enable(operand);
-        double result = naCheck.convertComplexToDouble(operand, false);
-        if (operand.getImaginaryPart() != 0.0) {
-            warningBranch.enter();
-            RError.warning(this, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
-        }
-        return result;
-    }
-
-    @Specialization
-    protected double doLogical(byte operand) {
-        naCheck.enable(operand);
-        return naCheck.convertLogicalToDouble(operand);
-    }
-
-    @Specialization
-    protected double doString(String operand, //
-                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
-        if (naProfile.isNA(operand) || emptyStringProfile.profile(operand.isEmpty())) {
-            return RRuntime.DOUBLE_NA;
-        }
-        double result = RRuntime.string2doubleNoCheck(operand);
-        if (RRuntime.isNA(result)) {
-            warningBranch.enter();
-            RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
-        }
-        return result;
-    }
-
-    @Specialization
-    protected double doRaw(RRaw operand) {
-        return RRuntime.raw2double(operand);
     }
 
     private RDoubleVector createResultVector(RAbstractVector operand, double[] ddata) {
@@ -269,12 +205,6 @@ public abstract class CastDoubleNode extends CastBaseNode {
             ret.copyRegAttributesFrom(list);
         }
         return ret;
-    }
-
-    @Fallback
-    @TruffleBoundary
-    protected double doOther(Object operand) {
-        throw new ConversionFailedException(operand.getClass().getName());
     }
 
     public static CastDoubleNode create() {

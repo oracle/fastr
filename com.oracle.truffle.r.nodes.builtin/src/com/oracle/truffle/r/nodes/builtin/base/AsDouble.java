@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "as.double", aliases = {"as.numeric"}, kind = PRIMITIVE, parameterNames = {"x", "..."})
-// TODO define alias in R
 public abstract class AsDouble extends RBuiltinNode {
 
     @Child private CastDoubleNode castDoubleNode;

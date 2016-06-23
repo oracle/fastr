@@ -32,7 +32,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -52,7 +51,7 @@ public abstract class Xtfrm extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             getNode = insert(GetNodeGen.create(null));
         }
-        RFunction func = (RFunction) getNode.execute(frame, "xtfrm.default", RArguments.getEnvironment(frame), RType.Function.getName(), RRuntime.LOGICAL_TRUE);
+        RFunction func = (RFunction) getNode.execute(frame, "xtfrm.default", RArguments.getEnvironment(frame), RType.Function.getName(), true);
         return RContext.getEngine().evalFunction(func, null, null, x);
     }
 }

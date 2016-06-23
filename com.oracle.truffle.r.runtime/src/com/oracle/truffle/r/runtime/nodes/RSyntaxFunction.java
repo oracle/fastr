@@ -37,10 +37,12 @@ public interface RSyntaxFunction extends RSyntaxElement {
 
     RSyntaxElement getSyntaxBody();
 
+    String getSyntaxDebugName();
+
     /**
      * Helper function: creates a synthetic RSyntaxFunction.
      */
-    static RSyntaxFunction createDummyFunction(SourceSection originalSource, ArgumentsSignature signature, RSyntaxElement[] arguments, RSyntaxElement body) {
+    static RSyntaxFunction createDummyFunction(SourceSection originalSource, ArgumentsSignature signature, RSyntaxElement[] arguments, RSyntaxElement body, String debugName) {
         return new RSyntaxFunction() {
             @Override
             public SourceSection getSourceSection() {
@@ -65,6 +67,11 @@ public interface RSyntaxFunction extends RSyntaxElement {
             @Override
             public void setSourceSection(SourceSection src) {
                 // ignored
+            }
+
+            @Override
+            public String getSyntaxDebugName() {
+                return debugName;
             }
         };
     }

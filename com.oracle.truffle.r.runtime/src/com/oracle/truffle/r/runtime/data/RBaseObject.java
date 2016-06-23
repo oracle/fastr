@@ -22,15 +22,42 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-abstract class RBaseObject {
+abstract class RBaseObject implements RTypedValue {
 
-    protected int typedValueInfo;
+    private int typedValueInfo;
 
-    public int getTypedValueInfo() {
+    @Override
+    public final int getTypedValueInfo() {
         return typedValueInfo;
     }
 
-    public void setTypedValueInfo(int value) {
+    @Override
+    public final void setTypedValueInfo(int value) {
         typedValueInfo = value;
+    }
+
+    @Override
+    public final int getGPBits() {
+        return (getTypedValueInfo() & GP_BITS_MASK) >>> GP_BITS_MASK_SHIFT;
+    }
+
+    @Override
+    public final void setGPBits(int gpbits) {
+        setTypedValueInfo((getTypedValueInfo() & ~GP_BITS_MASK) | (gpbits << GP_BITS_MASK_SHIFT));
+    }
+
+    @Override
+    public final boolean isS4() {
+        return (getGPBits() & S4_MASK) == S4_MASK;
+    }
+
+    @Override
+    public final void setS4() {
+        setGPBits(getGPBits() | S4_MASK);
+    }
+
+    @Override
+    public final void unsetS4() {
+        setGPBits(getGPBits() & ~S4_MASK);
     }
 }

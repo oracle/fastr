@@ -115,7 +115,7 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
             }
             newFunction.initAttributes(newAttributes);
         }
-        newFunction.typedValueInfo = typedValueInfo;
+        newFunction.setTypedValueInfo(getTypedValueInfo());
         return newFunction;
     }
 

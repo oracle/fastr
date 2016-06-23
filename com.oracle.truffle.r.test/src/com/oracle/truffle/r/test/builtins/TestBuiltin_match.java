@@ -84,8 +84,7 @@ public class TestBuiltin_match extends TestBase {
 
     @Test
     public void testmatch14() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), 0L, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), 0L, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test

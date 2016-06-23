@@ -45,7 +45,8 @@ public enum RType {
     DefunctSingle("single", -1),
     ExternalPtr("externalptr", -1),
     S4Object("s4object", -1),
-    Connection("connection", -1);
+    Connection("connection", -1),
+    Dots("...", -1);
 
     public static final int NO_PRECEDENCE = -1;
     public static final int NUMBER_OF_PRECEDENCES = 9;

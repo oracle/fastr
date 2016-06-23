@@ -49,7 +49,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.library.graphics.RGraphics;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
@@ -57,7 +56,6 @@ import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -384,7 +382,6 @@ final class REngine implements Engine, Engine.Timings {
     @Override
     @TruffleBoundary
     public Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, Object... args) {
-        ArgumentsSignature argsSig = ((RRootNode) func.getRootNode()).getSignature();
         assert frame == null || caller != null;
         MaterializedFrame actualFrame = frame;
         if (actualFrame == null) {
@@ -396,7 +393,7 @@ final class REngine implements Engine, Engine.Timings {
                 actualFrame = current.materialize();
             }
         }
-        Object[] rArgs = RArguments.create(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, args, argsSig, null);
+        Object[] rArgs = RArguments.create(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, args, null);
         return func.getTarget().call(rArgs);
     }
 
@@ -545,8 +542,6 @@ final class REngine implements Engine, Engine.Timings {
         return true;
     }
 
-    private static final ArgumentsSignature PRINT_SIGNATURE = ArgumentsSignature.get("x", "...");
-
     @Override
     @TruffleBoundary
     public void printResult(Object result) {
@@ -563,7 +558,7 @@ final class REngine implements Engine, Engine.Timings {
                 ((RShareable) resultValue).incRefCount();
             }
             MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
-            function.getTarget().call(RArguments.create(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE, null));
+            function.getTarget().call(RArguments.create(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, null));
             if (resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                 ((RShareable) resultValue).decRefCount();
             }

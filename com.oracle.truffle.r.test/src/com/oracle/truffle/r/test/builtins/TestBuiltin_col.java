@@ -32,6 +32,11 @@ public class TestBuiltin_col extends TestBase {
         assertEval("{ ma <- matrix(1:12, 3, 4) ; col(ma) }");
         assertEval("{ ma <- cbind(x = 1:10, y = (-4:5)^2) ; col(ma) }");
 
-        assertEval(Output.ContainsError, "{ col(c(1,2,3)) }");
+        assertEval(Output.IgnoreErrorContext, "{ col(c(1,2,3)) }");
+    }
+
+    @Test
+    public void testCasts0() {
+        assertEval(Output.IgnoreErrorContext, "col(NULL)");
     }
 }

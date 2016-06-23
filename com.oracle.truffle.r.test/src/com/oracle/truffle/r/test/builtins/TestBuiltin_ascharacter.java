@@ -213,8 +213,7 @@ public class TestBuiltin_ascharacter extends TestBase {
 
     @Test
     public void testascharacter39() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));as.character(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));as.character(argv[[1]],argv[[2]]);");
     }
 
     @Test

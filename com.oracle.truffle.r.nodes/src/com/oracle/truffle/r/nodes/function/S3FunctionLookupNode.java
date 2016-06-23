@@ -101,22 +101,17 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
     @TruffleBoundary
     private static Result performLookup(MaterializedFrame callerFrame, String genericName, String groupName, RStringVector type, boolean nextMethod, LookupOperation op, GetMethodsTable getTable) {
         Result result;
-        // look for a generic function reachable from the caller frame
-        if ((result = lookupClassGenerics(callerFrame, genericName, groupName, type, nextMethod, false, op)) != null) {
-            return result;
-        }
         Object methodsTable = getTable.get();
         if (methodsTable instanceof RPromise) {
             methodsTable = PromiseHelperNode.evaluateSlowPath(null, (RPromise) methodsTable);
         }
         MaterializedFrame methodsTableFrame = methodsTable == null ? null : ((REnvironment) methodsTable).getFrame();
 
-        if (methodsTableFrame != null) {
-            // look for a generic function in the methods table
-            if ((result = lookupClassGenerics(methodsTableFrame, genericName, groupName, type, nextMethod, true, op)) != null) {
-                return result;
-            }
+        // look for a generic function reachable from the caller frame
+        if ((result = lookupClassGenerics(callerFrame, methodsTableFrame, genericName, groupName, type, nextMethod, op)) != null) {
+            return result;
         }
+
         // look for the default method
         String functionName = genericName + RRuntime.RDOT + RRuntime.DEFAULT;
         RFunction function = checkPromise(op.read(callerFrame, functionName, false));
@@ -129,19 +124,29 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         return null;
     }
 
-    private static Result lookupClassGenerics(MaterializedFrame callerFrame, String genericName, String groupName, RStringVector type, boolean nextMethod, boolean inMethodsTable, LookupOperation op) {
+    private static Result lookupClassGenerics(MaterializedFrame callerFrame, MaterializedFrame methodsTableFrame, String genericName, String groupName, RStringVector type, boolean nextMethod,
+                    LookupOperation op) {
         Result result = null;
         for (int i = nextMethod ? 1 : 0; i < type.getLength(); i++) {
             String clazzName = type.getDataAt(i);
             boolean groupMatch = false;
 
             String functionName = genericName + RRuntime.RDOT + type.getDataAt(i);
-            RFunction function = checkPromise(op.read(callerFrame, functionName, inMethodsTable));
+            RFunction function = checkPromise(op.read(callerFrame, functionName, false));
 
-            if (function == null && groupName != null) {
-                groupMatch = true;
-                functionName = groupName + RRuntime.RDOT + clazzName;
-                function = checkPromise(op.read(callerFrame, functionName, inMethodsTable));
+            if (function == null) {
+                if (methodsTableFrame != null) {
+                    function = checkPromise(op.read(methodsTableFrame, functionName, true));
+                }
+
+                if (function == null && groupName != null) {
+                    groupMatch = true;
+                    functionName = groupName + RRuntime.RDOT + clazzName;
+                    function = checkPromise(op.read(callerFrame, functionName, false));
+                    if (function == null && methodsTableFrame != null) {
+                        function = checkPromise(op.read(methodsTableFrame, functionName, true));
+                    }
+                }
             }
 
             if (function != null) {

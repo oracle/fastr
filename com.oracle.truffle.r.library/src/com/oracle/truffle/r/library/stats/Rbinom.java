@@ -18,6 +18,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -266,7 +267,9 @@ public abstract class Rbinom extends RExternalBuiltinNode.Arg3 {
     @Specialization
     protected Object rbinom(RAbstractDoubleVector n, RAbstractDoubleVector size, RAbstractDoubleVector prob,  //
                     @Cached("create()") NAProfile na, //
-                    @Cached("create()") BranchProfile nanProfile) {
+                    @Cached("create()") BranchProfile nanProfile, //
+                    @Cached("create()") VectorLengthProfile sizeProfile, //
+                    @Cached("create()") VectorLengthProfile probProfile) {
         int length = n.getLength();
         RNode.reportWork(this, length);
         if (length == 1) {
@@ -276,8 +279,8 @@ public abstract class Rbinom extends RExternalBuiltinNode.Arg3 {
             }
             length = (int) l;
         }
-        int sizeLength = size.getLength();
-        int probLength = prob.getLength();
+        int sizeLength = sizeProfile.profile(size.getLength());
+        int probLength = probProfile.profile(prob.getLength());
 
         double[] result = new double[length];
         boolean complete = true;

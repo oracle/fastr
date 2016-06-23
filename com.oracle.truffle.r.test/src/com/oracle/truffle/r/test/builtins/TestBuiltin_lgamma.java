@@ -56,7 +56,7 @@ public class TestBuiltin_lgamma extends TestBase {
 
     @Test
     public void testlgamma9() {
-        assertEval(Output.ContainsWarning, "argv <- list(Inf);do.call('lgamma', argv)");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(Inf);do.call('lgamma', argv)");
     }
 
     @Test
@@ -68,6 +68,6 @@ public class TestBuiltin_lgamma extends TestBase {
         assertEval("{ lgamma(c(100, 2.2)) }");
         assertEval("{ lgamma(FALSE) }");
         assertEval("{ lgamma(as.raw(1)) }");
-        assertEval(Output.ContainsError, "{ lgamma(1+1i) }");
+        assertEval(Output.IgnoreErrorContext, "{ lgamma(1+1i) }");
     }
 }

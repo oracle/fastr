@@ -37,6 +37,6 @@ public class TestBuiltin_bitwiseAnd extends TestBase {
         assertEval(Ignored.Unknown, "{ bitwAnd(NULL, NULL) }");
         assertEval(Ignored.Unknown, "{ bitwAnd(c(), c(1,2,3)) }");
         // Error message mismatch
-        assertEval(Output.ContainsError, "{ bitwAnd(c(1,2,3,4), c(TRUE)) }");
+        assertEval(Output.IgnoreErrorContext, "{ bitwAnd(c(1,2,3,4), c(TRUE)) }");
     }
 }

@@ -59,7 +59,7 @@ public class TestBuiltin_asdouble extends TestBase {
 
     @Test
     public void testasdouble9() {
-        assertEval(Output.ContainsWarning, "argv <- list(c('-.1', ' 2.7 ', 'B'));as.double(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(c('-.1', ' 2.7 ', 'B'));as.double(argv[[1]]);");
     }
 
     @Test
@@ -178,10 +178,10 @@ public class TestBuiltin_asdouble extends TestBase {
         assertEval("{ as.double(\"1.27\") }");
         assertEval("{ as.double(1L) }");
         assertEval("{ as.double(as.raw(1)) }");
-        assertEval(Output.ContainsWarning, "{ as.double(c(\"1\",\"hello\")) }");
-        assertEval(Output.ContainsWarning, "{ as.double(\"TRUE\") }");
-        assertEval(Output.ContainsWarning, "{ as.double(10+2i) }");
-        assertEval(Output.ContainsWarning, "{ as.double(c(3+3i, 4+4i)) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.double(c(\"1\",\"hello\")) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.double(\"TRUE\") }");
+        assertEval(Output.IgnoreWarningContext, "{ as.double(10+2i) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.double(c(3+3i, 4+4i)) }");
         assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.double(x); attributes(y) }");
         assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.double(x); attributes(y) }");
         assertEval("{ as.double(NULL) }");

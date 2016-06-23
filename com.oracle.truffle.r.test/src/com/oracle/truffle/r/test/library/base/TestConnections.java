@@ -85,7 +85,7 @@ public class TestConnections extends TestBase {
 
     @Test
     public void testWriteTextReadConnection() {
-        assertEval(Output.ContainsError, "{ writeChar(\"x\", textConnection(\"abc\")) }");
+        assertEval(Output.IgnoreErrorContext, "{ writeChar(\"x\", textConnection(\"abc\")) }");
     }
 
     @Test

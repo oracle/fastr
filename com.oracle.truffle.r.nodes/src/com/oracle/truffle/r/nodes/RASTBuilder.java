@@ -64,10 +64,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 /**
  * This class can be used to build fragments of Truffle AST that correspond to R language
@@ -86,42 +84,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     public RASTBuilder(Map<String, Object> constants) {
         this.constants = constants;
-    }
-
-    @Override
-    public RSyntaxNode process(RSyntaxElement original) {
-        return new RSyntaxVisitor<RSyntaxNode>() {
-
-            @Override
-            protected RSyntaxNode visit(RSyntaxCall element) {
-                ArrayList<Argument<RSyntaxNode>> args = createArguments(element.getSyntaxSignature(), element.getSyntaxArguments());
-                return call(element.getSourceSection(), accept(element.getSyntaxLHS()), args);
-            }
-
-            private ArrayList<Argument<RSyntaxNode>> createArguments(ArgumentsSignature signature, RSyntaxElement[] arguments) {
-                ArrayList<Argument<RSyntaxNode>> args = new ArrayList<>(arguments.length);
-                for (int i = 0; i < arguments.length; i++) {
-                    args.add(RCodeBuilder.argument(arguments[i] == null ? null : arguments[i].getSourceSection(), signature.getName(i), arguments[i] == null ? null : accept(arguments[i])));
-                }
-                return args;
-            }
-
-            @Override
-            protected RSyntaxNode visit(RSyntaxConstant element) {
-                return constant(element.getSourceSection(), element.getValue());
-            }
-
-            @Override
-            protected RSyntaxNode visit(RSyntaxLookup element) {
-                return lookup(element.getSourceSection(), element.getIdentifier(), element.isFunctionLookup());
-            }
-
-            @Override
-            protected RSyntaxNode visit(RSyntaxFunction element) {
-                ArrayList<Argument<RSyntaxNode>> params = createArguments(element.getSyntaxSignature(), element.getSyntaxArgumentDefaults());
-                return function(element.getSourceSection(), params, accept(element.getSyntaxBody()), null);
-            }
-        }.accept(original);
     }
 
     @Override
@@ -210,8 +172,10 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         return signature;
     }
 
-    private static String getFunctionDescription(SourceSection source, RSyntaxNode assignedTo) {
-        if (assignedTo instanceof RSyntaxLookup) {
+    private static String getFunctionDescription(SourceSection source, Object assignedTo) {
+        if (assignedTo instanceof String) {
+            return (String) assignedTo;
+        } else if (assignedTo instanceof RSyntaxLookup) {
             return ((RSyntaxLookup) assignedTo).getIdentifier();
         } else {
             String functionBody = source.getCode();
@@ -328,7 +292,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             RSyntaxCall call = (RSyntaxCall) current;
             calls.add(call);
 
-            if (call.getSyntaxArguments().length == 0 || !(call.getSyntaxLHS() instanceof RSyntaxLookup || isNamespaceLookupCall(call.getSyntaxLHS()))) {
+            RSyntaxElement syntaxLHS = call.getSyntaxLHS();
+            if (call.getSyntaxArguments().length == 0 || !(syntaxLHS instanceof RSyntaxLookup || isNamespaceLookupCall(syntaxLHS))) {
                 // TODO: this should only be signaled when run, not when parsed
                 throw RInternalError.unimplemented("proper error message for RError.INVALID_LHS");
             }
@@ -382,7 +347,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     }
 
     @Override
-    public RSyntaxNode function(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, RSyntaxNode assignedTo) {
+    public RSyntaxNode function(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, Object assignedTo) {
         String description = getFunctionDescription(source, assignedTo);
         RootCallTarget callTarget = rootFunction(source, params, body, description);
         return FunctionExpressionNode.create(source, callTarget);

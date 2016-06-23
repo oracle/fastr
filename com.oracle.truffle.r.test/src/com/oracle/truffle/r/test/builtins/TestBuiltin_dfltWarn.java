@@ -24,7 +24,7 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn2() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list('bessel_y(2,nu=288.12): precision lost in result', quote(besselY(2, nu = nu <- seq(3, 300, len = 51)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
@@ -46,7 +46,7 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn6() {
-        assertEval(Output.ContainsWarning, "argv <- list('NaNs produced', quote(log(ifelse(y == 0, 1, y/mu)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval(Output.IgnoreWarningContext, "argv <- list('NaNs produced', quote(log(ifelse(y == 0, 1, y/mu)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -56,13 +56,13 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn8() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list('prediction from a rank-deficient fit may be misleading', quote(predict.lm(object, newdata, se.fit, scale = residual.scale, type = ifelse(type == 'link', 'response', type), terms = terms, na.action = na.action))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testdfltWarn9() {
-        assertEval(Output.ContainsWarning, "argv <- list('1 y value <= 0 omitted from logarithmic plot', quote(xy.coords(x, NULL, log = log))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval(Output.IgnoreWarningContext, "argv <- list('1 y value <= 0 omitted from logarithmic plot', quote(xy.coords(x, NULL, log = log))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test

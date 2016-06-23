@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -30,14 +29,9 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
-import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -117,15 +111,6 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
         state.serializeNodeSetCar(storeRhs.getRhs());
         state.setCdr(state.closePairList());
         state.setCdr(state.closePairList());
-    }
-
-    @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        List<Argument<RSyntaxNode>> argsList = new LinkedList<>();
-        argsList.add(RCodeBuilder.argument(syntaxLhs.substituteImpl(env)));
-        argsList.add(RCodeBuilder.argument(storeRhs.getRhs().substitute(env)));
-        // use "fake" read variable node to trigger the right behavior of the AST builder
-        return RContext.getASTBuilder().call(RSyntaxNode.LAZY_DEPARSE, ReadVariableNode.create(operator), argsList);
     }
 
     @Override

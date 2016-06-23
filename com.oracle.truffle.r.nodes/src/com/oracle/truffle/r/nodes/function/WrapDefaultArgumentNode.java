@@ -45,22 +45,16 @@ public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
     @Override
     public Object execute(VirtualFrame frame) {
         Object result = operand.execute(frame);
-        return execute(result);
-    }
-
-    public Object execute(Object o) {
-        Object result = o;
         RShareable rShareable = getShareable(result);
         if (rShareable != null) {
             shareable.enter();
             if (isShared.profile(rShareable.isShared())) {
-                result = ((RShareable) o).copy();
+                return ((RShareable) result).copy();
             } else {
-                ((RShareable) o).incRefCount();
+                ((RShareable) result).incRefCount();
             }
         }
         return result;
-
     }
 
     public static RNode create(RNode operand) {

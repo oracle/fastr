@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.RType;
 /**
  * The rarely seen {@code externalptr} type.
  */
-public class RExternalPtr extends RAttributeStorage implements RTypedValue {
+public class RExternalPtr extends RAttributeStorage {
     private long addr;
     private Object tag;
     private Object prot;

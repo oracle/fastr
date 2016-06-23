@@ -186,7 +186,7 @@ public class TestBuiltin_dim extends TestBase {
         assertEval("{ x <- 1:4 ; f <- function() { x <- 1:4 ; dim(x) <<- c(2,2) } ; f() ; dim(x) }");
 
         assertEval("{ x<-1:12; dim(x)<-c(12); x }");
-        assertEval(Output.ContainsWarning, "{ x<-1:12; dim(x)<-c(12+10i); x }");
+        assertEval(Output.IgnoreWarningContext, "{ x<-1:12; dim(x)<-c(12+10i); x }");
         assertEval("{ x<-1:12; dim(x)<-c(as.raw(12)); x }");
         assertEval("{ x<-1:12; dim(x)<-c(\"12\"); x }");
         assertEval("{ x<-1:1; dim(x)<-c(TRUE); x }");

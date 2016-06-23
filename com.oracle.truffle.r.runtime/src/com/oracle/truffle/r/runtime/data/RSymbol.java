@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.RType;
  * Truffle sense.
  */
 @ValueType
-public final class RSymbol extends RAttributeStorage implements RTypedValue {
+public final class RSymbol extends RAttributeStorage {
 
     public static final RSymbol MISSING = RDataFactory.createSymbol("");
 
