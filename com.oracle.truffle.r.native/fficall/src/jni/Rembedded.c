@@ -67,6 +67,38 @@ static char **update_environ_with_java_home(void);
 static void print_environ(char **env);
 static char *get_classpath(char *r_home);
 
+# define JMP_BUF sigjmp_buf
+
+/* Evaluation Context Structure */
+typedef struct RCNTXT {
+    struct RCNTXT *nextcontext;	/* The next context up the chain */
+    int callflag;		/* The context "type" */
+    JMP_BUF cjmpbuf;		/* C stack and register information */
+    int cstacktop;		/* Top of the pointer protection stack */
+    int evaldepth;	        /* evaluation depth at inception */
+    SEXP promargs;		/* Promises supplied to closure */
+    SEXP callfun;		/* The closure called */
+    SEXP sysparent;		/* environment the closure was called from */
+    SEXP call;			/* The call that effected this context*/
+    SEXP cloenv;		/* The environment */
+    SEXP conexit;		/* Interpreted "on.exit" code */
+    void (*cend)(void *);	/* C "on.exit" thunk */
+    void *cenddata;		/* data for C "on.exit" thunk */
+    void *vmax;		        /* top of R_alloc stack */
+    int intsusp;                /* interrupts are suspended */
+    SEXP handlerstack;          /* condition handler stack */
+    SEXP restartstack;          /* stack of available restarts */
+    void *prstack;   /* stack of pending promises */
+    void *nodestack;
+#ifdef BC_INT_STACK
+    IStackval *intstack;
+#endif
+    SEXP srcref;	        /* The source line in effect */
+    int browserfinish;     /* should browser finish this context without stopping */
+    SEXP returnValue;			/* only set during on.exit calls */
+} RCNTXT, *context;
+
+
 int Rf_initialize_R(int argc, char *argv[]) {
 	if (initialized) {
 		fprintf(stderr, "%s", "R is already initialized\n");
@@ -88,6 +120,14 @@ int Rf_initialize_R(int argc, char *argv[]) {
 			struct stat statbuf;
 			if (stat(jvmdir, &statbuf) == 0) {
 				java_home = jvmdir;
+			}
+		} else if (strcmp(utsname.sysname, "Darwin") == 0) {
+			char *jvmdir = "/Library/Java/JavaVirtualMachines/jdk.latest";
+			struct stat statbuf;
+			if (stat(jvmdir, &statbuf) == 0) {
+				java_home = (char*)malloc(strlen(jvmdir) + 32);
+				strcpy(java_home, jvmdir);
+				strcat(java_home, "/Contents/Home");
 			}
 		}
 		if (java_home == NULL) {
@@ -159,6 +199,7 @@ int Rf_initialize_R(int argc, char *argv[]) {
 		(*jniEnv)->SetObjectArrayElement(jniEnv, argsArray, i, arg);
 	}
 
+    R_GlobalContext = malloc(sizeof(struct RCNTXT));
 	engine = checkRef(jniEnv, (*jniEnv)->CallStaticObjectMethod(jniEnv, rembeddedClass, initializeMethod, argsArray));
 	initialized++;
 	return 0;
