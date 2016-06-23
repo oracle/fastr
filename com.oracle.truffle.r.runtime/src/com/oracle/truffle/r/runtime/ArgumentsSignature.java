@@ -133,6 +133,10 @@ public final class ArgumentsSignature implements Iterable<String> {
         return varArgIndexes.length;
     }
 
+    public String[] getNames() {
+        return names;
+    }
+
     public String getName(int index) {
         return names[index] == UNMATCHED ? null : names[index];
     }

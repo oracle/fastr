@@ -89,6 +89,20 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 // @formatter:on
 public final class RArguments {
 
+    public static final String SUMMARY_GROUP_NA_RM_ARG_NAME = "na.rm";
+    /**
+     * Marker for the only group S3 dispatch argument that may have default value carried over from
+     * the R dispatch method to the dispatched to R method.
+     */
+    public static final S3DefaultArguments SUMMARY_GROUP_DEFAULT_VALUE_NA_RM = new S3DefaultArguments();
+
+    /**
+     * Placeholder, should the group S3 dispatch need more flexible default arguments. See
+     * {@code RCallNode.callGroupGeneric} for more details.
+     */
+    public static class S3DefaultArguments {
+    }
+
     @ValueType
     public abstract static class DispatchArgs {
         public final Object generic;
