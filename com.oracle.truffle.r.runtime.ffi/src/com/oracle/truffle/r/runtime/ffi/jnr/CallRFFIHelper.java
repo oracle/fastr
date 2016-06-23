@@ -107,7 +107,7 @@ public class CallRFFIHelper {
     }
 
     private static RuntimeException unimplemented(String message) {
-        System.out.println(message);
+        System.err.println(message);
         try {
             throw RInternalError.unimplemented(message);
         } catch (Error e) {
@@ -917,6 +917,14 @@ public class CallRFFIHelper {
             return new ParseResult(ParseStatus.PARSE_ERROR.ordinal(), RNull.instance);
         }
 
+    }
+
+    public static Object R_lsInternal3(Object envArg, int allArg, int sortedArg) {
+        RFFIUtils.traceUpCall("R_lsInternal3", envArg, allArg, sortedArg);
+        boolean sorted = sortedArg != 0;
+        boolean all = allArg != 0;
+        REnvironment env = guaranteeInstanceOf(envArg, REnvironment.class);
+        return env.ls(all, null, sorted);
     }
 
     @SuppressWarnings("unused")

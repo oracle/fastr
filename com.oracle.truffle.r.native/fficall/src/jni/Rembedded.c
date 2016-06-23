@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <rffiutils.h>
 #include <R_ext/RStartup.h>
+#define R_INTERFACE_PTRS
 #include <Rinterface.h>
 
 extern char **environ;
@@ -217,9 +218,8 @@ void R_SaveGlobalEnvToFile(const char *f) {
 	unimplemented("R_SaveGlobalEnvToFile");
 }
 
-void R_Suicide(const char *x) {
-	unimplemented("R_Suicide");
-}
+void R_Suicide(const char *s) { ptr_R_Suicide(s); }
+
 
 void R_DefParams(Rstart rs) {
     // These are the GnuR defaults and correspond to the settings in RStartParams
@@ -298,7 +298,10 @@ void Rf_mainloop(void) {
 // functions that can be assigned by an embedded client to change behavior
 
 void uR_Suicide(const char *x) {
-	unimplemented("R_Suicide");
+	JNIEnv *jniEnv = getEnv();
+	jstring msg = (*jniEnv)->NewStringUTF(jniEnv, x);
+	jmethodID suicideMethod = checkGetMethodID(jniEnv, rembeddedClass, "R_Suicide", "(Ljava/lang/String;)V", 1);
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, suicideMethod, msg);
 }
 
 void uR_ShowMessage(const char *x) {

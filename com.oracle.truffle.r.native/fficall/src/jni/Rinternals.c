@@ -96,6 +96,7 @@ static jmethodID SET_RDEBUGMethodID;
 static jmethodID RSTEPMethodID;
 static jmethodID SET_RSTEPMethodID;
 static jmethodID ENCLOSMethodID;
+static jmethodID R_lsInternal3MethodID;
 
 static jclass rErrorHandlingClass;
 static jclass handlerStacksClass;
@@ -189,6 +190,7 @@ void init_internals(JNIEnv *env) {
 	RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "RSTEP", "(Ljava/lang/Object;)I", 1);
 	SET_RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_RSTEP", "(Ljava/lang/Object;I)V", 1);
 	ENCLOSMethodID = checkGetMethodID(env, CallRFFIHelperClass, "ENCLOS", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	R_lsInternal3MethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_lsInternal3", "(Ljava/lang/Object;II)Ljava/lang/Object;", 1);
 
 	rErrorHandlingClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RErrorHandling");
 	handlerStacksClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RErrorHandling$HandlerStacks");
@@ -671,9 +673,18 @@ SEXP Rf_xlengthgets(SEXP x, R_xlen_t y) {
 
 }
 
-SEXP R_lsInternal(SEXP x, Rboolean y) {
-	return unimplemented("R_lsInternal");
+SEXP R_lsInternal(SEXP env, Rboolean all) {
+	return R_lsInternal3(env, all, TRUE);
 }
+
+SEXP R_lsInternal3(SEXP env, Rboolean all, Rboolean sorted) {
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_lsInternal3MethodID, env, all, sorted);
+	return checkRef(thisenv, result);
+
+
+}
+
 
 SEXP Rf_namesgets(SEXP x, SEXP y) {
 	return unimplemented("Rf_namesgets");

@@ -113,4 +113,8 @@ public class REmbedded {
         runRmainloop(vm);
     }
 
+    private static void R_Suicide(String msg) {
+
+    }
+
 }

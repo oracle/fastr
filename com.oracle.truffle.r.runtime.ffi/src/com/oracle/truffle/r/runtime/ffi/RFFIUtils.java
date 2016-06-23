@@ -36,7 +36,7 @@ public class RFFIUtils {
     /**
      * Set this to {@code true} when it is not possible to set {@link FastROptions}.
      */
-    private static boolean alwaysTrace;
+    private static boolean alwaysTrace = true;
 
     public static byte[] wrapChar(char v) {
         return new byte[]{(byte) v};
