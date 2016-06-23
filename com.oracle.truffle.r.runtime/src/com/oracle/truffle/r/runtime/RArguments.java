@@ -156,7 +156,8 @@ public final class RArguments {
     }
 
     public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
-        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length), dispatchArgs);
+        ArgumentsSignature formalSignature = ((HasSignature) functionObj.getRootNode()).getSignature();
+        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(formalSignature.getLength()), dispatchArgs);
     }
 
     public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature, DispatchArgs dispatchArgs) {
@@ -168,8 +169,20 @@ public final class RArguments {
         return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length), enclosingFrame, dispatchArgs);
     }
 
+    /**
+     * Creates the arguments array that can be stored in the frame.
+     *
+     * @param evaluatedArgs arguments ordered according to the formal signature of the function (see
+     *            {@code ArgumentMatcher}).
+     * @param suppliedSignature the original call signature re-ordered the same way as the
+     *            evaluatedArgs
+     * @return the arguments array (in Truffle sense), containing the actual arguments for the R
+     *         function as well as additional information like the parent frame or supplied
+     *         signature.
+     */
     public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
                     ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
+        assert suppliedSignature.getLength() == evaluatedArgs.length : "suppliedSignature should match the evaluatedArgs (see Java docs).";
         assert evaluatedArgs != null : "RArguments.create evaluatedArgs is null";
         assert call != null : "RArguments.create call is null";
         // Eventually we want to have this invariant

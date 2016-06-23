@@ -461,6 +461,7 @@ public class ArgumentMatcher {
         int[] resultPermutation = new int[formalSignature.getLength()];
         String[] resultSignature = new String[formalSignature.getLength()];
         Arrays.fill(resultPermutation, MatchPermutation.UNMATCHED);
+        Arrays.fill(resultSignature, ArgumentsSignature.UNMATCHED);
 
         boolean[] matchedSuppliedArgs = new boolean[signature.getLength()];
         for (int suppliedIndex = 0; suppliedIndex < signature.getLength(); suppliedIndex++) {

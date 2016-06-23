@@ -48,6 +48,10 @@ public abstract class PrepareArguments extends Node {
 
     private static final int CACHE_SIZE = 4;
 
+    /**
+     * Returns the argument values and corresponding signature. The signature represents the
+     * original call signature reordered in the same way as the arguments.
+     */
     public abstract RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call);
 
     public static PrepareArguments create(RRootNode target, CallArgumentsNode args, boolean noOpt) {

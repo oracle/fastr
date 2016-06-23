@@ -175,6 +175,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         private final ConditionProfile alternateClassHeaderProfile = ConditionProfile.createBinaryProfile();
 
         private final ValueProfile parameterSignatureProfile = ValueProfile.createIdentityProfile();
+        private final ValueProfile suppliedParameterSignatureProfile = ValueProfile.createIdentityProfile();
 
         protected NextMethod() {
             super(true);
@@ -203,8 +204,8 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             String group = (String) rvnGroup.execute(frame);
 
             ArgumentsSignature suppliedSignature;
-            ArgumentsSignature parameterSignature = parameterSignatureProfile.profile(RArguments.getSignature(frame));
-            Object[] suppliedArguments = collectArguments.execute(frame, parameterSignature);
+            ArgumentsSignature parameterSignature = suppliedParameterSignatureProfile.profile(RArguments.getSuppliedSignature(frame));
+            Object[] suppliedArguments = collectArguments.execute(frame, parameterSignatureProfile.profile(RArguments.getSignature(frame)));
             if (emptyArgsProfile.profile(args == RArgsValuesAndNames.EMPTY)) {
                 suppliedSignature = parameterSignature;
             } else {
