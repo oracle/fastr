@@ -24,12 +24,9 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.RContext;
 
-public final class RList extends RListBase implements TruffleObject {
+public final class RList extends RListBase {
 
     private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getClazz());
 
@@ -84,8 +81,4 @@ public final class RList extends RListBase implements TruffleObject {
         return getClassHierarchyHelper(implicitClassHeader);
     }
 
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return RContext.getRForeignAccessFactory().getForeignAccess(this);
-    }
 }

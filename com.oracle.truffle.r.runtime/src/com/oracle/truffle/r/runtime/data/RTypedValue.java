@@ -19,7 +19,7 @@ import com.oracle.truffle.r.runtime.RType;
  * primitive values {@link Integer}, {@link Double}, {@link Byte} and {@link String} flow but are
  * not implementing this interface.
  */
-public interface RTypedValue {
+public interface RTypedValue extends RTruffleObject {
 
     // mask values are the same as in GNU R
     // as is the layout of data (but it's never exposed so it does not matter for correctness)

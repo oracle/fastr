@@ -24,11 +24,11 @@ package com.oracle.truffle.r.runtime.context;
 
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 public interface RForeignAccessFactory {
 
-    ForeignAccess getForeignAccess(RTypedValue value);
+    ForeignAccess getForeignAccess(RTruffleObject value);
 
     Class<? extends TruffleLanguage<RContext>> getTruffleLanguage();
 }

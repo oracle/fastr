@@ -27,7 +27,6 @@ import java.io.IOException;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -66,16 +65,12 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        protected Object debugSource(Object name, RTypedValue value) {
+        protected Object exportSymbol(Object name, RTypedValue value) {
             String stringName = RRuntime.asString(name);
             if (stringName == null) {
                 throw RError.error(this, RError.Message.INVALID_ARG_TYPE, "name");
             }
-            if (value instanceof TruffleObject) {
-                RContext.getInstance().getExportedSymbols().put(stringName, (TruffleObject) value);
-            } else {
-                throw RError.error(this, RError.Message.NO_INTEROP, "value", value.getClass().getSimpleName());
-            }
+            RContext.getInstance().getExportedSymbols().put(stringName, value);
             return RNull.instance;
         }
     }
@@ -85,7 +80,7 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        protected Object debugSource(Object name) {
+        protected Object importSymbol(Object name) {
             String stringName = RRuntime.asString(name);
             if (stringName == null) {
                 throw RError.error(this, RError.Message.INVALID_ARG_TYPE, "name");

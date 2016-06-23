@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop;
+package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.context.RContext;
 
-class ConstantRootNode extends RootNode {
-
-    @Child private ConstantNode constant;
-
-    ConstantRootNode(ConstantNode constant) {
-        super(TruffleRLanguage.class, null, null);
-        this.constant = constant;
-    }
-
+public interface RTruffleObject extends TruffleObject {
     @Override
-    public Object execute(VirtualFrame frame) {
-        return constant.execute(frame);
+    default ForeignAccess getForeignAccess() {
+        return RContext.getRForeignAccessFactory().getForeignAccess(this);
     }
 }
