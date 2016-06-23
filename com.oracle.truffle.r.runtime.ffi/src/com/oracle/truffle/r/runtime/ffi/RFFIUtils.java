@@ -74,20 +74,37 @@ public class RFFIUtils {
         }
     }
 
+    private enum CallMode {
+        UP("Up"),
+        UP_RETURN("UpReturn"),
+        DOWN("Down"),
+        DOWN_RETURN("DownReturn");
+
+        private final String printName;
+
+        CallMode(String printName) {
+            this.printName = printName;
+        }
+    }
+
     public static void traceUpCall(String name, Object... args) {
-        traceCall(false, name, args);
+        traceCall(CallMode.UP, name, args);
+    }
+
+    public static void traceUpCallReturn(String name, Object... args) {
+        traceCall(CallMode.UP_RETURN, name, args);
     }
 
     public static void traceDownCall(String name, Object... args) {
-        traceCall(true, name, args);
+        traceCall(CallMode.DOWN, name, args);
     }
 
-    private static void traceCall(boolean down, String name, Object... args) {
+    private static void traceCall(CallMode mode, String name, Object... args) {
         if (alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue()) {
             initialize();
             StringBuffer sb = new StringBuffer();
             sb.append("CallRFFI[");
-            sb.append(down ? "Down" : "Up");
+            sb.append(mode.printName);
             sb.append(']');
             sb.append(name);
             sb.append('(');

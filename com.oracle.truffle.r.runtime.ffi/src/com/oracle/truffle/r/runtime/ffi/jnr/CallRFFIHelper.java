@@ -327,24 +327,27 @@ public class CallRFFIHelper {
 
     public static RStringVector getClassHr(Object v) {
         RFFIUtils.traceUpCall("getClassHr", v);
+        RStringVector result;
         if (v instanceof RAttributable) {
-            return ((RAttributable) v).getClassHierarchy();
+            result = ((RAttributable) v).getClassHierarchy();
         } else if (v instanceof Byte) {
-            return RLogicalVector.implicitClassHeader;
+            result = RLogicalVector.implicitClassHeader;
         } else if (v instanceof String) {
-            return RStringVector.implicitClassHeader;
+            result = RStringVector.implicitClassHeader;
         } else if (v instanceof Integer) {
-            return RIntVector.implicitClassHeader;
+            result = RIntVector.implicitClassHeader;
         } else if (v instanceof Double) {
-            return RDoubleVector.implicitClassHeader;
+            result = RDoubleVector.implicitClassHeader;
         } else if (v instanceof RComplex) {
-            return RComplexVector.implicitClassHeader;
+            result = RComplexVector.implicitClassHeader;
         } else if (v instanceof RRaw) {
-            return RRawVector.implicitClassHeader;
+            result = RRawVector.implicitClassHeader;
         } else {
             guaranteeInstanceOf(v, RNull.class);
-            return RNull.implicitClassHeader;
+            result = RNull.implicitClassHeader;
         }
+        RFFIUtils.traceUpCallReturn("getClassHr", result);
+        return result;
     }
 
     public static int Rf_inherits(Object x, String clazz) {
