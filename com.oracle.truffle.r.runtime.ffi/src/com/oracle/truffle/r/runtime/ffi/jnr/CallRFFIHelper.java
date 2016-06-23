@@ -325,8 +325,7 @@ public class CallRFFIHelper {
         }
     }
 
-    public static RStringVector getClassHr(Object v) {
-        RFFIUtils.traceUpCall("getClassHr", v);
+    private static RStringVector getClassHr(Object v) {
         RStringVector result;
         if (v instanceof RAttributable) {
             result = ((RAttributable) v).getClassHierarchy();
@@ -346,19 +345,20 @@ public class CallRFFIHelper {
             guaranteeInstanceOf(v, RNull.class);
             result = RNull.implicitClassHeader;
         }
-        RFFIUtils.traceUpCallReturn("getClassHr", result);
         return result;
     }
 
     public static int Rf_inherits(Object x, String clazz) {
         RFFIUtils.traceUpCall("Rf_inherits", x, clazz);
+        int result = 0;
         RStringVector hierarchy = getClassHr(x);
         for (int i = 0; i < hierarchy.getLength(); i++) {
             if (hierarchy.getDataAt(i).equals(clazz)) {
-                return 1;
+                result = 1;
             }
         }
-        return 0;
+        RFFIUtils.traceUpCallReturn("Rf_inherits", result);
+        return result;
     }
 
     public static Object Rf_lengthgets(Object x, int newSize) {
