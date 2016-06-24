@@ -172,8 +172,8 @@ public class RCommand {
         return ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
     }
 
-    private static final Source GET_ECHO = Source.fromText("invisible(getOption('echo'))", RInternalSourceDescriptions.GET_ECHO).withMimeType(TruffleRLanguage.MIME);
-    private static final Source QUIT_EOF = Source.fromText("quit(\"default\", 0L, TRUE)", RInternalSourceDescriptions.QUIT_EOF).withMimeType(TruffleRLanguage.MIME);
+    @SuppressWarnings("deprecation") private static final Source GET_ECHO = Source.fromText("invisible(getOption('echo'))", RInternalSourceDescriptions.GET_ECHO).withMimeType(TruffleRLanguage.MIME);
+    @SuppressWarnings("deprecation") private static final Source QUIT_EOF = Source.fromText("quit(\"default\", 0L, TRUE)", RInternalSourceDescriptions.QUIT_EOF).withMimeType(TruffleRLanguage.MIME);
 
     /**
      * The read-eval-print loop, which can take input from a console, command line expression or a
@@ -186,6 +186,7 @@ public class RCommand {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
+    @SuppressWarnings("deprecation")
     static void readEvalPrint(ContextInfo info) {
         PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
         ConsoleHandler consoleHandler = info.getConsoleHandler();
@@ -211,6 +212,7 @@ public class RCommand {
                     }
 
                     String continuePrompt = getContinuePrompt();
+                    @SuppressWarnings("deprecation")
                     Source subSource = Source.subSource(source, startLength).withMimeType(TruffleRLanguage.MIME);
                     while (true) {
                         /*

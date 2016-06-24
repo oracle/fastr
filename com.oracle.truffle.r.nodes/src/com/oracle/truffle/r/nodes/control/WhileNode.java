@@ -153,6 +153,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
             return whileNode;
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         public String toString() {
             RootNode rootNode = getRootNode();

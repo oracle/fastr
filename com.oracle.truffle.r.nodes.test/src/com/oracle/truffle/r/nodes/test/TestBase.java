@@ -45,7 +45,8 @@ public class TestBase {
     }
 
     // clear out warnings (which are stored in shared base env)
-    private static final Source CLEAR_WARNINGS = Source.fromText("assign('last.warning', NULL, envir = baseenv())", "<clear_warnings>").withMimeType(TruffleRLanguage.MIME);
+    @SuppressWarnings("deprecation") private static final Source CLEAR_WARNINGS = Source.fromText("assign('last.warning', NULL, envir = baseenv())", "<clear_warnings>").withMimeType(
+                    TruffleRLanguage.MIME);
 
     @AfterClass
     public static void finishClass() throws IOException {

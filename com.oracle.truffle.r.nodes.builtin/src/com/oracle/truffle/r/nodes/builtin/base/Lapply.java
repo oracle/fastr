@@ -61,7 +61,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @RBuiltin(name = "lapply", kind = INTERNAL, parameterNames = {"X", "FUN"}, splitCaller = true)
 public abstract class Lapply extends RBuiltinNode {
 
-    private static final Source CALL_SOURCE = Source.fromText("FUN(X[[i]], ...)", "lapply");
+    @SuppressWarnings("deprecation") private static final Source CALL_SOURCE = Source.fromText("FUN(X[[i]], ...)", "lapply");
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
