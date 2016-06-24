@@ -762,11 +762,8 @@ modelframe <- function(formula, rownames, variables, varnames, dots, dotnames, s
     }
     
     # Do the subsetting, if required.
-    # Need to save and restore 'most' attributes
     if (!is.null(subset)) {
-        # TODO: what is this supposed to do?
-        print("DEBUG: warning hit untested case in 'modelframe'")
-        `[.data.frame`(list(data, subset, NULL, FALSE))
+        data <- data[subset,,drop=FALSE]
     }
     
     # finally, we run na.action on the data frame
