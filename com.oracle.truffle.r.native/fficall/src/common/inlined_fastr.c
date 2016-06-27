@@ -191,6 +191,8 @@ INLINE_FUN SEXP listAppend(SEXP s, SEXP t)
 }
 
 
+SEXP SET_TYPEOF_FASTR(SEXP x, int v);
+
 /* Language based list constructs.  These are identical to the list */
 /* constructs, but the results can be evaluated. */
 
@@ -199,8 +201,7 @@ INLINE_FUN SEXP listAppend(SEXP s, SEXP t)
 INLINE_FUN SEXP lcons(SEXP car, SEXP cdr)
 {
     SEXP e = cons(car, cdr);
-    e = SET_TYPEOF_FASTR(e, LANGSXP);
-    return e;
+    return SET_TYPEOF_FASTR(e, LANGSXP);
 }
 
 INLINE_FUN SEXP lang1(SEXP s)
