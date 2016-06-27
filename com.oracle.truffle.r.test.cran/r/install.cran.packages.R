@@ -509,7 +509,7 @@ do.it <- function() {
 		install.pkgs(test.pkgnames)
 		cat("END package installation\n")
 
-		if (print.ok.installs) {
+		if (print.install.status) {
 			cat("BEGIN install status\n")
 			for (pkgname.i in test.pkgnames) {
 				cat(paste0(pkgname.i, ":"), ifelse(install.status[pkgname.i], "OK", "FAILED"), "\n")
@@ -704,8 +704,8 @@ parse.args <- function() {
 			run.tests <<- TRUE
 		} else if (a == "--testdir") {
 			testdir <<- get.argvalue()
-		} else if (a == "--print-ok-installs") {
-			print.ok.installs <<- T
+		} else if (a == "--print-install-status" || a == "--print-ok-installs") {
+			print.install.status <<- T
 		} else if (a == "--list-versions") {
 			list.versions <<- TRUE
 		} else if (a == "--install-dependents-first") {
@@ -720,7 +720,6 @@ parse.args <- function() {
 			}
 			# backwards compatibility
 			pkg.pattern <<- a
-			break
 		}
 
 		args <<- args[-1L]
@@ -751,7 +750,7 @@ cat.args <- function() {
 		cat("count.daily:", count.daily, "\n")
 		cat("run.mode:", run.mode, "\n")
 		cat("run.tests:", run.tests, "\n")
-		cat("print.ok.installs:", print.ok.installs, "\n")
+		cat("print.install.status:", print.install.status, "\n")
 		cat("use.installed.pkgs:", use.installed.pkgs, "\n")
 		cat("invert.pkgset:", invert.pkgset, "\n")
 		cat("testdir.path", testdir, "\n")
@@ -809,7 +808,7 @@ testdir <- "test"
 pkg.pattern <- NA
 pkg.filelist <- character()
 pkg.filelistfile <- NA
-print.ok.installs <- F
+print.install.status <- F
 use.installed.pkgs <- F
 verbose <- F
 very.verbose <- F
