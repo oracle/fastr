@@ -23,16 +23,21 @@
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
@@ -728,6 +733,32 @@ public class CallRFFIHelper {
         return result;
     }
 
+    private static Object convertPairList(RPairList list) {
+        try {
+            if (list.getType() == SEXPTYPE.LANGSXP) {
+                RPairList pl = (RPairList) list;
+                Map<String, Object> constants = new HashMap<>();
+                String deparse = RDeparse.deparseDeserialize(constants, pl);
+                Source source = Source.fromText(deparse, "<PAIR LIST CONVERT deparse>");
+                RExpression expr = RContext.getEngine().parse(constants, source);
+                assert expr.getLength() == 1;
+                Object result = expr.getDataAt(0);
+                RAttributes attrs = pl.getAttributes();
+                if (result instanceof RAttributable) {
+                    RSerialize.copyAttributes((RAttributable) result, attrs);
+                }
+                return result;
+
+            } else {
+                throw RInternalError.shouldNotReachHere();
+            }
+        } catch (Throwable x) {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+    }
+
+    @TruffleBoundary
     public static Object Rf_eval(Object expr, Object env) {
         RFFIUtils.traceUpCall("Rf_eval", expr, env);
         guarantee(env instanceof REnvironment);
@@ -738,6 +769,8 @@ public class CallRFFIHelper {
             result = RContext.getEngine().eval((RExpression) expr, (REnvironment) env, RCaller.createInvalid(null));
         } else if (expr instanceof RLanguage) {
             result = RContext.getEngine().eval((RLanguage) expr, (REnvironment) env, RCaller.createInvalid(null));
+        } else if (expr instanceof RPairList) {
+            result = Rf_eval(convertPairList((RPairList) expr), env);
         } else {
             // just return value
             result = expr;
