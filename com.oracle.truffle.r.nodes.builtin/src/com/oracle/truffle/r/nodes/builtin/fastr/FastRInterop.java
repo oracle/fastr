@@ -43,6 +43,7 @@ public class FastRInterop {
     @RBuiltin(name = ".fastr.interop.eval", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"mimeType", "source"})
     public abstract static class Eval extends RBuiltinNode {
 
+        @SuppressWarnings("deprecation")
         @Specialization
         @TruffleBoundary
         protected Object interopEval(Object mimeType, Object source) {

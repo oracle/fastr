@@ -141,7 +141,7 @@ public final class FastRSession implements RSession {
         return singleton;
     }
 
-    public static final Source GET_CONTEXT = Source.fromText("invisible(.fastr.context.get())", "<get_context>").withMimeType(TruffleRLanguage.MIME);
+    @SuppressWarnings("deprecation") public static final Source GET_CONTEXT = Source.fromText("invisible(.fastr.context.get())", "<get_context>").withMimeType(TruffleRLanguage.MIME);
 
     public PolyglotEngine createTestContext(ContextInfo contextInfoArg) {
         create();
@@ -243,6 +243,7 @@ public final class FastRSession implements RSession {
                     try {
                         String input = consoleHandler.readLine();
                         while (input != null) {
+                            @SuppressWarnings("deprecation")
                             Source source = Source.fromText(input, null).withMimeType(TruffleRLanguage.MIME);
                             try {
                                 vm.eval(source);

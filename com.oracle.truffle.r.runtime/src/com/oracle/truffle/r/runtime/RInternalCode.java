@@ -54,6 +54,7 @@ public final class RInternalCode {
         this.basePackage = basePackage;
     }
 
+    @SuppressWarnings("deprecation")
     public static Source loadSourceRelativeTo(Class<?> clazz, String fileName) {
         URL url = clazz.getResource("/" + clazz.getPackage().getName().replaceAll("\\.", "//") + "/" + fileName);
         try {

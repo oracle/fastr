@@ -48,6 +48,7 @@ import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Value;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromiseBase;
 
+@SuppressWarnings("deprecation")
 public class FastRDebugTest {
     private Debugger debugger;
     private final LinkedList<Runnable> run = new LinkedList<>();

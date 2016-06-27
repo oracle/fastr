@@ -85,6 +85,7 @@ public class RInstrumentation {
             this.fdn = fdn;
         }
 
+        @SuppressWarnings("deprecation")
         private FunctionIdentification getIdentification() {
             if (ident == null) {
                 SourceSection ss = fdn.getSourceSection();

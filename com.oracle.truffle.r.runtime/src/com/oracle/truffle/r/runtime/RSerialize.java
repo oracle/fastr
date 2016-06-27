@@ -858,6 +858,7 @@ public class RSerialize {
             }
         }
 
+        @SuppressWarnings("deprecation")
         private RExpression parse(Map<String, Object> constants, String deparseRaw) throws IOException {
             try {
                 Source source = Source.fromText(deparseRaw, UNKNOWN_PACKAGE_SOURCE_PREFIX + packageName + " deparse>");
@@ -876,6 +877,7 @@ public class RSerialize {
             }
         }
 
+        @SuppressWarnings("deprecation")
         private RFunction parseFunction(Map<String, Object> constants, String deparseRaw, MaterializedFrame enclosingFrame, String currentFunctionName) throws IOException {
             try {
                 String sourcePath = null;
@@ -930,7 +932,7 @@ public class RSerialize {
         }
 
         private static final String FAILED_DEPARSE_FUNCTION = "function(...) stop(\"FastR error: proxy for lazily loaded function that did not deparse/parse\")";
-        private static final Source FAILED_DEPARSE_FUNCTION_SOURCE = Source.fromText(FAILED_DEPARSE_FUNCTION, UNKNOWN_PACKAGE_SOURCE_PREFIX + "deparse_error>");
+        @SuppressWarnings("deprecation") private static final Source FAILED_DEPARSE_FUNCTION_SOURCE = Source.fromText(FAILED_DEPARSE_FUNCTION, UNKNOWN_PACKAGE_SOURCE_PREFIX + "deparse_error>");
 
         /**
          * GnuR uses a pairlist to represent attributes, whereas FastR uses the abstract RAttributes

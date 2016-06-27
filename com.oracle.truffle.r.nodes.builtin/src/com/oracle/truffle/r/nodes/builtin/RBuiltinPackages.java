@@ -65,6 +65,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         return instance;
     }
 
+    @SuppressWarnings("deprecation")
     public static void loadBase(MaterializedFrame baseFrame) {
         RBuiltinPackage pkg = basePackage;
         REnvironment baseEnv = REnvironment.baseEnv();

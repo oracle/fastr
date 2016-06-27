@@ -40,6 +40,7 @@ public class FastRTckTest extends TruffleTCK {
     }
 
     // @formatter:off
+    @SuppressWarnings("deprecation")
     private static final Source INITIALIZATION = Source.fromText(
         "fourtyTwo <- function() {\n" +
         "  42L\n" +
@@ -71,6 +72,16 @@ public class FastRTckTest extends TruffleTCK {
         " a$real <- a$real + b$real\n" +
         "}\n" +
         ".fastr.interop.export('complexAdd', complexAdd)\n" +
+        "countUpWhile <- function(fn) {\n" +
+        " counter <- 0\n" +
+        " while (T) {\n" +
+        "  if (!fn(counter)) {\n" +
+        "   break\n" +
+        "  }\n" +
+        "  counter <- counter + 1\n" +
+        " }\n" +
+        "}\n" +
+        ".fastr.interop.export('countUpWhile', countUpWhile)\n" +
         "complexSumReal <- function(a) {\n" +
         " sum <- 0\n" +
         " for (i in 0:(length(a)-1)) {\n" +
@@ -162,6 +173,11 @@ public class FastRTckTest extends TruffleTCK {
     @Override
     protected String valuesObject() {
         return "valuesObject";
+    }
+
+    @Override
+    protected String countUpWhile() {
+        return "countUpWhile";
     }
 
     @Override
@@ -345,4 +361,10 @@ public class FastRTckTest extends TruffleTCK {
     public String multiplyCode(String firstName, String secondName) {
         return firstName + '*' + secondName;
     }
+
+    @Override
+    public void timeOutTest() throws Exception {
+        // We cannot execute this owing to Tck uing Boolean for truth values
+    }
+
 }

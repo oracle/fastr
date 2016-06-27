@@ -187,6 +187,7 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void checkAndRunStartupShutdownFunction(String name, String... args) {
         Object func = REnvironment.globalEnv().findFunction(name);
