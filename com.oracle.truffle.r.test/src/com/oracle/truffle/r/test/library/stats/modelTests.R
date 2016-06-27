@@ -97,7 +97,13 @@ run.tests()
 
 cat("now some variables will be factors\n")
 ignoremf <- ignoremm # log(x) and I(x+4) etc is not supported with factors in R
-k <- factor(rep(c("m", "f"), 5))
-z <- factor(c(rep(c("a", "b", "c"), 3), "c"))
+k <- factor(c(rep(c("m", "f"), 5), "f"))
+z <- factor(c(rep(c("a", "b", "c"), 3), "c", "c"))
 run.tests()
+
+# check subsetting
+print(y~z)
+mf <- model.frame.default(y~z, subset=3:7)
+check(mf, modelframedefault(y~z, subset=3:7), "model.frame.default with subset")
+
 

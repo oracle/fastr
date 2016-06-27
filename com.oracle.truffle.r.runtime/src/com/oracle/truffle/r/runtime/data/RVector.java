@@ -754,7 +754,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     }
 
     @Override
-    public final RAttributes resetAllAttributes(boolean nullify) {
+    public final void resetAllAttributes(boolean nullify) {
         this.dimensions = null;
         this.names = null;
         this.dimNames = null;
@@ -766,7 +766,6 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
                 this.attributes.clear();
             }
         }
-        return this.attributes;
     }
 
     @Override
