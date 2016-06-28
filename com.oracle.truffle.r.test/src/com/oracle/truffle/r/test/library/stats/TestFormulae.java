@@ -84,4 +84,24 @@ public class TestFormulae extends TestBase {
     public void testModelMatrix() {
         assertEval(template("{%0; model.matrix(model.frame(terms.formula(%1))) }", INITS, FORMULAE));
     }
+
+    @Test
+    public void testSubsettingModelframe() {
+        assertEval("{x<-y<-1:10; model.frame.default(x~y, subset=3:7); }");
+    }
+
+    @Test
+    public void testSpecialsTermsform() {
+        assertEval("f <- terms.formula(y~myfun(z)+x, c('myfun')); attrs <- attributes(f); " + SHOW_ATTRS);
+    }
+
+    @Test
+    public void testExpandDostsTermsform() {
+        assertEval("f <- terms.formula(cyl~hp*mpg+., data=mtcars); attrs <- attributes(f);" + SHOW_ATTRS);
+    }
+
+    @Test
+    public void testExpandDostsAndSpecialsTermsform() {
+        assertEval("f <- terms.formula(cyl~myfun(mpg)+., specials=c('myfun'), data=mtcars); attrs <- attributes(f); " + SHOW_ATTRS);
+    }
 }
