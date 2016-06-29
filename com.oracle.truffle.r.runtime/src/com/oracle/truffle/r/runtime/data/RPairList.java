@@ -72,6 +72,21 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
         this.type = type;
     }
 
+    /**
+     * Creates a new pair list of given size > 0. Note: pair list of size 0 is NULL.
+     */
+    @TruffleBoundary
+    public static Object create(int size) {
+        assert size > 0 : "a pair list of size = 0 is NULLs";
+        RPairList result = new RPairList();
+        for (int i = 1; i < size; i++) {
+            RPairList tmp = result;
+            result = new RPairList();
+            result.cdr = tmp;
+        }
+        return result;
+    }
+
     @Override
     public RType getRType() {
         return RType.PairList;

@@ -66,4 +66,10 @@ public class TestBuiltin_vector extends TestBase {
         assertEval("{ vector(length=3) }");
         assertEval("{ x<-as.vector(3); y<-vector(length=x) }");
     }
+
+    @Test
+    public void testVectorWithPairlist() {
+        assertEval("vector('pairlist', 0)");
+        assertEval("vector('pairlist', 3)");
+    }
 }
