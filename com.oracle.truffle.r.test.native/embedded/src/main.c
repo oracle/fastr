@@ -57,6 +57,7 @@
 #define R_INTERFACE_PTRS 1
 #include <Rinterface.h>
 #include <Rembedded.h>
+#include <R_ext/Rdynload.h>
 
 
 void (*ptr_stdR_CleanUp)(SA_TYPE, int, int);
@@ -103,6 +104,7 @@ int main(int argc, char **argv) {
 	ptr_R_Suicide = &testR_Suicide;
 	ptr_R_ReadConsole = &testR_ReadConsole;
 	ptr_R_WriteConsole = &testR_WriteConsole;
+	DllInfo *eDllInfo = R_getEmbeddingDllInfo();
 	Rf_mainloop();
 	Rf_endEmbeddedR(0);
 }

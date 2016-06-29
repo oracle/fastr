@@ -847,7 +847,7 @@ public class RSerialize {
             return result;
         }
 
-        private static void copyAttributes(RAttributable obj, RAttributes attrs) {
+        public static void copyAttributes(RAttributable obj, RAttributes attrs) {
             if (attrs == null) {
                 return;
             }
