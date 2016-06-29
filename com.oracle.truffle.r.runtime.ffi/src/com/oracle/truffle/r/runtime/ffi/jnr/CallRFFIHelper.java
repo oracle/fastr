@@ -736,7 +736,7 @@ public class CallRFFIHelper {
     private static Object convertPairList(RPairList list) {
         try {
             if (list.getType() == SEXPTYPE.LANGSXP) {
-                RPairList pl = (RPairList) list;
+                RPairList pl = list;
                 Map<String, Object> constants = new HashMap<>();
                 String deparse = RDeparse.deparseDeserialize(constants, pl);
                 Source source = Source.fromText(deparse, "<PAIR LIST CONVERT deparse>");
@@ -745,7 +745,7 @@ public class CallRFFIHelper {
                 Object result = expr.getDataAt(0);
                 RAttributes attrs = pl.getAttributes();
                 if (result instanceof RAttributable) {
-                    RSerialize.copyAttributes((RAttributable) result, attrs);
+                    RAttributes.copyAttributes((RAttributable) result, attrs);
                 }
                 return result;
 
