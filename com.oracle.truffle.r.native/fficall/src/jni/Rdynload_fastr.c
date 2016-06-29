@@ -17,23 +17,29 @@
 static jclass DLLClass;
 static jclass JNI_PkgInitClass;
 static jclass DotSymbolClass;
+static jclass RegisteredNativeSymbolClass;
 
 static jmethodID registerRoutinesID;
 static jmethodID registerCCallableID;
 static jmethodID useDynamicSymbolsID;
 static jmethodID forceSymbolsID;
 static jmethodID setDotSymbolValuesID;
+static jmethodID getEmbeddingDllInfoID;
+static jmethodID findSymbolID;
 
 void init_dynload(JNIEnv *env) {
     DLLClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL");
     JNI_PkgInitClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/JNI_PkgInit");
     DotSymbolClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL$DotSymbol");
+    RegisteredNativeSymbolClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL$RegisteredNativeSymbol");
 
     registerRoutinesID = checkGetMethodID(env, JNI_PkgInitClass, "registerRoutines", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;IIJ)V", 1);
     registerCCallableID = checkGetMethodID(env, JNI_PkgInitClass, "registerCCallable", "(Ljava/lang/String;Ljava/lang/String;J)V", 1);
     useDynamicSymbolsID = checkGetMethodID(env, JNI_PkgInitClass, "useDynamicSymbols", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;I)I", 1);
     forceSymbolsID = checkGetMethodID(env, JNI_PkgInitClass, "forceSymbols", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;I)I", 1);
     setDotSymbolValuesID = checkGetMethodID(env, JNI_PkgInitClass, "setDotSymbolValues", "(Ljava/lang/String;JI)Lcom/oracle/truffle/r/runtime/ffi/DLL$DotSymbol;", 1);
+    getEmbeddingDllInfoID = checkGetMethodID(env, JNI_PkgInitClass, "getEmbeddingDllInfo", "()Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;", 1);
+    findSymbolID = checkGetMethodID(env, JNI_PkgInitClass, "findSymbol", "(Ljava/lang/String;Ljava/lang/String;Lcom/oracle/truffle/r/runtime/ffi/DLL$RegisteredNativeSymbol;)I", 1);
 }
 
 // Must match ordinal value for DLL.NativeSymbolType
@@ -143,5 +149,6 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg,
 }
 
 DllInfo *R_getEmbeddingDllInfo(void) {
-	return (DllInfo*) unimplemented("R_getEmbeddingDllInfo");
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallStaticObjectMethod(thisenv, JNI_PkgInitClass, getEmbeddingDllInfoID);
 }

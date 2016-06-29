@@ -67,4 +67,13 @@ final class JNI_PkgInit {
     public static int forceSymbols(DLLInfo dllInfo, int value) {
         return DLL.forceSymbols(dllInfo, value);
     }
+
+    public static DLLInfo getEmbeddingDllInfo() {
+        return DLL.getEmbeddingDLLInfo();
+    }
+
+    @SuppressWarnings("unused")
+    public static int findSymbol(String name, String pkg, DLL.RegisteredNativeSymbol rns) {
+        throw RInternalError.unimplemented();
+    }
 }

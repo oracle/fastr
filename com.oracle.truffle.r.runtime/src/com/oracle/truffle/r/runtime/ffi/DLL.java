@@ -527,4 +527,14 @@ public class DLL {
         dllInfo.forceSymbols = value == 0 ? false : true;
         return old;
     }
+
+    private static final String EMBEDDING = "(embedding)";
+
+    public static DLLInfo getEmbeddingDLLInfo() {
+        DLLInfo result = findLibrary(EMBEDDING);
+        if (result == null) {
+            result = new DLLInfo(EMBEDDING, EMBEDDING, false, null);
+        }
+        return result;
+    }
 }
