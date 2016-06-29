@@ -55,11 +55,14 @@ public final class RInternalCode {
     }
 
     public static Source loadSourceRelativeTo(Class<?> clazz, String fileName) {
-        URL url = clazz.getResource("/" + clazz.getPackage().getName().replaceAll("\\.", "//") + "/" + fileName);
         try {
+            URL url = ResourceHandlerFactory.getHandler().getResource(clazz, fileName);
+            if (url == null) {
+                throw new IOException();
+            }
             return Source.fromURL(url, fileName);
         } catch (IOException e) {
-            throw RInternalError.shouldNotReachHere(e, "Internal R script failed to load.");
+            throw RInternalError.shouldNotReachHere(e, "Internal R script " + fileName + " failed to load.");
         }
     }
 
