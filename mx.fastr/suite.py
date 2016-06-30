@@ -21,14 +21,14 @@
 # questions.
 #
 suite = {
-  "mxversion" : "5.30.0",
+  "mxversion" : "5.31.0",
   "name" : "fastr",
   "versionConflictResolution" : "latest",
   "imports" : {
     "suites" : [
             {
                "name" : "truffle",
-               "version" : "b7010d85db42a0afc2b3d4fceb1e14e9c43bc55b",
+               "version" : "fbb6bb30803df787c07b1c8131789c94acfc2761",
                "urls" : [
                     {"url" : "https://github.com/graalvm/truffle", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
