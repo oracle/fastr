@@ -569,7 +569,7 @@ public class RSerialize {
                                 MaterializedFrame enclosingFrame = ((REnvironment) rpl.getTag()).getFrame();
                                 RFunction func = parseFunction(constants, deparse, enclosingFrame, currentFunctionName);
 
-                                copyAttributes(func, rpl.getAttributes());
+                                RAttributes.copyAttributes(func, rpl.getAttributes());
                                 result = func;
                             } catch (Throwable ex) {
                                 throw new RInternalError(ex, "unserialize - failed to eval deparsed closure");
@@ -594,7 +594,7 @@ public class RSerialize {
                                 result = expr.getDataAt(0);
                                 RAttributes attrs = pl.getAttributes();
                                 if (result instanceof RAttributable) {
-                                    copyAttributes((RAttributable) result, attrs);
+                                    RAttributes.copyAttributes((RAttributable) result, attrs);
                                 }
                             }
                             break;
@@ -845,17 +845,6 @@ public class RSerialize {
         private static Object checkResult(Object result) {
             assert result != null;
             return result;
-        }
-
-        private static void copyAttributes(RAttributable obj, RAttributes attrs) {
-            if (attrs == null) {
-                return;
-            }
-            Iterator<RAttribute> iter = attrs.iterator();
-            while (iter.hasNext()) {
-                RAttribute attr = iter.next();
-                obj.setAttr(attr.getName(), attr.getValue());
-            }
         }
 
         private RExpression parse(Map<String, Object> constants, String deparseRaw) throws IOException {
