@@ -23,8 +23,6 @@
 
 package com.oracle.truffle.r.runtime;
 
-import java.io.IOException;
-import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -55,15 +53,7 @@ public final class RInternalCode {
     }
 
     public static Source loadSourceRelativeTo(Class<?> clazz, String fileName) {
-        try {
-            URL url = ResourceHandlerFactory.getHandler().getResource(clazz, fileName);
-            if (url == null) {
-                throw new IOException();
-            }
-            return Source.fromURL(url, fileName);
-        } catch (IOException e) {
-            throw RInternalError.shouldNotReachHere(e, "Internal R script " + fileName + " failed to load.");
-        }
+        return Utils.getResourceAsSource(clazz, fileName);
     }
 
     private REnvironment evaluate() {
