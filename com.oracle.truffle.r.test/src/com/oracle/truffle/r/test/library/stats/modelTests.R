@@ -59,7 +59,7 @@ check <- function(expected, actual, name) {
 tests <- c(y~z, y~1+z, y~0+z, y~-1+z, y~z*k, y~z*k+w*m, u~z*k+w*m, y~z:k)
 tests <- c(tests, y~z^2, y~(z+k)^2, y~z*((m+w)^3), y~(z+k)*(w+u))
 tests <- c(tests, y~w%in%v, y~w/k, y~(1 + w/k))
-ignoremm <- c(y~log(z), y~z+I(k+4))
+ignoremm <- c(y~log(z), y~z+I(k+4), y~z+I(k^2), y~z+offset(log(z)))
 ignoremf <- NULL
 tests <- c(tests, ignoremm)
 
@@ -97,7 +97,26 @@ run.tests()
 
 cat("now some variables will be factors\n")
 ignoremf <- ignoremm # log(x) and I(x+4) etc is not supported with factors in R
-k <- factor(rep(c("m", "f"), 5))
-z <- factor(c(rep(c("a", "b", "c"), 3), "c"))
+k <- factor(c(rep(c("m", "f"), 5), "f"))
+z <- factor(c(rep(c("a", "b", "c"), 3), "c", "c"))
 run.tests()
 
+# check subsetting
+print(y~z)
+mf <- model.frame.default(y~z, subset=3:7)
+check(mf, modelframedefault(y~z, subset=3:7), "model.frame.default with subset")
+
+# check specials
+t <- y~myfun(z)+x
+print(t)
+check(terms.formula(t, c('myfun')), termsform(t, c('myfun'), NULL, FALSE, FALSE), "termsform with specials")
+
+# check expand dots
+t <- cyl~hp*mpg+.
+print(t)
+check(terms.formula(t, data=mtcars), termsform(t, NULL, mtcars, FALSE, FALSE), "termsform with expandDots")
+
+# check specials and expand dots
+t <- cyl~mufun(mpg)+.
+print(t)
+check(terms.formula(t, specials=c('myfun'), data=mtcars), termsform(t, c('myfun'), mtcars, FALSE, FALSE), "termsform with specials and expandDots")

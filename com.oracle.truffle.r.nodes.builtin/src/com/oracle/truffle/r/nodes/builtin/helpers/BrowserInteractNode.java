@@ -70,6 +70,7 @@ public abstract class BrowserInteractNode extends RNode {
         return inBrowser;
     }
 
+    @SuppressWarnings("deprecation")
     @Specialization
     protected int interact(VirtualFrame frame) {
         CompilerDirectives.transferToInterpreter();

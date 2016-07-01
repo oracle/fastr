@@ -102,6 +102,7 @@ public final class RProfile implements RContext.ContextState {
         return userProfile;
     }
 
+    @SuppressWarnings("deprecation")
     private static Source getProfile(String path) {
         try {
             return Source.fromFileName(path);

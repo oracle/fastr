@@ -112,8 +112,8 @@ public class TestBuiltin_namesassign extends TestBase {
         assertEval("{ x<-c(1, 2); names(x)<-c(\"a\", \"b\"); attr(x, \"names\")<-NULL; x }");
         assertEval("{ x<-c(1, 2); names(x)<-42; x }");
         assertEval("{ x<-c(1, 2); names(x)<-c(TRUE, FALSE); x }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2); names(x) <- 42:44; x }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2); attr(x, \"names\") <- 42:45; x }");
+        assertEval("{ x<-c(1,2); names(x) <- 42:44; x }");
+        assertEval("{ x<-c(1,2); attr(x, \"names\") <- 42:45; x }");
         assertEval("{ x<-list(1,2); names(x)<-c(\"a\",NA); x }");
         assertEval("{ x<-list(1,2); names(x)<-c(\"a\",\"$\"); x }");
         assertEval("{ x<-list(1,2); names(x)<-c(\"a\",\"b\"); x }");
@@ -137,8 +137,19 @@ public class TestBuiltin_namesassign extends TestBase {
         assertEval("{ x <- c(1,2); names(x) <- c(\"A\", \"B\") ; x + 1 }");
         assertEval("{ x <- 1:2; names(x) <- c(\"A\", \"B\") ; y <- c(1,2,3,4) ; names(y) <- c(\"X\", \"Y\", \"Z\") ; x + y }");
 
-        assertEval(Output.IgnoreErrorContext, "{ x <- quote(plot(x = age, y = weight)); names(x)<- c(\"\", \"a\", \"b\", \"d\")}");
+        assertEval("{ x <- quote(plot(x = age, y = weight)); names(x)<- c(\"\", \"a\", \"b\", \"d\")}");
         assertEval("{ x <- quote(plot(x = age, y = weight)); names(x)<- c(\"\", \"a\", \"b\"); x}");
         assertEval("{ x <- quote(plot(x = age, y = weight)); x$x <- \"random\"; x}");
+    }
+
+    @Test
+    public void testUpdateDimnamesDifferentSize() {
+        assertEval("{ l <- list(1,2,3); names(l) <- list('a','b','c','d'); l }"); // longer
+        assertEval("{ l <- list(1,2,3); names(l) <- list('a','b'); l }"); // shorter
+    }
+
+    @Test
+    public void testUpdateDimnamesPairlist() {
+        assertEval("{ l <- vector('pairlist',2); names(l)<-c('a','b'); l; }");
     }
 }

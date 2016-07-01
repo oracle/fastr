@@ -91,6 +91,7 @@ public final class Utils {
         graphPrinter.printToNetwork(true);
     }
 
+    @SuppressWarnings("deprecation")
     public static Source getResourceAsSource(Class<?> clazz, String resourceName) {
         try {
             URL url = ResourceHandlerFactory.getHandler().getResource(clazz, resourceName);

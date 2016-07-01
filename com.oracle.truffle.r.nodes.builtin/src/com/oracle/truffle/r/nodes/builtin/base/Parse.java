@@ -183,6 +183,7 @@ public abstract class Parse extends RBuiltinNode {
     /**
      * Creates a {@link Source} object by gleaning information from {@code srcFile}.
      */
+    @SuppressWarnings("deprecation")
     private static Source createSource(Object srcFile, String coalescedLines) {
         if (srcFile instanceof REnvironment) {
             REnvironment srcFileEnv = (REnvironment) srcFile;
@@ -225,6 +226,7 @@ public abstract class Parse extends RBuiltinNode {
         return createFileSource(path, coalescedLines);
     }
 
+    @SuppressWarnings("deprecation")
     private static Source createFileSource(String path, CharSequence chars) {
         try {
             return Source.fromFileName(chars, path);

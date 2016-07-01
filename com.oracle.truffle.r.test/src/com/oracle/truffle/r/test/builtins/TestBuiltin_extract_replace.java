@@ -37,4 +37,9 @@ public class TestBuiltin_extract_replace extends TestBase {
     public void extractAndReplaceByItself() {
         assertEval("tmp <- c(1,8,NA,3); pivot <- c(1,2,4,3); tmp[pivot] <- tmp; tmp");
     }
+
+    @Test
+    public void replaceInLanguagePreservesAttributes() {
+        assertEval("f <- quote(a+b); attr(f, 'mya') <- 42; f[[2]] <- quote(q); f");
+    }
 }

@@ -342,6 +342,7 @@ public class RDeparse {
         }
 
         public void fixupSources() {
+            @SuppressWarnings("deprecation")
             Source source = Source.fromText(sb, "deparse");
             for (SourceSectionElement s : sources) {
                 s.element.setSourceSection(source.createSection(null, s.start, s.length));
