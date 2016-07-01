@@ -320,6 +320,7 @@ public final class RError extends RuntimeException {
         INVALID_UNNAMED_ARGUMENT("invalid argument"),
         INVALID_UNNAMED_VALUE("invalid value"),
         NAMES_NONVECTOR("names() applied to a non-vector"),
+        NAMES_LONGER("'names' attribute [%d] must be the same length as the vector [%d]"),
         ONLY_FIRST_VARIABLE_NAME("only the first element is used as variable name"),
         INVALID_FIRST_ARGUMENT("invalid first argument"),
         NO_ENCLOSING_ENVIRONMENT("no enclosing environment"),

@@ -58,7 +58,7 @@ public final class RInternalCode {
     public static Source loadSourceRelativeTo(Class<?> clazz, String fileName) {
         URL url = clazz.getResource("/" + clazz.getPackage().getName().replaceAll("\\.", "//") + "/" + fileName);
         try {
-            return Source.fromURL(url, fileName);
+            return Source.newBuilder(url).name(fileName).internal().build();
         } catch (IOException e) {
             throw RInternalError.shouldNotReachHere(e, "Internal R script failed to load.");
         }
