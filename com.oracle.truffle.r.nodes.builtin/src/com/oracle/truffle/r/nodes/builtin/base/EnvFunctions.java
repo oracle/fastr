@@ -68,6 +68,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -365,9 +366,7 @@ public class EnvFunctions {
             throw RError.error(this, RError.Message.USE_NULL_ENV_DEFUNCT);
         }
 
-        @Fallback
-        @TruffleBoundary
-        protected Object updateEnvironment(Object obj, Object env) {
+        protected Object updateEnvironmentNonFunction(Object obj, Object env) {
             if (env == RNull.instance || env instanceof REnvironment) {
                 if (obj instanceof RAttributable) {
                     RAttributable attributable = (RAttributable) obj;
@@ -384,6 +383,19 @@ public class EnvFunctions {
                 throw RError.error(this, RError.Message.REPLACEMENT_NOT_ENVIRONMENT);
             }
         }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object updateEnvironment(RAbstractContainer obj, Object env) {
+            return updateEnvironmentNonFunction(obj, env);
+        }
+
+        @Fallback
+        @TruffleBoundary
+        protected Object updateEnvironment(Object obj, Object env) {
+            return updateEnvironmentNonFunction(obj, env);
+        }
+
     }
 
     @RBuiltin(name = "environmentName", kind = INTERNAL, parameterNames = {"fun"})
