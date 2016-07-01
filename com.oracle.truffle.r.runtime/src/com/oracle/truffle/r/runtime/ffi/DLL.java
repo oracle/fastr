@@ -15,14 +15,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
@@ -247,7 +245,7 @@ public class DLL {
         }
     }
 
-    public static DLLInfo getDLLInfoForId(int id) {
+    public static synchronized DLLInfo getDLLInfoForId(int id) {
         for (DLLInfo dllInfo : list) {
             if (dllInfo.id == id) {
                 return dllInfo;
@@ -354,7 +352,7 @@ public class DLL {
         throw new DLLException(RError.Message.DLL_NOT_LOADED, path);
     }
 
-    public static ArrayList<DLLInfo> getLoadedDLLs() {
+    public static synchronized ArrayList<DLLInfo> getLoadedDLLs() {
         ArrayList<DLLInfo> result = new ArrayList<>();
         for (DLLInfo dllInfo : list) {
             result.add(dllInfo);
