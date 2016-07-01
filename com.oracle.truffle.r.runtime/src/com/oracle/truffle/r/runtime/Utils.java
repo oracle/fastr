@@ -93,8 +93,11 @@ public final class Utils {
 
     @SuppressWarnings("deprecation")
     public static Source getResourceAsSource(Class<?> clazz, String resourceName) {
-        URL url = ResourceHandlerFactory.getHandler().getResource(clazz, resourceName);
         try {
+            URL url = ResourceHandlerFactory.getHandler().getResource(clazz, resourceName);
+            if (url == null) {
+                throw new IOException();
+            }
             return Source.fromFileName(url.getPath());
         } catch (IOException ex) {
             throw Utils.fail("resource " + resourceName + " not found");
