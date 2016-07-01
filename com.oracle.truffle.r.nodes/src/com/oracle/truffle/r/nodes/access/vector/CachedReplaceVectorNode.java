@@ -78,6 +78,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final ConditionProfile valueIsNA = ConditionProfile.createBinaryProfile();
     private final BranchProfile resizeProfile = BranchProfile.create();
     private final BranchProfile sharedProfile = BranchProfile.create();
+    private final ConditionProfile rlanguageAttributesProfile = ConditionProfile.createBinaryProfile();
 
     private final ConditionProfile valueLengthOneProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyReplacementProfile = ConditionProfile.createBinaryProfile();
@@ -189,7 +190,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 repType = RContext.getRRuntimeASTAccess().getRepType((RLanguage) castVector);
                 vector = RContext.getRRuntimeASTAccess().asList((RLanguage) castVector);
                 RAttributes attrs = ((RLanguage) castVector).getAttributes();
-                if (attrs != null && !attrs.isEmpty()) {
+                if (rlanguageAttributesProfile.profile(attrs != null && !attrs.isEmpty())) {
                     vector.initAttributes(attrs.copy());
                 }
                 break;
