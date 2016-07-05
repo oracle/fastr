@@ -323,7 +323,7 @@ final class REngine implements Engine, Engine.Timings {
                 return lastValue;
             } catch (ReturnException ex) {
                 return ex.getResult();
-            } catch (DebugExitException | BrowserQuitException e) {
+            } catch (DebugExitException | BrowserQuitException | ThreadDeath e) {
                 throw e;
             } catch (RError e) {
                 // TODO normal error reporting is done by the runtime

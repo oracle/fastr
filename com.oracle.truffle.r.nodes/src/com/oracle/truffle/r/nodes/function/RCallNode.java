@@ -490,7 +490,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 foreignCallArgCount = argumentsArray.length;
             }
             try {
-                return ForeignAccess.execute(foreignCall, frame, function, argumentsArray);
+                Object result = ForeignAccess.execute(foreignCall, frame, function, argumentsArray);
+                if (result instanceof Boolean) {
+                    // convert to R logical
+                    // TODO byte/short convert to int?
+                    result = RRuntime.asLogical((boolean) result);
+                }
+                return result;
             } catch (Throwable e) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.GENERIC, "Foreign function failed: " + e.getMessage() != null ? e.getMessage() : e.toString());

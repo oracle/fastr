@@ -280,7 +280,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         } catch (RError e) {
             CompilerDirectives.transferToInterpreter();
             throw e;
-        } catch (DebugExitException | BrowserQuitException e) {
+        } catch (DebugExitException | BrowserQuitException | ThreadDeath e) {
             /*
              * These relate to the debugging support. exitHandlers must be suppressed and the
              * exceptions must pass through unchanged; they are not errors
