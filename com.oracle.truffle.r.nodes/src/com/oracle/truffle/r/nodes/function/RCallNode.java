@@ -543,11 +543,21 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         state.setAsLangType();
         state.serializeNodeSetCar(getFunctionNode());
         if (isColon(getFunctionNode())) {
-            // special case, have to translate Strings to Symbols
+            // special case, have to translate Identifier names to Symbols
+            RSyntaxNode arg0 = arguments[0];
+            RSyntaxNode arg1 = arguments[1];
             state.openPairList();
-            state.setCarAsSymbol(((ReadVariableNode) arguments[0]).getIdentifier());
+            if (arg0 instanceof ReadVariableNode) {
+                state.setCarAsSymbol(((ReadVariableNode) arg0).getIdentifier());
+            } else {
+                state.setCar(((ConstantNode) arg0).getValue());
+            }
             state.openPairList();
-            state.setCarAsSymbol(((ReadVariableNode) arguments[1]).getIdentifier());
+            if (arg1 instanceof ReadVariableNode) {
+                state.setCarAsSymbol(((ReadVariableNode) arg1).getIdentifier());
+            } else {
+                state.setCar(((ConstantNode) arg1).getValue());
+            }
             state.linkPairList(2);
             state.setCdr(state.closePairList());
         } else {
