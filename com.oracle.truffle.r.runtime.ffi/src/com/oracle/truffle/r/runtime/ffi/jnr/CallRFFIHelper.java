@@ -727,6 +727,13 @@ public class CallRFFIHelper {
         REnvironment.baseEnv().safePut(((RSymbol) x).getName(), v);
     }
 
+    public static int R_BindingIsLocked(Object sym, Object env) {
+        RFFIUtils.traceUpCall("R_BindingIsLocked", sym, env);
+        guaranteeInstanceOf(sym, RSymbol.class);
+        guaranteeInstanceOf(env, REnvironment.class);
+        return ((REnvironment) env).bindingIsLocked(((RSymbol) sym).getName()) ? 1 : 0;
+    }
+
     public static Object R_FindNamespace(Object name) {
         RFFIUtils.traceUpCall("R_FindNamespace", name);
         Object result = RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(RRuntime.asString(name));
