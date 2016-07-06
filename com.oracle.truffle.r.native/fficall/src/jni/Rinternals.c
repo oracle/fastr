@@ -53,6 +53,7 @@ static jmethodID Rf_rPsortMethodID;
 static jmethodID Rf_iPsortMethodID;
 static jmethodID RprintfMethodID;
 static jmethodID R_FindNamespaceMethodID;
+static jmethodID R_BindingIsLockedID;
 static jmethodID Rf_GetOption1MethodID;
 static jmethodID Rf_gsetVarMethodID;
 static jmethodID Rf_inheritsMethodID;
@@ -146,6 +147,7 @@ void init_internals(JNIEnv *env) {
 	Rf_NewHashedEnvMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_createNewEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/String;ZI)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 1);
 	RprintfMethodID = checkGetMethodID(env, CallRFFIHelperClass, "printf", "(Ljava/lang/String;)V", 1);
 	R_FindNamespaceMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_FindNamespace", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	R_BindingIsLockedID = checkGetMethodID(env, CallRFFIHelperClass, "R_BindingIsLocked", "(Ljava/lang/Object;Ljava/lang/Object;)I", 1);
 	Rf_GetOption1MethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_GetOption1", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_gsetVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_gsetVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	Rf_inheritsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_inherits", "(Ljava/lang/Object;Ljava/lang/String;)I", 1);
@@ -1401,11 +1403,13 @@ void R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env) {
 }
 
 Rboolean R_BindingIsLocked(SEXP sym, SEXP env) {
-	return (Rboolean) unimplemented("R_BindingIsLocked");
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, R_BindingIsLockedID, sym, env);
 }
 
 Rboolean R_BindingIsActive(SEXP sym, SEXP env) {
-	return (Rboolean) unimplemented("R_BindingIsActive");
+    // TODO: for now, I belive all bindings are false
+    return (Rboolean)0;
 }
 
 Rboolean R_HasFancyBindings(SEXP rho) {
