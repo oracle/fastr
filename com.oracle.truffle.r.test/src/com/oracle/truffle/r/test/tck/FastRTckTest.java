@@ -362,10 +362,4 @@ public class FastRTckTest extends TruffleTCK {
         return firstName + '*' + secondName;
     }
 
-    @Override
-    public void testRootNodeName() throws Exception {
-        // TODO We cannot implement this due to halting in the runtime startup
-        // Fixed in upcoming Truffle
-    }
-
 }

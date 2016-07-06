@@ -391,8 +391,13 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     @Override
-    public String toString() {
+    public String getName() {
         return description == null ? "<no source>" : description;
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 
     /**
