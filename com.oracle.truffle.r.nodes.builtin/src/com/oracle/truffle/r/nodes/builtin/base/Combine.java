@@ -178,6 +178,7 @@ public abstract class Combine extends RBuiltinNode {
     @ExplodeLoop
     private RStringVector foldNames(BranchProfile naNameBranch, NACheck naNameCheck, Object[] elements, int size) {
         RStringVector result = RDataFactory.createStringVector(new String[size], true);
+        result.incRefCount();
         int pos = 0;
         for (Object element : elements) {
             pos += processNamesElement(naNameBranch, naNameCheck, result, pos, element);
