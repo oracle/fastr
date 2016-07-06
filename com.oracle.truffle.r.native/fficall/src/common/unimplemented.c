@@ -75,12 +75,6 @@ addInputHandler(InputHandler *handlers, int fd, InputHandlerProc handler,
     return NULL;
 }
 
-const char *locale2charset(const char *locale)
-{
-	unimplemented("locale2charset");
-	return NULL;
-}
-
 void setup_RdotApp(void) {
 	unimplemented("setup_RdotApp");
 }
