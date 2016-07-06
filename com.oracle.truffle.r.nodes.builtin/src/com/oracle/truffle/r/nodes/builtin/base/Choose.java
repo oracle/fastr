@@ -85,7 +85,7 @@ public abstract class Choose extends RBuiltinNode {
         return (int) result;
     }
 
-    private RAbstractDoubleVector choose(int nLength, IntToDoubleFunction getN, int kLength, IntUnaryOperator getK) {
+    private static RAbstractDoubleVector choose(int nLength, IntToDoubleFunction getN, int kLength, IntUnaryOperator getK) {
         int resultLen = Math.max(nLength, kLength);
         boolean complete = true;
         double[] result = new double[resultLen];
@@ -98,7 +98,8 @@ public abstract class Choose extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, complete);
     }
 
-    private double choose(double n, int k) {
+    private static double choose(double n, int ka) {
+        int k = ka;
         if (n == RRuntime.DOUBLE_NA || k == RRuntime.INT_NA) {
             return RRuntime.DOUBLE_NA;
         }

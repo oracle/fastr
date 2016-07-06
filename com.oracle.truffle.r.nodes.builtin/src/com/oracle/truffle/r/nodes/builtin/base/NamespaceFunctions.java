@@ -90,7 +90,7 @@ public class NamespaceFunctions {
         }
 
         @Specialization
-        protected byte doIsNamespaceEnv(RNull env) {
+        protected byte doIsNamespaceEnv(@SuppressWarnings("unused") RNull env) {
             return RRuntime.LOGICAL_FALSE;
         }
     }

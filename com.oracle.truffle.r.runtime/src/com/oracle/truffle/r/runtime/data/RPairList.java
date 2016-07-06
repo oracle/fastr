@@ -125,13 +125,13 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
         for (int i = 0; i < len; i++) {
             data[i] = plt.car();
             if (named) {
-                Object tag = plt.tag;
-                if (isNull(tag)) {
+                Object ptag = plt.tag;
+                if (isNull(ptag)) {
                     names[i] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
-                } else if (tag instanceof RSymbol) {
-                    names[i] = ((RSymbol) tag).getName();
+                } else if (ptag instanceof RSymbol) {
+                    names[i] = ((RSymbol) ptag).getName();
                 } else {
-                    names[i] = RRuntime.asString(tag);
+                    names[i] = RRuntime.asString(ptag);
                     assert names[i] != null : "unexpected type of tag in RPairList";
                 }
             }

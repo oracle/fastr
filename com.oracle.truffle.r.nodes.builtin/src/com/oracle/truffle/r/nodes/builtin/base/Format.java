@@ -208,6 +208,7 @@ public abstract class Format extends RBuiltinNode {
         }
     }
 
+    @SuppressWarnings("unused")
     private static class Config {
         public int width;
         public int naWidth;

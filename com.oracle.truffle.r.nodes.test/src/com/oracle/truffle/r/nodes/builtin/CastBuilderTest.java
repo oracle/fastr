@@ -542,7 +542,7 @@ public class CastBuilderTest {
         testPipeline(true);
     }
 
-    private void testPipeline(boolean positiveMustNotBeEmpty) {
+    private void testPipeline(@SuppressWarnings("unused") boolean positiveMustNotBeEmpty) {
         CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(cb.getCasts()[0]);
         System.out.println(sampler);
         // Samples<?> samples = sampler.collectSamples();
@@ -554,6 +554,7 @@ public class CastBuilderTest {
         // testPipeline(samples);
     }
 
+    @SuppressWarnings("unused")
     private void testPipeline(Samples<?> samples) {
 
         for (Object sample : samples.positiveSamples()) {

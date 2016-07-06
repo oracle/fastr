@@ -29,7 +29,7 @@ import org.junit.BeforeClass;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
 
@@ -45,8 +45,7 @@ public class TestBase {
     }
 
     // clear out warnings (which are stored in shared base env)
-    @SuppressWarnings("deprecation") private static final Source CLEAR_WARNINGS = Source.fromText("assign('last.warning', NULL, envir = baseenv())", "<clear_warnings>").withMimeType(
-                    TruffleRLanguage.MIME);
+    private static final Source CLEAR_WARNINGS = RSource.fromText("assign('last.warning', NULL, envir = baseenv())", "<clear_warnings>");
 
     @AfterClass
     public static void finishClass() throws IOException {

@@ -34,6 +34,7 @@ import com.oracle.truffle.api.source.Source;
 public class RInternalSourceDescriptions {
     private static final Set<String> set = new HashSet<>();
 
+    public static final String UNIT_TEST = add("<unit_test>");
     public static final String SHELL_INPUT = add("<shell_input>");
     public static final String EXPRESSION_INPUT = add("<expression_input>");
     public static final String GET_ECHO = add("<get_echo>");
@@ -42,6 +43,7 @@ public class RInternalSourceDescriptions {
     public static final String REPL_WRAPPER = add("<repl wrapper>");
     public static final String NO_SOURCE = add("<no source>");
     public static final String CONTEXT_EVAL = add("<context_eval>");
+    public static final String RF_FINDFUN = add("<Rf_findfun>");
 
     private static String add(String s) {
         set.add(s);

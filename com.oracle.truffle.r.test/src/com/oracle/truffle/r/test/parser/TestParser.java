@@ -29,6 +29,7 @@ import org.junit.Test;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.runtime.RParserFactory;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.test.TestBase;
 
@@ -89,7 +90,6 @@ public class TestParser extends TestBase {
 
     static int errorCount;
 
-    @SuppressWarnings("deprecation")
     private static void recurse(File file) {
         assert file.exists();
         if (file.isDirectory()) {
@@ -102,7 +102,7 @@ public class TestParser extends TestBase {
                 Source source = null;
                 RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
                 try {
-                    source = Source.fromURL(file.toURL(), file.getName());
+                    source = RSource.fromFile(file);
                     parser.script(source, new RASTBuilder());
                 } catch (Throwable e) {
                     errorCount++;
