@@ -25,6 +25,11 @@
 
 // Most everything in RInternals.h
 
+// N.B. When implementing a new method that returns a SEXP, you MUST
+// explicitly (or implicitly) return via "checkRef(thisenv, result)"
+// to ensure that a global JNI handle is created (if necessary) and returned,
+// otherwise a GC might reclaim the result.
+
 static jmethodID Rf_ScalarIntegerMethodID;
 static jmethodID Rf_ScalarDoubleMethodID;
 static jmethodID Rf_ScalarStringMethodID;
@@ -354,7 +359,7 @@ SEXP Rf_getAttrib(SEXP vec, SEXP name) {
 
 SEXP Rf_setAttrib(SEXP vec, SEXP name, SEXP val) {
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_setAttribMethodID, vec, name, val);
+	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, Rf_setAttribMethodID, vec, name, val);
 	return val;
 }
 
@@ -683,10 +688,7 @@ SEXP R_lsInternal3(SEXP env, Rboolean all, Rboolean sorted) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_lsInternal3MethodID, env, all, sorted);
 	return checkRef(thisenv, result);
-
-
 }
-
 
 SEXP Rf_namesgets(SEXP x, SEXP y) {
 	return unimplemented("Rf_namesgets");
@@ -965,7 +967,8 @@ SEXP FRAME(SEXP x) {
 
 SEXP ENCLOS(SEXP x) {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, ENCLOSMethodID, x);
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, ENCLOSMethodID, x);
+    return checkRef(thisenv, result);
 }
 
 SEXP HASHTAB(SEXP x) {
@@ -1431,7 +1434,7 @@ static SEXP R_tryEvalInternal(SEXP x, SEXP y, int *ErrorOccurred, jboolean silen
 	if (ErrorOccurred) {
 		*ErrorOccurred = tryResult == NULL;
 	}
-	return tryResult;
+	return checkRef(thisenv, tryResult);
 }
 
 SEXP R_tryEval(SEXP x, SEXP y, int *ErrorOccurred) {
