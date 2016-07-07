@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 
 @SuppressWarnings({"rawtypes", "unchecked"})

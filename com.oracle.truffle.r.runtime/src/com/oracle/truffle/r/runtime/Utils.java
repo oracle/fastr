@@ -91,14 +91,13 @@ public final class Utils {
         graphPrinter.printToNetwork(true);
     }
 
-    @SuppressWarnings("deprecation")
     public static Source getResourceAsSource(Class<?> clazz, String resourceName) {
         try {
             URL url = ResourceHandlerFactory.getHandler().getResource(clazz, resourceName);
             if (url == null) {
                 throw new IOException();
             }
-            return Source.fromFileName(url.getPath());
+            return RSource.fromFileName(url.getPath());
         } catch (IOException ex) {
             throw Utils.fail("resource " + resourceName + " not found");
         }

@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize.State;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -61,7 +62,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @RBuiltin(name = "lapply", kind = INTERNAL, parameterNames = {"X", "FUN"}, splitCaller = true)
 public abstract class Lapply extends RBuiltinNode {
 
-    @SuppressWarnings("deprecation") private static final Source CALL_SOURCE = Source.fromText("FUN(X[[i]], ...)", "lapply");
+    private static final Source CALL_SOURCE = RSource.fromText("FUN(X[[i]], ...)", "lapply");
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 

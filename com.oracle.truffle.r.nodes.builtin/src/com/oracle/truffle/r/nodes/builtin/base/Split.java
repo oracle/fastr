@@ -47,14 +47,14 @@ public abstract class Split extends RBuiltinNode {
 
     @Child private RFactorNodes.GetLevels getLevelNode = new RFactorNodes.GetLevels();
 
-    private final ConditionProfile noStringLevels = ConditionProfile.createBinaryProfile();
+    @SuppressWarnings("unused") private final ConditionProfile noStringLevels = ConditionProfile.createBinaryProfile();
 
     private static final int INITIAL_SIZE = 5;
     private static final int SCALE_FACTOR = 2;
 
     public static class SplitTemplate {
-        private int[] collectResulSize;
-        private int nLevels;
+        @SuppressWarnings("unused") private int[] collectResultsSize;
+        @SuppressWarnings("unused") private int nLevels;
     }
 
     @Specialization

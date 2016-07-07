@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RPerfStats;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -85,7 +86,6 @@ public class RInstrumentation {
             this.fdn = fdn;
         }
 
-        @SuppressWarnings("deprecation")
         private FunctionIdentification getIdentification() {
             if (ident == null) {
                 SourceSection ss = fdn.getSourceSection();
@@ -114,7 +114,7 @@ public class RInstrumentation {
                 } else {
                     // One of the RSyntaxNode "unavailable"s.
                     idOrigin = idName;
-                    idSource = Source.fromText(idName, idName);
+                    idSource = RSource.fromText(idName, idName);
                 }
                 ident = new FunctionIdentification(idSource, idName, idOrigin, fdn);
             }

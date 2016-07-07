@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -65,7 +66,6 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         return instance;
     }
 
-    @SuppressWarnings("deprecation")
     public static void loadBase(MaterializedFrame baseFrame) {
         RBuiltinPackage pkg = basePackage;
         REnvironment baseEnv = REnvironment.baseEnv();
@@ -93,7 +93,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         Path basePathbase = baseDirPath.resolve("R").resolve("base");
         Source baseSource = null;
         try {
-            baseSource = Source.fromFileName(basePathbase.toString());
+            baseSource = RSource.fromFileName(basePathbase.toString());
         } catch (IOException ex) {
             Utils.fail(String.format("unable to open the base package %s", basePathbase));
         }

@@ -62,6 +62,7 @@ public abstract class Drop extends RBuiltinNode {
 
         // the result is single value, all dims == 1
         if (resultIsScalarProfile.profile(lastNonOneIndex == -1)) {
+            @SuppressWarnings("unused")
             RAbstractVector r = x.copy();
             x.setDimensions(null);
             x.setDimNames(null);

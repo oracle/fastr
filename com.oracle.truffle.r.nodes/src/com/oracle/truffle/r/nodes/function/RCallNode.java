@@ -87,8 +87,6 @@ import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -98,7 +96,6 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
@@ -490,7 +487,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 foreignCallArgCount = argumentsArray.length;
             }
             try {
-                return ForeignAccess.execute(foreignCall, frame, function, argumentsArray);
+                Object result = ForeignAccess.execute(foreignCall, frame, function, argumentsArray);
+                if (result instanceof Boolean) {
+                    // convert to R logical
+                    // TODO byte/short convert to int?
+                    result = RRuntime.asLogical((boolean) result);
+                }
+                return result;
             } catch (Throwable e) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.GENERIC, "Foreign function failed: " + e.getMessage() != null ? e.getMessage() : e.toString());

@@ -68,6 +68,7 @@ import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.ThreadTimings;
@@ -187,7 +188,6 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public void checkAndRunStartupShutdownFunction(String name, String... args) {
         Object func = REnvironment.globalEnv().findFunction(name);
@@ -209,7 +209,7 @@ final class REngine implements Engine, Engine.Timings {
             }
             // Should this print the result?
             try {
-                parseAndEval(Source.fromText(call, RInternalSourceDescriptions.STARTUP_SHUTDOWN), globalFrame, false);
+                parseAndEval(RSource.fromText(call, RInternalSourceDescriptions.STARTUP_SHUTDOWN), globalFrame, false);
             } catch (ParseException e) {
                 throw new RInternalError(e, "error while parsing startup function");
             }
@@ -323,7 +323,7 @@ final class REngine implements Engine, Engine.Timings {
                 return lastValue;
             } catch (ReturnException ex) {
                 return ex.getResult();
-            } catch (DebugExitException | BrowserQuitException e) {
+            } catch (DebugExitException | BrowserQuitException | ThreadDeath e) {
                 throw e;
             } catch (RError e) {
                 // TODO normal error reporting is done by the runtime
