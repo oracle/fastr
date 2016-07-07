@@ -78,7 +78,6 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 
 	int length = (*env)->GetArrayLength(env, initialValues);
 	int index;
-	int globalRefIndex = 0;
 	for (index = 0; index < length; index++) {
 		jobject variable = (*env)->GetObjectArrayElement(env, initialValues, index);
 		jstring nameString = (*env)->CallObjectMethod(env, variable, nameMethodID);
@@ -98,7 +97,7 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 			} else if (strcmp(nameChars, "R_NaInt") == 0) {
 				R_NaInt = (*env)->CallIntMethod(env, value, intValueMethodID);
 			} else {
-				SEXP ref = mkNamedGlobalRef(env, globalRefIndex++, value);
+				SEXP ref = mkNamedGlobalRef(env, value);
 				if (strcmp(nameChars, "R_EmptyEnv") == 0) {
 					R_EmptyEnv = ref;
 				} else if (strcmp(nameChars, "R_NilValue") == 0) {

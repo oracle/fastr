@@ -234,7 +234,7 @@ static jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp) {
 }
 
 SEXP Rf_ScalarInteger(int value) {
-	TRACE("%s(%d)\n", value);
+	TRACE(TARGp, value);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarIntegerMethodID, value);
     return checkRef(thisenv, result);
@@ -247,14 +247,14 @@ SEXP Rf_ScalarReal(double value) {
 }
 
 SEXP Rf_ScalarString(SEXP value) {
-	TRACE(TARG1, value);
+	TRACE(TARGp, value);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarStringMethodID, value);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_ScalarLogical(int value) {
-	TRACE(TARG1, value);
+	TRACE(TARGp, value);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarLogicalMethodID, value);
     return checkRef(thisenv, result);
@@ -262,17 +262,17 @@ SEXP Rf_ScalarLogical(int value) {
 
 SEXP Rf_allocVector3(SEXPTYPE t, R_xlen_t len, R_allocator_t* allocator) {
     if (allocator != NULL) {
-	unimplemented("RF_allocVector with custom allocator");
-	return NULL;
+  	    unimplemented("RF_allocVector with custom allocator");
+	    return NULL;
     }
-    TRACE(TARG2d, t, len);
+    TRACE(TARGpd, t, len);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateVectorMethodID, t, len);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_allocArray(SEXPTYPE t, SEXP dims) {
-	TRACE(TARG2d, t, dims);
+	TRACE(TARGppd, t, dims);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateArrayMethodID, t, dims);
 	return checkRef(thisenv, result);
@@ -283,7 +283,7 @@ SEXP Rf_alloc3DArray(SEXPTYPE t, int x, int y, int z) {
 }
 
 SEXP Rf_allocMatrix(SEXPTYPE mode, int nrow, int ncol) {
-	TRACE(TARG2d, mode, nrow, ncol);
+	TRACE(TARGppd, mode, nrow, ncol);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateMatrixMethodID, mode, nrow, ncol);
 	return checkRef(thisenv, result);
@@ -299,12 +299,14 @@ SEXP Rf_allocSExp(SEXPTYPE t) {
 }
 
 SEXP Rf_cons(SEXP car, SEXP cdr) {
+	TRACE(TARGpp, car, cdr);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_consMethodID, car, cdr);
     return checkRef(thisenv, result);
 }
 
 void Rf_defineVar(SEXP symbol, SEXP value, SEXP rho) {
+	TRACE(TARGppp, symbol, value, rho);
 	JNIEnv *thisenv = getEnv();
 	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_defineVarMethodID, symbol, value, rho);
 }
@@ -322,54 +324,63 @@ SEXP Rf_dimnamesgets(SEXP x, SEXP y) {
 }
 
 SEXP Rf_eval(SEXP expr, SEXP env) {
+	TRACE(TARGpp, expr, env);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_evalMethodID, expr, env);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_findFun(SEXP symbol, SEXP rho) {
+	TRACE(TARGpp, symbol, rho);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findfunMethodID, symbol, rho);
 	return checkRef(thisenv, result);
 }
 
 SEXP Rf_findVar(SEXP sym, SEXP rho) {
+	TRACE(TARGpp, sym, rho);
 	JNIEnv *thisenv = getEnv();
 	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarMethodID, sym, rho);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_findVarInFrame(SEXP rho, SEXP sym) {
+	TRACE(TARGpp, rho, sym);
 	JNIEnv *thisenv = getEnv();
 	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarInFrameMethodID, rho, sym);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_findVarInFrame3(SEXP rho, SEXP sym, Rboolean b) {
+	TRACE(TARGppd, rho, sym, b);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarInFrame3MethodID, rho, sym, b);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_getAttrib(SEXP vec, SEXP name) {
+	TRACE(TARGpp, vec, name);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_getAttribMethodID, vec, name);
 	return checkRef(thisenv, result);
 }
 
 SEXP Rf_setAttrib(SEXP vec, SEXP name, SEXP val) {
+	TRACE(TARGppp, vec,name, val);
 	JNIEnv *thisenv = getEnv();
 	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, Rf_setAttribMethodID, vec, name, val);
 	return val;
 }
 
 SEXP Rf_duplicate(SEXP x) {
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_duplicateMethodID, x);
 	return checkRef(thisenv, result);
 }
 
 R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
+	TRACE(TARGpd, x, from_last);
     if (!isVector(x)) error(_("'duplicated' applies only to vectors"));
 	JNIEnv *thisenv = getEnv();
     return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_anyDuplicatedMethodID, x, from_last);
@@ -397,6 +408,7 @@ int Rf_countContexts(int x, int y) {
 }
 
 Rboolean Rf_inherits(SEXP x, const char * klass) {
+	TRACE(TARGps, x, klass);
     JNIEnv *thisenv = getEnv();
     jstring klazz = (*thisenv)->NewStringUTF(thisenv, klass);
     return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_inheritsMethodID, x, klazz);
@@ -436,6 +448,7 @@ void Rf_PrintValue(SEXP x) {
 }
 
 SEXP Rf_install(const char *name) {
+	TRACE(TARGs, name);
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, name);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createSymbolMethodID, string);
@@ -443,7 +456,7 @@ SEXP Rf_install(const char *name) {
 }
 
 SEXP Rf_installChar(SEXP charsxp) {
-	TRACE("%s(%p)\n", charsxp);
+	TRACE(TARGp, charsxp);
 	JNIEnv *thisenv = getEnv();
 	jstring string = stringFromCharSXP(thisenv, charsxp);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createSymbolMethodID, string);
@@ -484,6 +497,7 @@ SEXP Rf_mkCharLen(const char *x, int y) {
 }
 
 SEXP Rf_mkCharLenCE(const char *x, int len, cetype_t enc) {
+	TRACE(TARGsdd, x, len, enc);
 	JNIEnv *thisenv = getEnv();
 	jbyteArray bytes = (*thisenv)->NewByteArray(thisenv, len);
 	(*thisenv)->SetByteArrayRegion(thisenv, bytes, 0, len, x);
@@ -668,7 +682,7 @@ const char *Rf_translateCharUTF8(SEXP x) {
 }
 
 SEXP Rf_lengthgets(SEXP x, R_len_t y) {
-	TRACE("%s(%p)\n", x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	invalidateCopiedObject(thisenv, x);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_lengthgetsMethodID, x, y);
@@ -762,28 +776,28 @@ void Rf_gsetVar(SEXP symbol, SEXP value, SEXP rho)
 }
 
 SEXP TAG(SEXP e) {
-    TRACE(TARG1, e);
+    TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, TAG_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP PRINTNAME(SEXP e) {
-    TRACE(TARG1, e);
+    TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, PRINTNAME_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP CAR(SEXP e) {
-    TRACE(TARG1, e);
+    TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CAR_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP CDR(SEXP e) {
-    TRACE(TARG1, e);
+    TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CDR_MethodID, e);
     return checkRef(thisenv, result);
@@ -800,7 +814,7 @@ SEXP CDAR(SEXP e) {
 }
 
 SEXP CADR(SEXP e) {
-    TRACE(TARG1, e);
+    TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CADR_MethodID, e);
     return checkRef(thisenv, result);
@@ -841,20 +855,20 @@ void SET_MISSING(SEXP x, int v) {
 }
 
 void SET_TAG(SEXP x, SEXP y) {
-    TRACE(TARG2, x, y);
+    TRACE(TARGpp, x, y);
     JNIEnv *thisenv = getEnv();
     (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SET_TAG_MethodID, x, y);
 }
 
 SEXP SETCAR(SEXP x, SEXP y) {
-    TRACE(TARG2, x, y);
+    TRACE(TARGpp, x, y);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCAR_MethodID, x, y);
     return checkRef(thisenv, result);
 }
 
 SEXP SETCDR(SEXP x, SEXP y) {
-    TRACE(TARG2, x, y);
+    TRACE(TARGpp, x, y);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCDR_MethodID, x, y);
     return checkRef(thisenv, result);
@@ -1031,7 +1045,7 @@ void SET_PRCODE(SEXP x, SEXP v) {
 }
 
 int LENGTH(SEXP x) {
-    TRACE(TARG1, x);
+    TRACE(TARGp, x);
     JNIEnv *thisenv = getEnv();
     return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, LENGTH_MethodID, x);
 }
@@ -1082,7 +1096,7 @@ int SETLEVELS(SEXP x, int v){
 }
 
 int *LOGICAL(SEXP x){
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	jint *data = (jint *) findCopiedObject(thisenv, x);
 	if (data == NULL) {
@@ -1101,7 +1115,7 @@ int *LOGICAL(SEXP x){
 }
 
 int *INTEGER(SEXP x){
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	jint *data = (jint *) findCopiedObject(thisenv, x);
 	if (data == NULL) {
@@ -1147,7 +1161,7 @@ Rcomplex *COMPLEX(SEXP x){
 
 
 SEXP STRING_ELT(SEXP x, R_xlen_t i){
-	TRACE(TARG2d, x, i);
+	TRACE(TARGpd, x, i);
 	JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, STRING_ELT_MethodID, x, i);
     return checkRef(thisenv, result);
@@ -1155,7 +1169,7 @@ SEXP STRING_ELT(SEXP x, R_xlen_t i){
 
 
 SEXP VECTOR_ELT(SEXP x, R_xlen_t i){
-	TRACE(TARG2d, x, i);
+	TRACE(TARGpd, x, i);
 	JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, VECTOR_ELT_MethodID, x, i);
     return checkRef(thisenv, result);
@@ -1188,14 +1202,14 @@ SEXP *VECTOR_PTR(SEXP x){
 }
 
 SEXP Rf_asChar(SEXP x){
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_asCharMethodID, x);
 	return checkRef(thisenv, result);
 }
 
 SEXP Rf_PairToVectorList(SEXP x){
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_PairToVectorListMethodID, x);
 	return checkRef(thisenv, result);
@@ -1212,19 +1226,19 @@ SEXP Rf_asCharacterFactor(SEXP x){
 }
 
 int Rf_asLogical(SEXP x){
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_asLogicalMethodID, x);
 }
 
 int Rf_asInteger(SEXP x) {
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_asIntegerMethodID, x);
 }
 
 //double Rf_asReal(SEXP x) {
-//	TRACE(TARG1, x);
+//	TRACE(TARGp, x);
 //	JNIEnv *thisenv = getEnv();
 //	return (*thisenv)->CallStaticDoubleMethod(thisenv, CallRFFIHelperClass, Rf_asRealMethodID, x);
 //}
@@ -1235,7 +1249,7 @@ Rcomplex Rf_asComplex(SEXP x){
 }
 
 int TYPEOF(SEXP x) {
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, TYPEOF_MethodID, x);
 }
