@@ -32,28 +32,22 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
+/**
+ * Mostly support for tracing R FFI up/down calls. Currently tracing of the arguments to calls is
+ * limited. The type of the argument is printed as is the value for types with simple (short)
+ * values. Potentially complex types, e.g, {@link RPairList} do not have their values printed.
+ *
+ */
 public class RFFIUtils {
+    private static boolean initialized;
     /**
      * Set this to {@code true} when it is not possible to set {@link FastROptions}.
      */
     private static boolean alwaysTrace;
-
-    public static byte[] wrapChar(char v) {
-        return new byte[]{(byte) v};
-    }
-
-    public static int[] wrapInt(int v) {
-        return new int[]{v};
-    }
-
-    public static double[] wrapDouble(double v) {
-        return new double[]{v};
-    }
-
-    @TruffleBoundary
-    public static IOException ioex(String errMsg) throws IOException {
-        throw new IOException(errMsg);
-    }
+    /**
+     * Is set by initialization and caches whether we are tracing.
+     */
+    private static boolean traceEnabled;
 
     /**
      * Places in /tmp because in embedded mode can't trust that cwd is writeable. Also, tag with
@@ -63,14 +57,20 @@ public class RFFIUtils {
     private static PrintWriter traceWriter;
 
     private static void initialize() {
-        if (traceWriter == null) {
-            String tracePath = tracePathPrefix + Long.toString(System.currentTimeMillis());
-            try {
-                traceWriter = new PrintWriter(new FileWriter(tracePath));
-            } catch (IOException ex) {
-                System.err.println(ex.getMessage());
-                System.exit(1);
+        if (!initialized) {
+            traceEnabled = alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue();
+            if (traceEnabled) {
+                if (traceWriter == null) {
+                    String tracePath = tracePathPrefix + Long.toString(System.currentTimeMillis());
+                    try {
+                        traceWriter = new PrintWriter(new FileWriter(tracePath));
+                    } catch (IOException ex) {
+                        System.err.println(ex.getMessage());
+                        System.exit(1);
+                    }
+                }
             }
+            initialized = true;
         }
     }
 
@@ -99,9 +99,13 @@ public class RFFIUtils {
         traceCall(CallMode.DOWN, name, args);
     }
 
+    public static boolean traceEnabled() {
+        return traceEnabled;
+    }
+
     private static void traceCall(CallMode mode, String name, Object... args) {
-        if (alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue()) {
-            initialize();
+        initialize();
+        if (traceEnabled) {
             StringBuffer sb = new StringBuffer();
             sb.append("CallRFFI[");
             sb.append(mode.printName);
@@ -124,18 +128,33 @@ public class RFFIUtils {
                 sb.append(", ");
             }
             sb.append(arg == null ? "" : arg.getClass().getSimpleName());
-            if (arg instanceof RPairList) {
-                sb.append("[");
-                printArgs(sb, ((RPairList) arg).toRList().getDataCopy());
-                sb.append("]");
-            }
             if (arg instanceof RSymbol) {
                 RSymbol symbol = (RSymbol) arg;
-                sb.append("\"" + symbol.getName() + "\")");
+                sb.append("(\"" + symbol.getName() + "\")");
             }
             if (!(arg instanceof RTypedValue)) {
                 sb.append("(" + arg + ")");
             }
         }
     }
+
+    // Miscellaneous support functions
+
+    public static byte[] wrapChar(char v) {
+        return new byte[]{(byte) v};
+    }
+
+    public static int[] wrapInt(int v) {
+        return new int[]{v};
+    }
+
+    public static double[] wrapDouble(double v) {
+        return new double[]{v};
+    }
+
+    @TruffleBoundary
+    public static IOException ioex(String errMsg) throws IOException {
+        throw new IOException(errMsg);
+    }
+
 }
