@@ -47,9 +47,11 @@ jmp_buf *callErrorJmpBuf;
 
 #define DEBUG_CACHE 0
 #define TRACE_COPIES 0
-#define CACHED_GLOBALREFS_TABLE_SIZE 100
-static SEXP cachedGlobalRefs[CACHED_GLOBALREFS_TABLE_SIZE];
-static SEXP checkCachedGlobalRef(JNIEnv *env, SEXP obj);
+
+static int alwaysUseGlobal = 0;
+#define CACHED_GLOBALREFS_INITIAL_SIZE 64
+static SEXP *cachedGlobalRefs;
+static int cachedGlobalRefsLength;
 
 typedef struct CopiedVectors_struct {
 	SEXPTYPE type;
@@ -58,7 +60,7 @@ typedef struct CopiedVectors_struct {
 	void *data;
 } CopiedVector;
 
-#define COPIED_VECTORS_INITIAL_SIZE 100
+#define COPIED_VECTORS_INITIAL_SIZE 64
 // A table of vectors that have been accessed and whose contents, e.g. the actual data
 // as a primitive array have been copied and handed out to the native code.
 static CopiedVector *copiedVectors;
@@ -76,10 +78,9 @@ void init_utils(JNIEnv *env) {
 	unimplementedMethodID = checkGetMethodID(env, RInternalErrorClass, "unimplemented", "(Ljava/lang/String;)Ljava/lang/RuntimeException;", 1);
 	createSymbolMethodID = checkGetMethodID(env, RDataFactoryClass, "createSymbolInterned", "(Ljava/lang/String;)Lcom/oracle/truffle/r/runtime/data/RSymbol;", 1);
     validateMethodID = checkGetMethodID(env, CallRFFIHelperClass, "validate", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-    for (int i = 0; i < CACHED_GLOBALREFS_TABLE_SIZE; i++) {
-    	cachedGlobalRefs[i] = NULL;
-    }
-	copiedVectors = malloc(sizeof(CopiedVector) * COPIED_VECTORS_INITIAL_SIZE);
+    cachedGlobalRefs = calloc(CACHED_GLOBALREFS_INITIAL_SIZE, sizeof(SEXP));
+    cachedGlobalRefsLength = CACHED_GLOBALREFS_INITIAL_SIZE;
+	copiedVectors = calloc(COPIED_VECTORS_INITIAL_SIZE, sizeof(CopiedVector));
 	copiedVectorsLength = COPIED_VECTORS_INITIAL_SIZE;
 	copiedVectorsIndex = 0;
 }
@@ -197,9 +198,9 @@ void addCopiedObject(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, void *dat
 #endif
 	if (copiedVectorsIndex >= copiedVectorsLength) {
 		int newLength = 2 * copiedVectorsLength;
-		CopiedVector *newCopiedVectors = malloc(sizeof(CopiedVector) * newLength);
+		CopiedVector *newCopiedVectors = calloc(newLength, sizeof(CopiedVector));
 		if (newCopiedVectors == NULL) {
-			fatalError("malloc failure");
+			fatalError("FFI copied vectors table expansion failure");
 		}
 		memcpy(newCopiedVectors, copiedVectors, copiedVectorsLength * sizeof(CopiedVector));
 		free(copiedVectors);
@@ -216,41 +217,52 @@ void addCopiedObject(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, void *dat
 #endif
 }
 
-SEXP checkRef(JNIEnv *env, SEXP obj) {
-	SEXP result = checkCachedGlobalRef(env, obj);
-	return result;
-}
-
-SEXP mkNamedGlobalRef(JNIEnv *env, int index, SEXP obj) {
-	SEXP result = (*env)->NewGlobalRef(env, obj);
-	if (cachedGlobalRefs[index] != NULL) {
-		fatalError("duplicate named global ref index\n");
+static SEXP checkCachedGlobalRef(JNIEnv *env, SEXP obj, int useGlobal) {
+	int i;
+	for (i = 0; i < cachedGlobalRefsLength; i++) {
+		SEXP ref = cachedGlobalRefs[i];
+		if (ref == NULL) {
+			break;
+		}
+		if ((*env)->IsSameObject(env, ref, obj)) {
+#if DEBUG_CACHE
+			printf("gref: cache hit: %d\n", i);
+#endif
+			return ref;
+		}
 	}
-	cachedGlobalRefs[index] = result;
+	SEXP result;
+	if (useGlobal) {
+		if (i >= cachedGlobalRefsLength) {
+			int newLength = cachedGlobalRefsLength * 2;
 #if DEBUG_CACHE
-	printf("gref: %d=%p\n", index, result);
+			printf("gref: extending table to %d\n", newLength);
 #endif
+			SEXP newCachedGlobalRefs = calloc(newLength, sizeof(SEXP));
+			if (newCachedGlobalRefs == NULL) {
+				fatalError("FFI global refs table expansion failure");
+			}
+			memcpy(newCachedGlobalRefs, cachedGlobalRefs, cachedGlobalRefsLength * sizeof(SEXP));
+			free(cachedGlobalRefs);
+			cachedGlobalRefs = newCachedGlobalRefs;
+			cachedGlobalRefsLength = newLength;
+		}
+		result = (*env)->NewGlobalRef(env, obj);
+		cachedGlobalRefs[i] = result;
+	} else {
+		result = obj;
+	}
 	return result;
 }
 
-static SEXP checkCachedGlobalRef(JNIEnv *env, SEXP obj) {
-    for (int i = 0; i < CACHED_GLOBALREFS_TABLE_SIZE; i++) {
-    	SEXP ref = cachedGlobalRefs[i];
-    	if (ref == NULL) {
-    		break;
-    	}
-    	if ((*env)->IsSameObject(env, ref, obj)) {
-#if DEBUG_CACHE
-    		printf("gref: cache hit: %d\n", i);
-#endif
-    		return ref;
-    	}
-    }
-#if USE_GLOBAL
-    SEXP result = (*env)->NewGlobalRef(env, obj);
-#else
-    SEXP result = obj;
-#endif
+SEXP checkRef(JNIEnv *env, SEXP obj) {
+	SEXP result = checkCachedGlobalRef(env, obj, alwaysUseGlobal);
+	TRACE(TARGp, result);
+	return result;
+}
+
+SEXP mkNamedGlobalRef(JNIEnv *env, SEXP obj) {
+	SEXP result = checkCachedGlobalRef(env, obj, 1);
 	return result;
 }
 

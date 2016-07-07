@@ -48,8 +48,8 @@ void fatalError(char *msg);
 void validate(SEXP x);
 // checks x against the list of canonical (named) refs, returning the canonical version if a match
 SEXP checkRef(JNIEnv *env, SEXP x);
-// creates a JNI global ref from x for slot index of the named refs table
-SEXP mkNamedGlobalRef(JNIEnv *env, int index, SEXP x);
+// creates a canonical (named) JNI global ref from x
+SEXP mkNamedGlobalRef(JNIEnv *env, SEXP x);
 // validate a JNI reference
 void validateRef(JNIEnv *env, SEXP x, const char *msg);
 
@@ -84,9 +84,14 @@ extern jclass RRuntimeClass;
 
 #define TRACE_UPCALLS 0
 
-#define TARG1 "%s(%p)\n"
-#define TARG2 "%s(%p, %p)\n"
-#define TARG2d "%s(%p, %d)\n"
+#define TARGp "%s(%p)\n"
+#define TARGpp "%s(%p, %p)\n"
+#define TARGppp "%s(%p, %p, %p)\n"
+#define TARGpd "%s(%p, %d)\n"
+#define TARGppd "%s(%p, %p, %d)\n"
+#define TARGs "%s(\"%s\")\n"
+#define TARGps "%s(%p, \"%s\")\n"
+#define TARGsdd "%s(\"%s\", %d, %d)\n"
 
 #if TRACE_UPCALLS
 #define TRACE(format, ...) printf(format, __FUNCTION__, __VA_ARGS__)
