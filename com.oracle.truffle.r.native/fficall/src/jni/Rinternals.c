@@ -664,21 +664,24 @@ SEXP Rf_classgets(SEXP x, SEXP y) {
 }
 
 const char *Rf_translateChar(SEXP x) {
-//	unimplemented("Rf_translateChar");
 	// TODO: proper implementation
+	TRACE(TARGp, x);
 	const char *result = CHAR(x);
-//	printf("translateChar: '%s'\n", result);
 	return result;
 }
 
 const char *Rf_translateChar0(SEXP x) {
-	unimplemented("Rf_translateChar0");
-	return NULL;
+	// TODO: proper implementation
+	TRACE(TARGp, x);
+	const char *result = CHAR(x);
+	return result;
 }
 
 const char *Rf_translateCharUTF8(SEXP x) {
-	unimplemented("Rf_translateCharUTF8");
-	return NULL;
+	// TODO: proper implementation
+	TRACE(TARGp, x);
+	const char *result = CHAR(x);
+	return result;
 }
 
 SEXP Rf_lengthgets(SEXP x, R_len_t y) {
