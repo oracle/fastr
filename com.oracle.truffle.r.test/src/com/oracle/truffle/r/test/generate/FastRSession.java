@@ -152,7 +152,7 @@ public final class FastRSession implements RSession {
         } else {
             contextInfo = contextInfoArg;
         }
-        return contextInfo.apply(PolyglotEngine.newBuilder()).build();
+        return contextInfo.createVM();
     }
 
     public ContextInfo createContextInfo(ContextKind contextKind) {
@@ -165,7 +165,7 @@ public final class FastRSession implements RSession {
         try {
             RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[]{"--no-restore"});
             ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
-            main = info.apply(PolyglotEngine.newBuilder()).build();
+            main = info.createVM();
             try {
                 mainContext = main.eval(GET_CONTEXT).as(RContext.class);
             } catch (IOException e) {

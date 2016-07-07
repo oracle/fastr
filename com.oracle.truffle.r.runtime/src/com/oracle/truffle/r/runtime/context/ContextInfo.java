@@ -35,9 +35,8 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 /**
  * Represents custom initialization state for an R instance.
  *
- * Use {@link #apply(com.oracle.truffle.api.vm.PolyglotEngine.Builder)} to apply this information to
- * a newly-built {@link PolyglotEngine} instance (it will be stored in the "fastrContextInfo" global
- * symbol).
+ * Use {@link #createVM()} to apply this information to a newly-built {@link PolyglotEngine}
+ * instance (it will be stored in the "fastrContextInfo" global symbol).
  */
 public final class ContextInfo implements TruffleObject {
     static final String GLOBAL_SYMBOL = "fastrContextInfo";
@@ -56,6 +55,7 @@ public final class ContextInfo implements TruffleObject {
     private final RContext parent;
     private final ConsoleHandler consoleHandler;
     private final int id;
+    private PolyglotEngine vm;
 
     private ContextInfo(RCmdOptions options, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone, int id) {
         this.options = options;
@@ -66,8 +66,10 @@ public final class ContextInfo implements TruffleObject {
         this.id = id;
     }
 
-    public PolyglotEngine.Builder apply(PolyglotEngine.Builder builder) {
-        return builder.globalSymbol(GLOBAL_SYMBOL, this);
+    public PolyglotEngine createVM() {
+        PolyglotEngine newVM = PolyglotEngine.newBuilder().globalSymbol(GLOBAL_SYMBOL, this).build();
+        this.vm = newVM;
+        return newVM;
     }
 
     /**
@@ -121,6 +123,10 @@ public final class ContextInfo implements TruffleObject {
 
     public int getId() {
         return id;
+    }
+
+    public PolyglotEngine getVM() {
+        return vm;
     }
 
     @Override

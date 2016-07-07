@@ -187,7 +187,7 @@ public class RCommand {
      * exiting. So,in either case, we never return.
      */
     static void readEvalPrint(ContextInfo info) {
-        PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
+        PolyglotEngine vm = info.createVM();
         ConsoleHandler consoleHandler = info.getConsoleHandler();
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));

@@ -189,7 +189,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
         @Override
         public void run() {
-            PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
+            PolyglotEngine vm = info.createVM();
             try {
                 setContext(vm.eval(GET_CONTEXT).as(RContext.class));
             } catch (IOException e1) {
@@ -660,6 +660,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public static Engine getEngine() {
         return RContext.getInstance().engine;
+    }
+
+    public PolyglotEngine getVM() {
+        return info.getVM();
     }
 
     public void setLoadingBase(boolean b) {

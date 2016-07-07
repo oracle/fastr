@@ -203,7 +203,7 @@ public class FastRContext {
             } else {
                 for (int i = 0; i < contexts.getLength(); i++) {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
-                    PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
+                    PolyglotEngine vm = info.createVM();
                     try {
                         Source source = RSource.fromText(exprs.getDataAt(i % exprs.getLength()), RInternalSourceDescriptions.CONTEXT_EVAL);
                         PolyglotEngine.Value resultValue = vm.eval(source);
