@@ -134,6 +134,6 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
 
     @Override
     public String getSyntaxDebugName() {
-        return ((RRootNode) callTarget.getRootNode()).getDescription();
+        return ((RRootNode) callTarget.getRootNode()).getName();
     }
 }

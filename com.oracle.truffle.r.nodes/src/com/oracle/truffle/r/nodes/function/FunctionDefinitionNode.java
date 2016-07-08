@@ -88,11 +88,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      * {@code f <- function}.
      * <li>The first several characters of the function definition for anonymous functions.
      * </ul>
-     * It can be updated later by calling {@link #setDescription}, which is useful for functions
-     * lazily loaded from packages, where at the point of definition any assignee variable is
-     * unknown.
+     * It can be updated later by calling {@link #setName}, which is useful for functions lazily
+     * loaded from packages, where at the point of definition any assignee variable is unknown.
      */
-    private String description;
+    private String name;
     private FunctionUID uuid;
     private boolean instrumented = false;
     private SourceSection sourceSectionR;
@@ -133,12 +132,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private final ConditionProfile returnTopLevelProfile = ConditionProfile.createBinaryProfile();
 
     public static FunctionDefinitionNode create(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments, RSyntaxNode body,
-                    FormalArguments formals, String description, PostProcessArgumentsNode argPostProcess) {
-        return new FunctionDefinitionNode(src, frameDesc, argSourceSections, saveArguments, body, formals, description, argPostProcess, FunctionUIDFactory.get().createUID());
+                    FormalArguments formals, String name, PostProcessArgumentsNode argPostProcess) {
+        return new FunctionDefinitionNode(src, frameDesc, argSourceSections, saveArguments, body, formals, name, argPostProcess, FunctionUIDFactory.get().createUID());
     }
 
     private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RSyntaxNode body, FormalArguments formals,
-                    String description, PostProcessArgumentsNode argPostProcess, FunctionUID uuid) {
+                    String name, PostProcessArgumentsNode argPostProcess, FunctionUID uuid) {
         super(null, formals, frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
         this.argSourceSections = argSourceSections;
         assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
@@ -146,7 +145,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.sourceSectionR = src;
         this.saveArguments = saveArguments;
         this.body = body.asRNode();
-        this.description = description;
+        this.name = name;
         this.onExitSlot = FrameSlotNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
         this.uuid = uuid;
         this.needsSplitting = needsAnyBuiltinSplitting();
@@ -165,7 +164,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             SourceSection source = argSourceSections == null ? getSourceSection() : argSourceSections[i];
             args.add(RCodeBuilder.argument(source, getFormalArguments().getSignature().getName(i), value == null ? null : builder.process(value.asRSyntaxNode())));
         }
-        RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(getSourceSection(), args, builder.process(getBody()), description);
+        RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(getSourceSection(), args, builder.process(getBody()), name);
         ((FunctionDefinitionNode) callTarget.getRootNode()).uuid = uuid;
         return callTarget;
     }
@@ -392,7 +391,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Override
     public String getName() {
-        return description == null ? "<no source>" : description;
+        return name == null ? "<no source>" : name;
     }
 
     @Override
@@ -454,8 +453,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         }
     }
 
-    public void setDescription(String name) {
-        this.description = name;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public boolean getInstrumented() {
@@ -495,6 +494,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Override
     public String getSyntaxDebugName() {
-        return description;
+        return name;
     }
 }
