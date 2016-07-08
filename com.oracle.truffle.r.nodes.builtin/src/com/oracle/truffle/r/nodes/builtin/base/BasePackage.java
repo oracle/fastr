@@ -526,6 +526,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Row.class, RowNodeGen::create);
         add(RowMeans.class, RowMeansNodeGen::create);
         add(RowSums.class, RowSumsNodeGen::create);
+        add(RowsumFunctions.Rowsum.class, RowsumFunctionsFactory.RowsumNodeGen::create);
         add(S3DispatchFunctions.NextMethod.class, S3DispatchFunctionsFactory.NextMethodNodeGen::create);
         add(S3DispatchFunctions.UseMethod.class, S3DispatchFunctionsFactory.UseMethodNodeGen::create);
         add(Sample.class, SampleNodeGen::create);
