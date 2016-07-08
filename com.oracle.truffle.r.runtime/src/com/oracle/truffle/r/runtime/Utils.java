@@ -531,11 +531,6 @@ public final class Utils {
             }
             RCaller call = RArguments.getCall(unwrapped);
             if (call != null) {
-                /*
-                 * Log the frame depths as a triple: d,e,p, where 'd' is the actual depth, 'e' is
-                 * the effective depth and 'p' is the promise frame depth, or -1 if no promise
-                 * evaluation in progress.
-                 */
                 String callSrc = call.isValidCaller() ? RContext.getRRuntimeASTAccess().getCallerSource(call) : "<invalid call>";
                 int depth = RArguments.getDepth(unwrapped);
                 str.append("Frame(d=").append(depth).append("): ").append(callTarget).append(isVirtual ? " (virtual)" : "");
