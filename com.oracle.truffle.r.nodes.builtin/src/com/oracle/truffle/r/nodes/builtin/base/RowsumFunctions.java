@@ -41,7 +41,7 @@ public class RowsumFunctions {
 
     @RBuiltin(name = "rowsum_matrix", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "g", "uniqueg", "snarm", "rn"})
 
-    public static abstract class Rowsum extends RBuiltinNode {
+    public abstract static class Rowsum extends RBuiltinNode {
 
         private final ConditionProfile typeProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile errorProfile = ConditionProfile.createBinaryProfile();

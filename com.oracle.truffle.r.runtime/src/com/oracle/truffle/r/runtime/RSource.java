@@ -31,6 +31,10 @@ import java.net.URL;
 import com.oracle.truffle.api.source.Source;
 
 public class RSource {
+    /**
+     * Create an (external) source from the {@code text} that is known to originate from the file
+     * system path {@code path}.
+     */
     public static Source fromFileName(String text, String path) {
         File file = new File(path).getAbsoluteFile();
         try {
@@ -41,22 +45,59 @@ public class RSource {
         }
     }
 
-    public static Source fromText(String text, String name) {
-        return fromText(text, name, RRuntime.R_APP_MIME);
+    /**
+     * If {@code source} is "internal", return {@code null} else return the file system path
+     * corresponding to the associated {@link URI}.
+     */
+    public static String getPath(Source source) {
+        if (source == null || source.isInternal()) {
+            return null;
+        }
+        URI uri = source.getURI();
+        assert uri != null;
+        return uri.getPath();
     }
 
-    public static Source fromText(String text, String name, String mimeType) {
-        return Source.newBuilder(text).name(name).mimeType(mimeType).build();
+    /**
+     * Create an {@code internal} source from {@code text} and {@code description}.
+     */
+    public static Source fromTextInternal(String text, RInternalSourceDescription description) {
+        return fromTextInternal(text, description.string);
     }
 
+    /**
+     * Create an {@code internal} source from {@code text} and {@code name}.
+     */
+    public static Source fromTextInternal(String text, String name) {
+        return Source.newBuilder(text).name(name).mimeType(RRuntime.R_APP_MIME).internal().build();
+    }
+
+    /**
+     * Create an {@code internal} source from {@code text} and {@code description} of given
+     * {@code mimType}.
+     */
+
+    public static Source fromTextInternal(String text, RInternalSourceDescription description, String mimeType) {
+        return Source.newBuilder(text).name(description.string).mimeType(mimeType).internal().build();
+    }
+
+    /**
+     * Create an (external) source from the file system path {@code path}.
+     */
     public static Source fromFileName(String path) throws IOException {
         return Source.newBuilder(new File(path)).name(path).mimeType(RRuntime.R_APP_MIME).build();
     }
 
+    /**
+     * Create an (external) source from the file system path denoted by {@code file}.
+     */
     public static Source fromFile(File file) throws IOException {
         return Source.newBuilder(file).name(file.getName()).mimeType(RRuntime.R_APP_MIME).build();
     }
 
+    /**
+     * Create an (external) source from {@code url}.
+     */
     public static Source fromURL(URL url, String name) throws IOException {
         return Source.newBuilder(url).name(name).mimeType(RRuntime.R_APP_MIME).build();
     }

@@ -40,8 +40,6 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public interface Engine {
 
-    String EVAL_FUNCTION_NAME = "<eval wrapper>";
-
     class ParseException extends IOException {
         private static final long serialVersionUID = 1L;
 

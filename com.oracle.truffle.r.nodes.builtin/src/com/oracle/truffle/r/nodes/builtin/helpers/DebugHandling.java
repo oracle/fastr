@@ -48,7 +48,8 @@ import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
+import com.oracle.truffle.r.runtime.RInternalSourceDescription;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -447,8 +448,8 @@ public class DebugHandling {
             consoleHandler.print("debug: ");
         } else {
             SourceSection source = ((RBaseNode) node).asRSyntaxNode().getSourceSection();
-            String path = source.getSource().getPath();
-            if (path == null || RInternalSourceDescriptions.isInternal(path)) {
+            String path = RSource.getPath(source.getSource());
+            if (path == null) {
                 path = "";
             }
             consoleHandler.print("debug at " + path + "#" + source.getStartLine() + ": ");

@@ -26,6 +26,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -38,6 +39,7 @@ import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
@@ -45,9 +47,11 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
 
@@ -55,10 +59,11 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
     private ProfileThread profileThread;
     private StatementListener statementListener;
     private long intervalInMillis;
+    private boolean lineProfiling;
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object do_Rprof(RAbstractStringVector filenameVec, byte appendL, double intervalD, byte memProfilingL,
+    public Object doRprof(RAbstractStringVector filenameVec, byte appendL, double intervalD, byte memProfilingL,
                     byte gcProfilingL, byte lineProfilingL, int numFiles, int bufSize) {
         String filename = filenameVec.getDataAt(0);
         if (filename.length() == 0) {
@@ -72,6 +77,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
             boolean append = RRuntime.fromLogical(appendL);
             boolean memProfiling = RRuntime.fromLogical(memProfilingL);
             boolean gcProfiling = RRuntime.fromLogical(gcProfilingL);
+            lineProfiling = RRuntime.fromLogical(lineProfilingL);
             try {
                 out = new PrintWriter(new FileWriter(filename, append));
                 if (memProfiling) {
@@ -95,28 +101,51 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
 
     private void endProfiling() {
         profileThread.running = false;
+        HashMap<String, Integer> fileMap = null;
+        if (lineProfiling) {
+            out.print("line profiling: ");
+        }
         out.printf("sample.interval=%d\n", intervalInMillis * 1000);
-        for (ArrayList<RCaller> intervalStack : statementListener.intervalStacks) {
-            boolean didOutput = false;
-            for (RCaller caller : intervalStack) {
-                while (caller.isPromise()) {
-                    caller = caller.getParent();
+        if (lineProfiling) {
+            // scan stacks to find files
+            fileMap = new HashMap<>();
+            int fileIndex = 0;
+            for (ArrayList<RSyntaxNode> intervalStack : statementListener.intervalStacks) {
+                for (RSyntaxNode node : intervalStack) {
+                    String path = getPath(node);
+                    if (path != null && fileMap.get(path) == null) {
+                        fileMap.put(path, ++fileIndex);
+                        out.printf("#File %d: %s\n", fileIndex, path);
+                    }
                 }
-                RootNode rootNode = caller.getSyntaxNode().asRNode().getRootNode();
+            }
+        }
+        for (ArrayList<RSyntaxNode> intervalStack : statementListener.intervalStacks) {
+            for (RSyntaxNode node : intervalStack) {
+                RootNode rootNode = node.asRNode().getRootNode();
                 if (rootNode instanceof FunctionDefinitionNode) {
                     String name = rootNode.getName();
+                    if (lineProfiling) {
+                        Integer fileIndex = fileMap.get(getPath(node));
+                        if (fileIndex != null) {
+                            out.printf("%d#%d ", fileIndex, node.getSourceSection().getStartLine());
+                        }
+                    }
                     out.printf("\"%s\" ", name);
-                    didOutput = true;
                 }
             }
-            if (didOutput) {
-                out.println();
-            }
+            out.println();
         }
         out.close();
     }
 
-    private static class ProfileThread extends Thread {
+    private static String getPath(RSyntaxNode node) {
+        Source source = node.getSourceSection().getSource();
+        String path = RSource.getPath(source);
+        return path;
+    }
+
+    private static final class ProfileThread extends Thread {
         private final long interval;
         private final StatementListener statementListener;
         private volatile boolean running = true;
@@ -144,8 +173,8 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
      * Emulates a sampling timer by checking when the sample interval rolls over and at that point
      * collects the stack of functions.
      */
-    private static class StatementListener implements ExecutionEventListener {
-        private ArrayList<ArrayList<RCaller>> intervalStacks = new ArrayList<>();
+    private static final class StatementListener implements ExecutionEventListener {
+        private ArrayList<ArrayList<RSyntaxNode>> intervalStacks = new ArrayList<>();
         private volatile boolean newInterval;
 
         private StatementListener() {
@@ -162,28 +191,33 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (newInterval) {
-                final ArrayList<RCaller> callers = collectStack();
-                intervalStacks.add(callers);
+                /* context tells here we are now, frame provides callers. */
+                final ArrayList<RSyntaxNode> stack = new ArrayList<>();
+                stack.add((RSyntaxNode) context.getInstrumentedNode());
+                collectStack(stack);
+                intervalStacks.add(stack);
                 newInterval = false;
             }
         }
 
         @TruffleBoundary
-        private static ArrayList<RCaller> collectStack() {
-            final ArrayList<RCaller> callers = new ArrayList<>();
+        private static void collectStack(final ArrayList<RSyntaxNode> stack) {
             Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
 
                 @Override
                 public Object apply(Frame f) {
                     RCaller call = RArguments.getCall(f);
                     if (call != null && call.isValidCaller()) {
-                        callers.add(RArguments.getCall(f));
+                        while (call.isPromise()) {
+                            call = call.getParent();
+                        }
+                        RSyntaxNode syntaxNode = call.getSyntaxNode();
+                        stack.add(syntaxNode);
                     }
                     return null;
                 }
 
             });
-            return callers;
         }
 
         @Override

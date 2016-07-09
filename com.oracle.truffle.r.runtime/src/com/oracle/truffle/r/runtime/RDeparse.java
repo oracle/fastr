@@ -342,7 +342,7 @@ public class RDeparse {
         }
 
         public void fixupSources() {
-            Source source = RSource.fromText(sb.toString(), "deparse");
+            Source source = RSource.fromTextInternal(sb.toString(), RInternalSourceDescription.DEPARSE);
             for (SourceSectionElement s : sources) {
                 s.element.setSourceSection(source.createSection(null, s.start, s.length));
             }

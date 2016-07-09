@@ -52,7 +52,7 @@ import com.oracle.truffle.r.nodes.builtin.base.Quit;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
+import com.oracle.truffle.r.runtime.RInternalSourceDescription;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
@@ -139,7 +139,7 @@ public class RCommand {
             if (!options.getBoolean(SLAVE)) {
                 options.setValue(NO_SAVE, true);
             }
-            consoleHandler = new StringConsoleHandler(exprs, System.out, RInternalSourceDescriptions.EXPRESSION_INPUT);
+            consoleHandler = new StringConsoleHandler(exprs, System.out, RInternalSourceDescription.EXPRESSION_INPUT.string);
         } else {
             /*
              * GnuR behavior differs from the manual entry for {@code interactive} in that {@code
@@ -172,8 +172,8 @@ public class RCommand {
         return ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
     }
 
-    private static final Source GET_ECHO = RSource.fromText("invisible(getOption('echo'))", RInternalSourceDescriptions.GET_ECHO);
-    private static final Source QUIT_EOF = RSource.fromText("quit(\"default\", 0L, TRUE)", RInternalSourceDescriptions.QUIT_EOF);
+    private static final Source GET_ECHO = RSource.fromTextInternal("invisible(getOption('echo'))", RInternalSourceDescription.GET_ECHO);
+    private static final Source QUIT_EOF = RSource.fromTextInternal("quit(\"default\", 0L, TRUE)", RInternalSourceDescription.QUIT_EOF);
 
     /**
      * The read-eval-print loop, which can take input from a console, command line expression or a
@@ -207,7 +207,7 @@ public class RCommand {
 
                     String continuePrompt = getContinuePrompt();
                     StringBuffer sb = new StringBuffer(input);
-                    Source source = RSource.fromText(sb.toString(), RInternalSourceDescriptions.SHELL_INPUT);
+                    Source source = RSource.fromTextInternal(sb.toString(), RInternalSourceDescription.SHELL_INPUT);
                     while (true) {
                         /*
                          * N.B. As of Truffle rev 371045b1312d412bafa29882e6c3f7bfe6c0f8f1, only
@@ -224,7 +224,7 @@ public class RCommand {
                                 throw new EOFException();
                             }
                             sb.append(additionalInput);
-                            source = RSource.fromText(sb.toString(), RInternalSourceDescriptions.SHELL_INPUT);
+                            source = RSource.fromTextInternal(sb.toString(), RInternalSourceDescription.SHELL_INPUT);
                             // The only continuation in the while loop
                             continue;
                         } catch (ParseException e) {

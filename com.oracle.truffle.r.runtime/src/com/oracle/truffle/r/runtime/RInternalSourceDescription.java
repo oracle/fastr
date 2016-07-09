@@ -22,35 +22,46 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.oracle.truffle.api.source.Source;
 
 /**
  * Collection of strings that are used to indicate {@link Source} instances that have internal
  * descriptions.
  */
-public class RInternalSourceDescriptions {
-    private static final Set<String> set = new HashSet<>();
+public enum RInternalSourceDescription {
 
-    public static final String UNIT_TEST = add("<unit_test>");
-    public static final String SHELL_INPUT = add("<shell_input>");
-    public static final String EXPRESSION_INPUT = add("<expression_input>");
-    public static final String GET_ECHO = add("<get_echo>");
-    public static final String QUIT_EOF = add("<<quit_eof>>");
-    public static final String STARTUP_SHUTDOWN = add("<startup/shutdown>");
-    public static final String REPL_WRAPPER = add("<repl wrapper>");
-    public static final String NO_SOURCE = add("<no source>");
-    public static final String CONTEXT_EVAL = add("<context_eval>");
-    public static final String RF_FINDFUN = add("<Rf_findfun>");
+    UNIT_TEST("<unit_test>"),
+    SHELL_INPUT("<shell_input>"),
+    EXPRESSION_INPUT("<expression_input>"),
+    GET_ECHO("<get_echo>"),
+    QUIT_EOF("<<quit_eof>>"),
+    STARTUP_SHUTDOWN("<startup/shutdown>"),
+    REPL_WRAPPER("<repl wrapper>"),
+    EVAL_WRAPPER("<eval wrapper>"),
+    NO_SOURCE("<no source>"),
+    CONTEXT_EVAL("<context_eval>"),
+    RF_FINDFUN("<Rf_findfun>"),
+    BROWSER_INPUT("<browser_input>"),
+    CLEAR_WARNINGS("<clear_warnings>"),
+    DEPARSE("<deparse>"),
+    GET_CONTEXT("<get_context>"),
+    DEBUGTEST_FACTORIAL("<factorial.r>"),
+    DEBUGTEST_DEBUG("<debugtest.r>"),
+    DEBUGTEST_EVAL("<evaltest.r>"),
+    TCK_INIT("<tck_initialization>"),
+    PACKAGE("<package: %s deparse>"),
+    DEPARSE_ERROR("<package: deparse_error>"),
+    LAPPLY("<lapply>");
 
-    private static String add(String s) {
-        set.add(s);
-        return s;
+    public final String string;
+
+    RInternalSourceDescription(String text) {
+        this.string = text;
     }
 
-    public static boolean isInternal(String s) {
-        return set.contains(s);
+    public static String createPackageDescription(String pkg) {
+        return String.format(PACKAGE.string, pkg);
+
     }
+
 }

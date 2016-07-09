@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalCode.ContextStateImpl;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RInternalSourceDescription;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -172,7 +173,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      */
     public static class EvalThread extends ContextThread {
 
-        private static final Source GET_CONTEXT = RSource.fromText("invisible(.fastr.context.get())", "<get_context>");
+        private static final Source GET_CONTEXT = RSource.fromTextInternal("invisible(.fastr.context.get())", RInternalSourceDescription.GET_CONTEXT);
 
         private final Source source;
         private final ContextInfo info;

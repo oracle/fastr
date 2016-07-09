@@ -29,6 +29,7 @@ import org.junit.Test;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
+import com.oracle.truffle.r.runtime.RInternalSourceDescription;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.tck.TruffleTCK;
 
@@ -40,7 +41,7 @@ public class FastRTckTest extends TruffleTCK {
     }
 
     // @formatter:off
-    private static final Source INITIALIZATION = RSource.fromText(
+    private static final Source INITIALIZATION = RSource.fromTextInternal(
         "fourtyTwo <- function() {\n" +
         "  42L\n" +
         "}\n" +
@@ -100,7 +101,7 @@ public class FastRTckTest extends TruffleTCK {
         "  list('byteValue'=0L, 'shortValue'=0L, 'intValue'=0L, 'longValue'=0L, 'floatValue'=0, 'doubleValue'=0, 'charValue'=48L, 'stringValue'='', 'booleanValue'=FALSE)\n" +
         "}\n" +
         ".fastr.interop.export('valuesObject', valuesObject)\n",
-        "<initialization>"
+        RInternalSourceDescription.TCK_INIT
     );
     // @formatter:on
 
