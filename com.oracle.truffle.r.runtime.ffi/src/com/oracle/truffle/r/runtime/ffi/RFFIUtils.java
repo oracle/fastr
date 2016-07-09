@@ -22,12 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-
+import java.io.PrintStream;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -36,6 +36,10 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
  * Mostly support for tracing R FFI up/down calls. Currently tracing of the arguments to calls is
  * limited. The type of the argument is printed as is the value for types with simple (short)
  * values. Potentially complex types, e.g, {@link RPairList} do not have their values printed.
+ *
+ * Embedded mode requires special treatment. Experimentally the primary embedding app, RStudio, sets
+ * a very constrained environment (i.e. does not propagate environment variables set in the shell
+ * that launches RStudio.) and sets the cwd to "/", which is not writeable.
  *
  */
 public class RFFIUtils {
@@ -50,24 +54,28 @@ public class RFFIUtils {
     private static boolean traceEnabled;
 
     /**
-     * Places in /tmp because in embedded mode can't trust that cwd is writeable. Also, tag with
-     * time in event of multiple concurrent instances.
+     * In embedded mode can't trust that cwd is writeable, so output placed in /tmp. Also, tag with
+     * time in event of multiple concurrent instances (which happens with RStudio).
      */
     private static final String tracePathPrefix = "/tmp/fastr_trace_nativecalls.log-";
-    private static PrintWriter traceWriter;
+    private static PrintStream traceStream;
 
     private static void initialize() {
         if (!initialized) {
             traceEnabled = alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue();
             if (traceEnabled) {
-                if (traceWriter == null) {
-                    String tracePath = tracePathPrefix + Long.toString(System.currentTimeMillis());
-                    try {
-                        traceWriter = new PrintWriter(new FileWriter(tracePath));
-                    } catch (IOException ex) {
-                        System.err.println(ex.getMessage());
-                        System.exit(1);
+                if (RContext.isEmbedded()) {
+                    if (traceStream == null) {
+                        String tracePath = tracePathPrefix + Long.toString(System.currentTimeMillis());
+                        try {
+                            traceStream = new PrintStream(new FileOutputStream(tracePath));
+                        } catch (IOException ex) {
+                            System.err.println(ex.getMessage());
+                            System.exit(1);
+                        }
                     }
+                } else {
+                    traceStream = System.out;
                 }
             }
             initialized = true;
@@ -114,8 +122,8 @@ public class RFFIUtils {
             sb.append('(');
             printArgs(sb, args);
             sb.append(')');
-            traceWriter.println(sb.toString());
-            traceWriter.flush();
+            traceStream.println(sb.toString());
+            traceStream.flush();
         }
     }
 

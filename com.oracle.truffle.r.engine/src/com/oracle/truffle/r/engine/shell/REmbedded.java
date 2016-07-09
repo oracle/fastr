@@ -69,6 +69,7 @@ public class REmbedded {
      * the {@link RStartParams}, which happens after this call returns.
      */
     private static PolyglotEngine initializeR(String[] args) {
+        RContext.setEmbedded();
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, true);
         PolyglotEngine vm = RCommand.createContextInfoFromCommandLine(options, true);
         try {
@@ -113,8 +114,9 @@ public class REmbedded {
         runRmainloop(vm);
     }
 
+    @SuppressWarnings("unused")
     private static void R_Suicide(String msg) {
-
+        // TODO implement
     }
 
 }
