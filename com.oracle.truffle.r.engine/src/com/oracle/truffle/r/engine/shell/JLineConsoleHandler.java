@@ -115,7 +115,7 @@ class JLineConsoleHandler implements ConsoleHandler {
 
     @Override
     public String getInputDescription() {
-        return RInternalSourceDescription.SHELL_INPUT;
+        return RInternalSourceDescription.SHELL_INPUT.string;
     }
 
     @Override
