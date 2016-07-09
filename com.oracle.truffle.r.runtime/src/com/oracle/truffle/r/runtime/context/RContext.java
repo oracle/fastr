@@ -302,6 +302,12 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      */
     @CompilationFinal private static boolean ignoreVisibility;
 
+    /**
+     * Set to {@code true} when in embedded mode to allow other parts of the system to determine
+     * whether embedded mode is in effect, <b>before</b> the initial context is created.
+     */
+    private static boolean embedded;
+
     /*
      * Workarounds to finesse project circularities between runtime/nodes.
      */
@@ -367,11 +373,17 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public final TraceState.ContextStateImpl stateTraceHandling;
     public final ContextStateImpl stateInternalCode;
 
-    private final boolean embedded;
-
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize,
                         stateLazyDBCache, stateTraceHandling};
+    }
+
+    public static void setEmbedded() {
+        embedded = true;
+    }
+
+    public static boolean isEmbedded() {
+        return embedded;
     }
 
     private RContext(Env env, Instrumenter instrumenter, boolean isInitial) {
@@ -429,7 +441,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         assert !active;
         active = true;
         attachThread();
-        embedded = info.getStartParams().getEmbedded();
         if (!embedded) {
             doEnvOptionsProfileInitialization();
         }
