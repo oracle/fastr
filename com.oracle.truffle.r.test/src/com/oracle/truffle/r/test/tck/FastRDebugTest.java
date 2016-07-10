@@ -46,7 +46,6 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.EventConsumer;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Value;
-import com.oracle.truffle.r.runtime.RInternalSourceDescription;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromiseBase;
 
@@ -105,7 +104,7 @@ public class FastRDebugTest {
                         "        res\n" +
                         "    }\n" +
                         "}\n",
-                        RInternalSourceDescription.DEBUGTEST_FACTORIAL);
+                        RSource.Internal.DEBUGTEST_FACTORIAL);
     }
 
     protected final String getOut() {
@@ -151,7 +150,7 @@ public class FastRDebugTest {
                         "n", 2.0);
         continueExecution();
 
-        final Source evalSrc = RSource.fromTextInternal("main()\n", RInternalSourceDescription.DEBUGTEST_DEBUG);
+        final Source evalSrc = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_DEBUG);
         final Value value = engine.eval(evalSrc);
         assertExecutedOK();
         Assert.assertEquals("[1] 2\n", getOut());
@@ -199,7 +198,7 @@ public class FastRDebugTest {
         assertLocation(3, "res", "res", 2.0);
         stepOut();
 
-        final Source evalSource = RSource.fromTextInternal("main()\n", RInternalSourceDescription.DEBUGTEST_EVAL);
+        final Source evalSource = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_EVAL);
         final Value value = engine.eval(evalSource);
         assertExecutedOK();
         Assert.assertEquals("[1] 2\n", getOut());

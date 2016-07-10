@@ -114,7 +114,7 @@ public class RInstrumentation {
                 } else {
                     // One of the RSyntaxNode "unavailable"s.
                     idOrigin = idName;
-                    idSource = RSource.fromTextInternal(idName, "<" + idName + ">");
+                    idSource = RSource.fromTextInternal(idName, RSource.Internal.NO_SOURCE);
                 }
                 ident = new FunctionIdentification(idSource, idName, idOrigin, fdn);
             }

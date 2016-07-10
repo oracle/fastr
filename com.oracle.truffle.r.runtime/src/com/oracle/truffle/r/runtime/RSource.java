@@ -32,6 +32,43 @@ import com.oracle.truffle.api.source.Source;
 
 public class RSource {
     /**
+     * Collection of strings that are used to indicate {@link Source} instances that have internal
+     * descriptions.
+     */
+    public enum Internal {
+
+        UNIT_TEST("<unit_test>"),
+        SHELL_INPUT("<shell_input>"),
+        EXPRESSION_INPUT("<expression_input>"),
+        GET_ECHO("<get_echo>"),
+        QUIT_EOF("<<quit_eof>>"),
+        STARTUP_SHUTDOWN("<startup/shutdown>"),
+        REPL_WRAPPER("<repl wrapper>"),
+        EVAL_WRAPPER("<eval wrapper>"),
+        NO_SOURCE("<no source>"),
+        CONTEXT_EVAL("<context_eval>"),
+        RF_FINDFUN("<Rf_findfun>"),
+        BROWSER_INPUT("<browser_input>"),
+        CLEAR_WARNINGS("<clear_warnings>"),
+        DEPARSE("<deparse>"),
+        GET_CONTEXT("<get_context>"),
+        DEBUGTEST_FACTORIAL("<factorial.r>"),
+        DEBUGTEST_DEBUG("<debugtest.r>"),
+        DEBUGTEST_EVAL("<evaltest.r>"),
+        TCK_INIT("<tck_initialization>"),
+        PACKAGE("<package: %s deparse>"),
+        DEPARSE_ERROR("<package: deparse_error>"),
+        LAPPLY("<lapply>");
+
+        public final String string;
+
+        Internal(String text) {
+            this.string = text;
+        }
+
+    }
+
+    /**
      * Create an (external) source from the {@code text} that is known to originate from the file
      * system path {@code path}.
      */
@@ -61,14 +98,16 @@ public class RSource {
     /**
      * Create an {@code internal} source from {@code text} and {@code description}.
      */
-    public static Source fromTextInternal(String text, RInternalSourceDescription description) {
-        return fromTextInternal(text, description.string);
+    public static Source fromTextInternal(String text, Internal description) {
+        return fromPackageTextInternal(text, description.string);
     }
 
     /**
-     * Create an {@code internal} source from {@code text} and {@code name}.
+     * Create an {@code internal} source for a deparsed package from {@code text} and
+     * {@code packageName}.
      */
-    public static Source fromTextInternal(String text, String name) {
+    public static Source fromPackageTextInternal(String text, String packageName) {
+        String name = String.format(Internal.PACKAGE.string, packageName);
         return Source.newBuilder(text).name(name).mimeType(RRuntime.R_APP_MIME).internal().build();
     }
 
@@ -77,7 +116,7 @@ public class RSource {
      * {@code mimType}.
      */
 
-    public static Source fromTextInternal(String text, RInternalSourceDescription description, String mimeType) {
+    public static Source fromTextInternal(String text, Internal description, String mimeType) {
         return Source.newBuilder(text).name(description.string).mimeType(mimeType).internal().build();
     }
 

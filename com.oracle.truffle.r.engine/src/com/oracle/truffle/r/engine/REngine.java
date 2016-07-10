@@ -64,7 +64,6 @@ import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RInternalSourceDescription;
 import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -209,7 +208,7 @@ final class REngine implements Engine, Engine.Timings {
             }
             // Should this print the result?
             try {
-                parseAndEval(RSource.fromTextInternal(call, RInternalSourceDescription.STARTUP_SHUTDOWN), globalFrame, false);
+                parseAndEval(RSource.fromTextInternal(call, RSource.Internal.STARTUP_SHUTDOWN), globalFrame, false);
             } catch (ParseException e) {
                 throw new RInternalError(e, "error while parsing startup function");
             }
@@ -242,7 +241,7 @@ final class REngine implements Engine, Engine.Timings {
         try {
             Object lastValue = RNull.instance;
             for (RSyntaxNode node : list) {
-                RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RInternalSourceDescription.REPL_WRAPPER.string, printResult, true);
+                RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, printResult, true);
                 lastValue = callTarget.call(frame);
             }
             return lastValue;
@@ -300,7 +299,7 @@ final class REngine implements Engine, Engine.Timings {
         @SuppressWarnings("unchecked") @Child private FindContextNode<RContext> findContext = (FindContextNode<RContext>) TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         PolyglotEngineRootNode(List<RSyntaxNode> statements) {
-            super(TruffleRLanguage.class, SourceSection.createUnavailable("repl", RInternalSourceDescription.REPL_WRAPPER.string), new FrameDescriptor());
+            super(TruffleRLanguage.class, SourceSection.createUnavailable("repl", RSource.Internal.REPL_WRAPPER.string), new FrameDescriptor());
             this.statements = statements;
         }
 
@@ -317,7 +316,7 @@ final class REngine implements Engine, Engine.Timings {
             try {
                 Object lastValue = RNull.instance;
                 for (RSyntaxNode node : statements) {
-                    RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RInternalSourceDescription.REPL_WRAPPER.string, true, true);
+                    RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, true, true);
                     lastValue = callTarget.call(newContext.stateREnvironment.getGlobalFrame());
                 }
                 return lastValue;
@@ -376,7 +375,7 @@ final class REngine implements Engine, Engine.Timings {
         if (n instanceof ConstantNode) {
             return ((ConstantNode) n).getValue();
         }
-        RootCallTarget callTarget = doMakeCallTarget(n, RInternalSourceDescription.EVAL_WRAPPER.string, false, false);
+        RootCallTarget callTarget = doMakeCallTarget(n, RSource.Internal.EVAL_WRAPPER.string, false, false);
         return callTarget.call(frame);
     }
 
@@ -402,7 +401,7 @@ final class REngine implements Engine, Engine.Timings {
         // we need to copy the node, otherwise it (and its children) will specialized to a specific
         // frame descriptor and will fail on subsequent re-executions
         RSyntaxNode n = RContext.getASTBuilder().process(exprRep);
-        RootCallTarget callTarget = doMakeCallTarget(n.asRNode(), RInternalSourceDescription.EVAL_WRAPPER.string, false, false);
+        RootCallTarget callTarget = doMakeCallTarget(n.asRNode(), RSource.Internal.EVAL_WRAPPER.string, false, false);
         return evalTarget(callTarget, caller, envir);
     }
 

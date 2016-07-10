@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RInternalSourceDescription;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RVisibility;
@@ -123,7 +122,7 @@ public class FastRContext {
             RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
             for (int i = 0; i < threads.length; i++) {
                 ContextInfo info = checkContext(contexts.getDataAt(i), this);
-                threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % threads.length), RInternalSourceDescription.CONTEXT_EVAL));
+                threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % threads.length), RSource.Internal.CONTEXT_EVAL));
             }
             for (int i = 0; i < threads.length; i++) {
                 threads[i].start();
@@ -187,7 +186,7 @@ public class FastRContext {
                 RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
                 for (int i = 0; i < threads.length; i++) {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
-                    threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % threads.length), RInternalSourceDescription.CONTEXT_EVAL));
+                    threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % threads.length), RSource.Internal.CONTEXT_EVAL));
                 }
                 for (int i = 0; i < threads.length; i++) {
                     threads[i].start();
@@ -205,7 +204,7 @@ public class FastRContext {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
                     PolyglotEngine vm = info.createVM();
                     try {
-                        Source source = RSource.fromTextInternal(exprs.getDataAt(i % exprs.getLength()), RInternalSourceDescription.CONTEXT_EVAL);
+                        Source source = RSource.fromTextInternal(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL);
                         PolyglotEngine.Value resultValue = vm.eval(source);
                         results[i] = RContext.EvalThread.createEvalResult(resultValue);
                     } catch (ParseException e) {

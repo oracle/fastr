@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RInternalSourceDescription;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
@@ -142,7 +141,7 @@ public final class FastRSession implements RSession {
         return singleton;
     }
 
-    public static final Source GET_CONTEXT = RSource.fromTextInternal("invisible(.fastr.context.get())", RInternalSourceDescription.GET_CONTEXT);
+    public static final Source GET_CONTEXT = RSource.fromTextInternal("invisible(.fastr.context.get())", RSource.Internal.GET_CONTEXT);
 
     public PolyglotEngine createTestContext(ContextInfo contextInfoArg) {
         create();
@@ -244,7 +243,7 @@ public final class FastRSession implements RSession {
                     try {
                         String input = consoleHandler.readLine();
                         while (input != null) {
-                            Source source = RSource.fromTextInternal(input, RInternalSourceDescription.UNIT_TEST);
+                            Source source = RSource.fromTextInternal(input, RSource.Internal.UNIT_TEST);
                             try {
                                 vm.eval(source);
                                 input = consoleHandler.readLine();
