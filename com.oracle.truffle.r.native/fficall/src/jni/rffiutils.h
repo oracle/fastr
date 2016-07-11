@@ -76,13 +76,20 @@ void init_random(JNIEnv *env);
 void init_utils(JNIEnv *env);
 void init_parse(JNIEnv *env);
 
+void setEmbedded(void);
+
 void setTempDir(JNIEnv *, jstring tempDir);
 
 extern jclass RDataFactoryClass;
 extern jclass CallRFFIHelperClass;
 extern jclass RRuntimeClass;
+extern FILE *traceFile;
 
-#define TRACE_UPCALLS 0
+// tracing/debugging support, set to 1 and recompile to enable
+#define TRACE_UPCALLS 1    // trace upcalls
+#define TRACE_REF_CACHE 0  // trace JNI reference cache
+#define TRACE_COPIES 0     // trace copying of internal arrays
+#define TRACE_ENABLED TRACE_UPCALLS || TRACE_REF_CACHE || TRACE_COPIES
 
 #define TARGp "%s(%p)\n"
 #define TARGpp "%s(%p, %p)\n"
@@ -94,7 +101,7 @@ extern jclass RRuntimeClass;
 #define TARGsdd "%s(\"%s\", %d, %d)\n"
 
 #if TRACE_UPCALLS
-#define TRACE(format, ...) printf(format, __FUNCTION__, __VA_ARGS__)
+#define TRACE(format, ...) fprintf(traceFile, format, __FUNCTION__, __VA_ARGS__)
 #else
 #define TRACE(format, ...)
 #endif

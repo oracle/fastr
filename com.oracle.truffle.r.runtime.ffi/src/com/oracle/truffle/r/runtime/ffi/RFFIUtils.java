@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -58,6 +59,7 @@ public class RFFIUtils {
      * time in event of multiple concurrent instances (which happens with RStudio).
      */
     private static final String tracePathPrefix = "/tmp/fastr_trace_nativecalls.log-";
+    private static FileOutputStream traceFileStream;
     private static PrintStream traceStream;
 
     private static void initialize() {
@@ -68,7 +70,8 @@ public class RFFIUtils {
                     if (traceStream == null) {
                         String tracePath = tracePathPrefix + Long.toString(System.currentTimeMillis());
                         try {
-                            traceStream = new PrintStream(new FileOutputStream(tracePath));
+                            traceFileStream = new FileOutputStream(tracePath);
+                            traceStream = new PrintStream(traceFileStream);
                         } catch (IOException ex) {
                             System.err.println(ex.getMessage());
                             System.exit(1);
@@ -79,6 +82,21 @@ public class RFFIUtils {
                 }
             }
             initialized = true;
+        }
+    }
+
+    /**
+     * Upcalled from native when tracing to get FD of the {@link #traceFileStream}. Allows the same
+     * fd to be used on both sides of the JNI boundary.
+     */
+    @SuppressWarnings("unused")
+    private static FileDescriptor getTraceFileDescriptor() {
+        try {
+            return traceFileStream.getFD();
+        } catch (IOException ex) {
+            System.err.println(ex.getMessage());
+            System.exit(1);
+            return null;
         }
     }
 
