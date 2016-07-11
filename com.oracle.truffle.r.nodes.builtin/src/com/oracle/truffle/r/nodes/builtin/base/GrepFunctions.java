@@ -809,6 +809,13 @@ public class GrepFunctions {
                         } else {
                             resultItem = splitIntl(data, currentSplit);
                         }
+                        if (resultItem.getLength() == 0) {
+                            if (fixed) {
+                                resultItem = RDataFactory.createStringVector(data);
+                            } else {
+                                resultItem = RDataFactory.createStringVector(data.length());
+                            }
+                        }
                     }
                     result[i] = resultItem;
                 }
