@@ -23,6 +23,7 @@
 #include <rffiutils.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 /*
  * All calls pass through one of the call(N) methods in rfficall.c, which carry the JNIEnv value,
@@ -45,8 +46,8 @@ static jmethodID validateMethodID;
 static JNIEnv *curenv = NULL;
 jmp_buf *callErrorJmpBuf;
 
-#define DEBUG_CACHE 0
-#define TRACE_COPIES 0
+// default for trace output when enabled
+FILE *traceFile = NULL;
 
 static int alwaysUseGlobal = 0;
 #define CACHED_GLOBALREFS_INITIAL_SIZE 64
@@ -68,9 +69,31 @@ static CopiedVector *copiedVectors;
 static int copiedVectorsIndex;
 static int copiedVectorsLength;
 
+static int isEmbedded = 0;
+void setEmbedded() {
+	isEmbedded = 1;
+}
 
 void init_utils(JNIEnv *env) {
 	curenv = env;
+	if (TRACE_ENABLED && traceFile == NULL) {
+		if (!isEmbedded) {
+			traceFile = stdout;
+		} else {
+			jclass RFFIUtilsClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/RFFIUtils");
+			jclass FileDescriptorClass = checkFindClass(env, "java/io/FileDescriptor");
+			jmethodID getTraceFileDescriptorMethodID = checkGetMethodID(env, RFFIUtilsClass, "getTraceFileDescriptor", "()Ljava/io/FileDescriptor;", 1);
+			// ASSUMPTION: FileDescriptor has an "fd" field
+			jobject tfd = (*env)->CallStaticObjectMethod(env, RFFIUtilsClass, getTraceFileDescriptorMethodID);
+			jfieldID fdField = checkGetFieldID(env, FileDescriptorClass, "fd", "I", 0);
+			int fd = (*env)->GetIntField(env, tfd, fdField);
+		    traceFile = fdopen(fd, "w");
+		    if (traceFile == NULL) {
+				fprintf(stderr, "%s, %d", "failed to fdopen trace file on JNI side\n", errno);
+				exit(1);
+			}
+		}
+	}
 	RDataFactoryClass = checkFindClass(env, "com/oracle/truffle/r/runtime/data/RDataFactory");
 	CallRFFIHelperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper");
 	RRuntimeClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RRuntime");
@@ -149,7 +172,7 @@ void releaseCopiedVector(JNIEnv *env, CopiedVector cv) {
 }
 
 void callExit(JNIEnv *env) {
-//	printf("callExit\n");
+//	fprintf(traceFile, "callExit\n");
 	int i;
 	for (i = 0; i < copiedVectorsIndex; i++) {
 		releaseCopiedVector(env, copiedVectors[i]);
@@ -163,14 +186,14 @@ void invalidateCopiedObject(JNIEnv *env, SEXP oldObj) {
 		CopiedVector cv = copiedVectors[i];
 		if ((*env)->IsSameObject(env, cv.obj, oldObj)) {
 #if TRACE_COPIES
-			printf("invalidateCopiedObject(%p): found\n", oldObj);
+			fprintf(traceFile, "invalidateCopiedObject(%p): found\n", oldObj);
 #endif
 			releaseCopiedVector(env, cv);
 			copiedVectors[i].obj = NULL;
 		}
 	}
 #if TRACE_COPIES
-	printf("invalidateCopiedObject(%p): not found\n", oldObj);
+	fprintf(traceFile, "invalidateCopiedObject(%p): not found\n", oldObj);
 #endif
 }
 
@@ -181,20 +204,20 @@ void *findCopiedObject(JNIEnv *env, SEXP x) {
 		if ((*env)->IsSameObject(env, cv.obj, x)) {
 			void *data = cv.data;
 #if TRACE_COPIES
-			printf("findCopiedObject(%p): found %p\n", x, data);
+			fprintf(traceFile, "findCopiedObject(%p): found %p\n", x, data);
 #endif
 			return data;
 		}
 	}
 #if TRACE_COPIES
-	printf("findCopiedObject(%p): not found\n", x);
+	fprintf(traceFile, "findCopiedObject(%p): not found\n", x);
 #endif
 	return NULL;
 }
 
 void addCopiedObject(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, void *data) {
 #if TRACE_COPIES
-	printf("addCopiedObject(%p, %p)\n", x, data);
+	fprintf(traceFile, "addCopiedObject(%p, %p)\n", x, data);
 #endif
 	if (copiedVectorsIndex >= copiedVectorsLength) {
 		int newLength = 2 * copiedVectorsLength;
@@ -213,7 +236,7 @@ void addCopiedObject(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, void *dat
 	copiedVectors[copiedVectorsIndex].jArray = jArray;
 	copiedVectorsIndex++;
 #if TRACE_COPIES
-	printf("copiedVectorsIndex: %d\n", copiedVectorsIndex);
+	fprintf(traceFile, "copiedVectorsIndex: %d\n", copiedVectorsIndex);
 #endif
 }
 
@@ -225,8 +248,8 @@ static SEXP checkCachedGlobalRef(JNIEnv *env, SEXP obj, int useGlobal) {
 			break;
 		}
 		if ((*env)->IsSameObject(env, ref, obj)) {
-#if DEBUG_CACHE
-			printf("gref: cache hit: %d\n", i);
+#if TRACE_REF_CACHE
+			fprintf(traceFile, "gref: cache hit: %d\n", i);
 #endif
 			return ref;
 		}
@@ -235,8 +258,8 @@ static SEXP checkCachedGlobalRef(JNIEnv *env, SEXP obj, int useGlobal) {
 	if (useGlobal) {
 		if (i >= cachedGlobalRefsLength) {
 			int newLength = cachedGlobalRefsLength * 2;
-#if DEBUG_CACHE
-			printf("gref: extending table to %d\n", newLength);
+#if TRACE_REF_CACHE
+			fprintf(traceFile, "gref: extending table to %d\n", newLength);
 #endif
 			SEXP newCachedGlobalRefs = calloc(newLength, sizeof(SEXP));
 			if (newCachedGlobalRefs == NULL) {
@@ -280,7 +303,7 @@ void validate(SEXP x) {
 }
 
 JNIEnv *getEnv() {
-//	printf("getEnv()=%p\n", curenv);
+//	fprintf(traceFile, "getEnv()=%p\n", curenv);
 	return curenv;
 }
 

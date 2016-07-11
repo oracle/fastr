@@ -43,7 +43,7 @@ typedef jint (JNICALL *JNI_CreateJavaVMFunc)
 static void *dlopen_jvmlib(char *libpath) {
 	void *handle = dlopen(libpath, RTLD_GLOBAL | RTLD_NOW);
 	if (handle == NULL) {
-		printf("Rf_initialize_R: cannot dlopen %s: %s\n", libpath, dlerror());
+		fprintf(stderr, "Rf_initialize_R: cannot dlopen %s: %s\n", libpath, dlerror());
 		exit(1);
 	}
 	return handle;
@@ -108,7 +108,7 @@ int Rf_initialize_R(int argc, char *argv[]) {
 	// print_environ(environ);
 	char *r_home = getenv("R_HOME");
 	if (r_home == NULL) {
-		printf("R_HOME must be set\n");
+		fprintf(stderr, "R_HOME must be set\n");
 		exit(1);
 	}
 	struct utsname utsname;
@@ -132,7 +132,7 @@ int Rf_initialize_R(int argc, char *argv[]) {
 			}
 		}
 		if (java_home == NULL) {
-			printf("Rf_initialize_R: can't find a JAVA_HOME\n");
+			fprintf(stderr, "Rf_initialize_R: can't find a JAVA_HOME\n");
 			exit(1);
 		}
 	}
@@ -148,13 +148,13 @@ int Rf_initialize_R(int argc, char *argv[]) {
 		strcat(jlilib_path, "/jre/lib/jli/libjli.dylib");
 		dlopen_jvmlib(jlilib_path);
 	} else {
-		printf("unsupported OS: %s\n", utsname.sysname);
+		fprintf(stderr, "unsupported OS: %s\n", utsname.sysname);
 		exit(1);
 	}
 	void *vm_handle = dlopen_jvmlib(jvmlib_path);
 	JNI_CreateJavaVMFunc createJavaVMFunc = (JNI_CreateJavaVMFunc) dlsym(vm_handle, "JNI_CreateJavaVM");
 	if (createJavaVMFunc == NULL) {
-		printf("Rf_initialize_R: cannot find JNI_CreateJavaVM\n");
+		fprintf(stderr, "Rf_initialize_R: cannot find JNI_CreateJavaVM\n");
 		exit(1);
 	}
 
@@ -183,10 +183,11 @@ int Rf_initialize_R(int argc, char *argv[]) {
 	jint flag = (*createJavaVMFunc)(&javaVM, (void**)
 			&jniEnv, &vm_args);
 	if (flag == JNI_ERR) {
-		printf("Rf_initEmbeddedR: error creating Java VM, exiting...\n");
+		fprintf(stderr, "Rf_initEmbeddedR: error creating Java VM, exiting...\n");
 		return 1;
 	}
 
+	setEmbedded();
 	setEnv(jniEnv);
 	rInterfaceCallbacksClass = checkFindClass(jniEnv, "com/oracle/truffle/r/runtime/RInterfaceCallbacks");
 	rembeddedClass = checkFindClass(jniEnv, "com/oracle/truffle/r/engine/shell/REmbedded");
@@ -199,7 +200,7 @@ int Rf_initialize_R(int argc, char *argv[]) {
 		jstring arg = (*jniEnv)->NewStringUTF(jniEnv, argv[i]);
 		(*jniEnv)->SetObjectArrayElement(jniEnv, argsArray, i, arg);
 	}
-
+	// Can't TRACE this upcall as system not initialized
     R_GlobalContext = malloc(sizeof(struct RCNTXT));
 	engine = checkRef(jniEnv, (*jniEnv)->CallStaticObjectMethod(jniEnv, rembeddedClass, initializeMethod, argsArray));
 	initialized++;
@@ -562,10 +563,10 @@ static char *get_classpath(char *r_home) {
 
 // debugging
 static void print_environ(char **env) {
-	printf("## Environment variables at %p\n", env);
+	fprintf(stdout, "## Environment variables at %p\n", env);
 	char **e = env;
 	while (*e != NULL) {
-		printf("%s\n", *e);
+		fprintf(stdout, "%s\n", *e);
 		e++;
 	}
 }
