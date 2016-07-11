@@ -101,10 +101,10 @@ public class RInstrumentation {
                     idSource = ss.getSource();
                     String sourceName = idSource.getName();
                     idOrigin = sourceName;
-                    if (sourceName.startsWith("<package:")) {
+                    String packageName = RSource.getPackageName(idSource);
+                    if (packageName != null) {
                         // try to find the name in the package environments
-                        // format of sourceName is "<package"xxx deparse>"
-                        String functionName = findFunctionName(uid, sourceName.substring(1, sourceName.lastIndexOf(' ')));
+                        String functionName = findFunctionName(uid, packageName);
                         if (functionName != null) {
                             idName = functionName;
                         }
@@ -216,7 +216,7 @@ public class RInstrumentation {
     }
 
     public static Instrumenter getInstrumenter() {
-        return RContext.getInstance().getInstrumenter();
+        return RContext.getInstance().getInstrumentationState().getInstrumenter();
     }
 
     public static void checkDebugRequested(RFunction func) {

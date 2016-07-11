@@ -30,6 +30,20 @@ import java.net.URL;
 
 import com.oracle.truffle.api.source.Source;
 
+/**
+ * A facade for the creation of Truffle {@link Source} objects, which is complicated in R due the
+ * the many different ways in which sources can be created. Particularly tricky are sources created
+ * from deparsing functions from (binary-form) packages and from the {@code source} builtin, as
+ * these are presented as text strings despite being associated with files.
+ *
+ * We separate sources as <i>internal</i> or <i>external</i>, where the former will return
+ * {@code true} to {@link Source#isInternal()}. External sources always correspond to some external
+ * data source, e.g., file, url, even if they are not created using the standard methods in
+ * {@link Source}. An internal source will always return {@code null} to {@link Source#getURI} but
+ * {@link Source#getName} should return a value that indicates how/why the source was created, a
+ * value from {@link Internal}.
+ *
+ */
 public class RSource {
     /**
      * Collection of strings that are used to indicate {@link Source} instances that have internal
@@ -56,8 +70,8 @@ public class RSource {
         DEBUGTEST_DEBUG("<debugtest.r>"),
         DEBUGTEST_EVAL("<evaltest.r>"),
         TCK_INIT("<tck_initialization>"),
-        PACKAGE("<package: %s deparse>"),
-        DEPARSE_ERROR("<package: deparse_error>"),
+        PACKAGE("<package:%s deparse>"),
+        DEPARSE_ERROR("<package_deparse_error>"),
         LAPPLY("<lapply>");
 
         public final String string;
@@ -70,36 +84,23 @@ public class RSource {
 
     /**
      * Create an (external) source from the {@code text} that is known to originate from the file
-     * system path {@code path}.
+     * system path {@code path}. The simulates the behavior of {@link #fromFile}.
      */
     public static Source fromFileName(String text, String path) {
         File file = new File(path).getAbsoluteFile();
         try {
             URI uri = new URI("file://" + file.getAbsolutePath());
-            return Source.newBuilder(text).name(path).uri(uri).mimeType(RRuntime.R_APP_MIME).build();
+            return Source.newBuilder(text).name(file.getName()).uri(uri).mimeType(RRuntime.R_APP_MIME).build();
         } catch (URISyntaxException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
     }
 
     /**
-     * If {@code source} is "internal", return {@code null} else return the file system path
-     * corresponding to the associated {@link URI}.
-     */
-    public static String getPath(Source source) {
-        if (source == null || source.isInternal()) {
-            return null;
-        }
-        URI uri = source.getURI();
-        assert uri != null;
-        return uri.getPath();
-    }
-
-    /**
      * Create an {@code internal} source from {@code text} and {@code description}.
      */
     public static Source fromTextInternal(String text, Internal description) {
-        return fromPackageTextInternal(text, description.string);
+        return Source.newBuilder(text).name(description.string).mimeType(RRuntime.R_APP_MIME).internal().build();
     }
 
     /**
@@ -109,6 +110,19 @@ public class RSource {
     public static Source fromPackageTextInternal(String text, String packageName) {
         String name = String.format(Internal.PACKAGE.string, packageName);
         return Source.newBuilder(text).name(name).mimeType(RRuntime.R_APP_MIME).internal().build();
+    }
+
+    /**
+     * Create an {@code internal} source for a deparsed package from {@code text} when the function
+     * name might be known. If {@code functionName} is not {@code null}, use it as the "name" for
+     * the source, else default to {@link #fromPackageTextInternal(String, String)}.
+     */
+    public static Source fromPackageTextInternalWithName(String text, String packageName, String functionName) {
+        if (functionName == null) {
+            return fromPackageTextInternal(text, packageName);
+        } else {
+            return Source.newBuilder(text).name(packageName + "::" + functionName).mimeType(RRuntime.R_APP_MIME).internal().build();
+        }
     }
 
     /**
@@ -140,4 +154,44 @@ public class RSource {
     public static Source fromURL(URL url, String name) throws IOException {
         return Source.newBuilder(url).name(name).mimeType(RRuntime.R_APP_MIME).build();
     }
+
+    /**
+     * If {@code source} was created with {@link #fromPackageTextInternal} return the
+     * "package:name", else {@code null}. This can be used to access the corresponding R
+     * environment.
+     */
+    public static String getPackageName(Source source) {
+        String sourceName = source.getName();
+        if (sourceName.startsWith("<package:")) {
+            return sourceName.substring(1, sourceName.lastIndexOf(' '));
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * If {@code source} is "internal", return {@code null} else return the file system path
+     * corresponding to the associated {@link URI}.
+     */
+    public static String getPath(Source source) {
+        if (source == null || source.isInternal()) {
+            return null;
+        }
+        URI uri = source.getURI();
+        assert uri != null;
+        return uri.getPath();
+    }
+
+    /**
+     * Always returns a non-null string even for internal sources.
+     */
+    public static String getOrigin(Source source) {
+        String path = RSource.getPath(source);
+        if (path == null) {
+            return source.getName();
+        } else {
+            return path;
+        }
+    }
+
 }

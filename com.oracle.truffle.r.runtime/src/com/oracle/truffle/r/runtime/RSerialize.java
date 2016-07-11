@@ -892,7 +892,7 @@ public class RSerialize {
                 Source source;
                 String name;
                 if (sourcePath == null) {
-                    source = RSource.fromPackageTextInternal(deparse, packageName);
+                    source = RSource.fromPackageTextInternalWithName(deparse, packageName, currentFunctionName);
                     name = currentFunctionName;
                 } else {
                     source = RSource.fromFileName(deparse, sourcePath);

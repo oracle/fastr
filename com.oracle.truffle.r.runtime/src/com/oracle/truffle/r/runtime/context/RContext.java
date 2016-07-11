@@ -41,6 +41,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.tools.Profiler;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
@@ -252,6 +253,30 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         }
     }
 
+    /**
+     * Captures all state regarding instrumentation.
+     */
+    public static class InstrumentationState {
+        private final Instrumenter instrumenter;
+        private Profiler profiler;
+
+        InstrumentationState(Instrumenter instrumenter) {
+            this.instrumenter = instrumenter;
+        }
+
+        public void setProfiler(Profiler profiler) {
+            this.profiler = profiler;
+        }
+
+        public Profiler getProfiler() {
+            return profiler;
+        }
+
+        public Instrumenter getInstrumenter() {
+            return instrumenter;
+        }
+    }
+
     private final ContextInfo info;
     private final Engine engine;
 
@@ -340,7 +365,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     @CompilationFinal private static RContext singleContext;
 
     private final Env env;
-    private final Instrumenter instrumenter;
+    private final InstrumentationState instrumentationState;
     private final HashMap<String, TruffleObject> exportedSymbols = new HashMap<>();
     /**
      * State that is used to support interposing on loadNamespace() for overrides.
@@ -394,7 +419,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         }
 
         this.env = env;
-        this.instrumenter = instrumenter;
+        this.instrumentationState = new InstrumentationState(instrumenter);
         if (info.getConsoleHandler() == null) {
             throw Utils.fail("no console handler set");
         }
@@ -487,8 +512,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         return env;
     }
 
-    public Instrumenter getInstrumenter() {
-        return instrumenter;
+    public InstrumentationState getInstrumentationState() {
+        return instrumentationState;
     }
 
     public ContextKind getKind() {
