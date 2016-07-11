@@ -12,7 +12,9 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import java.util.HashMap;
@@ -44,20 +46,19 @@ public class RowsumFunctions {
     public abstract static class Rowsum extends RBuiltinNode {
 
         private final ConditionProfile typeProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile errorProfile = ConditionProfile.createBinaryProfile();
         private final NACheck na = NACheck.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").mustBe(numericValue(), RError.Message.X_NUMERIC);
+            casts.arg("x").mustBe(integerValue().or(doubleValue()), RError.Message.ROWSUM_NON_NUMERIC);
 
             casts.arg("g").asVector();
 
             casts.arg("uniqueg").asVector();
 
-            casts.arg("snarm").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("snarm").asLogicalVector().findFirst().notNA(RError.Message.INVALID_LOGICAL).map(toBoolean());
 
-            casts.arg("rn").asStringVector();
+            casts.arg("rn").mustBe(stringValue(), RError.Message.ROWSUM_NAMES_NOT_CHAR).asStringVector();
         }
 
         @Specialization
@@ -114,24 +115,20 @@ public class RowsumFunctions {
                 }
                 result = RDataFactory.createIntVector(ansi, complete, new int[]{ng, p});
             } else {
-                if (errorProfile.profile(!(xv instanceof RDoubleVector))) {
-                    throw RError.error(this, RError.Message.GENERIC, "non-numeric matrix in rowsum(): this should not happen");
-                } else {
-                    RDoubleVector xd = (RDoubleVector) xv;
-                    double[] ansd = new double[ng * p];
-                    for (int i = 0; i < p; i++) {
-                        for (int j = 0; j < n; j++) {
-                            int midx = matches[j] - 1 + offsetg;
-                            double dtmp = xd.getDataAt(j + offset);
-                            if (!narm || !Double.isNaN(dtmp)) {
-                                ansd[midx] += dtmp;
-                            }
+                RDoubleVector xd = (RDoubleVector) xv;
+                double[] ansd = new double[ng * p];
+                for (int i = 0; i < p; i++) {
+                    for (int j = 0; j < n; j++) {
+                        int midx = matches[j] - 1 + offsetg;
+                        double dtmp = xd.getDataAt(j + offset);
+                        if (!narm || !Double.isNaN(dtmp)) {
+                            ansd[midx] += dtmp;
                         }
-                        offset += n;
-                        offsetg += ng;
                     }
-                    result = RDataFactory.createDoubleVector(ansd, complete, new int[]{ng, p});
+                    offset += n;
+                    offsetg += ng;
                 }
+                result = RDataFactory.createDoubleVector(ansd, complete, new int[]{ng, p});
             }
             Object[] dimNamesData = new Object[2];
             dimNamesData[0] = rn;

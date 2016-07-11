@@ -60,7 +60,6 @@ import com.oracle.truffle.r.library.utils.CountFields;
 import com.oracle.truffle.r.library.utils.Crc64NodeGen;
 import com.oracle.truffle.r.library.utils.Download;
 import com.oracle.truffle.r.library.utils.MenuNodeGen;
-import com.oracle.truffle.r.library.utils.Rprof;
 import com.oracle.truffle.r.library.utils.RprofNodeGen;
 import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
 import com.oracle.truffle.r.library.utils.WriteTable;
