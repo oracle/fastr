@@ -49,37 +49,36 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RprofState;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
 
-    private PrintWriter out;
-    private ProfileThread profileThread;
-    private StatementListener statementListener;
-    private long intervalInMillis;
-    private boolean lineProfiling;
-
     @SuppressWarnings("unused")
     @Specialization
     public Object doRprof(RAbstractStringVector filenameVec, byte appendL, double intervalD, byte memProfilingL,
                     byte gcProfilingL, byte lineProfilingL, int numFiles, int bufSize) {
+        if (!RContext.getInstance().isInitial()) {
+            throw RError.error(this, RError.Message.GENERIC, "profiling not supported in created contexts");
+        }
+        RprofState profState = RContext.getInstance().stateRprof;
         String filename = filenameVec.getDataAt(0);
         if (filename.length() == 0) {
             // disable
             endProfiling();
         } else {
             // enable
-            if (out != null) {
+            if (profState.out() != null) {
                 endProfiling();
             }
             boolean append = RRuntime.fromLogical(appendL);
             boolean memProfiling = RRuntime.fromLogical(memProfilingL);
             boolean gcProfiling = RRuntime.fromLogical(gcProfilingL);
-            lineProfiling = RRuntime.fromLogical(lineProfilingL);
             try {
-                out = new PrintWriter(new FileWriter(filename, append));
+                PrintWriter out = new PrintWriter(new FileWriter(filename, append));
                 if (memProfiling) {
                     RError.warning(this, RError.Message.GENERIC, "Rprof: memory profiling not supported");
                 }
@@ -87,10 +86,11 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
                     RError.warning(this, RError.Message.GENERIC, "Rprof: gc profiling not supported");
                 }
                 // interval is in seconds, we convert to millis
-                intervalInMillis = (long) (1E3 * intervalD);
-                statementListener = new StatementListener();
-                profileThread = new ProfileThread(intervalInMillis, statementListener);
+                long intervalInMillis = (long) (1E3 * intervalD);
+                StatementListener statementListener = new StatementListener();
+                ProfileThread profileThread = new ProfileThread(intervalInMillis, statementListener);
                 profileThread.setDaemon(true);
+                profState.initialize(out, profileThread, statementListener, intervalInMillis, RRuntime.fromLogical(lineProfilingL));
                 profileThread.start();
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.GENERIC, String.format("Rprof: cannot open profile file '%s'", filename));
@@ -99,14 +99,18 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
         return RNull.instance;
     }
 
-    private void endProfiling() {
+    private static void endProfiling() {
+        RprofState profState = RContext.getInstance().stateRprof;
+        ProfileThread profileThread = (ProfileThread) profState.profileThread();
         profileThread.running = false;
         HashMap<String, Integer> fileMap = null;
-        if (lineProfiling) {
+        PrintWriter out = profState.out();
+        StatementListener statementListener = (StatementListener) profState.statementListener();
+        if (profState.lineProfiling()) {
             out.print("line profiling: ");
         }
-        out.printf("sample.interval=%d\n", intervalInMillis * 1000);
-        if (lineProfiling) {
+        out.printf("sample.interval=%d\n", profState.intervalInMillis() * 1000);
+        if (profState.lineProfiling()) {
             // scan stacks to find files
             fileMap = new HashMap<>();
             int fileIndex = 0;
@@ -125,7 +129,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
                 RootNode rootNode = node.asRNode().getRootNode();
                 if (rootNode instanceof FunctionDefinitionNode) {
                     String name = rootNode.getName();
-                    if (lineProfiling) {
+                    if (profState.lineProfiling()) {
                         Integer fileIndex = fileMap.get(getPath(node));
                         if (fileIndex != null) {
                             out.printf("%d#%d ", fileIndex, node.getSourceSection().getStartLine());

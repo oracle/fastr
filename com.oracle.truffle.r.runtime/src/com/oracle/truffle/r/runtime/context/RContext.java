@@ -367,6 +367,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     private final Env env;
     private final InstrumentationState instrumentationState;
     private final HashMap<String, TruffleObject> exportedSymbols = new HashMap<>();
+    private final boolean initial;
     /**
      * State that is used to support interposing on loadNamespace() for overrides.
      */
@@ -390,10 +391,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public final LazyDBCache.ContextStateImpl stateLazyDBCache;
     public final TraceState.ContextStateImpl stateTraceHandling;
     public final ContextStateImpl stateInternalCode;
+    public final RprofState stateRprof;
 
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize,
-                        stateLazyDBCache, stateTraceHandling};
+                        stateLazyDBCache, stateTraceHandling, stateRprof};
     }
 
     private RContext(Env env, Instrumenter instrumenter, boolean isInitial) {
@@ -403,6 +405,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         } else {
             this.info = initialInfo;
         }
+        this.initial = isInitial;
 
         // this must happen before engine activation in the code below
         if (info.getKind() == ContextKind.SHARE_NOTHING) {
@@ -459,6 +462,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateLazyDBCache = LazyDBCache.ContextStateImpl.newContext(this);
         stateTraceHandling = TraceState.newContext(this);
         stateInternalCode = ContextStateImpl.newContext(this);
+        stateRprof = RprofState.newContext(this);
         engine.activate(stateREnvironment);
 
         if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
@@ -689,6 +693,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public PolyglotEngine getVM() {
         return info.getVM();
+    }
+
+    public boolean isInitial() {
+        return initial;
     }
 
     public void setLoadingBase(boolean b) {
