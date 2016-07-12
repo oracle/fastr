@@ -295,6 +295,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                     Object result;
                     if (dataAt == RNull.instance) {
                         result = RNull.instance;
+                    } else if (positions[i] instanceof RAbstractContainer && ((RAbstractContainer) positions[i]).getLength() == 0) {
+                        result = RNull.instance;
                     } else {
                         result = extract(i, (RAbstractStringVector) dataAt, positions[i], positionProfile[i]);
                     }
