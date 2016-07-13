@@ -39,7 +39,6 @@ public enum FastROptions {
     PrintErrorStacktracesToFile("Dumps Java and R stack traces to 'fastr_errors.log' for all errors", true),
     CheckResultCompleteness("Assert completeness of results vectors after evaluating unit tests and R shell commands", true),
     Debug("Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.", null, true),
-    Instrument("Enable (Old) Instrumentation", false),
     TraceCalls("Trace all R function calls", false),
     TraceCallsToFile("TraceCalls output is sent to 'fastr_tracecalls.log'", false),
     TraceNativeCalls("Trace all native function calls (performed via .Call, .External, etc.)", false),
