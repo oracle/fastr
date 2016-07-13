@@ -32,8 +32,9 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 // Translated from main/unique.c
@@ -42,7 +43,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public class RowsumFunctions {
 
     @RBuiltin(name = "rowsum_matrix", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "g", "uniqueg", "snarm", "rn"})
-
     public abstract static class Rowsum extends RBuiltinNode {
 
         private final ConditionProfile typeProfile = ConditionProfile.createBinaryProfile();
@@ -63,7 +63,7 @@ public class RowsumFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object rowsum(RVector xv, RVector g, RVector uniqueg, boolean narm, RStringVector rn) {
+        protected Object rowsum(RAbstractVector xv, RAbstractVector g, RAbstractVector uniqueg, boolean narm, RAbstractStringVector rn) {
             int p = xv.isMatrix() ? xv.getDimensions()[1] : 1;
             int n = g.getLength();
             int ng = uniqueg.getLength();
@@ -132,7 +132,7 @@ public class RowsumFunctions {
             }
             Object[] dimNamesData = new Object[2];
             dimNamesData[0] = rn;
-            RList dn2 = xv.getDimNames();
+            RList dn2 = xv.materialize().getDimNames();
             if (dn2 != null && dn2.getLength() >= 2 && dn2.getDataAt(1) != RNull.instance) {
                 dimNamesData[1] = dn2.getDataAt(1);
             }
