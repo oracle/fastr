@@ -121,6 +121,10 @@ public final class TypeExpr {
         return disjNormForm.stream().map(conj -> normalize(conj)).filter(t -> !t.equals(Not.NOTHING)).collect(Collectors.toSet());
     }
 
+    public Set<Class<?>> toClasses() {
+        return normalize().stream().filter(t -> t instanceof Class).map(t -> (Class<?>) t).collect(Collectors.toSet());
+    }
+
     private static Type normalize(Set<? extends Type> conj) {
         Type[] conjArray = conj.toArray(new Type[conj.size()]);
         Set<Type> lessSpecific = new HashSet<>();

@@ -349,7 +349,7 @@ public class TestCasts extends TestBase {
             protected Root(String name) {
                 super(name,
                                 new CastBuilder().output(NullStream.INSTANCE).arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(
-                                                ValuePredicateArgumentFilterSampler.omLambdaWithResTypes(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Object.class),
+                                                ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Object.class),
                                                 Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(), asInteger()).builder().getCasts()[0]);
             }
 

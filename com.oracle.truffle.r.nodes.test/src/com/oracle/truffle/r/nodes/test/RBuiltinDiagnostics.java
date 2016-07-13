@@ -47,6 +47,7 @@ import com.oracle.truffle.r.nodes.casts.CastUtils.Casts;
 import com.oracle.truffle.r.nodes.casts.Not;
 import com.oracle.truffle.r.nodes.casts.PredefFiltersSamplers;
 import com.oracle.truffle.r.nodes.casts.PredefMappersSamplers;
+import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -78,6 +79,10 @@ public final class RBuiltinDiagnostics {
     private static void diagnoseSingleBuiltin(String builtinName, boolean verbose, boolean ignoreRNull, boolean ignoreRMissing) throws Exception {
         BasePackage bp = new BasePackage();
         RBuiltinFactory bf = bp.lookupByName(builtinName);
+        if (bf == null) {
+            System.out.println("No builtin '" + builtinName + "' found");
+            return;
+        }
         diagnoseBuiltin(bf, verbose, ignoreRNull, ignoreRMissing);
     }
 
@@ -119,6 +124,8 @@ public final class RBuiltinDiagnostics {
 
         Set<List<Type>> nonCoveredArgsSet = combineArguments(argResultSets, convResultTypePerSpec);
 
+        List<Samples<?>> argSamples = createSamples(argLength, castNodes);
+
         System.out.println("Argument cast pipelines binding:");
         for (int i = 0; i < argLength; i++) {
             TypeExpr argResultSet = argResultSets.get(i);
@@ -140,6 +147,8 @@ public final class RBuiltinDiagnostics {
             }
             System.out.println("  Unbound types:");
             System.out.println("   " + unboundArgTypes.stream().map(argType -> typeName(argType)).collect(Collectors.toSet()));
+            System.out.println(" Samples:");
+            System.out.println(argSamples.get(i));
         }
 
         System.out.println("\nUnhandled argument combinations: " + nonCoveredArgsSet.size());
@@ -201,6 +210,26 @@ public final class RBuiltinDiagnostics {
             argResultSets.add(te);
         }
         return argResultSets;
+    }
+
+    private static List<Samples<?>> createSamples(int argLength, CastNode[] castNodes) {
+        List<Samples<?>> argSamples = new ArrayList<>();
+        for (int i = 0; i < argLength; i++) {
+            CastNode cn;
+            if (i < castNodes.length) {
+                cn = castNodes[i];
+            } else {
+                cn = null;
+            }
+            Samples<?> samples;
+            try {
+                samples = cn == null ? Samples.anything() : CastNodeSampler.createSampler(cn).collectSamples();
+            } catch (Exception e) {
+                throw new RuntimeException("Error in sample generation from argument " + i, e);
+            }
+            argSamples.add(samples);
+        }
+        return argSamples;
     }
 
     private static CastNode[] getCastNodesFromBuiltin(RBuiltinFactory builtinFactory, String[] parameterNames) {

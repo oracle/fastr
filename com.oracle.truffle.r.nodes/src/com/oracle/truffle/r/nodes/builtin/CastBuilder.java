@@ -27,10 +27,12 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
+import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentValueFilter;
 import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
@@ -267,33 +269,19 @@ public final class CastBuilder {
 
         ValuePredicateArgumentFilter<Integer> intNA();
 
-        ValuePredicateArgumentFilter<Integer> notIntNA();
-
         ValuePredicateArgumentFilter<Byte> logicalNA();
-
-        ValuePredicateArgumentFilter<Byte> notLogicalNA();
 
         ValuePredicateArgumentFilter<Double> doubleNA();
 
-        ValuePredicateArgumentFilter<Double> notDoubleNA();
-
         ValuePredicateArgumentFilter<String> stringNA();
-
-        ValuePredicateArgumentFilter<String> notStringNA();
 
         ValuePredicateArgumentFilter<Integer> eq(int x);
 
         ValuePredicateArgumentFilter<Double> eq(double x);
 
-        ValuePredicateArgumentFilter<Integer> neq(int x);
-
-        ValuePredicateArgumentFilter<Double> neq(double x);
-
         ValuePredicateArgumentFilter<Integer> gt(int x);
 
         ValuePredicateArgumentFilter<Double> gt(double x);
-
-        ValuePredicateArgumentFilter<Integer> gte(int x);
 
         ValuePredicateArgumentFilter<Double> gte(double x);
 
@@ -301,29 +289,13 @@ public final class CastBuilder {
 
         ValuePredicateArgumentFilter<Double> lt(double x);
 
-        ValuePredicateArgumentFilter<Integer> lte(int x);
-
         ValuePredicateArgumentFilter<Double> lte(double x);
 
         ValuePredicateArgumentFilter<String> length(int l);
 
-        ValuePredicateArgumentFilter<String> isEmpty();
-
         ValuePredicateArgumentFilter<String> lengthGt(int l);
 
-        ValuePredicateArgumentFilter<String> lengthGte(int l);
-
         ValuePredicateArgumentFilter<String> lengthLt(int l);
-
-        ValuePredicateArgumentFilter<String> lengthLte(int l);
-
-        ValuePredicateArgumentFilter<Integer> gt0();
-
-        ValuePredicateArgumentFilter<Integer> gte0();
-
-        ValuePredicateArgumentFilter<Integer> gt1();
-
-        ValuePredicateArgumentFilter<Integer> gte1();
 
         <R> TypePredicateArgumentFilter<Object, R> instanceOf(Class<R> cls);
 
@@ -426,18 +398,8 @@ public final class CastBuilder {
         }
 
         @Override
-        public ValuePredicateArgumentFilter<Integer> notIntNA() {
-            return ValuePredicateArgumentFilter.fromLambda((Integer x) -> !RRuntime.isNA(x));
-        }
-
-        @Override
         public ValuePredicateArgumentFilter<Byte> logicalNA() {
             return ValuePredicateArgumentFilter.fromLambda((Byte x) -> RRuntime.isNA(x));
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Byte> notLogicalNA() {
-            return ValuePredicateArgumentFilter.fromLambda((Byte x) -> !RRuntime.isNA(x));
         }
 
         @Override
@@ -446,18 +408,8 @@ public final class CastBuilder {
         }
 
         @Override
-        public ValuePredicateArgumentFilter<Double> notDoubleNA() {
-            return ValuePredicateArgumentFilter.fromLambda((Double x) -> !RRuntime.isNA(x));
-        }
-
-        @Override
         public ValuePredicateArgumentFilter<String> stringNA() {
             return ValuePredicateArgumentFilter.fromLambda((String x) -> RRuntime.isNA(x));
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<String> notStringNA() {
-            return ValuePredicateArgumentFilter.fromLambda((String x) -> !RRuntime.isNA(x));
         }
 
         @Override
@@ -471,48 +423,28 @@ public final class CastBuilder {
         }
 
         @Override
-        public ValuePredicateArgumentFilter<Integer> neq(int x) {
-            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg == null || arg.intValue() != x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Double> neq(double x) {
-            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg == null || arg.doubleValue() != x);
-        }
-
-        @Override
         public ValuePredicateArgumentFilter<Integer> gt(int x) {
-            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg > x);
+            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg != null && arg > x);
         }
 
         @Override
         public ValuePredicateArgumentFilter<Double> gt(double x) {
-            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg > x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Integer> gte(int x) {
-            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg >= x);
+            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg != null && arg > x);
         }
 
         @Override
         public ValuePredicateArgumentFilter<Double> gte(double x) {
-            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg >= x);
+            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg != null && arg >= x);
         }
 
         @Override
         public ValuePredicateArgumentFilter<Integer> lt(int x) {
-            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg < x);
+            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg != null && arg < x);
         }
 
         @Override
         public ValuePredicateArgumentFilter<Double> lt(double x) {
             return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg < x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Integer> lte(int x) {
-            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg <= x);
         }
 
         @Override
@@ -526,48 +458,13 @@ public final class CastBuilder {
         }
 
         @Override
-        public ValuePredicateArgumentFilter<String> isEmpty() {
-            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.isEmpty());
-        }
-
-        @Override
         public ValuePredicateArgumentFilter<String> lengthGt(int l) {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() > l);
         }
 
         @Override
-        public ValuePredicateArgumentFilter<String> lengthGte(int l) {
-            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() >= l);
-        }
-
-        @Override
         public ValuePredicateArgumentFilter<String> lengthLt(int l) {
             return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() < l);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<String> lengthLte(int l) {
-            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() <= l);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Integer> gt0() {
-            return ValuePredicateArgumentFilter.fromLambda((Integer x) -> x > 0);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Integer> gte0() {
-            return ValuePredicateArgumentFilter.fromLambda((Integer x) -> x >= 0);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Integer> gt1() {
-            return ValuePredicateArgumentFilter.fromLambda((Integer x) -> x > 1);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Integer> gte1() {
-            return ValuePredicateArgumentFilter.fromLambda((Integer x) -> x >= 1);
         }
 
         @Override
@@ -642,7 +539,18 @@ public final class CastBuilder {
         @Override
         public ValuePredicateArgumentMapper<String, Integer> charAt0(int defaultValue) {
             final ConditionProfile profile = ConditionProfile.createBinaryProfile();
-            return ValuePredicateArgumentMapper.fromLambda(x -> profile.profile(x == null || x.isEmpty()) ? defaultValue : (int) x.charAt(0));
+            final ConditionProfile profile2 = ConditionProfile.createBinaryProfile();
+            return ValuePredicateArgumentMapper.fromLambda(x -> {
+                if (profile.profile(x == null || x.isEmpty())) {
+                    return defaultValue;
+                } else {
+                    if (profile2.profile(x == RRuntime.STRING_NA)) {
+                        return RRuntime.INT_NA;
+                    } else {
+                        return (int) x.charAt(0);
+                    }
+                }
+            });
         }
 
         @Override
@@ -802,32 +710,32 @@ public final class CastBuilder {
             return predefFilters().intNA();
         }
 
-        public static ValuePredicateArgumentFilter<Integer> notIntNA() {
-            return predefFilters().notIntNA();
+        public static ArgumentValueFilter<Integer> notIntNA() {
+            return predefFilters().intNA().not();
         }
 
         public static ValuePredicateArgumentFilter<Byte> logicalNA() {
             return predefFilters().logicalNA();
         }
 
-        public static ValuePredicateArgumentFilter<Byte> notLogicalNA() {
-            return predefFilters().notLogicalNA();
+        public static ArgumentValueFilter<Byte> notLogicalNA() {
+            return predefFilters().logicalNA().not();
         }
 
         public static ValuePredicateArgumentFilter<Double> doubleNA() {
             return predefFilters().doubleNA();
         }
 
-        public static ValuePredicateArgumentFilter<Double> notDoubleNA() {
-            return predefFilters().notDoubleNA();
+        public static ArgumentValueFilter<Double> notDoubleNA() {
+            return predefFilters().doubleNA().not();
         }
 
         public static ValuePredicateArgumentFilter<String> stringNA() {
             return predefFilters().stringNA();
         }
 
-        public static ValuePredicateArgumentFilter<String> notStringNA() {
-            return predefFilters().notStringNA();
+        public static ArgumentValueFilter<String> notStringNA() {
+            return predefFilters().stringNA().not();
         }
 
         public static ValuePredicateArgumentFilter<Integer> eq(int x) {
@@ -838,12 +746,12 @@ public final class CastBuilder {
             return predefFilters().eq(x);
         }
 
-        public static ValuePredicateArgumentFilter<Integer> neq(int x) {
-            return predefFilters().neq(x);
+        public static ArgumentValueFilter<Integer> neq(int x) {
+            return predefFilters().eq(x).not();
         }
 
-        public static ValuePredicateArgumentFilter<Double> neq(double x) {
-            return predefFilters().neq(x);
+        public static ArgumentValueFilter<Double> neq(double x) {
+            return predefFilters().eq(x).not();
         }
 
         public static ValuePredicateArgumentFilter<Integer> gt(int x) {
@@ -855,7 +763,7 @@ public final class CastBuilder {
         }
 
         public static ValuePredicateArgumentFilter<Integer> gte(int x) {
-            return predefFilters().gte(x);
+            return predefFilters().gt(x - 1);
         }
 
         public static ValuePredicateArgumentFilter<Double> gte(double x) {
@@ -871,7 +779,7 @@ public final class CastBuilder {
         }
 
         public static ValuePredicateArgumentFilter<Integer> lte(int x) {
-            return predefFilters().lte(x);
+            return predefFilters().lt(x + 1);
         }
 
         public static ValuePredicateArgumentFilter<Double> lte(double x) {
@@ -883,7 +791,7 @@ public final class CastBuilder {
         }
 
         public static ValuePredicateArgumentFilter<String> isEmpty() {
-            return predefFilters().isEmpty();
+            return predefFilters().lengthLt(1);
         }
 
         public static ValuePredicateArgumentFilter<String> lengthGt(int l) {
@@ -891,7 +799,7 @@ public final class CastBuilder {
         }
 
         public static ValuePredicateArgumentFilter<String> lengthGte(int l) {
-            return predefFilters().lengthGte(l);
+            return predefFilters().lengthGt(l - 1);
         }
 
         public static ValuePredicateArgumentFilter<String> lengthLt(int l) {
@@ -899,23 +807,23 @@ public final class CastBuilder {
         }
 
         public static ValuePredicateArgumentFilter<String> lengthLte(int l) {
-            return predefFilters().lengthLte(l);
+            return predefFilters().lengthLt(l + 1);
         }
 
         public static ValuePredicateArgumentFilter<Integer> gt0() {
-            return predefFilters().gt0();
+            return predefFilters().gt(0);
         }
 
         public static ValuePredicateArgumentFilter<Integer> gte0() {
-            return predefFilters().gte0();
+            return predefFilters().gt(-1);
         }
 
         public static ValuePredicateArgumentFilter<Integer> gt1() {
-            return predefFilters().gt1();
+            return predefFilters().gt(1);
         }
 
         public static ValuePredicateArgumentFilter<Integer> gte1() {
-            return predefFilters().gte1();
+            return predefFilters().gt(0);
         }
 
         public static <R> TypePredicateArgumentFilter<Object, R> instanceOf(Class<R> cls) {
@@ -1026,6 +934,10 @@ public final class CastBuilder {
 
         default THIS shouldBe(ArgumentFilter<? super T, ?> argFilter) {
             return shouldBe(argFilter, state().defaultWarning().message, state().defaultWarning().args);
+        }
+
+        default <R, THAT extends ArgCastBuilder<R, THAT>> THAT alias(Function<THIS, THAT> aliaser) {
+            return aliaser.apply((THIS) this);
         }
 
     }

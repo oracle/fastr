@@ -33,14 +33,12 @@ public class ConditionalMapNodeGenSampler extends CastNodeSampler<ConditionalMap
     private final ArgumentFilterSampler argFilter;
     private final CastNodeSampler trueBranch;
     private final CastNodeSampler falseBranch;
-    private final TypeExpr conditionType;
 
     public ConditionalMapNodeGenSampler(ConditionalMapNodeGen castNode) {
         super(castNode);
         argFilter = (ArgumentFilterSampler) castNode.getFilter();
         trueBranch = createSampler(castNode.getTrueBranch());
         falseBranch = createSampler(castNode.getFalseBranch());
-        conditionType = argFilter.allowedTypes();
     }
 
     @Override
@@ -49,14 +47,14 @@ public class ConditionalMapNodeGenSampler extends CastNodeSampler<ConditionalMap
     }
 
     private TypeExpr trueBranchResultTypes(TypeExpr inputType) {
-        return trueBranch.resultTypes(conditionType.and(inputType));
+        return trueBranch.resultTypes(argFilter.trueBranchType().and(inputType));
     }
 
     private TypeExpr falseBranchResultTypes(TypeExpr inputType) {
         if (falseBranch != null) {
-            return falseBranch.resultTypes(inputType.and(conditionType.not()));
+            return falseBranch.resultTypes(argFilter.falseBranchType().and(inputType));
         } else {
-            return inputType.and(conditionType.not());
+            return argFilter.falseBranchType().and(inputType);
         }
     }
 
@@ -66,12 +64,18 @@ public class ConditionalMapNodeGenSampler extends CastNodeSampler<ConditionalMap
         TypeExpr falseBranchResultType = falseBranchResultTypes(inputType);
 
         // filter out the incompatible samples
-        Samples definedTrueBranchSamples = downStreamSamples.filter(x -> trueBranchResultType.isInstance(x));
-        Samples definedFalseBranchSamples = downStreamSamples.filter(x -> falseBranchResultType.isInstance(x));
+        Samples compatibleTrueBranchDownStreamSamples = downStreamSamples.filter(x -> trueBranchResultType.isInstance(x));
+        Samples compatibleFalseBranchDownStreamSamples = downStreamSamples.filter(x -> falseBranchResultType.isInstance(x));
 
-        Samples unmappedTrueBranchDefinedSamples = argFilter.collectSamples(trueBranch.collectSamples(conditionType.and(inputType), definedTrueBranchSamples));
-        Samples unmappedFalseBranchDefinedSamples = falseBranch == null ? definedFalseBranchSamples : falseBranch.collectSamples(inputType.and(conditionType.not()), definedFalseBranchSamples);
+        Samples trueBranchSamples = trueBranch.collectSamples(argFilter.trueBranchType().and(inputType), compatibleTrueBranchDownStreamSamples);
+        Samples falseBranchSamples = falseBranch == null ? compatibleFalseBranchDownStreamSamples
+                        : falseBranch.collectSamples(argFilter.falseBranchType().and(inputType), compatibleFalseBranchDownStreamSamples);
+        Samples bothBranchesSamples = trueBranchSamples.or(falseBranchSamples);
 
-        return unmappedTrueBranchDefinedSamples.or(unmappedFalseBranchDefinedSamples);
+        // Collect the "interesting" samples from the condition. Both positive and negative samples
+        // are actually interpreted as positive ones.
+        Samples origConditionSamples = argFilter.collectSamples(inputType).makePositive();
+        // Merge the samples from the branches with the condition samples
+        return origConditionSamples.or(bothBranchesSamples);
     }
 }

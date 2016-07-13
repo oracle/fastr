@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.casts;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -31,19 +32,33 @@ import java.util.stream.Collectors;
 
 public final class Samples<T> {
 
-    private static final Samples<?> EMPTY = new Samples<>(Collections.emptySet(), Collections.emptySet());
+    private static final Samples<?> ANYTHING = new Samples<>("anything", Collections.emptySet(), Collections.emptySet(), x -> true);
 
     @SuppressWarnings("unchecked")
-    public static <T> Samples<T> empty() {
-        return (Samples<T>) EMPTY;
+    public static <T> Samples<T> anything() {
+        return (Samples<T>) ANYTHING;
     }
 
     private final Set<? extends T> posSamples;
     private final Set<?> negSamples;
+    private final Predicate<Object> posMembership;
+    private final Predicate<Object> negMembership;
+    private final String name;
 
-    public Samples(Set<? extends T> positiveSamples, Set<?> negativeSamples) {
+    public Samples(String name, Set<? extends T> positiveSamples, Set<?> negativeSamples, Predicate<Object> posMembership) {
+        this.name = name;
         this.posSamples = positiveSamples;
         this.negSamples = negativeSamples;
+        this.posMembership = CastUtils.instrument(posMembership, name);
+        this.negMembership = CastUtils.instrument(this.posMembership.negate(), "neg(" + name + ")");
+    }
+
+    private Samples(String name, Set<? extends T> positiveSamples, Set<?> negativeSamples, Predicate<Object> posMembership, Predicate<Object> negMembership) {
+        this.name = name;
+        this.posSamples = positiveSamples;
+        this.negSamples = negativeSamples;
+        this.posMembership = CastUtils.instrument(posMembership, name);
+        this.negMembership = CastUtils.instrument(negMembership, "neg(" + name + ")");
     }
 
     public Set<? extends T> positiveSamples() {
@@ -54,47 +69,94 @@ public final class Samples<T> {
         return negSamples;
     }
 
-    public <R> Samples<R> map(Function<T, R> posMapper, Function<Object, Object> negMapper) {
+    public <R> Samples<R> map(Function<T, R> posMapper, Function<Object, Object> negMapper, Function<Object, Optional<T>> posUnmapper, Function<Object, Optional<Object>> negUnmapper) {
         Set<R> mappedPositive = positiveSamples().stream().map(posMapper).collect(Collectors.toSet());
         Set<Object> mappedNegative = negativeSamples().stream().map(negMapper).collect(Collectors.toSet());
-        return new Samples<>(mappedPositive, mappedNegative);
+        return new Samples<>(name + ".map", mappedPositive, mappedNegative, x -> {
+            Optional<T> um = posUnmapper.apply(x);
+            return um.isPresent() ? posMembership.test(um.get()) : false;
+        }, x -> {
+            Optional<Object> um = negUnmapper.apply(x);
+            return um.isPresent() ? negMembership.test(um.get()) : false;
+        });
     }
 
-    public Samples<T> filter(Predicate<T> posCondition) {
-        Set<T> newPositive = positiveSamples().stream().filter(posCondition).collect(Collectors.toSet());
-        Set<T> newNegativeFromPositive = positiveSamples().stream().filter(x -> !posCondition.test(x)).collect(Collectors.toSet());
-        Set<Object> newNegative = new HashSet<>(negativeSamples());
-        newNegative.addAll(newNegativeFromPositive);
-        return new Samples<>(newPositive, newNegative);
+    public Samples<T> filter(Predicate<Object> newPosCondition) {
+        return filter(newPosCondition, negMembership);
     }
 
+    public Samples<T> filter(Predicate<Object> newPosCondition, Predicate<Object> newNegCondition) {
+        Set<T> newPositive = positiveSamples().stream().filter(newPosCondition).collect(Collectors.toSet());
+        Set<Object> newNegative = negativeSamples().stream().filter(newNegCondition).collect(Collectors.toSet());
+        return new Samples<>(name + ".filter", newPositive, newNegative, x -> posMembership.test(x) && newPosCondition.test(x),
+                        x -> negMembership.test(x) && newNegCondition.test(x));
+    }
+
+    @SuppressWarnings("unchecked")
     public Samples<T> and(Samples<? extends T> other) {
-        Set<Object> negativeUnion = new HashSet<>(other.negativeSamples());
-        negativeUnion.addAll(negativeSamples());
-        Set<T> positiveUnion = new HashSet<>(other.positiveSamples());
-        positiveUnion.addAll(positiveSamples());
-        positiveUnion.removeAll(negativeUnion);
+        String newName = "and(" + name + "," + other.name + ")";
 
-        return new Samples<>(positiveUnion, negativeUnion);
+        Set<Object> negativeUnion = new HashSet<>(other.negativeSamples());
+        negativeUnion.addAll(other.positiveSamples());
+        negativeUnion.addAll(negativeSamples());
+        negativeUnion.addAll(positiveSamples());
+        Predicate<Object> newNegCondition = CastUtils.instrument(negMembership.or(other.negMembership), "and-neg");
+        negativeUnion.removeIf(CastUtils.instrument(newNegCondition.negate(), "pruningNegUnion:" + newName));
+
+        Set<Object> positiveUnion = new HashSet<>(other.positiveSamples());
+        positiveUnion.addAll(other.negativeSamples());
+        positiveUnion.addAll(positiveSamples());
+        positiveUnion.addAll(negativeSamples());
+        Predicate<Object> newPosCondition = CastUtils.instrument(posMembership.and(other.posMembership), "and-pos");
+        positiveUnion.removeIf(CastUtils.instrument(newPosCondition.negate(), "pruningPosUnion:" + newName));
+
+        return new Samples<>(newName, (Set<T>) positiveUnion, negativeUnion, newPosCondition, newNegCondition);
     }
 
+    @SuppressWarnings("unchecked")
     public Samples<T> or(Samples<? extends T> other) {
-        Set<T> positiveUnion = new HashSet<>(other.positiveSamples());
-        positiveUnion.addAll(positiveSamples());
+        String newName = "or(" + name + "," + other.name + ")";
 
         Set<Object> negativeUnion = new HashSet<>(other.negativeSamples());
+        negativeUnion.addAll(other.positiveSamples());
         negativeUnion.addAll(negativeSamples());
-        negativeUnion.removeAll(positiveUnion);
+        negativeUnion.addAll(positiveSamples());
+        Predicate<Object> newNegCondition = CastUtils.instrument(negMembership.and(other.negMembership), "or-neg");
+        negativeUnion.removeIf(CastUtils.instrument(newNegCondition.negate(), "pruningNegUnion:" + newName));
 
-        return new Samples<>(positiveUnion, negativeUnion);
+        Set<Object> positiveUnion = new HashSet<>(other.positiveSamples());
+        positiveUnion.addAll(other.negativeSamples());
+        positiveUnion.addAll(positiveSamples());
+        positiveUnion.addAll(negativeSamples());
+        Predicate<Object> newPosCondition = CastUtils.instrument(posMembership.or(other.posMembership), "or-neg");
+        positiveUnion.removeIf(CastUtils.instrument(newPosCondition.negate(), "pruningPosUnion:" + newName));
+
+        return new Samples<>(newName, (Set<T>) positiveUnion, negativeUnion, newPosCondition, newNegCondition);
     }
 
     public Samples<Object> swap() {
-        return new Samples<>(negSamples, posSamples);
+        return new Samples<>(name + ".swap", negSamples, posSamples, negMembership, posMembership);
+    }
+
+    public Samples<Object> makePositive() {
+        Set<Object> mergedSamples = new HashSet<>(positiveSamples());
+        // Add negative samples to positive samples
+        mergedSamples.addAll(negativeSamples());
+        return new Samples<>(name + ".makePositive", mergedSamples, Collections.emptySet(), posMembership.or(negMembership));
+    }
+
+    public Samples<T> positiveOnly() {
+        return new Samples<>(name + ".positiveOnly", posSamples, Collections.emptySet(), posMembership);
+    }
+
+    public static <T> Samples<T> singleton(T x) {
+        return new Samples<>("singleton(" + x + ")", Collections.singleton(x), Collections.emptySet(), xx -> x.equals(xx));
     }
 
     @Override
     public String toString() {
-        return posSamples.toString() + ":" + negSamples.toString();
+        // return posSamples.toString() + ":" + negSamples.toString();
+        return "Positive:" + posSamples.stream().map(s -> s != null ? s + "(" + s.getClass() + ")" : "null").collect(Collectors.toList()).toString() + "\nNegative:" +
+                        negSamples.stream().map(s -> s != null ? s + "(" + s.getClass() + ")" : "null").collect(Collectors.toList());
     }
 }

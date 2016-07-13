@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.casts;
 
 import static com.oracle.truffle.r.nodes.casts.CastUtils.samples;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Objects;
 
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PredefFilters;
@@ -52,55 +54,58 @@ public final class PredefFiltersSamplers implements PredefFilters {
 
     @Override
     public <T, R extends T> TypePredicateArgumentFilterSampler<T, R> nullValue() {
-        return TypePredicateArgumentFilterSampler.fromLambda(x -> x == RNull.instance || x == null, CastUtils.<R> samples(null), CastUtils.<R> samples(), RNull.class);
+        // return TypePredicateArgumentFilterSampler.fromLambda(x -> x == RNull.instance || x ==
+        // null, CastUtils.<R> samples(null), CastUtils.<R> samples(), RNull.class);
+        return new TypePredicateArgumentFilterSampler<>("nullValue()", x -> x == RNull.instance || x == null, CastUtils.<R> samples(null), CastUtils.<R> samples(), Collections.singleton(RNull.class),
+                        true);
     }
 
     @Override
     public <T extends RAbstractVector> VectorPredicateArgumentFilterSampler<T> notEmpty() {
-        return new VectorPredicateArgumentFilterSampler<>(x -> x.getLength() > 0, false);
+        return new VectorPredicateArgumentFilterSampler<>("notEmpty()", x -> x.getLength() > 0, false, 0);
     }
 
     @Override
     public <T extends RAbstractVector> VectorPredicateArgumentFilterSampler<T> singleElement() {
-        return new VectorPredicateArgumentFilterSampler<>(x -> x.getLength() == 1, false);
+        return new VectorPredicateArgumentFilterSampler<>("singleElement()", x -> {
+            return x.getLength() == 1;
+        }, false, 0, 2);
     }
 
     @Override
     public <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilterSampler<T> size(int s) {
-        return new VectorPredicateArgumentFilterSampler<>(x -> x.getLength() == s, false);
+        if (s == 0) {
+            return new VectorPredicateArgumentFilterSampler<>("size(int)", x -> x.getLength() == s, false, s - 1, s + 1);
+        } else {
+            return new VectorPredicateArgumentFilterSampler<>("size(int)", x -> x.getLength() == s, false, 0, s - 1, s + 1);
+        }
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<Boolean> trueValue() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples(x -> x, CastUtils.<Boolean> samples(), samples(Boolean.FALSE));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples(x -> x, samples(Boolean.TRUE), samples(Boolean.FALSE));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<Boolean> falseValue() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples(x -> x, CastUtils.<Boolean> samples(), samples(Boolean.FALSE));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples(x -> x, samples(Boolean.FALSE), samples(Boolean.TRUE));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<Byte> logicalTrue() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples(x -> RRuntime.LOGICAL_TRUE == x, CastUtils.<Byte> samples(),
-                        samples(RRuntime.LOGICAL_FALSE));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples(x -> RRuntime.LOGICAL_TRUE == x, samples(RRuntime.LOGICAL_TRUE),
+                        samples(RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<Byte> logicalFalse() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples(x -> RRuntime.LOGICAL_FALSE == x, CastUtils.<Byte> samples(),
-                        samples(RRuntime.LOGICAL_TRUE));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples(x -> RRuntime.LOGICAL_FALSE == x, samples(RRuntime.LOGICAL_FALSE),
+                        samples(RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_NA));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<Integer> intNA() {
         return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer x) -> RRuntime.isNA(x), samples(RRuntime.INT_NA), samples(0));
-    }
-
-    @Override
-    public ValuePredicateArgumentFilterSampler<Integer> notIntNA() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer x) -> !RRuntime.isNA(x), CastUtils.<Integer> samples(),
-                        samples(RRuntime.INT_NA));
     }
 
     @Override
@@ -110,20 +115,8 @@ public final class PredefFiltersSamplers implements PredefFilters {
     }
 
     @Override
-    public ValuePredicateArgumentFilterSampler<Byte> notLogicalNA() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Byte x) -> !RRuntime.isNA(x), CastUtils.<Byte> samples(),
-                        samples(RRuntime.LOGICAL_NA));
-    }
-
-    @Override
     public ValuePredicateArgumentFilterSampler<Double> doubleNA() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double x) -> RRuntime.isNA(x), samples(RRuntime.DOUBLE_NA), samples(0.0));
-    }
-
-    @Override
-    public ValuePredicateArgumentFilterSampler<Double> notDoubleNA() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double x) -> !RRuntime.isNA(x), CastUtils.<Double> samples(),
-                        samples(RRuntime.DOUBLE_NA));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double x) -> RRuntime.isNA(x), samples(RRuntime.DOUBLE_NA), samples(0d));
     }
 
     @Override
@@ -132,128 +125,66 @@ public final class PredefFiltersSamplers implements PredefFilters {
     }
 
     @Override
-    public ValuePredicateArgumentFilterSampler<String> notStringNA() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((String x) -> !RRuntime.isNA(x), CastUtils.<String> samples(),
-                        samples(RRuntime.STRING_NA));
-    }
-
-    @Override
     public ValuePredicateArgumentFilterSampler<Integer> eq(int x) {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer arg) -> arg != null && arg.intValue() == x, samples(x), samples(x + 1));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer arg) -> arg != null && arg.intValue() == x, samples(x), CastUtils.<Integer> samples(x + 1));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<Double> eq(double x) {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double arg) -> arg != null && arg.doubleValue() == x, samples(x), samples(x + 0.00001));
-    }
-
-    @Override
-    public ValuePredicateArgumentFilterSampler<Integer> neq(int x) {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer arg) -> arg == null || arg.intValue() != x, samples(x + 1), samples(x));
-    }
-
-    @Override
-    public ValuePredicateArgumentFilterSampler<Double> neq(double x) {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double arg) -> arg == null || arg.doubleValue() != x, samples(x + 0.00001), samples(x));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double arg) -> arg != null && arg.doubleValue() == x, samples(x), CastUtils.<Double> samples(x + 1));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<Integer> gt(int x) {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer arg) -> arg > x, samples(x + 1), samples(x));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer arg) -> arg != null && arg > x, samples(x + 1), samples(x));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<Double> gt(double x) {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double arg) -> arg > x, samples(x + 0.00001), samples(x));
-    }
-
-    @Override
-    public ValuePredicateArgumentFilterSampler<Integer> gte(int x) {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer arg) -> arg >= x, samples(x), samples(x - 1));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double arg) -> arg != null && arg > x, CastUtils.<Double> samples(), samples(x));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<Double> gte(double x) {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double arg) -> arg >= x, samples(x), samples(x - 0.00001));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double arg) -> arg != null && arg >= x, samples(x), samples(x - 1));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<Integer> lt(int x) {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer arg) -> arg < x, samples(x - 1), samples(x));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer arg) -> arg != null && arg < x, samples(x - 1), samples(x));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<Double> lt(double x) {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double arg) -> arg < x, samples(x - 0.00001), samples(x));
-    }
-
-    @Override
-    public ValuePredicateArgumentFilterSampler<Integer> lte(int x) {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer arg) -> arg <= x, samples(x), samples(x + 1));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double arg) -> arg < x, CastUtils.<Double> samples(), samples(x));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<Double> lte(double x) {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double arg) -> arg <= x, samples(x), samples(x + 0.00001));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double arg) -> arg <= x, samples(x), samples(x + 1));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<String> length(int l) {
-        return ValuePredicateArgumentFilterSampler.omLambdaWithResTypes((String arg) -> arg != null && arg.length() == l);
-    }
-
-    @Override
-    public ValuePredicateArgumentFilterSampler<String> isEmpty() {
-        return ValuePredicateArgumentFilterSampler.omLambdaWithResTypes((String arg) -> arg != null && arg.isEmpty());
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((String arg) -> arg != null && arg.length() == l, samples(sampleString(l)),
+                        samples(sampleString(l + 1)));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<String> lengthGt(int l) {
-        return ValuePredicateArgumentFilterSampler.omLambdaWithResTypes((String arg) -> arg != null && arg.length() > l);
-    }
-
-    @Override
-    public ValuePredicateArgumentFilterSampler<String> lengthGte(int l) {
-        return ValuePredicateArgumentFilterSampler.omLambdaWithResTypes((String arg) -> arg != null && arg.length() >= l);
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((String arg) -> arg != null && arg.length() > l, samples(sampleString(l + 1)),
+                        samples(sampleString(l)));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<String> lengthLt(int l) {
-        return ValuePredicateArgumentFilterSampler.omLambdaWithResTypes((String arg) -> arg != null && arg.length() < l);
-    }
-
-    @Override
-    public ValuePredicateArgumentFilterSampler<String> lengthLte(int l) {
-        return ValuePredicateArgumentFilterSampler.omLambdaWithResTypes((String arg) -> arg != null && arg.length() <= l);
-    }
-
-    @Override
-    public ValuePredicateArgumentFilterSampler<Integer> gt0() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer x) -> x > 0, CastUtils.<Integer> samples(), samples(-1, 0),
-                        Integer.class);
-    }
-
-    @Override
-    public ValuePredicateArgumentFilterSampler<Integer> gte0() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer x) -> x >= 0, CastUtils.<Integer> samples(), samples(-1),
-                        Integer.class);
-    }
-
-    @Override
-    public ValuePredicateArgumentFilterSampler<Integer> gt1() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer x) -> x > 1, CastUtils.<Integer> samples(), samples(-1, 0, 1),
-                        Integer.class);
-    }
-
-    @Override
-    public ValuePredicateArgumentFilterSampler<Integer> gte1() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Integer x) -> x >= 1, CastUtils.<Integer> samples(), samples(-1, 0),
-                        Integer.class);
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((String arg) -> arg != null && arg.length() < l, samples(sampleString(l - 1)),
+                        samples(sampleString(l)));
     }
 
     @Override
     public <R> TypePredicateArgumentFilterSampler<Object, R> instanceOf(Class<R> cls) {
-        return TypePredicateArgumentFilterSampler.fromLambda(x -> cls.isInstance(x), cls);
+        return TypePredicateArgumentFilterSampler.fromLambda(x -> cls.isInstance(x), CastUtils.<R> samples(), samples(null), cls);
     }
 
     @Override
@@ -276,7 +207,8 @@ public final class PredefFiltersSamplers implements PredefFilters {
     @Override
     public <R extends RAbstractLogicalVector> TypePredicateArgumentFilterSampler<Object, R> logicalValue() {
         return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof Byte ||
-                        x instanceof RAbstractLogicalVector, RAbstractLogicalVector.class, Byte.class);
+                        x instanceof RAbstractLogicalVector, samples(RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA), CastUtils.<Object> samples(), RAbstractLogicalVector.class,
+                        Byte.class);
     }
 
     @Override
@@ -315,4 +247,13 @@ public final class PredefFiltersSamplers implements PredefFilters {
         return TypePredicateArgumentFilterSampler.fromLambda(x -> RMissing.instance == x, RMissing.class);
     }
 
+    private static String sampleString(int len) {
+        if (len <= 0) {
+            return "";
+        } else {
+            char[] ch = new char[len];
+            Arrays.fill(ch, 'a');
+            return String.valueOf(ch);
+        }
+    }
 }
