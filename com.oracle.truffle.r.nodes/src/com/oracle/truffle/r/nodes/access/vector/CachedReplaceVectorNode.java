@@ -498,12 +498,14 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         return returnVector;
     }
 
+    private final ConditionProfile rightIsNotTemporary = ConditionProfile.createBinaryProfile();
+
     private RTypedValue copyValueOnAssignment(RTypedValue value) {
         if (value instanceof RShareable && value instanceof RAbstractVector) {
             RShareable val = (RShareable) value;
             if (rightIsShared.profile(val.isShared())) {
                 val = val.copy();
-            } else {
+            } else if (rightIsNotTemporary.profile(!val.isTemporary())) {
                 val.incRefCount();
             }
             return val;
