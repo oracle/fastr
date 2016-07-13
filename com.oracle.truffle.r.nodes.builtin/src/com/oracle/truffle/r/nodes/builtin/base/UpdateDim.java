@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "dim<-", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"x", "value"})
+@RBuiltin(name = "dim<-", kind = PRIMITIVE, parameterNames = {"x", "value"})
 public abstract class UpdateDim extends RBuiltinNode {
 
     @Child private ReuseNonSharedNode reuse = ReuseNonSharedNode.create();

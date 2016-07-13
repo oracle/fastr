@@ -110,7 +110,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "isdebugged", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
+    @RBuiltin(name = "isdebugged", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
     public abstract static class IsDebugged extends ErrorAdapter {
 
         @Fallback

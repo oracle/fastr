@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "attributes<-", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"obj", "value"})
+@RBuiltin(name = "attributes<-", kind = PRIMITIVE, parameterNames = {"obj", "value"})
 public abstract class UpdateAttributes extends RBuiltinNode {
     private final ConditionProfile numAttributesProfile = ConditionProfile.createBinaryProfile();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();

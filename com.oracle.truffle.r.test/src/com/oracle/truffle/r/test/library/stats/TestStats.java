@@ -143,6 +143,7 @@ public class TestStats extends TestBase {
 
         assertEval("{ set.seed(7); round( runif(3), digits = 5 ) }");
         assertEval("{ set.seed(7); round( runif(3,1,10), digits = 5 ) }");
+        assertEval("{ set.seed(7); round( rnorm(3,c(1000,2,3),c(10,11)), digits = 5 ) }");
 
         assertEval("{ set.seed(7); round( rbinom(3,3,0.9), digits = 5 ) }");
         assertEval("{ set.seed(7); round( rbinom(3,10,(1:5)/5), digits = 5 ) }");
@@ -150,7 +151,6 @@ public class TestStats extends TestBase {
 
     @Test
     public void testRandomIgnore() {
-        assertEval(Ignored.Unknown, "{ set.seed(7); round( rnorm(3,c(1000,2,3),c(10,11)), digits = 5 ) }");
         assertEval(Ignored.Unknown, "{ set.seed(7); round( runif(3,1:3,3:2), digits = 5 ) }");
 
         assertEval(Ignored.Unknown, "{ set.seed(7); round( rgamma(3,1), digits = 5 ) }");
