@@ -231,14 +231,11 @@ public class RASTUtils {
             return RCallNode.createCall(sourceSection, (ReadVariableNode) fn, signature, arguments);
         } else if (fn instanceof NamedRNode) {
             return RCallNode.createCall(RSyntaxNode.SOURCE_UNAVAILABLE, (NamedRNode) fn, signature, arguments);
-        } else if (fn instanceof RFunction) {
-            RFunction rfn = (RFunction) fn;
-            return RCallNode.createCall(sourceSection, ConstantNode.create(rfn), signature, arguments);
         } else if (fn instanceof RCallNode) {
             return RCallNode.createCall(sourceSection, (RCallNode) fn, signature, arguments);
         } else {
-            // this of course would not make much sense if trying to evaluate this call, yet it's
-            // syntactically possible, for example as a result of:
+            // apart from RFunction, this of course would not make much sense if trying to evaluate
+            // this call, yet it's syntactically possible, for example as a result of:
             // f<-function(x,y) sys.call(); x<-f(7, 42); x[c(2,3)]
             return RCallNode.createCall(sourceSection, ConstantNode.create(fn), signature, arguments);
         }
