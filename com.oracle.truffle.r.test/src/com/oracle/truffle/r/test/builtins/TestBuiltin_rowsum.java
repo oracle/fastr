@@ -29,8 +29,7 @@ public class TestBuiltin_rowsum extends TestBase {
 
     @Test
     public void testrowsum3() {
-        // prints too many leading spaces
-        assertEval(Ignored.OutputFormatting, "argv <- list(numeric(0), numeric(0), numeric(0), FALSE, character(0)); .Internal(rowsum_matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(numeric(0), numeric(0), numeric(0), FALSE, character(0)); .Internal(rowsum_matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
