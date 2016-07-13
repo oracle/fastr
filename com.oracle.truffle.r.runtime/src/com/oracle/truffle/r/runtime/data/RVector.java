@@ -398,7 +398,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
                         }
                     } else {
                         RStringVector dimVector = (RStringVector) dimObject;
-                        if (dimVector == null || dimVector.getLength() == 0) {
+                        if (dimVector == null) {
                             newDimNames.updateDataAt(i, RNull.instance, null);
                         } else if (dimVector.getLength() != dimensions[i]) {
                             throw RError.error(invokingNode, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
