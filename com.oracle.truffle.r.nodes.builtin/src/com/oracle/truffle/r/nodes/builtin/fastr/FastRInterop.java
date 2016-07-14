@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import java.io.IOException;
+
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -51,13 +53,15 @@ public class FastRInterop {
 
             try {
                 callTarget = RContext.getInstance().getEnv().parse(sourceObject);
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
+                emitIO();
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 
             return callTarget.call();
+        }
+
+        private void emitIO() throws IOException {
         }
     }
 
