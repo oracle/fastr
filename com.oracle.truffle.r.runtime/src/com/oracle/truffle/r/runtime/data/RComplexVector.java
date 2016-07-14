@@ -198,7 +198,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
     }
 
     @Override
-    public RComplexVector copyResized(int size, boolean fillNA) {
+    protected RComplexVector internalCopyResized(int size, boolean fillNA) {
         boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete);
     }

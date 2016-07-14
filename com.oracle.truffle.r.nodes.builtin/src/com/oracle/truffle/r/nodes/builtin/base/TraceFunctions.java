@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.io.IOException;
+import java.util.HashSet;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -35,10 +38,13 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.MemoryTracer;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class TraceFunctions {
 
@@ -109,6 +115,38 @@ public class TraceFunctions {
         @TruffleBoundary
         protected byte traceOnOff(@SuppressWarnings("unused") RNull state) {
             return RRuntime.asLogical(RContext.getInstance().stateInstrumentation.getTracingState());
+        }
+    }
+
+    @RBuiltin(name = "tracemem", kind = RBuiltinKind.PRIMITIVE, parameterNames = "x")
+    public abstract static class Tracemem extends RBuiltinNode {
+
+        static {
+            MemoryTracer.setListener(new TracememListener());
+        }
+
+        @Specialization
+        protected String execute(Object x) {
+            getTracedObjects().add(x);
+            MemoryTracer.reportEvents();
+            return String.format("<0x%x>", x.hashCode());
+        }
+
+        private static HashSet<Object> getTracedObjects() {
+            return RContext.getInstance().getInstrumentationState().getTracemem().getTracedObjects();
+        }
+
+        private static final class TracememListener implements MemoryTracer.Listener {
+            public void reportCopying(RAbstractVector src, RAbstractVector dest) {
+                if (getTracedObjects().contains(src)) {
+                    String msg = String.format("tracemem[0x%x -> 0x%x]", src.hashCode(), dest.hashCode());
+                    try {
+                        StdConnections.getStdout().writeString(msg, true);
+                    } catch (IOException ex) {
+                        throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, ex.getMessage());
+                    }
+                }
+            }
         }
     }
 }

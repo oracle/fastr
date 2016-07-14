@@ -72,7 +72,7 @@ public abstract class UpdateNames extends RBuiltinNode {
         }
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (stringVector.getLength() < result.getLength()) {
-            stringVector = stringVector.copyResized(result.getLength(), true);
+            stringVector = (RStringVector) stringVector.copyResized(result.getLength(), true);
         } else if (stringVector.getLength() > result.getLength()) {
             throw RError.error(this, Message.NAMES_LONGER, stringVector.getLength(), result.getLength());
         } else if (stringVector == container) {
