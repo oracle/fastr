@@ -36,6 +36,7 @@ jmethodID getBaseEnvMethodID;
 jmethodID getBaseNamespaceMethodID;
 jmethodID getNamespaceRegistryMethodID;
 jmethodID isInteractiveMethodID;
+jmethodID getGlobalContextMethodID;
 
 // R_GlobalEnv et al are not a variables in FASTR as they are RContext specific
 SEXP FASTR_GlobalEnv() {
@@ -58,6 +59,11 @@ SEXP FASTR_NamespaceRegistry() {
 	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getNamespaceRegistryMethodID);
 }
 
+SEXP FASTR_GlobalContext() {
+	JNIEnv *env = getEnv();
+	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getGlobalContextMethodID);
+}
+
 void init_variables(JNIEnv *env, jobjectArray initialValues) {
 	// initialValues is an array of enums
 	jclass enumClass = (*env)->GetObjectClass(env, (*env)->GetObjectArrayElement(env, initialValues, 0));
@@ -75,6 +81,7 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 	getBaseNamespaceMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getBaseNamespace", "()Ljava/lang/Object;", 1);
 	getNamespaceRegistryMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getNamespaceRegistry", "()Ljava/lang/Object;", 1);
 	isInteractiveMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isInteractive", "()I", 1);
+	getGlobalContextMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getGlobalContext", "()Ljava/lang/Object;", 1);
 
 	int length = (*env)->GetArrayLength(env, initialValues);
 	int index;

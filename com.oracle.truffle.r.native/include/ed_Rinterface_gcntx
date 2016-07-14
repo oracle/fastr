@@ -1,0 +1,12 @@
+/R_GlobalContext/
+i
+#ifdef FASTR
+extern void* FASTR_GlobalContext();
+#define R_GlobalContext FASTR_GlobalContext()
+#else
+.
++1
+a
+#endif
+.
+w Rinterface.h
