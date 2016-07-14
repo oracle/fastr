@@ -191,7 +191,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
             try {
                 setContext(vm.eval(GET_CONTEXT).as(RContext.class));
-            } catch (IOException e1) {
+            } catch (Exception e1) {
                 throw new RInternalError(e1, "error while initializing eval thread");
             }
             try {
