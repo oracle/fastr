@@ -494,7 +494,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "bindingIsActive", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "env"})
+    @RBuiltin(name = "bindingIsActive", kind = INTERNAL, parameterNames = {"sym", "env"})
     public abstract static class BindingIsActive extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization

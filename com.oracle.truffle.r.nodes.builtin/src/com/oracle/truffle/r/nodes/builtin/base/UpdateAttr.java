@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "attr<-", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"x", "which", "value"})
+@RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which", "value"})
 public abstract class UpdateAttr extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();

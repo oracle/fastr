@@ -69,7 +69,7 @@ public class TestBuiltin_copyDFattr extends TestBase {
 
     @Test
     public void testcopyDFattr10() {
-        assertEval(Ignored.Unknown,
+        assertEval(Output.IgnoreErrorContext,
                         "argv <- list(structure(list(Df = c(1, 1, 1, 1, 16), `Sum Sq` = c(309.6845, 0.420500000000001, 4.90050000000001, 3.9605, 64.924), `Mean Sq` = c(309.6845, 0.420500000000001, 4.90050000000001, 3.9605, 4.05775), `F value` = c(76.3192656028586, 0.103628858357464, 1.20768899020393, 0.976033516111146, NA), `Pr(>F)` = c(1.73825946976405e-07, 0.751685166772039, 0.288052080502172, 0.337885793589305, NA)), .Names = c('Df', 'Sum Sq', 'Mean Sq', 'F value', 'Pr(>F)'), class = c('anova', 'data.frame'), row.names = c('(Intercept)  ', 'rate         ', 'additive     ', 'rate:additive', 'Residuals    ')), structure(list(Df = NULL, `Sum Sq` = NULL, `Mean Sq` = NULL, `F value` = NULL, `Pr(>F)` = NULL), .Names = c('Df', 'Sum Sq', 'Mean Sq', 'F value', 'Pr(>F)'), class = c('anova', 'data.frame'), row.names = c('(Intercept)  ', 'rate         ', 'additive     ', 'rate:additive', 'Residuals    '))); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
     }
 
@@ -123,7 +123,7 @@ public class TestBuiltin_copyDFattr extends TestBase {
 
     @Test
     public void testcopyDFattr19() {
-        assertEval(Ignored.Unknown,
+        assertEval(Output.IgnoreErrorContext,
                         "argv <- list(structure(list(Df = c(NA, 1, 1, 2), Deviance = c(12.2441566485997, 32.825622681839, 8.44399377410362, 11.9670615295804), AIC = c(73.9421143635373, 92.5235803967766, 72.1419514890412, 77.665019244518)), .Names = c('Df', 'Deviance', 'AIC'), row.names = c('<none>', '- M.user', '+ Temp', '+ Soft'), class = c('anova', 'data.frame')), structure(list(Df = NULL, Deviance = NULL, AIC = NULL), .Names = c('Df', 'Deviance', 'AIC'), row.names = c('<none>', '- M.user', '+ Temp', '+ Soft'), class = c('anova', 'data.frame'))); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
     }
 

@@ -326,7 +326,7 @@ public class TestFunctions extends TestBase {
 
         assertEval("{ `-.foo` <- function(...) 123; v <- 1; class(v) <- 'foo'; sapply(1,`-`,v); sapply(v,`-`,1); sapply(v,`-`,v) }");
 
-        assertEval(Ignored.Unknown, "{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
+        assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
 
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ lapply(1:3, \"dummy\") }");
 
