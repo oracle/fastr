@@ -41,7 +41,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.tools.Profiler;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
@@ -72,7 +71,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.RFFIContextStateFactory;
-import com.oracle.truffle.r.runtime.instrument.TraceState;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
@@ -253,30 +252,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         }
     }
 
-    /**
-     * Captures all state regarding instrumentation.
-     */
-    public static class InstrumentationState {
-        private final Instrumenter instrumenter;
-        private Profiler profiler;
-
-        InstrumentationState(Instrumenter instrumenter) {
-            this.instrumenter = instrumenter;
-        }
-
-        public void setProfiler(Profiler profiler) {
-            this.profiler = profiler;
-        }
-
-        public Profiler getProfiler() {
-            return profiler;
-        }
-
-        public Instrumenter getInstrumenter() {
-            return instrumenter;
-        }
-    }
-
     private final ContextInfo info;
     private final Engine engine;
 
@@ -365,7 +340,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     @CompilationFinal private static RContext singleContext;
 
     private final Env env;
-    private final InstrumentationState instrumentationState;
     private final HashMap<String, TruffleObject> exportedSymbols = new HashMap<>();
     private final boolean initial;
     /**
@@ -389,13 +363,12 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public final ContextState stateRFFI;
     public final RSerialize.ContextStateImpl stateRSerialize;
     public final LazyDBCache.ContextStateImpl stateLazyDBCache;
-    public final TraceState.ContextStateImpl stateTraceHandling;
+    public final InstrumentationState stateInstrumentation;
     public final ContextStateImpl stateInternalCode;
-    public final RprofState stateRprof;
 
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize,
-                        stateLazyDBCache, stateTraceHandling, stateRprof};
+                        stateLazyDBCache, stateInstrumentation};
     }
 
     private RContext(Env env, Instrumenter instrumenter, boolean isInitial) {
@@ -422,7 +395,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         }
 
         this.env = env;
-        this.instrumentationState = new InstrumentationState(instrumenter);
         if (info.getConsoleHandler() == null) {
             throw Utils.fail("no console handler set");
         }
@@ -460,9 +432,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateRFFI = RFFIContextStateFactory.newContext(this);
         stateRSerialize = RSerialize.ContextStateImpl.newContext(this);
         stateLazyDBCache = LazyDBCache.ContextStateImpl.newContext(this);
-        stateTraceHandling = TraceState.newContext(this);
+        stateInstrumentation = InstrumentationState.newContext(this, instrumenter);
         stateInternalCode = ContextStateImpl.newContext(this);
-        stateRprof = RprofState.newContext(this);
         engine.activate(stateREnvironment);
 
         if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
@@ -517,7 +488,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     }
 
     public InstrumentationState getInstrumentationState() {
-        return instrumentationState;
+        return stateInstrumentation;
     }
 
     public ContextKind getKind() {

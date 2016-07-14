@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.helpers;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -44,7 +43,6 @@ import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
-import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
@@ -103,11 +101,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 public class DebugHandling {
 
     /**
-     * Records all functions that have debug listeners installed.
-     */
-    private static final WeakHashMap<FunctionUID, FunctionStatementsEventListener> listenerMap = new WeakHashMap<>();
-
-    /**
      * This flag is used to (temporarily) disable all debugging across calls that are used
      * internally in the implementation.
      */
@@ -117,8 +110,7 @@ public class DebugHandling {
      * Attach the DebugHandling instrument to the FunctionStatementsNode and all syntactic nodes.
      */
     public static boolean enableDebug(RFunction func, Object text, Object condition, boolean once) {
-        FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-        FunctionStatementsEventListener fbr = listenerMap.get(fdn.getUID());
+        FunctionStatementsEventListener fbr = getFunctionStatementsEventListener(func);
         if (fbr == null) {
             attachDebugHandler(func, text, condition, once);
         } else {
@@ -128,7 +120,7 @@ public class DebugHandling {
     }
 
     public static boolean undebug(RFunction func) {
-        FunctionStatementsEventListener fbr = listenerMap.get(((FunctionDefinitionNode) func.getRootNode()).getUID());
+        FunctionStatementsEventListener fbr = getFunctionStatementsEventListener(func);
         if (fbr == null) {
             return false;
         } else {
@@ -138,8 +130,16 @@ public class DebugHandling {
     }
 
     public static boolean isDebugged(RFunction func) {
-        FunctionStatementsEventListener fser = listenerMap.get(((FunctionDefinitionNode) func.getRootNode()).getUID());
+        FunctionStatementsEventListener fser = getFunctionStatementsEventListener(func);
         return fser != null && !fser.disabled();
+    }
+
+    private static FunctionStatementsEventListener getFunctionStatementsEventListener(RFunction func) {
+        return (FunctionStatementsEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(RInstrumentation.getSourceSection(func));
+    }
+
+    private static FunctionStatementsEventListener getFunctionStatementsEventListener(FunctionDefinitionNode fdn) {
+        return (FunctionStatementsEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(fdn.getSourceSection());
     }
 
     /**
@@ -186,7 +186,7 @@ public class DebugHandling {
     }
 
     private static void ensureSingleStep(FunctionDefinitionNode fdn) {
-        FunctionStatementsEventListener fser = listenerMap.get(fdn.getUID());
+        FunctionStatementsEventListener fser = getFunctionStatementsEventListener(fdn);
         if (fser == null) {
             // attach a "once" listener
             fser = attachDebugHandler(fdn, null, null, true);
@@ -262,7 +262,7 @@ public class DebugHandling {
                          * will everything get invalidated?
                          */
                         stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(StandardTags.RootTag.class).build(),
-                                        new StepIntoInstrumentListener(listenerMap.get(functionDefinitionNode.getUID())));
+                                        new StepIntoInstrumentListener(getFunctionStatementsEventListener(functionDefinitionNode)));
                     }
                     break;
                 case BrowserInteractNode.CONTINUE:
@@ -275,7 +275,7 @@ public class DebugHandling {
                     AbstractLoopNode loopNode = inLoop(node);
                     if (loopNode != null) {
                         // Have to disable just the body of the loop
-                        FunctionStatementsEventListener fser = listenerMap.get(functionDefinitionNode.getUID());
+                        FunctionStatementsEventListener fser = getFunctionStatementsEventListener(functionDefinitionNode);
                         fser.setFinishing(loopNode);
                     } else {
                         doContinue();
@@ -285,7 +285,7 @@ public class DebugHandling {
         }
 
         private void doContinue() {
-            FunctionStatementsEventListener fser = listenerMap.get(functionDefinitionNode.getUID());
+            FunctionStatementsEventListener fser = getFunctionStatementsEventListener(functionDefinitionNode);
             fser.setContinuing();
         }
 
@@ -323,7 +323,7 @@ public class DebugHandling {
 
         FunctionStatementsEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once) {
             super(functionDefinitionNode, text, condition);
-            listenerMap.put(functionDefinitionNode.getUID(), this);
+            RContext.getInstance().stateInstrumentation.putDebugListener(functionDefinitionNode.getSourceSection(), this);
             statementListener = new StatementEventListener(functionDefinitionNode, text, condition);
             this.once = once;
         }

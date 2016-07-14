@@ -50,9 +50,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RprofState;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofState;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
@@ -64,7 +64,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
         if (!RContext.getInstance().isInitial()) {
             throw RError.error(this, RError.Message.GENERIC, "profiling not supported in created contexts");
         }
-        RprofState profState = RContext.getInstance().stateRprof;
+        RprofState profState = RContext.getInstance().stateInstrumentation.getRprof();
         String filename = filenameVec.getDataAt(0);
         if (filename.length() == 0) {
             // disable
@@ -100,7 +100,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
     }
 
     private static void endProfiling() {
-        RprofState profState = RContext.getInstance().stateRprof;
+        RprofState profState = RContext.getInstance().stateInstrumentation.getRprof();
         ProfileThread profileThread = (ProfileThread) profState.profileThread();
         profileThread.running = false;
         HashMap<String, Integer> fileMap = null;
