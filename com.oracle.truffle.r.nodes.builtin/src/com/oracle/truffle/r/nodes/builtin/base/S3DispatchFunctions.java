@@ -155,7 +155,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             return promiseCheckHelper.checkEvaluate(frame, enclosingArg);
         }
 
-        private Object getFirstNonMissingArg(VirtualFrame frame, int startIdx) {
+        private static Object getFirstNonMissingArg(VirtualFrame frame, int startIdx) {
             for (int i = startIdx; i < RArguments.getArgumentsLength(frame); i++) {
                 Object arg = RArguments.getArgument(frame, i);
                 if (arg instanceof RArgsValuesAndNames) {
@@ -167,7 +167,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             return null;
         }
 
-        private Object getFirstVarArg(RArgsValuesAndNames varArgs) {
+        private static Object getFirstVarArg(RArgsValuesAndNames varArgs) {
             return varArgs.isEmpty() ? null : varArgs.getArgument(0);
         }
     }
