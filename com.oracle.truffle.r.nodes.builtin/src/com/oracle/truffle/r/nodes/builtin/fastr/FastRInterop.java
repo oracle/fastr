@@ -53,11 +53,15 @@ public class FastRInterop {
 
             try {
                 callTarget = RContext.getInstance().getEnv().parse(sourceObject);
+                emitIO();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 
             return callTarget.call();
+        }
+
+        private void emitIO() throws IOException {
         }
     }
 
