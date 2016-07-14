@@ -89,6 +89,20 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 // @formatter:on
 public final class RArguments {
 
+    public static final String SUMMARY_GROUP_NA_RM_ARG_NAME = "na.rm";
+    /**
+     * Marker for the only group S3 dispatch argument that may have default value carried over from
+     * the R dispatch method to the dispatched to R method.
+     */
+    public static final S3DefaultArguments SUMMARY_GROUP_DEFAULT_VALUE_NA_RM = new S3DefaultArguments();
+
+    /**
+     * Placeholder, should the group S3 dispatch need more flexible default arguments. See
+     * {@code RCallNode.callGroupGeneric} for more details.
+     */
+    public static class S3DefaultArguments {
+    }
+
     @ValueType
     public abstract static class DispatchArgs {
         public final Object generic;
@@ -156,7 +170,8 @@ public final class RArguments {
     }
 
     public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
-        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length), dispatchArgs);
+        ArgumentsSignature formalSignature = ((HasSignature) functionObj.getRootNode()).getSignature();
+        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(formalSignature.getLength()), dispatchArgs);
     }
 
     public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature, DispatchArgs dispatchArgs) {
@@ -168,8 +183,20 @@ public final class RArguments {
         return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length), enclosingFrame, dispatchArgs);
     }
 
+    /**
+     * Creates the arguments array that can be stored in the frame.
+     *
+     * @param evaluatedArgs arguments ordered according to the formal signature of the function (see
+     *            {@code ArgumentMatcher}).
+     * @param suppliedSignature the original call signature re-ordered the same way as the
+     *            evaluatedArgs
+     * @return the arguments array (in Truffle sense), containing the actual arguments for the R
+     *         function as well as additional information like the parent frame or supplied
+     *         signature.
+     */
     public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
                     ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
+        assert suppliedSignature.getLength() == evaluatedArgs.length : "suppliedSignature should match the evaluatedArgs (see Java docs).";
         assert evaluatedArgs != null : "RArguments.create evaluatedArgs is null";
         assert call != null : "RArguments.create call is null";
         // Eventually we want to have this invariant
