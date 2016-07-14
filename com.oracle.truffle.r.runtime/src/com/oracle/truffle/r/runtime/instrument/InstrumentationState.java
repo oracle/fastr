@@ -38,7 +38,7 @@ import com.oracle.truffle.tools.Profiler;
  * specific.
  *
  */
-public class InstrumentationState implements RContext.ContextState {
+public final class InstrumentationState implements RContext.ContextState {
 
     /**
      * Records all functions that have trace listeners installed.

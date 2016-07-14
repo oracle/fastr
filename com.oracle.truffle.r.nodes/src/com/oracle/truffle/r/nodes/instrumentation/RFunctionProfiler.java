@@ -131,7 +131,7 @@ public class RFunctionProfiler {
     }
 
     private static class PerfHandler implements RPerfStats.Handler {
-        static final String NAME = "timer";
+        static final String NAME = "timing";
         @SuppressWarnings("unused") private boolean stmts;
         private int threshold;
 
