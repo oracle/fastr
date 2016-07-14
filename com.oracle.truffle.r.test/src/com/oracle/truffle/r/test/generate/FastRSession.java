@@ -167,6 +167,7 @@ public final class FastRSession implements RSession {
             main = info.createVM();
             try {
                 mainContext = main.eval(GET_CONTEXT).as(RContext.class);
+                emitIO();
             } catch (IOException e) {
                 throw new RuntimeException("error while retrieving test context", e);
             }
@@ -247,6 +248,7 @@ public final class FastRSession implements RSession {
                             try {
                                 vm.eval(source);
                                 input = consoleHandler.readLine();
+                                emitIO();
                             } catch (IncompleteSourceException | com.oracle.truffle.api.vm.IncompleteSourceException e) {
                                 String additionalInput = consoleHandler.readLine();
                                 if (additionalInput == null) {
@@ -287,5 +289,8 @@ public final class FastRSession implements RSession {
     @Override
     public String name() {
         return "FastR";
+    }
+
+    static void emitIO() throws IOException {
     }
 }

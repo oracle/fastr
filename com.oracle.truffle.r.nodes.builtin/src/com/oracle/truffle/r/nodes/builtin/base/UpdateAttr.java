@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -51,7 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "attr<-", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"x", "which", "value"})
+@RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which", "value"})
 public abstract class UpdateAttr extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();

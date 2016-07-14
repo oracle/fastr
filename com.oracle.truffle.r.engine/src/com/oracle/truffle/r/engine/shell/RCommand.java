@@ -215,6 +215,7 @@ public class RCommand {
                          */
                         try {
                             vm.eval(source);
+                            emitIO();
                         } catch (IncompleteSourceException | com.oracle.truffle.api.vm.IncompleteSourceException e) {
                             // read another line of input
                             consoleHandler.setPrompt(doEcho ? continuePrompt : null);
@@ -278,6 +279,7 @@ public class RCommand {
         PolyglotEngine.Value echoValue;
         try {
             echoValue = vm.eval(GET_ECHO);
+            emitIO();
             Object echo = echoValue.get();
             if (echo instanceof TruffleObject) {
                 RLogicalVector echoVec = echoValue.as(RLogicalVector.class);
@@ -294,5 +296,8 @@ public class RCommand {
 
     private static String getContinuePrompt() {
         return RRuntime.asString(RRuntime.asAbstractVector(RContext.getInstance().stateROptions.getValue("continue")));
+    }
+
+    private static void emitIO() throws IOException {
     }
 }

@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -66,17 +67,12 @@ public abstract class Call extends RBuiltinNode {
 
     @TruffleBoundary
     private static RLanguage makeCall(String name, RArgsValuesAndNames args) {
-        return makeCall0(name, false, args);
-    }
-
-    @TruffleBoundary
-    private static RLanguage makeCall(RFunction function, RArgsValuesAndNames args) {
-        return makeCall0(function, false, args);
+        return makeCall0(ReadVariableNode.createFunctionLookup(RSyntaxNode.EAGER_DEPARSE, name), false, args);
     }
 
     @TruffleBoundary
     protected static RLanguage makeCallSourceUnavailable(String name, RArgsValuesAndNames args) {
-        return makeCall0(name, true, args);
+        return makeCall0(ReadVariableNode.createFunctionLookup(RSyntaxNode.EAGER_DEPARSE, name), true, args);
     }
 
     @TruffleBoundary
@@ -92,6 +88,7 @@ public abstract class Call extends RBuiltinNode {
      */
     @TruffleBoundary
     private static RLanguage makeCall0(Object fn, boolean sourceUnavailable, RArgsValuesAndNames argsAndNames) {
+        assert !(fn instanceof String);
         int argLength = argsAndNames == null ? 0 : argsAndNames.getLength();
         RSyntaxNode[] args = new RSyntaxNode[argLength];
         Object[] values = argsAndNames == null ? null : argsAndNames.getArguments();
