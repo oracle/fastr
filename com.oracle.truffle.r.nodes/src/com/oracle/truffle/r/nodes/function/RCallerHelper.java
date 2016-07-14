@@ -26,9 +26,11 @@ import java.util.function.Supplier;
 
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -51,7 +53,18 @@ public final class RCallerHelper {
      * @param arguments array with arguments and corresponding names. This method strips any
      *            {@code RMissing} arguments and unrolls all varargs withint arguments array.
      */
-    public static Supplier<RSyntaxNode> createFromArguments(final Object function, final RArgsValuesAndNames arguments) {
+    public static Supplier<RSyntaxNode> createFromArguments(RFunction function, RArgsValuesAndNames arguments) {
+        return createFromArgumentsInternal(function, arguments);
+    }
+
+    /**
+     * @see #createFromArguments(RFunction, RArgsValuesAndNames)
+     */
+    public static Supplier<RSyntaxNode> createFromArguments(String function, RArgsValuesAndNames arguments) {
+        return createFromArgumentsInternal(function, arguments);
+    }
+
+    public static Supplier<RSyntaxNode> createFromArgumentsInternal(final Object function, final RArgsValuesAndNames arguments) {
         return new Supplier<RSyntaxNode>() {
 
             RSyntaxNode syntaxNode = null;
@@ -87,7 +100,8 @@ public final class RCallerHelper {
                             index++;
                         }
                     }
-                    syntaxNode = RASTUtils.createCall(function, true, ArgumentsSignature.get(signature), syntaxArguments);
+                    Object replacedFunction = function instanceof String ? ReadVariableNode.createFunctionLookup(RSyntaxNode.EAGER_DEPARSE, (String) function) : function;
+                    syntaxNode = RASTUtils.createCall(replacedFunction, true, ArgumentsSignature.get(signature), syntaxArguments);
                 }
                 return syntaxNode;
             }
