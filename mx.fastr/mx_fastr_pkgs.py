@@ -112,6 +112,8 @@ def pkgtest(args):
     # install and (optionally) test the packages
     if not '--install-only' in install_args:
         install_args += ['--run-tests']
+        if not '--print-install-status' in install_args:
+            install_args += ['--print-install-status']
 
     _log_step('BEGIN', 'install/test', 'FastR')
     rc = mx_fastr._installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, env=env, out=out, err=out)

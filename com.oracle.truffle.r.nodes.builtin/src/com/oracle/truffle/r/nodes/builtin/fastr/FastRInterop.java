@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -41,11 +42,10 @@ public class FastRInterop {
     @RBuiltin(name = ".fastr.interop.eval", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"mimeType", "source"})
     public abstract static class Eval extends RBuiltinNode {
 
-        @SuppressWarnings("deprecation")
         @Specialization
         @TruffleBoundary
         protected Object interopEval(Object mimeType, Object source) {
-            Source sourceObject = Source.fromText(RRuntime.asString(source), Engine.EVAL_FUNCTION_NAME).withMimeType(RRuntime.asString(mimeType));
+            Source sourceObject = RSource.fromText(RRuntime.asString(source), Engine.EVAL_FUNCTION_NAME, RRuntime.asString(mimeType));
 
             CallTarget callTarget;
 

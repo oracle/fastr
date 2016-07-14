@@ -48,13 +48,13 @@ import java.util.List;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.nodes.builtin.base.Quit;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
@@ -172,8 +172,8 @@ public class RCommand {
         return ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
     }
 
-    @SuppressWarnings("deprecation") private static final Source GET_ECHO = Source.fromText("invisible(getOption('echo'))", RInternalSourceDescriptions.GET_ECHO).withMimeType(TruffleRLanguage.MIME);
-    @SuppressWarnings("deprecation") private static final Source QUIT_EOF = Source.fromText("quit(\"default\", 0L, TRUE)", RInternalSourceDescriptions.QUIT_EOF).withMimeType(TruffleRLanguage.MIME);
+    private static final Source GET_ECHO = RSource.fromText("invisible(getOption('echo'))", RInternalSourceDescriptions.GET_ECHO);
+    private static final Source QUIT_EOF = RSource.fromText("quit(\"default\", 0L, TRUE)", RInternalSourceDescriptions.QUIT_EOF);
 
     /**
      * The read-eval-print loop, which can take input from a console, command line expression or a
@@ -186,11 +186,9 @@ public class RCommand {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    @SuppressWarnings("deprecation")
     static void readEvalPrint(ContextInfo info) {
         PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
         ConsoleHandler consoleHandler = info.getConsoleHandler();
-        Source source = Source.fromAppendableText(consoleHandler.getInputDescription());
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             REPL: for (;;) {
@@ -201,19 +199,15 @@ public class RCommand {
                     if (input == null) {
                         throw new EOFException();
                     }
-                    // Start index of the new input
-                    int startLength = source.getLength();
-                    // Append the input as is
-                    source.appendCode(input);
-                    input = input.trim();
-                    if (input.equals("") || input.charAt(0) == '#') {
+                    String trInput = input.trim();
+                    if (trInput.equals("") || trInput.charAt(0) == '#') {
                         // nothing to parse
                         continue;
                     }
 
                     String continuePrompt = getContinuePrompt();
-                    @SuppressWarnings("deprecation")
-                    Source subSource = Source.subSource(source, startLength).withMimeType(TruffleRLanguage.MIME);
+                    StringBuffer sb = new StringBuffer(input);
+                    Source source = RSource.fromText(sb.toString(), RInternalSourceDescriptions.SHELL_INPUT);
                     while (true) {
                         /*
                          * N.B. As of Truffle rev 371045b1312d412bafa29882e6c3f7bfe6c0f8f1, only
@@ -221,7 +215,7 @@ public class RCommand {
                          * subclasses pass through.
                          */
                         try {
-                            vm.eval(subSource);
+                            vm.eval(source);
                             emitIO();
                         } catch (IncompleteSourceException | com.oracle.truffle.api.vm.IncompleteSourceException e) {
                             // read another line of input
@@ -230,8 +224,8 @@ public class RCommand {
                             if (additionalInput == null) {
                                 throw new EOFException();
                             }
-                            source.appendCode(additionalInput);
-                            subSource = Source.subSource(source, startLength).withMimeType(TruffleRLanguage.MIME);
+                            sb.append(additionalInput);
+                            source = RSource.fromText(sb.toString(), RInternalSourceDescriptions.SHELL_INPUT);
                             // The only continuation in the while loop
                             continue;
                         } catch (ParseException e) {

@@ -102,7 +102,12 @@ public final class RBuiltinRootNode extends RRootNode {
     }
 
     @Override
-    public String toString() {
+    public String getName() {
         return "RBuiltin(" + builtin + ")";
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 }

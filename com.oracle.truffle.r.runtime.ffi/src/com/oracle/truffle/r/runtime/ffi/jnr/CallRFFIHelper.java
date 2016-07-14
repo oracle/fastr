@@ -30,7 +30,9 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -653,8 +655,7 @@ public class CallRFFIHelper {
         guarantee(symbolObj instanceof RSymbol);
         RSymbol symbol = (RSymbol) symbolObj;
         // Works but not remotely efficient
-        @SuppressWarnings("deprecation")
-        Source source = Source.fromText("get(\"" + symbol.getName() + "\", mode=\"function\")", "<Rf_findfun>");
+        Source source = RSource.fromText("get(\"" + symbol.getName() + "\", mode=\"function\")", RInternalSourceDescriptions.RF_FINDFUN);
         try {
             Object result = RContext.getEngine().parseAndEval(source, env.getFrame(), false);
             return result;

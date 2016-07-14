@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
@@ -171,7 +172,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      */
     public static class EvalThread extends ContextThread {
 
-        @SuppressWarnings("deprecation") private static final Source GET_CONTEXT = Source.fromText("invisible(.fastr.context.get())", "<get_context>").withMimeType("application/x-r");
+        private static final Source GET_CONTEXT = RSource.fromText("invisible(.fastr.context.get())", "<get_context>");
 
         private final Source source;
         private final ContextInfo info;

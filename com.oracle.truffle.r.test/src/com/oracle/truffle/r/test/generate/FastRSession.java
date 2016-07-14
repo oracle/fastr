@@ -34,11 +34,12 @@ import java.util.concurrent.TimeoutException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
@@ -141,7 +142,7 @@ public final class FastRSession implements RSession {
         return singleton;
     }
 
-    @SuppressWarnings("deprecation") public static final Source GET_CONTEXT = Source.fromText("invisible(.fastr.context.get())", "<get_context>").withMimeType(TruffleRLanguage.MIME);
+    public static final Source GET_CONTEXT = RSource.fromText("invisible(.fastr.context.get())", "<get_context>");
 
     public PolyglotEngine createTestContext(ContextInfo contextInfoArg) {
         create();
@@ -244,8 +245,7 @@ public final class FastRSession implements RSession {
                     try {
                         String input = consoleHandler.readLine();
                         while (input != null) {
-                            @SuppressWarnings("deprecation")
-                            Source source = Source.fromText(input, null).withMimeType(TruffleRLanguage.MIME);
+                            Source source = RSource.fromText(input, RInternalSourceDescriptions.UNIT_TEST);
                             try {
                                 vm.eval(source);
                                 input = consoleHandler.readLine();

@@ -29,7 +29,7 @@ import org.junit.Test;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.tck.TruffleTCK;
 
 public class FastRTckTest extends TruffleTCK {
@@ -40,8 +40,7 @@ public class FastRTckTest extends TruffleTCK {
     }
 
     // @formatter:off
-    @SuppressWarnings("deprecation")
-    private static final Source INITIALIZATION = Source.fromText(
+    private static final Source INITIALIZATION = RSource.fromText(
         "fourtyTwo <- function() {\n" +
         "  42L\n" +
         "}\n" +
@@ -102,7 +101,7 @@ public class FastRTckTest extends TruffleTCK {
         "}\n" +
         ".fastr.interop.export('valuesObject', valuesObject)\n",
         "<initialization>"
-    ).withMimeType(TruffleRLanguage.MIME);
+    );
     // @formatter:on
 
     @Override
@@ -360,11 +359,6 @@ public class FastRTckTest extends TruffleTCK {
     @Override
     public String multiplyCode(String firstName, String secondName) {
         return firstName + '*' + secondName;
-    }
-
-    @Override
-    public void timeOutTest() throws Exception {
-        // We cannot execute this owing to Tck uing Boolean for truth values
     }
 
 }

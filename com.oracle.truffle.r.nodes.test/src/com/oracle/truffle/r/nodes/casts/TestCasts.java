@@ -317,6 +317,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
+                @SuppressWarnings("unused")
                 Object res = node.execute(value);
                 return null;
             }
@@ -354,6 +355,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
+                @SuppressWarnings("unused")
                 Object res = node.execute(value);
                 return null;
             }
@@ -374,6 +376,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
+                @SuppressWarnings("unused")
                 Object res = node.execute(value);
                 return null;
             }
@@ -392,6 +395,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
+                @SuppressWarnings("unused")
                 Object res = node.execute(value);
                 return null;
             }
@@ -410,6 +414,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
+                @SuppressWarnings("unused")
                 Object res = node.execute(value);
                 return null;
             }
@@ -427,6 +432,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
+                @SuppressWarnings("unused")
                 Object res = node.execute(value);
                 return null;
             }
@@ -446,6 +452,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
+                @SuppressWarnings("unused")
                 Object res = node.execute(value);
                 return null;
             }

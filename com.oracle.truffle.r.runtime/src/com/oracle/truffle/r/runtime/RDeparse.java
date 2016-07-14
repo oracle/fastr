@@ -275,7 +275,7 @@ public class RDeparse {
         private final int cutoff;
         private final boolean backtick;
         private int opts;
-        private final int nlines;
+        @SuppressWarnings("unused") private final int nlines;
 
         private int inCurly = 0;
         private int inList = 0;
@@ -342,8 +342,7 @@ public class RDeparse {
         }
 
         public void fixupSources() {
-            @SuppressWarnings("deprecation")
-            Source source = Source.fromText(sb, "deparse");
+            Source source = RSource.fromText(sb.toString(), "deparse");
             for (SourceSectionElement s : sources) {
                 s.element.setSourceSection(source.createSection(null, s.start, s.length));
             }

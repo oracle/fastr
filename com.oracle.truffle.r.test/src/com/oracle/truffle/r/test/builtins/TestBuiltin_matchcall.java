@@ -80,4 +80,9 @@ public class TestBuiltin_matchcall extends TestBase {
 
         // TODO add tests that pass "definition" and "call" explicitly
     }
+
+    @Test
+    public void testS3DispatchAndMatchcall() {
+        assertEval("{foo.default<-function(a,b,...,c)match.call(); foo<-function(x,...)UseMethod('foo'); foo(2,3,c=4);}");
+    }
 }

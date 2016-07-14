@@ -26,11 +26,11 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.base.Quit;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
@@ -70,7 +70,6 @@ public abstract class BrowserInteractNode extends RNode {
         return inBrowser;
     }
 
-    @SuppressWarnings("deprecation")
     @Specialization
     protected int interact(VirtualFrame frame) {
         CompilerDirectives.transferToInterpreter();
@@ -129,7 +128,7 @@ public abstract class BrowserInteractNode extends RNode {
 
                     default:
                         try {
-                            RContext.getEngine().parseAndEval(Source.fromText(input, BROWSER_SOURCE), mFrame, true);
+                            RContext.getEngine().parseAndEval(RSource.fromText(input, BROWSER_SOURCE), mFrame, true);
                         } catch (ReturnException e) {
                             exitMode = NEXT;
                             break LW;
