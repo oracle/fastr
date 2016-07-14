@@ -37,19 +37,20 @@ R_EXT_HEADERS_TO_LINK := $(filter-out $(notdir $(R_EXT_HEADERS_LOCAL)),$(R_EXT_H
 R_HEADERS := $(wildcard $(GNUR_HOME)/include/*.h)
 R_HEADERS_FILENAMES := $(notdir $(R_HEADERS))
 #$(info R_HEADERS_FILENAMES=$(R_HEADERS_FILENAMES))
-R_HEADERS_LOCAL := src/libintl.h src/Rinternals.h # src/Rinterface.h
+R_HEADERS_LOCAL := src/libintl.h src/Rinternals.h src/Rinterface.h
 #$(info R_HEADERS_LOCAL=$(R_HEADERS_LOCAL))>
 R_HEADERS_TO_LINK := $(filter-out $(notdir $(R_HEADERS_LOCAL)),$(R_HEADERS_FILENAMES))
 #$(info R_HEADERS_TO_LINK=$(R_HEADERS_TO_LINK))
 
 all: linked
 
-linked: ed_Rinternals ed_Rinterface ed_GraphicsEngine
+linked: ed_Rinternals ed_Rinterface_gcntx ed_Rinterface_interactive ed_GraphicsEngine
 	mkdir -p R_ext
 	$(foreach file,$(R_HEADERS_TO_LINK),ln -sf $(GNUR_HOME)/include/$(file) $(file);)
 	ln -sf src/libintl.h
 	ed $(GNUR_HOME)/include/Rinternals.h < ed_Rinternals
-#	ed $(GNUR_HOME)/include/Rinterface.h < ed_Rinterface
+	ed $(GNUR_HOME)/include/Rinterface.h < ed_Rinterface_gcntx
+#	ed $(GNUR_HOME)/include/Rinterface.h < ed_Rinterface_interactive
 	ed $(GNUR_HOME)/include/R_ext/GraphicsEngine.h < ed_GraphicsEngine
 	$(foreach file,$(R_EXT_HEADERS_TO_LINK),ln -sf $(GNUR_HOME)/include/R_ext/$(file) R_ext/$(file);)
 #	cp $(R_EXT_HEADERS_LOCAL) R_ext

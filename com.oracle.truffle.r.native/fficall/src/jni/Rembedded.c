@@ -13,9 +13,9 @@
 #include <sys/utsname.h>
 #include <sys/stat.h>
 #include <rffiutils.h>
-#include <R_ext/RStartup.h>
 #define R_INTERFACE_PTRS
 #include <Rinterface.h>
+#include <R_ext/RStartup.h>
 
 extern char **environ;
 
@@ -69,36 +69,6 @@ static void print_environ(char **env);
 static char *get_classpath(char *r_home);
 
 # define JMP_BUF sigjmp_buf
-
-/* Evaluation Context Structure */
-typedef struct RCNTXT {
-    struct RCNTXT *nextcontext;	/* The next context up the chain */
-    int callflag;		/* The context "type" */
-    JMP_BUF cjmpbuf;		/* C stack and register information */
-    int cstacktop;		/* Top of the pointer protection stack */
-    int evaldepth;	        /* evaluation depth at inception */
-    SEXP promargs;		/* Promises supplied to closure */
-    SEXP callfun;		/* The closure called */
-    SEXP sysparent;		/* environment the closure was called from */
-    SEXP call;			/* The call that effected this context*/
-    SEXP cloenv;		/* The environment */
-    SEXP conexit;		/* Interpreted "on.exit" code */
-    void (*cend)(void *);	/* C "on.exit" thunk */
-    void *cenddata;		/* data for C "on.exit" thunk */
-    void *vmax;		        /* top of R_alloc stack */
-    int intsusp;                /* interrupts are suspended */
-    SEXP handlerstack;          /* condition handler stack */
-    SEXP restartstack;          /* stack of available restarts */
-    void *prstack;   /* stack of pending promises */
-    void *nodestack;
-#ifdef BC_INT_STACK
-    IStackval *intstack;
-#endif
-    SEXP srcref;	        /* The source line in effect */
-    int browserfinish;     /* should browser finish this context without stopping */
-    SEXP returnValue;			/* only set during on.exit calls */
-} RCNTXT, *context;
-
 
 int Rf_initialize_R(int argc, char *argv[]) {
 	if (initialized) {
@@ -201,7 +171,6 @@ int Rf_initialize_R(int argc, char *argv[]) {
 		(*jniEnv)->SetObjectArrayElement(jniEnv, argsArray, i, arg);
 	}
 	// Can't TRACE this upcall as system not initialized
-    R_GlobalContext = malloc(sizeof(struct RCNTXT));
 	engine = checkRef(jniEnv, (*jniEnv)->CallStaticObjectMethod(jniEnv, rembeddedClass, initializeMethod, argsArray));
 	initialized++;
 	return 0;

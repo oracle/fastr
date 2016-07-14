@@ -1127,6 +1127,13 @@ public class CallRFFIHelper {
         return x;
     }
 
+    public static Object getGlobalContext() {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("getGlobalContext");
+        }
+        return unimplemented("getGlobalContext");
+    }
+
     public static Object getGlobalEnv() {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("getGlobalEnv");
