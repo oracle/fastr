@@ -100,7 +100,16 @@ public class RSource {
      * Create an {@code internal} source from {@code text} and {@code description}.
      */
     public static Source fromTextInternal(String text, Internal description) {
-        return Source.newBuilder(text).name(description.string).mimeType(RRuntime.R_APP_MIME).internal().build();
+        return fromTextInternal(text, description, RRuntime.R_APP_MIME);
+    }
+
+    /**
+     * Create an {@code internal} source from {@code text} and {@code description} of given
+     * {@code mimeType}.
+     */
+
+    public static Source fromTextInternal(String text, Internal description, String mimeType) {
+        return Source.newBuilder(text).name(description.string).mimeType(mimeType).internal().build();
     }
 
     /**
@@ -109,7 +118,7 @@ public class RSource {
      */
     public static Source fromPackageTextInternal(String text, String packageName) {
         String name = String.format(Internal.PACKAGE.string, packageName);
-        return Source.newBuilder(text).name(name).mimeType(RRuntime.R_APP_MIME).internal().build();
+        return Source.newBuilder(text).name(name).mimeType(RRuntime.R_APP_MIME).build();
     }
 
     /**
@@ -121,17 +130,8 @@ public class RSource {
         if (functionName == null) {
             return fromPackageTextInternal(text, packageName);
         } else {
-            return Source.newBuilder(text).name(packageName + "::" + functionName).mimeType(RRuntime.R_APP_MIME).internal().build();
+            return Source.newBuilder(text).name(packageName + "::" + functionName).mimeType(RRuntime.R_APP_MIME).build();
         }
-    }
-
-    /**
-     * Create an {@code internal} source from {@code text} and {@code description} of given
-     * {@code mimType}.
-     */
-
-    public static Source fromTextInternal(String text, Internal description, String mimeType) {
-        return Source.newBuilder(text).name(description.string).mimeType(mimeType).internal().build();
     }
 
     /**
