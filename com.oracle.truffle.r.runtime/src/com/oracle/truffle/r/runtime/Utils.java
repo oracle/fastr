@@ -446,10 +446,7 @@ public final class Utils {
                     SourceSection ss = sn != null ? sn.getSourceSection() : null;
                     // fabricate a srcref attribute from ss
                     Source source = ss != null ? ss.getSource() : null;
-                    String path = source != null ? source.getPath() : null;
-                    if (path != null && RInternalSourceDescriptions.isInternal(path)) {
-                        path = null;
-                    }
+                    String path = RSource.getPath(source);
                     RStringVector callerSource = RDataFactory.createStringVectorFromScalar(RContext.getRRuntimeASTAccess().getCallerSource(call));
                     if (path != null) {
                         callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(ss, path));
@@ -531,11 +528,6 @@ public final class Utils {
             }
             RCaller call = RArguments.getCall(unwrapped);
             if (call != null) {
-                /*
-                 * Log the frame depths as a triple: d,e,p, where 'd' is the actual depth, 'e' is
-                 * the effective depth and 'p' is the promise frame depth, or -1 if no promise
-                 * evaluation in progress.
-                 */
                 String callSrc = call.isValidCaller() ? RContext.getRRuntimeASTAccess().getCallerSource(call) : "<invalid call>";
                 int depth = RArguments.getDepth(unwrapped);
                 str.append("Frame(d=").append(depth).append("): ").append(callTarget).append(isVirtual ? " (virtual)" : "");

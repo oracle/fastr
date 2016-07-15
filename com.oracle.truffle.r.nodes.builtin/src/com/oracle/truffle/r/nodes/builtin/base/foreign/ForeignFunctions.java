@@ -60,6 +60,7 @@ import com.oracle.truffle.r.library.utils.CountFields;
 import com.oracle.truffle.r.library.utils.Crc64NodeGen;
 import com.oracle.truffle.r.library.utils.Download;
 import com.oracle.truffle.r.library.utils.MenuNodeGen;
+import com.oracle.truffle.r.library.utils.RprofNodeGen;
 import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
 import com.oracle.truffle.r.library.utils.WriteTable;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
@@ -568,8 +569,9 @@ public class ForeignFunctions {
                     return new Download();
                 case "termsform":
                     return getExternalModelBuiltinNode("termsform");
-                case "unzip":
                 case "Rprof":
+                    return RprofNodeGen.create();
+                case "unzip":
                 case "Rprofmem":
                 case "addhistory":
                 case "loadhistory":

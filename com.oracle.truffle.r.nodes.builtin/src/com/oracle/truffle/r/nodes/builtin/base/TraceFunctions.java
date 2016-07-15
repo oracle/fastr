@@ -97,10 +97,10 @@ public class TraceFunctions {
         @Specialization
         @TruffleBoundary
         protected byte traceOnOff(byte state) {
-            boolean prevState = RContext.getInstance().stateTraceHandling.getTracingState();
+            boolean prevState = RContext.getInstance().stateInstrumentation.getTracingState();
             boolean newState = RRuntime.fromLogical(state);
             if (newState != prevState) {
-                RContext.getInstance().stateTraceHandling.setTracingState(newState);
+                RContext.getInstance().stateInstrumentation.setTracingState(newState);
             }
             return RRuntime.asLogical(prevState);
         }
@@ -108,7 +108,7 @@ public class TraceFunctions {
         @Specialization
         @TruffleBoundary
         protected byte traceOnOff(@SuppressWarnings("unused") RNull state) {
-            return RRuntime.asLogical(RContext.getInstance().stateTraceHandling.getTracingState());
+            return RRuntime.asLogical(RContext.getInstance().stateInstrumentation.getTracingState());
         }
     }
 }

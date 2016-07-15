@@ -90,7 +90,7 @@ public class FastRDebugTest {
     }
 
     private static Source createFactorial() {
-        return RSource.fromText("main <- function() {\n" +
+        return RSource.fromTextInternal("main <- function() {\n" +
                         "  res = fac(2)\n" +
                         "  res\n" +
                         "}\n" +
@@ -104,7 +104,7 @@ public class FastRDebugTest {
                         "        res\n" +
                         "    }\n" +
                         "}\n",
-                        "factorial.r");
+                        RSource.Internal.DEBUGTEST_FACTORIAL);
     }
 
     protected final String getOut() {
@@ -150,7 +150,7 @@ public class FastRDebugTest {
                         "n", 2.0);
         continueExecution();
 
-        final Source evalSrc = RSource.fromText("main()\n", "debugtest.r");
+        final Source evalSrc = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_DEBUG);
         final Value value = engine.eval(evalSrc);
         assertExecutedOK();
         Assert.assertEquals("[1] 2\n", getOut());
@@ -198,7 +198,7 @@ public class FastRDebugTest {
         assertLocation(3, "res", "res", 2.0);
         stepOut();
 
-        final Source evalSource = RSource.fromText("main()\n", "evaltest.r");
+        final Source evalSource = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_EVAL);
         final Value value = engine.eval(evalSource);
         assertExecutedOK();
         Assert.assertEquals("[1] 2\n", getOut());

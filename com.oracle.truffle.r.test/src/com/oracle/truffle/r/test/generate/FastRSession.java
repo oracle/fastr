@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
@@ -142,7 +141,7 @@ public final class FastRSession implements RSession {
         return singleton;
     }
 
-    public static final Source GET_CONTEXT = RSource.fromText("invisible(.fastr.context.get())", "<get_context>");
+    public static final Source GET_CONTEXT = RSource.fromTextInternal("invisible(.fastr.context.get())", RSource.Internal.GET_CONTEXT);
 
     public PolyglotEngine createTestContext(ContextInfo contextInfoArg) {
         create();
@@ -152,7 +151,7 @@ public final class FastRSession implements RSession {
         } else {
             contextInfo = contextInfoArg;
         }
-        return contextInfo.apply(PolyglotEngine.newBuilder()).build();
+        return contextInfo.createVM();
     }
 
     public ContextInfo createContextInfo(ContextKind contextKind) {
@@ -165,7 +164,7 @@ public final class FastRSession implements RSession {
         try {
             RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[]{"--no-restore"});
             ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
-            main = info.apply(PolyglotEngine.newBuilder()).build();
+            main = info.createVM();
             try {
                 mainContext = main.eval(GET_CONTEXT).as(RContext.class);
                 emitIO();
@@ -245,7 +244,7 @@ public final class FastRSession implements RSession {
                     try {
                         String input = consoleHandler.readLine();
                         while (input != null) {
-                            Source source = RSource.fromText(input, RInternalSourceDescriptions.UNIT_TEST);
+                            Source source = RSource.fromTextInternal(input, RSource.Internal.UNIT_TEST);
                             try {
                                 vm.eval(source);
                                 input = consoleHandler.readLine();
