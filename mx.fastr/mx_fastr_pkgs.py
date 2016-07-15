@@ -26,6 +26,8 @@ import shutil, os, re
 import mx
 import mx_fastr
 
+quiet = False
+
 def _mx_gnur():
     return mx.suite('gnur')
 
@@ -44,13 +46,18 @@ def _create_libinstall(s):
     return libinstall, install_tmp
 
 def _log_step(state, step, rvariant):
-    print "{0} {1} with {2}".format(state, step, rvariant)
+    global quiet
+    if not quiet:
+        print "{0} {1} with {2}".format(state, step, rvariant)
 
 def pkgtest(args):
     '''used for package installation/testing'''
 
     libinstall, install_tmp = _create_libinstall(mx.suite('fastr'))
     stacktrace_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
+    if "--quiet" in args:
+        global quiet
+        quiet = True
 
     install_args = args
 
@@ -109,8 +116,8 @@ def pkgtest(args):
     #_install_vignette_support('FastR', env)
 
     out = OutputCapture()
-    # install and (optionally) test the packages
-    if not '--install-only' in install_args:
+    # install and test the packages, unless just listing versions
+    if not '--list-versions' in install_args:
         install_args += ['--run-tests']
         if not '--print-install-status' in install_args:
             install_args += ['--print-install-status']
