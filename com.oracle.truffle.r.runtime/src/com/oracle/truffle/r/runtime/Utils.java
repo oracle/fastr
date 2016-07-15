@@ -95,11 +95,11 @@ public final class Utils {
         try {
             URL url = ResourceHandlerFactory.getHandler().getResource(clazz, resourceName);
             if (url == null) {
-                throw new IOException();
+                throw RInternalError.shouldNotReachHere("resource " + resourceName + " not found, context: " + clazz);
             }
-            return RSource.fromFileName(url.getPath());
+            return RSource.fromURL(url, resourceName);
         } catch (IOException ex) {
-            throw Utils.fail("resource " + resourceName + " not found");
+            throw RInternalError.shouldNotReachHere("resource " + resourceName + " not found, context: " + clazz);
         }
     }
 
