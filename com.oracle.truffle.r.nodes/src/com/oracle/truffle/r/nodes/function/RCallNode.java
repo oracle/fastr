@@ -236,7 +236,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     public Arguments<RSyntaxNode> getArguments() {
-        return new Arguments<>(arguments, signature);
+        return Arguments.create(arguments, signature);
     }
 
     private RArgsValuesAndNames lookupVarArgs(VirtualFrame frame) {

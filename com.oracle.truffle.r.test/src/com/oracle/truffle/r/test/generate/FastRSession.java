@@ -291,6 +291,7 @@ public final class FastRSession implements RSession {
         return "FastR";
     }
 
+    @SuppressWarnings("unused")
     static void emitIO() throws IOException {
     }
 }

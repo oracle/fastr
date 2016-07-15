@@ -30,7 +30,6 @@ import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
-import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
@@ -229,8 +228,6 @@ public class RASTUtils {
         SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.EAGER_DEPARSE;
         if (fn instanceof ReadVariableNode) {
             return RCallNode.createCall(sourceSection, (ReadVariableNode) fn, signature, arguments);
-        } else if (fn instanceof NamedRNode) {
-            return RCallNode.createCall(RSyntaxNode.SOURCE_UNAVAILABLE, (NamedRNode) fn, signature, arguments);
         } else if (fn instanceof RCallNode) {
             return RCallNode.createCall(sourceSection, (RCallNode) fn, signature, arguments);
         } else {

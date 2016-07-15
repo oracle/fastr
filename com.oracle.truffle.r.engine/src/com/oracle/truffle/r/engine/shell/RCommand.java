@@ -298,6 +298,7 @@ public class RCommand {
         return RRuntime.asString(RRuntime.asAbstractVector(RContext.getInstance().stateROptions.getValue("continue")));
     }
 
+    @SuppressWarnings("unused")
     private static void emitIO() throws IOException {
     }
 }
