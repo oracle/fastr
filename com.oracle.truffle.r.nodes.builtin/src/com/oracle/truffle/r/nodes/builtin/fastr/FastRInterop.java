@@ -61,6 +61,7 @@ public class FastRInterop {
             return callTarget.call();
         }
 
+        @SuppressWarnings("unused")
         private void emitIO() throws IOException {
         }
     }
