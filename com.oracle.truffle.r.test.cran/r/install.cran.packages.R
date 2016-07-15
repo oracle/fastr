@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -72,6 +72,8 @@
 # --pkg-filelist a file containing an explicit list of package names (not regexps), one per line
 # --alpha-daily implicitly sets --pkg-pattern from the day of the year modulo 26. E.g., 0 is ^[Aa], 1 is ^[Bb]
 # --ok-only implicitly sets --pkg-filelist to a list of packages known to install
+
+# TODO At some point this will need to upgraded to support installation from other repos, e.g. BioConductor, github
 
 args <- commandArgs(TRUE)
 
@@ -479,7 +481,7 @@ do.it <- function() {
 	if (list.versions) {
 		for (i in (1:length(rownames(toinstall.pkgs)))) {
 			pkg <- toinstall.pkgs[i, ]
-			cat(pkg["Package"], pkg["Version"], "\n", sep=",")
+			cat(pkg["Package"], pkg["Version"], paste0(contriburl, "/", pkg["Version"], ".tar.gz"), "\n", sep=",")
 		}
 	}
 
