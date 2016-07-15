@@ -116,7 +116,12 @@ def pkgtest(args):
             install_args += ['--print-install-status']
 
     _log_step('BEGIN', 'install/test', 'FastR')
-    rc = mx_fastr._installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
+    # Currently installpkgs does not set a return code (in install.cran.packages.R)
+    mx_fastr._installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
+    rc = 0
+    for status in out.install_status.itervalues():
+        if not status:
+            rc = 1
     _log_step('END', 'install/test', 'FastR')
     if '--run-tests' in install_args:
         # in order to compare the test output with GnuR we have to install/test the same
@@ -126,6 +131,8 @@ def pkgtest(args):
         _set_test_status(out.test_info)
         print 'Test Status'
         for pkg, test_status in out.test_info.iteritems():
+            if test_status.status != "OK":
+                rc = 1
             print '{0}: {1}'.format(pkg, test_status.status)
 
     shutil.rmtree(install_tmp, ignore_errors=True)
