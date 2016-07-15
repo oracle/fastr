@@ -25,10 +25,12 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
@@ -426,8 +428,9 @@ public class IsTypeFunctions {
         public abstract byte execute(Object value);
 
         @Specialization
-        protected byte isObject(RAttributable arg) {
-            return arg.isObject(attrProfiles) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        protected byte isObject(RAttributable arg, //
+                        @Cached("createClassProfile()") ValueProfile profile) {
+            return RRuntime.asLogical(profile.profile(arg).isObject(attrProfiles));
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRAttributable(value)"})
