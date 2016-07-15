@@ -209,6 +209,24 @@ SEXP Rf_ScalarReal(double value) {
     return checkRef(thisenv, result);
 }
 
+// JNR calls to PCRE do not work properly (via JNR) without these wrappers
+
+char *pcre_maketables();
+void *pcre_compile(char * pattern, int options, char ** errorMessage, int *errOffset, char * tables);
+int  pcre_exec(void * code, void *extra, char* subject, int subjectLength, int startOffset, int options, int *ovector, int ovecSize);
+
+char *fastr_pcre_maketables() {
+	return pcre_maketables();
+}
+
+void *fastr_pcre_compile(char * pattern, int options, char ** errorMessage, int *errOffset, char * tables) {
+	return pcre_compile(pattern, options, errorMessage, errOffset, tables);
+}
+
+int fastr_pcre_exec(void * code, void *extra,  char* subject, int subjectLength, int startOffset, int options, int *ovector, int ovecSize) {
+	return pcre_exec(code, extra, subject, subjectLength, startOffset, options, ovector, ovecSize);
+}
+
 SEXP Rf_ScalarString(SEXP value) {
 	TRACE(TARG1, value);
 	JNIEnv *thisenv = getEnv();
