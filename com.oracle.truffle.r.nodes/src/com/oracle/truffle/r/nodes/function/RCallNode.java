@@ -164,6 +164,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     @Child private ReadVariableNode lookupVarArgs;
     protected final LocalReadVariableNode explicitArgs;
 
+    private final ConditionProfile nullBuiltinProfile = ConditionProfile.createBinaryProfile();
+
     // needed for INTERNAL_GENERIC calls:
     @Child private FunctionDispatch internalDispatchCall;
 
@@ -270,7 +272,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
      * special dispatch logic.
      */
     protected boolean isDefaultDispatch(RFunction function) {
-        return (signature != null && signature.isEmpty()) || function.getRBuiltin() == null || function.getRBuiltin().getDispatch() == RDispatch.DEFAULT;
+        return (signature != null && signature.isEmpty()) || nullBuiltinProfile.profile(function.getRBuiltin() == null) || function.getRBuiltin().getDispatch() == RDispatch.DEFAULT;
     }
 
     @Specialization(guards = "isDefaultDispatch(function)")
