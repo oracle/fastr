@@ -37,6 +37,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
@@ -127,42 +128,37 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
      * This methods unrolls all "..." in the argument list. The result varies if the number of
      * arguments in the varargs or their names change.
      */
-    public UnmatchedArguments unrollArguments(ArgumentsSignature varArgSignature) {
-        CompilerAsserts.neverPartOfCompilation();
-        assert containsVarArgsSymbol() == (varArgSignature != null);
-        if (!containsVarArgsSymbol()) {
-            return this;
-        } else {
-            RNode[] values = new RNode[arguments.length];
-            String[] newNames = new String[arguments.length];
+    public Arguments<RNode> unrollArguments(ArgumentsSignature varArgSignature) {
+        assert containsVarArgsSymbol();
+        RNode[] values = new RNode[arguments.length];
+        String[] newNames = new String[arguments.length];
 
-            int vargsSymbolsIndex = 0;
-            int index = 0;
-            for (int i = 0; i < arguments.length; i++) {
-                if (vargsSymbolsIndex < varArgsSymbolIndices.length && varArgsSymbolIndices[vargsSymbolsIndex] == i) {
-                    if (varArgSignature.isEmpty()) {
-                        // An empty "..." vanishes
-                        values = Utils.resizeArray(values, values.length - 1);
-                        newNames = Utils.resizeArray(newNames, newNames.length - 1);
-                        continue;
-                    }
+        int vargsSymbolsIndex = 0;
+        int index = 0;
+        for (int i = 0; i < arguments.length; i++) {
+            if (vargsSymbolsIndex < varArgsSymbolIndices.length && varArgsSymbolIndices[vargsSymbolsIndex] == i) {
+                if (varArgSignature.isEmpty()) {
+                    // An empty "..." vanishes
+                    values = Utils.resizeArray(values, values.length - 1);
+                    newNames = Utils.resizeArray(newNames, newNames.length - 1);
+                    continue;
+                }
 
-                    values = Utils.resizeArray(values, values.length + varArgSignature.getLength() - 1);
-                    newNames = Utils.resizeArray(newNames, newNames.length + varArgSignature.getLength() - 1);
-                    for (int j = 0; j < varArgSignature.getLength(); j++) {
-                        values[index] = PromiseNode.createVarArg(j);
-                        newNames[index] = varArgSignature.getName(j);
-                        index++;
-                    }
-                    vargsSymbolsIndex++;
-                } else {
-                    values[index] = arguments[i];
-                    newNames[index] = signature.getName(i);
+                values = Utils.resizeArray(values, values.length + varArgSignature.getLength() - 1);
+                newNames = Utils.resizeArray(newNames, newNames.length + varArgSignature.getLength() - 1);
+                for (int j = 0; j < varArgSignature.getLength(); j++) {
+                    values[index] = PromiseNode.createVarArg(j);
+                    newNames[index] = varArgSignature.getName(j);
                     index++;
                 }
+                vargsSymbolsIndex++;
+            } else {
+                values[index] = arguments[i];
+                newNames[index] = signature.getName(i);
+                index++;
             }
-            return UnrolledVariadicArguments.create(values, ArgumentsSignature.get(newNames), this);
         }
+        return Arguments.create(values, ArgumentsSignature.get(newNames));
     }
 
     private ArgumentsSignature cachedVarArgsSignature;

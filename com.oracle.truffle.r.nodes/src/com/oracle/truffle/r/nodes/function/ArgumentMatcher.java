@@ -37,6 +37,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
+import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
@@ -62,8 +63,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * <p>
  * {@link ArgumentMatcher} serves the purpose of matching {@link CallArgumentsNode} to
  * {@link FormalArguments} of a specific function, see
- * {@link #matchArguments(RRootNode, UnmatchedArguments, S3DefaultArguments, RBaseNode, boolean)} .
- * The other match functions are used for special cases, where builtins make it necessary to
+ * {@link #matchArguments(RRootNode, CallArgumentsNode, ArgumentsSignature, S3DefaultArguments, RBaseNode, boolean)}
+ * . The other match functions are used for special cases, where builtins make it necessary to
  * re-match parameters, e.g.:
  * {@link #matchArgumentsEvaluated(RRootNode, RArgsValuesAndNames, S3DefaultArguments, boolean, RBaseNode)}
  * for 'UseMethod'.
@@ -132,13 +133,27 @@ public class ArgumentMatcher {
      * in {@link PromiseNode}s. Used for calls to all functions parsed from R code
      *
      * @param target The function which is to be called
-     * @param suppliedArgs The arguments supplied to the call
+     * @param arguments The arguments supplied to the call
      * @param callingNode The {@link RBaseNode} invoking the match
-     * @return A fresh {@link MatchedArguments} containing the arguments in correct order and
-     *         wrapped in {@link PromiseNode}s
+     * @return A fresh {@link Arguments} containing the arguments in correct order and wrapped in
+     *         {@link PromiseNode}s
      */
-    public static MatchedArguments matchArguments(RRootNode target, UnmatchedArguments suppliedArgs, S3DefaultArguments s3DefaultArguments, RBaseNode callingNode, boolean noOpt) {
-        return matchNodes(target, suppliedArgs.getArguments(), suppliedArgs.getSignature(), s3DefaultArguments, callingNode, suppliedArgs, noOpt);
+    public static Arguments<RNode> matchArguments(RRootNode target, CallArgumentsNode arguments, ArgumentsSignature varArgSignature, S3DefaultArguments s3DefaultArguments, RBaseNode callingNode,
+                    boolean noOpt) {
+        CompilerAsserts.neverPartOfCompilation();
+        assert arguments.containsVarArgsSymbol() == (varArgSignature != null);
+
+        RNode[] argNodes;
+        ArgumentsSignature signature;
+        if (!arguments.containsVarArgsSymbol()) {
+            argNodes = arguments.getArguments();
+            signature = arguments.getSignature();
+        } else {
+            Arguments<RNode> suppliedArgs = arguments.unrollArguments(varArgSignature);
+            argNodes = suppliedArgs.getArguments();
+            signature = suppliedArgs.getSignature();
+        }
+        return ArgumentMatcher.matchNodes(target, argNodes, signature, s3DefaultArguments, callingNode, arguments, noOpt);
     }
 
     public static MatchPermutation matchArguments(ArgumentsSignature supplied, ArgumentsSignature formal, RBaseNode callingNode, boolean forNextMethod, RBuiltinDescriptor builtin) {
@@ -286,7 +301,7 @@ public class ArgumentMatcher {
      *         and wrapped into the proper {@link PromiseNode}s and the supplied signature reordered
      *         accordingly.
      */
-    private static MatchedArguments matchNodes(RRootNode target, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, S3DefaultArguments s3DefaultArguments, RBaseNode callingNode,
+    private static Arguments<RNode> matchNodes(RRootNode target, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, S3DefaultArguments s3DefaultArguments, RBaseNode callingNode,
                     ClosureCache closureCache, boolean noOpt) {
         CompilerAsserts.neverPartOfCompilation();
         assert suppliedArgs.length == suppliedSignature.getLength();
@@ -382,7 +397,7 @@ public class ArgumentMatcher {
                 resArgs[formalIndex] = wrapMatched(formals, builtin, closureCache, suppliedArgs[suppliedIndex], formalIndex, noOpt, fastPath);
             }
         }
-        return MatchedArguments.create(resArgs, match.resultSignature);
+        return Arguments.create(resArgs, match.resultSignature);
     }
 
     /**

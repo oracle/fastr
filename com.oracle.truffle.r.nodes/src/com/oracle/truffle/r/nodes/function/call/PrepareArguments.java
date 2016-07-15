@@ -31,9 +31,8 @@ import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
 import com.oracle.truffle.r.nodes.function.CallArgumentsNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
-import com.oracle.truffle.r.nodes.function.MatchedArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.function.UnmatchedArguments;
+import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
 import com.oracle.truffle.r.runtime.RError;
@@ -73,7 +72,7 @@ public abstract class PrepareArguments extends Node {
         return new RArgsValuesAndNames(result, suppliedSignature);
     }
 
-    private static RArgsValuesAndNames executeArgs(MatchedArguments matched, VirtualFrame frame) {
+    private static RArgsValuesAndNames executeArgs(Arguments<RNode> matched, VirtualFrame frame) {
         return executeArgs(matched.getArguments(), matched.getSignature(), frame);
     }
 
@@ -115,7 +114,7 @@ public abstract class PrepareArguments extends Node {
                         boolean noOpt) {
             this.next = next;
             cachedVarArgSignature = varArgSignature;
-            MatchedArguments matched = ArgumentMatcher.matchArguments(target, args.unrollArguments(varArgSignature), s3DefaultArguments, call, noOpt);
+            Arguments<RNode> matched = ArgumentMatcher.matchArguments(target, args, varArgSignature, s3DefaultArguments, call, noOpt);
             this.matchedArguments = matched.getArguments();
             this.matchedSuppliedSignature = matched.getSignature();
             this.cachedS3DefaultArguments = s3DefaultArguments;
@@ -146,8 +145,7 @@ public abstract class PrepareArguments extends Node {
         public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames varArgs, S3DefaultArguments s3DefaultArguments, RCallNode call) {
             CompilerDirectives.transferToInterpreter();
             ArgumentsSignature varArgSignature = varArgs == null ? null : varArgs.getSignature();
-            UnmatchedArguments argsValuesAndNames = args.unrollArguments(varArgSignature);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(target, argsValuesAndNames, s3DefaultArguments, RError.ROOTNODE, true);
+            Arguments<RNode> matchedArgs = ArgumentMatcher.matchArguments(target, args, varArgSignature, s3DefaultArguments, RError.ROOTNODE, true);
             return executeArgs(matchedArgs, frame);
         }
     }

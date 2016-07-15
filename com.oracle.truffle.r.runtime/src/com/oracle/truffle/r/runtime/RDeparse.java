@@ -847,8 +847,7 @@ public class RDeparse {
             }
             RSyntaxElement[] arguments = argElements.toArray(new RSyntaxElement[argElements.size()]);
             ArgumentsSignature signature = ArgumentsSignature.get(argNames.toArray(new String[argNames.size()]));
-            Arguments<RSyntaxElement> arg = new Arguments<>(arguments, signature);
-            return arg;
+            return Arguments.create(arguments, signature);
         }
 
         private static RPairList next(RPairList pairlist) {

@@ -53,7 +53,6 @@ import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.function.UnmatchedArguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.HasSignature;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -234,8 +233,7 @@ public class FrameFunctions {
             RCallNode callNode = (RCallNode) RASTUtils.unwrap(call.getRep());
             CallArgumentsNode callArgs = callNode.createArguments(null, false, false);
             ArgumentsSignature inputVarArgSignature = callArgs.containsVarArgsSymbol() ? CallArgumentsNode.getVarargsAndNames(cframe).getSignature() : null;
-            UnmatchedArguments executeFlatten = callArgs.unrollArguments(inputVarArgSignature);
-            RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), executeFlatten, null, null, true).getArguments();
+            RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), callArgs, inputVarArgSignature, null, null, true).getArguments();
             ArgumentsSignature sig = ((HasSignature) definition.getRootNode()).getSignature();
             // expand any varargs
             ArrayList<RNode> nodes = new ArrayList<>();
