@@ -61,6 +61,7 @@ static jmethodID TAG_MethodID;
 static jmethodID PRINTNAME_MethodID;
 static jmethodID CAR_MethodID;
 static jmethodID CDR_MethodID;
+static jmethodID CDDR_MethodID;
 static jmethodID SET_TAG_MethodID;
 static jmethodID SETCAR_MethodID;
 static jmethodID SETCDR_MethodID;
@@ -87,6 +88,7 @@ static jmethodID OBJECT_MethodID;
 static jmethodID DUPLICATE_ATTRIB_MethodID;
 static jmethodID isS4ObjectMethodID;
 static jmethodID logObject_MethodID;
+static jmethodID R_do_MAKE_CLASS_MethodID;
 
 static jclass RExternalPtrClass;
 static jmethodID createExternalPtrMethodID;
@@ -129,6 +131,7 @@ void init_internals(JNIEnv *env) {
 	Rf_anyDuplicatedMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_anyDuplicated", "(Ljava/lang/Object;I)I", 1);
 	Rf_NewHashedEnvMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_createNewEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/String;ZI)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 1);
 	RprintfMethodID = checkGetMethodID(env, CallRFFIHelperClass, "printf", "(Ljava/lang/String;)V", 1);
+	R_do_MAKE_CLASS_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_do_MAKE_CLASS", "(Ljava/lang/String;)Ljava/lang/Object;", 1);
 	R_FindNamespaceMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_FindNamespace", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_GetOption1MethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_GetOption1", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_gsetVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_gsetVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
@@ -141,6 +144,7 @@ void init_internals(JNIEnv *env) {
 	PRINTNAME_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "PRINTNAME", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	CAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CAR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	CDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	CDDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CDDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	SET_TAG_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_TAG", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	SETCAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCAR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	SETCDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCDR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
@@ -774,8 +778,10 @@ SEXP CADR(SEXP e) {
 }
 
 SEXP CDDR(SEXP e) {
-    unimplemented("CDDR");
-    return NULL;
+    TRACE(TARG1, e);
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CDDR_MethodID, e);
+    return checkRef(thisenv, result);
 }
 
 SEXP CDDDR(SEXP e) {
@@ -1279,9 +1285,19 @@ const char *R_CHAR(SEXP charsxp) {
 	return copyChars;
 }
 
-void *(R_DATAPTR)(SEXP x) {
-    unimplemented("R_DATAPTR");
-	return NULL;
+void *DATAPTR(SEXP x) {
+	int type = TYPEOF(x);
+	if (type == INTSXP) {
+		return INTEGER(x);
+	} else if (type == REALSXP) {
+		return REAL(x);
+	} else if (type == LGLSXP) {
+		return LOGICAL(x);
+	} else {
+		printf("DATAPTR %d\n", type);
+		unimplemented("R_DATAPTR");
+		return NULL;
+	}
 }
 
 void R_qsort_I  (double *v, int *II, int i, int j) {
@@ -1422,7 +1438,9 @@ int R_has_slot(SEXP obj, SEXP name) {
 }
 
 SEXP R_do_MAKE_CLASS(const char *what) {
-	return unimplemented("R_do_MAKE_CLASS");
+	JNIEnv *thisenv = getEnv();
+	jstring string = (*thisenv)->NewStringUTF(thisenv, what);
+	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_do_MAKE_CLASS_MethodID, string);
 }
 
 SEXP R_getClassDef (const char *what) {
