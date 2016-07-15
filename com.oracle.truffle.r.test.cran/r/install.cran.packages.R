@@ -541,7 +541,6 @@ do.it <- function() {
 				if (dry.run) {
 					cat("would test:", pkgname, "\n")
 				} else {
-
 					cat("BEGIN testing:", pkgname, "(", test.count, "of", test.total, ")", "\n")
 					test.package(pkgname)
 					cat("END testing:", pkgname, "\n")
@@ -662,6 +661,8 @@ parse.args <- function() {
 		} else if (a == "-V") {
 			verbose <<- T
 			very.verbose <<- T
+		} else if (a == "--quiet") {
+			quiet <<- T
 		} else if (a == "--no-install" || a == "-n") {
 			install <<- F
 		} else if (a == "--dryrun" || a == "--dry-run") {
@@ -732,6 +733,11 @@ parse.args <- function() {
 	if (is.na(pkg.pattern) && is.na(pkg.filelistfile)) {
 	    pkg.pattern <<- "^.*"
 	}
+	# list.versions is just that
+    if (list.versions) {
+		install <<- F
+		run.tests <<- F
+	}
 }
 
 cat.args <- function() {
@@ -800,6 +806,7 @@ run <- function() {
     do.it()
 }
 
+quiet <- F
 cran.mirror <- NA
 contriburl <- NA
 blacklist.file <- NA
