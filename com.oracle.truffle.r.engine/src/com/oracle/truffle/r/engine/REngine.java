@@ -544,13 +544,10 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     @TruffleBoundary
-    public void printResult(Object result) {
-        // this supports printing of non-R values (via toString for now)
-        if (result == null || result instanceof TruffleObject && !(result instanceof RTypedValue)) {
-            RContext.getInstance().getConsoleHandler().println(toString(result));
-        } else if (result instanceof CharSequence && !(result instanceof String)) {
-            RContext.getInstance().getConsoleHandler().println(toString(result));
-        } else {
+    public void printResult(Object originalResult) {
+        Object result = evaluatePromise(originalResult);
+        result = RRuntime.asAbstractVector(result);
+        if (result instanceof RTypedValue) {
             Object resultValue = evaluatePromise(result);
             Object printMethod = REnvironment.globalEnv().findFunction("print");
             RFunction function = (RFunction) evaluatePromise(printMethod);
@@ -562,19 +559,27 @@ final class REngine implements Engine, Engine.Timings {
             if (resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                 ((RShareable) resultValue).decRefCount();
             }
+        } else {
+            // this supports printing of non-R values (via toString for now)
+            RContext.getInstance().getConsoleHandler().println(toString(result));
         }
     }
 
-    @Override
-    public String toString(Object result) {
+    private static String toString(Object originalResult) {
+        Object result = evaluatePromise(originalResult);
+        result = RRuntime.asAbstractVector(result);
         // this supports printing of non-R values (via toString for now)
-        if (result == null || (result instanceof TruffleObject && !(result instanceof RTypedValue))) {
-            return "foreign()";
-        } else if (result instanceof CharSequence && !(result instanceof String)) {
+        if (result instanceof RTypedValue) {
+            return PrettyPrinterNode.prettyPrintDefault(result);
+        } else if (result == null) {
+            return "[external object (null)]";
+        } else if (result instanceof TruffleObject) {
+            assert !(result instanceof RTypedValue);
+            return "[external object]";
+        } else if (result instanceof CharSequence) {
             return "[1] \"" + String.valueOf(result) + "\"";
         } else {
-            Object resultValue = evaluatePromise(result);
-            return PrettyPrinterNode.prettyPrintDefault(resultValue);
+            return String.valueOf(result);
         }
     }
 
