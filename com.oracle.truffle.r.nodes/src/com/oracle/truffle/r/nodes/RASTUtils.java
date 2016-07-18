@@ -47,6 +47,8 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -105,6 +107,11 @@ public class RASTUtils {
             result[i] = nodes[i] == null ? null : nodes[i].asRSyntaxNode();
         }
         return result;
+    }
+
+    public static boolean isLookup(RBaseNode node, String identifier) {
+        RSyntaxNode element = node.asRSyntaxNode();
+        return element instanceof RSyntaxLookup && identifier.equals(((RSyntaxLookup) element).getIdentifier());
     }
 
     /**

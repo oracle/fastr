@@ -28,7 +28,13 @@ public enum RDispatch {
     MATH_GROUP_GENERIC("Math"),
     OPS_GROUP_GENERIC("Ops"),
     SUMMARY_GROUP_GENERIC("Summary"),
-    COMPLEX_GROUP_GENERIC("Complex");
+    COMPLEX_GROUP_GENERIC("Complex"),
+    /**
+     * The "special" dispatch type is (at the logical level) the same as the default dispatch, but
+     * it allows the node to take full control of its arguments (no wrapping in promises will take
+     * place). This is only useful in special cases for basic language constructs like "missing".
+     */
+    SPECIAL(null);
 
     private final String groupGenericName;
 

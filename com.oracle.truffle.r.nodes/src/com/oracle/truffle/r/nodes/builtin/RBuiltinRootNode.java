@@ -29,7 +29,10 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
+import com.oracle.truffle.r.runtime.RDispatch;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -62,6 +65,10 @@ public final class RBuiltinRootNode extends RRootNode {
         verifyEnclosingAssumptions(frame);
         Object result = null;
         try {
+            if (builtin == null) {
+                assert factory.getDispatch() == RDispatch.SPECIAL : "null builtin node only allowed for SPECIAL dispatch";
+                throw RError.error(RError.SHOW_CALLER, Message.INVALID_USE, factory.getName());
+            }
             result = builtin.execute(frame);
         } catch (NullPointerException | ArrayIndexOutOfBoundsException | AssertionError e) {
             CompilerDirectives.transferToInterpreter();
