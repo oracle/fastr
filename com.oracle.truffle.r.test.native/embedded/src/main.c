@@ -70,6 +70,7 @@ void testR_CleanUp(SA_TYPE x, int y, int z) {
 
 void testR_Suicide(const char *msg) {
 	printf("testR_Suicide: %s\n",msg);
+	(ptr_stdR_Suicide(msg));
 }
 
 int  testR_ReadConsole(const char *prompt, unsigned char *buf, int len, int h) {
@@ -101,6 +102,7 @@ int main(int argc, char **argv) {
 	R_SetParams(Rp);
 	ptr_stdR_CleanUp = ptr_R_CleanUp;
 	ptr_R_CleanUp = &testR_CleanUp;
+	ptr_stdR_Suicide = ptr_R_Suicide;
 	ptr_R_Suicide = &testR_Suicide;
 	ptr_R_ReadConsole = &testR_ReadConsole;
 	ptr_R_WriteConsole = &testR_WriteConsole;
