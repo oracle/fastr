@@ -68,6 +68,7 @@ def pkgtest(args):
             self.mode = None
             self.start_install_pattern = re.compile(r"^BEGIN processing: (?P<package>[a-zA-Z0-9\.\-]+) .*")
             self.test_pattern = re.compile(r"^(?P<status>BEGIN|END) testing: (?P<package>[a-zA-Z0-9\.\-]+) .*")
+            self.time_pattern = re.compile(r"^TEST_TIME: (?P<package>[a-zA-Z0-9\.\-]+) (?P<time>[0-9\.\-]+) .*")
             self.status_pattern = re.compile(r"^(?P<package>[a-zA-Z0-9\.\-]+): (?P<status>OK|FAILED).*")
             self.install_data = dict()
             self.install_status = dict()
@@ -107,7 +108,13 @@ def pkgtest(args):
                     pkg_name = test_match.group(2)
                     if begin_end == "END":
                         _get_test_outputs('fastr', pkg_name, self.test_info)
-
+                else:
+                    time_match = re.match(self.time_pattern, data)
+                    if time_match:
+                        pkg_name = time_match.group(1)
+                        test_time = time_match.group(2)
+                        with open(join('test', pkg_name, 'test_time'), 'w') as f:
+                            f.write(test_time)
     env = os.environ.copy()
     env["TMPDIR"] = install_tmp
     env['R_LIBS_USER'] = libinstall

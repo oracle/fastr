@@ -613,6 +613,7 @@ test.package <- function(pkgname) {
 	testdir.path <- testdir
 	check.create.dir(testdir.path)
 	check.create.dir(file.path(testdir.path, pkgname))
+	start.time <- proc.time()[[3]]
 	if (run.mode == "system") {
 		system.test(pkgname)
 	} else if (run.mode == "internal") {
@@ -620,6 +621,8 @@ test.package <- function(pkgname) {
 	} else if (run.mode == "context") {
 		stop("context run-mode not implemented\n")
 	}
+	end.time <- proc.time()[[3]]
+	cat("TEST_TIME:", pkgname, end.time - start.time, "\n")
 }
 
 is.fastr <- function() {
