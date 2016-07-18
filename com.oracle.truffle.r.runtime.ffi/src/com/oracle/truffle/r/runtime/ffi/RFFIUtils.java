@@ -26,8 +26,11 @@ import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Path;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -58,7 +61,7 @@ public class RFFIUtils {
      * In embedded mode can't trust that cwd is writeable, so output placed in /tmp. Also, tag with
      * time in event of multiple concurrent instances (which happens with RStudio).
      */
-    private static final String tracePathPrefix = "/tmp/fastr_trace_nativecalls.log-";
+    private static final String TRACEFILE = "fastr_trace_nativecalls.log";
     private static FileOutputStream traceFileStream;
     private static PrintStream traceStream;
 
@@ -68,9 +71,9 @@ public class RFFIUtils {
             if (traceEnabled) {
                 if (RContext.isEmbedded()) {
                     if (traceStream == null) {
-                        String tracePath = tracePathPrefix + Long.toString(System.currentTimeMillis());
+                        Path tracePath = Utils.getLogPath(TRACEFILE);
                         try {
-                            traceFileStream = new FileOutputStream(tracePath);
+                            traceFileStream = new FileOutputStream(tracePath.toString());
                             traceStream = new PrintStream(traceFileStream);
                         } catch (IOException ex) {
                             System.err.println(ex.getMessage());

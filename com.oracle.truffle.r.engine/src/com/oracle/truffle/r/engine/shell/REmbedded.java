@@ -114,9 +114,12 @@ public class REmbedded {
         runRmainloop(vm);
     }
 
+    /**
+     * Upcalled from embedded mode to commit suicide.
+     */
     @SuppressWarnings("unused")
     private static void R_Suicide(String msg) {
-        // TODO implement
+        Utils.exit(2);
     }
 
 }
