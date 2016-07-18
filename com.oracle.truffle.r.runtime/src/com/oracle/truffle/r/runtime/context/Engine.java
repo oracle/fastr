@@ -195,8 +195,6 @@ public interface Engine {
      */
     void printResult(Object value);
 
-    String toString(Object value);
-
     /**
      * This function a special fast path to create functions from code directly, without executing
      * the intermediate "function" expression.
