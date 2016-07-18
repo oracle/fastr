@@ -131,44 +131,47 @@ jmp_buf *getErrorJmpBuf() {
 }
 
 void releaseCopiedVector(JNIEnv *env, CopiedVector cv) {
-    if (cv.obj != NULL) {
-	switch (cv.type) {
-        case INTSXP: {
-	        jintArray intArray = (jintArray) cv.jArray;
-	        (*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
-	        break;
-        }
+	if (cv.obj != NULL) {
+#if TRACE_COPIES
+	fprintf(traceFile, "releaseCopiedVector(%p)\n", cv.obj);
+#endif
+		switch (cv.type) {
+		case INTSXP: {
+			jintArray intArray = (jintArray) cv.jArray;
+			(*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
+			break;
+		}
 
-        case LGLSXP: {
-        	// for LOGICAL, we need to convert back to 1-byte elements
-	        jintArray byteArray = (jbyteArray) cv.jArray;
-    	    int len = (*env)->GetArrayLength(env, byteArray);
-    	    jbyte* internalData = (*env)->GetByteArrayElements(env, byteArray, NULL);
-    	    int* data = (int*) cv.data;
-    	    for (int i = 0; i < len; i++) {
-    	    	internalData[i] = data[i] == NA_INTEGER ? 255 : (jbyte) data[i];
-    	    }
-    	    (*env)->ReleaseByteArrayElements(env, byteArray, internalData, 0);
-	        break;
-        }
+		case LGLSXP: {
+			// for LOGICAL, we need to convert back to 1-byte elements
+			jintArray byteArray = (jbyteArray) cv.jArray;
+			int len = (*env)->GetArrayLength(env, byteArray);
+			jbyte* internalData = (*env)->GetByteArrayElements(env, byteArray, NULL);
+			int* data = (int*) cv.data;
+			for (int i = 0; i < len; i++) {
+				internalData[i] = data[i] == NA_INTEGER ? 255 : (jbyte) data[i];
+			}
+			(*env)->ReleaseByteArrayElements(env, byteArray, internalData, 0);
+			break;
+		}
 
-	    case REALSXP: {
-		    jdoubleArray doubleArray = (jdoubleArray) cv.jArray;
-		    (*env)->ReleaseDoubleArrayElements(env, doubleArray, (jdouble *)cv.data, 0);
-		    break;
+		case REALSXP: {
+			jdoubleArray doubleArray = (jdoubleArray) cv.jArray;
+			(*env)->ReleaseDoubleArrayElements(env, doubleArray, (jdouble *)cv.data, 0);
+			break;
 
-	    }
+		}
 
-	    case RAWSXP: {
-		    jbyteArray byteArray = (jbyteArray) cv.jArray;
-		    (*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, 0);
-		    break;
+		case RAWSXP: {
+			jbyteArray byteArray = (jbyteArray) cv.jArray;
+			(*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, 0);
+			break;
 
-	    }
-	    default:
-		fatalError("copiedVector type");
+		}
+		default:
+			fatalError("copiedVector type");
+		}
 	}
-    }
 }
 
 void callExit(JNIEnv *env) {
