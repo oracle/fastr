@@ -71,20 +71,24 @@ public class RFFIUtils {
             if (traceEnabled) {
                 if (RContext.isEmbedded()) {
                     if (traceStream == null) {
-                        Path tracePath = Utils.getLogPath(TRACEFILE);
-                        try {
-                            traceFileStream = new FileOutputStream(tracePath.toString());
-                            traceStream = new PrintStream(traceFileStream);
-                        } catch (IOException ex) {
-                            System.err.println(ex.getMessage());
-                            System.exit(1);
-                        }
+                        initTraceStream();
                     }
                 } else {
                     traceStream = System.out;
                 }
             }
             initialized = true;
+        }
+    }
+
+    private static void initTraceStream() {
+        Path tracePath = Utils.getLogPath(TRACEFILE);
+        try {
+            traceFileStream = new FileOutputStream(tracePath.toString());
+            traceStream = new PrintStream(traceFileStream);
+        } catch (IOException ex) {
+            System.err.println(ex.getMessage());
+            System.exit(1);
         }
     }
 
@@ -95,6 +99,10 @@ public class RFFIUtils {
     @SuppressWarnings("unused")
     private static FileDescriptor getTraceFileDescriptor() {
         try {
+            if (traceStream == null) {
+                // Happens if native has tracing enabled and Java does not
+                initTraceStream();
+            }
             return traceFileStream.getFD();
         } catch (IOException ex) {
             System.err.println(ex.getMessage());

@@ -86,7 +86,7 @@ extern jclass RRuntimeClass;
 extern FILE *traceFile;
 
 // tracing/debugging support, set to 1 and recompile to enable
-#define TRACE_UPCALLS 1    // trace upcalls
+#define TRACE_UPCALLS 0    // trace upcalls
 #define TRACE_REF_CACHE 0  // trace JNI reference cache
 #define TRACE_COPIES 0     // trace copying of internal arrays
 #define TRACE_ENABLED TRACE_UPCALLS || TRACE_REF_CACHE || TRACE_COPIES
