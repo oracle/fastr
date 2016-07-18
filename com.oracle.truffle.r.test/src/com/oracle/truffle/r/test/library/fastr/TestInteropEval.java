@@ -30,6 +30,10 @@ public class TestInteropEval extends TestBase {
 
     @Test
     public void testInteropEval() {
-        assertEvalFastR("{ .fastr.interop.eval('application/x-r', '14 + 2') }", "16");
+        assertEvalFastR(".fastr.interop.eval('application/x-r', '14 + 2')", "16");
+        assertEvalFastR(".fastr.interop.eval('application/x-r', '1')", "1");
+        assertEvalFastR(".fastr.interop.eval('application/x-r', '1L')", "1L");
+        assertEvalFastR(".fastr.interop.eval('application/x-r', 'TRUE')", "TRUE");
+        assertEvalFastR(".fastr.interop.eval('application/x-r', 'as.character(123)')", "as.character(123)");
     }
 }

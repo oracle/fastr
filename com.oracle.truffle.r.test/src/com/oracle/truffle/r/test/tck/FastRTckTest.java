@@ -83,7 +83,7 @@ public class FastRTckTest extends TruffleTCK {
         ".fastr.interop.export('countUpWhile', countUpWhile)\n" +
         "complexSumReal <- function(a) {\n" +
         " sum <- 0\n" +
-        " for (i in 0:(length(a)-1)) {\n" +
+        " for (i in 1:length(a)) {\n" +
         "   sum <- sum + a[i]$real\n" +
         " }\n" +
         " return(sum)\n" +
