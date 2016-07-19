@@ -130,8 +130,8 @@ def _graal_options(nocompile=False):
     else:
         return []
 
-def _get_ldpaths(lib_env_name):
-    ldpaths = os.path.join(os.environ['R_HOME'], 'etc', 'ldpaths')
+def _get_ldpaths(env, lib_env_name):
+    ldpaths = os.path.join(env['R_HOME'], 'etc', 'ldpaths')
     command = ['bash', '-c', 'source ' + ldpaths + ' && env']
 
     try:
@@ -168,7 +168,7 @@ def setREnvironment(env=None):
         if lib_env in env:
             lib_value = env[lib_env]
         else:
-            lib_value = _get_ldpaths(lib_env)
+            lib_value = _get_ldpaths(env, lib_env)
 
         env[lib_env] = lib_value
 

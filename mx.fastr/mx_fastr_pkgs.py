@@ -26,6 +26,8 @@ import shutil, os, re
 import mx
 import mx_fastr
 
+quiet = False
+
 def _mx_gnur():
     return mx.suite('gnur')
 
@@ -44,13 +46,17 @@ def _create_libinstall(s):
     return libinstall, install_tmp
 
 def _log_step(state, step, rvariant):
-    print "{0} {1} with {2}".format(state, step, rvariant)
+    if not quiet:
+        print "{0} {1} with {2}".format(state, step, rvariant)
 
 def pkgtest(args):
     '''used for package installation/testing'''
 
     libinstall, install_tmp = _create_libinstall(mx.suite('fastr'))
     stacktrace_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
+    if "--quiet" in args:
+        global quiet
+        quiet = True
 
     install_args = args
 
@@ -61,6 +67,7 @@ def pkgtest(args):
             self.mode = None
             self.start_install_pattern = re.compile(r"^BEGIN processing: (?P<package>[a-zA-Z0-9\.\-]+) .*")
             self.test_pattern = re.compile(r"^(?P<status>BEGIN|END) testing: (?P<package>[a-zA-Z0-9\.\-]+) .*")
+            self.time_pattern = re.compile(r"^TEST_TIME: (?P<package>[a-zA-Z0-9\.\-]+) (?P<time>[0-9\.\-]+) .*")
             self.status_pattern = re.compile(r"^(?P<package>[a-zA-Z0-9\.\-]+): (?P<status>OK|FAILED).*")
             self.install_data = dict()
             self.install_status = dict()
@@ -100,7 +107,13 @@ def pkgtest(args):
                     pkg_name = test_match.group(2)
                     if begin_end == "END":
                         _get_test_outputs('fastr', pkg_name, self.test_info)
-
+                else:
+                    time_match = re.match(self.time_pattern, data)
+                    if time_match:
+                        pkg_name = time_match.group(1)
+                        test_time = time_match.group(2)
+                        with open(join('test', pkg_name, 'test_time'), 'w') as f:
+                            f.write(test_time)
     env = os.environ.copy()
     env["TMPDIR"] = install_tmp
     env['R_LIBS_USER'] = libinstall
@@ -109,14 +122,19 @@ def pkgtest(args):
     #_install_vignette_support('FastR', env)
 
     out = OutputCapture()
-    # install and (optionally) test the packages
-    if not '--install-only' in install_args:
+    # install and test the packages, unless just listing versions
+    if not '--list-versions' in install_args:
         install_args += ['--run-tests']
         if not '--print-install-status' in install_args:
             install_args += ['--print-install-status']
 
     _log_step('BEGIN', 'install/test', 'FastR')
-    rc = mx_fastr._installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
+    # Currently installpkgs does not set a return code (in install.cran.packages.R)
+    mx_fastr._installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
+    rc = 0
+    for status in out.install_status.itervalues():
+        if not status:
+            rc = 1
     _log_step('END', 'install/test', 'FastR')
     if '--run-tests' in install_args:
         # in order to compare the test output with GnuR we have to install/test the same
@@ -126,6 +144,8 @@ def pkgtest(args):
         _set_test_status(out.test_info)
         print 'Test Status'
         for pkg, test_status in out.test_info.iteritems():
+            if test_status.status != "OK":
+                rc = 1
             print '{0}: {1}'.format(pkg, test_status.status)
 
     shutil.rmtree(install_tmp, ignore_errors=True)
