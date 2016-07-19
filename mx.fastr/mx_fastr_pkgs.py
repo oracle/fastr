@@ -46,7 +46,6 @@ def _create_libinstall(s):
     return libinstall, install_tmp
 
 def _log_step(state, step, rvariant):
-    global quiet
     if not quiet:
         print "{0} {1} with {2}".format(state, step, rvariant)
 
