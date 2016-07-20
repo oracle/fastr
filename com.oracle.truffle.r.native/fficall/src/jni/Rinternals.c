@@ -75,10 +75,10 @@ static jmethodID SYMVALUE_MethodID;
 static jmethodID SET_SYMVALUE_MethodID;
 static jmethodID SET_STRING_ELT_MethodID;
 static jmethodID SET_VECTOR_ELT_MethodID;
-static jmethodID RAW_MethodID;
-static jmethodID INTEGER_MethodID;
-static jmethodID REAL_MethodID;
-static jmethodID LOGICAL_MethodID;
+jmethodID RAW_MethodID;
+jmethodID INTEGER_MethodID;
+jmethodID REAL_MethodID;
+jmethodID LOGICAL_MethodID;
 static jmethodID STRING_ELT_MethodID;
 static jmethodID VECTOR_ELT_MethodID;
 static jmethodID LENGTH_MethodID;
@@ -526,24 +526,25 @@ int Rf_nrows(SEXP x) {
 
 
 SEXP Rf_protect(SEXP x) {
+	TRACE(TARGp, x);
 	return x;
 }
 
 void Rf_unprotect(int x) {
-	// TODO perhaps we can use this
+	TRACE(TARGp, x);
 }
 
 void R_ProtectWithIndex(SEXP x, PROTECT_INDEX *y) {
-
+	TRACE(TARGpd, x,y);
 }
 
 void R_Reprotect(SEXP x, PROTECT_INDEX y) {
-
+	TRACE(TARGpd, x,y);
 }
 
 
 void Rf_unprotect_ptr(SEXP x) {
-	// TODO perhaps we can use this
+	TRACE(TARGp, x);
 }
 
 #define BUFSIZE 8192
@@ -1101,58 +1102,28 @@ int SETLEVELS(SEXP x, int v){
 int *LOGICAL(SEXP x){
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	jint *data = (jint *) findCopiedObject(thisenv, x);
-	if (data == NULL) {
-	    jbyteArray byteArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, LOGICAL_MethodID, x);
-	    int len = (*thisenv)->GetArrayLength(thisenv, byteArray);
-	    jbyte* internalData = (*thisenv)->GetByteArrayElements(thisenv, byteArray, NULL);
-	    data = malloc(len * sizeof(int));
-	    for (int i = 0; i < len; i++) {
-	    	char value = internalData[i];
-	    	data[i] = value == 0 ? FALSE : value == 1 ? TRUE : NA_INTEGER;
-	    }
-	    (*thisenv)->ReleaseByteArrayElements(thisenv, byteArray, internalData, JNI_ABORT);
-	    addCopiedObject(thisenv, x, LGLSXP, byteArray, data);
-	}
+	jint *data = (jint *) getNativeArray(thisenv, x, LGLSXP);
 	return data;
 }
 
 int *INTEGER(SEXP x){
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	jint *data = (jint *) findCopiedObject(thisenv, x);
-	if (data == NULL) {
-	    jintArray intArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, INTEGER_MethodID, x);
-	    int len = (*thisenv)->GetArrayLength(thisenv, intArray);
-	    data = (*thisenv)->GetIntArrayElements(thisenv, intArray, NULL);
-	    addCopiedObject(thisenv, x, INTSXP, intArray, data);
-	}
+	jint *data = (jint *) getNativeArray(thisenv, x, INTSXP);
 	return data;
 }
 
 
 Rbyte *RAW(SEXP x){
 	JNIEnv *thisenv = getEnv();
-	jbyte *data = (jbyte *) findCopiedObject(thisenv, x);
-	if (data == NULL) {
-	    jbyteArray byteArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, RAW_MethodID, x);
-	    int len = (*thisenv)->GetArrayLength(thisenv, byteArray);
-	    data = (*thisenv)->GetByteArrayElements(thisenv, byteArray, NULL);
-        addCopiedObject(thisenv, x, RAWSXP, byteArray, data);
-    }
-	return (Rbyte*) data;
+	Rbyte *data = (Rbyte*) getNativeArray(thisenv, x, RAWSXP);
+	return data;
 }
 
 
 double *REAL(SEXP x){
     JNIEnv *thisenv = getEnv();
-    jdouble *data = (jdouble *) findCopiedObject(thisenv, x);
-    if (data == NULL) {
-	jdoubleArray doubleArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, REAL_MethodID, x);
-	int len = (*thisenv)->GetArrayLength(thisenv, doubleArray);
-	data = (*thisenv)->GetDoubleArrayElements(thisenv, doubleArray, NULL);
-	addCopiedObject(thisenv, x, REALSXP, doubleArray, data);
-    }
+    jdouble *data = (jdouble *) getNativeArray(thisenv, x, REALSXP);
     return data;
 }
 

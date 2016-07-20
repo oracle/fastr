@@ -62,11 +62,12 @@ void allocExit();
 
 jmp_buf *getErrorJmpBuf();
 
-// find an object for which we have cached the internal rep
-void *findCopiedObject(JNIEnv *env, SEXP x);
-// add a new object to the internal rep cache
-void addCopiedObject(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, void *data);
-void invalidateCopiedObject(JNIEnv *env, SEXP oldObj);
+// Given the x denotes an R vector type, return a pointer to
+// the data as a C array
+void *getNativeArray(JNIEnv *env, SEXP x, SEXPTYPE type);
+// Rare case where an operation changes the internal
+// data and thus the old C array should be invalidated
+void invalidateNativeArray(JNIEnv *env, SEXP oldObj);
 
 void init_rmath(JNIEnv *env);
 void init_variables(JNIEnv *env, jobjectArray initialValues);
@@ -88,8 +89,8 @@ extern FILE *traceFile;
 // tracing/debugging support, set to 1 and recompile to enable
 #define TRACE_UPCALLS 0    // trace upcalls
 #define TRACE_REF_CACHE 0  // trace JNI reference cache
-#define TRACE_COPIES 0     // trace copying of internal arrays
-#define TRACE_ENABLED TRACE_UPCALLS || TRACE_REF_CACHE || TRACE_COPIES
+#define TRACE_NATIVE_ARRAYS 0     // trace generation of internal arrays
+#define TRACE_ENABLED TRACE_UPCALLS || TRACE_REF_CACHE || TRACE_NATIVE_ARRAYS
 
 #define TARGp "%s(%p)\n"
 #define TARGpp "%s(%p, %p)\n"
@@ -110,5 +111,12 @@ extern FILE *traceFile;
 
 // convert a string into a char*
 const char *stringToChars(JNIEnv *jniEnv, jstring string);
+
+extern jmethodID INTEGER_MethodID;
+extern jmethodID LOGICAL_MethodID;
+extern jmethodID REAL_MethodID;
+extern jmethodID RAW_MethodID;
+
+extern int callDepth;
 
 #endif /* RFFIUTILS_H */
