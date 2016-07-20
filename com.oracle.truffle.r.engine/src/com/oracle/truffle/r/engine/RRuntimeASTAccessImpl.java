@@ -447,7 +447,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public void setFunctionName(RootNode node, String name) {
-        ((FunctionDefinitionNode) node).setDescription(name);
+        ((FunctionDefinitionNode) node).setName(name);
     }
 
     @Override

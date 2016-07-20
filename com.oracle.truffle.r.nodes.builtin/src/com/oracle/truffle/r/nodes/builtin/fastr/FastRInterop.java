@@ -25,17 +25,23 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -44,21 +50,41 @@ public class FastRInterop {
     @RBuiltin(name = ".fastr.interop.eval", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"mimeType", "source"})
     public abstract static class Eval extends RBuiltinNode {
 
-        @Specialization
-        @TruffleBoundary
-        protected Object interopEval(Object mimeType, Object source) {
-            Source sourceObject = RSource.fromText(RRuntime.asString(source), Engine.EVAL_FUNCTION_NAME, RRuntime.asString(mimeType));
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.firstStringWithError(0, Message.INVALID_ARGUMENT, "mimeType");
+            casts.firstStringWithError(1, Message.INVALID_ARGUMENT, "source");
+        }
 
-            CallTarget callTarget;
+        protected CallTarget parse(String mimeType, String source) {
+            CompilerAsserts.neverPartOfCompilation();
 
+            Source sourceObject = RSource.fromTextInternal(source, RSource.Internal.EVAL_WRAPPER, mimeType);
             try {
-                callTarget = RContext.getInstance().getEnv().parse(sourceObject);
                 emitIO();
+                return RContext.getInstance().getEnv().parse(sourceObject);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw RError.error(this, Message.GENERIC, "Error while parsing: " + e.getMessage());
             }
+        }
 
-            return callTarget.call();
+        protected DirectCallNode createCall(String mimeType, String source) {
+            return Truffle.getRuntime().createDirectCallNode(parse(mimeType, source));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"cachedMimeType != null", "cachedMimeType.equals(mimeType)", "cachedSource != null", "cachedSource.equals(source)"})
+        protected Object evalCached(VirtualFrame frame, String mimeType, String source, //
+                        @Cached("mimeType") String cachedMimeType, //
+                        @Cached("source") String cachedSource, //
+                        @Cached("createCall(mimeType, source)") DirectCallNode call) {
+            return call.call(frame, EMPTY_OBJECT_ARRAY);
+        }
+
+        @Specialization(contains = "evalCached")
+        @TruffleBoundary
+        protected Object eval(String mimeType, String source) {
+            return parse(mimeType, source).call();
         }
 
         @SuppressWarnings("unused")

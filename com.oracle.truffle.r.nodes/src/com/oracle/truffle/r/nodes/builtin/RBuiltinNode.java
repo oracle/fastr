@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.unary.ApplyCastNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -100,13 +101,19 @@ public abstract class RBuiltinNode extends RNode {
         CompilerAsserts.neverPartOfCompilation();
 
         // Create function initialization
-        RNode[] argAccessNodes = createAccessArgumentsNodes(builtin);
-        RBuiltinNode node = builtin.getConstructor().apply(argAccessNodes.clone());
-
-        assert builtin.getKind() != RBuiltinKind.INTERNAL || node.getDefaultParameterValues().length == 0 : "INTERNAL builtins do not need default values";
-        FormalArguments formals = FormalArguments.createForBuiltin(node.getDefaultParameterValues(), builtin.getSignature());
-        for (RNode access : argAccessNodes) {
-            ((AccessArgumentNode) access).setFormals(formals);
+        RBuiltinNode node;
+        FormalArguments formals;
+        if (builtin.getDispatch() == RDispatch.SPECIAL) {
+            node = null;
+            formals = FormalArguments.createForBuiltin(EMPTY_OBJECT_ARRAY, builtin.getSignature());
+        } else {
+            RNode[] argAccessNodes = createAccessArgumentsNodes(builtin);
+            node = builtin.getConstructor().apply(argAccessNodes.clone());
+            assert builtin.getKind() != RBuiltinKind.INTERNAL || node.getDefaultParameterValues().length == 0 : "INTERNAL builtins do not need default values";
+            formals = FormalArguments.createForBuiltin(node.getDefaultParameterValues(), builtin.getSignature());
+            for (RNode access : argAccessNodes) {
+                ((AccessArgumentNode) access).setFormals(formals);
+            }
         }
 
         // Setup

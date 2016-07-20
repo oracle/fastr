@@ -60,6 +60,7 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
@@ -163,6 +164,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     private final ArgumentsSignature signature;
     @Child private ReadVariableNode lookupVarArgs;
     protected final LocalReadVariableNode explicitArgs;
+
+    private final ConditionProfile nullBuiltinProfile = ConditionProfile.createBinaryProfile();
 
     // needed for INTERNAL_GENERIC calls:
     @Child private FunctionDispatch internalDispatchCall;
@@ -270,13 +273,42 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
      * special dispatch logic.
      */
     protected boolean isDefaultDispatch(RFunction function) {
-        return (signature != null && signature.isEmpty()) || function.getRBuiltin() == null || function.getRBuiltin().getDispatch() == RDispatch.DEFAULT;
+        return (signature != null && signature.isEmpty()) || nullBuiltinProfile.profile(function.getRBuiltin() == null) || function.getRBuiltin().getDispatch() == RDispatch.DEFAULT;
     }
 
     @Specialization(guards = "isDefaultDispatch(function)")
     public Object call(VirtualFrame frame, RFunction function, //
                     @Cached("createUninitializedCall()") FunctionDispatch call) {
         return call.execute(frame, function, lookupVarArgs(frame), null, null);
+    }
+
+    protected boolean isSpecialDispatch(RFunction function) {
+        return function.getRBuiltin().getDispatch() == RDispatch.SPECIAL;
+    }
+
+    protected RBuiltinNode createSpecial(RBuiltinDescriptor builtin) {
+        RNode[] nodes = new RNode[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            nodes[i] = arguments[i] == null ? null : RASTUtils.cloneNode(arguments[i].asRNode());
+        }
+        return ((RBuiltinFactory) builtin).getConstructor().apply(nodes);
+    }
+
+    @Specialization(limit = "5", guards = {"isSpecialDispatch(function)", "cachedBuiltin == function.getRBuiltin()"})
+    public Object callSpecial(VirtualFrame frame, @SuppressWarnings("unused") RFunction function, //
+                    @Cached("function.getRBuiltin()") RBuiltinDescriptor cachedBuiltin, //
+                    @Cached("createSpecial(cachedBuiltin)") RBuiltinNode call) {
+        if (explicitArgs != null) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.error(this, RError.Message.INVALID_USE, cachedBuiltin.getName());
+        }
+        RContext.getInstance().setVisible(cachedBuiltin.getVisibility());
+        return call.execute(frame);
+    }
+
+    @Specialization(contains = "callSpecial", guards = "isSpecialDispatch(function)")
+    public Object callSpecialFallback(@SuppressWarnings("unused") RFunction function) {
+        throw RInternalError.shouldNotReachHere("too much polymorphism in SPECIAL dispatch");
     }
 
     protected RNode createDispatchArgument(int index) {
@@ -520,7 +552,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             this.arguments = arguments;
         }
 
-        @SuppressWarnings("deprecation")
         public Object execute(VirtualFrame frame, TruffleObject function) {
             Object[] argumentsArray = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getArguments() : arguments.evaluateFlattenObjects(frame, lookupVarArgs(frame));
             if (foreignCall == null || foreignCallArgCount != argumentsArray.length) {
@@ -529,7 +560,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 foreignCallArgCount = argumentsArray.length;
             }
             try {
-                Object result = ForeignAccess.execute(foreignCall, frame, function, argumentsArray);
+                Object result = ForeignAccess.sendExecute(foreignCall, frame, function, argumentsArray);
                 if (result instanceof Boolean) {
                     // convert to R logical
                     // TODO byte/short convert to int?

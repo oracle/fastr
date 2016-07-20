@@ -676,7 +676,10 @@ public final class RError extends RuntimeException {
         QUIT_ASK("one of \"yes\", \"no\", \"ask\" or \"default\" expected."),
         QUIT_SAVE("unrecognized value of 'save'"),
         ENVIRONMENTS_COERCE("environments cannot be coerced to other types"),
-        CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'");
+        CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'"),
+        ROWSUM_NAMES_NOT_CHAR("row names are not character"),
+        ROWSUM_NON_NUMERIC("non-numeric matrix in rowsum(): this should not happen"),
+        ARGUMENTS_REQUIRED_COUNT("%d arguments to '%s' which requires %d");
 
         public final String message;
         final boolean hasArgs;

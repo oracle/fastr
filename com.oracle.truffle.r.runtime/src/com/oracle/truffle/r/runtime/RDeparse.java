@@ -342,7 +342,7 @@ public class RDeparse {
         }
 
         public void fixupSources() {
-            Source source = RSource.fromText(sb.toString(), "deparse");
+            Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);
             for (SourceSectionElement s : sources) {
                 s.element.setSourceSection(source.createSection(null, s.start, s.length));
             }
@@ -577,7 +577,7 @@ public class RDeparse {
                 // coerce scalar values to vectors and unwrap data frames and factors:
                 Object value = RRuntime.asAbstractVector(constant.getValue());
 
-                if (constants != null && !(value instanceof RAbstractVector)) {
+                if (constants != null && !(value instanceof RAbstractVector || value instanceof RNull)) {
                     String name = "C.." + constants.size();
                     constants.put(name, value);
                     append(name);

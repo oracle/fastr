@@ -45,7 +45,7 @@ public class TestBase {
     }
 
     // clear out warnings (which are stored in shared base env)
-    private static final Source CLEAR_WARNINGS = RSource.fromText("assign('last.warning', NULL, envir = baseenv())", "<clear_warnings>");
+    private static final Source CLEAR_WARNINGS = RSource.fromTextInternal("assign('last.warning', NULL, envir = baseenv())", RSource.Internal.CLEAR_WARNINGS);
 
     @AfterClass
     public static void finishClass() throws IOException {

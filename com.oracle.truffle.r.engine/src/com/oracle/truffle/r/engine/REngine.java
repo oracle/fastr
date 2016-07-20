@@ -64,7 +64,6 @@ import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -209,7 +208,7 @@ final class REngine implements Engine, Engine.Timings {
             }
             // Should this print the result?
             try {
-                parseAndEval(RSource.fromText(call, RInternalSourceDescriptions.STARTUP_SHUTDOWN), globalFrame, false);
+                parseAndEval(RSource.fromTextInternal(call, RSource.Internal.STARTUP_SHUTDOWN), globalFrame, false);
             } catch (ParseException e) {
                 throw new RInternalError(e, "error while parsing startup function");
             }
@@ -242,7 +241,7 @@ final class REngine implements Engine, Engine.Timings {
         try {
             Object lastValue = RNull.instance;
             for (RSyntaxNode node : list) {
-                RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RInternalSourceDescriptions.REPL_WRAPPER, printResult, true);
+                RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, printResult, true);
                 lastValue = callTarget.call(frame);
             }
             return lastValue;
@@ -300,7 +299,7 @@ final class REngine implements Engine, Engine.Timings {
         @SuppressWarnings("unchecked") @Child private FindContextNode<RContext> findContext = (FindContextNode<RContext>) TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         PolyglotEngineRootNode(List<RSyntaxNode> statements) {
-            super(TruffleRLanguage.class, SourceSection.createUnavailable("repl", RInternalSourceDescriptions.REPL_WRAPPER), new FrameDescriptor());
+            super(TruffleRLanguage.class, SourceSection.createUnavailable("repl", RSource.Internal.REPL_WRAPPER.string), new FrameDescriptor());
             this.statements = statements;
         }
 
@@ -317,7 +316,7 @@ final class REngine implements Engine, Engine.Timings {
             try {
                 Object lastValue = RNull.instance;
                 for (RSyntaxNode node : statements) {
-                    RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RInternalSourceDescriptions.REPL_WRAPPER, true, true);
+                    RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, true, true);
                     lastValue = callTarget.call(newContext.stateREnvironment.getGlobalFrame());
                 }
                 return lastValue;
@@ -376,7 +375,7 @@ final class REngine implements Engine, Engine.Timings {
         if (n instanceof ConstantNode) {
             return ((ConstantNode) n).getValue();
         }
-        RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME, false, false);
+        RootCallTarget callTarget = doMakeCallTarget(n, RSource.Internal.EVAL_WRAPPER.string, false, false);
         return callTarget.call(frame);
     }
 
@@ -402,7 +401,7 @@ final class REngine implements Engine, Engine.Timings {
         // we need to copy the node, otherwise it (and its children) will specialized to a specific
         // frame descriptor and will fail on subsequent re-executions
         RSyntaxNode n = RContext.getASTBuilder().process(exprRep);
-        RootCallTarget callTarget = doMakeCallTarget(n.asRNode(), EVAL_FUNCTION_NAME, false, false);
+        RootCallTarget callTarget = doMakeCallTarget(n.asRNode(), RSource.Internal.EVAL_WRAPPER.string, false, false);
         return evalTarget(callTarget, caller, envir);
     }
 
@@ -545,13 +544,10 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     @TruffleBoundary
-    public void printResult(Object result) {
-        // this supports printing of non-R values (via toString for now)
-        if (result == null || result instanceof TruffleObject && !(result instanceof RTypedValue)) {
-            RContext.getInstance().getConsoleHandler().println(toString(result));
-        } else if (result instanceof CharSequence && !(result instanceof String)) {
-            RContext.getInstance().getConsoleHandler().println(toString(result));
-        } else {
+    public void printResult(Object originalResult) {
+        Object result = evaluatePromise(originalResult);
+        result = RRuntime.asAbstractVector(result);
+        if (result instanceof RTypedValue) {
             Object resultValue = evaluatePromise(result);
             Object printMethod = REnvironment.globalEnv().findFunction("print");
             RFunction function = (RFunction) evaluatePromise(printMethod);
@@ -563,19 +559,27 @@ final class REngine implements Engine, Engine.Timings {
             if (resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                 ((RShareable) resultValue).decRefCount();
             }
+        } else {
+            // this supports printing of non-R values (via toString for now)
+            RContext.getInstance().getConsoleHandler().println(toString(result));
         }
     }
 
-    @Override
-    public String toString(Object result) {
+    private static String toString(Object originalResult) {
+        Object result = evaluatePromise(originalResult);
+        result = RRuntime.asAbstractVector(result);
         // this supports printing of non-R values (via toString for now)
-        if (result == null || (result instanceof TruffleObject && !(result instanceof RTypedValue))) {
-            return "foreign()";
-        } else if (result instanceof CharSequence && !(result instanceof String)) {
+        if (result instanceof RTypedValue) {
+            return PrettyPrinterNode.prettyPrintDefault(result);
+        } else if (result == null) {
+            return "[external object (null)]";
+        } else if (result instanceof TruffleObject) {
+            assert !(result instanceof RTypedValue);
+            return "[external object]";
+        } else if (result instanceof CharSequence) {
             return "[1] \"" + String.valueOf(result) + "\"";
         } else {
-            Object resultValue = evaluatePromise(result);
-            return PrettyPrinterNode.prettyPrintDefault(resultValue);
+            return String.valueOf(result);
         }
     }
 

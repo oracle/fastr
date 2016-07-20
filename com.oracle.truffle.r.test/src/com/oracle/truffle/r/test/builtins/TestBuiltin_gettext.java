@@ -44,6 +44,12 @@ public class TestBuiltin_gettext extends TestBase {
 
     @Test
     public void testgettext6() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL, NULL); .Internal(gettext(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(NULL, NULL); .Internal(gettext(argv[[1]], argv[[2]]))");
+    }
+
+    @Test
+    public void testgettext() {
+        assertEval("gettext('Loading required package: %s')");
+        assertEval("gettext(domain='foo', 'bar')");
     }
 }

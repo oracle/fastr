@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -35,19 +34,34 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.MissingNodeGen.MissingCheckCacheNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.MissingFactory.MissingCheckCacheNodeGen;
 import com.oracle.truffle.r.nodes.function.GetMissingValueNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RMissingHelper;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RDispatch;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@RBuiltin(name = "missing", kind = PRIMITIVE, parameterNames = {"x"}, nonEvalArgs = 0)
-public abstract class Missing extends RBuiltinNode {
+@RBuiltin(name = "missing", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.SPECIAL)
+public final class Missing extends RBuiltinNode {
+
+    private final String symbol;
+
+    @Child private MissingCheckCache cache;
+
+    private Missing(String symbol) {
+        this.symbol = symbol;
+        this.cache = MissingCheckCache.create(0);
+    }
 
     public abstract static class MissingCheckCache extends Node {
 
@@ -135,7 +149,7 @@ public abstract class Missing extends RBuiltinNode {
                         return true;
                     }
                 }
-                String symbol = RMissingHelper.unwrapName((RNode) promise.getRep());
+                String symbol = promise.getClosure().asSymbol();
                 if (isSymbolNullProfile.profile(symbol == null)) {
                     return false;
                 } else {
@@ -170,21 +184,30 @@ public abstract class Missing extends RBuiltinNode {
         }
     }
 
-    @Specialization
-    protected byte missing(VirtualFrame frame, RPromise promise, //
-                    @Cached("create(0)") MissingCheckCache cache, //
-                    @Cached("createBinaryProfile()") ConditionProfile isNullSymbol) {
-        String symbol = RMissingHelper.unwrapName((RNode) promise.getRep());
-        return RRuntime.asLogical(isNullSymbol.profile(symbol == null) ? false : cache.execute(frame, symbol));
+    @Override
+    public Object execute(VirtualFrame frame, Object... args) {
+        throw RInternalError.shouldNotReachHere();
     }
 
-    @Specialization
-    protected byte missing(@SuppressWarnings("unused") RMissing obj) {
-        return RRuntime.LOGICAL_TRUE;
+    @Override
+    public Object execute(VirtualFrame frame) {
+        return RRuntime.asLogical(cache.execute(frame, symbol));
     }
 
-    @Fallback
-    protected byte missing(@SuppressWarnings("unused") Object obj) {
-        return RRuntime.LOGICAL_FALSE;
+    public static RBuiltinNode create(RNode[] arguments) {
+        if (arguments.length != 1) {
+            throw RError.error(RError.SHOW_CALLER, Message.ARGUMENTS_REQUIRED_COUNT, arguments.length, "missing", 1);
+        }
+        RSyntaxNode arg = arguments[0].asRSyntaxNode();
+        String symbol = null;
+        if (arg instanceof RSyntaxLookup) {
+            symbol = ((RSyntaxLookup) arg).getIdentifier();
+        } else if (arg instanceof RSyntaxConstant) {
+            symbol = RRuntime.asStringLengthOne(((RSyntaxConstant) arg).getValue());
+        }
+        if (symbol == null) {
+            throw RError.error(RError.SHOW_CALLER, Message.INVALID_USE, "missing");
+        }
+        return new Missing(symbol);
     }
 }

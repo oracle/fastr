@@ -57,7 +57,6 @@ public abstract class BrowserInteractNode extends RNode {
     public static final int CONTINUE = 2;
     public static final int FINISH = 3;
 
-    private static final String BROWSER_SOURCE = "<browser_input>";
     private static String lastEmptyLineCommand = "n";
 
     /**
@@ -128,7 +127,7 @@ public abstract class BrowserInteractNode extends RNode {
 
                     default:
                         try {
-                            RContext.getEngine().parseAndEval(RSource.fromText(input, BROWSER_SOURCE), mFrame, true);
+                            RContext.getEngine().parseAndEval(RSource.fromTextInternal(input, RSource.Internal.BROWSER_INPUT), mFrame, true);
                         } catch (ReturnException e) {
                             exitMode = NEXT;
                             break LW;

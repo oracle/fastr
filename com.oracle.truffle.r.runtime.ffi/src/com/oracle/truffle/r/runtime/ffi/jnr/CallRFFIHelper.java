@@ -30,7 +30,6 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RType;
@@ -231,11 +230,17 @@ public class CallRFFIHelper {
         }
     }
 
+    public static Object R_do_MAKE_CLASS(String clazz) {
+        RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(REnvironment.getRegisteredNamespace("methods").get("getClass"));
+        return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), clazz);
+    }
+
     public static Object Rf_findVar(Object symbolArg, Object envArg) {
         return findVarInFrameHelper(symbolArg, envArg, true);
     }
 
-    public static Object Rf_findVarInFrame(Object symbolArg, Object envArg) {
+    public static Object Rf_findVarInFrame(Object envArg, Object symbolArg) {
+        // important: this functions does have a different signature than findVar
         return findVarInFrameHelper(symbolArg, envArg, false);
     }
 
@@ -259,7 +264,6 @@ public class CallRFFIHelper {
             env = env.getParent();
         }
         return RUnboundValue.instance;
-
     }
 
     public static Object Rf_getAttrib(Object obj, Object name) {
@@ -589,20 +593,50 @@ public class CallRFFIHelper {
 
     public static Object CAR(Object e) {
         guaranteeInstanceOf(e, RPairList.class);
-        Object car = ((RPairList) e).car();
-        return car;
+        return ((RPairList) e).car();
     }
 
     public static Object CDR(Object e) {
-        guaranteeInstanceOf(e, RPairList.class);
-        Object cdr = ((RPairList) e).cdr();
-        return cdr;
+        if (e instanceof RLanguage) {
+            RLanguage lang = (RLanguage) e;
+            int length = RContext.getRRuntimeASTAccess().getLength(lang);
+            Object obj = RNull.instance;
+
+            // TODO: missing argument names in the tags
+            for (int i = length - 1; i >= 1; i--) {
+                Object element = RContext.getRRuntimeASTAccess().getDataAtAsObject(lang, i);
+                obj = RDataFactory.createPairList(element, obj);
+            }
+
+            return obj;
+        } else {
+            guaranteeInstanceOf(e, RPairList.class);
+            return ((RPairList) e).cdr();
+        }
+    }
+
+    public static Object CDDR(Object e) {
+        if (e instanceof RLanguage) {
+            RLanguage lang = (RLanguage) e;
+            int length = RContext.getRRuntimeASTAccess().getLength(lang);
+            Object obj = RNull.instance;
+
+            // TODO: missing argument names in the tags
+            for (int i = length - 1; i >= 2; i--) {
+                Object element = RContext.getRRuntimeASTAccess().getDataAtAsObject(lang, i);
+                obj = RDataFactory.createPairList(element, obj);
+            }
+
+            return obj;
+        } else {
+            guaranteeInstanceOf(e, RPairList.class);
+            return ((RPairList) e).cddr();
+        }
     }
 
     public static Object CADR(Object e) {
         guaranteeInstanceOf(e, RPairList.class);
-        Object cadr = ((RPairList) e).cadr();
-        return cadr;
+        return ((RPairList) e).cadr();
     }
 
     public static Object SET_TAG(Object x, Object y) {
@@ -655,7 +689,7 @@ public class CallRFFIHelper {
         guarantee(symbolObj instanceof RSymbol);
         RSymbol symbol = (RSymbol) symbolObj;
         // Works but not remotely efficient
-        Source source = RSource.fromText("get(\"" + symbol.getName() + "\", mode=\"function\")", RInternalSourceDescriptions.RF_FINDFUN);
+        Source source = RSource.fromTextInternal("get(\"" + symbol.getName() + "\", mode=\"function\")", RSource.Internal.RF_FINDFUN);
         try {
             Object result = RContext.getEngine().parseAndEval(source, env.getFrame(), false);
             return result;
