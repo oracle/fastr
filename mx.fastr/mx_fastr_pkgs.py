@@ -50,7 +50,10 @@ def _log_step(state, step, rvariant):
         print "{0} {1} with {2}".format(state, step, rvariant)
 
 def pkgtest(args):
-    '''used for package installation/testing'''
+    '''
+    Package installation/testing.
+    rc: 0 for success; 1: install fail, 2: test fail, 3: install&test fail
+    '''
 
     libinstall, install_tmp = _create_libinstall(mx.suite('fastr'))
     stacktrace_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
@@ -136,7 +139,10 @@ def pkgtest(args):
         if not status:
             rc = 1
     _log_step('END', 'install/test', 'FastR')
-    if '--run-tests' in install_args:
+
+    single_pkg = len(out.install_status) == 1
+    install_failure = single_pkg and rc == 1
+    if '--run-tests' in install_args and not install_failure:
         # in order to compare the test output with GnuR we have to install/test the same
         # set of packages with GnuR, which must be present as a sibling suite
         ok_pkgs = [k for k, v in out.install_status.iteritems() if v]
@@ -145,7 +151,7 @@ def pkgtest(args):
         print 'Test Status'
         for pkg, test_status in out.test_info.iteritems():
             if test_status.status != "OK":
-                rc = 1
+                rc = rc | 2
             print '{0}: {1}'.format(pkg, test_status.status)
 
     shutil.rmtree(install_tmp, ignore_errors=True)
