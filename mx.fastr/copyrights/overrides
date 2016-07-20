@@ -566,7 +566,6 @@ com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_reg
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_rep_len.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_rep.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_repint.java,purdue.copyright
-com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_retracemem.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_rev.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_round.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_row.java,purdue.copyright

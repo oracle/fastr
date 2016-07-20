@@ -27,12 +27,32 @@ import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 
+/**
+ * Tests tracemem and related builtins.
+ */
 public class TestBuiltin_tracemem extends TestBase {
     @Test
-    public void basicTests() {
-        // tracemem returns the hash in form of "<0x0fa0abcd>", we get rid of the "<" and ">" to
-        // match it against the output that is produced by copying 'v', which should be in the form
-        // of "tracemem[0x0fa0abcd->someotherhash]".
-        assertEval("v <- c(1,10); addr<-tracemem(v); f<-function(x) x[[1]]<-42; out<-capture.output(f(v)); addr<-sub('>','',sub('<','',addr)); grep(paste0('tracemem[', addr), out, fixed=TRUE)");
+    public void argumentErrors() {
+        assertEval("tracemem(NULL)");
+        assertEval("retracemem(NULL)");
+        assertEval("retracemem(c(1,10,100), 1:10)");
+    }
+
+    @Test
+    public void vectors() {
+        assertEval(Output.ContainsReferences, "v <- c(1,10,100); tracemem(v); x <- v; y <- v; x[[1]]<-42; y[[2]] <- 84");
+        assertEval(Output.ContainsReferences, "v <- c(1,10,100); tracemem(v); x <- v; y <- v; x[[1]]<-42; untracemem(v); y[[2]] <- 84");
+    }
+
+    @Test
+    public void list() {
+        assertEval(Output.ContainsReferences, "v <- list(1,10,100); tracemem(v); x <- v; x[[1]]<-42;");
+    }
+
+    @Test
+    public void retracemem() {
+        // intended semantics of retracemem is not clear, this tests what is definitely intended:
+        // retracemem starts tracing of its first argument
+        assertEval(Output.ContainsReferences, "v <- c(1,10,100); tracemem(v); x <- v[-1]; retracemem(x, retracemem(v)); u <- x; u[[1]] <- 42;");
     }
 }

@@ -270,6 +270,7 @@ public final class RError extends RuntimeException {
         EMPTY_WHAT("empty 'what' specified"),
         LINE_ELEMENTS("line %d did not have %d elements"),
         ITEMS_NOT_MULTIPLE("number of items read is not a multiple of the number of columns"),
+        TRACEMEM_NOT_NULL("cannot trace NULL"),
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("'%s' is not a function, character or symbol"),
         NON_CHARACTER("non-character argument"),
