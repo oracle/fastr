@@ -577,7 +577,7 @@ public class RDeparse {
                 // coerce scalar values to vectors and unwrap data frames and factors:
                 Object value = RRuntime.asAbstractVector(constant.getValue());
 
-                if (constants != null && !(value instanceof RAbstractVector)) {
+                if (constants != null && !(value instanceof RAbstractVector || value instanceof RNull)) {
                     String name = "C.." + constants.size();
                     constants.put(name, value);
                     append(name);
