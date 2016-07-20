@@ -58,3 +58,16 @@ rffi.rhome_dir <- function() {
 	.Call("rHomeDir", PACKAGE = "testrffi")
 }
 
+rffi.upcalled <- function(v) {
+	gc()
+	.Call("nestedCall2", PACKAGE = "testrffi", v)
+}
+
+rffi.nested.call1 <- function() {
+	upcall <- quote(rffi.upcalled(v))
+	v <- c(10L, 20L, 30L)
+	env <- new.env()
+	assign("v", v, env)
+	.Call("nestedCall1", PACKAGE = "testrffi", upcall, env)
+}
+
