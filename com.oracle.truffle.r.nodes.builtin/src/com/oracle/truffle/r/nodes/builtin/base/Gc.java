@@ -40,9 +40,7 @@ public abstract class Gc extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected RDoubleVector gc(RAbstractLogicalVector verbose, RAbstractLogicalVector reset) {
-        // manually triggering gc in Java is typically not a terribly good idea so we don't do it
-        // here at all
-
+        System.gc();
         // TODO: somehow produce the (semi?) correct values
         double[] data = new double[14];
         Arrays.fill(data, RRuntime.DOUBLE_NA);
