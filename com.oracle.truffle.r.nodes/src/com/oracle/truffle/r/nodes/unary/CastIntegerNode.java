@@ -22,9 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -50,6 +48,10 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     private final NAProfile naProfile = NAProfile.create();
 
+    protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
     public abstract Object executeInt(int o);
 
     public abstract Object executeInt(double o);
@@ -57,8 +59,6 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     public abstract Object executeInt(byte o);
 
     public abstract Object executeInt(Object o);
-
-    @Child private CastIntegerNode recursiveCastInteger;
 
     @Specialization
     protected RAbstractIntVector doIntVector(RAbstractIntVector operand) {
@@ -74,7 +74,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     private RIntVector createResultVector(RAbstractVector operand, int[] idata) {
         RIntVector ret = RDataFactory.createIntVector(idata, naCheck.neverSeenNA(), getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -96,7 +96,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         }
         RIntVector ret = RDataFactory.createIntVector(idata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -152,7 +152,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         }
         RIntVector ret = RDataFactory.createIntVector(idata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -190,8 +190,8 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
                     int value = (Integer) castEntry;
                     result[i] = value;
                     seenNA = seenNA || RRuntime.isNA(value);
-                } else if (castEntry instanceof RIntVector) {
-                    RIntVector intVector = (RIntVector) castEntry;
+                } else if (castEntry instanceof RAbstractIntVector) {
+                    RAbstractIntVector intVector = (RAbstractIntVector) castEntry;
                     if (intVector.getLength() == 1) {
                         int value = intVector.getDataAt(0);
                         result[i] = value;
@@ -208,7 +208,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
             }
         }
         RIntVector ret = RDataFactory.createIntVector(result, !seenNA);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(list);
         }
         return ret;
@@ -222,12 +222,6 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     protected static boolean isIntVector(Object arg) {
         return arg instanceof RIntVector;
-    }
-
-    @Fallback
-    @TruffleBoundary
-    protected int doOther(Object operand) {
-        throw new ConversionFailedException(operand.getClass().getName());
     }
 
     public static CastIntegerNode create() {

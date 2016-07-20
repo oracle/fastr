@@ -35,11 +35,10 @@ public class CastStringNodeGenSampler extends CastNodeSampler<CastStringNodeGen>
     @Override
     public TypeExpr resultTypes(TypeExpr inputType) {
         TypeExpr rt = super.resultTypes(inputType);
-        if (castNode.isEmptyVectorConvertedToNull()) {
+        if (castNode.convertEmptyVectorToNull()) {
             return rt.or(TypeExpr.union(RNull.class));
         } else {
             return rt;
         }
     }
-
 }
