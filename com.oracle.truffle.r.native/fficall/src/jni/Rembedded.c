@@ -572,3 +572,54 @@ static char **update_environ_with_java_home(void) {
 	return update_environ(java_home_env);
 }
 
+CTXT R_getGlobalFunctionContext() {
+	JNIEnv *jniEnv = getEnv();
+	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getGlobalFunctionContext", "()Ljava/lang/Object;", 1);
+    CTXT result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID);
+    result = checkRef(jniEnv, result);
+    return result == R_NilValue ? NULL : result;
+}
+
+CTXT R_getParentFunctionContext(CTXT c) {
+	JNIEnv *jniEnv = getEnv();
+	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getParentFunctionContext", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    CTXT result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID, c);
+    result = checkRef(jniEnv, result);
+    return result == R_NilValue ? NULL : result;
+}
+
+SEXP R_getContextEnv(CTXT context) {
+	JNIEnv *jniEnv = getEnv();
+	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getContextEnv", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    SEXP result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID, context);
+    return checkRef(jniEnv, result);
+}
+
+SEXP R_getContextFun(CTXT context) {
+	JNIEnv *jniEnv = getEnv();
+	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getContextFun", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    SEXP result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID, context);
+    return checkRef(jniEnv, result);
+}
+
+SEXP R_getContextCall(CTXT context) {
+    return R_NilValue;
+	JNIEnv *jniEnv = getEnv();
+	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getContextCall", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    SEXP result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID, context);
+    return checkRef(jniEnv, result);
+}
+
+SEXP R_getContextSrcRef(CTXT context) {
+    JNIEnv *jniEnv = getEnv();
+    jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getContextSrcRef", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    SEXP result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID, context);
+    result = checkRef(jniEnv, result);
+    return result == R_NilValue ? NULL : result;
+}
+
+int R_insideBrowser() {
+	JNIEnv *jniEnv = getEnv();
+	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_insideBrowser", "()I", 1);
+    return (*jniEnv)->CallStaticIntMethod(jniEnv, CallRFFIHelperClass, methodID);
+}

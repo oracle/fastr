@@ -25,9 +25,13 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
@@ -37,8 +41,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -750,9 +755,12 @@ public class CallRFFIHelper {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("CAR", e);
         }
-        guaranteeInstanceOf(e, RPairList.class);
-        Object car = ((RPairList) e).car();
-        return car;
+        guarantee(e != null && (RPairList.class.isInstance(e) || RLanguage.class.isInstance(e)), "CAR only works on pair lists and language objects");
+        if (e instanceof RPairList) {
+            return ((RPairList) e).car();
+        } else {
+            return ((RLanguage) e).getDataAtAsObject(0);
+        }
     }
 
     public static Object CDR(Object e) {
@@ -760,17 +768,19 @@ public class CallRFFIHelper {
             RFFIUtils.traceUpCall("CDR", e);
         }
         guaranteeInstanceOf(e, RPairList.class);
-        Object cdr = ((RPairList) e).cdr();
-        return cdr;
+        return ((RPairList) e).cdr();
     }
 
     public static Object CADR(Object e) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("CADR", e);
         }
-        guaranteeInstanceOf(e, RPairList.class);
-        Object cadr = ((RPairList) e).cadr();
-        return cadr;
+        guarantee(e != null && (RPairList.class.isInstance(e) || RLanguage.class.isInstance(e)), "CADR only works on pair lists and language objects");
+        if (e instanceof RPairList) {
+            return ((RPairList) e).cadr();
+        } else {
+            return ((RLanguage) e).getDataAtAsObject(1);
+        }
     }
 
     public static Object SET_TAG(Object x, Object y) {
@@ -1059,6 +1069,14 @@ public class CallRFFIHelper {
         return result;
     }
 
+    public static Object PRVALUE(Object x) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("PRVALUE", x);
+        }
+        RPromise p = guaranteeInstanceOf(x, RPromise.class);
+        return p.isEvaluated() ? p.getValue() : RUnboundValue.instance;
+    }
+
     private enum ParseStatus {
         PARSE_NULL,
         PARSE_OK,
@@ -1127,11 +1145,18 @@ public class CallRFFIHelper {
         return x;
     }
 
+    private static RCaller topLevel = RCaller.createInvalid(null);
+
     public static Object getGlobalContext() {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("getGlobalContext");
         }
-        return unimplemented("getGlobalContext");
+        Frame frame = Utils.getActualCurrentFrame();
+        if (frame == null) {
+            return topLevel;
+        }
+        RCaller rCaller = RArguments.getCall(frame);
+        return rCaller == null ? topLevel : rCaller;
     }
 
     public static Object getGlobalEnv() {
@@ -1200,4 +1225,161 @@ public class CallRFFIHelper {
         }
         return RRNG.unifRand();
     }
+
+    public static Object R_getGlobalFunctionContext() {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("getGlobalFunctionContext");
+        }
+        Frame frame = Utils.getActualCurrentFrame();
+        if (frame == null) {
+            return RNull.instance;
+        }
+        RCaller currentCaller = RArguments.getCall(frame);
+        while (currentCaller != null) {
+            if (!currentCaller.isPromise()) {
+                break;
+            }
+            currentCaller = currentCaller.getParent();
+        }
+        return currentCaller == null ? RNull.instance : currentCaller;
+    }
+
+    public static Object R_getParentFunctionContext(Object c) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("getParentFunctionContext");
+        }
+        RCaller currentCaller = guaranteeInstanceOf(c, RCaller.class);
+        while (true) {
+            currentCaller = currentCaller.getParent();
+            if (currentCaller == null || !currentCaller.isPromise()) {
+                break;
+            }
+        }
+        return currentCaller == null ? RNull.instance : currentCaller;
+    }
+
+    public static Object R_getFunctionContext(int depth) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("getFunctionContext", depth);
+        }
+        Frame frame = Utils.getActualCurrentFrame();
+        RCaller currentCaller = RArguments.getCall(frame);
+        int currentDepth = 0;
+        while (currentCaller != null) {
+            if (!currentCaller.isPromise()) {
+                currentDepth++;
+                if (currentDepth >= depth) {
+                    break;
+                }
+            }
+            currentCaller = currentCaller.getParent();
+        }
+        return currentCaller == null ? RNull.instance : currentCaller;
+    }
+
+    public static Object R_getContextEnv(Object c) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("getContextEnv", c);
+        }
+        RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
+        if (rCaller == topLevel) {
+            return RContext.getInstance().stateREnvironment.getGlobalEnv();
+        }
+        Frame frame = Utils.getActualCurrentFrame();
+        if (RArguments.getCall(frame) == rCaller) {
+            return REnvironment.frameToEnvironment(frame.materialize());
+        } else {
+            Object result = Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
+
+                @Override
+                public Object apply(Frame f) {
+                    RCaller currentCaller = RArguments.getCall(f);
+                    if (currentCaller == rCaller) {
+                        return REnvironment.frameToEnvironment(f.materialize());
+                    } else {
+                        return null;
+                    }
+                }
+            });
+            return result;
+        }
+    }
+
+    public static Object R_getContextFun(Object c) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("getContextEnv", c);
+        }
+        RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
+        if (rCaller == topLevel) {
+            return RNull.instance;
+        }
+        Frame frame = Utils.getActualCurrentFrame();
+        if (RArguments.getCall(frame) == rCaller) {
+            return RArguments.getFunction(frame);
+        } else {
+            Object result = Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
+
+                @Override
+                public Object apply(Frame f) {
+                    RCaller currentCaller = RArguments.getCall(f);
+                    if (currentCaller == rCaller) {
+                        return RArguments.getFunction(f);
+                    } else {
+                        return null;
+                    }
+                }
+            });
+            return result;
+        }
+    }
+
+    public static Object R_getContextCall(Object c) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("getContextEnv", c);
+        }
+        RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
+        if (rCaller == topLevel) {
+            return RNull.instance;
+        }
+        Frame frame = Utils.getActualCurrentFrame();
+        if (RArguments.getCall(frame) == rCaller) {
+            return RContext.getRRuntimeASTAccess().getSyntaxCaller(rCaller);
+        } else {
+            Object result = Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
+
+                @Override
+                public Object apply(Frame f) {
+                    RCaller currentCaller = RArguments.getCall(f);
+                    if (currentCaller == rCaller) {
+                        return RContext.getRRuntimeASTAccess().getSyntaxCaller(rCaller);
+                    } else {
+                        return null;
+                    }
+                }
+            });
+            return result;
+        }
+    }
+
+    public static Object R_getContextSrcRef(Object c) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("getContextSrcRef", c);
+        }
+        Object o = R_getContextFun(c);
+        if (!(o instanceof RFunction)) {
+            return RNull.instance;
+        } else {
+            RFunction f = (RFunction) o;
+            SourceSection ss = f.getRootNode().getSourceSection();
+            String path = ss.getSource().getPath();
+            return RSrcref.createLloc(ss, path);
+
+        }
+
+    }
+
+    public static int R_insideBrowser() {
+        return RContext.getInstance().isInBrowser() ? 1 : 0;
+    }
+
 }
