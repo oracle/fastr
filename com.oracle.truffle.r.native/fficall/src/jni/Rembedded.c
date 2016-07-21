@@ -438,6 +438,10 @@ JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nat
 	(*ptr_R_CleanUp)(x, y, z);
 }
 
+JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeSuicide(JNIEnv *jniEnv, jclass c, jstring string) {
+	const char *cbuf =  (*jniEnv)->GetStringUTFChars(jniEnv, string, NULL);
+	(*ptr_R_Suicide)(cbuf);
+}
 
 void uR_PolledEvents(void) {
 	unimplemented("R_PolledEvents");

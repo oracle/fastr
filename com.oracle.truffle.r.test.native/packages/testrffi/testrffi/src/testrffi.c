@@ -150,12 +150,51 @@ SEXP tryEval(SEXP expr, SEXP env) {
 	}
 	SET_VECTOR_ELT(v, 0, r);
 	SET_VECTOR_ELT(v, 1, ScalarLogical(error));
-	UNPROTECT(v);
+	UNPROTECT(1);
 	return v;
 }
 
 SEXP rHomeDir() {
 	char *dir = R_HomeDir();
 	return ScalarString(mkChar(dir));
+}
+
+SEXP nestedCall1(SEXP upcall, SEXP env) {
+	SEXP vec;
+	PROTECT(vec = allocVector(INTSXP, 10));
+	int *vecstar = INTEGER(vec);
+	for (int i = 0; i < 10; i++) {
+		vecstar[i] = i + 1;
+	}
+	SEXP upcallResult = tryEval(upcall, env);
+	int *vecstar2 = INTEGER(vec);
+	int ok = vecstar == vecstar2;
+	if (ok) {
+		for (int i = 0; i < 10; i++) {
+			if (vecstar[i] != i + 1) {
+				ok = 0;
+				break;
+			}
+		}
+	}
+	SEXP result;
+	PROTECT(result = allocVector(VECSXP, 2));
+	SET_VECTOR_ELT(result, 0, upcallResult);
+	SET_VECTOR_ELT(result, 1, ScalarLogical(ok));
+	UNPROTECT(2);
+	return result;
+}
+
+SEXP nestedCall2(SEXP v) {
+	SEXP sumVec;
+	PROTECT(sumVec = allocVector(INTSXP, 1));
+	int len = Rf_length(v);
+	int sum = 0;
+	for (int i = 0; i < len; i++) {
+		sum += INTEGER(v)[i];
+	}
+	INTEGER(sumVec)[0] = sum;
+	UNPROTECT(1);
+	return sumVec;
 }
 

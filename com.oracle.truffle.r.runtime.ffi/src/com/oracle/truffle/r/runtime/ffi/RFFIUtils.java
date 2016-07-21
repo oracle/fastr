@@ -25,9 +25,12 @@ package com.oracle.truffle.r.runtime.ffi;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.OutputStream;
+import java.nio.file.Path;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -58,24 +61,20 @@ public class RFFIUtils {
      * In embedded mode can't trust that cwd is writeable, so output placed in /tmp. Also, tag with
      * time in event of multiple concurrent instances (which happens with RStudio).
      */
-    private static final String tracePathPrefix = "/tmp/fastr_trace_nativecalls.log-";
-    private static FileOutputStream traceFileStream;
-    private static PrintStream traceStream;
+    private static final String TRACEFILE = "fastr_trace_nativecalls.log";
+    private static OutputStream traceStream;
+    /**
+     * Records the call depth. TBD: make context specific
+     */
+    private static int depth;
 
-    private static void initialize() {
+    public static void initialize() {
         if (!initialized) {
             traceEnabled = alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue();
             if (traceEnabled) {
                 if (RContext.isEmbedded()) {
                     if (traceStream == null) {
-                        String tracePath = tracePathPrefix + Long.toString(System.currentTimeMillis());
-                        try {
-                            traceFileStream = new FileOutputStream(tracePath);
-                            traceStream = new PrintStream(traceFileStream);
-                        } catch (IOException ex) {
-                            System.err.println(ex.getMessage());
-                            System.exit(1);
-                        }
+                        initTraceStream();
                     }
                 } else {
                     traceStream = System.out;
@@ -85,14 +84,28 @@ public class RFFIUtils {
         }
     }
 
+    private static void initTraceStream() {
+        Path tracePath = Utils.getLogPath(TRACEFILE);
+        try {
+            traceStream = new FileOutputStream(tracePath.toString());
+        } catch (IOException ex) {
+            System.err.println(ex.getMessage());
+            System.exit(1);
+        }
+    }
+
     /**
-     * Upcalled from native when tracing to get FD of the {@link #traceFileStream}. Allows the same
-     * fd to be used on both sides of the JNI boundary.
+     * Upcalled from native when tracing to get FD of the {@link #traceStream}. Allows the same fd
+     * to be used on both sides of the JNI boundary.
      */
     @SuppressWarnings("unused")
     private static FileDescriptor getTraceFileDescriptor() {
         try {
-            return traceFileStream.getFD();
+            if (traceStream == null) {
+                // Happens if native has tracing enabled and Java does not
+                initTraceStream();
+            }
+            return ((FileOutputStream) traceStream).getFD();
         } catch (IOException ex) {
             System.err.println(ex.getMessage());
             System.exit(1);
@@ -101,10 +114,10 @@ public class RFFIUtils {
     }
 
     private enum CallMode {
-        UP("Up"),
-        UP_RETURN("UpReturn"),
-        DOWN("Down"),
-        DOWN_RETURN("DownReturn");
+        UP("U"),
+        UP_RETURN("UR"),
+        DOWN("D"),
+        DOWN_RETURN("DR");
 
         private final String printName;
 
@@ -114,34 +127,45 @@ public class RFFIUtils {
     }
 
     public static void traceUpCall(String name, Object... args) {
-        traceCall(CallMode.UP, name, args);
+        traceCall(CallMode.UP, name, depth, args);
     }
 
-    public static void traceUpCallReturn(String name, Object... args) {
-        traceCall(CallMode.UP_RETURN, name, args);
+    public static void traceUpCallReturn(String name, Object result) {
+        traceCall(CallMode.UP_RETURN, name, depth, result);
     }
 
     public static void traceDownCall(String name, Object... args) {
-        traceCall(CallMode.DOWN, name, args);
+        traceCall(CallMode.DOWN, name, ++depth, args);
+    }
+
+    public static void traceDownCallReturn(String name, Object result) {
+        traceCall(CallMode.DOWN_RETURN, name, depth--, result);
     }
 
     public static boolean traceEnabled() {
         return traceEnabled;
     }
 
-    private static void traceCall(CallMode mode, String name, Object... args) {
-        initialize();
+    private static void traceCall(CallMode mode, String name, int depthValue, Object... args) {
+        assert initialized;
         if (traceEnabled) {
             StringBuffer sb = new StringBuffer();
             sb.append("CallRFFI[");
             sb.append(mode.printName);
+            sb.append(':');
+            sb.append(depthValue);
             sb.append(']');
             sb.append(name);
             sb.append('(');
             printArgs(sb, args);
             sb.append(')');
-            traceStream.println(sb.toString());
-            traceStream.flush();
+            try {
+                traceStream.write(sb.toString().getBytes());
+                traceStream.write('\n');
+                traceStream.flush();
+            } catch (IOException ex) {
+                // ignore
+            }
         }
     }
 

@@ -243,15 +243,12 @@ public class RCommand {
                                  * logging the report will go to a file, so we print a message on
                                  * the console as well.
                                  */
+                                RInternalError.reportError(e);
                                 consoleHandler.println("internal error: " + e.getMessage() + " (see fastr_errors.log)");
-                                RInternalError.reportError(e);
                             } else {
-                                /*
-                                 * This should never happen owing to earlier invariants of
-                                 * converting everything else to an RInternalError
-                                 */
-                                consoleHandler.println("unexpected internal error (" + e.getClass().getSimpleName() + "); " + e.getMessage());
+                                // Something else, e.g. NPE
                                 RInternalError.reportError(e);
+                                consoleHandler.println("unexpected internal error (" + e.getClass().getSimpleName() + "); " + e.getMessage());
                             }
                         }
                         continue REPL;

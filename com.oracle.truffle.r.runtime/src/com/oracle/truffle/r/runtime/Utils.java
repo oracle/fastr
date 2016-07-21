@@ -153,21 +153,17 @@ public final class Utils {
          * polyglot context are.
          */
         RPerfStats.report();
-        if (RContext.getInstance() != null && RContext.getInstance().getStartParams() != null && RContext.getInstance().getStartParams().getDebugInitFile()) {
-            throw new DebugExitException();
-        } else {
-            try {
-                /*
-                 * This is not the proper way to dispose a PolyglotEngine, but it doesn't matter
-                 * since we're going to System.exit anyway.
-                 */
-                RContext.getInstance().destroy();
-            } catch (Throwable t) {
-                // ignore
-            }
-            System.exit(status);
-            return null;
+        try {
+            /*
+             * This is not the proper way to dispose a PolyglotEngine, but it doesn't matter since
+             * we're going to System.exit anyway.
+             */
+            RContext.getInstance().destroy();
+        } catch (Throwable t) {
+            // ignore
         }
+        System.exit(status);
+        return null;
     }
 
     public static RuntimeException fail(String msg) {
@@ -248,6 +244,17 @@ public final class Utils {
 
     public static void updateCurwd(String path) {
         wdState().setCurrent(path);
+    }
+
+    /**
+     * Returns a {@link Path} for a log file with base name {@code fileName}, taking into account
+     * whether the system is running in embedded mode.
+     */
+    public static Path getLogPath(String fileName) {
+        String root = RContext.isEmbedded() ? "/tmp" : REnvVars.rHome();
+        int pid = RFFIFactory.getRFFI().getBaseRFFI().getpid();
+        String baseName = RContext.isEmbedded() ? fileName + "-" + Integer.toString(pid) : fileName;
+        return FileSystems.getDefault().getPath(root, baseName);
     }
 
     /**
