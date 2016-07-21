@@ -12,6 +12,7 @@ a
 i
 #ifdef FASTR
 typedef void *SEXP;
+typedef void *CTXT;
 #else
 .
 +1
