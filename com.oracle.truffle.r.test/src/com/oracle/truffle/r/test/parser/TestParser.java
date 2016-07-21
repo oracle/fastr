@@ -29,6 +29,7 @@ import org.junit.Test;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.runtime.RParserFactory;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.test.TestBase;
 
@@ -65,18 +66,18 @@ public class TestParser extends TestBase {
         assertEval("y <- 2; z <- 5; x <- (y *\n  z)");
         assertEval("y <- 2; z <- 5; x <- (y \n * z)");
         assertEval("y <- 2; z <- 5; x <- ({y *\n  z})");
-        assertEval(Output.ContainsAmbiguousError, "y <- 2; z <- 5; x <- ({y \n * z})");
+        assertEval(Output.IgnoreErrorMessage, "y <- 2; z <- 5; x <- ({y \n * z})");
         assertEval("y <- 2; z <- 5; x <- ({(y *\n  z)})");
         assertEval("y <- 2; z <- 5; x <- ({(y \n * z)})");
         assertEval("a <- 1:100; y <- 2; z <- 5; x <- ({(a[y *\n  z])})");
         assertEval("a <- 1:100; y <- 2; z <- 5; x <- ({(a[[y \n * z]])})");
-        assertEval(Output.ContainsAmbiguousError, "a <- 1:100; y <- 2; z <- 5; x <- (a[[{y \n * z}]])");
+        assertEval(Output.IgnoreErrorMessage, "a <- 1:100; y <- 2; z <- 5; x <- (a[[{y \n * z}]])");
     }
 
     @Test
     public void testLexerError() {
         // FastR provides a more accurate error message
-        assertEval(Output.ContainsAmbiguousError, "%0");
+        assertEval(Output.IgnoreErrorMessage, "%0");
     }
 
     /**
@@ -89,7 +90,6 @@ public class TestParser extends TestBase {
 
     static int errorCount;
 
-    @SuppressWarnings("deprecation")
     private static void recurse(File file) {
         assert file.exists();
         if (file.isDirectory()) {
@@ -102,7 +102,7 @@ public class TestParser extends TestBase {
                 Source source = null;
                 RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
                 try {
-                    source = Source.fromURL(file.toURL(), file.getName());
+                    source = RSource.fromFile(file);
                     parser.script(source, new RASTBuilder());
                 } catch (Throwable e) {
                     errorCount++;

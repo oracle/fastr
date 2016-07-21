@@ -29,7 +29,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * This class should be used as the superclass for all instances of nodes in the FastR AST in
@@ -120,11 +119,6 @@ public abstract class RBaseNode extends Node {
             current = current.getParent();
         }
         return null;
-    }
-
-    public RSyntaxNode substitute(REnvironment env) {
-        RSyntaxNode syntaxNode = getRSyntaxNode();
-        return syntaxNode.substituteImpl(env);
     }
 
     public void serialize(RSerialize.State state) {

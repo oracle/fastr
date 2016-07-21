@@ -71,8 +71,8 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-NULL; row.names(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-logical(); attributes(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-logical(); row.names(x) }");
-        assertEval(Output.ContainsError, "{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; attributess(x) }");
-        assertEval(Output.ContainsError, "{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; row.names(x) }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; attributess(x) }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; row.names(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-c(7, 42); attributes(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-c(7, 42); row.names(x) }");
 
@@ -87,7 +87,7 @@ public class TestSimpleDataFrames extends TestBase {
     public void testAsDataFrame() {
         assertEval("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, \"r2\"); attributes(x) }");
         assertEval("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, \"r2\"); attributes(y) }");
-        assertEval(Output.ContainsError, "{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, c(\"r1\", \"r2\")); attributes(y) }");
+        assertEval("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, c(\"r1\", \"r2\")); attributes(y) }");
         assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
         assertEval("{ x<-as.double(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
         assertEval("{ x<-as.logical(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
@@ -100,12 +100,12 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ x<-as.character(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
         assertEval("{ x<-as.complex(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
         assertEval("{ x<-as.raw(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
-        assertEval(Output.ContainsWarning, "{ x<-c(7L,42L); y<-as.data.frame(x, row.names=\"r1\", nm=\"x\"); attributes(y); }");
+        assertEval(Output.IgnoreWarningContext, "{ x<-c(7L,42L); y<-as.data.frame(x, row.names=\"r1\", nm=\"x\"); attributes(y); }");
         assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=c(\"r1\", \"r2\"), nm=\"x\"); attributes(y); }");
-        assertEval(Output.ContainsWarning, "{ x<-c(7L,42L); y<-as.data.frame(x, row.names=c(\"r1\", \"r2\", \"r3\"), nm=\"x\"); attributes(y); }");
+        assertEval(Output.IgnoreWarningContext, "{ x<-c(7L,42L); y<-as.data.frame(x, row.names=c(\"r1\", \"r2\", \"r3\"), nm=\"x\"); attributes(y); }");
         assertEval("{ x<-matrix(c(1,2,3,4), nrow=2); y<-as.data.frame(x, row.names=NULL, optional=FALSE); attributes(y); }");
         assertEval("{ x<-matrix(c(1,2,3,4), nrow=2); y<-as.data.frame(x, row.names=\"r1\", optional=FALSE); attributes(y); }");
-        assertEval(Output.ContainsError, "{ x<-1; class(x)<-\"foo\"; y<-as.data.frame(x) }");
+        assertEval("{ x<-1; class(x)<-\"foo\"; y<-as.data.frame(x) }");
     }
 
     @Test
@@ -175,7 +175,7 @@ public class TestSimpleDataFrames extends TestBase {
     public void testMisc() {
         assertEval("{ y<-data.frame(7); as.logical(y) }");
         assertEval("{ y<-data.frame(integer()); as.logical(y) }");
-        assertEval(Output.ContainsError, "{ y<-data.frame(c(1,2,3)); as.logical(y) }");
+        assertEval(Output.IgnoreErrorContext, "{ y<-data.frame(c(1,2,3)); as.logical(y) }");
 
         assertEval("{ y<-data.frame(c(1,2,3)); length(y) }");
 

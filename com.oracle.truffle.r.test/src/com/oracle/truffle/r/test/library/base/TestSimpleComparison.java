@@ -26,7 +26,7 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ x<-1:4; y<-21:24; names(y)<-121:124; attributes(x > y) }");
         assertEval("{ x<-1:4; names(x)<-101:104; y<-21:28; names(y)<-121:128;  attributes(y > x) }");
         assertEval("{ x<-1:4; names(x)<-101:104; y<-21:28; attributes(x > y) }");
-        assertEval(Output.ContainsError, "{ x<-1:4; dim(x)<-c(2,2); y<-21:28; x > y }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); y<-21:28; x > y }");
         assertEval("{ x<-factor(c(a=1)); y<-factor(c(b=1)); x==y }");
     }
 
@@ -208,18 +208,18 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ 1:3 == TRUE }");
         assertEval("{ TRUE == 1:3 }");
 
-        assertEval(Output.ContainsWarning, "{ c(1,2) < c(2,1,4) }");
-        assertEval(Output.ContainsWarning, "{ c(2,1,4) < c(1,2) }");
-        assertEval(Output.ContainsWarning, "{ c(1L,2L) < c(2L,1L,4L) }");
-        assertEval(Output.ContainsWarning, "{ c(2L,1L,4L) < c(1L,2L) }");
-        assertEval(Output.ContainsWarning, "{ c(TRUE,FALSE,FALSE) < c(TRUE,TRUE) }");
-        assertEval(Output.ContainsWarning, "{ c(TRUE,TRUE) == c(TRUE,FALSE,FALSE) }");
-        assertEval(Output.ContainsWarning, "{ as.raw(c(1,2)) < as.raw(c(2,1,4)) }");
-        assertEval(Output.ContainsWarning, "{ as.raw(c(2,1,4)) < as.raw(c(1,2)) }");
-        assertEval(Output.ContainsWarning, "{ c(\"hi\",\"hello\",\"bye\") > c(\"cau\", \"ahoj\") }");
-        assertEval(Output.ContainsWarning, "{ c(\"cau\", \"ahoj\") != c(\"hi\",\"hello\",\"bye\") }");
-        assertEval(Output.ContainsWarning, "{ c(1+1i,2+2i) == c(2+1i,1+2i,1+1i) }");
-        assertEval(Output.ContainsWarning, "{ c(2+1i,1+2i,1+1i) == c(1+1i, 2+2i) }");
+        assertEval(Output.IgnoreWarningContext, "{ c(1,2) < c(2,1,4) }");
+        assertEval(Output.IgnoreWarningContext, "{ c(2,1,4) < c(1,2) }");
+        assertEval(Output.IgnoreWarningContext, "{ c(1L,2L) < c(2L,1L,4L) }");
+        assertEval(Output.IgnoreWarningContext, "{ c(2L,1L,4L) < c(1L,2L) }");
+        assertEval(Output.IgnoreWarningContext, "{ c(TRUE,FALSE,FALSE) < c(TRUE,TRUE) }");
+        assertEval(Output.IgnoreWarningContext, "{ c(TRUE,TRUE) == c(TRUE,FALSE,FALSE) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1,2)) < as.raw(c(2,1,4)) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(2,1,4)) < as.raw(c(1,2)) }");
+        assertEval(Output.IgnoreWarningContext, "{ c(\"hi\",\"hello\",\"bye\") > c(\"cau\", \"ahoj\") }");
+        assertEval(Output.IgnoreWarningContext, "{ c(\"cau\", \"ahoj\") != c(\"hi\",\"hello\",\"bye\") }");
+        assertEval(Output.IgnoreWarningContext, "{ c(1+1i,2+2i) == c(2+1i,1+2i,1+1i) }");
+        assertEval(Output.IgnoreWarningContext, "{ c(2+1i,1+2i,1+1i) == c(1+1i, 2+2i) }");
 
         assertEval("{ as.raw(c(2,1,4)) < raw() }");
         assertEval("{ raw() < as.raw(c(2,1,4)) }");
@@ -255,7 +255,7 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ c(0/0+1i,2+1i) == c(1+1i,2+1i) }");
         assertEval("{ c(1+1i,2+1i) == c(0/0+1i,2+1i) }");
 
-        assertEval(Output.ContainsError, "{ m <- matrix(nrow=2, ncol=2, 1:4) ; m == 1:16 }");
+        assertEval(Output.IgnoreErrorContext, "{ m <- matrix(nrow=2, ncol=2, 1:4) ; m == 1:16 }");
     }
 
     @Test

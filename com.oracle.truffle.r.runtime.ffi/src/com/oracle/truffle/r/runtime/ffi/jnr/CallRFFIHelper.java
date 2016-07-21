@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSrcref;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
@@ -276,6 +277,11 @@ public class CallRFFIHelper {
         }
     }
 
+    public static Object R_do_MAKE_CLASS(String clazz) {
+        RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(REnvironment.getRegisteredNamespace("methods").get("getClass"));
+        return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), clazz);
+    }
+
     public static Object Rf_findVar(Object symbolArg, Object envArg) {
         // WARNING: argument order reversed from Rf_findVarInFrame!
         if (RFFIUtils.traceEnabled()) {
@@ -321,7 +327,6 @@ public class CallRFFIHelper {
             env = env.getParent();
         }
         return RUnboundValue.instance;
-
     }
 
     public static Object Rf_getAttrib(Object obj, Object name) {
@@ -483,11 +488,7 @@ public class CallRFFIHelper {
             case VECSXP:
                 return RDataFactory.createList(n);
             case LANGSXP:
-                if (n == 0) {
-                    return RNull.instance;
-                } else {
-                    return RDataFactory.createPairList(n);
-                }
+                return RDataFactory.createLangPairList(n);
             default:
                 throw unimplemented("unexpected SEXPTYPE " + type);
         }
@@ -767,8 +768,22 @@ public class CallRFFIHelper {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("CDR", e);
         }
-        guaranteeInstanceOf(e, RPairList.class);
-        return ((RPairList) e).cdr();
+        if (e instanceof RLanguage) {
+            RLanguage lang = (RLanguage) e;
+            int length = RContext.getRRuntimeASTAccess().getLength(lang);
+            Object obj = RNull.instance;
+
+            // TODO: missing argument names in the tags
+            for (int i = length - 1; i >= 1; i--) {
+                Object element = RContext.getRRuntimeASTAccess().getDataAtAsObject(lang, i);
+                obj = RDataFactory.createPairList(element, obj);
+            }
+
+            return obj;
+        } else {
+            guaranteeInstanceOf(e, RPairList.class);
+            return ((RPairList) e).cdr();
+        }
     }
 
     public static Object CADR(Object e) {
@@ -780,6 +795,28 @@ public class CallRFFIHelper {
             return ((RPairList) e).cadr();
         } else {
             return ((RLanguage) e).getDataAtAsObject(1);
+        }
+    }
+
+    public static Object CDDR(Object e) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("CDDR", e);
+        }
+        if (e instanceof RLanguage) {
+            RLanguage lang = (RLanguage) e;
+            int length = RContext.getRRuntimeASTAccess().getLength(lang);
+            Object obj = RNull.instance;
+
+            // TODO: missing argument names in the tags
+            for (int i = length - 1; i >= 2; i--) {
+                Object element = RContext.getRRuntimeASTAccess().getDataAtAsObject(lang, i);
+                obj = RDataFactory.createPairList(element, obj);
+            }
+
+            return obj;
+        } else {
+            guaranteeInstanceOf(e, RPairList.class);
+            return ((RPairList) e).cddr();
         }
     }
 
@@ -863,7 +900,7 @@ public class CallRFFIHelper {
                 RPairList pl = list;
                 Map<String, Object> constants = new HashMap<>();
                 String deparse = RDeparse.deparseDeserialize(constants, pl);
-                Source source = Source.fromText(deparse, "<PAIR LIST CONVERT deparse>");
+                Source source = RSource.fromTextInternal(deparse, RSource.Internal.PAIRLIST_DEPARSE);
                 RExpression expr = RContext.getEngine().parse(constants, source);
                 assert expr.getLength() == 1;
                 Object result = expr.getDataAt(0);
@@ -913,7 +950,7 @@ public class CallRFFIHelper {
         guarantee(symbolObj instanceof RSymbol);
         RSymbol symbol = (RSymbol) symbolObj;
         // Works but not remotely efficient
-        Source source = Source.fromText("get(\"" + symbol.getName() + "\", mode=\"function\")", "<Rf_findfun>");
+        Source source = RSource.fromTextInternal("get(\"" + symbol.getName() + "\", mode=\"function\")", RSource.Internal.RF_FINDFUN);
         try {
             Object result = RContext.getEngine().parseAndEval(source, env.getFrame(), false);
             return result;
@@ -992,7 +1029,6 @@ public class CallRFFIHelper {
         throw unimplemented();
     }
 
-    @SuppressWarnings("unused")
     public static Object R_tryEval(Object expr, Object env, boolean silent) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("R_tryEval", expr, env, silent);
@@ -1045,6 +1081,7 @@ public class CallRFFIHelper {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("RSTEP", x);
         }
+        @SuppressWarnings("unused")
         REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
         throw RInternalError.unimplemented("RSTEP");
     }
@@ -1053,6 +1090,7 @@ public class CallRFFIHelper {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("SET_RSTEP", x, v);
         }
+        @SuppressWarnings("unused")
         REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
         throw RInternalError.unimplemented("SET_RSTEP");
     }
@@ -1106,7 +1144,7 @@ public class CallRFFIHelper {
         assert textString != null;
 
         try {
-            Source source = Source.fromText(textString, "<R_ParseVector>");
+            Source source = RSource.fromTextInternal(textString, RSource.Internal.R_PARSEVECTOR);
             RExpression exprs = RContext.getEngine().parse(null, source);
             return new ParseResult(ParseStatus.PARSE_OK.ordinal(), exprs);
         } catch (ParseException ex) {

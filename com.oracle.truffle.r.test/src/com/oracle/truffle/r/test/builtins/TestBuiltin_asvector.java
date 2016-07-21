@@ -39,7 +39,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector5() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(NA_integer_, .Label = c('Australia', 'UK', 'US'), class = 'factor'), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(NA_integer_, .Label = c('Australia', 'UK', 'US'), class = 'factor'), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -300,8 +300,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector59() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(`character(0)` = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'character(0)', row.names = character(0), class = 'data.frame'), 'character'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(list(`character(0)` = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'character(0)', row.names = character(0), class = 'data.frame'), 'character'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -363,7 +362,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector73() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(NA_integer_, .Label = c('no', 'yes'), class = 'factor'), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(NA_integer_, .Label = c('no', 'yes'), class = 'factor'), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -398,16 +397,16 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testAsVector() {
-        assertEval(Output.ContainsWarning, "{ as.vector(\"foo\", \"integer\") }");
-        assertEval(Output.ContainsWarning, "{ as.vector(\"foo\", \"double\") }");
-        assertEval(Output.ContainsWarning, "{ as.vector(\"foo\", \"numeric\") }");
+        assertEval(Output.IgnoreWarningContext, "{ as.vector(\"foo\", \"integer\") }");
+        assertEval(Output.IgnoreWarningContext, "{ as.vector(\"foo\", \"double\") }");
+        assertEval(Output.IgnoreWarningContext, "{ as.vector(\"foo\", \"numeric\") }");
         assertEval("{ as.vector(\"foo\", \"logical\") }");
-        assertEval(Output.ContainsWarning, "{ as.vector(\"foo\", \"raw\") }");
+        assertEval(Output.IgnoreWarningContext, "{ as.vector(\"foo\", \"raw\") }");
         assertEval("{ as.vector(\"foo\", \"character\") }");
         assertEval("{ as.vector(\"foo\", \"list\") }");
         assertEval("{ as.vector(\"foo\") }");
-        assertEval(Output.ContainsError, "{ as.vector(\"foo\", \"bar\") }");
-        assertEval(Output.ContainsWarning, "{ as.vector(c(\"foo\", \"bar\"), \"raw\") }");
+        assertEval(Output.IgnoreErrorContext, "{ as.vector(\"foo\", \"bar\") }");
+        assertEval(Output.IgnoreWarningContext, "{ as.vector(c(\"foo\", \"bar\"), \"raw\") }");
         assertEval("x<-c(a=1.1, b=2.2); as.vector(x, \"raw\")");
         assertEval("x<-c(a=1L, b=2L); as.vector(x, \"complex\")");
         assertEval("{ x<-c(a=FALSE, b=TRUE); attr(x, \"foo\")<-\"foo\"; y<-as.vector(x); attributes(y) }");

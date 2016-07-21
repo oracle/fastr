@@ -101,7 +101,7 @@ public class RscriptCommand {
         // Handle --help and --version specially, as they exit.
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.RSCRIPT, args, false);
         preprocessRScriptOptions(options);
-        PolyglotEngine vm = RCommand.createContextInfoFromCommandLine(options, false);
+        PolyglotEngine vm = RCommand.createPolyglotEngineFromCommandLine(options, false);
         // never returns
         RCommand.readEvalPrint(vm);
         throw RInternalError.shouldNotReachHere();

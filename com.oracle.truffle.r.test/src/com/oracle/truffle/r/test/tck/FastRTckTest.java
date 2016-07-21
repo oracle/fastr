@@ -29,7 +29,7 @@ import org.junit.Test;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.tck.TruffleTCK;
 
 public class FastRTckTest extends TruffleTCK {
@@ -40,7 +40,7 @@ public class FastRTckTest extends TruffleTCK {
     }
 
     // @formatter:off
-    private static final Source INITIALIZATION = Source.fromText(
+    private static final Source INITIALIZATION = RSource.fromTextInternal(
         "fourtyTwo <- function() {\n" +
         "  42L\n" +
         "}\n" +
@@ -71,9 +71,19 @@ public class FastRTckTest extends TruffleTCK {
         " a$real <- a$real + b$real\n" +
         "}\n" +
         ".fastr.interop.export('complexAdd', complexAdd)\n" +
+        "countUpWhile <- function(fn) {\n" +
+        " counter <- 0\n" +
+        " while (T) {\n" +
+        "  if (!fn(counter)) {\n" +
+        "   break\n" +
+        "  }\n" +
+        "  counter <- counter + 1\n" +
+        " }\n" +
+        "}\n" +
+        ".fastr.interop.export('countUpWhile', countUpWhile)\n" +
         "complexSumReal <- function(a) {\n" +
         " sum <- 0\n" +
-        " for (i in 0:(length(a)-1)) {\n" +
+        " for (i in 1:length(a)) {\n" +
         "   sum <- sum + a[i]$real\n" +
         " }\n" +
         " return(sum)\n" +
@@ -90,8 +100,8 @@ public class FastRTckTest extends TruffleTCK {
         "  list('byteValue'=0L, 'shortValue'=0L, 'intValue'=0L, 'longValue'=0L, 'floatValue'=0, 'doubleValue'=0, 'charValue'=48L, 'stringValue'='', 'booleanValue'=FALSE)\n" +
         "}\n" +
         ".fastr.interop.export('valuesObject', valuesObject)\n",
-        "<initialization>"
-    ).withMimeType(TruffleRLanguage.MIME);
+        RSource.Internal.TCK_INIT
+    );
     // @formatter:on
 
     @Override
@@ -162,6 +172,11 @@ public class FastRTckTest extends TruffleTCK {
     @Override
     protected String valuesObject() {
         return "valuesObject";
+    }
+
+    @Override
+    protected String countUpWhile() {
+        return "countUpWhile";
     }
 
     @Override
@@ -345,4 +360,5 @@ public class FastRTckTest extends TruffleTCK {
     public String multiplyCode(String firstName, String secondName) {
         return firstName + '*' + secondName;
     }
+
 }

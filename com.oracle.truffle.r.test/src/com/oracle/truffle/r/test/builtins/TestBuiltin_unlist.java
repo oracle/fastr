@@ -19,17 +19,17 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist1() {
-        assertEval(Ignored.Unknown, "argv <- list(list('yaxp'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list('yaxp'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist2() {
-        assertEval(Ignored.Unknown, "argv <- list(list(c(13823, NA)), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(c(13823, NA)), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist3() {
-        assertEval(Ignored.Unknown, "argv <- list(structure('A', .Names = 'x', package = '.GlobalEnv'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure('A', .Names = 'x', package = '.GlobalEnv'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -40,60 +40,52 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist5() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(sec = c(8.40000009536743, 8.80000019073486), min = c(14L, 14L), hour = c(22L, 22L)), .Names = c('sec', 'min', 'hour')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(sec = c(8.40000009536743, 8.80000019073486), min = c(14L, 14L), hour = c(22L, 22L)), .Names = c('sec', 'min', 'hour')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist6() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(structure(list(c(NA, 0L)), row.names = c(NA, -2L), class = 'data.frame'), structure(list(c(NA, 0)), row.names = c(NA, -2L), class = 'data.frame'), structure(list(c(10L, 10L)), row.names = c(NA, -2L), class = 'data.frame'), structure(list(c(2.74035772634541, 2.74035772634541)), row.names = c(NA, -2L), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(structure(list(c(NA, 0L)), row.names = c(NA, -2L), class = 'data.frame'), structure(list(c(NA, 0)), row.names = c(NA, -2L), class = 'data.frame'), structure(list(c(10L, 10L)), row.names = c(NA, -2L), class = 'data.frame'), structure(list(c(2.74035772634541, 2.74035772634541)), row.names = c(NA, -2L), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist7() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(diagonalMatrix = 1, lMatrix = 1, sparseMatrix = 2, Matrix = 2, mMatrix = 4), .Names = c('diagonalMatrix', 'lMatrix', 'sparseMatrix', 'Matrix', 'mMatrix')), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(diagonalMatrix = 1, lMatrix = 1, sparseMatrix = 2, Matrix = 2, mMatrix = 4), .Names = c('diagonalMatrix', 'lMatrix', 'sparseMatrix', 'Matrix', 'mMatrix')), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist8() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(structure(list(), .Names = character(0), row.names = integer(0), class = 'data.frame'), structure(list(height = numeric(0), weight = numeric(0)), .Names = c('height', 'weight'), row.names = integer(0), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(structure(list(), .Names = character(0), row.names = integer(0), class = 'data.frame'), structure(list(height = numeric(0), weight = numeric(0)), .Names = c('height', 'weight'), row.names = integer(0), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist9() {
-        assertEval(Ignored.Unknown, "argv <- list(list(c(TRUE, FALSE, FALSE, FALSE, FALSE), c(TRUE, TRUE, TRUE, TRUE, NA)), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(c(TRUE, FALSE, FALSE, FALSE, FALSE), c(TRUE, TRUE, TRUE, TRUE, NA)), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist10() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure('     \\\'Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)\\\')\\n', Rd_tag = 'RCODE'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure('     \\\'Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)\\\')\\n', Rd_tag = 'RCODE'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist11() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(`1 sec` = 345600, `2 secs` = 172800, `5 secs` = 69120, `10 secs` = 34560, `15 secs` = 23040, `30 secs` = 11520, `1 min` = 5760, `2 mins` = 2880, `5 mins` = 1152, `10 mins` = 576, `15 mins` = 384, `30 mins` = 192, `1 hour` = 96, `3 hours` = 32, `6 hours` = 16, `12 hours` = 8, `1 DSTday` = 4, `2 DSTdays` = 2, `1 week` = 0.571428571428571, halfmonth = 0.262833675564682, `1 month` = 0.131416837782341, `3 months` = 0.0438056125941136, `6 months` = 0.0219028062970568, `1 year` = 0.0109514031485284,     `2 years` = 0.0054757015742642, `5 years` = 0.00219028062970568, `10 years` = 0.00109514031485284, `20 years` = 0.00054757015742642, `50 years` = 0.000219028062970568, `100 years` = 0.000109514031485284, `200 years` = 5.4757015742642e-05, `500 years` = 2.19028062970568e-05, `1000 years` = 1.09514031485284e-05), .Names = c('1 sec', '2 secs', '5 secs', '10 secs', '15 secs', '30 secs', '1 min', '2 mins', '5 mins', '10 mins', '15 mins', '30 mins', '1 hour', '3 hours', '6 hours', '12 hours', '1 DSTday', '2 DSTdays', '1 week', 'halfmonth', '1 month', '3 months', '6 months', '1 year', '2 years', '5 years', '10 years', '20 years', '50 years', '100 years', '200 years', '500 years', '1000 years')), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(`1 sec` = 345600, `2 secs` = 172800, `5 secs` = 69120, `10 secs` = 34560, `15 secs` = 23040, `30 secs` = 11520, `1 min` = 5760, `2 mins` = 2880, `5 mins` = 1152, `10 mins` = 576, `15 mins` = 384, `30 mins` = 192, `1 hour` = 96, `3 hours` = 32, `6 hours` = 16, `12 hours` = 8, `1 DSTday` = 4, `2 DSTdays` = 2, `1 week` = 0.571428571428571, halfmonth = 0.262833675564682, `1 month` = 0.131416837782341, `3 months` = 0.0438056125941136, `6 months` = 0.0219028062970568, `1 year` = 0.0109514031485284,     `2 years` = 0.0054757015742642, `5 years` = 0.00219028062970568, `10 years` = 0.00109514031485284, `20 years` = 0.00054757015742642, `50 years` = 0.000219028062970568, `100 years` = 0.000109514031485284, `200 years` = 5.4757015742642e-05, `500 years` = 2.19028062970568e-05, `1000 years` = 1.09514031485284e-05), .Names = c('1 sec', '2 secs', '5 secs', '10 secs', '15 secs', '30 secs', '1 min', '2 mins', '5 mins', '10 mins', '15 mins', '30 mins', '1 hour', '3 hours', '6 hours', '12 hours', '1 DSTday', '2 DSTdays', '1 week', 'halfmonth', '1 month', '3 months', '6 months', '1 year', '2 years', '5 years', '10 years', '20 years', '50 years', '100 years', '200 years', '500 years', '1000 years')), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist12() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(vector = TRUE, atomicVector = TRUE, index = TRUE, numIndex = TRUE, numLike = TRUE, number = TRUE, replValue = TRUE), .Names = c('vector', 'atomicVector', 'index', 'numIndex', 'numLike', 'number', 'replValue')), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(vector = TRUE, atomicVector = TRUE, index = TRUE, numIndex = TRUE, numLike = TRUE, number = TRUE, replValue = TRUE), .Names = c('vector', 'atomicVector', 'index', 'numIndex', 'numLike', 'number', 'replValue')), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist13() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(a = 6:10), .Names = 'a', row.names = 6:10), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(a = 6:10), .Names = 'a', row.names = 6:10), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist14() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(`2005` = structure(c(31L, 28L, 31L, 30L, 31L, 30L, 31L, 31L, 30L, 31L, 30L, 31L), .Dim = 12L, .Dimnames = structure(list(c('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')), .Names = ''), class = 'table'), `2006` = structure(c(31L, 28L, 31L, 30L, 31L, 30L, 31L, 31L, 30L, 31L, 30L, 31L), .Dim = 12L, .Dimnames = structure(list(c('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')), .Names = ''), class = 'table'), `2007` = structure(c(31L, 28L, 31L, 30L, 31L, 30L, 31L, 31L, 30L, 31L, 30L, 31L), .Dim = 12L, .Dimnames = structure(list(c('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')), .Names = ''), class = 'table'), `2008` = structure(c(31L, 29L, 31L, 30L, 31L, 30L, 31L, 31L, 30L, 31L, 30L, 31L), .Dim = 12L, .Dimnames = structure(list(c('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')), .Names = ''), class = 'table'), `2009` = structure(1L, .Dim = 1L, .Dimnames = structure(list('01'), .Names = ''), class = 'table')), .Names = c('2005', '2006', '2007', '2008', '2009')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(`2005` = structure(c(31L, 28L, 31L, 30L, 31L, 30L, 31L, 31L, 30L, 31L, 30L, 31L), .Dim = 12L, .Dimnames = structure(list(c('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')), .Names = ''), class = 'table'), `2006` = structure(c(31L, 28L, 31L, 30L, 31L, 30L, 31L, 31L, 30L, 31L, 30L, 31L), .Dim = 12L, .Dimnames = structure(list(c('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')), .Names = ''), class = 'table'), `2007` = structure(c(31L, 28L, 31L, 30L, 31L, 30L, 31L, 31L, 30L, 31L, 30L, 31L), .Dim = 12L, .Dimnames = structure(list(c('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')), .Names = ''), class = 'table'), `2008` = structure(c(31L, 29L, 31L, 30L, 31L, 30L, 31L, 31L, 30L, 31L, 30L, 31L), .Dim = 12L, .Dimnames = structure(list(c('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')), .Names = ''), class = 'table'), `2009` = structure(1L, .Dim = 1L, .Dimnames = structure(list('01'), .Names = ''), class = 'table')), .Names = c('2005', '2006', '2007', '2008', '2009')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -104,24 +96,24 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist16() {
-        assertEval(Ignored.Unknown,
+        assertEval(Output.IgnoreErrorMessage,
                         "argv <- list(structure('print(.leap.seconds, tz = \\\'PST8PDT\\\')  # and in Seattle's\\n', Rd_tag = 'RCODE'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist17() {
-        assertEval(Ignored.Unknown, "argv <- list(list(TRUE, TRUE, TRUE, TRUE), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(TRUE, TRUE, TRUE, TRUE), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist18() {
-        assertEval(Ignored.Unknown,
+        assertEval(
                         "argv <- list(list(c(NA_real_, NA_real_), c('Svansota', 'No. 462', 'Manchuria', 'No. 475', 'Velvet', 'Peatland', 'Glabron', 'No. 457', 'Wisconsin No. 38', 'Trebi'), c('Svansota', 'No. 462', 'Manchuria', 'No. 475', 'Velvet', 'Peatland', 'Glabron', 'No. 457', 'Wisconsin No. 38', 'Trebi'), c('Svansota', 'No. 462', 'Manchuria', 'No. 475', 'Velvet', 'Peatland', 'Glabron', 'No. 457', 'Wisconsin No. 38', 'Trebi'), c('Svansota', 'No. 462', 'Manchuria', 'No. 475', 'Velvet', 'Peatland', 'Glabron', 'No. 457', 'Wisconsin No. 38', 'Trebi'), c('Svansota', 'No. 462', 'Manchuria', 'No. 475', 'Velvet', 'Peatland', 'Glabron', 'No. 457', 'Wisconsin No. 38', 'Trebi'), c('Svansota', 'No. 462', 'Manchuria', 'No. 475', 'Velvet', 'Peatland', 'Glabron', 'No. 457', 'Wisconsin No. 38', 'Trebi'), c('Svansota', 'No. 462', 'Manchuria', 'No. 475', 'Velvet', 'Peatland', 'Glabron', 'No. 457', 'Wisconsin No. 38', 'Trebi'), c('Svansota', 'No. 462', 'Manchuria', 'No. 475', 'Velvet', 'Peatland', 'Glabron', 'No. 457', 'Wisconsin No. 38', 'Trebi'),     c('Svansota', 'No. 462', 'Manchuria', 'No. 475', 'Velvet', 'Peatland', 'Glabron', 'No. 457', 'Wisconsin No. 38', 'Trebi'), c('Svansota', 'No. 462', 'Manchuria', 'No. 475', 'Velvet', 'Peatland', 'Glabron', 'No. 457', 'Wisconsin No. 38', 'Trebi'), c('Svansota', 'No. 462', 'Manchuria', 'No. 475', 'Velvet', 'Peatland', 'Glabron', 'No. 457', 'Wisconsin No. 38', 'Trebi')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist19() {
-        assertEval(Ignored.Unknown,
+        assertEval(
                         "argv <- list(list(structure(list('/home/lzhao/tmp/RtmpTzriDZ/R.INSTALL30d4108a07be/mgcv/R/gamm.r'), row.names = c(NA, -1L), class = 'data.frame'), structure(list(1522L), row.names = c(NA, -1L), class = 'data.frame'), structure(list(1522L), row.names = c(NA, -1L), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
@@ -132,8 +124,7 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist21() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(`1` = 5900.92307692308, `2` = 6784.76923076923), .Names = c('1', '2')), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(`1` = 5900.92307692308, `2` = 6784.76923076923), .Names = c('1', '2')), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -144,25 +135,22 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist23() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(structure(c(-Inf, -Inf, -Inf, -Inf, 0, 0, 0, 0, 0, -Inf, -Inf, -Inf, -Inf, 0, 0, 0, 0, 0, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 0, 0, 0, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 0, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 0, 0, 0, -Inf, -Inf, -Inf, -Inf, -Inf, 0, 0, 0, 0, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 0, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 0, 0, 0, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 0, 0, 0), .Dim = c(9L, 9L), .Dimnames = list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL)), structure(c(-Inf, -Inf, -Inf, 0, 0, 1, 1, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.5, 1, Inf, Inf, Inf, -Inf, -Inf, -Inf, -Inf, 0, 1, 1, 1, Inf, -Inf, -Inf, -Inf, -Inf, 0, 0.5, 1, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.5, 1, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.6, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.4, 0.8, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.533333333333334, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.525, Inf, Inf, Inf, Inf), .Dim = c(9L, 9L), .Dimnames = list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL)), structure(c(-Inf, -Inf, 0, 0, 1, 2, Inf, Inf, Inf, -Inf, -Inf, 0, 0.5, 1, 2, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0, 1, 2, 2, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.8, 1.6, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0.5, 1.3, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0.5, 1.4, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0.5, 1.2, 1.9, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0.499999999999999, 1.33333333333333, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0.5, 1.325, Inf, Inf, Inf, Inf), .Dim = c(9L, 9L), .Dimnames = list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL)), structure(c(-Inf, -Inf, 0, 1, 2, 3, Inf, Inf, Inf, -Inf, -Inf, 0, 1, 2, 3, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1, 2, 3, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0.5, 1.6, 2.7, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1, 2.1, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1, 2.2, Inf, Inf, Inf, Inf, -Inf, -Inf, 0, 1, 2, 3, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1, 2.13333333333333, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1, 2.125, Inf, Inf, Inf, Inf), .Dim = c(9L, 9L), .Dimnames = list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL)), structure(c(-Inf, -Inf, 0, 1, 3, 4, Inf, Inf, Inf, -Inf, -Inf, 0, 1.5, 3, 4, Inf, Inf, Inf, -Inf, -Inf, 0, 1, 2, 4, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1, 2.4, 3.8, Inf, Inf, Inf, -Inf, -Inf, 0.100000000000001, 1.5, 2.9, Inf, Inf, Inf, Inf, -Inf, -Inf, 0, 1.5, 3, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.2, 1.5, 2.8, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.0666666666666664, 1.5, 2.93333333333333, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.0750000000000002, 1.5, 2.925, Inf, Inf, Inf, Inf), .Dim = c(9L, 9L), .Dimnames = list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL)), structure(c(-Inf, -Inf, 0, 2, 4, 5, Inf, Inf, Inf, -Inf, -Inf, 0, 2, 4, 5, Inf, Inf, Inf, -Inf, -Inf, 0, 1, 3, 5, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1.5, 3.2, 4.9, Inf, Inf, Inf, -Inf, -Inf, 0.300000000000001, 2, 3.7, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.2, 2, 3.8, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.4, 2, 3.6, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.266666666666667, 2, 3.73333333333333, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.275, 2, 3.725, Inf, Inf, Inf, Inf), .Dim = c(9L, 9L), .Dimnames = list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL))), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(structure(c(-Inf, -Inf, -Inf, -Inf, 0, 0, 0, 0, 0, -Inf, -Inf, -Inf, -Inf, 0, 0, 0, 0, 0, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 0, 0, 0, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 0, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 0, 0, 0, -Inf, -Inf, -Inf, -Inf, -Inf, 0, 0, 0, 0, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 0, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 0, 0, 0, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 0, 0, 0), .Dim = c(9L, 9L), .Dimnames = list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL)), structure(c(-Inf, -Inf, -Inf, 0, 0, 1, 1, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.5, 1, Inf, Inf, Inf, -Inf, -Inf, -Inf, -Inf, 0, 1, 1, 1, Inf, -Inf, -Inf, -Inf, -Inf, 0, 0.5, 1, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.5, 1, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.6, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.4, 0.8, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.533333333333334, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.525, Inf, Inf, Inf, Inf), .Dim = c(9L, 9L), .Dimnames = list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL)), structure(c(-Inf, -Inf, 0, 0, 1, 2, Inf, Inf, Inf, -Inf, -Inf, 0, 0.5, 1, 2, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0, 1, 2, 2, Inf, Inf, -Inf, -Inf, -Inf, 0, 0.8, 1.6, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0.5, 1.3, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0.5, 1.4, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0.5, 1.2, 1.9, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0.499999999999999, 1.33333333333333, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0.5, 1.325, Inf, Inf, Inf, Inf), .Dim = c(9L, 9L), .Dimnames = list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL)), structure(c(-Inf, -Inf, 0, 1, 2, 3, Inf, Inf, Inf, -Inf, -Inf, 0, 1, 2, 3, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1, 2, 3, Inf, Inf, Inf, -Inf, -Inf, -Inf, 0.5, 1.6, 2.7, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1, 2.1, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1, 2.2, Inf, Inf, Inf, Inf, -Inf, -Inf, 0, 1, 2, 3, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1, 2.13333333333333, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1, 2.125, Inf, Inf, Inf, Inf), .Dim = c(9L, 9L), .Dimnames = list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL)), structure(c(-Inf, -Inf, 0, 1, 3, 4, Inf, Inf, Inf, -Inf, -Inf, 0, 1.5, 3, 4, Inf, Inf, Inf, -Inf, -Inf, 0, 1, 2, 4, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1, 2.4, 3.8, Inf, Inf, Inf, -Inf, -Inf, 0.100000000000001, 1.5, 2.9, Inf, Inf, Inf, Inf, -Inf, -Inf, 0, 1.5, 3, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.2, 1.5, 2.8, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.0666666666666664, 1.5, 2.93333333333333, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.0750000000000002, 1.5, 2.925, Inf, Inf, Inf, Inf), .Dim = c(9L, 9L), .Dimnames = list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL)), structure(c(-Inf, -Inf, 0, 2, 4, 5, Inf, Inf, Inf, -Inf, -Inf, 0, 2, 4, 5, Inf, Inf, Inf, -Inf, -Inf, 0, 1, 3, 5, Inf, Inf, Inf, -Inf, -Inf, -Inf, 1.5, 3.2, 4.9, Inf, Inf, Inf, -Inf, -Inf, 0.300000000000001, 2, 3.7, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.2, 2, 3.8, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.4, 2, 3.6, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.266666666666667, 2, 3.73333333333333, Inf, Inf, Inf, Inf, -Inf, -Inf, 0.275, 2, 3.725, Inf, Inf, Inf, Inf), .Dim = c(9L, 9L), .Dimnames = list(c('20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'), NULL))), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist24() {
-        assertEval(Ignored.Unknown, "argv <- list(structure('# everything ', Rd_tag = 'VERB'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure('# everything ', Rd_tag = 'VERB'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist25() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(sec = NA_real_, min = NA_integer_, hour = NA_integer_), .Names = c('sec', 'min', 'hour')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(sec = NA_real_, min = NA_integer_, hour = NA_integer_), .Names = c('sec', 'min', 'hour')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist26() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(a = list(1:5, c('A', 'B', 'C', 'D', 'E')), b = 'Z', c = NA), .Names = c('a', 'b', 'c')), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(a = list(1:5, c('A', 'B', 'C', 'D', 'E')), b = 'Z', c = NA), .Names = c('a', 'b', 'c')), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -173,24 +161,22 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist28() {
-        assertEval(Ignored.Unknown, "argv <- list(list(NULL), TRUE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(NULL), TRUE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist29() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(a = 'a', b = 2, c = 3.14159265358979+2i), .Names = c('a', 'b', 'c')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(a = 'a', b = 2, c = 3.14159265358979+2i), .Names = c('a', 'b', 'c')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist30() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(`1` = c(2, 1), `2` = c(3, 1.5, 1.5, 4), `3` = c(4, 2.5, 2.5, 5, 1), `4` = c(5, 3.5, 3.5, 7, 1.5, 6, 1.5), `5` = c(5, 3.5, 3.5, 8, 1.5, 6.5, 1.5, 6.5), `6` = c(6, 4.5, 4.5, 10, 2.5, 8.5, 2.5, 8.5, 1, 7), `7` = c(7, 5.5, 5.5, 11, 3.5, 9.5, 3.5, 9.5, 2, 8, 1)), .Dim = 7L, .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7'))), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(`1` = c(2, 1), `2` = c(3, 1.5, 1.5, 4), `3` = c(4, 2.5, 2.5, 5, 1), `4` = c(5, 3.5, 3.5, 7, 1.5, 6, 1.5), `5` = c(5, 3.5, 3.5, 8, 1.5, 6.5, 1.5, 6.5), `6` = c(6, 4.5, 4.5, 10, 2.5, 8.5, 2.5, 8.5, 1, 7), `7` = c(7, 5.5, 5.5, 11, 3.5, 9.5, 3.5, 9.5, 2, 8, 1)), .Dim = 7L, .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7'))), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist31() {
-        assertEval(Ignored.Unknown, "argv <- list(list(c(TRUE, TRUE), c(TRUE, TRUE), c(TRUE, TRUE), c(TRUE, TRUE), c(1, 2, 3)), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(c(TRUE, TRUE), c(TRUE, TRUE), c(TRUE, TRUE), c(TRUE, TRUE), c(1, 2, 3)), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -201,37 +187,32 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist33() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(c('  \\036 The ‘internal’ graphics device invoked by .Call(\\\'R_GD_nullDevice\\\',', '    package = \\\'grDevices\\\') has been removed: use pdf(file = NULL)', '    instead.')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(c('  \\036 The ‘internal’ graphics device invoked by .Call(\\\'R_GD_nullDevice\\\',', '    package = \\\'grDevices\\\') has been removed: use pdf(file = NULL)', '    instead.')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist34() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(surname = structure(c('McNeil', 'Ripley', 'Tierney', 'Tukey', 'Venables'), class = 'AsIs'), nationality = structure(c('Australia', 'UK', 'US', 'US', 'Australia'), class = 'AsIs'), deceased = structure(c('no', 'no', 'no', 'yes', 'no'), class = 'AsIs'), title = structure(c(NA_character_, NA_character_, NA_character_, NA_character_, NA_character_), class = 'AsIs'), other.author = structure(c(NA_character_, NA_character_, NA_character_, NA_character_, NA_character_), class = 'AsIs')), .Names = c('surname', 'nationality', 'deceased', 'title', 'other.author'), row.names = c('1', '2', '3', '4', '5')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(surname = structure(c('McNeil', 'Ripley', 'Tierney', 'Tukey', 'Venables'), class = 'AsIs'), nationality = structure(c('Australia', 'UK', 'US', 'US', 'Australia'), class = 'AsIs'), deceased = structure(c('no', 'no', 'no', 'yes', 'no'), class = 'AsIs'), title = structure(c(NA_character_, NA_character_, NA_character_, NA_character_, NA_character_), class = 'AsIs'), other.author = structure(c(NA_character_, NA_character_, NA_character_, NA_character_, NA_character_), class = 'AsIs')), .Names = c('surname', 'nationality', 'deceased', 'title', 'other.author'), row.names = c('1', '2', '3', '4', '5')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist35() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(structure(list(Ozone = c(96L, 78L, 73L, 91L, 47L, 32L, 20L, 23L, 21L, 24L, 44L, 21L, 28L, 9L, 13L, 46L, 18L, 13L, 24L, 16L, 13L, 23L, 36L, 7L, 14L, 30L, NA, 14L, 18L, 20L), Solar.R = c(167L, 197L, 183L, 189L, 95L, 92L, 252L, 220L, 230L, 259L, 236L, 259L, 238L, 24L, 112L, 237L, 224L, 27L, 238L, 201L, 238L, 14L, 139L, 49L, 20L, 193L, 145L, 191L, 131L, 223L), Wind = c(6.9, 5.1, 2.8, 4.6, 7.4, 15.5, 10.9, 10.3, 10.9, 9.7, 14.9, 15.5, 6.3, 10.9, 11.5, 6.9, 13.8, 10.3, 10.3, 8, 12.6, 9.2, 10.3, 10.3, 16.6, 6.9, 13.2, 14.3, 8, 11.5), Temp = c(91L, 92L, 93L, 93L, 87L, 84L, 80L, 78L, 75L, 73L, 81L, 76L, 77L, 71L, 71L, 78L, 67L, 76L, 68L, 82L, 64L, 71L, 81L, 69L, 63L, 70L, 77L, 75L, 76L, 68L), Month = c(9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L), Day = 1:30), .Names = c('Ozone', 'Solar.R', 'Wind', 'Temp', 'Month', 'Day'), row.names = 124:153, class = 'data.frame'), structure(list(c(2.67385465817826, 1.92826057080163, 1.7211511020859, 2.46674518946253, 0.6441818647641, 0.0228534586169083, -0.474209266300845, -0.349943585071407, -0.432787372557699, -0.308521691328261, 0.519916183534662, -0.432787372557699, -0.142834116355676, -0.929850097475453, -0.764162522502868, 0.602759971020954, -0.557053053787138, -0.764162522502868, -0.308521691328261, -0.63989684127343, -0.764162522502868, -0.349943585071407, 0.188541033589493, -1.01269388496175, -0.722740628759722, -0.059990328869384, NA, -0.722740628759722, -0.557053053787138, -0.474209266300845)), row.names = c(NA, -30L), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(structure(list(Ozone = c(96L, 78L, 73L, 91L, 47L, 32L, 20L, 23L, 21L, 24L, 44L, 21L, 28L, 9L, 13L, 46L, 18L, 13L, 24L, 16L, 13L, 23L, 36L, 7L, 14L, 30L, NA, 14L, 18L, 20L), Solar.R = c(167L, 197L, 183L, 189L, 95L, 92L, 252L, 220L, 230L, 259L, 236L, 259L, 238L, 24L, 112L, 237L, 224L, 27L, 238L, 201L, 238L, 14L, 139L, 49L, 20L, 193L, 145L, 191L, 131L, 223L), Wind = c(6.9, 5.1, 2.8, 4.6, 7.4, 15.5, 10.9, 10.3, 10.9, 9.7, 14.9, 15.5, 6.3, 10.9, 11.5, 6.9, 13.8, 10.3, 10.3, 8, 12.6, 9.2, 10.3, 10.3, 16.6, 6.9, 13.2, 14.3, 8, 11.5), Temp = c(91L, 92L, 93L, 93L, 87L, 84L, 80L, 78L, 75L, 73L, 81L, 76L, 77L, 71L, 71L, 78L, 67L, 76L, 68L, 82L, 64L, 71L, 81L, 69L, 63L, 70L, 77L, 75L, 76L, 68L), Month = c(9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L), Day = 1:30), .Names = c('Ozone', 'Solar.R', 'Wind', 'Temp', 'Month', 'Day'), row.names = 124:153, class = 'data.frame'), structure(list(c(2.67385465817826, 1.92826057080163, 1.7211511020859, 2.46674518946253, 0.6441818647641, 0.0228534586169083, -0.474209266300845, -0.349943585071407, -0.432787372557699, -0.308521691328261, 0.519916183534662, -0.432787372557699, -0.142834116355676, -0.929850097475453, -0.764162522502868, 0.602759971020954, -0.557053053787138, -0.764162522502868, -0.308521691328261, -0.63989684127343, -0.764162522502868, -0.349943585071407, 0.188541033589493, -1.01269388496175, -0.722740628759722, -0.059990328869384, NA, -0.722740628759722, -0.557053053787138, -0.474209266300845)), row.names = c(NA, -30L), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist36() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(c(5.87030131383818+0i, 1.5889879152884+1.34124369386909i, 2.11222603449395-1.81528547759475i, 2.90982451403972-3.07851581383191i, -0.93444299242086+4.19201264862077i, -2.47319172794455-3.70050127054969i, 3.40387225833387-2.03794044354999i, 0.964146923537224+0.43683199768595i, 0.964146923537223-0.43683199768595i, 3.40387225833387+2.03794044354999i, -2.47319172794455+3.70050127054969i, -0.93444299242086-4.19201264862077i, 2.90982451403972+3.07851581383191i, 2.11222603449395+1.81528547759475i, 1.5889879152884-1.34124369386909i), c(-0.198575181429756+0i, 3.06901469564285-0.28753262878135i, 2.52792606446531+0.34832983414202i, -0.22897831647696+4.34107190550675i, -1.1328140942159+1.10933827962707i, -2.13015831304915-3.19551716353477i, 1.66248610578085-2.34843556657312i, 2.53273081248013+0.345339148259i, 2.53273081248013-0.345339148259i, 1.66248610578085+2.34843556657312i, -2.13015831304915+3.19551716353477i, -1.1328140942159-1.10933827962708i, -0.22897831647696-4.34107190550675i, 2.52792606446531-0.34832983414202i, 3.06901469564285+0.28753262878135i), c(-0.177389766587854+0i, -0.750507869921238-0.968112891774716i, 2.01908494011385-1.61353499070386i, -1.32842557557029+1.87677956172028i, 0.278793972604843+0.060190561256586i, 0.06482045217871+2.780245561063i, -3.05075608405522+4.21179315999883i, -0.12202595251607-1.65218285338028i, -0.12202595251607+1.65218285338028i, -3.05075608405522-4.21179315999883i, 0.06482045217871-2.780245561063i, 0.278793972604844-0.060190561256586i, -1.32842557557029-1.87677956172028i, 2.01908494011385+1.61353499070386i, -0.750507869921237+0.968112891774715i), c(-1.93496831243286+0i, -4.87879352188084-3.06857420991118i, 0.91348359987171+2.30355482564816i, 2.7631069926811+6.2396752311874i, -0.9934286053847-5.99510259160787i, 0.39705745560005+3.84166415349047i, -1.5293697261841+2.76025815484515i, 3.48992984345714-5.88708433976428i, 3.48992984345714+5.88708433976428i, -1.5293697261841-2.76025815484515i, 0.39705745560005-3.84166415349047i, -0.99342860538471+5.99510259160787i, 2.7631069926811-6.2396752311874i, 0.91348359987171-2.30355482564816i, -4.87879352188084+3.06857420991118i), c(1.6954625122129+0i, 0.96480086806796-2.54002409930623i, -3.5054253146275-7.05689416264505i, -2.10114573645889-1.07773818646711i, 1.81179418950692+1.03308206229221i, 0.84721205589596-4.740786425434i, -1.90295630545443-1.68686014535334i, -2.43557705822344-1.63964363160433i, -2.43557705822344+1.63964363160433i, -1.90295630545443+1.68686014535334i, 0.84721205589596+4.740786425434i, 1.81179418950692-1.03308206229221i, -2.10114573645889+1.07773818646711i, -3.50542531462751+7.05689416264504i, 0.96480086806796+2.54002409930623i)), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(c(5.87030131383818+0i, 1.5889879152884+1.34124369386909i, 2.11222603449395-1.81528547759475i, 2.90982451403972-3.07851581383191i, -0.93444299242086+4.19201264862077i, -2.47319172794455-3.70050127054969i, 3.40387225833387-2.03794044354999i, 0.964146923537224+0.43683199768595i, 0.964146923537223-0.43683199768595i, 3.40387225833387+2.03794044354999i, -2.47319172794455+3.70050127054969i, -0.93444299242086-4.19201264862077i, 2.90982451403972+3.07851581383191i, 2.11222603449395+1.81528547759475i, 1.5889879152884-1.34124369386909i), c(-0.198575181429756+0i, 3.06901469564285-0.28753262878135i, 2.52792606446531+0.34832983414202i, -0.22897831647696+4.34107190550675i, -1.1328140942159+1.10933827962707i, -2.13015831304915-3.19551716353477i, 1.66248610578085-2.34843556657312i, 2.53273081248013+0.345339148259i, 2.53273081248013-0.345339148259i, 1.66248610578085+2.34843556657312i, -2.13015831304915+3.19551716353477i, -1.1328140942159-1.10933827962708i, -0.22897831647696-4.34107190550675i, 2.52792606446531-0.34832983414202i, 3.06901469564285+0.28753262878135i), c(-0.177389766587854+0i, -0.750507869921238-0.968112891774716i, 2.01908494011385-1.61353499070386i, -1.32842557557029+1.87677956172028i, 0.278793972604843+0.060190561256586i, 0.06482045217871+2.780245561063i, -3.05075608405522+4.21179315999883i, -0.12202595251607-1.65218285338028i, -0.12202595251607+1.65218285338028i, -3.05075608405522-4.21179315999883i, 0.06482045217871-2.780245561063i, 0.278793972604844-0.060190561256586i, -1.32842557557029-1.87677956172028i, 2.01908494011385+1.61353499070386i, -0.750507869921237+0.968112891774715i), c(-1.93496831243286+0i, -4.87879352188084-3.06857420991118i, 0.91348359987171+2.30355482564816i, 2.7631069926811+6.2396752311874i, -0.9934286053847-5.99510259160787i, 0.39705745560005+3.84166415349047i, -1.5293697261841+2.76025815484515i, 3.48992984345714-5.88708433976428i, 3.48992984345714+5.88708433976428i, -1.5293697261841-2.76025815484515i, 0.39705745560005-3.84166415349047i, -0.99342860538471+5.99510259160787i, 2.7631069926811-6.2396752311874i, 0.91348359987171-2.30355482564816i, -4.87879352188084+3.06857420991118i), c(1.6954625122129+0i, 0.96480086806796-2.54002409930623i, -3.5054253146275-7.05689416264505i, -2.10114573645889-1.07773818646711i, 1.81179418950692+1.03308206229221i, 0.84721205589596-4.740786425434i, -1.90295630545443-1.68686014535334i, -2.43557705822344-1.63964363160433i, -2.43557705822344+1.63964363160433i, -1.90295630545443+1.68686014535334i, 0.84721205589596+4.740786425434i, 1.81179418950692-1.03308206229221i, -2.10114573645889+1.07773818646711i, -3.50542531462751+7.05689416264504i, 0.96480086806796+2.54002409930623i)), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist37() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(inner = integer(0), outer = integer(0)), .Names = c('inner', 'outer')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(inner = integer(0), outer = integer(0)), .Names = c('inner', 'outer')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist38() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c('mode', 'length', 'x', 'mode', 'x', 'mode'), .Dim = 2:3), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(c('mode', 'length', 'x', 'mode', 'x', 'mode'), .Dim = 2:3), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -248,24 +229,22 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist41() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(N = 84L, ZXrows = 18, ZXcols = 5, Q = 1L, StrRows = 18, qvec = structure(c(1, 0, 0), .Names = c('Seed', '', '')), ngrps = structure(c(14L, 1L, 1L), .Names = c('Seed', 'X', 'y')), DmOff = structure(c(0, 1, 10), .Names = c('', 'Seed', '')), ncol = structure(c(1, 3, 1), .Names = c('Seed', '', '')), nrot = structure(c(4, 1, 0), .Names = c('', '', '')), ZXoff = structure(list(Seed = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13), X = structure(18, .Names = 'Seed'), y = structure(72, .Names = '')), .Names = c('Seed', 'X', 'y')), ZXlen = structure(list(Seed = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5), X = 18, y = 18), .Names = c('Seed', 'X', 'y')), SToff = structure(list(Seed = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13), X = structure(32, .Names = 'Seed'), y = structure(89, .Names = '')), .Names = c('Seed', 'X', 'y')), DecOff = structure(list(Seed = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13), X = structure(18, .Names = 'Seed'), y = structure(72, .Names = '')), .Names = c('Seed', 'X', 'y')), DecLen = structure(list(    Seed = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5), X = 18, y = 18), .Names = c('Seed', 'X', 'y'))), .Names = c('N', 'ZXrows', 'ZXcols', 'Q', 'StrRows', 'qvec', 'ngrps', 'DmOff', 'ncol', 'nrot', 'ZXoff', 'ZXlen', 'SToff', 'DecOff', 'DecLen')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(N = 84L, ZXrows = 18, ZXcols = 5, Q = 1L, StrRows = 18, qvec = structure(c(1, 0, 0), .Names = c('Seed', '', '')), ngrps = structure(c(14L, 1L, 1L), .Names = c('Seed', 'X', 'y')), DmOff = structure(c(0, 1, 10), .Names = c('', 'Seed', '')), ncol = structure(c(1, 3, 1), .Names = c('Seed', '', '')), nrot = structure(c(4, 1, 0), .Names = c('', '', '')), ZXoff = structure(list(Seed = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13), X = structure(18, .Names = 'Seed'), y = structure(72, .Names = '')), .Names = c('Seed', 'X', 'y')), ZXlen = structure(list(Seed = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5), X = 18, y = 18), .Names = c('Seed', 'X', 'y')), SToff = structure(list(Seed = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13), X = structure(32, .Names = 'Seed'), y = structure(89, .Names = '')), .Names = c('Seed', 'X', 'y')), DecOff = structure(list(Seed = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13), X = structure(18, .Names = 'Seed'), y = structure(72, .Names = '')), .Names = c('Seed', 'X', 'y')), DecLen = structure(list(    Seed = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5), X = 18, y = 18), .Names = c('Seed', 'X', 'y'))), .Names = c('N', 'ZXrows', 'ZXcols', 'Q', 'StrRows', 'qvec', 'ngrps', 'DmOff', 'ncol', 'nrot', 'ZXoff', 'ZXlen', 'SToff', 'DecOff', 'DecLen')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist42() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(structure('\\n', Rd_tag = 'RCODE'), structure('Sys.timezone()\\n', Rd_tag = 'RCODE'), structure('\\n', Rd_tag = 'RCODE'), structure('#ifdef windows not active', Rd_tag = 'COMMENT'), structure(list(structure('\\n', Rd_tag = 'VERB'), structure('## need to supply a suitable file path (if any) for your system\\n', Rd_tag = 'VERB'), structure('tzfile <- \\\'/usr/share/zoneinfo/zone.tab\\\'\\n', Rd_tag = 'VERB'), structure('tzones <- read.delim(tzfile, row.names = NULL, header = FALSE,\\n', Rd_tag = 'VERB'),     structure('    col.names = c(\\\'country\\\', \\\'coords\\\', \\\'name\\\', \\\'comments\\\'),\\n', Rd_tag = 'VERB'), structure('    as.is = TRUE, fill = TRUE, comment.char = \\\'#\\\')\\n', Rd_tag = 'VERB'), structure('str(tzones$name)\\n', Rd_tag = 'VERB')), Rd_tag = '\\\\dontrun'), structure('\\n', Rd_tag = 'RCODE')), Rd_tag = '\\\\examples'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(structure('\\n', Rd_tag = 'RCODE'), structure('Sys.timezone()\\n', Rd_tag = 'RCODE'), structure('\\n', Rd_tag = 'RCODE'), structure('#ifdef windows not active', Rd_tag = 'COMMENT'), structure(list(structure('\\n', Rd_tag = 'VERB'), structure('## need to supply a suitable file path (if any) for your system\\n', Rd_tag = 'VERB'), structure('tzfile <- \\\'/usr/share/zoneinfo/zone.tab\\\'\\n', Rd_tag = 'VERB'), structure('tzones <- read.delim(tzfile, row.names = NULL, header = FALSE,\\n', Rd_tag = 'VERB'),     structure('    col.names = c(\\\'country\\\', \\\'coords\\\', \\\'name\\\', \\\'comments\\\'),\\n', Rd_tag = 'VERB'), structure('    as.is = TRUE, fill = TRUE, comment.char = \\\'#\\\')\\n', Rd_tag = 'VERB'), structure('str(tzones$name)\\n', Rd_tag = 'VERB')), Rd_tag = '\\\\dontrun'), structure('\\n', Rd_tag = 'RCODE')), Rd_tag = '\\\\examples'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist43() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(`1` = 8.91763605923317e+38), .Names = '1'), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(`1` = 8.91763605923317e+38), .Names = '1'), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist44() {
-        assertEval(Ignored.Unknown, "argv <- list(list(c(0, 0), c(0, 0, 0, 1), NULL, c(1, 1)), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(c(0, 0), c(0, 0, 0, 1), NULL, c(1, 1)), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -282,19 +261,17 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist47() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(structure(list(structure('DateTimeClasses', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('print.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('print.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('summary.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'),     structure(list(structure('summary.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('+.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('-.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('Ops.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('Math.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('Summary.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('Math.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'),     structure(list(structure('Summary.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[<-.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[[.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[<-.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('as.data.frame.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'),     structure(list(structure('as.data.frame.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('as.list.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('.leap.seconds', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('is.na.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('c.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('c.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(        structure('as.matrix.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('length.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('mean.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('mean.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('str.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('check_tzones', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('duplicated.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'),     structure(list(structure('unique.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('split.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('names.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('names<-.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('date-time', Rd_tag = 'VERB')), Rd_tag = '\\\\alias')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(structure(list(structure('DateTimeClasses', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('print.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('print.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('summary.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'),     structure(list(structure('summary.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('+.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('-.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('Ops.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('Math.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('Summary.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('Math.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'),     structure(list(structure('Summary.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[<-.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[[.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[<-.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('as.data.frame.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'),     structure(list(structure('as.data.frame.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('as.list.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('.leap.seconds', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('is.na.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('c.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('c.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(        structure('as.matrix.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('length.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('mean.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('mean.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('str.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('check_tzones', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('duplicated.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'),     structure(list(structure('unique.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('split.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('names.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('names<-.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('date-time', Rd_tag = 'VERB')), Rd_tag = '\\\\alias')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist48() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(c(3L, 0L, 0L)), class = 'numeric_version'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(list(c(3L, 0L, 0L)), class = 'numeric_version'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist49() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(structure(list(x = 1L, y = structure(1L, .Label = c('A', 'D', 'E'), class = 'factor'), z = 6), .Names = c('x', 'y', 'z'), row.names = 1L, class = 'data.frame'), structure(list(), .Names = character(0), row.names = 1L, class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(structure(list(x = 1L, y = structure(1L, .Label = c('A', 'D', 'E'), class = 'factor'), z = 6), .Names = c('x', 'y', 'z'), row.names = 1L, class = 'data.frame'), structure(list(), .Names = character(0), row.names = 1L, class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

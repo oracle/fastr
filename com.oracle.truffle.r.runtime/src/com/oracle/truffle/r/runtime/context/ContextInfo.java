@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
+import java.io.IOException;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,15 +30,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
 /**
  * Represents custom initialization state for an R instance.
  *
- * Use {@link #apply(com.oracle.truffle.api.vm.PolyglotEngine.Builder)} to apply this information to
- * a newly-built {@link PolyglotEngine} instance (it will be stored in the "fastrContextInfo" global
- * symbol).
+ * Use {@link #createVM()} to apply this information to a newly-built {@link PolyglotEngine}
+ * instance (it will be stored in the "fastrContextInfo" global symbol).
  */
 public final class ContextInfo implements TruffleObject {
     public static final String GLOBAL_SYMBOL = "fastrContextInfo";
@@ -56,6 +57,7 @@ public final class ContextInfo implements TruffleObject {
     private final RContext parent;
     private final ConsoleHandler consoleHandler;
     private final int id;
+    private PolyglotEngine vm;
 
     private ContextInfo(RStartParams startParams, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone, int id) {
         this.startParams = startParams;
@@ -66,8 +68,10 @@ public final class ContextInfo implements TruffleObject {
         this.id = id;
     }
 
-    public PolyglotEngine.Builder apply(PolyglotEngine.Builder builder) {
-        return builder.globalSymbol(GLOBAL_SYMBOL, this);
+    public PolyglotEngine createVM() {
+        PolyglotEngine newVM = PolyglotEngine.newBuilder().globalSymbol(GLOBAL_SYMBOL, this).build();
+        this.vm = newVM;
+        return newVM;
     }
 
     /**
@@ -99,6 +103,14 @@ public final class ContextInfo implements TruffleObject {
         return contextInfos.get(id);
     }
 
+    public static ContextInfo getContextInfo(PolyglotEngine vm) {
+        try {
+            return (ContextInfo) vm.findGlobalSymbol(ContextInfo.GLOBAL_SYMBOL).get();
+        } catch (IOException ex) {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
     public RStartParams getStartParams() {
         return startParams;
     }
@@ -121,6 +133,10 @@ public final class ContextInfo implements TruffleObject {
 
     public int getId() {
         return id;
+    }
+
+    public PolyglotEngine getVM() {
+        return vm;
     }
 
     @Override

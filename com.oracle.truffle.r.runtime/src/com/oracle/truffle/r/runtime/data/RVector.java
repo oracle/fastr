@@ -398,7 +398,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
                         }
                     } else {
                         RStringVector dimVector = (RStringVector) dimObject;
-                        if (dimVector == null || dimVector.getLength() == 0) {
+                        if (dimVector == null) {
                             newDimNames.updateDataAt(i, RNull.instance, null);
                         } else if (dimVector.getLength() != dimensions[i]) {
                             throw RError.error(invokingNode, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
@@ -552,7 +552,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         RVector result = internalCopy();
         setAttributes(result);
         incCopyCount();
-        result.typedValueInfo = typedValueInfo;
+        result.setTypedValueInfo(getTypedValueInfo());
         return result;
     }
 
@@ -754,7 +754,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     }
 
     @Override
-    public final RAttributes resetAllAttributes(boolean nullify) {
+    public final void resetAllAttributes(boolean nullify) {
         this.dimensions = null;
         this.names = null;
         this.dimNames = null;
@@ -766,7 +766,6 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
                 this.attributes.clear();
             }
         }
-        return this.attributes;
     }
 
     @Override

@@ -35,14 +35,13 @@ import java.util.List;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.nodes.builtin.base.Quit;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RStartParams;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
@@ -54,7 +53,6 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 
 import jline.console.UserInterruptException;
 
@@ -68,7 +66,7 @@ public class RCommand {
     public static void main(String[] args) {
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
         options.printHelpAndVersion();
-        PolyglotEngine vm = createContextInfoFromCommandLine(options, false);
+        PolyglotEngine vm = createPolyglotEngineFromCommandLine(options, false);
         // never returns
         readEvalPrint(vm);
         throw RInternalError.shouldNotReachHere();
@@ -81,7 +79,7 @@ public class RCommand {
         return input.replace("~+~", " ");
     }
 
-    static PolyglotEngine createContextInfoFromCommandLine(RCmdOptions options, boolean embedded) {
+    static PolyglotEngine createPolyglotEngineFromCommandLine(RCmdOptions options, boolean embedded) {
         RStartParams rsp = new RStartParams(options, embedded);
 
         String fileArg = options.getString(FILE);
@@ -137,7 +135,7 @@ public class RCommand {
             }
             // cf GNU R
             rsp.setInteractive(false);
-            consoleHandler = new StringConsoleHandler(exprs, System.out, RInternalSourceDescriptions.EXPRESSION_INPUT);
+            consoleHandler = new StringConsoleHandler(exprs, System.out, RSource.Internal.EXPRESSION_INPUT.string);
         } else {
             /*
              * GnuR behavior differs from the manual entry for {@code interactive} in that {@code
@@ -164,11 +162,11 @@ public class RCommand {
                 }
             }
         }
-        return ContextInfo.create(rsp, ContextKind.SHARE_NOTHING, null, consoleHandler).apply(PolyglotEngine.newBuilder()).build();
+        return ContextInfo.create(rsp, ContextKind.SHARE_NOTHING, null, consoleHandler).createVM();
     }
 
-    private static final Source GET_ECHO = Source.fromText("invisible(getOption('echo'))", RInternalSourceDescriptions.GET_ECHO).withMimeType(TruffleRLanguage.MIME);
-    private static final Source QUIT_EOF = Source.fromText("quit(\"default\", 0L, TRUE)", RInternalSourceDescriptions.QUIT_EOF).withMimeType(TruffleRLanguage.MIME);
+    private static final Source GET_ECHO = RSource.fromTextInternal("invisible(getOption('echo'))", RSource.Internal.GET_ECHO);
+    private static final Source QUIT_EOF = RSource.fromTextInternal("quit(\"default\", 0L, TRUE)", RSource.Internal.QUIT_EOF);
 
     /**
      * The read-eval-print loop, which can take input from a console, command line expression or a
@@ -182,8 +180,7 @@ public class RCommand {
      * exiting. So,in either case, we never return.
      */
     static void readEvalPrint(PolyglotEngine vm) {
-        ConsoleHandler consoleHandler = getContextInfo(vm).getConsoleHandler();
-        Source source = Source.fromAppendableText(consoleHandler.getInputDescription());
+        ConsoleHandler consoleHandler = ContextInfo.getContextInfo(vm).getConsoleHandler();
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             REPL: for (;;) {
@@ -194,18 +191,15 @@ public class RCommand {
                     if (input == null) {
                         throw new EOFException();
                     }
-                    // Start index of the new input
-                    int startLength = source.getLength();
-                    // Append the input as is
-                    source.appendCode(input);
-                    input = input.trim();
-                    if (input.equals("") || input.charAt(0) == '#') {
+                    String trInput = input.trim();
+                    if (trInput.equals("") || trInput.charAt(0) == '#') {
                         // nothing to parse
                         continue;
                     }
 
                     String continuePrompt = getContinuePrompt();
-                    Source subSource = Source.subSource(source, startLength).withMimeType(TruffleRLanguage.MIME);
+                    StringBuffer sb = new StringBuffer(input);
+                    Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.SHELL_INPUT);
                     while (true) {
                         /*
                          * N.B. As of Truffle rev 371045b1312d412bafa29882e6c3f7bfe6c0f8f1, only
@@ -213,7 +207,8 @@ public class RCommand {
                          * subclasses pass through.
                          */
                         try {
-                            vm.eval(subSource);
+                            vm.eval(source);
+                            emitIO();
                         } catch (IncompleteSourceException | com.oracle.truffle.api.vm.IncompleteSourceException e) {
                             // read another line of input
                             consoleHandler.setPrompt(doEcho ? continuePrompt : null);
@@ -221,8 +216,8 @@ public class RCommand {
                             if (additionalInput == null) {
                                 throw new EOFException();
                             }
-                            source.appendCode(additionalInput);
-                            subSource = Source.subSource(source, startLength).withMimeType(TruffleRLanguage.MIME);
+                            sb.append(additionalInput);
+                            source = RSource.fromTextInternal(sb.toString(), RSource.Internal.SHELL_INPUT);
                             // The only continuation in the while loop
                             continue;
                         } catch (ParseException e) {
@@ -270,18 +265,11 @@ public class RCommand {
         }
     }
 
-    static ContextInfo getContextInfo(PolyglotEngine vm) {
-        try {
-            return (ContextInfo) vm.findGlobalSymbol(ContextInfo.GLOBAL_SYMBOL).get();
-        } catch (IOException ex) {
-            throw RInternalError.shouldNotReachHere();
-        }
-    }
-
     private static boolean doEcho(PolyglotEngine vm) {
         PolyglotEngine.Value echoValue;
         try {
             echoValue = vm.eval(GET_ECHO);
+            emitIO();
             Object echo = echoValue.get();
             if (echo instanceof TruffleObject) {
                 RLogicalVector echoVec = echoValue.as(RLogicalVector.class);
@@ -297,7 +285,10 @@ public class RCommand {
     }
 
     private static String getContinuePrompt() {
-        RStringVector continuePrompt = (RStringVector) RRuntime.asAbstractVector(RContext.getInstance().stateROptions.getValue("continue"));
-        return continuePrompt.getDataAt(0);
+        return RRuntime.asString(RRuntime.asAbstractVector(RContext.getInstance().stateROptions.getValue("continue")));
+    }
+
+    @SuppressWarnings("unused")
+    private static void emitIO() throws IOException {
     }
 }

@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 /**
  * Denotes an R {@code promise}.
@@ -277,7 +278,7 @@ public class RPromise implements RTypedValue {
          * @return Whether the promise has been deoptimized before
          */
         public boolean deoptimize() {
-            if (!deoptimized && !isEvaluated()) {
+            if (!deoptimized && !isEvaluated() && feedback != null) {
                 deoptimized = true;
                 notifyFailure();
                 materialize();
@@ -418,9 +419,15 @@ public class RPromise implements RTypedValue {
         public static final String CLOSURE_WRAPPER_NAME = new String("<promise>");
 
         private final RBaseNode expr;
+        private final String symbol;
 
         private Closure(RBaseNode expr) {
             this.expr = expr;
+            if (expr.asRSyntaxNode() instanceof RSyntaxLookup) {
+                this.symbol = ((RSyntaxLookup) expr.asRSyntaxNode()).getIdentifier();
+            } else {
+                this.symbol = null;
+            }
         }
 
         public static Closure create(RBaseNode expr) {
@@ -454,6 +461,10 @@ public class RPromise implements RTypedValue {
 
         public RBaseNode getExpr() {
             return expr;
+        }
+
+        public String asSymbol() {
+            return symbol;
         }
     }
 

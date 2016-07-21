@@ -20,6 +20,8 @@
 # The structure of the implementation somewhat reflects GnuR so that
 # it is easier to update this code, should the code in GnuR be changed.
 #
+# Please run tests in modelTests.R when updating this file!
+#
 
 # ================================================================
 # R reimplementations of C utility functions 
@@ -128,7 +130,10 @@ InstallVar <- function(var) {
             return(index)
         }
     }
-    varlist <<- c(varlist, var)
+
+    # as.list is necessary here until FastR is fixed not to
+    # cast c(symbol, language) to expressions, we need a list
+    varlist <<- as.list(c(varlist, var))
     
     return(index + 1L)
 }
@@ -143,13 +148,11 @@ ExtractVars <- function (formula, checkonly=FALSE) {
     
     v <- NULL
     if (is.symbol(formula)) {
-        haveDot <- identical(formula, quote(`.`))
+        haveDot <<- identical(formula, quote(`.`))
         if (!checkonly) {
             if (identical(formula, quote(`.`)) && !is.null(framenames)) {
                 for (framename in framenames) {
-                    if (!MatchVar(framename, varlist)) {
-                        InstallVar(framename)
-                    }
+                    InstallVar(as.symbol(framename))
                 }
             } else  {
                 InstallVar(formula)
@@ -215,16 +218,9 @@ CheckRHS <- function (v) {
         for (e in v) {
             CheckRHS(e)
         }        
-    }
-    if (is.symbol(v)) {
-        for (i in seq_along(framenames)) {
-            framename <- framenames[[i]];
-            # TODO is this check good enough?
-            # its a raw check in GNUR
-            if (identical(framename, v))  {
-                framenames <<- framenames[[-i]]
-            }
-        }
+    } else if (is.symbol(v)) {
+        vchar <- deparse(v)
+        framenames <<- framenames[framenames != vchar]
     }
 }
 AllocTerm <- function()  {
@@ -403,7 +399,25 @@ EncodeVars <- function(formula) {
         return(NULL)
     } else if (is.symbol(formula)) {
         if (identical(formula, quote(`.`)) && !is.null(framenames)) {
-            error("termsform: not implemented when formula='.' and there are framenames")
+            if (length(framenames) == 0L) {
+                return(NULL)
+            }
+            result <- vector("list", length(framenames))
+            for (i in 1:length(framenames)) {
+                name <- framenames[[i]]
+                if (i > 1) {
+                    for (j in 1:(i-1)) {
+                        if (name == framenames[[j]]) {
+                            error(paste0("duplicated name '", name, "' in data frame using '.'"))
+                        }
+                    }
+                }
+                idx <- InstallVar(as.symbol(name))
+                term <- AllocTerm();
+                term[[idx]] <- TRUE
+                result[[i]] <- term
+            }
+            return(result);
         } else {
             term <- AllocTerm()
             term[[InstallVar(formula)]] <- TRUE
@@ -479,6 +493,22 @@ TermCode <- function(formula, callIdx, varIndex) {
     return(2L);
 }
 
+# gets the formula as parameter and returns the same formula, where
+# dot symbol is replaced with (a+b+c+...) where a,b,c.. are framenames.
+ExpandDots <- function(x) {
+    if (is.symbol(x)) {
+        if (identical(x, quote(`.`))) {
+            return(parse(text=paste(framenames, collapse="+"))[[1]])
+        }
+        return(x)
+    }
+
+    for (i in seq_along(x)) {
+        x[[i]] <- ExpandDots(x[[i]]);
+    }
+    x
+}
+
 
 # PUBLIC: termsform
 #
@@ -546,12 +576,10 @@ termsform <- function (x, specials, data, keep.order, allowDotAsName) {
     attr(x, "variables") <- vars
     
     # Note: GnuR uses bitvector of integers and variable nwords to denote its size, we do not need that
-    # EncodeVars may have stretched varlist becuase it is a global variable (to reflect GnuR's implementation) 
     nvar <<- length(varlist) 
-    
     formula <- EncodeVars(x)
     
-    # EncodeVars may have stretched the varlist global variable
+    # EncodeVars may have stretched varlist becuase it is a global variable (to reflect GnuR's implementation) 
     nvar <<- length(varlist)
     
     # Step 2a: Compute variable names 
@@ -560,12 +588,13 @@ termsform <- function (x, specials, data, keep.order, allowDotAsName) {
     # Step 2b: Find and remove any offset(s) 
     
     # first see if any of the variables are offsets
-    k <- sum(substr(varnames, 0, 7) == "offset(")
-    if (k > 0L) {
-        offsets <- integer(k)
-        # TODO remove the offset terms from the formula
-        error("termsform: not implemented - remove the offset terms from formula")
-        attr(x, "offset") <- offsets
+    offsets <- substr(varnames, 0, 7) == "offset("
+    if (any(offsets)) {
+        indices <- which(offsets)
+        attr(x, "offset") <- indices
+        # remove the offset terms from the formula, that is terms that contain one of the offset vars
+        keepIndices = vapply(formula, function(f) !any(f[indices]), FALSE)
+        formula <- formula[which(keepIndices)]
     }
     
     nterm <<- length(formula);
@@ -579,7 +608,7 @@ termsform <- function (x, specials, data, keep.order, allowDotAsName) {
         ord <- sCounts;
     } else {
       pattern <- formula # save original formula
-      callIdx <- 1L # on the top of the two loop below, we iterate through formula. In GnuR this is done with CDR
+      callIdx <- 1L
       ord <- integer(nterm)
       for (i in 0:bitmax) {
         for (n in 1:nterm) {
@@ -622,15 +651,22 @@ termsform <- function (x, specials, data, keep.order, allowDotAsName) {
     attr(x, "factors") <- pattern
     
     if (!is.null(specials)) {
-      # TODO -- if there are specials stick them in here
-      error("termsform: not implemented when !is.null(specials)")
+        specialsAttr <- vector("pairlist", length(specials))
+        names(specialsAttr) <- specials
+        for (i in 1:length(specials)) {
+            s <- specials[[i]]
+            indices <- substring(varnames, 0, nchar(s) + 1) == paste0(s, '(');
+            if (any(indices)) {
+                specialsAttr[[i]] <- which(indices);
+            }
+        }
+        attr(x, 'specials') <- specialsAttr
     }
     
     # Step 6: Fix up the formula by substituting for dot, which should be
     # the framenames joined by +
     if (haveDot) {
-      # TODO
-      error("termsform: not implemented when haveDot")
+      x <- ExpandDots(x)
     }
     
     attr(x, "order") <- ord
@@ -762,11 +798,8 @@ modelframe <- function(formula, rownames, variables, varnames, dots, dotnames, s
     }
     
     # Do the subsetting, if required.
-    # Need to save and restore 'most' attributes
     if (!is.null(subset)) {
-        # TODO: what is this supposed to do?
-        print("DEBUG: warning hit untested case in 'modelframe'")
-        `[.data.frame`(list(data, subset, NULL, FALSE))
+        data <- data[subset,,drop=FALSE]
     }
     
     # finally, we run na.action on the data frame

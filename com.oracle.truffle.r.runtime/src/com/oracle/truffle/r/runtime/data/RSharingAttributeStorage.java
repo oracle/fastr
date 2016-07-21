@@ -56,8 +56,9 @@ public abstract class RSharingAttributeStorage extends RAttributeStorage impleme
     }
 
     @Override
-    public void makeSharedPermanent() {
+    public RSharingAttributeStorage makeSharedPermanent() {
         refCount = SHARED_PERMANENT_VAL;
+        return this;
     }
 
     @Override

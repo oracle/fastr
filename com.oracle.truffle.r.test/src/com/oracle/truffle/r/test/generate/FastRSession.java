@@ -34,12 +34,12 @@ import java.util.concurrent.TimeoutException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RStartParams;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
@@ -50,7 +50,8 @@ import com.oracle.truffle.r.test.TestBase;
 
 public final class FastRSession implements RSession {
 
-    private static final int TIMEOUT = System.getProperty("DisableTestTimeout") != null ? Integer.MAX_VALUE : 20000;
+    private static final int DEFAULT_TIMEOUT = System.getProperty("DisableTestTimeout") != null ? Integer.MAX_VALUE : 10000;
+    private static final int LONG_TIMEOUT = System.getProperty("DisableTestTimeout") != null ? Integer.MAX_VALUE : 60000;
 
     /**
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for
@@ -136,7 +137,7 @@ public final class FastRSession implements RSession {
         return singleton;
     }
 
-    public static final Source GET_CONTEXT = Source.fromText("invisible(.fastr.context.get())", "<get_context>").withMimeType(TruffleRLanguage.MIME);
+    public static final Source GET_CONTEXT = RSource.fromTextInternal("invisible(.fastr.context.get())", RSource.Internal.GET_CONTEXT);
 
     public PolyglotEngine createTestContext(ContextInfo contextInfoArg) {
         create();
@@ -146,7 +147,7 @@ public final class FastRSession implements RSession {
         } else {
             contextInfo = contextInfoArg;
         }
-        return contextInfo.apply(PolyglotEngine.newBuilder()).build();
+        return contextInfo.createVM();
     }
 
     public ContextInfo createContextInfo(ContextKind contextKind) {
@@ -159,9 +160,10 @@ public final class FastRSession implements RSession {
         try {
             RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[]{"--no-restore"}, false), false);
             ContextInfo info = ContextInfo.create(params, ContextKind.SHARE_NOTHING, null, consoleHandler);
-            main = info.apply(PolyglotEngine.newBuilder()).build();
+            main = info.createVM();
             try {
                 mainContext = main.eval(GET_CONTEXT).as(RContext.class);
+                emitIO();
             } catch (IOException e) {
                 throw new RuntimeException("error while retrieving test context", e);
             }
@@ -172,7 +174,7 @@ public final class FastRSession implements RSession {
 
     @Override
     @SuppressWarnings("deprecation")
-    public String eval(String expression, ContextInfo contextInfo) throws Throwable {
+    public String eval(String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
         consoleHandler.reset();
 
         EvalThread thread = evalThread;
@@ -186,7 +188,7 @@ public final class FastRSession implements RSession {
         thread.push(expression);
 
         try {
-            if (!thread.await(TIMEOUT)) {
+            if (!thread.await(longTimeout ? LONG_TIMEOUT : DEFAULT_TIMEOUT)) {
                 consoleHandler.println("<timeout>");
                 thread.stop();
                 evalThread = null;
@@ -238,10 +240,11 @@ public final class FastRSession implements RSession {
                     try {
                         String input = consoleHandler.readLine();
                         while (input != null) {
-                            Source source = Source.fromText(input, null).withMimeType(TruffleRLanguage.MIME);
+                            Source source = RSource.fromTextInternal(input, RSource.Internal.UNIT_TEST);
                             try {
                                 vm.eval(source);
                                 input = consoleHandler.readLine();
+                                emitIO();
                             } catch (IncompleteSourceException | com.oracle.truffle.api.vm.IncompleteSourceException e) {
                                 String additionalInput = consoleHandler.readLine();
                                 if (additionalInput == null) {
@@ -264,10 +267,12 @@ public final class FastRSession implements RSession {
                     if (t instanceof RError) {
                         // nothing to do
                     } else {
-                        if (!TestBase.ProcessFailedTests && t instanceof RInternalError) {
-                            RInternalError.reportError(t);
+                        if (!TestBase.ProcessFailedTests) {
+                            if (t instanceof RInternalError) {
+                                RInternalError.reportError(t);
+                            }
+                            t.printStackTrace();
                         }
-                        t.printStackTrace();
                         killedByException = t;
                     }
                 } finally {
@@ -280,5 +285,9 @@ public final class FastRSession implements RSession {
     @Override
     public String name() {
         return "FastR";
+    }
+
+    @SuppressWarnings("unused")
+    static void emitIO() throws IOException {
     }
 }

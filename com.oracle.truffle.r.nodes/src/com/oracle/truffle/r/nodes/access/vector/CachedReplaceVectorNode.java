@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -77,6 +78,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final ConditionProfile valueIsNA = ConditionProfile.createBinaryProfile();
     private final BranchProfile resizeProfile = BranchProfile.create();
     private final BranchProfile sharedProfile = BranchProfile.create();
+    private final ConditionProfile rlanguageAttributesProfile = ConditionProfile.createBinaryProfile();
 
     private final ConditionProfile valueLengthOneProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyReplacementProfile = ConditionProfile.createBinaryProfile();
@@ -187,6 +189,10 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             case Language:
                 repType = RContext.getRRuntimeASTAccess().getRepType((RLanguage) castVector);
                 vector = RContext.getRRuntimeASTAccess().asList((RLanguage) castVector);
+                RAttributes attrs = ((RLanguage) castVector).getAttributes();
+                if (rlanguageAttributesProfile.profile(attrs != null && !attrs.isEmpty())) {
+                    vector.initAttributes(attrs.copy());
+                }
                 break;
             case Expression:
                 vector = ((RExpression) castVector).getList();
@@ -492,15 +498,17 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         return returnVector;
     }
 
+    private final ConditionProfile rightIsNotTemporary = ConditionProfile.createBinaryProfile();
+
     private RTypedValue copyValueOnAssignment(RTypedValue value) {
         if (value instanceof RShareable && value instanceof RAbstractVector) {
             RShareable val = (RShareable) value;
             if (rightIsShared.profile(val.isShared())) {
                 val = val.copy();
-            } else {
+            } else if (rightIsNotTemporary.profile(!val.isTemporary())) {
                 val.incRefCount();
             }
-            return (RTypedValue) val;
+            return val;
         }
         return value;
     }

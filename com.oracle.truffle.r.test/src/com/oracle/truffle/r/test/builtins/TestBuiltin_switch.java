@@ -47,7 +47,7 @@ public class TestBuiltin_switch extends TestBase {
         assertEval("{ x <- \"<\"; switch(x, \"<=\" =, \"<\" =, \">\" =, FALSE) }");
         assertEval("{ a <- NULL ; switch(mode(a), NULL=\"naught\") }");
         assertEval("{ a <- NULL ; switch(mode(a), NULL=) }");
-        assertEval(Output.ContainsError, "{ x <- \"!\"; v <- switch(x, v77, \"<=\" =, \"<\" =, \">\" = 99, v55)}");
+        assertEval(Output.IgnoreErrorContext, "{ x <- \"!\"; v <- switch(x, v77, \"<=\" =, \"<\" =, \">\" = 99, v55)}");
         assertEval("{ x <- \"!\"; v <- switch(x, \"\"=v77, \"<=\" =, \"<\" =, \">\" = 99, v55)}");
     }
 }

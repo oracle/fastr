@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -40,10 +40,15 @@ ifeq ($(OS_NAME), Darwin)
 VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
 endif
 
+BLAS_TARGET := $(FASTR_LIB_DIR)/libRblas$(DYLIB_EXT)
+
 all: $(C_LIB)
 
 $(C_LIB): objs 
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(wildcard lib/*.o) $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(wildcard lib/*.o) -L $(GNUR_HOME)/lib -lRblas $(VERSION_FLAGS)
+ifeq ($(OS_NAME),Darwin)
+	install_name_tool -change libRblas.dylib $(BLAS_TARGET) $(C_LIB)
+endif
 
 objs:
 	$(MAKE) -C src/common all

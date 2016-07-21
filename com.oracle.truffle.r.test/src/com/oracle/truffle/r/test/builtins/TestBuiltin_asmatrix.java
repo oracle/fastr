@@ -41,12 +41,12 @@ public class TestBuiltin_asmatrix extends TestBase {
 
     @Test
     public void testIgnoredMatrixExpression1() {
-        Assert.assertEquals(expectedOut1, fastREval("{ matrix(1i,10,10) }", null));
+        Assert.assertEquals(expectedOut1, fastREval("{ matrix(1i,10,10) }", null, false));
     }
 
     @Test
     public void testIgnoredMatrixExpression2() {
-        Assert.assertEquals(expectedOut2, fastREval("{ matrix(c(1i,NA),10,10) }", null));
+        Assert.assertEquals(expectedOut2, fastREval("{ matrix(c(1i,NA),10,10) }", null, false));
     }
 
     @Test
@@ -74,8 +74,8 @@ public class TestBuiltin_asmatrix extends TestBase {
         assertEval("{ matrix(c(NaN,4+5i,2+0i,5+10i)} ");
 
         // FIXME missing warning
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ matrix(c(1,2,3,4),3,2) }");
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ matrix(1:4,3,2) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ matrix(c(1,2,3,4),3,2) }");
+        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ matrix(1:4,3,2) }");
 
         assertEval("{ x<-matrix(integer(), ncol=2) }");
         assertEval("{ x<-matrix(integer(), nrow=2) }");

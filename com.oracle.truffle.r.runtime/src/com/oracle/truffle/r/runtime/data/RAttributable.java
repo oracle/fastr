@@ -133,10 +133,19 @@ public interface RAttributable extends RTypedValue {
         }
     }
 
-    default RAttributes resetAllAttributes(@SuppressWarnings("unused") boolean nullify) {
+    /**
+     * Removes all attributes. If the attributes instance was not initialized, it will stay
+     * uninitialized (i.e. {@code null}). If the attributes instance was initialized, it will stay
+     * initialized and will be just cleared, unless nullify is {@code true}.
+     *
+     * @param nullify Some implementations can force nullifying attributes instance if this flag is
+     *            set to {@code true}. Nullifying is not guaranteed for al implementations.
+     */
+    default void resetAllAttributes(boolean nullify) {
         RAttributes attributes = getAttributes();
-        attributes.clear();
-        return attributes;
+        if (attributes != null) {
+            attributes.clear();
+        }
     }
 
     default RAttributable setClassAttr(RStringVector classAttr) {

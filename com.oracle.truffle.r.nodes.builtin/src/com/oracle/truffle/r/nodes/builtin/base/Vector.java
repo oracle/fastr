@@ -34,7 +34,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 
 @RBuiltin(name = "vector", kind = INTERNAL, parameterNames = {"mode", "length"})
 public abstract class Vector extends RBuiltinNode {
@@ -50,7 +50,7 @@ public abstract class Vector extends RBuiltinNode {
 
     protected RType modeToType(String mode) {
         RType type = typeFromMode.execute(mode);
-        if (!type.isVector()) {
+        if (type != RType.PairList && !type.isVector()) {
             throw RError.error(this, RError.Message.CANNOT_MAKE_VECTOR_OF_MODE, mode);
         }
         return type;
@@ -58,13 +58,23 @@ public abstract class Vector extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"mode == cachedMode"}, limit = CACHED_MODES_LIMIT)
-    RAbstractVector vectorCached(String mode, int length, @Cached("mode") String cachedMode, @Cached("modeToType(mode)") RType type) {
-        return type.create(length, false);
+    Object vectorCached(String mode, int length, @Cached("mode") String cachedMode, @Cached("modeToType(mode)") RType type) {
+        return createType(type, length);
     }
 
     @Specialization(contains = "vectorCached")
     @TruffleBoundary
-    protected RAbstractVector vector(String mode, int length) {
-        return modeToType(mode).create(length, false);
+    protected Object vector(String mode, int length) {
+        return createType(modeToType(mode), length);
+    }
+
+    // Note: we have to handle RPairList separately. In other circumstances it is not seen as a
+    // vector, e.g. is.vector(vector('pairlist',1)) is FALSE, so we cannot just turn it into
+    // RAbstractVector. Note2: pair list of size == 0 is RNull -> we have to return Object.
+    private static Object createType(RType type, int length) {
+        if (type == RType.PairList) {
+            return RDataFactory.createPairList(length);
+        }
+        return type.create(length, false);
     }
 }

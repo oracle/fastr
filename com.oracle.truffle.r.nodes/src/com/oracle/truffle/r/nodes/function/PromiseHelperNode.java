@@ -127,7 +127,6 @@ public class PromiseHelperNode extends RBaseNode {
         }
     }
 
-    @Child private InlineCacheNode expressionInlineCache;
     @Child private InlineCacheNode promiseClosureCache;
 
     @Child private PromiseHelperNode nextNode = null;
@@ -176,26 +175,20 @@ public class PromiseHelperNode extends RBaseNode {
             throw RError.error(RError.SHOW_CALLER, RError.Message.PROMISE_CYCLE);
         }
         try {
+            if (promiseClosureCache == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseClosureCache = insert(InlineCacheNode.createPromise(FastROptions.PromiseCacheSize.getNonNegativeIntValue()));
+            }
             if (isInOriginFrame(frame, promise)) {
                 // state change must happen inside of conditional as isInOriginalFrame checks the
                 // state
                 promise.setState(PromiseState.UnderEvaluation);
-                if (expressionInlineCache == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    expressionInlineCache = insert(InlineCacheNode.createExpression(FastROptions.PromiseCacheSize.getNonNegativeIntValue()));
-                }
-                return expressionInlineCache.execute(frame, promise.getRep());
+                return promiseClosureCache.execute(frame, promise.getClosure());
             } else {
                 promise.setState(PromiseState.UnderEvaluation);
                 Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
                 assert promiseFrame != null;
-
-                if (promiseClosureCache == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseClosureCache = insert(InlineCacheNode.createPromise(FastROptions.PromiseCacheSize.getNonNegativeIntValue()));
-                }
-                promiseFrame = wrapPromiseFrame(frame, promiseFrame);
-                return promiseClosureCache.execute(promiseFrame, promise.getClosure());
+                return promiseClosureCache.execute(wrapPromiseFrame(frame, promiseFrame), promise.getClosure());
             }
         } finally {
             promise.setState(state);

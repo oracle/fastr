@@ -40,7 +40,7 @@ final class FactorPrinter extends AbstractValuePrinter<RAbstractIntVector> {
         // singleton
     }
 
-    private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
+    @SuppressWarnings("unused") private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     @Override
     protected void printValue(RAbstractIntVector operand, PrintContext printCtx) throws IOException {

@@ -12,9 +12,9 @@ package com.oracle.truffle.r.test.functions;
 
 import org.junit.Test;
 
-import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.TestRBase;
 
-public class TestS3Dispatch extends TestBase {
+public class TestS3Dispatch extends TestRBase {
 
     @Test
     public void testUseMethodSimple() {
@@ -61,6 +61,13 @@ public class TestS3Dispatch extends TestBase {
     }
 
     @Test
+    public void testUseMethodArgsMatchingAfterDispatch() {
+        assertEval("{ foo.default <- function(y, ...) { y }; foo <- function(x, ...) { UseMethod('foo') }; foo(42); }");
+        assertEval("{ foo.default <- function(y, ...) { y }; foo <- function(x, ...) { UseMethod('foo') }; foo(1,2,y=3); }");
+        assertEval("{ foo.default <- function(a,b,c) { print(list(a=a,b=b,c=c)) }; foo <- function(c,a,b) { UseMethod('foo') }; foo('a','b','c'); }");
+    }
+
+    @Test
     public void testNextMethod() {
         assertEval("{ g<-function(){ x<-1; class(x)<-c(\"a\",\"b\",\"c\"); f<-function(x){UseMethod(\"f\")}; f.a<-function(x){cat(\"a\");NextMethod(\"f\",x)}; f.b<-function(x){cat(\"b\")}; f(x); }; g() }");
         assertEval("{ g<-function(){ x<-1; class(x)<-c(\"a\",\"b\",\"c\"); f<-function(x){UseMethod(\"f\")}; f.a<-function(x){cat(\"a\");NextMethod(\"f\",x, 42)}; f.b<-function(x, y=7){cat(\"b\", y)}; f(x); }; g(); }");
@@ -75,6 +82,10 @@ public class TestS3Dispatch extends TestBase {
         assertEval("{x<-c(1,2,3);class(x)<-\"foo\";Summary.foo<-function(x,...){\"summary\"};max(x)}");
         assertEval("{x<-c(1,2,3);class(x)<-\"foo\";Summary.foo<-function(x,...){\"summary\"};min(x)}");
         assertEval("{x<-c(1,2,3);class(x)<-\"foo\";min.foo<-function(x,...){\"summary\"};min(x)}");
+        // Note: default value for na.rm should be provided:
+        assertEval("{Summary.myclass <- function(...,na.rm)c(list(...),na.rm); max(structure(42,class='myclass'));}");
+        // Note: na.rm as named argument should be ignored when deciding on the class for dispatch
+        assertEval("{Summary.myclass <- function(...,na.rm)c(list(...),na.rm); max(na.rm=TRUE,structure(42,class='myclass'));}");
     }
 
     @Test
@@ -103,5 +114,28 @@ public class TestS3Dispatch extends TestBase {
     @Test
     public void testComplexGroupDispatch() {
         assertEval("{x<--7+2i;class(x)<-\"foo\";Complex.foo<-function(z){1;};Im(x);}");
+    }
+
+    @Test
+    public void testMethodTableDispatch() {
+        // this test ensures that print.ts is found in the method table before print.foo is found in
+        // the calling environment
+        assertEval("t <- ts(1:3); class(t) <- c('ts', 'foo'); print.foo <- function(x, ...) 'foo'; print(t)");
+    }
+
+    @Test
+    public void testDefaultArguments() {
+        assertEval("foo<-function(x,def1=TRUE)UseMethod('foo'); foo.default<-function(x,...)list(...); foo(42);");
+        assertEval("foo<-function(x,def1=TRUE)UseMethod('foo'); foo.default<-function(x,def1)def1; foo(42);");
+    }
+
+    @Test
+    public void testDispatchWithPartialNameMatching() {
+        assertEval("f.default<-function(abc, bbb, ...)list(abc, bbb, ...); f<-function(x,...)UseMethod('f'); f(13, ab=42, b=1, c=5);");
+    }
+
+    @Override
+    public String getTestDir() {
+        return "functions/S3";
     }
 }

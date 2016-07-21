@@ -76,8 +76,8 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public final RAttributes resetAllAttributes(boolean nullify) {
-        return data.resetAllAttributes(nullify);
+    public final void resetAllAttributes(boolean nullify) {
+        data.resetAllAttributes(nullify);
     }
 
     @Override
@@ -196,8 +196,8 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public void makeSharedPermanent() {
-        data.makeSharedPermanent();
+    public RShareable makeSharedPermanent() {
+        return data.makeSharedPermanent();
     }
 
     @Override

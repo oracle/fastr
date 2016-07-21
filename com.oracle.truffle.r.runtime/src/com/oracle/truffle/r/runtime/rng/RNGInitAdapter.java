@@ -16,7 +16,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG.RandomNumberGenerator;
 public abstract class RNGInitAdapter implements RandomNumberGenerator {
 
     // TODO: it seems like GNU R this is shared between the generators (does it matter?)
-    protected int[] iSeed = new int[625];
+    protected final int[] iSeed = new int[625];
 
     @Override
     public void setISeed(int[] seeds) {

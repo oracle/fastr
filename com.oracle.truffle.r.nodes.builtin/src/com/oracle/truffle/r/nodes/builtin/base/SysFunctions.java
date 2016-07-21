@@ -68,7 +68,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.getenv", kind = INTERNAL, parameterNames = {"x", "unset", "names"})
+    @RBuiltin(name = "Sys.getenv", kind = INTERNAL, parameterNames = {"x", "unset"})
     public abstract static class SysGetenv extends RBuiltinNode {
         private final ConditionProfile zeroLengthProfile = ConditionProfile.createBinaryProfile();
 

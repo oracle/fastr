@@ -40,8 +40,6 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public interface Engine {
 
-    String EVAL_FUNCTION_NAME = "<eval wrapper>";
-
     class ParseException extends IOException {
         private static final long serialVersionUID = 1L;
 
@@ -196,8 +194,6 @@ public interface Engine {
      * Essentially this is equivalent to {@link #evalFunction} using the {@code "print"} function.
      */
     void printResult(Object value);
-
-    String toString(Object value);
 
     /**
      * This function a special fast path to create functions from code directly, without executing

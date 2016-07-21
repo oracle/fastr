@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
 import jnr.ffi.LibraryLoader;
@@ -36,11 +37,11 @@ import jnr.ffi.annotations.Out;
 // Checkstyle: stop method name
 public class JNR_PCRE implements PCRERFFI {
     public interface PCRE {
-        long pcre_maketables();
+        long fastr_pcre_maketables();
 
-        long pcre_compile(String pattern, int options, @Out byte[] errorMessage, @Out int[] errOffset, long tables);
+        long fastr_pcre_compile(byte[] pattern, int options, @Out byte[] errorMessage, @Out int[] errOffset, long tables);
 
-        int pcre_exec(long code, long extra, @In byte[] subject, int subjectLength, int startOffset, int options, @Out int[] ovector, int ovecSize);
+        int fastr_pcre_exec(long code, long extra, @In byte[] subject, int subjectLength, int startOffset, int options, @Out int[] ovector, int ovecSize);
     }
 
     private static class PCREProvider {
@@ -48,7 +49,7 @@ public class JNR_PCRE implements PCRERFFI {
 
         @TruffleBoundary
         private static PCRE createAndLoadLib() {
-            return LibraryLoader.create(PCRE.class).load("pcre");
+            return LibraryLoader.create(PCRE.class).library(LibPaths.getBuiltinLibPath("R")).library("pcre").load();
         }
 
         static PCRE pcre() {
@@ -65,14 +66,14 @@ public class JNR_PCRE implements PCRERFFI {
 
     @Override
     public long maketables() {
-        return pcre().pcre_maketables();
+        return pcre().fastr_pcre_maketables();
     }
 
     @Override
     public Result compile(String pattern, int options, long tables) {
         int[] errOffset = new int[1];
         byte[] errorMessage = new byte[512];
-        long result = pcre().pcre_compile(pattern, options, errorMessage, errOffset, tables);
+        long result = pcre().fastr_pcre_compile(pattern.getBytes(), options, errorMessage, errOffset, tables);
         if (result == 0) {
             return new Result(result, new String(errorMessage), errOffset[0]);
         } else {
@@ -82,7 +83,7 @@ public class JNR_PCRE implements PCRERFFI {
 
     @Override
     public int exec(long code, long extra, String subject, int offset, int options, int[] ovector) {
-        return pcre().pcre_exec(code, extra, subject.getBytes(), subject.length(), offset, options, ovector, ovector.length);
+        return pcre().fastr_pcre_exec(code, extra, subject.getBytes(), subject.length(), offset, options, ovector, ovector.length);
     }
 
     @Override

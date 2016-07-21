@@ -142,26 +142,26 @@ public class ROptions {
                     "browserNLdisabled", "CBoundsCheck"));
 
     private static void applyDefaults(HashMap<String, Object> map, RStartParams startParams, REnvVars envVars) {
-        map.put("add.smooth", RDataFactory.createLogicalVectorFromScalar(true));
-        map.put("check.bounds", RDataFactory.createLogicalVectorFromScalar(false));
-        map.put("continue", RDataFactory.createStringVector("+ "));
-        map.put("deparse.cutoff", RDataFactory.createIntVectorFromScalar(60));
-        map.put("digits", RDataFactory.createIntVectorFromScalar(7));
-        map.put("echo", RDataFactory.createLogicalVectorFromScalar(startParams.getSlave() ? false : true));
-        map.put("encoding", RDataFactory.createStringVector("native.enc"));
-        map.put("expressions", RDataFactory.createIntVectorFromScalar(5000));
+        map.put("add.smooth", RDataFactory.createSharedLogicalVectorFromScalar(true));
+        map.put("check.bounds", RDataFactory.createSharedLogicalVectorFromScalar(false));
+        map.put("continue", RDataFactory.createSharedStringVectorFromScalar("+ "));
+        map.put("deparse.cutoff", RDataFactory.createSharedIntVectorFromScalar(60));
+        map.put("digits", RDataFactory.createSharedIntVectorFromScalar(7));
+        map.put("echo", RDataFactory.createSharedLogicalVectorFromScalar(startParams.getSlave() ? false : true));
+        map.put("encoding", RDataFactory.createSharedStringVectorFromScalar("native.enc"));
+        map.put("expressions", RDataFactory.createSharedIntVectorFromScalar(5000));
         boolean keepPkgSource = optionFromEnvVar("R_KEEP_PKG_SOURCE", envVars);
-        map.put("keep.source", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
-        map.put("keep.source.pkgs", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
-        map.put("OutDec", RDataFactory.createStringVector("."));
-        map.put("prompt", RDataFactory.createStringVector("> "));
-        map.put("verbose", RDataFactory.createLogicalVectorFromScalar(startParams.getVerbose()));
-        map.put("nwarnings", RDataFactory.createIntVectorFromScalar(50));
-        map.put("warning.length", RDataFactory.createIntVectorFromScalar(1000));
-        map.put("width", RDataFactory.createIntVectorFromScalar(RContext.CONSOLE_WIDTH));
-        map.put("browserNLdisabled", RDataFactory.createLogicalVectorFromScalar(false));
+        map.put("keep.source", RDataFactory.createSharedLogicalVectorFromScalar(keepPkgSource));
+        map.put("keep.source.pkgs", RDataFactory.createSharedLogicalVectorFromScalar(keepPkgSource));
+        map.put("OutDec", RDataFactory.createSharedStringVectorFromScalar("."));
+        map.put("prompt", RDataFactory.createSharedStringVectorFromScalar("> "));
+        map.put("verbose", RDataFactory.createSharedLogicalVectorFromScalar(false));
+        map.put("nwarnings", RDataFactory.createSharedIntVectorFromScalar(50));
+        map.put("warning.length", RDataFactory.createSharedIntVectorFromScalar(1000));
+        map.put("width", RDataFactory.createSharedIntVectorFromScalar(80));
+        map.put("browserNLdisabled", RDataFactory.createSharedLogicalVectorFromScalar(false));
         boolean cBoundsCheck = optionFromEnvVar("R_C_BOUNDS_CHECK", envVars);
-        map.put("CBoundsCheck", RDataFactory.createLogicalVectorFromScalar(cBoundsCheck));
+        map.put("CBoundsCheck", RDataFactory.createSharedLogicalVectorFromScalar(cBoundsCheck));
     }
 
     private static boolean optionFromEnvVar(String envVar, REnvVars envVars) {

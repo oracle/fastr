@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -64,11 +63,6 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
     public final Object execute(VirtualFrame frame) {
         RContext.getInstance().setVisible(true);
         return getValue();
-    }
-
-    @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        return this;
     }
 
     @Override

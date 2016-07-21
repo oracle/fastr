@@ -59,6 +59,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     private RBaseNode rep;
+    private String callLHSName;
 
     /**
      * Lazily computed value.
@@ -80,6 +81,14 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
 
     public void setRep(RBaseNode rep) {
         this.rep = rep;
+    }
+
+    public String getCallLHSName() {
+        return callLHSName;
+    }
+
+    public void setCallLHSName(String callLHSName) {
+        this.callLHSName = callLHSName;
     }
 
     @Override
@@ -193,7 +202,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
         if (this.attributes != null) {
             l.attributes = attributes.copy();
         }
-        l.typedValueInfo = typedValueInfo;
+        l.setTypedValueInfo(getTypedValueInfo());
         return l;
     }
 

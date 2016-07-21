@@ -50,7 +50,7 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
         super(operand, modeChange);
         this.modeChange = modeChange;
         this.index = index;
-        this.argPushStateNode = modeChange ? ArgumentStatePushNodeGen.create(index, null) : null;
+        this.argPushStateNode = modeChange ? ArgumentStatePushNodeGen.create(index) : null;
     }
 
     public boolean modeChange() {

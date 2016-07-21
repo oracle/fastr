@@ -27,7 +27,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -49,11 +48,6 @@ public final class BreakNode extends RSourceSectionNode implements RSyntaxNode, 
     public Object execute(VirtualFrame frame) {
         RContext.getInstance().setVisible(false);
         throw BreakException.instance;
-    }
-
-    @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        return this;
     }
 
     @Override

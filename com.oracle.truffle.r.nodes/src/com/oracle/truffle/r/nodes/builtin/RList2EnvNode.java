@@ -22,8 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -33,12 +32,10 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 /**
  * Abstracted for use by {@code List2Env}, {@code AsEnvironment}, {@code SubsituteDirect}.
  */
-public abstract class RList2EnvNode extends RBaseNode {
+public final class RList2EnvNode extends RBaseNode {
 
-    public abstract REnvironment execute(Object list, Object env);
-
-    @Specialization
-    protected REnvironment doList2Env(RList list, REnvironment env) {
+    @TruffleBoundary
+    public REnvironment execute(RList list, REnvironment env) {
         if (list.getLength() == 0) {
             return env;
         }
@@ -57,11 +54,5 @@ public abstract class RList2EnvNode extends RBaseNode {
             }
         }
         return env;
-    }
-
-    @SuppressWarnings("unused")
-    @Fallback
-    protected REnvironment doList2Env(Object obj, REnvironment env) {
-        throw RError.error(this, RError.Message.FIRST_ARGUMENT_NOT_NAMED_LIST);
     }
 }

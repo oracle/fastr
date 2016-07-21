@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -41,60 +42,16 @@ public abstract class NGetText extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(0);
+        casts.arg("n").asIntegerVector().findFirst().mustBe(gte0());
+
+        casts.arg("msg1").defaultError(RError.Message.MUST_BE_STRING, "msg1").mustBe(nullValue().not().and(stringValue())).asStringVector().mustBe(singleElement()).findFirst();
+
+        casts.arg("msg2").defaultError(RError.Message.MUST_BE_STRING, "msg2").mustBe(nullValue().not().and(stringValue())).asStringVector().mustBe(singleElement()).findFirst();
+
     }
 
-    @Specialization(guards = "wrongNVector(nVector)")
-    protected String getTextEmpty(RAbstractIntVector nVector, String msg1, String msg2, Object domain) {
-        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "n");
-    }
-
-    @Specialization(guards = "!wrongNVector(nVector)")
-    protected String getText(RAbstractIntVector nVector, String msg1, String msg2, Object domain) {
-        int n = nVector.getDataAt(0);
+    @Specialization()
+    protected String getText(int n, String msg1, String msg2, Object domain) {
         return n == 1 ? msg1 : msg2;
-    }
-
-    @Specialization(guards = "!wrongNVector(nVector)")
-    protected String getTextMsg1Null(RAbstractIntVector nVector, RNull msg1, RNull msg2, Object domain) {
-        throw RError.error(this, RError.Message.MUST_BE_STRING, "msg1");
-    }
-
-    @Specialization(guards = "!wrongNVector(nVector)")
-    protected String getTextMsg1Null(RAbstractIntVector nVector, RNull msg1, RAbstractVector msg2, Object domain) {
-        throw RError.error(this, RError.Message.MUST_BE_STRING, "msg1");
-    }
-
-    @Specialization(guards = {"!wrongNVector(nVector)", "!msgStringVectorOneElem(msg1)"})
-    protected String getTextMsg1WrongMsg2Null(RAbstractIntVector nVector, RAbstractVector msg1, RNull msg2, Object domain) {
-        throw RError.error(this, RError.Message.MUST_BE_STRING, "msg1");
-    }
-
-    @Specialization(guards = {"!wrongNVector(nVector)", "!msgStringVectorOneElem(msg1)"})
-    protected String getTextMsg1Wrong(RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
-        throw RError.error(this, RError.Message.MUST_BE_STRING, "msg1");
-    }
-
-    @Specialization(guards = {"!wrongNVector(nVector)", "msgStringVectorOneElem(msg1)"})
-    protected String getTextMsg1(RAbstractIntVector nVector, RAbstractVector msg1, RNull msg2, Object domain) {
-        throw RError.error(this, RError.Message.MUST_BE_STRING, "msg2");
-    }
-
-    @Specialization(guards = {"!wrongNVector(nVector)", "msgStringVectorOneElem(msg1)", "!msgStringVectorOneElem(msg2)"})
-    protected String getTextMsg2Wrong(RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
-        throw RError.error(this, RError.Message.MUST_BE_STRING, "msg2");
-    }
-
-    @Specialization(guards = {"!wrongNVector(nVector)", "msgStringVectorOneElem(msg1)", "msgStringVectorOneElem(msg2)"})
-    protected String getTextMsg1(RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
-        return getText(nVector, ((RAbstractStringVector) msg1).getDataAt(0), ((RAbstractStringVector) msg2).getDataAt(0), domain);
-    }
-
-    protected boolean wrongNVector(RAbstractIntVector nVector) {
-        return nVector.getLength() == 0 || (nVector.getLength() > 0 && nVector.getDataAt(0) < 0);
-    }
-
-    protected boolean msgStringVectorOneElem(RAbstractVector msg1) {
-        return msg1.getElementClass() == RString.class && msg1.getLength() == 1;
     }
 }

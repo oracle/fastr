@@ -71,3 +71,27 @@ rffi.nested.call1 <- function() {
 	.Call("nestedCall1", PACKAGE = "testrffi", upcall, env)
 }
 
+rffi.r_home <- function() {
+	.Call("r_home", PACKAGE = "testrffi")
+}
+
+rffi.mkStringFromChar <- function() {
+	.Call("mkStringFromChar", PACKAGE = "testrffi")
+}
+
+rffi.mkStringFromBytes <- function() {
+	.Call("mkStringFromBytes", PACKAGE = "testrffi")
+}
+
+rffi.null <- function() {
+	.Call("null", PACKAGE = "testrffi")
+}
+
+rffi.iterate_iarray <- function(x) {
+	.Call("iterate_iarray", x, PACKAGE = "testrffi")
+}
+
+rffi.iterate_iptr <- function(x) {
+	.Call("iterate_iptr", x, PACKAGE = "testrffi")
+}
+

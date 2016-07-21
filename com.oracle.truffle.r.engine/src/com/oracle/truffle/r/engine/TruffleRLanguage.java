@@ -134,9 +134,16 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
                     public Object call(Object... arguments) {
                         try {
                             throw e.throwAsRError();
-                        } catch (@SuppressWarnings("hiding") RError e) {
+                        } catch (RError e2) {
                             return null;
                         }
+                    }
+                };
+            } catch (RError e) {
+                return new CallTarget() {
+                    @Override
+                    public Object call(Object... arguments) {
+                        return null;
                     }
                 };
             }

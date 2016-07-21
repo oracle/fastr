@@ -76,5 +76,16 @@ public class TestBuiltin_substitute extends TestBase {
         assertEval("f<-function(..., list=character()) { substitute(list(...))[-1L] }; as.character(f(\"config\"))");
 
         assertEval("{ substitute({class(y) <- x; y}, list(x=42)) }");
+
+        assertEval("f<-function(...) { print(typeof(get('...'))); environment() }; e <- f(c(1,2), b=15, c=44); substitute(foo2({...}), e)");
+
+        assertEval("f<-function(x,name) substitute(x$name); f(foo, bar)");
+        assertEval("f<-function(x,name) substitute(x@name); f(foo, bar)");
+        assertEval("f<-function(x,name) substitute(x$name<-1); f(foo, bar)");
+        assertEval("f<-function(x,name) substitute(x@name<-2); f(foo, bar)");
+        assertEval("f<-function(x,name) substitute(x$name); f(foo, bar); foo <- new.env(); foo$bar <- 1; eval(f(foo,bar))");
+        assertEval("f<-function(x,name) substitute(x$name <- 5); f(foo, bar); foo <- new.env(); eval(f(foo,bar)); foo$bar");
+        assertEval("f<-function(x,name) substitute(x@name); f(foo, bar); setClass('cl', representation(bar='numeric')); foo <- new('cl'); foo@bar <- 1; eval(f(foo,bar))");
+        assertEval("f<-function(x,name) substitute(x@name <- 5); f(foo, bar); setClass('cl', representation(bar='numeric')); foo <- new('cl'); eval(f(foo,bar)); foo@bar");
     }
 }

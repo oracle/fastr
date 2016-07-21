@@ -32,8 +32,9 @@ import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
 import com.oracle.truffle.r.nodes.function.CallArgumentsNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.function.UnmatchedArguments;
+import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -47,7 +48,12 @@ public abstract class PrepareArguments extends Node {
 
     private static final int CACHE_SIZE = 4;
 
-    public abstract Object[] execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call);
+    /**
+     * Returns the argument values and corresponding signature. The signature represents the
+     * original call signature reordered in the same way as the arguments. For s3DefaultArguments
+     * motivation see {@link RCallNode#callGroupGeneric}.
+     */
+    public abstract RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames varArgs, S3DefaultArguments s3DefaultArguments, RCallNode call);
 
     public static PrepareArguments create(RRootNode target, CallArgumentsNode args, boolean noOpt) {
         return new UninitializedPrepareArguments(target, args, noOpt);
@@ -55,6 +61,19 @@ public abstract class PrepareArguments extends Node {
 
     public static PrepareArguments createExplicit(RRootNode target) {
         return new UninitializedExplicitPrepareArguments(target);
+    }
+
+    @ExplodeLoop
+    private static RArgsValuesAndNames executeArgs(RNode[] arguments, ArgumentsSignature suppliedSignature, VirtualFrame frame) {
+        Object[] result = new Object[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            result[i] = arguments[i].execute(frame);
+        }
+        return new RArgsValuesAndNames(result, suppliedSignature);
+    }
+
+    private static RArgsValuesAndNames executeArgs(Arguments<RNode> matched, VirtualFrame frame) {
+        return executeArgs(matched.getArguments(), matched.getSignature(), frame);
     }
 
     private static final class UninitializedPrepareArguments extends PrepareArguments {
@@ -71,15 +90,15 @@ public abstract class PrepareArguments extends Node {
         }
 
         @Override
-        public Object[] execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call) {
+        public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames varArgs, S3DefaultArguments s3DefaultArguments, RCallNode call) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             PrepareArguments next;
             if (depth-- > 0) {
-                next = new CachedPrepareArguments(this, target, call, sourceArguments, varArgs == null ? null : varArgs.getSignature(), noOpt);
+                next = new CachedPrepareArguments(this, target, call, sourceArguments, varArgs == null ? null : varArgs.getSignature(), s3DefaultArguments, noOpt);
             } else {
                 next = new GenericPrepareArguments(target, sourceArguments);
             }
-            return replace(next).execute(frame, varArgs, call);
+            return replace(next).execute(frame, varArgs, s3DefaultArguments, call);
         }
     }
 
@@ -87,26 +106,28 @@ public abstract class PrepareArguments extends Node {
 
         @Child private PrepareArguments next;
         @Children private final RNode[] matchedArguments;
+        private final ArgumentsSignature matchedSuppliedSignature;
         private final ArgumentsSignature cachedVarArgSignature;
+        private final Object cachedS3DefaultArguments;
 
-        CachedPrepareArguments(PrepareArguments next, RRootNode target, RCallNode call, CallArgumentsNode args, ArgumentsSignature varArgSignature, boolean noOpt) {
+        CachedPrepareArguments(PrepareArguments next, RRootNode target, RCallNode call, CallArgumentsNode args, ArgumentsSignature varArgSignature, S3DefaultArguments s3DefaultArguments,
+                        boolean noOpt) {
             this.next = next;
             cachedVarArgSignature = varArgSignature;
-            matchedArguments = ArgumentMatcher.matchArguments(target, args.unrollArguments(varArgSignature), call, noOpt);
+            Arguments<RNode> matched = ArgumentMatcher.matchArguments(target, args, varArgSignature, s3DefaultArguments, call, noOpt);
+            this.matchedArguments = matched.getArguments();
+            this.matchedSuppliedSignature = matched.getSignature();
+            this.cachedS3DefaultArguments = s3DefaultArguments;
         }
 
         @Override
         @ExplodeLoop
-        public Object[] execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call) {
+        public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames varArgs, S3DefaultArguments s3DefaultArguments, RCallNode call) {
             assert (cachedVarArgSignature != null) == (varArgs != null);
-            if (cachedVarArgSignature == null || cachedVarArgSignature == varArgs.getSignature()) {
-                Object[] result = new Object[matchedArguments.length];
-                for (int i = 0; i < matchedArguments.length; i++) {
-                    result[i] = matchedArguments[i].execute(frame);
-                }
-                return result;
+            if ((cachedVarArgSignature == null || cachedVarArgSignature == varArgs.getSignature()) && cachedS3DefaultArguments == s3DefaultArguments) {
+                return executeArgs(matchedArguments, matchedSuppliedSignature, frame);
             }
-            return next.execute(frame, varArgs, call);
+            return next.execute(frame, varArgs, s3DefaultArguments, call);
         }
     }
 
@@ -121,16 +142,11 @@ public abstract class PrepareArguments extends Node {
         }
 
         @Override
-        public Object[] execute(VirtualFrame frame, RArgsValuesAndNames varArgs, RCallNode call) {
+        public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames varArgs, S3DefaultArguments s3DefaultArguments, RCallNode call) {
             CompilerDirectives.transferToInterpreter();
             ArgumentsSignature varArgSignature = varArgs == null ? null : varArgs.getSignature();
-            UnmatchedArguments argsValuesAndNames = args.unrollArguments(varArgSignature);
-            RNode[] matchedArgs = ArgumentMatcher.matchArguments(target, argsValuesAndNames, RError.ROOTNODE, true);
-            Object[] result = new Object[matchedArgs.length];
-            for (int i = 0; i < matchedArgs.length; i++) {
-                result[i] = matchedArgs[i].execute(frame);
-            }
-            return result;
+            Arguments<RNode> matchedArgs = ArgumentMatcher.matchArguments(target, args, varArgSignature, s3DefaultArguments, RError.ROOTNODE, true);
+            return executeArgs(matchedArgs, frame);
         }
     }
 
@@ -144,7 +160,7 @@ public abstract class PrepareArguments extends Node {
         }
 
         @Override
-        public Object[] execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, RCallNode call) {
+        public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, S3DefaultArguments s3DefaultArguments, RCallNode call) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             PrepareArguments next;
             if (depth-- > 0) {
@@ -152,7 +168,7 @@ public abstract class PrepareArguments extends Node {
             } else {
                 next = new GenericExplicitPrepareArguments(target);
             }
-            return replace(next).execute(frame, explicitArgs, call);
+            return replace(next).execute(frame, explicitArgs, s3DefaultArguments, call);
         }
     }
 
@@ -172,11 +188,11 @@ public abstract class PrepareArguments extends Node {
         }
 
         @Override
-        public Object[] execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, RCallNode call) {
+        public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, S3DefaultArguments s3DefaultArguments, RCallNode call) {
             if (cachedExplicitArgSignature == explicitArgs.getSignature()) {
-                return ArgumentMatcher.matchArgumentsEvaluated(permutation, explicitArgs.getArguments(), formals);
+                return ArgumentMatcher.matchArgumentsEvaluated(permutation, explicitArgs.getArguments(), s3DefaultArguments, formals);
             }
-            return next.execute(frame, explicitArgs, call);
+            return next.execute(frame, explicitArgs, s3DefaultArguments, call);
         }
     }
 
@@ -189,10 +205,10 @@ public abstract class PrepareArguments extends Node {
         }
 
         @Override
-        public Object[] execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, RCallNode call) {
+        public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, S3DefaultArguments s3DefaultArguments, RCallNode call) {
             CompilerDirectives.transferToInterpreter();
             // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
-            return ArgumentMatcher.matchArgumentsEvaluated(target, explicitArgs, RError.ROOTNODE, false).getArguments();
+            return ArgumentMatcher.matchArgumentsEvaluated(target, explicitArgs, s3DefaultArguments, false, RError.ROOTNODE);
         }
     }
 }

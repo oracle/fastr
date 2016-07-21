@@ -144,7 +144,7 @@ public class TestBuiltin_seq extends TestBase {
 
     @Test
     public void testseq27() {
-        assertEval(Output.ContainsWarning, "argv <- list(c(2L, 2L));do.call('seq_len', argv)");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(c(2L, 2L));do.call('seq_len', argv)");
     }
 
     @Test
@@ -174,10 +174,10 @@ public class TestBuiltin_seq extends TestBase {
         assertEval("{ seq(0L,0L,0L) }");
         assertEval("{ seq(0L,0L) }");
         assertEval("{ seq(0,0,1i) }");
-        assertEval(Output.ContainsError, "{ seq(integer(), 7) }");
-        assertEval(Output.ContainsError, "{ seq(c(1,2), 7) }");
-        assertEval(Output.ContainsError, "{ seq(7, integer()) }");
-        assertEval(Output.ContainsError, "{ seq(7, c(41,42)) }");
+        assertEval(Output.IgnoreErrorContext, "{ seq(integer(), 7) }");
+        assertEval(Output.MayIgnoreErrorContext, "{ seq(c(1,2), 7) }");
+        assertEval(Output.IgnoreErrorContext, "{ seq(7, integer()) }");
+        assertEval(Output.MayIgnoreErrorContext, "{ seq(7, c(41,42)) }");
         assertEval("{ seq(integer()) }");
         assertEval("{ seq(double()) }");
         assertEval("{ seq(from=3L, length.out=3L) }");

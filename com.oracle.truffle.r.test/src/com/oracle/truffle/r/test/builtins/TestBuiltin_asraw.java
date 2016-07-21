@@ -58,15 +58,15 @@ public class TestBuiltin_asraw extends TestBase {
         assertEval("{ as.raw(list(1,2,3)) }");
         assertEval("{ as.raw(list(\"1\", 2L, 3.4)) }");
 
-        assertEval(Output.ContainsWarning, "{ as.raw(1+1i) }");
-        assertEval(Output.ContainsWarning, "{ as.raw(-1) }");
-        assertEval(Output.ContainsWarning, "{ as.raw(-1L) }");
-        assertEval(Output.ContainsWarning, "{ as.raw(NA) }");
-        assertEval(Output.ContainsWarning, "{ as.raw(\"test\") }");
-        assertEval(Output.ContainsWarning, "{ as.raw(c(1+3i, -2-1i, NA)) }");
-        assertEval(Output.ContainsWarning, "{ as.raw(c(1, -2, 3)) }");
-        assertEval(Output.ContainsWarning, "{ as.raw(c(1,1000,NA)) }");
-        assertEval(Output.ContainsWarning, "{ as.raw(c(1L, -2L, 3L)) }");
-        assertEval(Output.ContainsWarning, "{ as.raw(c(1L, -2L, NA)) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw(1+1i) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw(-1) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw(-1L) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw(NA) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw(\"test\") }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1+3i, -2-1i, NA)) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1, -2, 3)) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1,1000,NA)) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1L, -2L, 3L)) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1L, -2L, NA)) }");
     }
 }

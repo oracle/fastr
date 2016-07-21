@@ -59,6 +59,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RStartParams;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
@@ -72,7 +73,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.RFFIContextStateFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-import com.oracle.truffle.r.runtime.instrument.TraceState;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
@@ -173,7 +174,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      */
     public static class EvalThread extends ContextThread {
 
-        private static final Source GET_CONTEXT = Source.fromText("invisible(.fastr.context.get())", "<get_context>").withMimeType("application/x-r");
+        private static final Source GET_CONTEXT = RSource.fromTextInternal("invisible(.fastr.context.get())", RSource.Internal.GET_CONTEXT);
 
         private final Source source;
         private final ContextInfo info;
@@ -190,10 +191,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
         @Override
         public void run() {
-            PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
+            PolyglotEngine vm = info.createVM();
             try {
                 setContext(vm.eval(GET_CONTEXT).as(RContext.class));
-            } catch (IOException e1) {
+            } catch (Exception e1) {
                 throw new RInternalError(e1, "error while initializing eval thread");
             }
             try {
@@ -352,8 +353,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     @CompilationFinal private static RContext singleContext;
 
     private final Env env;
-    private final Instrumenter instrumenter;
     private final HashMap<String, TruffleObject> exportedSymbols = new HashMap<>();
+    private final boolean initial;
     /**
      * State that is used to support interposing on loadNamespace() for overrides.
      */
@@ -375,12 +376,12 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public final ContextState stateRFFI;
     public final RSerialize.ContextStateImpl stateRSerialize;
     public final LazyDBCache.ContextStateImpl stateLazyDBCache;
-    public final TraceState.ContextStateImpl stateTraceHandling;
+    public final InstrumentationState stateInstrumentation;
     public final ContextStateImpl stateInternalCode;
 
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize,
-                        stateLazyDBCache, stateTraceHandling};
+                        stateLazyDBCache, stateInstrumentation};
     }
 
     public static void setEmbedded() {
@@ -403,6 +404,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         } else {
             this.info = initialInfo;
         }
+        this.initial = isInitial;
 
         // this must happen before engine activation in the code below
         if (info.getKind() == ContextKind.SHARE_NOTHING) {
@@ -419,7 +421,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         }
 
         this.env = env;
-        this.instrumenter = instrumenter;
         if (info.getConsoleHandler() == null) {
             throw Utils.fail("no console handler set");
         }
@@ -457,7 +458,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateRFFI = RFFIContextStateFactory.newContext(this);
         stateRSerialize = RSerialize.ContextStateImpl.newContext(this);
         stateLazyDBCache = LazyDBCache.ContextStateImpl.newContext(this);
-        stateTraceHandling = TraceState.newContext(this);
+        stateInstrumentation = InstrumentationState.newContext(this, instrumenter);
         stateInternalCode = ContextStateImpl.newContext(this);
 
         if (!embedded) {
@@ -538,8 +539,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         return env;
     }
 
-    public Instrumenter getInstrumenter() {
-        return instrumenter;
+    public InstrumentationState getInstrumentationState() {
+        return stateInstrumentation;
     }
 
     public ContextKind getKind() {
@@ -724,6 +725,14 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public static Engine getEngine() {
         return RContext.getInstance().engine;
+    }
+
+    public PolyglotEngine getVM() {
+        return info.getVM();
+    }
+
+    public boolean isInitial() {
+        return initial;
     }
 
     public void setLoadingBase(boolean b) {

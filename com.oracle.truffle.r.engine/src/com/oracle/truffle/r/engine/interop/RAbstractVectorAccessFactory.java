@@ -23,17 +23,71 @@
 package com.oracle.truffle.r.engine.interop;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.ForeignAccess.Factory10;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactoryFactory.VectorReadNodeGen;
+import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
+import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
+import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessArraySubscriptBuiltin;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class RAbstractVectorAccessFactory implements Factory10 {
+
+    static class VectorSizeNode extends RootNode {
+
+        @Child private RLengthNode lengthNode = RLengthNode.create();
+
+        VectorSizeNode() {
+            super(TruffleRLanguage.class, null, null);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return lengthNode.executeInteger(frame, ForeignAccess.getReceiver(frame));
+        }
+    }
+
+    abstract static class VectorReadNode extends RootNode {
+
+        @CompilationFinal private boolean lengthAccess;
+        @Child private AccessArraySubscriptBuiltin builtin;
+        @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        @Child private RLengthNode lengthNode = RLengthNode.create();
+
+        VectorReadNode() {
+            super(TruffleRLanguage.class, null, null);
+            this.lengthAccess = false;
+        }
+
+        @Override
+        public final Object execute(VirtualFrame frame) {
+            Object label = ForeignAccess.getArguments(frame).get(0);
+            Object receiver = ForeignAccess.getReceiver(frame);
+            return execute(frame, receiver, label);
+        }
+
+        protected abstract Object execute(VirtualFrame frame, Object reciever, Object label);
+
+        @Specialization
+        protected Object readIndexed(VirtualFrame frame, Object receiver, int label) {
+            return extract.apply(frame, receiver, new Object[]{label + 1}, RLogical.TRUE, RLogical.TRUE);
+        }
+
+        @Specialization
+        protected Object readProperty(VirtualFrame frame, Object receiver, String label) {
+            return extract.applyAccessField(frame, receiver, label);
+        }
+    }
 
     private abstract class InteropRootNode extends RootNode {
         InteropRootNode() {

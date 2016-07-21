@@ -24,8 +24,7 @@ public class TestBuiltin_drop extends TestBase {
 
     @Test
     public void testdrop2() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE), .Dim = c(40L, 1L), .Dimnames = list(c('r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15', 'r16', 'r17', 'r18', 'r19', 'r20', 'r21', 'r22', 'r23', 'r24', 'r25', 'r26', 'r27', 'r28', 'r29', 'r30', 'r31', 'r32', 'r33', 'r34', 'r35', 'r36', 'r37', 'r38', 'r39', 'r40'), 'c1'))); .Internal(drop(argv[[1]]))");
+        assertEval("argv <- list(structure(c(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE), .Dim = c(40L, 1L), .Dimnames = list(c('r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15', 'r16', 'r17', 'r18', 'r19', 'r20', 'r21', 'r22', 'r23', 'r24', 'r25', 'r26', 'r27', 'r28', 'r29', 'r30', 'r31', 'r32', 'r33', 'r34', 'r35', 'r36', 'r37', 'r38', 'r39', 'r40'), 'c1'))); .Internal(drop(argv[[1]]))");
     }
 
     @Test
@@ -35,18 +34,17 @@ public class TestBuiltin_drop extends TestBase {
 
     @Test
     public void testdrop4() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1, .Dim = c(1L, 1L))); .Internal(drop(argv[[1]]))");
+        assertEval("argv <- list(structure(1, .Dim = c(1L, 1L))); .Internal(drop(argv[[1]]))");
     }
 
     @Test
     public void testdrop5() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1:4, .Dim = c(4L, 1L), .Dimnames = list(c('a', 'b', 'c', 'd'), NULL))); .Internal(drop(argv[[1]]))");
+        assertEval("argv <- list(structure(1:4, .Dim = c(4L, 1L), .Dimnames = list(c('a', 'b', 'c', 'd'), NULL))); .Internal(drop(argv[[1]]))");
     }
 
     @Test
     public void testdrop6() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(0.0394556761478965, 0.0353930191803619, 0.0421772348795039, 0.0302920451103359, 0.0377457762283076, 0.0338591835815583, 0.0403493901288877, 0.0289792716248635, 0.0342125137383397, 0.0306897327119817, 0.0365724115929804, 0.0262666138482847, 0.0422657427158027, 0.0379137398889158, 0.0451811331581029, 0.032449470138841), .Dim = c(1L, 4L, 4L), .Dimnames = list('1', c('DAX', 'SMI', 'CAC', 'FTSE'), c('DAX', 'SMI', 'CAC', 'FTSE')))); .Internal(drop(argv[[1]]))");
+        assertEval("argv <- list(structure(c(0.0394556761478965, 0.0353930191803619, 0.0421772348795039, 0.0302920451103359, 0.0377457762283076, 0.0338591835815583, 0.0403493901288877, 0.0289792716248635, 0.0342125137383397, 0.0306897327119817, 0.0365724115929804, 0.0262666138482847, 0.0422657427158027, 0.0379137398889158, 0.0451811331581029, 0.032449470138841), .Dim = c(1L, 4L, 4L), .Dimnames = list('1', c('DAX', 'SMI', 'CAC', 'FTSE'), c('DAX', 'SMI', 'CAC', 'FTSE')))); .Internal(drop(argv[[1]]))");
     }
 
     @Test
@@ -56,7 +54,7 @@ public class TestBuiltin_drop extends TestBase {
 
     @Test
     public void testdrop8() {
-        assertEval(Ignored.Unknown,
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0'))); .Internal(drop(argv[[1]]))");
     }
 
@@ -72,7 +70,7 @@ public class TestBuiltin_drop extends TestBase {
 
     @Test
     public void testdrop11() {
-        assertEval(Ignored.Unknown,
+        assertEval(Output.IgnoreWhitespace,
                         "argv <- list(structure(c(' 16', ' 16', '144', ' 16', ' 16', '128', ' 16', ' 16', '112', ' 16'), .Dim = 10L, .Dimnames = structure(list(c('1', '6', '7', '8', '13', '14', '15', '20', '21', '22')), .Names = ''))); .Internal(drop(argv[[1]]))");
     }
 
@@ -84,5 +82,7 @@ public class TestBuiltin_drop extends TestBase {
     @Test
     public void testDrop() {
         assertEval("{ x <- array(1:12, dim = c(1,3,1,1,2,1,2)); drop(x) }");
+        assertEval("drop(array(1:9, c(3,3,1), list(1:3, 4:6, 'b')))");
+        assertEval("a <- matrix(1:6, 3, 2, dimnames=list(1:3, c(' ','x'))); b <- array(c(1,2), dim=c(2), dimnames=list(c('int', 'x'))); drop(a %*% b);");
     }
 }

@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
@@ -121,11 +120,6 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
         }
         state.linkPairList(elsePart == null ? 2 : 3);
         state.setCdr(state.closePairList());
-    }
-
-    @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        return create(RSyntaxNode.EAGER_DEPARSE, condition.substitute(env), thenPart.substitute(env), elsePart == null ? null : elsePart.substitute(env));
     }
 
     @Override

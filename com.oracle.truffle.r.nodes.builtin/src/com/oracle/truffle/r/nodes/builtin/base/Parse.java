@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
@@ -207,12 +208,12 @@ public abstract class Parse extends RBuiltinNode {
                 }
                 return createFileSource(path, coalescedLines);
             } else {
-                return Source.fromText(coalescedLines, "<parse>");
+                return Source.newBuilder(coalescedLines).name("<parse>").mimeType(RRuntime.R_APP_MIME).build();
             }
         } else {
             String srcFileText = RRuntime.asString(srcFile);
             if (srcFileText.equals("<text>")) {
-                return Source.fromText(coalescedLines, "<parse>");
+                return Source.newBuilder(coalescedLines).name("<parse>").mimeType(RRuntime.R_APP_MIME).build();
             } else {
                 return createFileSource(ConnectionSupport.removeFileURLPrefix(srcFileText), coalescedLines);
             }
@@ -225,12 +226,8 @@ public abstract class Parse extends RBuiltinNode {
         return createFileSource(path, coalescedLines);
     }
 
-    private static Source createFileSource(String path, CharSequence chars) {
-        try {
-            return Source.fromFileName(chars, path);
-        } catch (IOException ex) {
-            throw RInternalError.shouldNotReachHere();
-        }
+    private static Source createFileSource(String path, String chars) {
+        return RSource.fromFileName(chars, path);
     }
 
     private static void addAttributes(RExpression exprs, Source source, REnvironment srcFile) {
@@ -262,4 +259,5 @@ public abstract class Parse extends RBuiltinNode {
         exprs.setAttr("wholeSrcref", RDataFactory.createIntVector(wholeSrcrefData, RDataFactory.COMPLETE_VECTOR));
         exprs.setAttr("srcfile", srcFile);
     }
+
 }

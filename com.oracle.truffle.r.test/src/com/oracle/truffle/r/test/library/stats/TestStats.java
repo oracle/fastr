@@ -32,7 +32,7 @@ public class TestStats extends TestBase {
         assertEval("{ cor(c(1,2,3),c(1,2,3)) }");
         assertEval("{ as.integer(cor(c(1,2,3),c(1,2,5))*10000000) }");
         assertEval("{ cor(cbind(c(3,2,1), c(1,2,3))) }");
-        assertEval(Output.ContainsWarning, "{ cor(cbind(c(1, 1, 1), c(1, 1, 1))) }");
+        assertEval(Output.IgnoreWarningContext, "{ cor(cbind(c(1, 1, 1), c(1, 1, 1))) }");
         assertEval("{ cor(cbind(c(1:9,0/0), 101:110)) }");
         assertEval("{ round( cor(cbind(c(10,5,4,1), c(2,5,10,5))), digits=5 ) }");
     }
@@ -143,6 +143,7 @@ public class TestStats extends TestBase {
 
         assertEval("{ set.seed(7); round( runif(3), digits = 5 ) }");
         assertEval("{ set.seed(7); round( runif(3,1,10), digits = 5 ) }");
+        assertEval("{ set.seed(7); round( rnorm(3,c(1000,2,3),c(10,11)), digits = 5 ) }");
 
         assertEval("{ set.seed(7); round( rbinom(3,3,0.9), digits = 5 ) }");
         assertEval("{ set.seed(7); round( rbinom(3,10,(1:5)/5), digits = 5 ) }");
@@ -150,7 +151,6 @@ public class TestStats extends TestBase {
 
     @Test
     public void testRandomIgnore() {
-        assertEval(Ignored.Unknown, "{ set.seed(7); round( rnorm(3,c(1000,2,3),c(10,11)), digits = 5 ) }");
         assertEval(Ignored.Unknown, "{ set.seed(7); round( runif(3,1:3,3:2), digits = 5 ) }");
 
         assertEval(Ignored.Unknown, "{ set.seed(7); round( rgamma(3,1), digits = 5 ) }");
@@ -170,7 +170,7 @@ public class TestStats extends TestBase {
         assertEval("na.fail(c(1L, 2L))");
         assertEval("na.fail(c(1,NA,3))");
         assertEval("na.fail(c(NA, 2L))");
-        assertEval(Output.ContainsError, "na.fail(c())");
-        assertEval(Output.ContainsError, "na.fail(NULL)");
+        assertEval(Output.IgnoreErrorContext, "na.fail(c())");
+        assertEval(Output.IgnoreErrorContext, "na.fail(NULL)");
     }
 }

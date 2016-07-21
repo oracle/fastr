@@ -24,10 +24,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
-import com.oracle.truffle.r.nodes.builtin.RList2EnvNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -35,13 +35,9 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 @RBuiltin(name = "list2env", kind = INTERNAL, parameterNames = {"x", "envir"})
 public abstract class List2Env extends RBuiltinNode {
 
-    @Child private RList2EnvNode list2EnvNode;
-
     @Specialization
-    protected REnvironment doList2Env(RList list, REnvironment env) {
-        if (list2EnvNode == null) {
-            list2EnvNode = insert(RList2EnvNodeGen.create());
-        }
-        return list2EnvNode.execute(list, env);
+    protected REnvironment doList2Env(RList list, REnvironment env,
+                    @Cached("new()") RList2EnvNode list2Env) {
+        return list2Env.execute(list, env);
     }
 }

@@ -607,7 +607,6 @@ SEXP R_getContextFun(CTXT context) {
 }
 
 SEXP R_getContextCall(CTXT context) {
-    return R_NilValue;
 	JNIEnv *jniEnv = getEnv();
 	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getContextCall", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
     SEXP result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID, context);

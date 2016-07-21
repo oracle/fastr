@@ -42,7 +42,7 @@ public abstract class Crossprod extends RBuiltinNode {
     private void ensureMatMult() {
         if (matMult == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            matMult = insert(MatMultNodeGen.create(null));
+            matMult = insert(MatMultNodeGen.create(/* promoteDimNames: */ false, null));
         }
     }
 

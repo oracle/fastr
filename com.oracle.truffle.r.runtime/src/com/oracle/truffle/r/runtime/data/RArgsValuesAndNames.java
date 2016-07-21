@@ -26,11 +26,13 @@ import java.util.Arrays;
 
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RType;
 
 /**
  * A simple wrapper class for passing the ... argument through RArguments
  */
-public final class RArgsValuesAndNames extends Arguments<Object> {
+public final class RArgsValuesAndNames extends Arguments<Object> implements RTypedValue {
     /**
      * Default instance for empty "..." ("..." that resolve to contain no expression at runtime).
      * The {@link RMissing#instance} for "...".
@@ -40,5 +42,20 @@ public final class RArgsValuesAndNames extends Arguments<Object> {
     public RArgsValuesAndNames(Object[] values, ArgumentsSignature signature) {
         super(values, signature);
         assert signature != null && signature.getLength() == values.length : Arrays.toString(values) + " " + signature;
+    }
+
+    @Override
+    public RType getRType() {
+        return RType.Dots;
+    }
+
+    @Override
+    public int getTypedValueInfo() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void setTypedValueInfo(int value) {
+        throw RInternalError.shouldNotReachHere();
     }
 }

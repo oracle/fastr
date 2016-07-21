@@ -34,13 +34,13 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators4() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`*`(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testoperators5() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`*`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`*`(argv[[1]]);");
     }
 
     @Test
@@ -183,12 +183,12 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators33() {
-        assertEval(Output.ContainsWarning, "argv <- list(c(20.8, 11.2, 6.2, 12.8, 43.4), c(10.4, 5.6, 3.1, 6.4, 21.7, 0, 10.4, 5.6, 3.1, 6.4, 21.7));`+`(argv[[1]],argv[[2]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(c(20.8, 11.2, 6.2, 12.8, 43.4), c(10.4, 5.6, 3.1, 6.4, 21.7, 0, 10.4, 5.6, 3.1, 6.4, 21.7));`+`(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testoperators34() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`+`(argv[[1]],argv[[2]]);");
     }
 
@@ -199,7 +199,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators36() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`+`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`+`(argv[[1]]);");
     }
 
     @Test
@@ -311,7 +311,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators58() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 1L);`-`(argv[[1]],argv[[2]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 1L);`-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -341,7 +341,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators64() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`-`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`-`(argv[[1]]);");
     }
 
     @Test
@@ -366,7 +366,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators69() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`-`(argv[[1]],argv[[2]]);");
     }
 
@@ -438,7 +438,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators84() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`<`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`<`(argv[[1]]);");
     }
 
     @Test
@@ -448,7 +448,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators86() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 1L);`<`(argv[[1]],argv[[2]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 1L);`<`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -530,7 +530,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators102() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 0L);`<=`(argv[[1]],argv[[2]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 0L);`<=`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -545,7 +545,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators105() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`<=`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`<=`(argv[[1]]);");
     }
 
     @Test
@@ -582,7 +582,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators112() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`!`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`!`(argv[[1]]);");
     }
 
     @Test
@@ -745,7 +745,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators144() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`>`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`>`(argv[[1]]);");
     }
 
     @Test
@@ -770,7 +770,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators149() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`>=`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`>=`(argv[[1]]);");
     }
 
     @Test
@@ -810,7 +810,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators157() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`%%`(argv[[1]],argv[[2]]);");
     }
 
@@ -866,7 +866,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators168() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`%%`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`%%`(argv[[1]]);");
     }
 
     @Test
@@ -916,8 +916,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators178() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0), .Dim = c(12L, 4L), .Dimnames = list(c('1', '3', '5', '7', '9', '11', '13', '15', '17', '19', '21', '23'), c('(Intercept)', 'M.userY', 'TempLow', 'M.userY:TempLow')), assign = 0:3, contrasts = structure(list(M.user = 'contr.treatment', Temp = 'contr.treatment'), .Names = c('M.user', 'Temp'))), c(0.262364229584951, -0.851832547542732, 0.0441056253109867, 0.444266588736502));`%*%`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0), .Dim = c(12L, 4L), .Dimnames = list(c('1', '3', '5', '7', '9', '11', '13', '15', '17', '19', '21', '23'), c('(Intercept)', 'M.userY', 'TempLow', 'M.userY:TempLow')), assign = 0:3, contrasts = structure(list(M.user = 'contr.treatment', Temp = 'contr.treatment'), .Names = c('M.user', 'Temp'))), c(0.262364229584951, -0.851832547542732, 0.0441056253109867, 0.444266588736502));`%*%`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -937,8 +936,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators182() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.35, 0.64, 0.12, 1.66, 1.52, 0.23, -1.99, 0.42, 1.86, -0.02, -1.64, -0.46, -0.1, 1.25, 0.37, 0.31, 1.11, 1.65, 0.33, 0.89, -0.25, -0.87, -0.22, 0.71, -2.26, 0.77, -0.05, 0.32, -0.64, 0.39, 0.19, -1.62, 0.37, 0.02, 0.97, -2.62, 0.15, 1.55, -1.41, -2.35, -0.43, 0.57, -0.66, -0.08, 0.02, 0.24, -0.33, -0.03, -1.13, 0.32, 1.55, 2.13, -0.1, -0.32, -0.67, 1.44, 0.04, -1.1, -0.95, -0.19, -0.68, -0.43, -0.84, 0.69, -0.65, 0.71, 0.19, 0.45, 0.45, -1.19, 1.3, 0.14, -0.36, -0.5, -0.47, -1.31, -1.02, 1.17, 1.51, -0.33, -0.01, -0.59, -0.28, -0.18, -1.07, 0.66, -0.71, 1.88, -0.14, -0.19, 0.84, 0.44, 1.33, -0.2, -0.45, 1.46, 1, -1.02, 0.68, 0.84), .Dim = c(100L, 2L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99', '100'), c('(Intercept)', 'x')), assign = 0:1), c(1.15937252188199, 0.442508987631707));`%*%`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.35, 0.64, 0.12, 1.66, 1.52, 0.23, -1.99, 0.42, 1.86, -0.02, -1.64, -0.46, -0.1, 1.25, 0.37, 0.31, 1.11, 1.65, 0.33, 0.89, -0.25, -0.87, -0.22, 0.71, -2.26, 0.77, -0.05, 0.32, -0.64, 0.39, 0.19, -1.62, 0.37, 0.02, 0.97, -2.62, 0.15, 1.55, -1.41, -2.35, -0.43, 0.57, -0.66, -0.08, 0.02, 0.24, -0.33, -0.03, -1.13, 0.32, 1.55, 2.13, -0.1, -0.32, -0.67, 1.44, 0.04, -1.1, -0.95, -0.19, -0.68, -0.43, -0.84, 0.69, -0.65, 0.71, 0.19, 0.45, 0.45, -1.19, 1.3, 0.14, -0.36, -0.5, -0.47, -1.31, -1.02, 1.17, 1.51, -0.33, -0.01, -0.59, -0.28, -0.18, -1.07, 0.66, -0.71, 1.88, -0.14, -0.19, 0.84, 0.44, 1.33, -0.2, -0.45, 1.46, 1, -1.02, 0.68, 0.84), .Dim = c(100L, 2L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99', '100'), c('(Intercept)', 'x')), assign = 0:1), c(1.15937252188199, 0.442508987631707));`%*%`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -959,8 +957,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators186() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(0.553622032575332, 0, 0, 0, 0, 1.83583330034692, 0, 0, 0, 0, 0.540309168173204, 0, 0, 0, 0, 0.347171956892285), .Dim = c(4L, 4L)), structure(c(3.26267089696047, -0.712693854979374, 2.39769041729195, 5.15111718577956, -0.712693854979374, 0.296710908544859, -1.00753262176762, -0.987904999293151, 2.39769041729195, -1.00753262176762, 3.42543180838832, 3.32535677689614, 5.15111718577956, -0.987904999293151, 3.32535677689614, 8.29680198510459), .Dim = c(4L, 4L), .Dimnames = list(c('A', 'B', 'C', 'D'), c('A', 'B', 'C', 'D'))));`%*%`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(c(0.553622032575332, 0, 0, 0, 0, 1.83583330034692, 0, 0, 0, 0, 0.540309168173204, 0, 0, 0, 0, 0.347171956892285), .Dim = c(4L, 4L)), structure(c(3.26267089696047, -0.712693854979374, 2.39769041729195, 5.15111718577956, -0.712693854979374, 0.296710908544859, -1.00753262176762, -0.987904999293151, 2.39769041729195, -1.00753262176762, 3.42543180838832, 3.32535677689614, 5.15111718577956, -0.987904999293151, 3.32535677689614, 8.29680198510459), .Dim = c(4L, 4L), .Dimnames = list(c('A', 'B', 'C', 'D'), c('A', 'B', 'C', 'D'))));`%*%`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1523,7 +1520,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators303() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`^`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`^`(argv[[1]]);");
     }
 
     @Test
@@ -1584,8 +1581,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators315() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1), .Dim = c(9L, 5L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9'), c('(Intercept)', 'outcome2', 'outcome3', 'treatment2', 'treatment3')), assign = c(0L, 1L, 1L, 2L, 2L), contrasts = structure(list(outcome = 'contr.treatment', treatment = 'contr.treatment'), .Names = c('outcome', 'treatment'))), c(3.04452243772342, -0.454255272277594, -0.292987124681473, 1.33790930192987e-15, 1.42108546079721e-15));`%*%`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1), .Dim = c(9L, 5L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9'), c('(Intercept)', 'outcome2', 'outcome3', 'treatment2', 'treatment3')), assign = c(0L, 1L, 1L, 2L, 2L), contrasts = structure(list(outcome = 'contr.treatment', treatment = 'contr.treatment'), .Names = c('outcome', 'treatment'))), c(3.04452243772342, -0.454255272277594, -0.292987124681473, 1.33790930192987e-15, 1.42108546079721e-15));`%*%`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1610,8 +1606,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators320() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 68, 56, 60, 68, 71, 61, 68, 60, 63, 56, 49, 58, 72, 60, 70, 74, 73, 48, 60, 61, 62, 65, 74, 73, 59, 60, 76, 74, 74, 63, 68, 58, 62, 65, 57, 75, 68, 67, 64, 68, 63, 74, 51, 81, 73, 59, 61, 72, 63, 69, 72, 70, 58, 59, 75, 69, 75, 76, 49, 68, 66, 75, 60, 72, 70, 77, 48, 47, 67, 74, 56, 56, 73, 76, 71, 82, 59, 60, 62, 55, 69, 62, 62, 69, 57, 46, 65, 58, 43, 56, 74, 60, 39, 66, 51, 45, 72, 58, 53, 52, 70, 52, 63, 50, 63, 62, 55, 50, 60, 64, 76, 70, 57, 39, 75, 0, 0, 0, 0, 0, 0, 0, NA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, NA, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, NA, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), .Dim = c(115L, 5L), .Dimnames = list(c('2', '3', '5', '7', '8', '10', '12', '14', '18', '19', '22', '24', '25', '27', '28', '30', '32', '33', '34', '35', '36', '37', '39', '42', '43', '44', '46', '47', '49', '52', '53', '54', '56', '57', '58', '61', '66', '67', '68', '69', '71', '73', '77', '79', '80', '81', '88', '90', '91', '95', '96', '100', '101', '105', '110', '111', '114', '116', '117', '118', '119', '121', '122', '124', '125', '129', '130', '133', '135', '136', '138', '140', '141', '143', '147', '149', '150', '152', '153', '155', '156', '158', '161', '163', '166', '168', '170', '172', '174', '177', '180', '181', '182', '183', '185', '186', '187', '188', '190', '192', '196', '199', '203', '204', '205', '206', '207', '208', '211', '214', '218', '219', '220', '225', '226'), c('(Intercept)', 'age', 'factor(ph.ecog)1', 'factor(ph.ecog)2', 'factor(ph.ecog)3')), assign = c(0L, 1L, 2L, 2L, 2L), contrasts = structure(list(`factor(ph.ecog)` = 'contr.treatment'), .Names = 'factor(ph.ecog)')), structure(c(6.76534252253894, -0.00731543889899693, -0.256632132912267, -0.629047717825279, -1.48257717514349), .Names = c('(Intercept)', 'age', 'factor(ph.ecog)1', 'factor(ph.ecog)2', 'factor(ph.ecog)3')));`%*%`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 68, 56, 60, 68, 71, 61, 68, 60, 63, 56, 49, 58, 72, 60, 70, 74, 73, 48, 60, 61, 62, 65, 74, 73, 59, 60, 76, 74, 74, 63, 68, 58, 62, 65, 57, 75, 68, 67, 64, 68, 63, 74, 51, 81, 73, 59, 61, 72, 63, 69, 72, 70, 58, 59, 75, 69, 75, 76, 49, 68, 66, 75, 60, 72, 70, 77, 48, 47, 67, 74, 56, 56, 73, 76, 71, 82, 59, 60, 62, 55, 69, 62, 62, 69, 57, 46, 65, 58, 43, 56, 74, 60, 39, 66, 51, 45, 72, 58, 53, 52, 70, 52, 63, 50, 63, 62, 55, 50, 60, 64, 76, 70, 57, 39, 75, 0, 0, 0, 0, 0, 0, 0, NA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, NA, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, NA, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), .Dim = c(115L, 5L), .Dimnames = list(c('2', '3', '5', '7', '8', '10', '12', '14', '18', '19', '22', '24', '25', '27', '28', '30', '32', '33', '34', '35', '36', '37', '39', '42', '43', '44', '46', '47', '49', '52', '53', '54', '56', '57', '58', '61', '66', '67', '68', '69', '71', '73', '77', '79', '80', '81', '88', '90', '91', '95', '96', '100', '101', '105', '110', '111', '114', '116', '117', '118', '119', '121', '122', '124', '125', '129', '130', '133', '135', '136', '138', '140', '141', '143', '147', '149', '150', '152', '153', '155', '156', '158', '161', '163', '166', '168', '170', '172', '174', '177', '180', '181', '182', '183', '185', '186', '187', '188', '190', '192', '196', '199', '203', '204', '205', '206', '207', '208', '211', '214', '218', '219', '220', '225', '226'), c('(Intercept)', 'age', 'factor(ph.ecog)1', 'factor(ph.ecog)2', 'factor(ph.ecog)3')), assign = c(0L, 1L, 2L, 2L, 2L), contrasts = structure(list(`factor(ph.ecog)` = 'contr.treatment'), .Names = 'factor(ph.ecog)')), structure(c(6.76534252253894, -0.00731543889899693, -0.256632132912267, -0.629047717825279, -1.48257717514349), .Names = c('(Intercept)', 'age', 'factor(ph.ecog)1', 'factor(ph.ecog)2', 'factor(ph.ecog)3')));`%*%`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1638,8 +1633,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators325() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(-97.5074316406251, structure(c(73.0102287440125, 79.6161885135717, 81.5497837663961, 53.9710956454646, 43.6831159601594, 20.8581884349194, 7.6155030786098, 10.8008470888011, 14.7201505829463, 8.49167208457355, 101.686214382123, 921.711710792497), .Dim = c(1L, 12L), .Dimnames = list(NULL, c('1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'))));`%*%`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(-97.5074316406251, structure(c(73.0102287440125, 79.6161885135717, 81.5497837663961, 53.9710956454646, 43.6831159601594, 20.8581884349194, 7.6155030786098, 10.8008470888011, 14.7201505829463, 8.49167208457355, 101.686214382123, 921.711710792497), .Dim = c(1L, 12L), .Dimnames = list(NULL, c('1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'))));`%*%`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1674,13 +1668,13 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators332() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`%/%`(argv[[1]]);");
     }
 
     @Test
     public void testoperators333() {
-        assertEval(Output.ContainsWarning,
+        assertEval(Output.IgnoreWarningContext,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`%/%`(argv[[1]],argv[[2]]);");
     }
 
@@ -1696,7 +1690,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators336() {
-        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`&`(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`&`(argv[[1]]);");
     }
 
     @Test
@@ -1923,7 +1917,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testDispatchToOpsSpecializations() {
-        assertEval(Output.ContainsError, "factor(c(\"a\",\"b\",\"c\")) == factor(c(1,2,3))");
+        assertEval(Output.IgnoreErrorContext, "factor(c(\"a\",\"b\",\"c\")) == factor(c(1,2,3))");
         assertEval("data.frame(factor(c(1,2,3))) == data.frame(factor(c(1,2,3)))");
         assertEval("data.frame(factor(c(1,2,1))) == data.frame(factor(c(1,2,2)))");
     }

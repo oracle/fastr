@@ -310,7 +310,6 @@ public class RSerialize {
     }
 
     private static class Input extends Common {
-        private static final String UNKNOWN_PACKAGE_SOURCE_PREFIX = "<package:";
 
         protected final PInputStream stream;
         /**
@@ -849,7 +848,7 @@ public class RSerialize {
 
         private RExpression parse(Map<String, Object> constants, String deparseRaw) throws IOException {
             try {
-                Source source = Source.fromText(deparseRaw, UNKNOWN_PACKAGE_SOURCE_PREFIX + packageName + " deparse>");
+                Source source = RSource.fromPackageTextInternal(deparseRaw, packageName);
                 return RContext.getEngine().parse(constants, source);
             } catch (Throwable ex) {
                 /*
@@ -882,10 +881,10 @@ public class RSerialize {
                 Source source;
                 String name;
                 if (sourcePath == null) {
-                    source = Source.fromText(deparse, UNKNOWN_PACKAGE_SOURCE_PREFIX + packageName + " deparse>");
+                    source = RSource.fromPackageTextInternalWithName(deparse, packageName, currentFunctionName);
                     name = currentFunctionName;
                 } else {
-                    source = Source.fromFileName(deparse, sourcePath);
+                    source = RSource.fromFileName(deparse, sourcePath);
                     // Located a function source file from which we can retrieve the function name
                     name = RPackageSource.decodeName(sourcePath);
                 }
@@ -919,7 +918,7 @@ public class RSerialize {
         }
 
         private static final String FAILED_DEPARSE_FUNCTION = "function(...) stop(\"FastR error: proxy for lazily loaded function that did not deparse/parse\")";
-        private static final Source FAILED_DEPARSE_FUNCTION_SOURCE = Source.fromText(FAILED_DEPARSE_FUNCTION, UNKNOWN_PACKAGE_SOURCE_PREFIX + "deparse_error>");
+        private static final Source FAILED_DEPARSE_FUNCTION_SOURCE = RSource.fromTextInternal(FAILED_DEPARSE_FUNCTION, RSource.Internal.DEPARSE_ERROR);
 
         /**
          * GnuR uses a pairlist to represent attributes, whereas FastR uses the abstract RAttributes

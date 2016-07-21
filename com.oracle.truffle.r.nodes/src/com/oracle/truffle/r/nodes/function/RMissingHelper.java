@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromiseBase;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * This class implements the behavior for {@link RMissing} which is needed inside this module, as it
@@ -76,26 +75,6 @@ public class RMissingHelper {
         }
 
         return false;
-    }
-
-    /**
-     * @param arg The {@link RNode}, expected to be a {@link ReadVariableNode} (possibly wrapped
-     *            into an {@link WrapArgumentNode})
-     * @return The name, if any ({@code null} else)
-     */
-    public static String unwrapName(RNode arg) {
-        RNode rvnArg = arg;
-        if (rvnArg instanceof WrapArgumentNode) {
-            rvnArg = ((WrapArgumentNode) rvnArg).getOperand();
-        } else if (rvnArg instanceof WrapDefaultArgumentNode) {
-            rvnArg = ((WrapDefaultArgumentNode) rvnArg).getOperand();
-        }
-
-        // ReadVariableNode denotes a name
-        if (rvnArg instanceof ReadVariableNode) {
-            return ((ReadVariableNode) rvnArg).getIdentifier();
-        }
-        return null;
     }
 
     /**

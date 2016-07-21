@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -103,11 +102,6 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
         state.setCdr(state.closePairList());
     }
 
-    @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        return create(RSyntaxNode.EAGER_DEPARSE, getCondition().substitute(env), getBody().substitute(env), isRepeat);
-    }
-
     private static final class WhileRepeatingNode extends RBaseNode implements RepeatingNode {
 
         @Child private ConvertBooleanNode condition;
@@ -159,6 +153,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
             return whileNode;
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         public String toString() {
             RootNode rootNode = getRootNode();

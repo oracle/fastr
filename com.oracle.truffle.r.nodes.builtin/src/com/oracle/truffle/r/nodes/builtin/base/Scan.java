@@ -12,6 +12,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
@@ -47,6 +48,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.sun.org.apache.bcel.internal.generic.INSTANCEOF;
 
 @SuppressWarnings("unused")
 @RBuiltin(name = "scan", kind = INTERNAL, parameterNames = {"file", "what", "nmax", "sep", "dec", "quote", "skip", "nlines", "na.strings", "flush", "fill", "strip.white", "quiet", "blank.lines.skip",
@@ -93,119 +95,77 @@ public abstract class Scan extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(2); // nmax
-        casts.toInteger(6); // nskip
-        casts.toInteger(7); // nlines
-        casts.toLogical(9); // flush
-        casts.toLogical(10); // fill
-        casts.toLogical(12); // quiet
-        casts.toLogical(13); // blSkip
-        casts.toLogical(14); // multiLine
-        casts.toLogical(16); // allowEscapes
-        casts.toLogical(18); // skipNull
+        casts.arg("file").mustBe(RConnection.class);
+
+        casts.arg("what").asVector();
+
+        casts.arg("nmax").asIntegerVector().findFirst(0).notNA(0).mapIf(lt(0), constant(0));
+
+        casts.arg("sep").mustBe(nullValue().or(stringValue())).asStringVector().findFirst("").mustBe(lengthLte(1), RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
+
+        casts.arg("dec").defaultError(RError.Message.INVALID_DECIMAL_SEP).mustBe(nullValue().or(stringValue())).asStringVector().findFirst(".").mustBe(length(1), RError.Message.MUST_BE_ONE_BYTE,
+                        "'sep' value");
+
+        casts.arg("quote").defaultError(RError.Message.INVALID_QUOTE_SYMBOL).mapIf(nullValue(), constant("")).mustBe(stringValue()).asStringVector().findFirst("");
+
+        casts.arg("skip").asIntegerVector().findFirst(0).notNA(0).mapIf(lt(0), constant(0));
+
+        casts.arg("nlines").asIntegerVector().findFirst(0).notNA(0).mapIf(lt(0), constant(0));
+
+        casts.arg("na.strings").mustBe(stringValue());
+
+        casts.arg("flush").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+
+        casts.arg("fill").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+
+        casts.arg("strip.white").mustBe(logicalValue());
+
+        casts.arg("quiet").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA(RRuntime.LOGICAL_FALSE).map(toBoolean());
+
+        casts.arg("blank.lines.skip").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).notNA(RRuntime.LOGICAL_TRUE).map(toBoolean());
+
+        casts.arg("multi.line").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).notNA(RRuntime.LOGICAL_TRUE).map(toBoolean());
+
+        casts.arg("comment.char").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(lengthLte(1)).map(charAt0(RRuntime.INT_NA)).notNA(NO_COMCHAR);
+
+        casts.arg("allowEscapes").asLogicalVector().findFirst().notNA().map(toBoolean());
+
+        casts.arg("encoding").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+
+        casts.arg("skipNull").asLogicalVector().findFirst().notNA().map(toBoolean());
     }
 
     @Specialization
-    protected Object doScan(RConnection file, RAbstractVector what, RAbstractIntVector nmaxVec, RAbstractVector sepVec, RAbstractVector decVec, RAbstractVector quotesVec, RAbstractIntVector nskipVec,
-                    RAbstractIntVector nlinesVec, RAbstractVector naStringsVec, RAbstractLogicalVector flushVec, RAbstractLogicalVector fillVec, RAbstractVector stripVec,
-                    RAbstractLogicalVector dataQuietVec, RAbstractLogicalVector blSkipVec, RAbstractLogicalVector multiLineVec, RAbstractVector commentCharVec, RAbstractLogicalVector escapesVec,
-                    RAbstractVector encodingVec, RAbstractLogicalVector skipNullVec) {
+    protected Object doScan(RConnection file, RAbstractVector what, int nmax, String sep, String dec, String quotes, int nskip,
+                    int nlines, RAbstractStringVector naStringsVec, boolean flush, boolean fill, RAbstractLogicalVector stripVec,
+                    boolean quiet, boolean blSkip, boolean multiLine, int commentChar, boolean escapes,
+                    String encoding, boolean skipNull) {
 
         LocalData data = new LocalData();
 
-        int nmax = firstElementOrNA(nmaxVec);
-
-        if (sepVec.getLength() == 0) {
-            data.sepchar = null;
-        } else if (sepVec.getElementClass() != RString.class) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "sep");
-        }
         // TODO: some sort of character translation happens here?
-        String sep = ((RAbstractStringVector) sepVec).getDataAt(0);
-        if (sep.length() > 1) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
-        }
-        data.sepchar = sep.length() == 0 ? null : sep.substring(0, 1);
+        data.sepchar = sep.isEmpty() ? null : sep.substring(0, 1);
 
-        if (decVec.getLength() == 0) {
-            data.decchar = '.';
-        } else if (decVec.getElementClass() != RString.class) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_DECIMAL_SEP);
-        }
         // TODO: some sort of character translation happens here?
-        String dec = ((RAbstractStringVector) decVec).getDataAt(0);
-        if (dec.length() > 1) {
-            throw RError.error(this, RError.Message.MUST_BE_ONE_BYTE, "decimal separator");
-        }
         data.decchar = dec.charAt(0);
 
-        if (quotesVec.getLength() == 0) {
-            data.quoteset = "";
-        } else if (quotesVec.getElementClass() != RString.class) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_QUOTE_SYMBOL);
-        }
         // TODO: some sort of character translation happens here?
-        data.quoteset = ((RAbstractStringVector) quotesVec).getDataAt(0);
+        data.quoteset = quotes;
 
-        int nskip = firstElementOrNA(nskipVec);
+        data.naStrings = naStringsVec;
 
-        int nlines = firstElementOrNA(nlinesVec);
-
-        if (naStringsVec.getElementClass() != RString.class) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "na.strings");
-        }
-        data.naStrings = (RAbstractStringVector) naStringsVec;
-
-        byte flush = firstElementOrNA(flushVec);
-
-        byte fill = firstElementOrNA(fillVec);
-
-        if (stripVec.getElementClass() != RLogical.class) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "strip.white");
-        }
         if (stripVec.getLength() != 1 && stripVec.getLength() != what.getLength()) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.INVALID_LENGTH, "strip.white");
         }
-        byte strip = ((RAbstractLogicalVector) stripVec).getDataAt(0);
+        byte strip = stripVec.getDataAt(0);
 
-        data.quiet = dataQuietVec.getLength() == 0 || RRuntime.isNA(dataQuietVec.getDataAt(0)) ? false : dataQuietVec.getDataAt(0) == RRuntime.LOGICAL_TRUE;
+        data.quiet = quiet;
 
-        byte blSkip = firstElementOrNA(blSkipVec);
+        data.comchar = commentChar;
 
-        byte multiLine = firstElementOrNA(multiLineVec);
+        data.escapes = escapes;
 
-        if (commentCharVec.getElementClass() != RString.class || commentCharVec.getLength() != 1) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "comment.char");
-        }
-        String commentChar = ((RAbstractStringVector) commentCharVec).getDataAt(0);
-        data.comchar = NO_COMCHAR;
-        if (commentChar.length() > 1) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "comment.char");
-        } else if (commentChar.length() == 1) {
-            data.comchar = commentChar.charAt(0);
-        }
-
-        byte escapes = firstElementOrNA(escapesVec);
-        if (RRuntime.isNA(escapes)) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "allowEscapes");
-        }
-        data.escapes = escapes != RRuntime.LOGICAL_FALSE;
-
-        if (encodingVec.getElementClass() != RString.class || encodingVec.getLength() != 1) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "encoding");
-        }
-        String encoding = ((RAbstractStringVector) encodingVec).getDataAt(0);
         if (encoding.equals("latin1")) {
             data.isLatin1 = true;
         }
@@ -213,28 +173,7 @@ public abstract class Scan extends RBuiltinNode {
             data.isUTF8 = true;
         }
 
-        byte skipNull = firstElementOrNA(skipNullVec);
-        if (RRuntime.isNA(skipNull)) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "skipNull");
-        }
-        data.skipNull = skipNull != RRuntime.LOGICAL_FALSE;
-
-        if (blSkip == RRuntime.LOGICAL_NA) {
-            blSkip = RRuntime.LOGICAL_TRUE;
-        }
-        if (multiLine == RRuntime.LOGICAL_NA) {
-            multiLine = RRuntime.LOGICAL_TRUE;
-        }
-        if (nskip < 0 || nskip == RRuntime.INT_NA) {
-            nskip = 0;
-        }
-        if (nlines < 0 || nlines == RRuntime.INT_NA) {
-            nlines = 0;
-        }
-        if (nmax < 0 || nmax == RRuntime.INT_NA) {
-            nmax = 0;
-        }
+        data.skipNull = skipNull;
 
         // TODO: quite a few more things happen in GNU R around connections
         data.con = file;
@@ -244,13 +183,12 @@ public abstract class Scan extends RBuiltinNode {
 
         try (RConnection openConn = data.con.forceOpen("r")) {
             if (nskip > 0) {
-                openConn.readLines(nskip, true, RRuntime.fromLogical(skipNull));
+                openConn.readLines(nskip, true, skipNull);
             }
             if (what instanceof RList) {
-                return scanFrame((RList) what, nmax, nlines, flush == RRuntime.LOGICAL_TRUE, fill == RRuntime.LOGICAL_TRUE, strip == RRuntime.LOGICAL_TRUE, blSkip == RRuntime.LOGICAL_TRUE,
-                                multiLine == RRuntime.LOGICAL_TRUE, data);
+                return scanFrame((RList) what, nmax, nlines, flush, fill, strip == RRuntime.LOGICAL_TRUE, blSkip, multiLine, data);
             } else {
-                return scanVector(what, nmax, nlines, flush == RRuntime.LOGICAL_TRUE, strip == RRuntime.LOGICAL_TRUE, blSkip == RRuntime.LOGICAL_TRUE, data);
+                return scanVector(what, nmax, nlines, flush, strip == RRuntime.LOGICAL_TRUE, blSkip, data);
             }
 
         } catch (IOException x) {

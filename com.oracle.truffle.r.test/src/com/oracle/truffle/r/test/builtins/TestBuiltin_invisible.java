@@ -24,7 +24,7 @@ public class TestBuiltin_invisible extends TestBase {
 
     @Test
     public void testinvisible2() {
-        assertEval(Output.ContainsError,
+        assertEval(Output.IgnoreErrorContext,
                         "argv <- list(structure('Error in cov(rnorm(10), NULL) : \\n  supply both 'x' and 'y' or a matrix-like 'x'\\n', class = 'try-error', condition = structure(list(message = 'supply both 'x' and 'y' or a matrix-like 'x'', call = quote(cov(rnorm(10), NULL))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
     }
 
@@ -96,7 +96,7 @@ public class TestBuiltin_invisible extends TestBase {
 
     @Test
     public void testinvisible16() {
-        assertEval(Output.ContainsError,
+        assertEval(Output.IgnoreErrorContext,
                         "argv <- list(structure('Error in cor(Z[, FALSE], use = \\\'pairwise.complete.obs\\\', method = \\\'kendall\\\') : \\n  'x' is empty\\n', class = 'try-error', condition = structure(list(message = \''x' is empty', call = quote(cor(Z[, FALSE], use = 'pairwise.complete.obs', method = 'kendall'))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
     }
 

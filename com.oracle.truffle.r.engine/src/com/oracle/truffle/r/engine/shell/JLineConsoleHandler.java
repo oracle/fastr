@@ -27,8 +27,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RStartParams;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 
@@ -117,7 +117,7 @@ class JLineConsoleHandler implements ConsoleHandler {
 
     @Override
     public String getInputDescription() {
-        return RInternalSourceDescriptions.SHELL_INPUT;
+        return RSource.Internal.SHELL_INPUT.string;
     }
 
     @Override

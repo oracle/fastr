@@ -45,8 +45,7 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna7() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 9L, mon = 9L, year = 103L, wday = 4L, yday = 281L, isdst = 1L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt')));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 9L, mon = 9L, year = 103L, wday = 4L, yday = 281L, isdst = 1L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt')));is.na(argv[[1]]);");
     }
 
     @Test
@@ -108,8 +107,7 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna20() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(conc = c(NA, 1.4, NA, NA, NA, NA, NA, NA, 2.2, NA, NA, 0.6)), .Names = 'conc', row.names = 407:418, class = 'data.frame'));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(list(conc = c(NA, 1.4, NA, NA, NA, NA, NA, NA, 2.2, NA, NA, 0.6)), .Names = 'conc', row.names = 407:418, class = 'data.frame'));is.na(argv[[1]]);");
     }
 
     @Test
@@ -124,26 +122,22 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna23() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 1L, mon = 0L, year = 105L, wday = 6L, yday = 0L, isdst = 0L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt'), tzone = 'GMT'));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 1L, mon = 0L, year = 105L, wday = 6L, yday = 0L, isdst = 0L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt'), tzone = 'GMT'));is.na(argv[[1]]);");
     }
 
     @Test
     public void testisna24() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));is.na(argv[[1]]);");
     }
 
     @Test
     public void testisna25() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 1L, mon = 0L, year = 60L, wday = 5L, yday = 0L, isdst = 0L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt'), tzone = 'GMT'));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 1L, mon = 0L, year = 60L, wday = 5L, yday = 0L, isdst = 0L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt'), tzone = 'GMT'));is.na(argv[[1]]);");
     }
 
     @Test
     public void testisna26() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(conc = c(NA, NA, NA, NA, NA, NA, NA, 1.4, NA, NA, NA, NA, NA, NA, NA, 3)), .Names = 'conc', row.names = c(NA, 16L), class = 'data.frame'));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(list(conc = c(NA, NA, NA, NA, NA, NA, NA, 1.4, NA, NA, NA, NA, NA, NA, NA, 3)), .Names = 'conc', row.names = c(NA, 16L), class = 'data.frame'));is.na(argv[[1]]);");
     }
 
     @Test
@@ -153,18 +147,17 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna28() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(conc = c(NA, 3.6)), .Names = 'conc', row.names = 419:420, class = 'data.frame'));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(list(conc = c(NA, 3.6)), .Names = 'conc', row.names = 419:420, class = 'data.frame'));is.na(argv[[1]]);");
     }
 
     @Test
     public void testisna29() {
-        assertEval(Output.ContainsWarning, "argv <- list(NULL);is.na(argv[[1]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(NULL);is.na(argv[[1]]);");
     }
 
     @Test
     public void testisna30() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(sec = NA_real_, min = NA_integer_, hour = NA_integer_, mday = NA_integer_, mon = NA_integer_, year = NA_integer_, wday = NA_integer_, yday = NA_integer_, isdst = -1L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt'), tzone = 'GMT'));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(list(sec = NA_real_, min = NA_integer_, hour = NA_integer_, mday = NA_integer_, mon = NA_integer_, year = NA_integer_, wday = NA_integer_, yday = NA_integer_, isdst = -1L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt'), tzone = 'GMT'));is.na(argv[[1]]);");
     }
 
     @Test
@@ -174,8 +167,7 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna32() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 12L, mon = 2L, year = 112L, wday = 1L, yday = 71L, isdst = 0L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt'), tzone = 'GMT'));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 12L, mon = 2L, year = 112L, wday = 1L, yday = 71L, isdst = 0L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt'), tzone = 'GMT'));is.na(argv[[1]]);");
     }
 
     @Test
@@ -201,8 +193,7 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna37() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(sec = 40, min = 24L, hour = 11L, mday = 15L, mon = 11L, year = 100L, wday = 5L, yday = 349L, isdst = 0L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt')));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(list(sec = 40, min = 24L, hour = 11L, mday = 15L, mon = 11L, year = 100L, wday = 5L, yday = 349L, isdst = 0L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt')));is.na(argv[[1]]);");
     }
 
     @Test
@@ -239,8 +230,7 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna44() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 1L, mon = 0L, year = 70L, wday = 4L, yday = 0L, isdst = 0L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt'), tzone = 'GMT'));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 1L, mon = 0L, year = 70L, wday = 4L, yday = 0L, isdst = 0L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt'), tzone = 'GMT'));is.na(argv[[1]]);");
     }
 
     @Test
@@ -263,7 +253,7 @@ public class TestBuiltin_isna extends TestBase {
         assertEval("{ is.na(1[10]) }");
         assertEval("{ is.na(c(1[10],2[10],3)) }");
         assertEval("{ is.na(list(1[10],1L[10],list(),integer())) }");
-        assertEval(Output.ContainsWarning, "is.na(quote(x()))");
+        assertEval(Output.IgnoreWarningContext, "is.na(quote(x()))");
         assertEval("is.na(is.na))");
 
         // Note: is.na.data.frame calls do.call("cbind", lapply(x, "is.na")) - there is the error

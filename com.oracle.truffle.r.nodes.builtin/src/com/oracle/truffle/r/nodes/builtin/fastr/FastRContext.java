@@ -38,9 +38,9 @@ import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RStartParams;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
@@ -123,7 +123,7 @@ public class FastRContext {
             RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
             for (int i = 0; i < threads.length; i++) {
                 ContextInfo info = checkContext(contexts.getDataAt(i), this);
-                threads[i] = new RContext.EvalThread(info, Source.fromText(exprs.getDataAt(i % threads.length), RInternalSourceDescriptions.CONTEXT_EVAL).withMimeType(RRuntime.R_APP_MIME));
+                threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % threads.length), RSource.Internal.CONTEXT_EVAL));
             }
             for (int i = 0; i < threads.length; i++) {
                 threads[i].start();
@@ -187,7 +187,7 @@ public class FastRContext {
                 RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
                 for (int i = 0; i < threads.length; i++) {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
-                    threads[i] = new RContext.EvalThread(info, Source.fromText(exprs.getDataAt(i % threads.length), RInternalSourceDescriptions.CONTEXT_EVAL).withMimeType(RRuntime.R_APP_MIME));
+                    threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % threads.length), RSource.Internal.CONTEXT_EVAL));
                 }
                 for (int i = 0; i < threads.length; i++) {
                     threads[i].start();
@@ -203,9 +203,9 @@ public class FastRContext {
             } else {
                 for (int i = 0; i < contexts.getLength(); i++) {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
-                    PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
+                    PolyglotEngine vm = info.createVM();
                     try {
-                        Source source = Source.fromText(exprs.getDataAt(i % exprs.getLength()), RInternalSourceDescriptions.CONTEXT_EVAL).withMimeType(RRuntime.R_APP_MIME);
+                        Source source = RSource.fromTextInternal(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL);
                         PolyglotEngine.Value resultValue = vm.eval(source);
                         results[i] = RContext.EvalThread.createEvalResult(resultValue);
                     } catch (ParseException e) {

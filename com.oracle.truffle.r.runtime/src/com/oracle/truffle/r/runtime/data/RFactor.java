@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 public final class RFactor {
 
-    private RFactor(RIntVector vector, boolean ordered) {
+    private RFactor() {
         // only static helpers
     }
 

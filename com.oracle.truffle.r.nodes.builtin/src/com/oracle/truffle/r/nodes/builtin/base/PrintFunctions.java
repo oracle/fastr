@@ -24,8 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import java.io.IOException;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -37,10 +35,8 @@ import com.oracle.truffle.r.nodes.builtin.base.printer.PrintParameters;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -50,24 +46,13 @@ import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public class PrintFunctions {
-    public abstract static class PrintAdapter extends RBuiltinNode {
-
-        @Child protected ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create();
-
-        @TruffleBoundary
-        protected void printHelper(String string) {
-            try {
-                StdConnections.getStdout().writeString(string, true);
-            } catch (IOException ex) {
-                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
-            }
-        }
-    }
 
     @RBuiltin(name = "print.default", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "digits", "quote", "na.print", "print.gap", "right", "max", "useSource", "noOpt"})
-    public abstract static class PrintDefault extends PrintAdapter {
+    public abstract static class PrintDefault extends RBuiltinNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+        @Child private ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -78,34 +63,40 @@ public class PrintFunctions {
             casts.firstBoolean(8);
         }
 
+        @TruffleBoundary
         @Specialization(guards = "!isS4(o)")
         protected Object printDefault(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
             valuePrinter.executeString(o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             return o;
         }
 
-        RFunction createShowFunction(VirtualFrame frame) {
+        protected static RFunction createShowFunction(VirtualFrame frame) {
             return ReadVariableNode.lookupFunction("show", frame, false);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isS4(o)")
-        protected Object printDefaultS4(VirtualFrame frame, RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt,
+        protected Object printDefaultS4(VirtualFrame frame, RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt, //
                         @Cached("createShowFunction(frame)") RFunction showFunction) {
-            RContext.getEngine().evalFunction(showFunction, null, null, o);
+            if (noOpt) {
+                // S4 should only be called in case noOpt is true
+                RContext.getEngine().evalFunction(showFunction, null, null, o);
+            } else {
+                printDefault(showFunction, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+            }
             return null;
         }
 
         protected boolean isS4(Object o) {
-            // checking for class attribute is a bit of a hack but GNU R has a hack in place here as
-            // well to avoid recursively calling show via print in showDefault (we just can't use
-            // the same hack at this point - for details see definition of showDefault in show.R)
             return o instanceof RAttributable && ((RAttributable) o).isS4() && ((RAttributable) o).getClassAttr(attrProfiles) != null;
         }
     }
 
     @RBuiltin(name = "print.function", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "useSource", "..."})
-    public abstract static class PrintFunction extends PrintAdapter {
+    public abstract static class PrintFunction extends RBuiltinNode {
+
+        @Child private ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create();
+
         @SuppressWarnings("unused")
         @Specialization
         protected RFunction printFunction(RFunction x, byte useSource, RArgsValuesAndNames extra) {

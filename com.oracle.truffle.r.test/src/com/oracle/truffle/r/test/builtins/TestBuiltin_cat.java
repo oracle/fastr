@@ -87,4 +87,5 @@ public class TestBuiltin_cat extends TestBase {
         assertEval("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\", \"b\") }");
         assertEval("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\", \"b\") }");
     }
+
 }

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -72,6 +72,8 @@
 # --pkg-filelist a file containing an explicit list of package names (not regexps), one per line
 # --alpha-daily implicitly sets --pkg-pattern from the day of the year modulo 26. E.g., 0 is ^[Aa], 1 is ^[Bb]
 # --ok-only implicitly sets --pkg-filelist to a list of packages known to install
+
+# TODO At some point this will need to upgraded to support installation from other repos, e.g. BioConductor, github
 
 args <- commandArgs(TRUE)
 
@@ -479,7 +481,7 @@ do.it <- function() {
 	if (list.versions) {
 		for (i in (1:length(rownames(toinstall.pkgs)))) {
 			pkg <- toinstall.pkgs[i, ]
-			cat(pkg["Package"], pkg["Version"], "\n", sep=",")
+			cat(pkg["Package"], pkg["Version"], paste0(contriburl, "/", pkg["Version"], ".tar.gz"), "\n", sep=",")
 		}
 	}
 
@@ -509,7 +511,7 @@ do.it <- function() {
 		install.pkgs(test.pkgnames)
 		cat("END package installation\n")
 
-		if (print.ok.installs) {
+		if (print.install.status) {
 			cat("BEGIN install status\n")
 			for (pkgname.i in test.pkgnames) {
 				cat(paste0(pkgname.i, ":"), ifelse(install.status[pkgname.i], "OK", "FAILED"), "\n")
@@ -539,7 +541,6 @@ do.it <- function() {
 				if (dry.run) {
 					cat("would test:", pkgname, "\n")
 				} else {
-
 					cat("BEGIN testing:", pkgname, "(", test.count, "of", test.total, ")", "\n")
 					test.package(pkgname)
 					cat("END testing:", pkgname, "\n")
@@ -612,6 +613,7 @@ test.package <- function(pkgname) {
 	testdir.path <- testdir
 	check.create.dir(testdir.path)
 	check.create.dir(file.path(testdir.path, pkgname))
+	start.time <- proc.time()[[3]]
 	if (run.mode == "system") {
 		system.test(pkgname)
 	} else if (run.mode == "internal") {
@@ -619,6 +621,8 @@ test.package <- function(pkgname) {
 	} else if (run.mode == "context") {
 		stop("context run-mode not implemented\n")
 	}
+	end.time <- proc.time()[[3]]
+	cat("TEST_TIME:", pkgname, end.time - start.time, "\n")
 }
 
 is.fastr <- function() {
@@ -660,6 +664,8 @@ parse.args <- function() {
 		} else if (a == "-V") {
 			verbose <<- T
 			very.verbose <<- T
+		} else if (a == "--quiet") {
+			quiet <<- T
 		} else if (a == "--no-install" || a == "-n") {
 			install <<- F
 		} else if (a == "--dryrun" || a == "--dry-run") {
@@ -704,8 +710,8 @@ parse.args <- function() {
 			run.tests <<- TRUE
 		} else if (a == "--testdir") {
 			testdir <<- get.argvalue()
-		} else if (a == "--print-ok-installs") {
-			print.ok.installs <<- T
+		} else if (a == "--print-install-status" || a == "--print-ok-installs") {
+			print.install.status <<- T
 		} else if (a == "--list-versions") {
 			list.versions <<- TRUE
 		} else if (a == "--install-dependents-first") {
@@ -720,7 +726,6 @@ parse.args <- function() {
 			}
 			# backwards compatibility
 			pkg.pattern <<- a
-			break
 		}
 
 		args <<- args[-1L]
@@ -730,6 +735,11 @@ parse.args <- function() {
 	}
 	if (is.na(pkg.pattern) && is.na(pkg.filelistfile)) {
 	    pkg.pattern <<- "^.*"
+	}
+	# list.versions is just that
+    if (list.versions) {
+		install <<- F
+		run.tests <<- F
 	}
 }
 
@@ -751,7 +761,7 @@ cat.args <- function() {
 		cat("count.daily:", count.daily, "\n")
 		cat("run.mode:", run.mode, "\n")
 		cat("run.tests:", run.tests, "\n")
-		cat("print.ok.installs:", print.ok.installs, "\n")
+		cat("print.install.status:", print.install.status, "\n")
 		cat("use.installed.pkgs:", use.installed.pkgs, "\n")
 		cat("invert.pkgset:", invert.pkgset, "\n")
 		cat("testdir.path", testdir, "\n")
@@ -799,6 +809,7 @@ run <- function() {
     do.it()
 }
 
+quiet <- F
 cran.mirror <- NA
 contriburl <- NA
 blacklist.file <- NA
@@ -809,7 +820,7 @@ testdir <- "test"
 pkg.pattern <- NA
 pkg.filelist <- character()
 pkg.filelistfile <- NA
-print.ok.installs <- F
+print.install.status <- F
 use.installed.pkgs <- F
 verbose <- F
 very.verbose <- F

@@ -1,5 +1,6 @@
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
-java8 : {name : oraclejdk, version : "8u66", platformspecific: true}
+#java8 : {name : oraclejdk, version : "8u66", platformspecific: true}
+java8 : {name : labsjdk, version : "8u92-jvmci-0.17", platformspecific: true}
 
 common : {
   packages : {
@@ -36,7 +37,7 @@ java8Downloads : {
 
 gateTest : ${common} ${java8Downloads} {
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,BuildNative,UnitTests: ExpectedTestOutput file check,UnitTests"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,UnitTests: ExpectedTestOutput file check,UnitTests"]
   ]
 }
 
@@ -58,16 +59,17 @@ gateStyle : ${common} {
 
 rbcheck : ${common} ${java8Downloads} {
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,BuildNative"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac"]
     ["mx", "rbcheck"]
-  ]
+    ["mx", "rbdiag", "-n", "-m"]
+  ]  
 }
 
 # currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
 
 builds = [
-  ${gateTest}       {capabilities : [linux, amd64, gate, post-merge],   name: "gate-test-linux-amd64"}
-  ${gateStyle}      {capabilities : [linux, amd64, gate, post-merge],   name: "gate-style-linux-amd64"}
-  ${rbcheck}        {capabilities : [linux, amd64, gate, post-merge],   name: "gate-rbcheck-linux-amd64"}
-#  ${gateTest}      {capabilities : [linux, sparcv9, gate, post-merge], name: "gate-test-linux-sparcv9"}
+  ${gateTest}       {capabilities : [linux, amd64],  targets : [gate, post-merge],  name: "gate-test-linux-amd64"}
+  ${gateStyle}      {capabilities : [linux, amd64],   targets : [gate, post-merge],  name: "gate-style-linux-amd64"}
+  ${rbcheck}        {capabilities : [linux, amd64],   targets : [gate, post-merge],  name: "gate-rbcheck-linux-amd64"}
+#  ${gateTest}      {capabilities : [linux, sparcv9], targets : [gate, post-merge],  name: "gate-test-linux-sparcv9"}
 ]

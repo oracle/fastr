@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
  *
  * {@code null} is never allowed as a value for the tag, car or cdr, only the type.
  */
-public class RPairList extends RAttributeStorage implements RAbstractContainer {
+public class RPairList extends RSharingAttributeStorage implements RAbstractContainer {
     private Object car = RNull.instance;
     private Object cdr = RNull.instance;
     /**
@@ -73,23 +73,25 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
     }
 
     /**
-     * Creates a pairlist of length {@code n > 0} of type {@code LANGSXP}.
+     * Creates a new pair list of given size > 0. Note: pair list of size 0 is NULL.
      */
-    public static RPairList create(int n) {
-        assert n > 0;
-        RPairList head = null;
-        RPairList pl = null;
-        for (int i = 0; i < n; i++) {
-            RPairList next = new RPairList();
-            if (pl == null) {
-                head = next;
-            } else {
-                pl.cdr = next;
-            }
-            pl = next;
+    public static RPairList create(int size) {
+        return create(size, null);
+    }
+
+    @TruffleBoundary
+    public static RPairList create(int size, SEXPTYPE type) {
+        assert size > 0 : "a pair list of size = 0 does not exist, it should be NULL";
+        RPairList result = new RPairList();
+        for (int i = 1; i < size; i++) {
+            RPairList tmp = result;
+            result = new RPairList();
+            result.cdr = tmp;
         }
-        head.type = SEXPTYPE.LANGSXP;
-        return head;
+        if (type != null) {
+            result.type = type;
+        }
+        return result;
     }
 
     @Override
@@ -130,10 +132,14 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
         for (int i = 0; i < len; i++) {
             data[i] = plt.car();
             if (named) {
-                if (plt.isNullTag()) {
+                Object ptag = plt.tag;
+                if (isNull(ptag)) {
                     names[i] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
+                } else if (ptag instanceof RSymbol) {
+                    names[i] = ((RSymbol) ptag).getName();
                 } else {
-                    names[i] = ((RSymbol) plt.getTag()).getName();
+                    names[i] = RRuntime.asString(ptag);
+                    assert names[i] != null : "unexpected type of tag in RPairList";
                 }
             }
             if (i < len - 1) {
@@ -256,7 +262,22 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
     }
 
     @Override
-    public RVector getNonShared() {
+    public RShareable copy() {
+        RPairList result = new RPairList();
+        Object original = this;
+        while (!isNull(original)) {
+            RPairList origList = (RPairList) original;
+            result.car = origList.car;
+            result.tag = origList.tag;
+            result.cdr = new RPairList();
+            result = (RPairList) result.cdr;
+            original = origList.cdr;
+        }
+        return result;
+    }
+
+    @Override
+    public RShareable deepCopy() {
         RInternalError.shouldNotReachHere();
         return null;
     }
@@ -305,27 +326,32 @@ public class RPairList extends RAttributeStorage implements RAbstractContainer {
 
     @Override
     public void setNames(RStringVector newNames) {
-        throw RInternalError.shouldNotReachHere();
+        Object p = this;
+        for (int i = 0; i < newNames.getLength() && !isNull(p); i++) {
+            RPairList pList = (RPairList) p;
+            pList.tag = newNames.getDataAt(i);
+            p = pList.cdr;
+        }
     }
 
     @Override
     public RList getDimNames(RAttributeProfiles attrProfiles) {
-        throw RInternalError.shouldNotReachHere();
+        return null;
     }
 
     @Override
     public void setDimNames(RList newDimNames) {
-        throw RInternalError.shouldNotReachHere();
+        throw RInternalError.unimplemented();
     }
 
     @Override
     public Object getRowNames(RAttributeProfiles attrProfiles) {
-        throw RInternalError.shouldNotReachHere();
+        throw RInternalError.unimplemented();
     }
 
     @Override
     public void setRowNames(RAbstractVector rowNames) {
-        throw RInternalError.shouldNotReachHere();
+        throw RInternalError.unimplemented();
     }
 
     @Override

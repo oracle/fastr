@@ -25,13 +25,11 @@ package com.oracle.truffle.r.runtime.ffi;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Path;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -58,11 +56,10 @@ public class RFFIUtils {
     private static boolean traceEnabled;
 
     /**
-     * In embedded mode can't trust that cwd is writeable, so output placed in /tmp. Also, tag with
-     * time in event of multiple concurrent instances (which happens with RStudio).
+     * Always trace to a file because stdout is problematic for embedded mode.
      */
     private static final String TRACEFILE = "fastr_trace_nativecalls.log";
-    private static OutputStream traceStream;
+    private static FileOutputStream traceStream;
     /**
      * Records the call depth. TBD: make context specific
      */
@@ -72,12 +69,8 @@ public class RFFIUtils {
         if (!initialized) {
             traceEnabled = alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue();
             if (traceEnabled) {
-                if (RContext.isEmbedded()) {
-                    if (traceStream == null) {
-                        initTraceStream();
-                    }
-                } else {
-                    traceStream = System.out;
+                if (traceStream == null) {
+                    initTraceStream();
                 }
             }
             initialized = true;
@@ -105,7 +98,7 @@ public class RFFIUtils {
                 // Happens if native has tracing enabled and Java does not
                 initTraceStream();
             }
-            return ((FileOutputStream) traceStream).getFD();
+            return traceStream.getFD();
         } catch (IOException ex) {
             System.err.println(ex.getMessage());
             System.exit(1);

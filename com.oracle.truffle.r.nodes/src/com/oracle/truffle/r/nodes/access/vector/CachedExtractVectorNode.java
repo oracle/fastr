@@ -295,6 +295,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                     Object result;
                     if (dataAt == RNull.instance) {
                         result = RNull.instance;
+                    } else if (positions[i] instanceof RAbstractContainer && ((RAbstractContainer) positions[i]).getLength() == 0) {
+                        result = RNull.instance;
                     } else {
                         result = extract(i, (RAbstractStringVector) dataAt, positions[i], positionProfile[i]);
                     }
@@ -355,8 +357,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             if (srcNames != RNull.instance) {
                 Object position = positions[currentDimIndex];
 
-                Object newNames = extractNames((RAbstractStringVector) srcNames, new Object[]{position}, new PositionProfile[]{profile}, currentDimIndex, RLogical.valueOf(true),
-                                RLogical.valueOf(dropDimensions));
+                Object newNames = extractNames((RAbstractStringVector) RRuntime.asAbstractVector(srcNames), new Object[]{position}, new PositionProfile[]{profile}, currentDimIndex,
+                                RLogical.valueOf(true), RLogical.valueOf(dropDimensions));
                 if (newNames != RNull.instance) {
                     if (newNamesProfile.profile(newNames instanceof String)) {
                         newNames = RDataFactory.createStringVector((String) newNames);

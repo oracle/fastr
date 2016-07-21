@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
@@ -40,7 +39,6 @@ import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
@@ -120,13 +118,6 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
     }
 
     @Override
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        FunctionDefinitionNode thisFdn = (FunctionDefinitionNode) callTarget.getRootNode();
-        FunctionDefinitionNode fdn = (FunctionDefinitionNode) thisFdn.substituteImpl(env);
-        return new FunctionExpressionNode(RSyntaxNode.EAGER_DEPARSE, Truffle.getRuntime().createCallTarget(fdn));
-    }
-
-    @Override
     public RSyntaxElement[] getSyntaxArgumentDefaults() {
         return RASTUtils.asSyntaxNodes(((FunctionDefinitionNode) callTarget.getRootNode()).getFormalArguments().getArguments());
     }
@@ -139,5 +130,10 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
     @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ((FunctionDefinitionNode) callTarget.getRootNode()).getFormalArguments().getSignature();
+    }
+
+    @Override
+    public String getSyntaxDebugName() {
+        return ((RRootNode) callTarget.getRootNode()).getName();
     }
 }

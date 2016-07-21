@@ -82,7 +82,7 @@ public class TestSimpleValues extends TestBase {
 
     @Test
     public void testUnaryBuiltings() {
-        assertEval(Output.MayContainError, template("%0(%1)", UNARY_BUILTINS, ALL_ARITHMETIC_VALUES));
+        assertEval(Output.MayIgnoreErrorContext, template("%0(%1)", UNARY_BUILTINS, ALL_ARITHMETIC_VALUES));
     }
 
     private static final String[] SUBSCRIPT_SEQUENCE_VALUES = {"1:1", "2:4", "4:2"};
@@ -131,7 +131,7 @@ public class TestSimpleValues extends TestBase {
 
     @Test
     public void testVectorAccess() {
-        assertEval(Output.MayContainError, template("x <- %1; x[%0]", SUBSCRIPT_ALL_VALUES, TESTED_VECTORS));
+        assertEval(Output.MayIgnoreErrorContext, template("x <- %1; x[%0]", SUBSCRIPT_ALL_VALUES, TESTED_VECTORS));
     }
 
     @Test
@@ -141,7 +141,7 @@ public class TestSimpleValues extends TestBase {
         assertEval("v <- double(5) ; v[[3]] <- c(1) ; v");
         assertEval("v <- double(5) ; v[[3]] <- matrix(c(1)) ; v");
         // TODO(tw): Expand this test.
-        assertEval(Output.MayContainError, Output.MayContainWarning,
+        assertEval(Output.MayIgnoreErrorContext, Output.MayIgnoreWarningContext,
                         template("{ x <- %2; x[%0] <- %1; x }", join(SUBSCRIPT_VECTOR_THREE_VALUES, SUBSCRIPT_SEQUENCE_VALUES), INT_UPDATE_VALUES, TESTED_VECTORS));
     }
 
@@ -172,7 +172,7 @@ public class TestSimpleValues extends TestBase {
     @Test
     public void testBinaryArithmetic() {
         assertEval("FALSE^(-3)");
-        assertEval(Output.MayContainError, BINARY_ARITHMETIC_WHITELIST, template("%0%1%2", ALL_ARITHMETIC_VALUES, BINARY_OPERATORS, ALL_ARITHMETIC_VALUES));
+        assertEval(Output.MayIgnoreErrorContext, BINARY_ARITHMETIC_WHITELIST, template("%0%1%2", ALL_ARITHMETIC_VALUES, BINARY_OPERATORS, ALL_ARITHMETIC_VALUES));
     }
 
     @Test

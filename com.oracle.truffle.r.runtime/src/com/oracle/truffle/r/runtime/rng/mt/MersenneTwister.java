@@ -170,18 +170,26 @@ public final class MersenneTwister extends RNGInitAdapter {
         RInternalError.guarantee(localMti != N + 1);
 
         int pos = 0;
-        while (pos < count && localMti < N) {
-            int y = getMt(localMti++);
-            /* Tempering */
-            y ^= (y >>> 11);
-            y ^= (y << 7) & TEMPERING_MASK_B;
-            y ^= (y << 15) & TEMPERING_MASK_C;
-            y ^= (y >>> 18);
-            result[pos] = RRNG.fixup((y & 0xffffffffL) * RRNG.I2_32M1);
-            pos++;
-        }
+        while (true) {
+            int loopCount = Math.min(count - pos, N - localMti);
+            for (int i = 0; i < loopCount; i++) {
+                int y = getMt(localMti + i);
+                /* Tempering */
+                y ^= (y >>> 11);
+                y ^= (y << 7) & TEMPERING_MASK_B;
+                y ^= (y << 15) & TEMPERING_MASK_C;
+                y ^= (y >>> 18);
+                result[pos + i] = ((y + Integer.MIN_VALUE) - (double) Integer.MIN_VALUE) * RRNG.I2_32M1;
+            }
+            for (int i = 0; i < loopCount; i++) {
+                result[pos + i] = RRNG.fixup(result[pos + i]);
+            }
+            localMti += loopCount;
+            pos += loopCount;
 
-        while (pos < count) {
+            if (pos == count) {
+                break;
+            }
             /* generate N words at one time */
             int kk;
             for (kk = 0; kk < N - M; kk++) {
@@ -196,17 +204,6 @@ public final class MersenneTwister extends RNGInitAdapter {
             setMt(N - 1, getMt(M - 1) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
 
             localMti = 0;
-
-            while (pos < count && localMti < N) {
-                int y = getMt(localMti++);
-                /* Tempering */
-                y ^= (y >>> 11);
-                y ^= (y << 7) & TEMPERING_MASK_B;
-                y ^= (y << 15) & TEMPERING_MASK_C;
-                y ^= (y >>> 18);
-                result[pos] = RRNG.fixup((y & 0xffffffffL) * RRNG.I2_32M1);
-                pos++;
-            }
         }
         localDummy0 = localMti;
         mti = localMti;

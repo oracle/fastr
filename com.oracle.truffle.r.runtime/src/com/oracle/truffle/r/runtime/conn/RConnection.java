@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  *
  * TODO Refactor the pushBack code into ConnectionsSupport
  */
-public abstract class RConnection extends RAttributeStorage implements RTypedValue, AutoCloseable, RAbstractContainer {
+public abstract class RConnection extends RAttributeStorage implements AutoCloseable, RAbstractContainer {
 
     @Override
     public RStringVector getImplicitClass() {

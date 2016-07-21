@@ -28,6 +28,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -40,6 +41,15 @@ public abstract class CastToVectorNode extends CastNode {
     protected Object castNull(@SuppressWarnings("unused") RNull rnull) {
         if (isNonVectorPreserved()) {
             return RNull.instance;
+        } else {
+            return RDataFactory.createList();
+        }
+    }
+
+    @Specialization
+    protected Object castMissing(@SuppressWarnings("unused") RMissing missing) {
+        if (isNonVectorPreserved()) {
+            return RMissing.instance;
         } else {
             return RDataFactory.createList();
         }

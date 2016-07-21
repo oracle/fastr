@@ -26,11 +26,10 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.nodes.builtin.base.Quit;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
@@ -38,7 +37,6 @@ import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -58,7 +56,6 @@ public abstract class BrowserInteractNode extends RNode {
     public static final int CONTINUE = 2;
     public static final int FINISH = 3;
 
-    private static final String BROWSER_SOURCE = "<browser_input>";
     private static String lastEmptyLineCommand = "n";
 
     @Specialization
@@ -77,8 +74,8 @@ public abstract class BrowserInteractNode extends RNode {
                     input = input.trim();
                 }
                 if (input == null || input.length() == 0) {
-                    RLogicalVector browserNLdisabledVec = (RLogicalVector) RContext.getInstance().stateROptions.getValue("browserNLdisabled");
-                    if (!RRuntime.fromLogical(browserNLdisabledVec.getDataAt(0))) {
+                    byte browserNLdisabledVec = RRuntime.asLogicalObject(RContext.getInstance().stateROptions.getValue("browserNLdisabled"));
+                    if (!RRuntime.fromLogical(browserNLdisabledVec)) {
                         input = lastEmptyLineCommand;
                     }
                 }
@@ -119,7 +116,7 @@ public abstract class BrowserInteractNode extends RNode {
 
                     default:
                         try {
-                            RContext.getEngine().parseAndEval(Source.fromText(input, BROWSER_SOURCE), mFrame, true);
+                            RContext.getEngine().parseAndEval(RSource.fromTextInternal(input, RSource.Internal.BROWSER_INPUT), mFrame, true);
                         } catch (ReturnException e) {
                             exitMode = NEXT;
                             break LW;

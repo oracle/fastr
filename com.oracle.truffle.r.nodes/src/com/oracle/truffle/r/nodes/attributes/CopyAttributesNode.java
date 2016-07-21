@@ -52,6 +52,10 @@ public abstract class CopyAttributesNode extends RBaseNode {
         this.copyAllAttributes = copyAllAttributes;
     }
 
+    public static CopyAttributesNode createCopyAllAttributes() {
+        return CopyAttributesNodeGen.create(true);
+    }
+
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength);
 
     protected boolean containsMetadata(RAbstractVector vector, RAttributeProfiles attrProfiles) {

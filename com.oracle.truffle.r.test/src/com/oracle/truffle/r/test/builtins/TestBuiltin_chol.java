@@ -29,6 +29,6 @@ public class TestBuiltin_chol extends TestBase {
         assertEval("{ chol(1) }");
         assertEval("{ round( chol(10), digits=5) }");
         assertEval("{ m <- matrix(c(5,1,1,3),2) ; round( chol(m), digits=5 ) }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ m <- matrix(c(5,-5,-5,3),2,2) ; chol(m) }");
+        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ m <- matrix(c(5,-5,-5,3),2,2) ; chol(m) }");
     }
 }

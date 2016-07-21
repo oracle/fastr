@@ -22,30 +22,81 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RForeignAccessFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
 
-    @Override
-    public ForeignAccess getForeignAccess(RTypedValue value) {
-        if (value instanceof RList) {
-            return ForeignAccess.create(RList.class, new RListAccessFactory());
-        } else if (value instanceof RAbstractVector) {
-            return ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
-        } else if (value instanceof RFunction) {
-            return ForeignAccess.create(RFunction.class, new RFunctionAccessFactory());
-        } else {
-            throw RInternalError.shouldNotReachHere("cannot create ForeignAccess for " + value);
+    private static final class TableEntry {
+        private final Class<? extends RTruffleObject> clazz;
+        private final ForeignAccess foreignAccess;
+        /**
+         * {@link PolyglotEngine} checks the thread on a {@link ForeignAccess}.
+         */
+        private final Thread thread;
+
+        private TableEntry(Class<? extends RTruffleObject> clazz, ForeignAccess foreignAccess) {
+            this.clazz = clazz;
+            this.thread = Thread.currentThread();
+            this.foreignAccess = foreignAccess;
         }
+    }
+
+    TableEntry[] table = new TableEntry[32];
+    int tableIndex;
+
+    @Override
+    public ForeignAccess getForeignAccess(RTruffleObject obj) {
+        return get(obj);
+    }
+
+    private synchronized ForeignAccess get(RTruffleObject obj) {
+        Class<? extends RTruffleObject> objclazz = obj.getClass();
+        Thread thread = Thread.currentThread();
+        for (int i = 0; i < tableIndex; i++) {
+            TableEntry te = table[i];
+            if (te.clazz == objclazz && te.thread == thread) {
+                return te.foreignAccess;
+            }
+        }
+        return createForeignAccess(objclazz);
+    }
+
+    @TruffleBoundary
+    private ForeignAccess createForeignAccess(Class<? extends RTruffleObject> clazz) {
+        ForeignAccess foreignAccess = null;
+        String name = clazz.getSimpleName();
+        if (RNull.class.isAssignableFrom(clazz)) {
+            foreignAccess = RNullMRForeign.createAccess();
+        } else if (RList.class.isAssignableFrom(clazz)) {
+            foreignAccess = RListMRForeign.createAccess();
+        } else if (RPairList.class.isAssignableFrom(clazz)) {
+            foreignAccess = RPairListMRForeign.createAccess();
+        } else if (RFunction.class.isAssignableFrom(clazz)) {
+            foreignAccess = RFunctionMRForeign.createAccess();
+        } else {
+            if (RAbstractVector.class.isAssignableFrom(clazz)) {
+                foreignAccess = ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
+            } else {
+                throw RInternalError.unimplemented("foreignAccess: " + name);
+            }
+        }
+        TableEntry te = new TableEntry(clazz, foreignAccess);
+        table[tableIndex++] = te;
+        return te.foreignAccess;
+
     }
 
     @Override

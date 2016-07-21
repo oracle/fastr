@@ -281,6 +281,7 @@ public final class RError extends RuntimeException {
         NON_NUMERIC_MATRIX_EXTENT("non-numeric matrix extent"),
         NON_CONFORMABLE_ARRAYS("non-conformable arrays"),
         UNKNOWN_UNNAMED_OBJECT("object not found"),
+        CHOOSE_ROUNDING_WARNING("'k' (%g) must be integer, rounded to %d"),
         ONLY_MATRIX_DIAGONALS("only matrix diagonals can be replaced"),
         REPLACEMENT_DIAGONAL_LENGTH("replacement diagonal has wrong length"),
         NA_INTRODUCED_COERCION("NAs introduced by coercion"),
@@ -319,6 +320,7 @@ public final class RError extends RuntimeException {
         INVALID_UNNAMED_ARGUMENT("invalid argument"),
         INVALID_UNNAMED_VALUE("invalid value"),
         NAMES_NONVECTOR("names() applied to a non-vector"),
+        NAMES_LONGER("'names' attribute [%d] must be the same length as the vector [%d]"),
         ONLY_FIRST_VARIABLE_NAME("only the first element is used as variable name"),
         INVALID_FIRST_ARGUMENT("invalid first argument"),
         NO_ENCLOSING_ENVIRONMENT("no enclosing environment"),
@@ -677,7 +679,10 @@ public final class RError extends RuntimeException {
         QUIT_INVALID_STATUS("invalid 'status', 0 assumed"),
         QUIT_INVALID_RUNLAST("invalid 'runLast', FALSE assumed"),
         ENVIRONMENTS_COERCE("environments cannot be coerced to other types"),
-        CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'");
+        CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'"),
+        ROWSUM_NAMES_NOT_CHAR("row names are not character"),
+        ROWSUM_NON_NUMERIC("non-numeric matrix in rowsum(): this should not happen"),
+        ARGUMENTS_REQUIRED_COUNT("%d arguments to '%s' which requires %d");
 
         public final String message;
         final boolean hasArgs;
@@ -686,5 +691,6 @@ public final class RError extends RuntimeException {
             this.message = message;
             hasArgs = message.indexOf('%') >= 0;
         }
+
     }
 }

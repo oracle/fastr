@@ -20,12 +20,12 @@ public class TestBuiltin_rawShift extends TestBase {
 
     @Test
     public void testrawShift1() {
-        assertEval(Output.ContainsError, "argv <- structure(list(x = as.raw(c(0, 1, 32, 127, 128, 255, 123)), n = -10L), .Names = c('x', 'n'));do.call('rawShift', argv)");
-        assertEval(Output.ContainsError, "argv <- structure(list(x = as.raw(c(0, 1, 32, 127, 128, 255, 123)), n = -9), .Names = c('x', 'n'));do.call('rawShift', argv)");
+        assertEval(Output.IgnoreErrorContext, "argv <- structure(list(x = as.raw(c(0, 1, 32, 127, 128, 255, 123)), n = -10L), .Names = c('x', 'n'));do.call('rawShift', argv)");
+        assertEval(Output.IgnoreErrorContext, "argv <- structure(list(x = as.raw(c(0, 1, 32, 127, 128, 255, 123)), n = -9), .Names = c('x', 'n'));do.call('rawShift', argv)");
         for (int i = -8; i <= 8; i++) {
             assertEval("argv <- structure(list(x = as.raw(c(0, 1, 32, 127, 128, 255, 123)), n = " + i + "L), .Names = c('x', 'n'));do.call('rawShift', argv)");
             assertEval("argv <- structure(list(x = as.raw(c(0, 1, 32, 127, 128, 255, 123)), n = " + i + ".1), .Names = c('x', 'n'));do.call('rawShift', argv)");
         }
-        assertEval(Output.ContainsError, "argv <- structure(list(x = as.raw(c(0, 1, 32, 127, 128, 255, 123)), n = 9), .Names = c('x', 'n'));do.call('rawShift', argv)");
+        assertEval(Output.IgnoreErrorContext, "argv <- structure(list(x = as.raw(c(0, 1, 32, 127, 128, 255, 123)), n = 9), .Names = c('x', 'n'));do.call('rawShift', argv)");
     }
 }

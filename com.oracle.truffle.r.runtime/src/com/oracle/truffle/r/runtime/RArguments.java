@@ -56,7 +56,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  *                            +--------------------+
  * INDEX_IS_IRREGULAR      -> | isIrregular        |
  *                            +--------------------+
- * INDEX_SIGNATURE         -> | ArgumentsSignature |
+ * INDEX_SUPPLIED_SIGNATURE-> | ArgumentsSignature |
  *                            +--------------------+
  * INDEX_ARGUMENTS         -> | arg_0              |
  *                            | arg_1              |
@@ -76,6 +76,10 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  * because such environment instances are only created on demand. It is however, set for frames
  * associated with packages and the global environment.
  *
+ * The INDEX_SUPPLIED_SIGNATURE is set to the permutation of the supplied signature that corresponds
+ * to how the supplied arguments were permuted. The purpose of this slot is to store the names in the
+ * original signature (especially positional vs. named) for later use in UseMethod.
+ *
  * N.B. The depth is always a monotonically increasing value and unique across the active set of stack frames.
  * Promise evaluation requires some special support as the stack must reflect the "logical" stack depth,
  * else code like {@code sys.frames} does not work correctly, but it must be possible to access the initial frame
@@ -84,6 +88,20 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  */
 // @formatter:on
 public final class RArguments {
+
+    public static final String SUMMARY_GROUP_NA_RM_ARG_NAME = "na.rm";
+    /**
+     * Marker for the only group S3 dispatch argument that may have default value carried over from
+     * the R dispatch method to the dispatched to R method.
+     */
+    public static final S3DefaultArguments SUMMARY_GROUP_DEFAULT_VALUE_NA_RM = new S3DefaultArguments();
+
+    /**
+     * Placeholder, should the group S3 dispatch need more flexible default arguments. See
+     * {@code RCallNode.callGroupGeneric} for more details.
+     */
+    public static class S3DefaultArguments {
+    }
 
     @ValueType
     public abstract static class DispatchArgs {
@@ -135,7 +153,7 @@ public final class RArguments {
     static final int INDEX_ENCLOSING_FRAME = 4;
     static final int INDEX_DISPATCH_ARGS = 5;
     static final int INDEX_IS_IRREGULAR = 6;
-    static final int INDEX_SIGNATURE = 7;
+    static final int INDEX_SUPPLIED_SIGNATURE = 7;
     static final int INDEX_ARGUMENTS = 8;
 
     /**
@@ -148,25 +166,39 @@ public final class RArguments {
     }
 
     private static int getNArgs(Frame frame) {
-        return getSignature(frame).getLength();
+        return frame.getArguments().length - INDEX_ARGUMENTS;
     }
 
-    private static ArgumentsSignature getSignature(RFunction function) {
-        return ((HasSignature) function.getRootNode()).getSignature();
+    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
+        ArgumentsSignature formalSignature = ((HasSignature) functionObj.getRootNode()).getSignature();
+        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(formalSignature.getLength()), dispatchArgs);
     }
 
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature signature,
-                    DispatchArgs dispatchArgs) {
+    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature, DispatchArgs dispatchArgs) {
         CompilerAsserts.neverPartOfCompilation();
-        return create(functionObj, call, callerFrame, evaluatedArgs, signature, functionObj.getEnclosingFrame(), dispatchArgs);
+        return create(functionObj, call, callerFrame, evaluatedArgs, suppliedSignature, functionObj.getEnclosingFrame(), dispatchArgs);
     }
 
+    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
+        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length), enclosingFrame, dispatchArgs);
+    }
+
+    /**
+     * Creates the arguments array that can be stored in the frame.
+     *
+     * @param evaluatedArgs arguments ordered according to the formal signature of the function (see
+     *            {@code ArgumentMatcher}).
+     * @param suppliedSignature the original call signature re-ordered the same way as the
+     *            evaluatedArgs
+     * @return the arguments array (in Truffle sense), containing the actual arguments for the R
+     *         function as well as additional information like the parent frame or supplied
+     *         signature.
+     */
     public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
-                    ArgumentsSignature signature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
-        assert evaluatedArgs != null && signature != null : evaluatedArgs + " " + signature;
-        assert evaluatedArgs.length == signature.getLength() : Arrays.toString(evaluatedArgs) + " " + signature;
-        assert signature == getSignature(functionObj) : signature + " vs. " + getSignature(functionObj);
-        assert call != null;
+                    ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
+        assert suppliedSignature.getLength() == evaluatedArgs.length : "suppliedSignature should match the evaluatedArgs (see Java docs).";
+        assert evaluatedArgs != null : "RArguments.create evaluatedArgs is null";
+        assert call != null : "RArguments.create call is null";
         // Eventually we want to have this invariant
         // assert call != null || REnvironment.isGlobalEnvFrame(callerFrame);
 
@@ -178,7 +210,7 @@ public final class RArguments {
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
         a[INDEX_DISPATCH_ARGS] = dispatchArgs;
         a[INDEX_IS_IRREGULAR] = false;
-        a[INDEX_SIGNATURE] = signature;
+        a[INDEX_SUPPLIED_SIGNATURE] = suppliedSignature;
         System.arraycopy(evaluatedArgs, 0, a, INDEX_ARGUMENTS, evaluatedArgs.length);
         // assert envFunctionInvariant(a);
         return a;
@@ -196,7 +228,6 @@ public final class RArguments {
     public static Object[] createUnitialized(Object... args) {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + args.length];
         a[INDEX_CALL] = RCaller.createInvalid(null);
-        a[INDEX_SIGNATURE] = ArgumentsSignature.empty(args.length);
         a[INDEX_IS_IRREGULAR] = false;
         System.arraycopy(args, 0, a, INDEX_ARGUMENTS, args.length);
         return a;
@@ -238,7 +269,7 @@ public final class RArguments {
 
     public static Object[] getArguments(Frame frame) {
         Object[] args = frame.getArguments();
-        return Arrays.copyOfRange(args, INDEX_ARGUMENTS, INDEX_ARGUMENTS + ((ArgumentsSignature) args[INDEX_SIGNATURE]).getLength());
+        return Arrays.copyOfRange(args, INDEX_ARGUMENTS, INDEX_ARGUMENTS + getArgumentsLength(frame));
     }
 
     /**
@@ -262,7 +293,11 @@ public final class RArguments {
     }
 
     public static ArgumentsSignature getSignature(Frame frame) {
-        return (ArgumentsSignature) frame.getArguments()[INDEX_SIGNATURE];
+        return ((HasSignature) getFunction(frame).getRootNode()).getSignature();
+    }
+
+    public static ArgumentsSignature getSuppliedSignature(Frame frame) {
+        return (ArgumentsSignature) frame.getArguments()[INDEX_SUPPLIED_SIGNATURE];
     }
 
     public static void setEnvironment(Frame frame, REnvironment env) {

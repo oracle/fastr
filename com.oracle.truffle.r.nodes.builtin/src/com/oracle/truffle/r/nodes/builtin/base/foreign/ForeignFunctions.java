@@ -61,6 +61,7 @@ import com.oracle.truffle.r.library.utils.Crc64NodeGen;
 import com.oracle.truffle.r.library.utils.Download;
 import com.oracle.truffle.r.library.utils.MenuNodeGen;
 import com.oracle.truffle.r.library.utils.ObjectSizeNodeGen;
+import com.oracle.truffle.r.library.utils.RprofNodeGen;
 import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
 import com.oracle.truffle.r.library.utils.WriteTable;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
@@ -443,6 +444,8 @@ public class ForeignFunctions {
 
                 case "Cdqrls":
                     return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(StatsUtil.class, "lm.R"), "Cdqrls");
+                case "dnorm":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new Dnorm4());
 
                 // tools
                 case "doTabExpand":
@@ -569,8 +572,9 @@ public class ForeignFunctions {
                     return new Download();
                 case "termsform":
                     return getExternalModelBuiltinNode("termsform");
-                case "unzip":
                 case "Rprof":
+                    return RprofNodeGen.create();
+                case "unzip":
                 case "Rprofmem":
                 case "addhistory":
                 case "loadhistory":

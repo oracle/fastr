@@ -101,7 +101,7 @@ public final class RProfile implements RContext.ContextState {
 
     private static Source getProfile(String path) {
         try {
-            return Source.fromFileName(path);
+            return RSource.fromFileName(path);
         } catch (IOException ex) {
             // GnuR does not report an error, just ignores
             return null;
