@@ -102,6 +102,7 @@ static jmethodID SET_RDEBUGMethodID;
 static jmethodID RSTEPMethodID;
 static jmethodID SET_RSTEPMethodID;
 static jmethodID ENCLOSMethodID;
+static jmethodID PRVALUEMethodID;
 static jmethodID R_lsInternal3MethodID;
 
 static jclass rErrorHandlingClass;
@@ -197,6 +198,7 @@ void init_internals(JNIEnv *env) {
 	RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "RSTEP", "(Ljava/lang/Object;)I", 1);
 	SET_RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_RSTEP", "(Ljava/lang/Object;I)V", 1);
 	ENCLOSMethodID = checkGetMethodID(env, CallRFFIHelperClass, "ENCLOS", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	PRVALUEMethodID = checkGetMethodID(env, CallRFFIHelperClass, "PRVALUE", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	R_lsInternal3MethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_lsInternal3", "(Ljava/lang/Object;II)Ljava/lang/Object;", 1);
 
 	rErrorHandlingClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RErrorHandling");
@@ -1024,7 +1026,9 @@ SEXP PRENV(SEXP x) {
 }
 
 SEXP PRVALUE(SEXP x) {
-	return unimplemented("PRVALUE");
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, PRVALUEMethodID, x);
+    return checkRef(thisenv, result);
 }
 
 int PRSEEN(SEXP x) {
@@ -1437,7 +1441,7 @@ Rboolean R_HasFancyBindings(SEXP rho) {
 }
 
 Rboolean Rf_isS4(SEXP x) {
-	return (Rboolean) unimplemented("Rf_isS4");
+    return IS_S4_OBJECT(x);
 }
 
 SEXP Rf_asS4(SEXP x, Rboolean b, int i) {
