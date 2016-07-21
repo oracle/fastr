@@ -22,12 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.io.PrintWriter;
-
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -35,25 +31,22 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class FindFirstNode extends CastNode {
 
-    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
     private final Class<?> elementClass;
     private final RError.Message message;
     private final Object[] messageArgs;
-    private final PrintWriter out;
     private final Object defaultValue;
 
     private final BranchProfile warningProfile = BranchProfile.create();
 
-    protected FindFirstNode(Class<?> elementClass, RError.Message message, Object[] messageArgs, PrintWriter out, Object defaultValue) {
+    protected FindFirstNode(Class<?> elementClass, RError.Message message, Object[] messageArgs, Object defaultValue) {
         this.elementClass = elementClass;
         this.defaultValue = defaultValue;
         this.message = message;
         this.messageArgs = messageArgs;
-        this.out = out;
     }
 
     protected FindFirstNode(Class<?> elementClass, Object defaultValue) {
-        this(elementClass, null, null, null, defaultValue);
+        this(elementClass, null, null, defaultValue);
     }
 
     public Class<?> getElementClass() {
@@ -79,7 +72,7 @@ public abstract class FindFirstNode extends CastNode {
         return handleMissingElement(x);
     }
 
-    @Specialization(guards = "!isVector(x)")
+    @Specialization(guards = "nonVector(x)")
     protected Object onNonVector(Object x) {
         return x;
     }
@@ -88,7 +81,7 @@ public abstract class FindFirstNode extends CastNode {
         if (defaultValue != null) {
             if (message != null) {
                 warningProfile.enter();
-                handleArgumentWarning(x, this, message, messageArgs, out);
+                handleArgumentWarning(x, this, message, messageArgs);
             }
             return defaultValue;
         } else {
@@ -106,8 +99,8 @@ public abstract class FindFirstNode extends CastNode {
         return x.getLength() == 0;
     }
 
-    protected boolean isVector(Object x) {
-        return x instanceof RAbstractVector;
+    protected boolean nonVector(Object x) {
+        return x != RNull.instance && x != RMissing.instance && !(x instanceof RAbstractVector);
     }
 
 }

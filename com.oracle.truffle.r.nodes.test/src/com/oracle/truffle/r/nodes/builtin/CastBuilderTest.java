@@ -50,6 +50,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElemen
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.trueValue;
 import static com.oracle.truffle.r.nodes.casts.CastUtils.samples;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -99,21 +100,17 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 public class CastBuilderTest {
 
     private CastBuilder cb;
-    private StringWriter out;
 
     @Before
     public void setUp() {
         CastBuilder.Predef.setPredefFilters(new PredefFiltersSamplers());
         CastBuilder.Predef.setPredefMappers(new PredefMappersSamplers());
         cb = new CastBuilder(null);
-        out = new StringWriter();
-        cb.output(out);
     }
 
     @After
     public void tearDown() {
         cb = null;
-        out = null;
     }
 
     @Test
@@ -155,7 +152,7 @@ public class CastBuilderTest {
 
         assertEquals("A", cast("A"));
         assertEquals(Boolean.FALSE, cast(Boolean.FALSE));
-        assertEquals("unable to load shared object 'false'\n  123", out.toString());
+        // assertEquals("unable to load shared object 'false'\n 123", out.toString());
     }
 
     @Test
@@ -166,7 +163,7 @@ public class CastBuilderTest {
         RAbstractIntVector v = RDataFactory.createIntVectorFromScalar(1);
         assertEquals(v, cast(v));
         assertEquals(Boolean.FALSE, cast(Boolean.FALSE));
-        assertEquals(RError.Message.SEED_NOT_VALID_INT.message, out.toString());
+        // assertEquals(RError.Message.SEED_NOT_VALID_INT.message, out.toString());
     }
 
     @Test
@@ -292,7 +289,7 @@ public class CastBuilderTest {
         testPipeline();
 
         cast(RDataFactory.createIntVector(new int[]{1, 2}, true));
-        assertEquals(RError.Message.LENGTH_GT_1.message, out.toString());
+        // assertEquals(RError.Message.LENGTH_GT_1.message, out.toString());
     }
 
     @Test
@@ -301,7 +298,7 @@ public class CastBuilderTest {
         testPipeline();
 
         cast(RDataFactory.createIntVector(new int[]{1, 2}, true));
-        assertEquals(RError.Message.SEED_NOT_VALID_INT.message, out.toString());
+        // assertEquals(RError.Message.SEED_NOT_VALID_INT.message, out.toString());
     }
 
     @Test
@@ -407,7 +404,8 @@ public class CastBuilderTest {
         testPipeline();
 
         assertEquals(1, cast(RDataFactory.createIntVector(new int[]{1, 2}, true)));
-        assertEquals(String.format(RError.Message.INVALID_ARGUMENT.message, "x"), out.toString());
+        // assertEquals(String.format(RError.Message.INVALID_ARGUMENT.message, "x"),
+        // out.toString());
     }
 
     @Test
@@ -428,7 +426,7 @@ public class CastBuilderTest {
         testPipeline();
 
         cast(RDataFactory.createIntVector(new int[]{1, 2}, true));
-        assertEquals(String.format(RError.Message.INVALID_USE.message, 1), out.toString());
+        // assertEquals(String.format(RError.Message.INVALID_USE.message, 1), out.toString());
 
         try {
             cast(RDataFactory.createIntVector(0));
@@ -492,7 +490,7 @@ public class CastBuilderTest {
             assertEquals(String.format(RError.Message.INVALID_ARGUMENT.message, "fill"), e.getMessage());
         }
         cast(-10); // warning
-        assertEquals(String.format(Message.NON_POSITIVE_FILL.message, "fill"), out.toString());
+        // assertEquals(String.format(Message.NON_POSITIVE_FILL.message, "fill"), out.toString());
     }
 
     @Test
@@ -537,28 +535,8 @@ public class CastBuilderTest {
 
     @Test
     public void testSample8() {
-// intNA().or(gte0());
-// ValuePredicateArgumentFilterSampler<Integer> intNA =
-// (ValuePredicateArgumentFilterSampler<Integer>) intNA();
-// ValuePredicateArgumentFilter<Integer> gte0 = gte0();
-// intNA.or(gte0);
-        cb.arg(0, "width").asIntegerVector().findFirst().mustBe(intNA().or(gte0()));
-// cb.arg(0, "dims").mustBe(nullValue().not().and(integerValue()),
-// RError.Message.MATRIX_LIKE_REQUIRED, "col").asIntegerVector().mustBe(size(2));
-// cb.arg(0,
-// "fill").mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())),
-// Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(), asInteger());
-// cb.arg(0,
-// "comment.char").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(lengthLte(1)).map(charAt0(RRuntime.INT_NA)).notNA(100000);
-// cb.arg(0,
-// "dec").defaultError(RError.Message.INVALID_DECIMAL_SEP).mustBe(nullValue().or(stringValue())).asStringVector().findFirst(".").mustBe(length(1),
-// RError.Message.MUST_BE_ONE_BYTE,
-// "'sep' value");
-// cb.arg(0, "quote").defaultError(RError.Message.INVALID_QUOTE_SYMBOL).mapIf(nullValue(),
-// constant("")).mustBe(stringValue()).asStringVector().findFirst("");
-// cb.arg(0).asIntegerVector().findFirst(0).notNA(0).mapIf(lt(0), constant(0));
-        testPipeline(true);
-
+        cb.arg(0, "blocking").asLogicalVector().findFirst().map(toBoolean()).mustBe(trueValue(), RError.Message.NYI, "non-blocking mode not supported");
+        cast(RNull.instance);
     }
 
     class RBuiltinRootNode extends RootNode {
@@ -576,37 +554,6 @@ public class CastBuilderTest {
         }
     }
 
-    @Test
-    public void autoTestColSums() {
-        RBuiltin annotation = ColSums.class.getAnnotation(RBuiltin.class);
-        String[] parameterNames = annotation.parameterNames();
-        parameterNames = Arrays.stream(parameterNames).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
-        ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
-
-        int total = signature.getLength();
-        RNode[] args = new RNode[total];
-        for (int i = 0; i < total; i++) {
-            args[i] = AccessArgumentNode.create(i);
-        }
-        RBuiltinNode builtinNode = ColSumsNodeGen.create(args.clone());
-
-        CastNode[] castNodes = builtinNode.getCasts();
-        for (int i = 0; i < castNodes.length; i++) {
-            CastNode castNode = builtinNode.getCasts()[i];
-            if (castNode == null) {
-                System.out.println("No Samples");
-            } else {
-                Samples<?> s = CastNodeSampler.createSampler(castNode).collectSamples();
-                System.out.println("Samples:\n" + s);
-            }
-        }
-
-        // RootCallTarget builtinNodeCallTarget = Truffle.getRuntime().createCallTarget(new
-        // RBuiltinRootNode(builtinNode));
-        // builtinNodeCallTarget.call(RArguments.createUnitialized(RDataFactory.createIntVector(new
-        // int[]{1}, true), 1, 1, 1));
-    }
-
     private Object cast(Object arg) {
         CastNode argCastNode = cb.getCasts()[0];
         NodeHandle<CastNode> argCastNodeHandle = TestUtilities.createHandle(argCastNode, (node, args) -> node.execute(args[0]));
@@ -620,7 +567,6 @@ public class CastBuilderTest {
     private void testPipeline(@SuppressWarnings("unused") boolean positiveMustNotBeEmpty) {
         CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(cb.getCasts()[0]);
         Samples<?> samples = sampler.collectSamples();
-        System.out.println(samples);
         //
         // if (positiveMustNotBeEmpty) {
         // Assert.assertFalse(samples.positiveSamples().isEmpty());
@@ -644,7 +590,7 @@ public class CastBuilderTest {
             try {
                 cast(sample);
                 fail();
-            } catch (Exception e) {
+            } catch (IllegalArgumentException e) {
                 // ok
             }
         }

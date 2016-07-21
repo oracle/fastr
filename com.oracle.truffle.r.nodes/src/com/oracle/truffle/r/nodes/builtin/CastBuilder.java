@@ -91,8 +91,6 @@ public final class CastBuilder {
 
     private CastNode[] casts = EMPTY_CASTS_ARRAY;
 
-    private PrintWriter out;
-
     public CastBuilder(RBuiltinNode builtinNode) {
         this.builtinNode = builtinNode;
     }
@@ -207,22 +205,6 @@ public final class CastBuilder {
             }
         }
         throw RInternalError.shouldNotReachHere(String.format("Argument %s not found in builtin %s", argumentName, builtinNode.getRBuiltin().name()));
-    }
-
-    /**
-     * Overrides the default output for warnings. Used in tests only.
-     *
-     * @param o the overriding output writer for warnings
-     * @return this builder
-     */
-    public CastBuilder output(Writer o) {
-        out = new PrintWriter(o);
-        return this;
-    }
-
-    public CastBuilder output(OutputStream o) {
-        out = new PrintWriter(o);
-        return this;
     }
 
     public static Object[] substituteArgPlaceholder(Object arg, Object[] messageArgs) {
@@ -928,7 +910,7 @@ public final class CastBuilder {
         }
 
         default THIS shouldBe(ArgumentFilter<? super T, ?> argFilter, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), FilterNodeGen.create(argFilter, true, message, messageArgs, state().boxPrimitives, state().cb.out));
+            state().castBuilder().insert(state().index(), FilterNodeGen.create(argFilter, true, message, messageArgs, state().boxPrimitives));
             return (THIS) this;
         }
 
@@ -1041,7 +1023,7 @@ public final class CastBuilder {
         }
 
         void mustBe(ArgumentFilter<?, ?> argFilter, RError.Message message, Object... messageArgs) {
-            castBuilder().insert(index(), FilterNodeGen.create(argFilter, false, message, messageArgs, boxPrimitives, cb.out));
+            castBuilder().insert(index(), FilterNodeGen.create(argFilter, false, message, messageArgs, boxPrimitives));
         }
 
         void mustBe(ArgumentFilter<?, ?> argFilter) {
@@ -1049,7 +1031,7 @@ public final class CastBuilder {
         }
 
         void shouldBe(ArgumentFilter<?, ?> argFilter, RError.Message message, Object... messageArgs) {
-            castBuilder().insert(index(), FilterNodeGen.create(argFilter, true, message, messageArgs, boxPrimitives, cb.out));
+            castBuilder().insert(index(), FilterNodeGen.create(argFilter, true, message, messageArgs, boxPrimitives));
         }
 
         void shouldBe(ArgumentFilter<?, ?> argFilter) {
@@ -1126,12 +1108,12 @@ public final class CastBuilder {
         }
 
         default InitialPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), NonNANodeGen.create(message, messageArgs, state().cb.out, null));
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(message, messageArgs, null));
             return this;
         }
 
         default InitialPhaseBuilder<T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), NonNANodeGen.create(message, messageArgs, state().cb.out, naReplacement));
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(message, messageArgs, naReplacement));
             return this;
         }
 
@@ -1141,7 +1123,7 @@ public final class CastBuilder {
         }
 
         default InitialPhaseBuilder<T> notNA() {
-            state().castBuilder().insert(state().index(), NonNANodeGen.create(state().defaultError().message, state().defaultError().args, state().cb.out, null));
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(state().defaultError().message, state().defaultError().args, null));
             return this;
         }
 
@@ -1192,7 +1174,7 @@ public final class CastBuilder {
          * reports the warning message.
          */
         default HeadPhaseBuilder<S> findFirst(S defaultValue, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), FindFirstNodeGen.create(elementClass(), message, messageArgs, state().cb.out, defaultValue));
+            state().castBuilder().insert(state().index(), FindFirstNodeGen.create(elementClass(), message, messageArgs, defaultValue));
             return state().factory.newHeadPhaseBuilder(this);
         }
 
@@ -1200,7 +1182,7 @@ public final class CastBuilder {
          * The inserted cast node raises an error if the input vector is empty.
          */
         default HeadPhaseBuilder<S> findFirst(RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), FindFirstNodeGen.create(elementClass(), message, messageArgs, state().cb.out, null));
+            state().castBuilder().insert(state().index(), FindFirstNodeGen.create(elementClass(), message, messageArgs, null));
             return state().factory.newHeadPhaseBuilder(this);
         }
 
@@ -1211,7 +1193,7 @@ public final class CastBuilder {
         default HeadPhaseBuilder<S> findFirst() {
             DefaultError err = state().isDefaultErrorDefined() ? state().defaultError() : new DefaultError(RError.Message.LENGTH_ZERO);
             state().castBuilder().insert(state().index(),
-                            FindFirstNodeGen.create(elementClass(), err.message, err.args, state().cb.out, null));
+                            FindFirstNodeGen.create(elementClass(), err.message, err.args, null));
             return state().factory.newHeadPhaseBuilder(this);
         }
 
@@ -1291,17 +1273,17 @@ public final class CastBuilder {
         }
 
         default HeadPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), NonNANodeGen.create(message, messageArgs, state().cb.out, null));
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(message, messageArgs, null));
             return this;
         }
 
         default HeadPhaseBuilder<T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), NonNANodeGen.create(message, messageArgs, state().cb.out, naReplacement));
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(message, messageArgs, naReplacement));
             return this;
         }
 
         default HeadPhaseBuilder<T> notNA() {
-            state().castBuilder().insert(state().index(), NonNANodeGen.create(state().defaultError().message, state().defaultError().args, state().cb.out, null));
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(state().defaultError().message, state().defaultError().args, null));
             return this;
         }
 

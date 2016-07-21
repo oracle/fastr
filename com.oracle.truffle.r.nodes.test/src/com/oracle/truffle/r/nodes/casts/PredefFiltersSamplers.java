@@ -190,19 +190,21 @@ public final class PredefFiltersSamplers implements PredefFilters {
 
     @Override
     public <R extends RAbstractIntVector> TypePredicateArgumentFilterSampler<Object, R> integerValue() {
-        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof Integer || x instanceof RAbstractIntVector, RAbstractIntVector.class, Integer.class);
+        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof Integer || x instanceof RAbstractIntVector, CastUtils.<R> samples(), CastUtils.<Object> samples(null),
+                        RAbstractIntVector.class,
+                        Integer.class);
     }
 
     @Override
     public <R extends RAbstractStringVector> TypePredicateArgumentFilterSampler<Object, R> stringValue() {
         return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof String ||
-                        x instanceof RAbstractStringVector, RAbstractStringVector.class, String.class);
+                        x instanceof RAbstractStringVector, CastUtils.<R> samples(), CastUtils.<Object> samples(null), RAbstractStringVector.class, String.class);
     }
 
     @Override
     public <R extends RAbstractDoubleVector> TypePredicateArgumentFilterSampler<Object, R> doubleValue() {
         return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof Double ||
-                        x instanceof RAbstractDoubleVector, RAbstractDoubleVector.class, Double.class);
+                        x instanceof RAbstractDoubleVector, CastUtils.<R> samples(), CastUtils.<Object> samples(null), RAbstractDoubleVector.class, Double.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -212,7 +214,7 @@ public final class PredefFiltersSamplers implements PredefFilters {
                         x instanceof RAbstractLogicalVector,
                         samples((R) RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_TRUE), (R) RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE),
                                         (R) RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_NA)),
-                        CastUtils.<Object> samples(), RAbstractLogicalVector.class,
+                        CastUtils.samples(null), RAbstractLogicalVector.class,
                         Byte.class);
     }
 
@@ -224,22 +226,22 @@ public final class PredefFiltersSamplers implements PredefFilters {
 
     @Override
     public TypePredicateArgumentFilterSampler<Object, String> scalarStringValue() {
-        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof String, String.class);
+        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof String, CastUtils.<String> samples(), CastUtils.<Object> samples(null), String.class);
     }
 
     @Override
     public TypePredicateArgumentFilterSampler<Object, Integer> scalarIntegerValue() {
-        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof Integer, Integer.class);
+        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof Integer, CastUtils.<Integer> samples(), CastUtils.<Object> samples(null), Integer.class);
     }
 
     @Override
     public TypePredicateArgumentFilterSampler<Object, Double> scalarDoubleValue() {
-        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof Double, Double.class);
+        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof Double, CastUtils.<Double> samples(), CastUtils.<Object> samples(null), Double.class);
     }
 
     @Override
     public TypePredicateArgumentFilterSampler<Object, Byte> scalarLogicalValue() {
-        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof Byte, samples(RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA), CastUtils.<Object> samples(),
+        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof Byte, samples(RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA), CastUtils.<Object> samples(null),
                         Byte.class);
     }
 

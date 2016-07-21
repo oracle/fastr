@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.casts;
 
 import static com.oracle.truffle.r.nodes.casts.CastUtils.samples;
 
+import java.util.Collections;
+
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PredefMappers;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -104,9 +106,11 @@ public final class PredefMappersSamplers implements PredefMappers {
                 return defType;
             }
 
+            @SuppressWarnings("unchecked")
             @Override
             public Samples<T> collectSamples(Samples<T> downStreamSamples) {
-                return Samples.singleton(defVal).or(downStreamSamples);
+                Samples<Object> nullOnly = new Samples<>("RNullOnly", Collections.singleton(RNull.instance), Collections.emptySet(), x -> x == RNull.instance);
+                return (Samples<T>) nullOnly.or(Samples.singleton(defVal).and(downStreamSamples));
             }
         };
     }

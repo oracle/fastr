@@ -69,6 +69,12 @@ public final class Samples<T> {
         return negSamples;
     }
 
+    public Set<Object> allSamples() {
+        HashSet<Object> all = new HashSet<>(posSamples);
+        all.addAll(negSamples);
+        return all;
+    }
+
     public <R> Samples<R> map(Function<T, R> posMapper, Function<Object, Object> negMapper, Function<Object, Optional<T>> posUnmapper, Function<Object, Optional<Object>> negUnmapper) {
         Set<R> mappedPositive = positiveSamples().stream().map(posMapper).collect(Collectors.toSet());
         Set<Object> mappedNegative = negativeSamples().stream().map(negMapper).collect(Collectors.toSet());
@@ -150,7 +156,7 @@ public final class Samples<T> {
     }
 
     public static <T> Samples<T> singleton(T x) {
-        return new Samples<>("singleton(" + x + ")", Collections.singleton(x), Collections.emptySet(), xx -> x.equals(xx));
+        return new Samples<>("singleton(" + x + ")", Collections.singleton(x), Collections.emptySet(), xx -> true);
     }
 
     @Override

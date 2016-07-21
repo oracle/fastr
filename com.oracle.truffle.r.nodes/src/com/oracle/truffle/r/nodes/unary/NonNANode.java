@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.io.PrintWriter;
-
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -35,20 +33,18 @@ public abstract class NonNANode extends CastNode {
 
     private final RError.Message message;
     private final Object[] messageArgs;
-    private final PrintWriter out;
     private final Object naReplacement;
 
     private final BranchProfile warningProfile = BranchProfile.create();
 
-    protected NonNANode(RError.Message message, Object[] messageArgs, PrintWriter out, Object naReplacement) {
+    protected NonNANode(RError.Message message, Object[] messageArgs, Object naReplacement) {
         this.message = message;
         this.messageArgs = messageArgs;
-        this.out = out;
         this.naReplacement = naReplacement;
     }
 
     protected NonNANode(Object naReplacement) {
-        this(null, null, null, naReplacement);
+        this(null, null, naReplacement);
     }
 
     public Object getNAReplacement() {
@@ -59,7 +55,7 @@ public abstract class NonNANode extends CastNode {
         if (naReplacement != null) {
             if (message != null) {
                 warningProfile.enter();
-                handleArgumentWarning(arg, this, message, messageArgs, out);
+                handleArgumentWarning(arg, this, message, messageArgs);
             }
             return naReplacement;
         } else {

@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
-import static org.junit.Assert.fail;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -46,54 +44,82 @@ import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.CastUtils;
 import com.oracle.truffle.r.nodes.casts.CastUtils.Cast;
 import com.oracle.truffle.r.nodes.casts.CastUtils.Casts;
-import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.nodes.casts.Not;
 import com.oracle.truffle.r.nodes.casts.PredefFiltersSamplers;
 import com.oracle.truffle.r.nodes.casts.PredefMappersSamplers;
-import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-public final class RBuiltinDiagnostics {
+public class RBuiltinDiagnostics {
 
-    public static void main(String[] args) throws Exception {
-        boolean verbose = Arrays.stream(args).filter(arg -> "-v".equals(arg)).findFirst().isPresent();
-        boolean ignoreRNull = Arrays.stream(args).filter(arg -> "-n".equals(arg)).findFirst().isPresent();
-        boolean ignoreRMissing = Arrays.stream(args).filter(arg -> "-m".equals(arg)).findFirst().isPresent();
+    static class DiagConfig {
+        boolean verbose;
+        boolean ignoreRNull;
+        boolean ignoreRMissing;
+        long maxTotalCombinations = 500L;
+    }
+
+    final DiagConfig diagConfig;
+
+    public RBuiltinDiagnostics(DiagConfig diagConfig) {
+        this.diagConfig = diagConfig;
+    }
+
+    public static void main(String[] args) throws Throwable {
+        DiagConfig diagConfig = new DiagConfig();
+
+        diagConfig.verbose = Arrays.stream(args).filter(arg -> "-v".equals(arg)).findFirst().isPresent();
+        diagConfig.ignoreRNull = Arrays.stream(args).filter(arg -> "-n".equals(arg)).findFirst().isPresent();
+        diagConfig.ignoreRMissing = Arrays.stream(args).filter(arg -> "-m".equals(arg)).findFirst().isPresent();
         List<String> bNames = Arrays.stream(args).filter(arg -> !arg.startsWith("-")).collect(Collectors.toList());
 
         Predef.setPredefFilters(new PredefFiltersSamplers());
         Predef.setPredefMappers(new PredefMappersSamplers());
 
+        boolean chimneySweeping = Arrays.stream(args).filter(arg -> "--sweep".equals(arg)).findFirst().isPresent();
+
+        RBuiltinDiagnostics rbDiag = chimneySweeping ? new ChimneySweeping.ChimneySweepingSuite(diagConfig) : new RBuiltinDiagnostics(diagConfig);
+
         if (bNames.isEmpty()) {
-            diagnoseAllBuiltins(verbose, ignoreRNull, ignoreRMissing);
+            rbDiag.diagnoseAllBuiltins();
         } else {
             for (String bName : bNames) {
-                diagnoseSingleBuiltin(bName, verbose, ignoreRNull, ignoreRMissing);
+                rbDiag.diagnoseSingleBuiltin(bName);
             }
         }
     }
 
-    private static void diagnoseSingleBuiltin(String builtinName, boolean verbose, boolean ignoreRNull, boolean ignoreRMissing) throws Exception {
+    public SingleBuiltinDiagnostics createBuiltinDiagnostics(RBuiltinFactory bf) {
+        return new SingleBuiltinDiagnostics(this, bf);
+    }
+
+    public void diagnoseSingleBuiltin(String builtinName) throws Exception {
         BasePackage bp = new BasePackage();
         RBuiltinFactory bf = bp.lookupByName(builtinName);
         if (bf == null) {
             System.out.println("No builtin '" + builtinName + "' found");
             return;
         }
-        diagnoseBuiltin(bf, verbose, ignoreRNull, ignoreRMissing);
+
+        createBuiltinDiagnostics(bf).diagnoseBuiltin();
     }
 
-    private static void diagnoseAllBuiltins(boolean verbose, boolean ignoreRNull, boolean ignoreRMissing) {
+    public void diagnoseAllBuiltins() {
         BasePackage bp = new BasePackage();
         for (RBuiltinFactory bf : bp.getBuiltins().values()) {
             try {
-                diagnoseBuiltin(bf, verbose, ignoreRNull, ignoreRMissing);
+                createBuiltinDiagnostics(bf).diagnoseBuiltin();
             } catch (Exception e) {
                 System.out.println(bf.getName() + " failed: " + e.getMessage());
             }
@@ -103,34 +129,96 @@ public final class RBuiltinDiagnostics {
         System.out.println("--------");
     }
 
-    public static void diagnoseBuiltin(RBuiltinFactory builtinFactory, boolean verbose, boolean ignoreRNull, boolean ignoreRMissing) throws Exception {
-        System.out.println("****************************************************************************");
-        System.out.println("Builtin: " + builtinFactory.getName() + " (" + builtinFactory.getBuiltinNodeClass().getName() + ")");
-        System.out.println("****************************************************************************");
+    static class SingleBuiltinDiagnostics {
+        private final RBuiltinDiagnostics diagSuite;
+        final RBuiltinFactory builtinFactory;
+        final String builtinName;
+        final int argLength;
+        final String[] parameterNames;
+        final CastNode[] castNodes;
+        final Class<?> builtinClass;
+        final RBuiltin annotation;
+        final List<Method> specMethods;
+        final List<TypeExpr> argResultSets;
+        final HashMap<Method, List<Set<Cast>>> convResultTypePerSpec;
+        final Set<List<Type>> nonCoveredArgsSet;
 
-        Class<?> builtinClass = builtinFactory.getBuiltinNodeClass();
-        RBuiltin annotation = builtinClass.getAnnotation(RBuiltin.class);
-        int argLength = annotation.parameterNames().length;
-        String[] parameterNames = annotation.parameterNames();
-        parameterNames = Arrays.stream(parameterNames).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
+        SingleBuiltinDiagnostics(RBuiltinDiagnostics diagSuite, RBuiltinFactory builtinFactory) {
+            this.diagSuite = diagSuite;
+            this.builtinFactory = builtinFactory;
+            this.builtinName = builtinFactory.getName();
 
-        CastNode[] castNodes = getCastNodesFromBuiltin(builtinFactory, parameterNames);
+            this.builtinClass = builtinFactory.getBuiltinNodeClass();
+            this.annotation = builtinClass.getAnnotation(RBuiltin.class);
+            this.argLength = annotation.parameterNames().length;
+            String[] pn = annotation.parameterNames();
+            this.parameterNames = Arrays.stream(pn).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
 
-        List<TypeExpr> argResultSets = createArgResultSets(argLength, parameterNames, castNodes);
-        argResultSets = argResultSets.stream().map(te -> te.filter(t -> {
-            return !((ignoreRNull && t == RNull.class) || (ignoreRMissing && t == RMissing.class));
-        })).collect(Collectors.toList());
+            this.castNodes = getCastNodesFromBuiltin();
 
-        List<Method> specMethods = CastUtils.getAnnotatedMethods(builtinClass, Specialization.class);
+            List<TypeExpr> argResultSetsPreliminary = createArgResultSets();
+            argResultSets = argResultSetsPreliminary.stream().map(te -> te.filter(t -> {
+                return !((diagSuite.diagConfig.ignoreRNull && t == RNull.class) || (diagSuite.diagConfig.ignoreRMissing && t == RMissing.class));
+            })).collect(Collectors.toList());
 
-        HashMap<Method, List<Set<Cast>>> convResultTypePerSpec = createConvResultTypePerSpecialization(argLength, argResultSets, specMethods);
+            this.specMethods = CastUtils.getAnnotatedMethods(builtinClass, Specialization.class);
 
-        Set<List<Type>> nonCoveredArgsSet = combineArguments(argResultSets, convResultTypePerSpec);
+            this.convResultTypePerSpec = createConvResultTypePerSpecialization();
+            this.nonCoveredArgsSet = combineArguments();
+        }
 
-        List<Samples<?>> argSamples = createSamples(argLength, castNodes);
+        private HashMap<Method, List<Set<Cast>>> createConvResultTypePerSpecialization() {
+            HashMap<Method, List<Set<Cast>>> convResultTypes = new HashMap<>();
 
-        System.out.println("Argument cast pipelines binding:");
-        for (int i = 0; i < argLength; i++) {
+            for (Method sm : specMethods) {
+                Class<?>[] parTypes = sm.getParameterTypes();
+
+                List<Set<Cast>> convResultTypesForSpec = new ArrayList<>();
+                for (int i = 0; i < argLength; i++) {
+                    TypeExpr argResultSet = argResultSets.get(i);
+                    Type argType = getParamType(parTypes, i);
+                    Set<Cast> convArgResultCasts = CastUtils.Casts.findConvertibleActualType(argResultSet, argType, true);
+                    convResultTypesForSpec.add(convArgResultCasts);
+                }
+                convResultTypes.put(sm, convResultTypesForSpec);
+            }
+            return convResultTypes;
+        }
+
+        private Set<List<Type>> combineArguments() {
+            Set<List<Type>> specPowerSetCombined = new HashSet<>();
+            for (Map.Entry<Method, List<Set<Cast>>> entry : convResultTypePerSpec.entrySet()) {
+                List<TypeExpr> actualArgTypeSets = entry.getValue().stream().map(argCasts -> Casts.inputsAsTypeExpr(argCasts)).collect(Collectors.toList());
+                Set<List<Type>> specPowerSet = CastUtils.argumentProductSet(actualArgTypeSets);
+                specPowerSetCombined.addAll(specPowerSet);
+            }
+
+            Set<List<Type>> nonCovered = CastUtils.argumentProductSet(argResultSets);
+            nonCovered.removeAll(specPowerSetCombined);
+            return nonCovered;
+        }
+
+        public void diagnoseBuiltin() throws Exception {
+            System.out.println("****************************************************************************");
+            System.out.println("Builtin: " + builtinName + " (" + builtinFactory.getBuiltinNodeClass().getName() + ")");
+            System.out.println("****************************************************************************");
+
+            System.out.println("Argument cast pipelines binding:");
+            for (int i = 0; i < argLength; i++) {
+                diagnosePipeline(i);
+            }
+
+            System.out.println("\nUnhandled argument combinations: " + nonCoveredArgsSet.size());
+            System.out.println("");
+
+            if (diagSuite.diagConfig.verbose) {
+                for (List<Type> uncoveredArgs : nonCoveredArgsSet) {
+                    System.out.println(uncoveredArgs.stream().map(t -> typeName(t)).collect(Collectors.toList()));
+                }
+            }
+        }
+
+        protected void diagnosePipeline(int i) {
             TypeExpr argResultSet = argResultSets.get(i);
             System.out.println("\n Pipeline for '" + annotation.parameterNames()[i] + "' (arg[" + i + "]):");
             System.out.println("  Result types union:");
@@ -150,153 +238,43 @@ public final class RBuiltinDiagnostics {
             }
             System.out.println("  Unbound types:");
             System.out.println("   " + unboundArgTypes.stream().map(argType -> typeName(argType)).collect(Collectors.toSet()));
-            System.out.println(" Samples:");
-            System.out.println(argSamples.get(i));
 
-            sweepChimney(castNodes, argSamples, i);
         }
 
-        System.out.println("\nUnhandled argument combinations: " + nonCoveredArgsSet.size());
-        System.out.println("");
+        private CastNode[] getCastNodesFromBuiltin() {
+            ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
 
-        if (verbose) {
-            for (List<Type> uncoveredArgs : nonCoveredArgsSet) {
-                System.out.println(uncoveredArgs.stream().map(t -> typeName(t)).collect(Collectors.toList()));
+            int total = signature.getLength();
+            RNode[] args = new RNode[total];
+            for (int i = 0; i < total; i++) {
+                args[i] = ReadVariableNode.create("dummy");
             }
-        }
-    }
+            RBuiltinNode builtinNode = builtinFactory.getConstructor().apply(args.clone());
 
-    /**
-     * Verifies that the argument samples are correct by passing them to the argument's pipeline.
-     * The positive samples should pass without any error, while the negative ones should cause an
-     * error.
-     *
-     * @param castNodes
-     * @param argSamples
-     * @param i
-     */
-    private static void sweepChimney(CastNode[] castNodes, List<Samples<?>> argSamples, int i) {
-        CastNode cn;
-        if (i < castNodes.length) {
-            cn = castNodes[i];
-        } else {
-            cn = null;
-        }
-        if (cn != null) {
-            Samples<?> samples = argSamples.get(i);
-            if (samples.positiveSamples().isEmpty() && samples.negativeSamples().isEmpty()) {
-                System.out.println("No samples");
-            } else {
-                testPipeline(cn, samples);
-                System.out.println("Samples OK(" + samples.positiveSamples().size() + "," + samples.negativeSamples().size() + ")");
-            }
-        }
-    }
-
-    private static Set<List<Type>> combineArguments(List<TypeExpr> argResultSets, HashMap<Method, List<Set<Cast>>> convResultTypePerSpec) {
-        Set<List<Type>> specPowerSetCombined = new HashSet<>();
-        for (Map.Entry<Method, List<Set<Cast>>> entry : convResultTypePerSpec.entrySet()) {
-            List<TypeExpr> actualArgTypeSets = entry.getValue().stream().map(argCasts -> Casts.inputsAsTypeExpr(argCasts)).collect(Collectors.toList());
-            Set<List<Type>> specPowerSet = CastUtils.argumentProductSet(actualArgTypeSets);
-            specPowerSetCombined.addAll(specPowerSet);
+            CastNode[] cn = builtinNode.getCasts();
+            return cn;
         }
 
-        Set<List<Type>> nonCoveredArgsSet = CastUtils.argumentProductSet(argResultSets);
-        nonCoveredArgsSet.removeAll(specPowerSetCombined);
-        return nonCoveredArgsSet;
-    }
-
-    private static HashMap<Method, List<Set<Cast>>> createConvResultTypePerSpecialization(int argLength, List<TypeExpr> argResultSets, List<Method> specMethods) {
-        HashMap<Method, List<Set<Cast>>> convResultTypePerSpec = new HashMap<>();
-
-        for (Method sm : specMethods) {
-            Class<?>[] parTypes = sm.getParameterTypes();
-
-            List<Set<Cast>> convResultTypesForSpec = new ArrayList<>();
+        private List<TypeExpr> createArgResultSets() {
+            List<TypeExpr> as = new ArrayList<>();
             for (int i = 0; i < argLength; i++) {
-                TypeExpr argResultSet = argResultSets.get(i);
-                Type argType = getParamType(parTypes, i);
-                Set<Cast> convArgResultCasts = CastUtils.Casts.findConvertibleActualType(argResultSet, argType, true);
-                convResultTypesForSpec.add(convArgResultCasts);
+                CastNode cn;
+                if (i < castNodes.length) {
+                    cn = castNodes[i];
+                } else {
+                    cn = null;
+                }
+                TypeExpr te;
+                try {
+                    te = cn == null ? TypeExpr.ANYTHING : CastNodeSampler.createSampler(cn).resultTypes();
+                } catch (Exception e) {
+                    throw new RuntimeException("Cannot create sampler for argument " + parameterNames[i], e);
+                }
+                as.add(te);
             }
-            convResultTypePerSpec.put(sm, convResultTypesForSpec);
+            return as;
         }
-        return convResultTypePerSpec;
-    }
 
-    private static List<TypeExpr> createArgResultSets(int argLength, String[] parameterNames, CastNode[] castNodes) {
-        List<TypeExpr> argResultSets = new ArrayList<>();
-        for (int i = 0; i < argLength; i++) {
-            CastNode cn;
-            if (i < castNodes.length) {
-                cn = castNodes[i];
-            } else {
-                cn = null;
-            }
-            TypeExpr te;
-            try {
-                te = cn == null ? TypeExpr.ANYTHING : CastNodeSampler.createSampler(cn).resultTypes();
-            } catch (Exception e) {
-                throw new RuntimeException("Cannot create sampler for argument " + parameterNames[i], e);
-            }
-            argResultSets.add(te);
-        }
-        return argResultSets;
-    }
-
-    private static List<Samples<?>> createSamples(int argLength, CastNode[] castNodes) {
-        List<Samples<?>> argSamples = new ArrayList<>();
-        for (int i = 0; i < argLength; i++) {
-            CastNode cn;
-            if (i < castNodes.length) {
-                cn = castNodes[i];
-            } else {
-                cn = null;
-            }
-            Samples<?> samples;
-            try {
-                samples = cn == null ? Samples.anything() : CastNodeSampler.createSampler(cn).collectSamples();
-            } catch (Exception e) {
-                throw new RuntimeException("Error in sample generation from argument " + i, e);
-            }
-            argSamples.add(samples);
-        }
-        return argSamples;
-    }
-
-    private static void testPipeline(CastNode cn, Samples<?> samples) {
-        NodeHandle<CastNode> argCastNodeHandle = TestUtilities.createHandle(cn, (node, args) -> node.execute(args[0]));
-
-        for (Object sample : samples.positiveSamples()) {
-            try {
-                argCastNodeHandle.call(sample);
-            } catch (Exception e) {
-                e.printStackTrace();
-                fail();
-            }
-        }
-        for (Object sample : samples.negativeSamples()) {
-            try {
-                argCastNodeHandle.call(sample);
-                fail();
-            } catch (Exception e) {
-                // ok
-            }
-        }
-    }
-
-    private static CastNode[] getCastNodesFromBuiltin(RBuiltinFactory builtinFactory, String[] parameterNames) {
-        ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
-
-        int total = signature.getLength();
-        RNode[] args = new RNode[total];
-        for (int i = 0; i < total; i++) {
-            args[i] = ReadVariableNode.create("dummy");
-        }
-        RBuiltinNode builtinNode = builtinFactory.getConstructor().apply(args.clone());
-
-        CastNode[] castNodes = builtinNode.getCasts();
-        return castNodes;
     }
 
     private static int getRealParamIndex(Class<?>[] parTypes, int i) {
@@ -337,5 +315,4 @@ public final class RBuiltinDiagnostics {
         }
         return typeName(m.getReturnType()) + " " + m.getName() + "(" + sb + ")";
     }
-
 }

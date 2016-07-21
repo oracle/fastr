@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.io.PrintWriter;
-
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -40,19 +38,17 @@ public abstract class FilterNode extends CastNode {
     private final Object[] messageArgs;
     private final boolean boxPrimitives;
     private final boolean isWarning;
-    private final PrintWriter out;
 
     private final BranchProfile warningProfile = BranchProfile.create();
 
     @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNodeGen.create();
 
-    protected FilterNode(ArgumentFilter<?, ?> filter, boolean isWarning, RError.Message message, Object[] messageArgs, boolean boxPrimitives, PrintWriter out) {
+    protected FilterNode(ArgumentFilter<?, ?> filter, boolean isWarning, RError.Message message, Object[] messageArgs, boolean boxPrimitives) {
         this.filter = filter;
         this.isWarning = isWarning;
         this.message = message;
         this.messageArgs = messageArgs;
         this.boxPrimitives = boxPrimitives;
-        this.out = out;
     }
 
     public ArgumentFilter getFilter() {
@@ -67,7 +63,7 @@ public abstract class FilterNode extends CastNode {
         if (isWarning) {
             if (message != null) {
                 warningProfile.enter();
-                handleArgumentWarning(x, this, message, messageArgs, out);
+                handleArgumentWarning(x, this, message, messageArgs);
             }
         } else {
             handleArgumentError(x, this, message, messageArgs);

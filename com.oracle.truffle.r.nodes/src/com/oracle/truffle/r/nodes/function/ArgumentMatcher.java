@@ -64,8 +64,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * <p>
  * {@link ArgumentMatcher} serves the purpose of matching {@link CallArgumentsNode} to
  * {@link FormalArguments} of a specific function, see
- * {@link #matchArguments(RRootNode, UnmatchedArguments, S3DefaultArguments, RBaseNode, boolean)} .
- * The other match functions are used for special cases, where builtins make it necessary to
+ * {@link #matchArguments(RRootNode, CallArgumentsNode, ArgumentsSignature, S3DefaultArguments, RBaseNode, boolean)}
+ * . The other match functions are used for special cases, where builtins make it necessary to
  * re-match parameters, e.g.:
  * {@link #matchArgumentsEvaluated(RRootNode, RArgsValuesAndNames, S3DefaultArguments, boolean, RBaseNode)}
  * for 'UseMethod'.

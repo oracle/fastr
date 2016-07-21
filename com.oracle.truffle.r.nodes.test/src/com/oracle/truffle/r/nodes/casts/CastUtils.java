@@ -671,6 +671,10 @@ public class CastUtils {
     public static Set<?> sampleValuesForType(Type t) {
         HashSet<Object> samples = new HashSet<>();
 
+        if (true) {
+            return samples;
+        }
+
         if (!(t instanceof Class)) {
             // todo:
             return samples;
