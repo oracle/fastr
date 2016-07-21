@@ -31,6 +31,7 @@ import java.util.Objects;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PredefFilters;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -204,10 +205,14 @@ public final class PredefFiltersSamplers implements PredefFilters {
                         x instanceof RAbstractDoubleVector, RAbstractDoubleVector.class, Double.class);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <R extends RAbstractLogicalVector> TypePredicateArgumentFilterSampler<Object, R> logicalValue() {
         return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof Byte ||
-                        x instanceof RAbstractLogicalVector, samples(RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA), CastUtils.<Object> samples(), RAbstractLogicalVector.class,
+                        x instanceof RAbstractLogicalVector,
+                        samples((R) RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_TRUE), (R) RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE),
+                                        (R) RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_NA)),
+                        CastUtils.<Object> samples(), RAbstractLogicalVector.class,
                         Byte.class);
     }
 
@@ -234,7 +239,8 @@ public final class PredefFiltersSamplers implements PredefFilters {
 
     @Override
     public TypePredicateArgumentFilterSampler<Object, Byte> scalarLogicalValue() {
-        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof Byte, Byte.class);
+        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof Byte, samples(RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA), CastUtils.<Object> samples(),
+                        Byte.class);
     }
 
     @Override

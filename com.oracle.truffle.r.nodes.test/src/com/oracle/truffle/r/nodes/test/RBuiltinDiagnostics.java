@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
+import static org.junit.Assert.fail;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -44,6 +46,7 @@ import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.CastUtils;
 import com.oracle.truffle.r.nodes.casts.CastUtils.Cast;
 import com.oracle.truffle.r.nodes.casts.CastUtils.Casts;
+import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.nodes.casts.Not;
 import com.oracle.truffle.r.nodes.casts.PredefFiltersSamplers;
 import com.oracle.truffle.r.nodes.casts.PredefMappersSamplers;
@@ -149,6 +152,8 @@ public final class RBuiltinDiagnostics {
             System.out.println("   " + unboundArgTypes.stream().map(argType -> typeName(argType)).collect(Collectors.toSet()));
             System.out.println(" Samples:");
             System.out.println(argSamples.get(i));
+
+            sweepChimney(castNodes, argSamples, i);
         }
 
         System.out.println("\nUnhandled argument combinations: " + nonCoveredArgsSet.size());
@@ -157,6 +162,33 @@ public final class RBuiltinDiagnostics {
         if (verbose) {
             for (List<Type> uncoveredArgs : nonCoveredArgsSet) {
                 System.out.println(uncoveredArgs.stream().map(t -> typeName(t)).collect(Collectors.toList()));
+            }
+        }
+    }
+
+    /**
+     * Verifies that the argument samples are correct by passing them to the argument's pipeline.
+     * The positive samples should pass without any error, while the negative ones should cause an
+     * error.
+     *
+     * @param castNodes
+     * @param argSamples
+     * @param i
+     */
+    private static void sweepChimney(CastNode[] castNodes, List<Samples<?>> argSamples, int i) {
+        CastNode cn;
+        if (i < castNodes.length) {
+            cn = castNodes[i];
+        } else {
+            cn = null;
+        }
+        if (cn != null) {
+            Samples<?> samples = argSamples.get(i);
+            if (samples.positiveSamples().isEmpty() && samples.negativeSamples().isEmpty()) {
+                System.out.println("No samples");
+            } else {
+                testPipeline(cn, samples);
+                System.out.println("Samples OK(" + samples.positiveSamples().size() + "," + samples.negativeSamples().size() + ")");
             }
         }
     }
@@ -230,6 +262,27 @@ public final class RBuiltinDiagnostics {
             argSamples.add(samples);
         }
         return argSamples;
+    }
+
+    private static void testPipeline(CastNode cn, Samples<?> samples) {
+        NodeHandle<CastNode> argCastNodeHandle = TestUtilities.createHandle(cn, (node, args) -> node.execute(args[0]));
+
+        for (Object sample : samples.positiveSamples()) {
+            try {
+                argCastNodeHandle.call(sample);
+            } catch (Exception e) {
+                e.printStackTrace();
+                fail();
+            }
+        }
+        for (Object sample : samples.negativeSamples()) {
+            try {
+                argCastNodeHandle.call(sample);
+                fail();
+            } catch (Exception e) {
+                // ok
+            }
+        }
     }
 
     private static CastNode[] getCastNodesFromBuiltin(RBuiltinFactory builtinFactory, String[] parameterNames) {
