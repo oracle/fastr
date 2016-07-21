@@ -52,7 +52,7 @@ public abstract class Quit extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object doQuit(RAbstractStringVector saveArg, final int status, final byte runLastIn) {
-        if (BrowserInteractNode.inBrowser()) {
+        if (RContext.getInstance().isInBrowser()) {
             RError.warning(this, RError.Message.BROWSER_QUIT);
             return RNull.instance;
         }

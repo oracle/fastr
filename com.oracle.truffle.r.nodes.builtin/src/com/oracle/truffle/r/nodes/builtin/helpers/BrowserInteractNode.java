@@ -61,16 +61,6 @@ public abstract class BrowserInteractNode extends RNode {
     private static final String BROWSER_SOURCE = "<browser_input>";
     private static String lastEmptyLineCommand = "n";
 
-    /**
-     * This used by {@link Quit} to prevent a "quit" from the browser (as per GnuR). If we supported
-     * multiple interactive contexts, this would need become context specific.
-     */
-    private static boolean inBrowser;
-
-    public static boolean inBrowser() {
-        return inBrowser;
-    }
-
     @Specialization
     protected int interact(VirtualFrame frame) {
         CompilerDirectives.transferToInterpreter();
@@ -80,7 +70,7 @@ public abstract class BrowserInteractNode extends RNode {
         ch.setPrompt(browserPrompt(RArguments.getDepth(frame)));
         int exitMode = NEXT;
         try {
-            inBrowser = true;
+            RContext.getInstance().setInBrowser(true);
             LW: while (true) {
                 String input = ch.readLine();
                 if (input != null) {
@@ -141,7 +131,7 @@ public abstract class BrowserInteractNode extends RNode {
             }
         } finally {
             ch.setPrompt(savedPrompt);
-            inBrowser = false;
+            RContext.getInstance().setInBrowser(false);
         }
         return exitMode;
     }
