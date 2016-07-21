@@ -59,7 +59,7 @@ SEXP FASTR_NamespaceRegistry() {
 	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getNamespaceRegistryMethodID);
 }
 
-SEXP FASTR_GlobalContext() {
+CTXT FASTR_GlobalContext() {
 	JNIEnv *env = getEnv();
 	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getGlobalContextMethodID);
 }
