@@ -27,7 +27,7 @@
 
 #include <string.h>
 #include <jni.h>
-#include <Rinternals.h>
+#include <Rinterface.h>
 #include <rffiutils.h>
 #include <variable_defs.h>
 

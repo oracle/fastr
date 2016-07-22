@@ -1,6 +1,8 @@
 /R_GlobalContext/
 i
 #ifdef FASTR
+typedef void *CTXT;
+typedef void *SEXP;
 extern CTXT FASTR_GlobalContext();
 #define R_GlobalContext FASTR_GlobalContext()
 extern CTXT R_getGlobalFunctionContext();

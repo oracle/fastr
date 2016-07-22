@@ -12,7 +12,6 @@ a
 i
 #ifdef FASTR
 typedef void *SEXP;
-typedef void *CTXT;
 #define DATAPTR(x)		R_DATAPTR(x)
 void *(R_DATAPTR)(SEXP x);
 #else

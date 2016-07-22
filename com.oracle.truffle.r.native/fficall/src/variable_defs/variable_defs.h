@@ -77,7 +77,7 @@ double R_NaReal;	/* NA_REAL: IEEE */
 int R_NaInt;	/* NA_INTEGER:= INT_MIN currently */
 
 // from Defn.h
-const char* R_Home;
+char* R_Home;
 const char* R_TempDir;
 
 // Set by a down call based on the setting in the initial context

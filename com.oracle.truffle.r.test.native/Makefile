@@ -24,13 +24,19 @@
 .PHONY: all clean
 
 export TOPDIR = $(CURDIR)
+OSNAME := $(shell uname)
 
 all:
 	$(MAKE) -C urand
 	$(MAKE) -C packages
+ifneq ($(OSNAME), SunOS)
 	$(MAKE) -C embedded
+endif
 
 clean:
 	$(MAKE) -C urand clean
 	$(MAKE) -C packages clean
+ifneq ($(OSNAME), SunOS)
 	$(MAKE) -C embedded clean
+endif
+	
