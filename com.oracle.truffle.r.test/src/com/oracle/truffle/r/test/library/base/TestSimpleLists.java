@@ -92,4 +92,17 @@ public class TestSimpleLists extends TestBase {
     public void testListArgumentEvaluation() {
         assertEval("{ a <- c(0,0,0) ; f <- function() { g <- function() { a[2] <<- 9 } ; g() } ; u <- function() { a <- c(1,1,1) ; f() ; a } ; list(a,u()) }");
     }
+
+    @Test
+    public void testListRefcounting() {
+        // (LS) more tests like this are needed...
+        assertEval(Ignored.Unimplemented, "a <- list(x=c(1,2,3)); b <- a; a$x[[1]] <- 4; b");
+    }
+
+    @Test
+    public void testListDuplication() {
+        assertEvalFastR("l <- list(x=c(3,4,5)); id <- .fastr.identity(l); l$x[2] <- 10; id == .fastr.identity(l)", "TRUE");
+        assertEvalFastR("l <- list(x=c(3,4,5)); id <- .fastr.identity(l$x); l$x[2] <- 10; id == .fastr.identity(l$x)", "TRUE");
+        assertEvalFastR("l <- list(x=c(3,4,5)); id <- .fastr.identity(l$x); l$x <- 1:10; id == .fastr.identity(l$x)", "FALSE");
+    }
 }
