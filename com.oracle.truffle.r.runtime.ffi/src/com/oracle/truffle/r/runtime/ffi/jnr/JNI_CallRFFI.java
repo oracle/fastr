@@ -82,6 +82,7 @@ public class JNI_CallRFFI implements CallRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public synchronized Object invokeCall(long address, String name, Object[] args) {
         Object result = null;
         if (traceEnabled()) {
@@ -141,6 +142,7 @@ public class JNI_CallRFFI implements CallRFFI {
     private static native Object call9(long address, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7, Object arg8, Object arg9);
 
     @Override
+    @TruffleBoundary
     public synchronized void invokeVoidCall(long address, String name, Object[] args) {
         if (traceEnabled()) {
             traceDownCall(name, args);
