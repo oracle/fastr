@@ -57,7 +57,7 @@ public abstract class Format extends RBuiltinNode {
         if (printConfig == null) {
             printConfig = new Config();
         }
-        printConfig.width = RContext.getInstance().getConsoleHandler().getWidth();
+        printConfig.width = (int) RContext.getInstance().stateROptions.getValue("width");
         printConfig.naWidth = RRuntime.STRING_NA.length();
         printConfig.naWidthNoQuote = RRuntime.NA_HEADER.length();
         printConfig.digits = 7 /* default */;

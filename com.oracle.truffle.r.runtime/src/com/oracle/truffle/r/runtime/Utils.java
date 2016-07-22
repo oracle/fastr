@@ -50,7 +50,6 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.nodes.GraphPrintVisitor;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -61,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class Utils {
@@ -156,21 +156,17 @@ public final class Utils {
          * polyglot context are.
          */
         RPerfStats.report();
-        if (RContext.getInstance() != null && RContext.getInstance().getOptions() != null && RContext.getInstance().getOptions().getString(RCmdOption.DEBUGGER) != null) {
-            throw new DebugExitException();
-        } else {
-            try {
-                /*
-                 * This is not the proper way to dispose a PolyglotEngine, but it doesn't matter
-                 * since we're going to System.exit anyway.
-                 */
-                RContext.getInstance().destroy();
-            } catch (Throwable t) {
-                // ignore
-            }
-            System.exit(status);
-            return null;
+        try {
+            /*
+             * This is not the proper way to dispose a PolyglotEngine, but it doesn't matter since
+             * we're going to System.exit anyway.
+             */
+            RContext.getInstance().destroy();
+        } catch (Throwable t) {
+            // ignore
         }
+        System.exit(status);
+        return null;
     }
 
     public static RuntimeException fail(String msg) {
@@ -180,8 +176,12 @@ public final class Utils {
         throw Utils.exit(2);
     }
 
-    public static RuntimeException fatalError(String msg) {
-        System.err.println("Fatal error: " + msg);
+    public static RuntimeException rSuicide(String msg) {
+        if (RInterfaceCallbacks.R_Suicide.isOverridden()) {
+            RFFIFactory.getRFFI().getREmbedRFFI().suicide(msg);
+        } else {
+            System.err.println("Fatal error: " + msg);
+        }
         throw Utils.exit(2);
     }
 
@@ -247,6 +247,19 @@ public final class Utils {
 
     public static void updateCurwd(String path) {
         wdState().setCurrent(path);
+    }
+
+    /**
+     * Returns a {@link Path} for a log file with base name {@code fileName}, taking into account
+     * whether the system is running in embedded mode. In the latter case, we can't assume that the
+     * cwd is writable. Plus some embedded apps, e.g. RStudio, spawn multiple R sub-processes
+     * concurrently so we tag the file with the pid.
+     */
+    public static Path getLogPath(String fileName) {
+        String root = RContext.isEmbedded() ? "/tmp" : REnvVars.rHome();
+        int pid = RFFIFactory.getRFFI().getBaseRFFI().getpid();
+        String baseName = RContext.isEmbedded() ? fileName + "-" + Integer.toString(pid) : fileName;
+        return FileSystems.getDefault().getPath(root, baseName);
     }
 
     /**

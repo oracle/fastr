@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@
 
 #include <string.h>
 #include <jni.h>
-#include <Rinternals.h>
+#include <Rinterface.h>
 #include <rffiutils.h>
 #include <variable_defs.h>
 
@@ -36,6 +36,7 @@ jmethodID getBaseEnvMethodID;
 jmethodID getBaseNamespaceMethodID;
 jmethodID getNamespaceRegistryMethodID;
 jmethodID isInteractiveMethodID;
+jmethodID getGlobalContextMethodID;
 
 // R_GlobalEnv et al are not a variables in FASTR as they are RContext specific
 SEXP FASTR_GlobalEnv() {
@@ -58,11 +59,10 @@ SEXP FASTR_NamespaceRegistry() {
 	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getNamespaceRegistryMethodID);
 }
 
-Rboolean FASTR_IsInteractive() {
+CTXT FASTR_GlobalContext() {
 	JNIEnv *env = getEnv();
-	return (*env)->CallStaticIntMethod(env, CallRFFIHelperClass, isInteractiveMethodID);
+	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getGlobalContextMethodID);
 }
-
 
 void init_variables(JNIEnv *env, jobjectArray initialValues) {
 	// initialValues is an array of enums
@@ -81,10 +81,10 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 	getBaseNamespaceMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getBaseNamespace", "()Ljava/lang/Object;", 1);
 	getNamespaceRegistryMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getNamespaceRegistry", "()Ljava/lang/Object;", 1);
 	isInteractiveMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isInteractive", "()I", 1);
+	getGlobalContextMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getGlobalContext", "()Ljava/lang/Object;", 1);
 
 	int length = (*env)->GetArrayLength(env, initialValues);
 	int index;
-	int globalRefIndex = 0;
 	for (index = 0; index < length; index++) {
 		jobject variable = (*env)->GetObjectArrayElement(env, initialValues, index);
 		jstring nameString = (*env)->CallObjectMethod(env, variable, nameMethodID);
@@ -104,7 +104,7 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 			} else if (strcmp(nameChars, "R_NaInt") == 0) {
 				R_NaInt = (*env)->CallIntMethod(env, value, intValueMethodID);
 			} else {
-				SEXP ref = mkNamedGlobalRef(env, globalRefIndex++, value);
+				SEXP ref = mkNamedGlobalRef(env, value);
 				if (strcmp(nameChars, "R_EmptyEnv") == 0) {
 					R_EmptyEnv = ref;
 				} else if (strcmp(nameChars, "R_NilValue") == 0) {

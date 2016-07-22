@@ -75,14 +75,21 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     /**
      * Creates a new pair list of given size > 0. Note: pair list of size 0 is NULL.
      */
+    public static RPairList create(int size) {
+        return create(size, null);
+    }
+
     @TruffleBoundary
-    public static Object create(int size) {
+    public static RPairList create(int size, SEXPTYPE type) {
         assert size > 0 : "a pair list of size = 0 does not exist, it should be NULL";
         RPairList result = new RPairList();
         for (int i = 1; i < size; i++) {
             RPairList tmp = result;
             result = new RPairList();
             result.cdr = tmp;
+        }
+        if (type != null) {
+            result.type = type;
         }
         return result;
     }

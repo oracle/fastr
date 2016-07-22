@@ -95,12 +95,6 @@ public interface ConsoleHandler {
     @TruffleBoundary
     void setPrompt(String prompt);
 
-    /**
-     * Get the console width.
-     */
-    @TruffleBoundary
-    int getWidth();
-
     String getInputDescription();
 
     default void setHistoryFrom(@SuppressWarnings("unused") File file) {

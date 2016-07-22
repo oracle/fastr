@@ -28,12 +28,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.TempPathName;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 
 @RBuiltin(name = "tempdir", kind = INTERNAL, parameterNames = {})
 public abstract class TempDir extends RBuiltinNode {
 
     @Specialization
     protected Object tempdir() {
-        return TempPathName.tempDirPath();
+        return RDataFactory.createStringVectorFromScalar(TempPathName.tempDirPath());
     }
 }

@@ -436,6 +436,10 @@ public final class RDataFactory {
         return traceDataCreated(new RPromise.PromisedPromise(exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback));
     }
 
+    public static Object createLangPairList(int size) {
+        return size == 0 ? RNull.instance : traceDataCreated(RPairList.create(size, SEXPTYPE.LANGSXP));
+    }
+
     public static Object createPairList(int size) {
         return size == 0 ? RNull.instance : traceDataCreated(RPairList.create(size));
     }

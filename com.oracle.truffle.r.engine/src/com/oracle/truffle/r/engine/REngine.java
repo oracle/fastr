@@ -56,17 +56,17 @@ import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
-import com.oracle.truffle.r.runtime.BrowserQuitException;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
-import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
@@ -177,9 +177,9 @@ final class REngine implements Engine, Engine.Timings {
                     throw new RInternalError(e, "error while parsing user profile from %s", userProfile.getName());
                 }
             }
-            if (!(context.getOptions().getBoolean(RCmdOption.NO_RESTORE) || context.getOptions().getBoolean(RCmdOption.NO_RESTORE_DATA))) {
+            if (!(context.getStartParams().getRestoreAction() == SA_TYPE.NORESTORE)) {
                 // call sys.load.image(".RData", RCmdOption.QUIET
-                checkAndRunStartupShutdownFunction("sys.load.image", new String[]{"\".RData\"", context.getOptions().getBoolean(RCmdOption.QUIET) ? "TRUE" : "FALSE"});
+                checkAndRunStartupShutdownFunction("sys.load.image", new String[]{"\".RData\"", context.getStartParams().getQuiet() ? "TRUE" : "FALSE"});
                 context.getConsoleHandler().setHistoryFrom(new File("./.Rhistory"));
             }
             checkAndRunStartupShutdownFunction(".First");
@@ -247,7 +247,7 @@ final class REngine implements Engine, Engine.Timings {
             return lastValue;
         } catch (ReturnException ex) {
             return ex.getResult();
-        } catch (DebugExitException | BrowserQuitException e) {
+        } catch (DebugExitException | JumpToTopLevelException e) {
             throw e;
         } catch (RError e) {
             // RError prints the correct result on the console during construction
@@ -322,7 +322,7 @@ final class REngine implements Engine, Engine.Timings {
                 return lastValue;
             } catch (ReturnException ex) {
                 return ex.getResult();
-            } catch (DebugExitException | BrowserQuitException | ThreadDeath e) {
+            } catch (DebugExitException | JumpToTopLevelException | ThreadDeath e) {
                 throw e;
             } catch (RError e) {
                 // TODO normal error reporting is done by the runtime
@@ -507,7 +507,7 @@ final class REngine implements Engine, Engine.Timings {
                     // there can be an outer loop
                     throw cfe;
                 }
-            } catch (DebugExitException | BrowserQuitException e) {
+            } catch (DebugExitException | JumpToTopLevelException e) {
                 CompilerDirectives.transferToInterpreter();
                 throw e;
             } catch (Throwable e) {

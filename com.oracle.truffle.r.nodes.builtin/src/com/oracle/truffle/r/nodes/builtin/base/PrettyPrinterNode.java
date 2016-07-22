@@ -507,7 +507,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 maxPositionLength = intString(vector.getLength()).length();
                 leftWidth = maxPositionLength + 2; // There is [] around the number.
             }
-            int forColumns = RContext.getInstance().getConsoleHandler().getWidth() - leftWidth;
+            int forColumns = (int) RContext.getInstance().stateROptions.getValue("width") - leftWidth;
             int numberOfColumns = Math.max(1, forColumns / columnWidth);
 
             int index = 0;
@@ -1723,7 +1723,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 for (; colInd < dataColWidths.length; colInd++) {
                     boolean hasNegative = dataColWidths[colInd] < 0;
                     totalWidth += Math.abs(dataColWidths[colInd]) + ((isDoubleVector || isComplexVector) && hasNegative ? 2 : 1);
-                    if (totalWidth > RContext.getInstance().getConsoleHandler().getWidth()) {
+                    if (totalWidth > (int) RContext.getInstance().stateROptions.getValue("name")) {
                         if (colInd == startColInd) {
                             // the first column is already too wide but needs to be printed
                             // nevertheless

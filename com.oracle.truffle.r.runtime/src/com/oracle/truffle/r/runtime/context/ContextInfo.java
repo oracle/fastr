@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
+import java.io.IOException;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,7 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.r.runtime.RCmdOptions;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
 /**
@@ -39,12 +41,12 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
  * instance (it will be stored in the "fastrContextInfo" global symbol).
  */
 public final class ContextInfo implements TruffleObject {
-    static final String GLOBAL_SYMBOL = "fastrContextInfo";
+    public static final String GLOBAL_SYMBOL = "fastrContextInfo";
 
     private static final ConcurrentHashMap<Integer, ContextInfo> contextInfos = new ConcurrentHashMap<>();
     private static final AtomicInteger contextInfoIds = new AtomicInteger();
 
-    private final RCmdOptions options;
+    private final RStartParams startParams;
     private final RContext.ContextKind kind;
     private final TimeZone systemTimeZone;
 
@@ -57,8 +59,8 @@ public final class ContextInfo implements TruffleObject {
     private final int id;
     private PolyglotEngine vm;
 
-    private ContextInfo(RCmdOptions options, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone, int id) {
-        this.options = options;
+    private ContextInfo(RStartParams startParams, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone, int id) {
+        this.startParams = startParams;
         this.kind = kind;
         this.parent = parent;
         this.consoleHandler = consoleHandler;
@@ -78,21 +80,21 @@ public final class ContextInfo implements TruffleObject {
      * @param parent if non-null {@code null}, the parent creating the context
      * @param kind defines the degree to which this context shares base and package environments
      *            with its parent
-     * @param options the command line arguments passed this R session
+     * @param startParams the start parameters passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
      * @param systemTimeZone the system's time zone
      */
-    public static ContextInfo create(RCmdOptions options, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone) {
+    public static ContextInfo create(RStartParams startParams, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone) {
         int id = contextInfoIds.incrementAndGet();
-        return new ContextInfo(options, kind, parent, consoleHandler, systemTimeZone, id);
+        return new ContextInfo(startParams, kind, parent, consoleHandler, systemTimeZone, id);
     }
 
-    public static ContextInfo create(RCmdOptions options, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
-        return create(options, kind, parent, consoleHandler, TimeZone.getDefault());
+    public static ContextInfo create(RStartParams startParams, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
+        return create(startParams, kind, parent, consoleHandler, TimeZone.getDefault());
     }
 
-    public static int createDeferred(RCmdOptions options, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
-        ContextInfo info = create(options, kind, parent, consoleHandler, TimeZone.getDefault());
+    public static int createDeferred(RStartParams startParams, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
+        ContextInfo info = create(startParams, kind, parent, consoleHandler, TimeZone.getDefault());
         contextInfos.put(info.id, info);
         return info.id;
     }
@@ -101,8 +103,16 @@ public final class ContextInfo implements TruffleObject {
         return contextInfos.get(id);
     }
 
-    public RCmdOptions getOptions() {
-        return options;
+    public static ContextInfo getContextInfo(PolyglotEngine vm) {
+        try {
+            return (ContextInfo) vm.findGlobalSymbol(ContextInfo.GLOBAL_SYMBOL).get();
+        } catch (IOException ex) {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    public RStartParams getStartParams() {
+        return startParams;
     }
 
     public ContextKind getKind() {

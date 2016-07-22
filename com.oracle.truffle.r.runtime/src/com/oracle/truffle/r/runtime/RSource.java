@@ -72,7 +72,9 @@ public class RSource {
         TCK_INIT("<tck_initialization>"),
         PACKAGE("<package:%s deparse>"),
         DEPARSE_ERROR("<package_deparse_error>"),
-        LAPPLY("<lapply>");
+        LAPPLY("<lapply>"),
+        R_PARSEVECTOR("<R_ParseVector>"),
+        PAIRLIST_DEPARSE("<pairlist deparse>");
 
         public final String string;
 

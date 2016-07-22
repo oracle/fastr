@@ -267,7 +267,7 @@ public class TraceHandling {
             try {
                 fileWriter = new FileWriter("fastr_tracecalls.log");
             } catch (IOException e) {
-                Utils.fatalError("failed to open 'fastr_tracecalls.log'" + e.getMessage());
+                Utils.rSuicide("failed to open 'fastr_tracecalls.log'" + e.getMessage());
             }
         }
 

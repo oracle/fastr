@@ -1,0 +1,21 @@
+/R_GlobalContext/
+i
+#ifdef FASTR
+typedef void *CTXT;
+typedef void *SEXP;
+extern CTXT FASTR_GlobalContext();
+#define R_GlobalContext FASTR_GlobalContext()
+extern CTXT R_getGlobalFunctionContext();
+extern CTXT R_getParentFunctionContext(CTXT);
+extern SEXP R_getContextEnv(CTXT);
+extern SEXP R_getContextFun(CTXT);
+extern SEXP R_getContextCall(CTXT);
+extern SEXP R_getContextSrcRef(CTXT);
+extern int R_insideBrowser();
+#else
+.
++1
+a
+#endif
+.
+w Rinterface.h

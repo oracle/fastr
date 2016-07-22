@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
-import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceCall;
-
-import java.util.concurrent.Semaphore;
+import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceDownCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceDownCallReturn;
+import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceEnabled;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
+import com.oracle.truffle.r.runtime.ffi.RFFIUtils;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 
 /**
@@ -66,43 +67,57 @@ public class JNI_CallRFFI implements CallRFFI {
             throw new RInternalError(ex, "error while loading " + librffiPath);
         }
         System.load(librffiPath);
-        traceCall("initialize");
-        initialize(RFFIVariables.values());
+        RFFIUtils.initialize();
+        if (traceEnabled()) {
+            traceDownCall("initialize");
+        }
+        try {
+            initialize(RFFIVariables.values());
+        } finally {
+            if (traceEnabled()) {
+                traceDownCallReturn("initialize", null);
+            }
+
+        }
     }
 
-    private static final Semaphore inCritical = new Semaphore(1, false);
-
     @Override
-    public Object invokeCall(long address, String name, Object[] args) {
-        traceCall(name, args);
+    @TruffleBoundary
+    public synchronized Object invokeCall(long address, String name, Object[] args) {
+        Object result = null;
+        if (traceEnabled()) {
+            traceDownCall(name, args);
+        }
         try {
-            inCritical.acquire();
             switch (args.length) {
             // @formatter:off
-            case 0: return call0(address);
-            case 1: return call1(address, args[0]);
-            case 2: return call2(address, args[0], args[1]);
-            case 3: return call3(address, args[0], args[1], args[2]);
-            case 4: return call4(address, args[0], args[1], args[2], args[3]);
-            case 5: return call5(address, args[0], args[1], args[2], args[3], args[4]);
-            case 6: return call6(address, args[0], args[1], args[2], args[3], args[4], args[5]);
-            case 7: return call7(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
-            case 8: return call8(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
-            case 9: return call9(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
+            case 0: result = call0(address); break;
+            case 1: result = call1(address, args[0]); break;
+            case 2: result = call2(address, args[0], args[1]); break;
+            case 3: result = call3(address, args[0], args[1], args[2]); break;
+            case 4: result = call4(address, args[0], args[1], args[2], args[3]); break;
+            case 5: result = call5(address, args[0], args[1], args[2], args[3], args[4]); break;
+            case 6: result = call6(address, args[0], args[1], args[2], args[3], args[4], args[5]); break;
+            case 7: result = call7(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6]); break;
+            case 8: result = call8(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]); break;
+            case 9: result = call9(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]); break;
             default:
-                return call(address, args);
+                result = call(address, args); break;
                 // @formatter:on
             }
-        } catch (InterruptedException ex) {
-            throw RInternalError.shouldNotReachHere();
+            return result;
         } finally {
-            inCritical.release();
+            if (traceEnabled()) {
+                traceDownCallReturn(name, result);
+            }
         }
     }
 
     private static native void initialize(RFFIVariables[] variables);
 
     private static native void nativeSetTempDir(String tempDir);
+
+    private static native void nativeSetInteractive(boolean interactive);
 
     private static native Object call(long address, Object[] args);
 
@@ -127,10 +142,12 @@ public class JNI_CallRFFI implements CallRFFI {
     private static native Object call9(long address, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7, Object arg8, Object arg9);
 
     @Override
-    public void invokeVoidCall(long address, String name, Object[] args) {
-        traceCall(name, args);
+    @TruffleBoundary
+    public synchronized void invokeVoidCall(long address, String name, Object[] args) {
+        if (traceEnabled()) {
+            traceDownCall(name, args);
+        }
         try {
-            inCritical.acquire();
             switch (args.length) {
                 case 0:
                     callVoid0(address);
@@ -141,9 +158,10 @@ public class JNI_CallRFFI implements CallRFFI {
                 default:
                     throw RInternalError.shouldNotReachHere();
             }
-        } catch (InterruptedException ex) {
         } finally {
-            inCritical.release();
+            if (traceEnabled()) {
+                traceDownCallReturn(name, null);
+            }
         }
     }
 
@@ -152,15 +170,26 @@ public class JNI_CallRFFI implements CallRFFI {
     private static native void callVoid1(long address, Object arg1);
 
     @Override
-    public void setTempDir(String tempDir) {
-        traceCall("setTempDir", tempDir);
-        try {
-            inCritical.acquire();
-            RFFIVariables.setTempDir(tempDir);
-            nativeSetTempDir(tempDir);
-        } catch (InterruptedException ex) {
-        } finally {
-            inCritical.release();
+    public synchronized void setTempDir(String tempDir) {
+        if (traceEnabled()) {
+            traceDownCall("setTempDir", tempDir);
+        }
+        RFFIVariables.setTempDir(tempDir);
+        nativeSetTempDir(tempDir);
+        if (traceEnabled()) {
+            traceDownCallReturn("setTempDir", null);
         }
     }
+
+    @Override
+    public synchronized void setInteractive(boolean interactive) {
+        if (traceEnabled()) {
+            traceDownCall("setInteractive", interactive);
+        }
+        nativeSetInteractive(interactive);
+        if (traceEnabled()) {
+            traceDownCallReturn("setInteractive", null);
+        }
+    }
+
 }

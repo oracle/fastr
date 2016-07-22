@@ -27,7 +27,6 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
-import com.oracle.truffle.r.runtime.context.RContext;
 
 class StringConsoleHandler implements ConsoleHandler {
     private final PrintStream output;
@@ -97,11 +96,6 @@ class StringConsoleHandler implements ConsoleHandler {
     @TruffleBoundary
     public void setPrompt(String prompt) {
         this.prompt = prompt;
-    }
-
-    @Override
-    public int getWidth() {
-        return RContext.CONSOLE_WIDTH;
     }
 
     @Override

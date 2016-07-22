@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_INIT_FILE;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_SITE_FILE;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -47,7 +44,7 @@ public final class RProfile implements RContext.ContextState {
         Source newSiteProfile = null;
         Source newUserProfile = null;
 
-        if (!context.getOptions().getBoolean(NO_SITE_FILE)) {
+        if (context.getStartParams().getLoadSiteFile()) {
             String siteProfilePath = envVars.get("R_PROFILE");
             if (siteProfilePath == null) {
                 siteProfilePath = fileSystem.getPath(rHome, "etc", "Rprofile.site").toString();
@@ -60,7 +57,7 @@ public final class RProfile implements RContext.ContextState {
             }
         }
 
-        if (!context.getOptions().getBoolean(NO_INIT_FILE)) {
+        if (context.getStartParams().getLoadInitFile()) {
             String userProfilePath = envVars.get("R_PROFILE_USER");
             if (userProfilePath == null) {
                 String dotRenviron = ".Rprofile";

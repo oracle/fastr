@@ -583,11 +583,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public void enableDebug(RFunction func) {
-        DebugHandling.enableDebug(func, "", RNull.instance, false);
-    }
-
-    @Override
     public boolean isTaggedWith(Node node, Class<?> tag) {
         if (!(node instanceof RSyntaxNode)) {
             return false;
@@ -647,6 +642,21 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public RBaseNode createConstantNode(Object o) {
         return ConstantNode.create(o);
+    }
+
+    @Override
+    public boolean enableDebug(RFunction func, boolean once) {
+        return DebugHandling.enableDebug(func, "", RNull.instance, once);
+    }
+
+    @Override
+    public boolean isDebugged(RFunction func) {
+        return DebugHandling.isDebugged(func);
+    }
+
+    @Override
+    public boolean disableDebug(RFunction func) {
+        return DebugHandling.undebug(func);
     }
 
 }

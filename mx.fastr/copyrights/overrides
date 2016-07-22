@@ -56,6 +56,7 @@ com.oracle.truffle.r.native/fficall/src/common/arithmetic_fastr.c,gnu_r_gentlema
 com.oracle.truffle.r.native/fficall/src/common/coerce_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/errors_fastr.c,gnu_r.core.copyright
 com.oracle.truffle.r.native/fficall/src/common/inlined_fastr.c,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.native/fficall/src/common/localecharset_fastr.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/common/print_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/printutils_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/sys_fastr.c,gnu_r.copyright
@@ -75,6 +76,7 @@ com.oracle.truffle.r.native/fficall/src/include/rlocale.h,gnu_r_gentleman_ihaka.
 com.oracle.truffle.r.native/fficall/src/variable_defs/variable_defs.h,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/jni/Memory.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/jni/Rdynload_fastr.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/src/jni/Rembedded.c,gnu_r.copyright
 com.oracle.truffle.r.native/include/src/libintl.h,no.copyright
 com.oracle.truffle.r.native/library/base/src/registration.c,no.copyright
 com.oracle.truffle.r.native/library/grDevices/src/gzio.c,gnu_r_gentleman_ihaka.copyright
@@ -105,6 +107,7 @@ com.oracle.truffle.r.native/library/tools/src/gramRd.c,no.copyright
 com.oracle.truffle.r.native/library/tools/src/tools_dummy.c,no.copyright
 com.oracle.truffle.r.native/library/utils/src/utils_dummy.c,no.copyright
 com.oracle.truffle.r.native/run/R.sh,oracle_bash.copyright
+com.oracle.truffle.r.native/run/Rclasspath.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rscript_exec.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rscript.sh,oracle_bash.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/fastr/FastrDqrls.java,gnu_r.copyright
@@ -149,6 +152,7 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/L
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/LoadSaveFunctions.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Merge.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Order.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Quit.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Rank.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Prod.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Rank.java,gnu_r_gentleman_ihaka.copyright
@@ -189,6 +193,8 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/InheritsNode.jav
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/IsFactorNode.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/R.g,purdue.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RSrcref.java,gnu_r.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RStartParams.java,gnu_r.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RCleanUp.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/data/RTypedValue.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ffi/DLL.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/gnur/SEXPTYPE.java,gnu_r.copyright

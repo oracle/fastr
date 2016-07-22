@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.util.Map;
 import java.util.Map.Entry;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -161,6 +162,20 @@ public enum FastROptions {
                         System.exit(2);
                     }
                     FastROptions.setValue(name, entry.getValue());
+                }
+            }
+        }
+        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+            String name = entry.getKey();
+            if (name.startsWith("FASTR_OPTION_")) {
+                name = name.replace("FASTR_OPTION_", "");
+                String value = entry.getValue();
+                if (value == null || value.equals("true") || value.equals("")) {
+                    FastROptions.setValue(name, true);
+                } else if (value.equals("false")) {
+                    FastROptions.setValue(name, false);
+                } else {
+                    FastROptions.setValue(name, value);
                 }
             }
         }

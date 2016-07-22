@@ -46,7 +46,9 @@ _r_command_project = 'com.oracle.truffle.r.engine'
 _repl_command = 'com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient'
 _command_class_dict = {'r': _r_command_project + ".shell.RCommand",
                        'rscript': _r_command_project + ".shell.RscriptCommand",
-                        'rrepl': _repl_command}
+                        'rrepl': _repl_command,
+                        'rembed': _r_command_project + ".shell.REmbedded",
+                    }
 # benchmarking support
 def r_path():
     return join(_fastr_suite.dir, 'bin', 'R')
@@ -98,6 +100,9 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     if command:
         vmArgs.append(_command_class_dict[command.lower()])
     return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
+
+def r_classpath(args):
+    print mx.classpath(_r_command_project)
 
 def _sanitize_vmArgs(jdk, vmArgs):
     '''
@@ -213,6 +218,9 @@ def rscript(args, parser=None, **kwargs):
 def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
     run_r(args, 'rrepl')
+
+def rembed(args, nonZeroIsFatal=True, extraVmArgs=None):
+    run_r(args, 'rembed')
 
 def _fastr_gate_runner(args, tasks):
     # Until fixed, we call Checkstyle here and limit to primary
@@ -504,8 +512,10 @@ _commands = {
     'rcmplib' : [rcmplib, ['options']],
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'rrepl' : [rrepl, '[options]'],
+    'rembed' : [rembed, '[options]'],
     'installpkgs' : [installpkgs, '[options]'],
     'installcran' : [installpkgs, '[options]'],
+    'r-cp' : [r_classpath, '[options]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)

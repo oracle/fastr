@@ -221,7 +221,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         int replacementLength = positionsCheckNode.getSelectedPositionsCount(positionProfiles);
         if (emptyReplacementProfile.profile(replacementLength == 0)) {
             /* Nothing to modify */
-            return vector;
+            return vector.materialize();
         }
 
         if (valueLengthOneProfile.profile(valueLength != 1)) {

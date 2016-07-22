@@ -136,6 +136,7 @@ public class BasePackage extends RBuiltinPackage {
         add(AsInteger.class, AsIntegerNodeGen::create);
         add(AsLogical.class, AsLogicalNodeGen::create);
         add(SetS4Object.class, SetS4ObjectNodeGen::create);
+        add(SetTimeLimit.class, SetTimeLimitNodeGen::create);
         add(AsRaw.class, AsRawNodeGen::create);
         add(AsVector.class, AsVectorNodeGen::create);
         add(Assign.class, AssignNodeGen::create);

@@ -81,6 +81,17 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
         return new RAttributes(names, values);
     }
 
+    public static void copyAttributes(RAttributable obj, RAttributes attrs) {
+        if (attrs == null) {
+            return;
+        }
+        Iterator<RAttribute> iter = attrs.iterator();
+        while (iter.hasNext()) {
+            RAttribute attr = iter.next();
+            obj.setAttr(attr.getName(), attr.getValue());
+        }
+    }
+
     /**
      * The implementation class which is separate to avoid a circularity that would result from the
      * {@code Iterable} in the abstract class.

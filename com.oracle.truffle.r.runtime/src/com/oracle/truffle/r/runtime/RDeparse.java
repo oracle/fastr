@@ -322,7 +322,6 @@ public class RDeparse {
         }
 
         private DeparseVisitor append(String str) {
-            assert !str.contains("\n");
             sb.append(str);
             return this;
         }
@@ -549,7 +548,12 @@ public class RDeparse {
                         } else if (args.length == 1) {
                             append(args[0]).append(symbol).append("NULL");
                         } else {
-                            append(args[0]).append(symbol).append(args[1]);
+                            // FIXME use call syntax until parser fixed to accept literals
+                            if (args[1] instanceof RSyntaxConstant) {
+                                append('`').append(symbol).append('`').append('(').append(args[0]).append(", ").append(args[1]).append(')');
+                            } else {
+                                append(args[0]).append(symbol).append(args[1]);
+                            }
                         }
                         return null;
                     }

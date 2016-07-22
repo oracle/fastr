@@ -60,6 +60,7 @@ import com.oracle.truffle.r.library.utils.CountFields;
 import com.oracle.truffle.r.library.utils.Crc64NodeGen;
 import com.oracle.truffle.r.library.utils.Download;
 import com.oracle.truffle.r.library.utils.MenuNodeGen;
+import com.oracle.truffle.r.library.utils.ObjectSizeNodeGen;
 import com.oracle.truffle.r.library.utils.RprofNodeGen;
 import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
 import com.oracle.truffle.r.library.utils.WriteTable;
@@ -475,7 +476,9 @@ public class ForeignFunctions {
                 case "menu":
                     return MenuNodeGen.create();
                 case "nsl":
+                    return new UnimplementedExternal(name);
                 case "objectSize":
+                    return ObjectSizeNodeGen.create();
                 case "processevents":
                 case "octsize":
                 case "sockconnect":

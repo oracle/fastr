@@ -75,12 +75,6 @@ addInputHandler(InputHandler *handlers, int fd, InputHandlerProc handler,
     return NULL;
 }
 
-const char *locale2charset(const char *locale)
-{
-	unimplemented("locale2charset");
-	return NULL;
-}
-
 void setup_RdotApp(void) {
 	unimplemented("setup_RdotApp");
 }
@@ -126,3 +120,32 @@ SEXP R_Unserialize(R_inpstream_t stream)
 	unimplemented("R_Unserialize");
 	return NULL;
 }
+
+SEXP R_getS4DataSlot(SEXP obj, SEXPTYPE type) {
+	unimplemented("R_getS4DataSlot");
+	return NULL;
+}
+
+void Rf_checkArityCall(SEXP a, SEXP b, SEXP c) {
+	unimplemented("Rf_checkArityCall");
+}
+
+SEXP NewEnvironment(SEXP a, SEXP b, SEXP c) {
+	unimplemented("NewEnvironment");
+	return NULL;
+}
+
+void* PRIMFUN(SEXP x) {
+	unimplemented("NewEnvironment");
+	return NULL;
+}
+
+SEXP coerceToSymbol(SEXP v) {
+	unimplemented("coerceToSymbol");
+}
+
+int IntegerFromString(SEXP a, int* b) {
+	unimplemented("IntegerFromString");
+	return 0;
+}
+

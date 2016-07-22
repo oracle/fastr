@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
@@ -71,6 +72,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.RFFIContextStateFactory;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -291,6 +293,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     private boolean nullS4Object = false;
 
+    /**
+     * This used to prevent a "quit" from the browser (as per GnuR).
+     */
+    private boolean inBrowser = false;
+
     private boolean active;
 
     private PrimitiveMethodsInfo primitiveMethodsInfo;
@@ -300,6 +307,12 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * benchmarks. Set across all contexts.
      */
     @CompilationFinal private static boolean ignoreVisibility;
+
+    /**
+     * Set to {@code true} when in embedded mode to allow other parts of the system to determine
+     * whether embedded mode is in effect, <b>before</b> the initial context is created.
+     */
+    private static boolean embedded;
 
     /*
      * Workarounds to finesse project circularities between runtime/nodes.
@@ -352,9 +365,9 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * could do this more dynamically with a registration process, perhaps driven by an annotation
      * processor, but the set is relatively small, so we just enumerate them here.
      */
-    public final REnvVars stateREnvVars;
-    public final RProfile stateRProfile;
-    public final ROptions.ContextStateImpl stateROptions;
+    public REnvVars stateREnvVars;
+    public RProfile stateRProfile;
+    public ROptions.ContextStateImpl stateROptions;
     public final REnvironment.ContextStateImpl stateREnvironment;
     public final RErrorHandling.ContextStateImpl stateRErrorHandling;
     public final ConnectionSupport.ContextStateImpl stateRConnection;
@@ -371,10 +384,23 @@ public final class RContext extends ExecutionContext implements TruffleObject {
                         stateLazyDBCache, stateInstrumentation};
     }
 
+    public static void setEmbedded() {
+        embedded = true;
+    }
+
+    public static boolean isEmbedded() {
+        return embedded;
+    }
+
     private RContext(Env env, Instrumenter instrumenter, boolean isInitial) {
         ContextInfo initialInfo = (ContextInfo) env.importSymbol(ContextInfo.GLOBAL_SYMBOL);
         if (initialInfo == null) {
-            this.info = ContextInfo.create(RCmdOptions.parseArguments(Client.R, new String[0]), ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env.in(), env.out()));
+            /*
+             * This implies that FastR is being invoked initially from another Truffle language and
+             * not via RCommand/RscriptCommand.
+             */
+            this.info = ContextInfo.create(new RStartParams(RCmdOptions.parseArguments(Client.R, new String[0], false), false), ContextKind.SHARE_NOTHING, null,
+                            new DefaultConsoleHandler(env.in(), env.out()));
         } else {
             this.info = initialInfo;
         }
@@ -421,9 +447,9 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         assert !active;
         active = true;
         attachThread();
-        stateREnvVars = REnvVars.newContext(this);
-        stateRProfile = RProfile.newContext(this, stateREnvVars);
-        stateROptions = ROptions.ContextStateImpl.newContext(this, stateREnvVars);
+        if (!embedded) {
+            doEnvOptionsProfileInitialization();
+        }
         stateREnvironment = REnvironment.ContextStateImpl.newContext(this);
         stateRErrorHandling = RErrorHandling.ContextStateImpl.newContext(this);
         stateRConnection = ConnectionSupport.ContextStateImpl.newContext(this);
@@ -434,7 +460,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateLazyDBCache = LazyDBCache.ContextStateImpl.newContext(this);
         stateInstrumentation = InstrumentationState.newContext(this, instrumenter);
         stateInternalCode = ContextStateImpl.newContext(this);
-        engine.activate(stateREnvironment);
+
+        if (!embedded) {
+            validateContextStates();
+            engine.activate(stateREnvironment);
+        }
 
         if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
             if (info.getParent().sharedChild != null) {
@@ -445,11 +475,33 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             // that methods package is loaded
             this.methodTableDispatchOn = info.getParent().methodTableDispatchOn;
         }
+        if (isInitial && !embedded) {
+            RFFIFactory.getRFFI().getCallRFFI().setInteractive(isInteractive());
+            initialContextInitialized = true;
+        }
+    }
+
+    /**
+     * Factored out for embedded setup, where this initialization may be customized after the
+     * context is created but before VM really starts execution.
+     */
+    private void doEnvOptionsProfileInitialization() {
+        stateREnvVars = REnvVars.newContext(this);
+        stateROptions = ROptions.ContextStateImpl.newContext(this, stateREnvVars);
+        stateRProfile = RProfile.newContext(this, stateREnvVars);
+    }
+
+    public void completeEmbeddedInitialization() {
+        doEnvOptionsProfileInitialization();
+        validateContextStates();
+        engine.activate(stateREnvironment);
+        stateROptions.updateDotOptions();
+        initialContextInitialized = true;
+    }
+
+    private void validateContextStates() {
         for (ContextState state : contextStates()) {
             assert state != null;
-        }
-        if (isInitial) {
-            initialContextInitialized = true;
         }
     }
 
@@ -538,7 +590,12 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public void setVisible(boolean v) {
         if (!FastROptions.IgnoreVisibility.getBooleanValue()) {
-            resultVisible = v;
+            /*
+             * Prevent printing the dummy expression used to force creation of initial context
+             */
+            if (initialContextInitialized || !embedded) {
+                resultVisible = v;
+            }
         }
     }
 
@@ -564,6 +621,14 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public void setNullS4Object(boolean on) {
         nullS4Object = on;
+    }
+
+    public boolean isInBrowser() {
+        return inBrowser;
+    }
+
+    public void setInBrowser(boolean on) {
+        inBrowser = on;
     }
 
     public boolean allowPrimitiveMethods() {
@@ -643,8 +708,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         return foreignAccessFactory;
     }
 
-    public RCmdOptions getOptions() {
-        return info.getOptions();
+    public RStartParams getStartParams() {
+        return info.getStartParams();
     }
 
     @Override

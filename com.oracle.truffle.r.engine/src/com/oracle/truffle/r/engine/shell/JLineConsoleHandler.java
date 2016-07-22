@@ -27,10 +27,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
-import com.oracle.truffle.r.runtime.context.RContext;
 
 import jline.console.ConsoleReader;
 import jline.console.UserInterruptException;
@@ -42,10 +42,17 @@ class JLineConsoleHandler implements ConsoleHandler {
     private final boolean isInteractive;
     private final PrintWriter printWriter;
 
-    JLineConsoleHandler(boolean isInteractive, ConsoleReader console) {
-        this.console = console;
+    JLineConsoleHandler(RStartParams startParams) {
+        try {
+            console = new ConsoleReader(System.in, System.out);
+            console.setHandleUserInterrupt(true);
+            console.setExpandEvents(false);
+        } catch (IOException ex) {
+            throw Utils.fail("unexpected error opening console reader");
+        }
+        // long start = System.currentTimeMillis();
         printWriter = new PrintWriter(console.getOutput());
-        this.isInteractive = isInteractive;
+        this.isInteractive = startParams.getInteractive();
     }
 
     @Override
@@ -106,11 +113,6 @@ class JLineConsoleHandler implements ConsoleHandler {
     @TruffleBoundary
     public void setPrompt(String prompt) {
         console.setPrompt(prompt);
-    }
-
-    @Override
-    public int getWidth() {
-        return RContext.CONSOLE_WIDTH;
     }
 
     @Override

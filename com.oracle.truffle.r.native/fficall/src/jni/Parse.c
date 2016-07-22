@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,22 @@
 #include <rffiutils.h>
 #include <R_ext/Parse.h>
 
-SEXP R_ParseVector(SEXP x, int y, ParseStatus *z, SEXP w) {
-	return unimplemented("R_ParseVector");
+static jmethodID parseMethodID;
+static jclass parseResultClass;
+static jfieldID parseStatusFieldID;
+static jfieldID parseExprFieldID;
+
+
+void init_parse(JNIEnv *env) {
+	parseMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_ParseVector", "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;", 1);
+	parseResultClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper$ParseResult");
+	parseStatusFieldID = checkGetFieldID(env, parseResultClass, "parseStatus", "I", 0);
+	parseExprFieldID = checkGetFieldID(env, parseResultClass, "expr", "Ljava/lang/Object;", 0);
+}
+
+SEXP R_ParseVector(SEXP text, int n, ParseStatus *z, SEXP srcfile) {
+	JNIEnv *env = getEnv();
+	jobject result = (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, parseMethodID, text, n, srcfile);
+	*z = (*env)->GetIntField(env, result, parseStatusFieldID);
+    return (*env)->GetObjectField(env, result, parseExprFieldID);
 }

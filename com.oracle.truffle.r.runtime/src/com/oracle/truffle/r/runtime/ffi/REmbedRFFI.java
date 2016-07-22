@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,13 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime;
+package com.oracle.truffle.r.runtime.ffi;
 
 /**
- * Thrown in response to the "Q" command in the browser.
+ * Function downcalls related to the embedded API.
  */
-public class BrowserQuitException extends RuntimeException {
+public interface REmbedRFFI {
+    void suicide(String x);
 
-    private static final long serialVersionUID = 1L;
+    void cleanUp(int type, int x, int y);
+
+    String readConsole(String prompt);
+
+    void writeConsole(String x);
+
+    void writeErrConsole(String x);
 
 }

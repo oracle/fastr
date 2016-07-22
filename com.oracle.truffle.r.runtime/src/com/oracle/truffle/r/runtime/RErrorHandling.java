@@ -163,10 +163,26 @@ public class RErrorHandling {
         }
     }
 
+    public static final class HandlerStacks {
+        public final Object handlerStack;
+        public final Object restartStack;
+
+        private HandlerStacks(Object handlerStack, Object restartStack) {
+            this.handlerStack = handlerStack;
+            this.restartStack = restartStack;
+        }
+    }
+
     private static final Object RESTART_TOKEN = new Object();
 
     private static ContextStateImpl getRErrorHandlingState() {
         return RContext.getInstance().stateRErrorHandling;
+    }
+
+    public static HandlerStacks resetAndGetHandlerStacks() {
+        HandlerStacks result = new HandlerStacks(getRErrorHandlingState().handlerStack, getRErrorHandlingState().restartStack);
+        resetStacks();
+        return result;
     }
 
     public static Object getHandlerStack() {
@@ -175,6 +191,21 @@ public class RErrorHandling {
 
     public static Object getRestartStack() {
         return getRErrorHandlingState().restartStack;
+    }
+
+    /**
+     * Resets the handler stacks for a "top-level" evaluation ({@code Rf_tryEval} in the R FFI. This
+     * must be preceded by calls to {@link #getHandlerStack} and {@link #getRestartStack()} and
+     * followed by {@link #restoreStacks} after the evaluation completes.
+     */
+    public static void resetStacks() {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        errorHandlingState.handlerStack = RNull.instance;
+        errorHandlingState.restartStack = RNull.instance;
+    }
+
+    public static void restoreHandlerStacks(HandlerStacks handlerStacks) {
+        restoreStacks(handlerStacks.handlerStack, handlerStacks.restartStack);
     }
 
     public static void restoreStacks(Object savedHandlerStack, Object savedRestartStack) {
