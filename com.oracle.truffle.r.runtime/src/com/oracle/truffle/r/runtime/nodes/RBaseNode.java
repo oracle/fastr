@@ -52,7 +52,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * <li>An instance of the subclass is never used to {@link #replace} an instance of
  * {@link RBaseNode}.</li>
  * </ul>
- *
  */
 public abstract class RBaseNode extends Node {
 
