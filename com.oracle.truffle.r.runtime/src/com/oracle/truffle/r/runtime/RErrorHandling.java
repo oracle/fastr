@@ -163,7 +163,7 @@ public class RErrorHandling {
         }
     }
 
-    public static class HandlerStacks {
+    public static final class HandlerStacks {
         public final Object handlerStack;
         public final Object restartStack;
 

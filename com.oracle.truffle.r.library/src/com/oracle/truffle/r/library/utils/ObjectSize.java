@@ -206,7 +206,7 @@ public abstract class ObjectSize extends RExternalBuiltinNode.Arg1 {
         return size;
     }
 
-    protected static abstract class RecursiveObjectSize extends TruffleBoundaryNode {
+    protected abstract static class RecursiveObjectSize extends TruffleBoundaryNode {
 
         protected abstract int executeInt(Object o);
 

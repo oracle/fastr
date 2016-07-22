@@ -110,7 +110,7 @@ public class DLL {
 
     }
 
-    public static class DLLInfo {
+    public static final class DLLInfo {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"name", "path", "dynamicLookup", "handle", "info"}, RDataFactory.COMPLETE_VECTOR);
         public static final String DLL_INFO_REFERENCE = "DLLInfoReference";
         private static final RStringVector INFO_REFERENCE_CLASS = RDataFactory.createStringVectorFromScalar(DLL_INFO_REFERENCE);

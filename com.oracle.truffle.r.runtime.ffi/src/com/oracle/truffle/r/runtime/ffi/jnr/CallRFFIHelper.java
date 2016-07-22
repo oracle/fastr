@@ -1264,6 +1264,8 @@ public class CallRFFIHelper {
         return RRNG.unifRand();
     }
 
+    // Checkstyle: stop method name check
+
     public static Object R_getGlobalFunctionContext() {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("getGlobalFunctionContext");

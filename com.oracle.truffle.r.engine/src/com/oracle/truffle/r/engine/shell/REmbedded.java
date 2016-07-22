@@ -113,6 +113,8 @@ public class REmbedded {
         runRmainloop(vm);
     }
 
+    // Checkstyle: stop method name check
+
     /**
      * Upcalled from embedded mode to commit suicide.
      */

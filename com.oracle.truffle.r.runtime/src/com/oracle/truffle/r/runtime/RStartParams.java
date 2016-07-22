@@ -44,7 +44,7 @@ public class RStartParams {
 
         private String userName;
 
-        private SA_TYPE(String userName) {
+        SA_TYPE(String userName) {
             this.userName = userName;
         }
 

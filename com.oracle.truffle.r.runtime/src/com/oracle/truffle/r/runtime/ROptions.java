@@ -132,7 +132,7 @@ public class ROptions {
     }
 
     /**
-     * S compatibility - pair list of the options
+     * S compatibility - pair list of the options.
      */
     private static final String DOT_OPTIONS = ".Options";
 
