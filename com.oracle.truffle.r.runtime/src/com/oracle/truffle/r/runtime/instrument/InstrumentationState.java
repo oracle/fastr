@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.instrument;
 
 import java.io.PrintWriter;
+import java.util.HashSet;
 import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.instrumentation.EventBinding;
@@ -58,20 +59,32 @@ public final class InstrumentationState implements RContext.ContextState {
 
     private final RprofState rprofState;
 
+    private final TracememContext tracememContext;
+
+    /**
+     * State used by the {@code tracemem} built-in.
+     */
+    public static final class TracememContext {
+        private HashSet<Object> tracedObjects;
+
+        public HashSet<Object> getTracedObjects() {
+            if (tracedObjects == null) {
+                tracedObjects = new HashSet<>();
+            }
+            return tracedObjects;
+        }
+    }
+
     /**
      * State used by {@code Rprof}.
      *
      */
-    public static class RprofState {
+    public static final class RprofState {
         private PrintWriter out;
         private Thread profileThread;
         private ExecutionEventListener statementListener;
         private long intervalInMillis;
         private boolean lineProfiling;
-
-        public static RprofState newContext(@SuppressWarnings("unused") RContext context) {
-            return new RprofState();
-        }
 
         public void initialize(PrintWriter outA, Thread profileThreadA, ExecutionEventListener statementListenerA, long intervalInMillisA,
                         boolean lineProfilingA) {
@@ -107,6 +120,7 @@ public final class InstrumentationState implements RContext.ContextState {
     private InstrumentationState(Instrumenter instrumenter) {
         this.instrumenter = instrumenter;
         this.rprofState = new RprofState();
+        this.tracememContext = new TracememContext();
     }
 
     public void putTraceBinding(SourceSection ss, EventBinding<?> binding) {
@@ -156,6 +170,10 @@ public final class InstrumentationState implements RContext.ContextState {
 
     public RprofState getRprof() {
         return rprofState;
+    }
+
+    public TracememContext getTracemem() {
+        return tracememContext;
     }
 
     public static InstrumentationState newContext(@SuppressWarnings("unused") RContext context, Instrumenter instrumenter) {

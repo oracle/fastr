@@ -64,7 +64,9 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
 
     @Override
     public RRawVector materialize() {
-        return RDataFactory.createRawVector(new byte[]{value});
+        RRawVector result = RDataFactory.createRawVector(new byte[]{value});
+        MemoryTracer.reportCopying(this, result);
+        return result;
     }
 
     @Override
