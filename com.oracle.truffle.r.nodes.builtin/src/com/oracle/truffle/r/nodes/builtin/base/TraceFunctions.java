@@ -174,6 +174,7 @@ public class TraceFunctions {
         }
 
         private static final class TracememListener implements MemoryTracer.Listener {
+            @Override
             public void reportCopying(RAbstractVector src, RAbstractVector dest) {
                 if (getTracedObjects().contains(src)) {
                     printToStdout(String.format("tracemem[0x%x -> 0x%x]: %s", src.hashCode(), dest.hashCode(), getStackTrace()));
@@ -233,7 +234,7 @@ public class TraceFunctions {
             return result;
         }
 
-        private Object getResult(Object x) {
+        private static Object getResult(Object x) {
             if (!isRNull(x) && getTracedObjects().contains(x)) {
                 RContext.getInstance().setVisible(true);
                 return formatHashCode(x);

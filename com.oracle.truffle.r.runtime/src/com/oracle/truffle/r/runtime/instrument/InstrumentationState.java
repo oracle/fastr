@@ -162,11 +162,8 @@ public final class InstrumentationState implements RContext.ContextState {
     private InstrumentationState(Instrumenter instrumenter) {
         this.instrumenter = instrumenter;
         this.rprofState = new RprofState();
-<<<<<<< HEAD
-        this.browserState = new BrowserState();
-=======
         this.tracememContext = new TracememContext();
->>>>>>> d9025ad903ab788e763440a9679cafcfbb92ed87
+        this.browserState = new BrowserState();
     }
 
     public void putTraceBinding(SourceSection ss, EventBinding<?> binding) {
@@ -218,7 +215,10 @@ public final class InstrumentationState implements RContext.ContextState {
         return rprofState;
     }
 
-<<<<<<< HEAD
+    public TracememContext getTracemem() {
+        return tracememContext;
+    }
+
     public BrowserState getBrowserState() {
         return browserState;
     }
@@ -231,10 +231,6 @@ public final class InstrumentationState implements RContext.ContextState {
 
     public boolean debugGloballyDisabled() {
         return debugGloballyDisabled;
-=======
-    public TracememContext getTracemem() {
-        return tracememContext;
->>>>>>> d9025ad903ab788e763440a9679cafcfbb92ed87
     }
 
     public static InstrumentationState newContext(@SuppressWarnings("unused") RContext context, Instrumenter instrumenter) {
