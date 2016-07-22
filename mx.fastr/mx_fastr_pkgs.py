@@ -186,7 +186,7 @@ def _get_test_outputs(suite, pkg_name, test_info):
             test_info[pkg_name] = TestStatus()
         for f in files:
             ext = os.path.splitext(f)[1]
-            if ext == '.R' or ext == '.prev':
+            if f == 'test_time' or ext == '.R' or ext == '.prev':
                 continue
             # suppress .pdf's for now (we can't compare them)
             if ext == '.pdf':
@@ -295,11 +295,21 @@ def _set_test_status(fastr_test_info):
                 break
             if result != 0:
                 fastr_test_status.status = "FAILED"
+                fastr_testfile_status.status = "FAILED"
                 print "{0}: FastR output mismatch: {1}".format(pkg, gnur_test_output_relpath)
                 break
         # we started out as UNKNOWN
         if not (fastr_test_status.status == "INDETERMINATE" or fastr_test_status.status == "FAILED"):
             fastr_test_status.status = "OK"
+
+        # write out a file with the test status for each output
+        with open(join(_pkg_testdir('fastr', pkg), 'testfile_status'), 'w') as f:
+            for fastr_relpath, fastr_testfile_status in fastr_outputs.iteritems():
+                f.write(fastr_relpath)
+                f.write(' ')
+                f.write(fastr_testfile_status.status)
+                f.write('\n')
+
         print 'END checking ' + pkg
 
 def _find_start(content):
