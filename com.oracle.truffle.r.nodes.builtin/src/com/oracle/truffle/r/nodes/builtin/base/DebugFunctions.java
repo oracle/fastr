@@ -47,7 +47,7 @@ public class DebugFunctions {
         protected void doDebug(RFunction fun, Object text, Object condition, boolean once) throws RError {
             // GnuR does not generate an error for builtins, but debug (obviously) has no effect
             if (!fun.isBuiltin()) {
-                if (!DebugHandling.enableDebug(fun, text, condition, once)) {
+                if (!DebugHandling.enableDebug(fun, text, condition, once, false)) {
                     throw RError.error(this, RError.Message.GENERIC, "failed to attach debug handler (not instrumented?)");
                 }
             }

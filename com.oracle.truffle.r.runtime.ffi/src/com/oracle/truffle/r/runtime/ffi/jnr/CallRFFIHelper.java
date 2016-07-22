@@ -1419,7 +1419,7 @@ public class CallRFFIHelper {
     }
 
     public static int R_insideBrowser() {
-        return RContext.getInstance().isInBrowser() ? 1 : 0;
+        return RContext.getInstance().stateInstrumentation.getBrowserState().inBrowser() ? 1 : 0;
     }
 
 }

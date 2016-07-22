@@ -25,11 +25,12 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * Helper for tracing memory related events. All implementors of {@link RAbstractVector} are
- * expected to report to {@link MemoryTracer} and othes can listen to them through {@link Listener}
+ * expected to report to {@link MemoryTracer} and others can listen to them through {@link Listener}
  * interface. Use method {@link #reportEvents()} to start the tracing.
  */
 public final class MemoryTracer {
@@ -58,10 +59,11 @@ public final class MemoryTracer {
 
     /**
      * Reports copy event to the listener. If there are no traced objects, this should turn into
-     * no-op.
+     * no-op. TODO might be worth interposing on a change in {@code tracingState} to turn off the
+     * collection.
      */
     public static void reportCopying(RAbstractVector source, RAbstractVector dest) {
-        if (!noMemoryTracingAssumption.isValid() && listener != null) {
+        if (!noMemoryTracingAssumption.isValid() && listener != null && RContext.getInstance().stateInstrumentation.getTracingState()) {
             listener.reportCopying(source, dest);
         }
     }

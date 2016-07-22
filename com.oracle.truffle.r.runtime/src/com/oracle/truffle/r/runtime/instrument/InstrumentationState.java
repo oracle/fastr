@@ -53,10 +53,19 @@ public final class InstrumentationState implements RContext.ContextState {
      */
     private final WeakHashMap<SourceSection, ExecutionEventListener> debugListenerMap = new WeakHashMap<>();
 
+    /**
+     * The {@link Instrumenter} associated with this {@link RContext}. Never {@code null}.
+     */
     private final Instrumenter instrumenter;
 
+    /**
+     * The {@link Profiler}, if any, associated with this {@link RContext}.
+     */
     private Profiler profiler;
 
+    /**
+     * The {@link RprofState} state, if any, associated with this {@link RContext}.
+     */
     private final RprofState rprofState;
 
     private final TracememContext tracememContext;
@@ -74,6 +83,18 @@ public final class InstrumentationState implements RContext.ContextState {
             return tracedObjects;
         }
     }
+
+    /**
+     * The {@link BrowserState} state, if any, associated with this {@link RContext}.
+     */
+    private final BrowserState browserState;
+
+    /**
+     * Whether debugging is globally disabled in this {@link RContext}. Used to (temporarily)
+     * disable all debugging across calls that are used internally in the implementation.
+     *
+     */
+    private boolean debugGloballyDisabled;
 
     /**
      * State used by {@code Rprof}.
@@ -117,10 +138,32 @@ public final class InstrumentationState implements RContext.ContextState {
 
     }
 
+    public static class BrowserState {
+        private boolean inBrowser;
+        private String lastEmptyLineCommand = "n";
+
+        public void setInBrowser(boolean state) {
+            this.inBrowser = state;
+        }
+
+        public boolean inBrowser() {
+            return inBrowser;
+        }
+
+        public void setLastEmptyLineCommand(String s) {
+            lastEmptyLineCommand = s;
+        }
+
+        public String lastEmptyLineCommand() {
+            return lastEmptyLineCommand;
+        }
+    }
+
     private InstrumentationState(Instrumenter instrumenter) {
         this.instrumenter = instrumenter;
         this.rprofState = new RprofState();
         this.tracememContext = new TracememContext();
+        this.browserState = new BrowserState();
     }
 
     public void putTraceBinding(SourceSection ss, EventBinding<?> binding) {
@@ -174,6 +217,20 @@ public final class InstrumentationState implements RContext.ContextState {
 
     public TracememContext getTracemem() {
         return tracememContext;
+    }
+
+    public BrowserState getBrowserState() {
+        return browserState;
+    }
+
+    public boolean setDebugGloballyDisabled(boolean state) {
+        boolean current = debugGloballyDisabled;
+        this.debugGloballyDisabled = state;
+        return current;
+    }
+
+    public boolean debugGloballyDisabled() {
+        return debugGloballyDisabled;
     }
 
     public static InstrumentationState newContext(@SuppressWarnings("unused") RContext context, Instrumenter instrumenter) {

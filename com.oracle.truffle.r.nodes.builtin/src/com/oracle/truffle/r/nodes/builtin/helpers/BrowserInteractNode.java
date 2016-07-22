@@ -36,18 +36,25 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * The interactive component of the {@code browser} function.
  *
- * TODO GnuR does not allow quit() from the browser. This really needs to be checked in the quit
- * builtin somehow.
+ * This is called in two ways:
+ * <ol>
+ * <li>implicitly when a function has had {@code debug} called</li>
+ * <li>explicitly by a call in the source code. N.B. in this case we must enable debugging
+ * (instrumentation) because a {@code n} command must stop at the next statement.</li>
+ * </ol>
+ *
  */
 public abstract class BrowserInteractNode extends RNode {
 
@@ -56,18 +63,19 @@ public abstract class BrowserInteractNode extends RNode {
     public static final int CONTINUE = 2;
     public static final int FINISH = 3;
 
-    private static String lastEmptyLineCommand = "n";
-
     @Specialization
     protected int interact(VirtualFrame frame) {
         CompilerDirectives.transferToInterpreter();
         MaterializedFrame mFrame = frame.materialize();
         ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
+        BrowserState browserState = RContext.getInstance().stateInstrumentation.getBrowserState();
         String savedPrompt = ch.getPrompt();
         ch.setPrompt(browserPrompt(RArguments.getDepth(frame)));
+        RFunction caller = RArguments.getFunction(frame);
+        boolean callerIsDebugged = DebugHandling.isDebugged(caller);
         int exitMode = NEXT;
         try {
-            RContext.getInstance().setInBrowser(true);
+            browserState.setInBrowser(true);
             LW: while (true) {
                 String input = ch.readLine();
                 if (input != null) {
@@ -76,7 +84,7 @@ public abstract class BrowserInteractNode extends RNode {
                 if (input == null || input.length() == 0) {
                     byte browserNLdisabledVec = RRuntime.asLogicalObject(RContext.getInstance().stateROptions.getValue("browserNLdisabled"));
                     if (!RRuntime.fromLogical(browserNLdisabledVec)) {
-                        input = lastEmptyLineCommand;
+                        input = browserState.lastEmptyLineCommand();
                     }
                 }
                 switch (input) {
@@ -86,11 +94,17 @@ public abstract class BrowserInteractNode extends RNode {
                         break LW;
                     case "n":
                         exitMode = NEXT;
-                        lastEmptyLineCommand = "n";
+                        if (!callerIsDebugged) {
+                            DebugHandling.enableDebug(caller, "", "", true, true);
+                        }
+                        browserState.setLastEmptyLineCommand("n");
                         break LW;
                     case "s":
                         exitMode = STEP;
-                        lastEmptyLineCommand = "s";
+                        if (!callerIsDebugged) {
+                            DebugHandling.enableDebug(caller, "", "", true, true);
+                        }
+                        browserState.setLastEmptyLineCommand("s");
                         break LW;
                     case "f":
                         exitMode = FINISH;
@@ -128,7 +142,7 @@ public abstract class BrowserInteractNode extends RNode {
             }
         } finally {
             ch.setPrompt(savedPrompt);
-            RContext.getInstance().setInBrowser(false);
+            browserState.setInBrowser(false);
         }
         return exitMode;
     }
