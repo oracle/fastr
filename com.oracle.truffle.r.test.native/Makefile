@@ -39,4 +39,3 @@ clean:
 ifneq ($(OSNAME), SunOS)
 	$(MAKE) -C embedded clean
 endif
-	
