@@ -101,18 +101,14 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 public class DebugHandling {
 
     /**
-     * This flag is used to (temporarily) disable all debugging across calls that are used
-     * internally in the implementation.
-     */
-    private static boolean globalDisable;
-
-    /**
      * Attach the DebugHandling instrument to the FunctionStatementsNode and all syntactic nodes.
+     *
+     * @param implicit TODO
      */
-    public static boolean enableDebug(RFunction func, Object text, Object condition, boolean once) {
+    public static boolean enableDebug(RFunction func, Object text, Object condition, boolean once, boolean implicit) {
         FunctionStatementsEventListener fbr = getFunctionStatementsEventListener(func);
         if (fbr == null) {
-            attachDebugHandler(func, text, condition, once);
+            attachDebugHandler(func, text, condition, once, implicit);
         } else {
             fbr.enable();
         }
@@ -142,25 +138,12 @@ public class DebugHandling {
         return (FunctionStatementsEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(fdn.getSourceSection());
     }
 
-    /**
-     * Disables/enables debugging globally. Intended to be used for short period, typically while
-     * executing functions used internally by the implementation.
-     *
-     * @param disable {@code true} to disable, {@code false} to enable.
-     * @return the current value (default {@code false}.
-     */
-    public static boolean globalDisable(boolean disable) {
-        boolean current = globalDisable;
-        globalDisable = disable;
-        return current;
+    private static void attachDebugHandler(RFunction func, Object text, Object condition, boolean once, boolean implicit) {
+        attachDebugHandler(RInstrumentation.getFunctionDefinitionNode(func), text, condition, once, implicit);
     }
 
-    private static void attachDebugHandler(RFunction func, Object text, Object condition, boolean once) {
-        attachDebugHandler(RInstrumentation.getFunctionDefinitionNode(func), text, condition, once);
-    }
-
-    private static FunctionStatementsEventListener attachDebugHandler(FunctionDefinitionNode fdn, Object text, Object condition, boolean once) {
-        FunctionStatementsEventListener fser = new FunctionStatementsEventListener(fdn, text, condition, once);
+    private static FunctionStatementsEventListener attachDebugHandler(FunctionDefinitionNode fdn, Object text, Object condition, boolean once, boolean implicit) {
+        FunctionStatementsEventListener fser = new FunctionStatementsEventListener(fdn, text, condition, once, implicit);
         // First attach the main listener on the START_FUNCTION
         Instrumenter instrumenter = RInstrumentation.getInstrumenter();
         SourceSectionFilter.Builder functionBuilder = RInstrumentation.createFunctionFilter(fdn, StandardTags.RootTag.class);
@@ -189,7 +172,7 @@ public class DebugHandling {
         FunctionStatementsEventListener fser = getFunctionStatementsEventListener(fdn);
         if (fser == null) {
             // attach a "once" listener
-            fser = attachDebugHandler(fdn, null, null, true);
+            fser = attachDebugHandler(fdn, null, null, true, false);
         } else {
             if (fser.disabled()) {
                 fser.enable();
@@ -221,7 +204,7 @@ public class DebugHandling {
         }
 
         boolean disabled() {
-            return disabled || globalDisable;
+            return disabled || RContext.getInstance().stateInstrumentation.debugGloballyDisabled();
         }
 
         void disable() {
@@ -315,17 +298,23 @@ public class DebugHandling {
          */
         private final boolean once;
         /**
+         * Denotes that this was installed by an explicit call to {@code browser()} on an otherwise
+         * undebugged function. {@code assert once == true}.
+         */
+        private final boolean implicit;
+        /**
          * Records whether a permanent handler was (temporarily) enabled for a step-into.
          *
          */
         private boolean enabledForStepInto;
         private boolean continuing;
 
-        FunctionStatementsEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once) {
+        FunctionStatementsEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once, boolean implicit) {
             super(functionDefinitionNode, text, condition);
             RContext.getInstance().stateInstrumentation.putDebugListener(functionDefinitionNode.getSourceSection(), this);
             statementListener = new StatementEventListener(functionDefinitionNode, text, condition);
             this.once = once;
+            this.implicit = implicit;
         }
 
         StatementEventListener getStatementListener() {
@@ -415,8 +404,10 @@ public class DebugHandling {
         }
 
         private void returnCleanup(VirtualFrame frame) {
-            print("exiting from: ", false);
-            printCall(frame);
+            if (!implicit) {
+                print("exiting from: ", false);
+                printCall(frame);
+            }
             if (once || enabledForStepInto) {
                 disable();
             } else if (continuing) {
@@ -559,7 +550,7 @@ public class DebugHandling {
 
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
-            if (!globalDisable) {
+            if (!RContext.getInstance().stateInstrumentation.debugGloballyDisabled()) {
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) context.getInstrumentedNode().getRootNode();
                 ensureSingleStep(fdn);
                 functionStatementsEventListener.clearStepInstrument();

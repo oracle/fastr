@@ -293,11 +293,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     private boolean nullS4Object = false;
 
-    /**
-     * This used to prevent a "quit" from the browser (as per GnuR).
-     */
-    private boolean inBrowser = false;
-
     private boolean active;
 
     private PrimitiveMethodsInfo primitiveMethodsInfo;
@@ -621,14 +616,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public void setNullS4Object(boolean on) {
         nullS4Object = on;
-    }
-
-    public boolean isInBrowser() {
-        return inBrowser;
-    }
-
-    public void setInBrowser(boolean on) {
-        inBrowser = on;
     }
 
     public boolean allowPrimitiveMethods() {
