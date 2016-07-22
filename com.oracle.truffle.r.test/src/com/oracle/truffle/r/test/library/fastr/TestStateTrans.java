@@ -31,14 +31,14 @@ public class TestStateTrans extends TestBase {
 
     @Test
     public void testTransitions() {
-        assertEvalFastR("{ f<-function(x) fastr.refcountinfo(x); f(c(1,2)) }", "1");
-        assertEvalFastR("{ f<-function(x) { y<-x; fastr.refcountinfo(y) }; f(c(1,2)) }", "2");
-        assertEvalFastR("{ x<-c(1,2); f<-function(x) fastr.refcountinfo(x); f(x) }", "2");
-        assertEvalFastR("{ f<-function(x) { xi1<-fastr.identity(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }; f(c(1,2)) }", "TRUE");
-        assertEvalFastR("{ f<-function(y) { x<-y; xi1<-fastr.identity(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }; f(c(1,2)) }", "FALSE");
+        assertEvalFastR("{ f<-function(x) .fastr.refcountinfo(x); f(c(1,2)) }", "1");
+        assertEvalFastR("{ f<-function(x) { y<-x; .fastr.refcountinfo(y) }; f(c(1,2)) }", "2");
+        assertEvalFastR("{ x<-c(1,2); f<-function(x) .fastr.refcountinfo(x); f(x) }", "2");
+        assertEvalFastR("{ f<-function(x) { xi1<-.fastr.identity(x); x[1]<-7; xi2<-.fastr.identity(x); xi1 == xi2 }; f(c(1,2)) }", "TRUE");
+        assertEvalFastR("{ f<-function(y) { x<-y; xi1<-.fastr.identity(x); x[1]<-7; xi2<-.fastr.identity(x); xi1 == xi2 }; f(c(1,2)) }", "FALSE");
         // after returning from read-only functions, vector should be modifiable without
         // creating a copy
-        assertEvalFastR("{ x<-rep(1, 100); xi1<-fastr.identity(x); f<-function(x) { x }; f(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }", "TRUE");
-        assertEvalFastR("{ x<-rep(1, 100); xi1<-fastr.identity(x); f<-function(x) { y<-x; y }; f(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }", "TRUE");
+        assertEvalFastR("{ x<-rep(1, 100); xi1<-.fastr.identity(x); f<-function(x) { x }; f(x); x[1]<-7; xi2<-.fastr.identity(x); xi1 == xi2 }", "TRUE");
+        assertEvalFastR("{ x<-rep(1, 100); xi1<-.fastr.identity(x); f<-function(x) { y<-x; y }; f(x); x[1]<-7; xi2<-.fastr.identity(x); xi1 == xi2 }", "TRUE");
     }
 }
