@@ -541,6 +541,9 @@ public class TestBuiltin_c extends TestBase {
         assertEval("{ setClass(\"foo\", representation(d=\"numeric\")); x<-new(\"foo\", d=42); y<-c(x, 7); y[[1]] }");
 
         assertEval("{ typeof(c(as.symbol(\"foo\"), 42)) }");
+
+        // names vector created by combine cannot be temporary
+        assertEval("{ x<-c(a=42); y<-c(b=7); z<-c(x,y); w<-names(z); w[[1]]<-\"c\"; z }");
     }
 
     @Test
