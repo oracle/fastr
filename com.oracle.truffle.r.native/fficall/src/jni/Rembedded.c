@@ -526,6 +526,7 @@ static char *get_classpath(char *r_home) {
 				break;
 			} else {
 				bufptr += count;
+				max -= count;
 			}
 		}
 		close(pipefd[0]);
