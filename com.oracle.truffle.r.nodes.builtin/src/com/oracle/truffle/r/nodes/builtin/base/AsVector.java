@@ -69,6 +69,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 @RBuiltin(name = "as.vector", kind = INTERNAL, parameterNames = {"x", "mode"})
 public abstract class AsVector extends RBuiltinNode {
@@ -207,12 +208,20 @@ public abstract class AsVector extends RBuiltinNode {
         }
 
         @Specialization(guards = "modeIsPairList(mode)")
+        @TruffleBoundary
         protected Object asVectorPairList(RList x, @SuppressWarnings("unused") String mode) {
             // TODO implement non-empty element list conversion; this is a placeholder for type test
             if (x.getLength() == 0) {
                 return RNull.instance;
             } else {
-                throw RError.nyi(RError.SHOW_CALLER, "non-empty lists");
+                Object list = RNull.instance;
+                RStringVector names = x.getNames();
+                for (int i = x.getLength() - 1; i >= 0; i--) {
+                    Object name = names == null ? RNull.instance : RDataFactory.createSymbolInterned(names.getDataAt(i));
+                    Object data = x.getDataAt(i);
+                    list = RDataFactory.createPairList(data, list, name, SEXPTYPE.LISTSXP);
+                }
+                return list;
             }
         }
 
