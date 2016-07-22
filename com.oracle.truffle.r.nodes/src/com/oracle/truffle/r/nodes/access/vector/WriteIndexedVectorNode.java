@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -87,19 +88,19 @@ abstract class WriteIndexedVectorNode extends Node {
     @Child private WriteIndexedVectorNode innerVectorNode;
 
     @SuppressWarnings("unchecked")
-    protected WriteIndexedVectorNode(RType vectorType, int totalDimensions, int dimensionIndex, boolean positionAppliesToRight, boolean skipNA, boolean setListElementAsObject) {
-        this.scalarNode = (WriteIndexedScalarNode<RAbstractVector, RTypedValue>) createIndexedAction(vectorType, setListElementAsObject);
+    protected WriteIndexedVectorNode(RType vectorType, int totalDimensions, int dimensionIndex, boolean positionAppliesToRight, boolean skipNA, boolean setListElementAsObject, boolean isReplace) {
+        this.scalarNode = (WriteIndexedScalarNode<RAbstractVector, RTypedValue>) createIndexedAction(vectorType, setListElementAsObject, isReplace);
         this.dimensionIndex = dimensionIndex;
         this.totalDimensions = totalDimensions;
         this.positionsApplyToRight = positionAppliesToRight;
         this.skipNA = skipNA;
         if (dimensionIndex > 0) {
-            innerVectorNode = WriteIndexedVectorNodeGen.create(vectorType, totalDimensions, dimensionIndex - 1, positionAppliesToRight, skipNA, setListElementAsObject);
+            innerVectorNode = WriteIndexedVectorNodeGen.create(vectorType, totalDimensions, dimensionIndex - 1, positionAppliesToRight, skipNA, setListElementAsObject, isReplace);
         }
     }
 
-    public static WriteIndexedVectorNode create(RType vectorType, int totalDimensions, boolean positionAppliesToValue, boolean skipNA, boolean setListElementAsObject) {
-        return WriteIndexedVectorNodeGen.create(vectorType, totalDimensions, totalDimensions - 1, positionAppliesToValue, skipNA, setListElementAsObject);
+    public static WriteIndexedVectorNode create(RType vectorType, int totalDimensions, boolean positionAppliesToValue, boolean skipNA, boolean setListElementAsObject, boolean isReplace) {
+        return WriteIndexedVectorNodeGen.create(vectorType, totalDimensions, totalDimensions - 1, positionAppliesToValue, skipNA, setListElementAsObject, isReplace);
     }
 
     public NACheck getValueNACheck() {
@@ -375,7 +376,7 @@ abstract class WriteIndexedVectorNode extends Node {
         }
     }
 
-    private static WriteIndexedScalarNode<? extends RAbstractVector, ? extends RTypedValue> createIndexedAction(RType type, boolean setListElementAsObject) {
+    private static WriteIndexedScalarNode<? extends RAbstractVector, ? extends RTypedValue> createIndexedAction(RType type, boolean setListElementAsObject, boolean isReplace) {
         switch (type) {
             case Logical:
                 return new WriteLogicalAction();
@@ -393,7 +394,7 @@ abstract class WriteIndexedVectorNode extends Node {
             case Expression:
             case PairList:
             case List:
-                return new WriteListAction(setListElementAsObject);
+                return new WriteListAction(setListElementAsObject, isReplace);
             default:
                 throw RInternalError.shouldNotReachHere();
         }
@@ -470,9 +471,27 @@ abstract class WriteIndexedVectorNode extends Node {
     private static final class WriteListAction extends WriteIndexedScalarNode<RAbstractListVector, RTypedValue> {
 
         private final boolean setListElementAsObject;
+        private final boolean isReplace;
+        @CompilationFinal private ValueProfile rightValueProfile;
+        @CompilationFinal private ConditionProfile rightIsShared;
+        @CompilationFinal private ConditionProfile rightIsNotTemporary;
 
-        WriteListAction(boolean setListElementAsObject) {
+        WriteListAction(boolean setListElementAsObject, boolean isReplace) {
             this.setListElementAsObject = setListElementAsObject;
+            this.isReplace = isReplace;
+        }
+
+        private Object copyValueOnAssignment(Object value) {
+            if (value instanceof RShareable && value instanceof RAbstractVector) {
+                RShareable val = (RShareable) value;
+                if (rightIsShared.profile(val.isShared())) {
+                    val = val.copy();
+                } else if (rightIsNotTemporary.profile(!val.isTemporary())) {
+                    val.incRefCount();
+                }
+                return val;
+            }
+            return value;
         }
 
         @Override
@@ -487,7 +506,16 @@ abstract class WriteIndexedVectorNode extends Node {
             } else {
                 rightValue = ((RAbstractContainer) rightAccess).getDataAtAsObject(rightStore, rightIndex);
             }
-
+            if (isReplace && leftAccess.getDataAtAsObject(leftStore, leftIndex) != rightValue) {
+                if (rightValueProfile == null) {
+                    // acts as a branch profile
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    rightValueProfile = ValueProfile.createClassProfile();
+                    rightIsShared = ConditionProfile.createBinaryProfile();
+                    rightIsNotTemporary = ConditionProfile.createBinaryProfile();
+                }
+                rightValue = copyValueOnAssignment(rightValueProfile.profile(rightValue));
+            }
             leftAccess.setDataAt(leftStore, leftIndex, rightValue);
             valueNACheck.checkListElement(rightValue);
         }

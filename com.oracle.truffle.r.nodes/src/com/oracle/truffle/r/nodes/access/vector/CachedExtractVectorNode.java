@@ -99,7 +99,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         this.dropDimensions = logicalAsBoolean(dropDimensions, DEFAULT_DROP_DIMENSION);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, this.exact, false, recursive);
         if (error == null && vectorType != RType.Null && vectorType != RType.Environment) {
-            this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length, true, false, false);
+            this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length, true, false, false, false);
         }
     }
 

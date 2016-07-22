@@ -74,7 +74,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final BranchProfile warningBranch = BranchProfile.create();
     private final RAttributeProfiles vectorNamesProfile = RAttributeProfiles.create();
     private final RAttributeProfiles positionNamesProfile = RAttributeProfiles.create();
-    private final ConditionProfile rightIsShared = ConditionProfile.createBinaryProfile();
     private final ConditionProfile valueIsNA = ConditionProfile.createBinaryProfile();
     private final BranchProfile resizeProfile = BranchProfile.create();
     private final BranchProfile sharedProfile = BranchProfile.create();
@@ -114,7 +113,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         Object[] convertedPositions = filterPositions(positions);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, true, true, recursive);
         if (castType != null && !castType.isNull()) {
-            this.writeVectorNode = WriteIndexedVectorNode.create(castType, convertedPositions.length, false, true, mode.isSubscript() && !isDeleteElements());
+            this.writeVectorNode = WriteIndexedVectorNode.create(castType, convertedPositions.length, false, true, mode.isSubscript() && !isDeleteElements(), true);
         }
     }
 
@@ -232,11 +231,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             verifyValueLength(positionProfiles, valueLength);
         }
 
-        if (isList()) {
-            if (mode.isSubscript()) {
-                value = copyValueOnAssignment(value);
-            }
-        } else if (value instanceof RAbstractVector) {
+        if (!isList() && value instanceof RAbstractVector) {
             value = ((RAbstractVector) value).castSafe(castType, valueIsNA);
         }
 
@@ -500,21 +495,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         CompilerAsserts.partialEvaluationConstant(returnVector.getClass());
 
         return returnVector;
-    }
-
-    private final ConditionProfile rightIsNotTemporary = ConditionProfile.createBinaryProfile();
-
-    private RTypedValue copyValueOnAssignment(RTypedValue value) {
-        if (value instanceof RShareable && value instanceof RAbstractVector) {
-            RShareable val = (RShareable) value;
-            if (rightIsShared.profile(val.isShared())) {
-                val = val.copy();
-            } else if (rightIsNotTemporary.profile(!val.isTemporary())) {
-                val.incRefCount();
-            }
-            return val;
-        }
-        return value;
     }
 
     // TODO (chumer) this is way to compilicated at the moment
