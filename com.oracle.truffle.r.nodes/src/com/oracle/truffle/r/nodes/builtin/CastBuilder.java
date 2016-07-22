@@ -387,7 +387,7 @@ public final class CastBuilder {
 
         @Override
         public <T, R extends T> TypePredicateArgumentFilter<T, R> nullValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x == RNull.instance || x == null);
+            return new TypePredicateArgumentFilter<>(x -> x == RNull.instance || x == null, true);
         }
 
         @Override

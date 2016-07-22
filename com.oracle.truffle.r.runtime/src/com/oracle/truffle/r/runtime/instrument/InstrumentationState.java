@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.instrument;
 
 import java.io.PrintWriter;
+import java.util.HashSet;
 import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.instrumentation.EventBinding;
@@ -67,6 +68,22 @@ public final class InstrumentationState implements RContext.ContextState {
      */
     private final RprofState rprofState;
 
+    private final TracememContext tracememContext;
+
+    /**
+     * State used by the {@code tracemem} built-in.
+     */
+    public static final class TracememContext {
+        private HashSet<Object> tracedObjects;
+
+        public HashSet<Object> getTracedObjects() {
+            if (tracedObjects == null) {
+                tracedObjects = new HashSet<>();
+            }
+            return tracedObjects;
+        }
+    }
+
     /**
      * The {@link BrowserState} state, if any, associated with this {@link RContext}.
      */
@@ -83,7 +100,7 @@ public final class InstrumentationState implements RContext.ContextState {
      * State used by {@code Rprof}.
      *
      */
-    public static class RprofState {
+    public static final class RprofState {
         private PrintWriter out;
         private Thread profileThread;
         private ExecutionEventListener statementListener;
@@ -145,7 +162,11 @@ public final class InstrumentationState implements RContext.ContextState {
     private InstrumentationState(Instrumenter instrumenter) {
         this.instrumenter = instrumenter;
         this.rprofState = new RprofState();
+<<<<<<< HEAD
         this.browserState = new BrowserState();
+=======
+        this.tracememContext = new TracememContext();
+>>>>>>> d9025ad903ab788e763440a9679cafcfbb92ed87
     }
 
     public void putTraceBinding(SourceSection ss, EventBinding<?> binding) {
@@ -197,6 +218,7 @@ public final class InstrumentationState implements RContext.ContextState {
         return rprofState;
     }
 
+<<<<<<< HEAD
     public BrowserState getBrowserState() {
         return browserState;
     }
@@ -209,6 +231,10 @@ public final class InstrumentationState implements RContext.ContextState {
 
     public boolean debugGloballyDisabled() {
         return debugGloballyDisabled;
+=======
+    public TracememContext getTracemem() {
+        return tracememContext;
+>>>>>>> d9025ad903ab788e763440a9679cafcfbb92ed87
     }
 
     public static InstrumentationState newContext(@SuppressWarnings("unused") RContext context, Instrumenter instrumenter) {

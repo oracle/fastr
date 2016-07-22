@@ -116,7 +116,7 @@ endif
 
 $(GNUR_HOME)/Makefile:
 	ed $(GNUR_HOME)/src/extra/xz/Makefile.in < patchXzMakefile
-	(cd $(GNUR_HOME); ./configure --with-x=no --without-recommended-packages $(GNUR_CONFIG_FLAGS) > gnur_configure.log 2>&1)
+	(cd $(GNUR_HOME); ./configure --with-x=no --without-recommended-packages --enable-memory-profiling $(GNUR_CONFIG_FLAGS) > gnur_configure.log 2>&1)
 
 build: $(GNUR_HOME)/bin/R
 

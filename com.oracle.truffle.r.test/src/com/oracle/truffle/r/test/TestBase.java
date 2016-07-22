@@ -22,6 +22,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -68,6 +69,7 @@ public class TestBase {
         IgnoreWarningContext, // the warning context is ignored
         MayIgnoreErrorContext,
         MayIgnoreWarningContext,
+        ContainsReferences, // replaces references in form of 0xbcdef1 for numbers
         IgnoreWhitespace;
     }
 
@@ -354,6 +356,11 @@ public class TestBase {
     private static final boolean FULL_COMPARE_ERRORS = false;
 
     /**
+     * To implement {@link Output#ContainsReferences}.
+     **/
+    private static final Pattern REFERENCE_PATTERN = Pattern.compile("(?<id>(0x[0-9abcdefx]+))");
+
+    /**
      * Test a given string with R source against expected output. This is (currently) an exact
      * match, so any warnings or errors will cause a failure until FastR matches GnuR in that
      * respect.
@@ -459,6 +466,7 @@ public class TestBase {
         boolean mayContainError = TestTrait.contains(traits, Output.MayIgnoreErrorContext);
         boolean ambiguousError = TestTrait.contains(traits, Output.IgnoreErrorMessage);
         boolean ignoreWhitespace = TestTrait.contains(traits, Output.IgnoreWhitespace);
+        boolean containsReferences = TestTrait.contains(traits, Output.ContainsReferences);
         boolean nonSharedContext = TestTrait.contains(traits, Context.NonShared);
         boolean longTimeout = TestTrait.contains(traits, Context.LongTimeout);
 
@@ -477,7 +485,7 @@ public class TestBase {
                     result = result.replaceAll("\\s+", "");
                 }
 
-                CheckResult checkResult = checkResult(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError);
+                CheckResult checkResult = checkResult(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError, containsReferences);
 
                 result = checkResult.result;
                 expected = checkResult.expected;
@@ -539,14 +547,18 @@ public class TestBase {
     }
 
     private CheckResult checkResult(WhiteList[] whiteLists, String input, String originalExpected, String originalResult, boolean containsWarning, boolean mayContainWarning, boolean containsError,
-                    boolean mayContainError, boolean ambiguousError) {
+                    boolean mayContainError, boolean ambiguousError, boolean convertReferences) {
         boolean ok;
         String result = originalResult;
         String expected = originalExpected;
+        if (convertReferences) {
+            result = convertReferencesInOutput(result);
+            expected = convertReferencesInOutput(expected);
+        }
         if (input.equals("c(1i,1i,1i)/(-(1/0))")) {
             System.console();
         }
-        if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError)) {
+        if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError, convertReferences)) {
             ok = true;
             if (containsError && !ambiguousError) {
                 System.out.println("unexpected correct error message: " + getTestContext());
@@ -575,8 +587,23 @@ public class TestBase {
         return new CheckResult(ok, result, expected);
     }
 
+    private static String convertReferencesInOutput(String result) {
+        Matcher matcher = REFERENCE_PATTERN.matcher(result);
+        HashMap<String, Integer> idsMap = new HashMap<>();
+        int currentId = 1;
+        while (matcher.find()) {
+            if (idsMap.putIfAbsent(matcher.group("id"), currentId) == null) {
+                currentId++;
+            }
+        }
+        for (Entry<String, Integer> item : idsMap.entrySet()) {
+            result = result.replace(item.getKey(), item.getValue().toString());
+        }
+        return result;
+    }
+
     private boolean searchWhiteLists(WhiteList[] whiteLists, String input, String expected, String result, boolean containsWarning, boolean mayContainWarning, boolean containsError,
-                    boolean mayContainError, boolean ambiguousError) {
+                    boolean mayContainError, boolean ambiguousError, boolean convertReferences) {
         if (whiteLists == null) {
             return false;
         }
@@ -584,13 +611,13 @@ public class TestBase {
             WhiteList.Results wlr = list.get(input);
             if (wlr != null) {
                 // Sanity check that "expected" matches the entry in the WhiteList
-                CheckResult checkedResult = checkResult(null, input, wlr.expected, expected, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError);
+                CheckResult checkedResult = checkResult(null, input, wlr.expected, expected, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError, convertReferences);
                 if (!checkedResult.ok) {
                     System.out.println("expected output does not match: " + wlr.expected + " vs. " + expected);
                     return false;
                 }
                 // Substitute the FastR output and try to match that
-                CheckResult fastRResult = checkResult(null, input, wlr.fastR, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError);
+                CheckResult fastRResult = checkResult(null, input, wlr.fastR, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError, convertReferences);
                 if (fastRResult.ok) {
                     list.markUsed(input);
                     return true;

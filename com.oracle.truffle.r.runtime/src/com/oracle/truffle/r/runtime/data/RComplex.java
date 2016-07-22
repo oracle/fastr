@@ -67,7 +67,9 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
 
     @Override
     public RComplexVector materialize() {
-        return RDataFactory.createComplexVectorFromScalar(this);
+        RComplexVector result = RDataFactory.createComplexVectorFromScalar(this);
+        MemoryTracer.reportCopying(this, result);
+        return result;
     }
 
     @Override
