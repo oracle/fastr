@@ -163,7 +163,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
             RList resDimNames = newDimNames;
             if (newDimNamesLength < dimensions.length) {
                 // resize the array and fill the missing entries with NULL-s
-                resDimNames = resDimNames.copyResized(dimensions.length, true);
+                resDimNames = (RList) resDimNames.copyResized(dimensions.length, true);
                 resDimNames.setAttributes(newDimNames);
                 for (int i = newDimNamesLength; i < dimensions.length; i++) {
                     resDimNames.updateDataAt(i, RNull.instance, null);

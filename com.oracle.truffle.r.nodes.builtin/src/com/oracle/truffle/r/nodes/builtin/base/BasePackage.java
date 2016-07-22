@@ -581,6 +581,9 @@ public class BasePackage extends RBuiltinPackage {
         add(TraceFunctions.PrimTrace.class, TraceFunctionsFactory.PrimTraceNodeGen::create);
         add(TraceFunctions.PrimUnTrace.class, TraceFunctionsFactory.PrimUnTraceNodeGen::create);
         add(TraceFunctions.TraceOnOff.class, TraceFunctionsFactory.TraceOnOffNodeGen::create);
+        add(TraceFunctions.Tracemem.class, TraceFunctionsFactory.TracememNodeGen::create);
+        add(TraceFunctions.Retracemem.class, TraceFunctionsFactory.RetracememNodeGen::create);
+        add(TraceFunctions.Untracemem.class, TraceFunctionsFactory.UntracememNodeGen::create);
         add(Transpose.class, TransposeNodeGen::create);
         add(TrigExpFunctions.Acos.class, TrigExpFunctionsFactory.AcosNodeGen::create);
         add(TrigExpFunctions.Acosh.class, TrigExpFunctionsFactory.AcoshNodeGen::create);

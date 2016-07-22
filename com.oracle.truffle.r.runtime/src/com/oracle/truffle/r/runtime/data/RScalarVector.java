@@ -142,22 +142,30 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
 
     @Override
     public RVector copyResized(int size, boolean fillNA) {
-        return materialize().copyResized(size, fillNA);
+        RVector result = materialize().copyResized(size, fillNA);
+        MemoryTracer.reportCopying(this, result);
+        return result;
     }
 
     @Override
     public RAbstractVector copyWithNewDimensions(int[] newDimensions) {
-        return materialize().copyWithNewDimensions(newDimensions);
+        RAbstractVector result = materialize().copyWithNewDimensions(newDimensions);
+        MemoryTracer.reportCopying(this, result);
+        return result;
     }
 
     @Override
     public RVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        return materialize().copyResizedWithDimensions(newDimensions, fillNA);
+        RVector result = materialize().copyResizedWithDimensions(newDimensions, fillNA);
+        MemoryTracer.reportCopying(this, result);
+        return result;
     }
 
     @Override
     public RAbstractVector copyDropAttributes() {
-        return materialize().copyDropAttributes();
+        RVector result = materialize().copyDropAttributes();
+        MemoryTracer.reportCopying(this, result);
+        return result;
     }
 
     @Override

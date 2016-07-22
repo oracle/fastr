@@ -366,14 +366,14 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public Object callback(RFunction f, Object[] args) {
-        boolean gd = DebugHandling.globalDisable(true);
+        boolean gd = RContext.getInstance().stateInstrumentation.setDebugGloballyDisabled(true);
         try {
             return RContext.getEngine().evalFunction(f, null, null, args);
         } catch (ReturnException ex) {
             // cannot throw return exceptions further up.
             return ex.getResult();
         } finally {
-            DebugHandling.globalDisable(gd);
+            RContext.getInstance().stateInstrumentation.setDebugGloballyDisabled(gd);
         }
     }
 
@@ -646,7 +646,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public boolean enableDebug(RFunction func, boolean once) {
-        return DebugHandling.enableDebug(func, "", RNull.instance, once);
+        return DebugHandling.enableDebug(func, "", RNull.instance, once, false);
     }
 
     @Override

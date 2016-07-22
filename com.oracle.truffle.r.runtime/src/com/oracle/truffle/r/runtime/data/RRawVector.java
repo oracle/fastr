@@ -187,7 +187,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
     }
 
     @Override
-    public RRawVector copyResized(int size, boolean fillNA) {
+    protected RRawVector internalCopyResized(int size, boolean fillNA) {
         return RDataFactory.createRawVector(copyResizedData(size, fillNA));
     }
 
