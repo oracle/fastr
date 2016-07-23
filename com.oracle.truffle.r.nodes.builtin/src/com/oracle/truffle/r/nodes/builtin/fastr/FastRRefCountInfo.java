@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RShareable;
  * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and SHARED_PERMANENT_VAL
  * for permanent shared
  */
-@RBuiltin(aliases = "fastr.refcountinfo", name = ".fastr.refcountinfo", kind = PRIMITIVE, parameterNames = {""})
+@RBuiltin(name = ".fastr.refcountinfo", kind = PRIMITIVE, parameterNames = {""})
 public abstract class FastRRefCountInfo extends RBuiltinNode {
     @Specialization
     protected int refcount(Object x) {

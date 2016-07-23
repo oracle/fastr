@@ -29,7 +29,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 
-@RBuiltin(aliases = "fastr.identity", name = ".fastr.identity", kind = PRIMITIVE, parameterNames = {""})
+@RBuiltin(name = ".fastr.identity", kind = PRIMITIVE, parameterNames = {""})
 public abstract class FastRIdentity extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
