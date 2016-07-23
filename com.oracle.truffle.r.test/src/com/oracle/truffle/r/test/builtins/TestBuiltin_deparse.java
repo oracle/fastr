@@ -319,6 +319,8 @@ public class TestBuiltin_deparse extends TestBase {
 
         assertEval("unserialize(serialize(quote(!(a <- TRUE)), NULL))");
         assertEval("unserialize(serialize(quote(a[a <- TRUE]), NULL))");
+
+        assertEval("{ x<-c(a=42, b=7); deparse(x) }");
     }
 
     @Test
