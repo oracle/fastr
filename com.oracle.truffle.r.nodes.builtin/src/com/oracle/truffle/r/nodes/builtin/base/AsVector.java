@@ -219,7 +219,7 @@ public abstract class AsVector extends RBuiltinNode {
                 for (int i = x.getLength() - 1; i >= 0; i--) {
                     Object name = names == null ? RNull.instance : RDataFactory.createSymbolInterned(names.getDataAt(i));
                     Object data = x.getDataAt(i);
-                    list = RDataFactory.createPairList(data, list, name, SEXPTYPE.LISTSXP);
+                    list = RDataFactory.createPairList(data, list, name);
                 }
                 return list;
             }
