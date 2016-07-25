@@ -52,18 +52,7 @@ public class CastNodeSampler<T extends CastNode> {
     }
 
     public final Samples<?> collectSamples() {
-        // Collect the initial samples for the result type of the pipeline. These samples will be
-        // processed in the bottom-up direction (i.e. from the last step in the pipeline toward the
-        // first one). The resulting samples are those that can be used as the input arguments for
-        // the pipeline.
-        TypeExpr bottomTypes = resultTypes();
-        Set<?> positiveBottomSamples = bottomTypes.normalize().stream().flatMap(t -> CastUtils.sampleValuesForType(t).stream()).collect(Collectors.toSet());
-        Predicate<?> posMembership = x -> true;
-
-        @SuppressWarnings({"rawtypes", "unchecked"})
-        Samples bottomSamples = new Samples("bottomSamples", positiveBottomSamples, Collections.emptySet(), posMembership);
-
-        return collectSamples(TypeExpr.ANYTHING, bottomSamples);
+        return collectSamples(TypeExpr.ANYTHING, Samples.anything());
     }
 
     @SuppressWarnings("unused")

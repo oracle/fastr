@@ -110,7 +110,7 @@ public final class PredefMappersSamplers implements PredefMappers {
             @Override
             public Samples<T> collectSamples(Samples<T> downStreamSamples) {
                 Samples<Object> nullOnly = new Samples<>("RNullOnly", Collections.singleton(RNull.instance), Collections.emptySet(), x -> x == RNull.instance);
-                return (Samples<T>) nullOnly.or(Samples.singleton(defVal).and(downStreamSamples));
+                return (Samples<T>) nullOnly.or(Samples.anything(defVal).and(downStreamSamples));
             }
         };
     }

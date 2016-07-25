@@ -76,7 +76,7 @@ class DefaultArgsExtractor {
                         defVal = eval.get();
 
                         if (defVal == null) {
-                            samplesMap.put(name, Samples.singleton(RNull.instance));
+                            samplesMap.put(name, Samples.anything(RNull.instance));
                         } else if (defVal instanceof RAbstractContainer) {
                             // enumerated default arg values
                             RAbstractContainer enumArgs = (RAbstractContainer) defVal;
@@ -89,13 +89,13 @@ class DefaultArgsExtractor {
                             }
                             samplesMap.put(name, new Samples<>(name, enumPosSamples, Collections.emptySet(), x -> true));
                         } else {
-                            samplesMap.put(name, Samples.singleton(defVal));
+                            samplesMap.put(name, Samples.anything(defVal));
                         }
 
                     } else if (defVal instanceof RSymbol) {
                         continue;
                     } else {
-                        samplesMap.put(name, Samples.singleton(defVal));
+                        samplesMap.put(name, Samples.anything(defVal));
                     }
                 }
 

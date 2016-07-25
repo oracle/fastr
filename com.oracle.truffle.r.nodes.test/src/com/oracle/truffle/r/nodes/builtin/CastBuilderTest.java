@@ -22,32 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asBoolean;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.charAt0;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.equalTo;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt0;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte0;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.length;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthLte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarStringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.trueValue;
@@ -55,26 +44,17 @@ import static com.oracle.truffle.r.nodes.casts.CastUtils.samples;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.StringWriter;
-import java.util.Arrays;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.kenai.jffi.Array;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.api.object.Shape.Pred;
-import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentValueFilter;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.InitialPhaseBuilder;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
-import com.oracle.truffle.r.nodes.builtin.base.ColSums;
-import com.oracle.truffle.r.nodes.builtin.base.ColSumsNodeGen;
 import com.oracle.truffle.r.nodes.casts.ArgumentFilterSampler;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.PredefFiltersSamplers;
@@ -94,8 +74,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public class CastBuilderTest {
 

@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -44,6 +45,7 @@ import com.oracle.truffle.api.vm.PolyglotEngine.Value;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.Samples;
+import com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics.DiagConfig;
 import com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics.SingleBuiltinDiagnostics;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -51,7 +53,9 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
@@ -59,19 +63,66 @@ import com.oracle.truffle.r.test.generate.TestOutputManager;
 
 class ChimneySweeping extends SingleBuiltinDiagnostics {
 
+    private static final String SWEEP_MODE_ARG = "--sweep";
+    private static final String SWEEP_MODE_ARG_SPEC = SWEEP_MODE_ARG + "-";
+
+    enum ChimneySweepingMode {
+        auto,
+        total,
+        lite;
+
+        static Optional<ChimneySweepingMode> fromArg(String arg) {
+            if (SWEEP_MODE_ARG.equals(arg)) {
+                return Optional.of(auto);
+            } else if (arg.startsWith(SWEEP_MODE_ARG_SPEC)) {
+                return Optional.of(valueOf(arg.substring(SWEEP_MODE_ARG_SPEC.length())));
+            } else {
+                return Optional.empty();
+            }
+        }
+    }
+
+    static class ChimneySweepingConfig extends DiagConfig {
+        ChimneySweepingMode sweepingMode;
+    }
+
     static class ChimneySweepingSuite extends RBuiltinDiagnostics {
 
+        final ChimneySweepingConfig diagConfig;
         final FastRSession fastRSession;
         final GnuROneShotRSession gnuRSession;
         final TestOutputManager outputManager;
 
-        ChimneySweepingSuite(RBuiltinDiagnostics.DiagConfig diagConfig) throws IOException {
-            super(diagConfig);
+        ChimneySweepingSuite(ChimneySweepingConfig config) throws IOException {
+            super(config);
+            this.diagConfig = config;
 
+            System.out.println("Loading GnuR ...");
             gnuRSession = new GnuROneShotRSession();
 
+            System.out.println("Loading FastR ...");
             fastRSession = FastRSession.create();
+
+            System.out.println("Loading test outputs ...");
             outputManager = loadTestOutputManager();
+        }
+
+        static Optional<RBuiltinDiagnostics> createChimneySweepingSuite(String[] args) throws IOException {
+            if (getSweepMode(args).isPresent()) {
+                ChimneySweepingConfig config = new ChimneySweepingConfig();
+                return Optional.of(new ChimneySweepingSuite(initChimneySweepingConfig(config, args)));
+            } else {
+                return Optional.empty();
+            }
+        }
+
+        static <C extends ChimneySweepingConfig> C initChimneySweepingConfig(C config, String[] args) {
+            config.sweepingMode = getSweepMode(args).flatMap(ChimneySweepingMode::fromArg).orElse(ChimneySweepingMode.auto);
+            return RBuiltinDiagnostics.initDiagConfig(config, args);
+        }
+
+        private static Optional<String> getSweepMode(String[] args) {
+            return Arrays.stream(args).filter(arg -> arg.startsWith(SWEEP_MODE_ARG)).findFirst();
         }
 
         @Override
@@ -96,6 +147,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
     private final List<Samples<?>> argSamples;
     private final ChimneySweepingSuite diagSuite;
+    private final Set<RList> validArgsList;
 
     private final Set<List<String>> printedOutputPairs = new HashSet<>();
     private final Set<String> printedErrors = new HashSet<>();
@@ -104,6 +156,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     ChimneySweeping(ChimneySweepingSuite diagSuite, RBuiltinFactory builtinFactory) {
         super(diagSuite, builtinFactory);
         this.diagSuite = diagSuite;
+        this.validArgsList = extractValidArgsForBuiltin();
         this.argSamples = createSamples();
     }
 
@@ -139,7 +192,12 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             }
             Samples samples;
             try {
-                samples = cn == null ? Samples.anything() : CastNodeSampler.createSampler(cn).collectSamples();
+                if (cn == null) {
+                    samples = Samples.anything();
+                } else {
+                    CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(cn);
+                    samples = sampler.collectSamples();
+                }
             } catch (Exception e) {
                 throw new RuntimeException("Error in sample generation from argument " + i, e);
             }
@@ -208,11 +266,6 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         }
     }
 
-    private void sweepChimney() throws IOException {
-        Set<RList> validArgsList = extractValidArgsForBuiltin();
-        sweepChimney(validArgsList);
-    }
-
     private Set<RList> extractValidArgsForBuiltin() {
         final PolyglotEngine vm = diagSuite.fastRSession.createTestContext(null);
 
@@ -220,9 +273,16 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             Set<String> validArgs = diagSuite.outputManager.getTestMaps().entrySet().stream().filter(
                             e -> e.getKey().startsWith("com.oracle.truffle.r.test.builtins.TestBuiltin_" + builtinName)).flatMap(
                                             e -> e.getValue().keySet().stream()).filter(a -> a.contains(".Internal(" + builtinName)).map(ChimneySweeping::cutOffInternal).filter(
-                                                            a -> a != null).collect(
-                                                                            Collectors.toSet());
+                                                            a -> a != null).collect(Collectors.toSet());
             Set<RList> args = validArgs.stream().map(a -> evalValidArgs(a, vm)).filter(a -> a != null).collect(Collectors.toSet());
+
+            if (args.isEmpty()) {
+                Object[] nullArgs = new Object[this.argLength];
+                Arrays.fill(nullArgs, RNull.instance);
+                args = Collections.singleton(RDataFactory.createList(nullArgs));
+                System.out.println("No suitable test snippets found. Using the default RNull argument list");
+            }
+
             return args;
         } finally {
             vm.dispose();
@@ -241,32 +301,43 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         }
     }
 
-    private void sweepChimney(Set<RList> validArgsList) throws IOException {
+    private void sweepChimney() throws IOException {
         System.out.println("++++++++++++++++++++++");
         System.out.println("+  Chimney-sweeping  +");
         System.out.println("++++++++++++++++++++++");
         System.out.println();
 
+        boolean useDiagonalGen;
+
         long totalCombinations = calculateNumOfSampleCombinations(argSamples);
-        boolean useDiagonalGen = totalCombinations > diagSuite.diagConfig.maxTotalCombinations;
+
+        switch (diagSuite.diagConfig.sweepingMode) {
+            case lite:
+                useDiagonalGen = true;
+                break;
+
+            case total:
+                useDiagonalGen = false;
+                break;
+
+            case auto:
+            default:
+                useDiagonalGen = totalCombinations > diagSuite.diagConfig.maxTotalCombinations;
+                break;
+        }
 
         List<List<Object>> generatedCombinations = generateSampleArgCombinations(argSamples, useDiagonalGen);
 
-        System.out.print("Sweeping builtin '" + builtinName + "' by " + generatedCombinations.size() + " derived argument combinations per each of " + validArgsList.size() +
-                        " valid argument samples, ");
-        System.out.println("i.e. the total number of sweeps is " + generatedCombinations.size() * validArgsList.size() + ".");
-        if (useDiagonalGen) {
-            System.out.println("Using diagonal generation (total generation would generate " + totalCombinations + " combinations per valid argument sample)");
-        } else {
-            System.out.println("Using total generation yields " + totalCombinations + " combinations");
-        }
+        System.out.println("Springboard argument lists: " + validArgsList.size());
+        System.out.println("Used sample combinations: " + generatedCombinations.size() + " (from total " + totalCombinations + ")");
+        System.out.println("Sweeps to perform: " + generatedCombinations.size() * validArgsList.size());
 
         System.out.println();
         System.out.println();
         System.out.println("Press Enter to continue ...");
         System.in.read();
 
-        evalArgsWithSampleCombinations(validArgsList, generatedCombinations);
+        evalArgsWithSampleCombinations(generatedCombinations);
     }
 
     private void evalBuiltin(RList validArgs, List<List<Object>> argSampleCombinations) {
@@ -278,7 +349,8 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
     }
 
-    private void evalArgsWithSampleCombinations(Set<RList> validArgsList, List<List<Object>> argSampleCombinations) {
+    private void evalArgsWithSampleCombinations(List<List<Object>> argSampleCombinations) {
+        sweepCounter = 0;
         validArgsList.forEach(validArgs -> evalBuiltin(validArgs, argSampleCombinations));
     }
 

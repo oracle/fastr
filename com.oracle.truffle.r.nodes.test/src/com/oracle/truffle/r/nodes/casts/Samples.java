@@ -39,6 +39,10 @@ public final class Samples<T> {
         return (Samples<T>) ANYTHING;
     }
 
+    public static <T> Samples<T> anything(T x) {
+        return new Samples<>("anything(" + x + ")", Collections.singleton(x), Collections.emptySet(), xx -> true);
+    }
+
     private final Set<? extends T> posSamples;
     private final Set<?> negSamples;
     private final Predicate<Object> posMembership;
@@ -153,10 +157,6 @@ public final class Samples<T> {
 
     public Samples<T> positiveOnly() {
         return new Samples<>(name + ".positiveOnly", posSamples, Collections.emptySet(), posMembership);
-    }
-
-    public static <T> Samples<T> singleton(T x) {
-        return new Samples<>("singleton(" + x + ")", Collections.singleton(x), Collections.emptySet(), xx -> true);
     }
 
     @Override

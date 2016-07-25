@@ -48,6 +48,7 @@ import com.oracle.truffle.r.nodes.casts.Not;
 import com.oracle.truffle.r.nodes.casts.PredefFiltersSamplers;
 import com.oracle.truffle.r.nodes.casts.PredefMappersSamplers;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
+import com.oracle.truffle.r.nodes.test.ChimneySweeping.ChimneySweepingSuite;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -70,27 +71,30 @@ public class RBuiltinDiagnostics {
         long maxTotalCombinations = 500L;
     }
 
-    final DiagConfig diagConfig;
+    private final DiagConfig diagConfig;
 
-    public RBuiltinDiagnostics(DiagConfig diagConfig) {
+    RBuiltinDiagnostics(DiagConfig diagConfig) {
         this.diagConfig = diagConfig;
     }
 
-    public static void main(String[] args) throws Throwable {
-        DiagConfig diagConfig = new DiagConfig();
+    static RBuiltinDiagnostics createRBuiltinDiagnostics(String[] args) {
+        return new RBuiltinDiagnostics(initDiagConfig(new DiagConfig(), args));
+    }
 
+    static <C extends DiagConfig> C initDiagConfig(C diagConfig, String[] args) {
         diagConfig.verbose = Arrays.stream(args).filter(arg -> "-v".equals(arg)).findFirst().isPresent();
         diagConfig.ignoreRNull = Arrays.stream(args).filter(arg -> "-n".equals(arg)).findFirst().isPresent();
         diagConfig.ignoreRMissing = Arrays.stream(args).filter(arg -> "-m".equals(arg)).findFirst().isPresent();
-        List<String> bNames = Arrays.stream(args).filter(arg -> !arg.startsWith("-")).collect(Collectors.toList());
+        return diagConfig;
+    }
 
+    public static void main(String[] args) throws Throwable {
         Predef.setPredefFilters(new PredefFiltersSamplers());
         Predef.setPredefMappers(new PredefMappersSamplers());
 
-        boolean chimneySweeping = Arrays.stream(args).filter(arg -> "--sweep".equals(arg)).findFirst().isPresent();
+        RBuiltinDiagnostics rbDiag = ChimneySweepingSuite.createChimneySweepingSuite(args).orElseGet(() -> createRBuiltinDiagnostics(args));
 
-        RBuiltinDiagnostics rbDiag = chimneySweeping ? new ChimneySweeping.ChimneySweepingSuite(diagConfig) : new RBuiltinDiagnostics(diagConfig);
-
+        List<String> bNames = Arrays.stream(args).filter(arg -> !arg.startsWith("-")).collect(Collectors.toList());
         if (bNames.isEmpty()) {
             rbDiag.diagnoseAllBuiltins();
         } else {
@@ -127,6 +131,8 @@ public class RBuiltinDiagnostics {
 
         System.out.println("Finished");
         System.out.println("--------");
+
+        System.exit(0);
     }
 
     static class SingleBuiltinDiagnostics {
