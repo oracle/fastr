@@ -333,7 +333,12 @@ check.installed.pkgs <- function() {
 # of the same type as avail.pkgs but containing only those packages to install
 # returns a vector of package names to install/test
 get.pkgs <- function() {
-	avail.pkgs <<- available.packages(contriburl=contriburl, type="source")
+	tryCatch({
+	    avail.pkgs <<- available.packages(contriburl=contriburl, type="source")
+    }, warning=function(war) {
+		cat("Fatal error:", war$message, "\n")
+		quit(save="no", status=100)
+	})
 	avail.pkgs.rownames <<- rownames(avail.pkgs)
 	# get/create the blacklist
 	blacklist <- get.blacklist()
