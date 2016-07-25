@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 @RBuiltin(name = "crossprod", kind = INTERNAL, parameterNames = {"x", "y"}, behavior = PURE)
 public abstract class Crossprod extends RBuiltinNode {
 
-    @Child private MatMult matMult;
+    @Child private MatMult matMult = MatMultNodeGen.create(/* promoteDimNames: */ false, null);
     @Child private Transpose transpose;
 
     @Override
@@ -49,15 +49,7 @@ public abstract class Crossprod extends RBuiltinNode {
         casts.arg("y").mustBe(nullValue().or(numericValue()).or(complexValue()), RError.ROOTNODE, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
     }
 
-    private void ensureMatMult() {
-        if (matMult == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            matMult = insert(MatMultNodeGen.create(/* promoteDimNames: */ false, null));
-        }
-    }
-
     private Object matMult(Object op1, Object op2) {
-        ensureMatMult();
         return matMult.executeObject(op1, op2);
     }
 
@@ -69,9 +61,8 @@ public abstract class Crossprod extends RBuiltinNode {
         return transpose.execute(value);
     }
 
-    @Specialization(guards = {"isMatrix(x)", "isMatrix(y)"})
+    @Specialization(guards = {"x.isMatrix()", "y.isMatrix()"})
     protected RDoubleVector crossprod(RAbstractDoubleVector x, RAbstractDoubleVector y) {
-        ensureMatMult();
         int xRows = x.getDimensions()[0];
         int xCols = x.getDimensions()[1];
         int yRows = y.getDimensions()[0];
@@ -104,9 +95,8 @@ public abstract class Crossprod extends RBuiltinNode {
         return matMult(transpose(x), y);
     }
 
-    @Specialization(guards = "isMatrix(x)")
-    protected Object crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y) {
-        ensureMatMult();
+    @Specialization(guards = "x.isMatrix()")
+    protected RDoubleVector crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y) {
         int xRows = x.getDimensions()[0];
         int xCols = x.getDimensions()[1];
         return mirror(matMult.doubleMatrixMultiply(x, x, xCols, xRows, xRows, xCols, xRows, 1, 1, xRows, true));
@@ -115,9 +105,5 @@ public abstract class Crossprod extends RBuiltinNode {
     @Specialization
     protected Object crossprod(RAbstractVector x, @SuppressWarnings("unused") RNull y) {
         return matMult(transpose(x), x);
-    }
-
-    protected static boolean isMatrix(RAbstractVector v) {
-        return v.isMatrix();
     }
 }
