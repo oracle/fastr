@@ -331,6 +331,7 @@ check.installed.pkgs <- function() {
 # requested set of candidate packages
 # sets global variables avail.pkgs and toinstall.pkgs, the latter being
 # of the same type as avail.pkgs but containing only those packages to install
+# returns a vector of package names to install/test
 get.pkgs <- function() {
 	avail.pkgs <<- available.packages(contriburl=contriburl, type="source")
 	avail.pkgs.rownames <<- rownames(avail.pkgs)
@@ -371,7 +372,29 @@ get.pkgs <- function() {
 	}
 	matched.avail.pkgs <- apply(avail.pkgs, 1, match.fun)
 	toinstall.pkgs <<-avail.pkgs[matched.avail.pkgs, , drop=F]
-	toinstall.pkgs
+
+	if (!is.na(random.count)) {
+		# install random.count packages taken at random from toinstall.pkgs
+		test.avail.pkgnames <- rownames(toinstall.pkgs)
+		rands <- sample(1:length(test.avail.pkgnames))
+		test.pkgnames <- character(random.count)
+		for (i in (1:random.count)) {
+			test.pkgnames[[i]] <- test.avail.pkgnames[[rands[[i]]]]
+		}
+	} else {
+		test.pkgnames <- rownames(toinstall.pkgs)
+		if (!is.na(count.daily)) {
+			# extract count from index given by yday
+			npkgs <- length(test.pkgnames)
+			yday <- as.POSIXlt(Sys.Date())$yday
+			chunk <- as.integer(npkgs / count.daily)
+			start <- (yday %% chunk) * count.daily
+			end <- ifelse(start + count.daily > npkgs, npkgs, start + count.daily - 1)
+			test.pkgnames <- test.pkgnames[start:end]
+		}
+	}
+
+	test.pkgnames
 }
 
 # Serially install the packages in pkgnames.
@@ -476,33 +499,12 @@ get.blacklist <- function() {
 
 # performs the installation, or logs what it would install if dry.run = T
 do.it <- function() {
-	get.pkgs()
+	test.pkgnames <- get.pkgs()
 
 	if (list.versions) {
-		for (i in (1:length(rownames(toinstall.pkgs)))) {
-			pkg <- toinstall.pkgs[i, ]
+		for (pkgname in test.pkgnames) {
+			pkg <- toinstall.pkgs[pkgname, ]
 			cat(pkg["Package"], pkg["Version"], paste0(contriburl, "/", pkg["Version"], ".tar.gz"), "\n", sep=",")
-		}
-	}
-
-	if (!is.na(random.count)) {
-		# install random.count packages taken at random from toinstall.pkgs
-		test.avail.pkgnames <- rownames(toinstall.pkgs)
-		rands <- sample(1:length(test.avail.pkgnames))
-		test.pkgnames <- character(random.count)
-		for (i in (1:random.count)) {
-			test.pkgnames[[i]] <- test.avail.pkgnames[[rands[[i]]]]
-		}
-	} else {
-		test.pkgnames <- rownames(toinstall.pkgs)
-		if (!is.na(count.daily)) {
-			# extract count from index given by yday
-			npkgs <- length(test.pkgnames)
-			yday <- as.POSIXlt(Sys.Date())$yday
-			chunk <- as.integer(npkgs / count.daily)
-			start <- (yday %% chunk) * count.daily
-			end <- ifelse(start + count.daily > npkgs, npkgs, start + count.daily - 1)
-			test.pkgnames <- test.pkgnames[start:end]
 		}
 	}
 
