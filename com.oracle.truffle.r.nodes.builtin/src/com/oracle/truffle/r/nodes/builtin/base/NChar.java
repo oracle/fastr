@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -34,11 +36,9 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.nodes.unary.ConversionFailedException;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -70,11 +70,7 @@ public abstract class NChar extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             convertString = insert(CastStringNodeGen.create(false, false, false, false));
         }
-        try {
-            return (String) convertString.executeString(content);
-        } catch (ConversionFailedException e) {
-            throw RError.error(this, RError.Message.TYPE_EXPECTED, RType.Character.getName());
-        }
+        return (String) convertString.executeString(content);
     }
 
     @SuppressWarnings("unused")

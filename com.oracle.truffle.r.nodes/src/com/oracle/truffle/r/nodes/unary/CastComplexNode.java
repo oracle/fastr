@@ -24,14 +24,13 @@ package com.oracle.truffle.r.nodes.unary;
 
 import java.util.function.IntFunction;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -59,6 +58,15 @@ public abstract class CastComplexNode extends CastBaseNode {
     public abstract Object executeComplex(byte o);
 
     public abstract Object executeComplex(Object o);
+
+    protected CastComplexNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    @Override
+    protected final RType getTargetType() {
+        return RType.Complex;
+    }
 
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
@@ -121,7 +129,7 @@ public abstract class CastComplexNode extends CastBaseNode {
         }
         RComplexVector ret = RDataFactory.createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -174,7 +182,7 @@ public abstract class CastComplexNode extends CastBaseNode {
         }
         RComplexVector ret = RDataFactory.createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -188,12 +196,6 @@ public abstract class CastComplexNode extends CastBaseNode {
     @Specialization
     protected RComplexVector doRawVector(RRawVector operand) {
         return createResultVector(operand, index -> RDataFactory.createComplex(operand.getDataAt(index).getValue(), 0));
-    }
-
-    @Fallback
-    @TruffleBoundary
-    protected int doOther(Object operand) {
-        throw new ConversionFailedException(operand.getClass().getName());
     }
 
     public static CastComplexNode create() {
