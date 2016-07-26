@@ -269,26 +269,37 @@ def _set_test_status(fastr_test_info):
         gnur_outputs = gnur_test_status.testfile_outputs
         fastr_outputs = fastr_test_status.testfile_outputs
         if _failed_outputs(gnur_outputs):
+            # What this likely means is that some native package is not
+            # installed on the system so GNUR can't run the tests.
+            # Ideally this never happens.
             print "{0}: GnuR test had .fail outputs".format(pkg)
-            continue
 
         if _failed_outputs(fastr_outputs):
+            # In addition to the similar comment for GNU R, this can happen
+            # if, say, the JVM crashes (possible with native code packages)
             print "{0}: FastR test had .fail outputs".format(pkg)
             fastr_test_status.status = "FAILED"
-            continue
 
-
+        # Now for each successful GNU R output we compare content (assuming FastR didn't fail)
         for gnur_test_output_relpath, gnur_testfile_status in gnur_outputs.iteritems():
+            # Can't compare if either GNUR or FastR failed
+            if gnur_testfile_status.status == "FAILED":
+                break
+
             if not gnur_test_output_relpath in fastr_outputs:
+                # FastR crashed on this test
                 fastr_test_status.status = "FAILED"
                 print "{0}: FastR is missing output file: {1}".format(pkg, gnur_test_output_relpath)
+                break
+
+            fastr_testfile_status = fastr_outputs[gnur_test_output_relpath]
+            if fastr_testfile_status.status == "FAILED":
                 break
 
             gnur_content = None
             with open(gnur_testfile_status.abspath) as f:
                 gnur_content = f.readlines()
             fastr_content = None
-            fastr_testfile_status = fastr_outputs[gnur_test_output_relpath]
             with open(fastr_testfile_status.abspath) as f:
                 fastr_content = f.readlines()
 
@@ -306,13 +317,14 @@ def _set_test_status(fastr_test_info):
         if not (fastr_test_status.status == "INDETERMINATE" or fastr_test_status.status == "FAILED"):
             fastr_test_status.status = "OK"
 
-        # write out a file with the test status for each output
+        # write out a file with the test status for each output (that exists)
         with open(join(_pkg_testdir('fastr', pkg), 'testfile_status'), 'w') as f:
             for fastr_relpath, fastr_testfile_status in fastr_outputs.iteritems():
-                f.write(fastr_relpath)
-                f.write(' ')
-                f.write(fastr_testfile_status.status)
-                f.write('\n')
+                if os.path.exists(join(_pkg_testdir('fastr', pkg), fastr_relpath)):
+                    f.write(fastr_relpath)
+                    f.write(' ')
+                    f.write(fastr_testfile_status.status)
+                    f.write('\n')
 
         print 'END checking ' + pkg
 
