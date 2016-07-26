@@ -340,7 +340,7 @@ public class RErrorHandling {
                     errorcallDfltWithCall(fromCall(call), Message.GENERIC, msg);
                 } else {
                     RFunction hf = (RFunction) h;
-                    RContext.getEngine().evalFunction(hf, null, null, cond);
+                    RContext.getEngine().evalFunction(hf, null, null, null, cond);
                 }
             } else {
                 throw gotoExitingHandler(cond, call, entry);
@@ -503,7 +503,7 @@ public class RErrorHandling {
                             evaluatedArgs[i] = RMissing.instance;
                         }
                     }
-                    RContext.getEngine().evalFunction(errorFunction, null, null, evaluatedArgs);
+                    RContext.getEngine().evalFunction(errorFunction, null, null, null, evaluatedArgs);
                 } else if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
                     if (errorExpr instanceof RLanguage) {
                         RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);

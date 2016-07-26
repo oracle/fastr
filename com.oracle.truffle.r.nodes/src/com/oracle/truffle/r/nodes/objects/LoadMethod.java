@@ -135,7 +135,7 @@ abstract class LoadMethod extends RBaseNode {
                 ret = (RFunction) loadMethodCall.call(frame, args);
             } else {
                 // slow path
-                ret = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), caller, fdef, fname, REnvironment.frameToEnvironment(frame.materialize()));
+                ret = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), caller, null, fdef, fname, REnvironment.frameToEnvironment(frame.materialize()));
             }
 
         } else {

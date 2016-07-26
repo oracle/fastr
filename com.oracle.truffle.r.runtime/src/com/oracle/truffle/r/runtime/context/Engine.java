@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -167,9 +168,10 @@ public interface Engine {
      * case the current frame is used). In many cases {@code frame} may not represent the current
      * call stack, for example many S4-related evaluations set {@code frame} to the {@code methods}
      * namespace, but the current stack is not empty. So when {@code frame} is not {@code null} a
-     * {@code caller} should be passed to maintain the call stack correctly.
+     * {@code caller} should be passed to maintain the call stack correctly. {@code names} string
+     * vector describing (optional) argument names
      */
-    Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, Object... args);
+    Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, RStringVector names, Object... args);
 
     /**
      * Checks for the existence of (startup/shutdown) function {@code name} and, if present, invokes
