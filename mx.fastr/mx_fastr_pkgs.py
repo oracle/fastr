@@ -320,7 +320,12 @@ def _set_test_status(fastr_test_info):
         # write out a file with the test status for each output (that exists)
         with open(join(_pkg_testdir('fastr', pkg), 'testfile_status'), 'w') as f:
             for fastr_relpath, fastr_testfile_status in fastr_outputs.iteritems():
-                if os.path.exists(join(_pkg_testdir('fastr', pkg), fastr_relpath)):
+                if fastr_testfile_status.status == "FAILED":
+                    relpath = fastr_relpath + ".fail"
+                else:
+                    relpath = fastr_relpath
+
+                if os.path.exists(join(_pkg_testdir('fastr', pkg), relpath)):
                     f.write(fastr_relpath)
                     f.write(' ')
                     f.write(fastr_testfile_status.status)
