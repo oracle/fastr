@@ -1386,4 +1386,14 @@ public class CallRFFIHelper {
     public static int R_insideBrowser() {
         return RContext.getInstance().stateInstrumentation.getBrowserState().inBrowser() ? 1 : 0;
     }
+
+    public static int R_isGlobal(Object c) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("isGlobal", c);
+        }
+        RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
+
+        return rCaller == topLevel ? 1 : 0;
+    }
+
 }

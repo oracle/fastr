@@ -627,3 +627,9 @@ int R_insideBrowser() {
 	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_insideBrowser", "()I", 1);
     return (*jniEnv)->CallStaticIntMethod(jniEnv, CallRFFIHelperClass, methodID);
 }
+
+int R_isGlobal(CTXT context) {
+	JNIEnv *jniEnv = getEnv();
+	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_isGlobal", "(Ljava/lang/Object;)I", 1);
+    return (*jniEnv)->CallStaticIntMethod(jniEnv, CallRFFIHelperClass, methodID, context);
+}
