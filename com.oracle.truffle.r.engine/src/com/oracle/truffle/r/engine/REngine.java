@@ -55,8 +55,10 @@ import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -76,6 +78,7 @@ import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -393,7 +396,15 @@ final class REngine implements Engine, Engine.Timings {
                 actualFrame = current.materialize();
             }
         }
-        Object[] rArgs = RArguments.create(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, args, null);
+        RArgsValuesAndNames reorderedArgs = CallMatcherGenericNode.reorderArguments(args, func, ArgumentsSignature.empty(args.length), false, RError.NO_CALLER);
+        Object[] newArgs = reorderedArgs.getArguments();
+        for (int i = 0; i < newArgs.length; i++) {
+            Object arg = newArgs[i];
+            if (arg instanceof RPromise) {
+                newArgs[i] = PromiseHelperNode.evaluateSlowPath(null, (RPromise) arg);
+            }
+        }
+        Object[] rArgs = RArguments.create(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, newArgs, null);
         return func.getTarget().call(rArgs);
     }
 

@@ -894,31 +894,6 @@ public class CallRFFIHelper {
         return result;
     }
 
-    private static Object convertPairList(RPairList list) {
-        try {
-            if (list.getType() == SEXPTYPE.LANGSXP) {
-                RPairList pl = list;
-                Map<String, Object> constants = new HashMap<>();
-                String deparse = RDeparse.deparseDeserialize(constants, pl);
-                Source source = RSource.fromTextInternal(deparse, RSource.Internal.PAIRLIST_DEPARSE);
-                RExpression expr = RContext.getEngine().parse(constants, source);
-                assert expr.getLength() == 1;
-                Object result = expr.getDataAt(0);
-                RAttributes attrs = pl.getAttributes();
-                if (result instanceof RAttributable) {
-                    RAttributes.copyAttributes((RAttributable) result, attrs);
-                }
-                return result;
-
-            } else {
-                throw RInternalError.shouldNotReachHere();
-            }
-        } catch (Throwable x) {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-    }
-
     @TruffleBoundary
     public static Object Rf_eval(Object expr, Object env) {
         if (RFFIUtils.traceEnabled()) {
@@ -929,11 +904,19 @@ public class CallRFFIHelper {
         if (expr instanceof RPromise) {
             result = RContext.getRRuntimeASTAccess().forcePromise(expr);
         } else if (expr instanceof RExpression) {
-            result = RContext.getEngine().eval((RExpression) expr, (REnvironment) env, RCaller.createInvalid(null));
+            result = RContext.getEngine().eval((RExpression) expr, (REnvironment) env, topLevel);
         } else if (expr instanceof RLanguage) {
-            result = RContext.getEngine().eval((RLanguage) expr, (REnvironment) env, RCaller.createInvalid(null));
+            result = RContext.getEngine().eval((RLanguage) expr, (REnvironment) env, topLevel);
         } else if (expr instanceof RPairList) {
-            result = Rf_eval(convertPairList((RPairList) expr), env);
+            RPairList l = (RPairList) expr;
+            RFunction f = (RFunction) l.car();
+            Object args = l.cdr();
+            if (args == RNull.instance) {
+                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), topLevel, new Object[0]);
+            } else {
+                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), topLevel, ((RPairList) args).toRList().getDataNonShared());
+            }
+
         } else {
             // just return value
             result = expr;
@@ -1276,12 +1259,12 @@ public class CallRFFIHelper {
         }
         RCaller currentCaller = RArguments.getCall(frame);
         while (currentCaller != null) {
-            if (!currentCaller.isPromise()) {
+            if (!currentCaller.isPromise() && currentCaller.isValidCaller()) {
                 break;
             }
             currentCaller = currentCaller.getParent();
         }
-        return currentCaller == null ? RNull.instance : currentCaller;
+        return currentCaller == null || currentCaller == topLevel ? RNull.instance : currentCaller;
     }
 
     public static Object R_getParentFunctionContext(Object c) {
@@ -1291,30 +1274,11 @@ public class CallRFFIHelper {
         RCaller currentCaller = guaranteeInstanceOf(c, RCaller.class);
         while (true) {
             currentCaller = currentCaller.getParent();
-            if (currentCaller == null || !currentCaller.isPromise()) {
+            if (currentCaller == null || (!currentCaller.isPromise() && currentCaller.isValidCaller())) {
                 break;
             }
         }
-        return currentCaller == null ? RNull.instance : currentCaller;
-    }
-
-    public static Object R_getFunctionContext(int depth) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("getFunctionContext", depth);
-        }
-        Frame frame = Utils.getActualCurrentFrame();
-        RCaller currentCaller = RArguments.getCall(frame);
-        int currentDepth = 0;
-        while (currentCaller != null) {
-            if (!currentCaller.isPromise()) {
-                currentDepth++;
-                if (currentDepth >= depth) {
-                    break;
-                }
-            }
-            currentCaller = currentCaller.getParent();
-        }
-        return currentCaller == null ? RNull.instance : currentCaller;
+        return currentCaller == null || currentCaller == topLevel ? RNull.instance : currentCaller;
     }
 
     public static Object R_getContextEnv(Object c) {
