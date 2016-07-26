@@ -133,7 +133,11 @@ def pkgtest(args):
 
     _log_step('BEGIN', 'install/test', 'FastR')
     # Currently installpkgs does not set a return code (in install.cran.packages.R)
-    mx_fastr._installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
+    rc = mx_fastr._installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
+    if rc == 100:
+        # fatal error connecting to package repo
+        mx.abort(rc)
+
     rc = 0
     for status in out.install_status.itervalues():
         if not status:

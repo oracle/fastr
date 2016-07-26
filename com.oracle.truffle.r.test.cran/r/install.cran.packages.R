@@ -333,12 +333,25 @@ check.installed.pkgs <- function() {
 # of the same type as avail.pkgs but containing only those packages to install
 # returns a vector of package names to install/test
 get.pkgs <- function() {
+	my.warning <- function(war) {
+		if (!quiet) {
+			cat("Fatal error:", war$message, "\n")
+		}
+		quit(save="no", status=100)
+	}
 	tryCatch({
 	    avail.pkgs <<- available.packages(contriburl=contriburl, type="source")
-    }, warning=function(war) {
-		cat("Fatal error:", war$message, "\n")
+    }, warning=my.warning)
+
+    # Owing to a FastR bug, we may not invoke the handler above, but
+	# if length(avail.pkgs) == 0, that also means it failed
+	if (length(avail.pkgs) == 0) {
+		if (!quiet) {
+		  print("Fatal error: no packages found in repo")
+    	}
 		quit(save="no", status=100)
-	})
+	}
+
 	avail.pkgs.rownames <<- rownames(avail.pkgs)
 	# get/create the blacklist
 	blacklist <- get.blacklist()
