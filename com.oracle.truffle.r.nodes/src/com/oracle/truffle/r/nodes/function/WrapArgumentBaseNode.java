@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RS4Object;
@@ -38,6 +39,7 @@ public abstract class WrapArgumentBaseNode extends RNode {
 
     @Child protected RNode operand;
 
+    private final ValueProfile argumentValueProfile;
     private final BranchProfile everSeenVector;
     private final BranchProfile everSeenLanguage;
     private final BranchProfile everSeenFunction;
@@ -49,6 +51,7 @@ public abstract class WrapArgumentBaseNode extends RNode {
     protected WrapArgumentBaseNode(RNode operand, boolean initProfiles) {
         this.operand = operand;
         if (initProfiles) {
+            argumentValueProfile = ValueProfile.createClassProfile();
             everSeenVector = BranchProfile.create();
             everSeenLanguage = BranchProfile.create();
             everSeenFunction = BranchProfile.create();
@@ -56,6 +59,7 @@ public abstract class WrapArgumentBaseNode extends RNode {
             shareable = BranchProfile.create();
             nonShareable = BranchProfile.create();
         } else {
+            argumentValueProfile = null;
             everSeenVector = null;
             everSeenLanguage = null;
             everSeenFunction = null;
@@ -65,7 +69,8 @@ public abstract class WrapArgumentBaseNode extends RNode {
         }
     }
 
-    protected RShareable getShareable(Object result) {
+    protected RShareable getShareable(Object initialResult) {
+        Object result = argumentValueProfile.profile(initialResult);
         if (result instanceof RVector) {
             everSeenVector.enter();
             return (RVector) result;
