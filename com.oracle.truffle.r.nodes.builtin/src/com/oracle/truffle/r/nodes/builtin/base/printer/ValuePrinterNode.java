@@ -25,7 +25,11 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.base.Inherits;
 import com.oracle.truffle.r.nodes.builtin.base.InheritsNodeGen;
@@ -130,4 +134,17 @@ public abstract class ValuePrinterNode extends RBaseNode {
     private static void prettyPrint(Object o, PrintContext printCtx) throws IOException {
         ValuePrinters.INSTANCE.println(o, printCtx);
     }
+
+    public static String prettyPrint(final Object value) {
+        return (String) Truffle.getRuntime().createCallTarget(new RootNode(TruffleLanguage.class, null, null) {
+
+            @Child ValuePrinterNode valuePrinterNode = ValuePrinterNodeGen.create();
+
+            @Override
+            public Object execute(VirtualFrame frame) {
+                return valuePrinterNode.prettyPrint(value, AnyVectorToStringVectorWriter::new);
+            }
+        }).call(value);
+    }
+
 }
