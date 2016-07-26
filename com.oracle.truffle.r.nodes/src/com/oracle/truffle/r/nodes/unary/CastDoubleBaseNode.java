@@ -22,14 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -38,9 +37,18 @@ import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 public abstract class CastDoubleBaseNode extends CastBaseNode {
 
-    private final NACheck naCheck = NACheck.create();
-    private final NAProfile naProfile = NAProfile.create();
-    private final BranchProfile warningBranch = BranchProfile.create();
+    protected final NACheck naCheck = NACheck.create();
+    protected final NAProfile naProfile = NAProfile.create();
+    protected final BranchProfile warningBranch = BranchProfile.create();
+
+    protected CastDoubleBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    @Override
+    protected final RType getTargetType() {
+        return RType.Double;
+    }
 
     public abstract Object executeDouble(int o);
 
@@ -101,11 +109,4 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
     protected double doRaw(RRaw operand) {
         return RRuntime.raw2double(operand);
     }
-
-    @Fallback
-    @TruffleBoundary
-    protected double doOther(Object operand) {
-        throw new ConversionFailedException(operand.getClass().getName());
-    }
-
 }

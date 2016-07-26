@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
@@ -36,7 +37,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
  */
 public abstract class RFFIFactory {
 
-    protected static RFFI theRFFI;
+    @CompilationFinal protected static RFFI theRFFI;
 
     public static void setRFFIFactory(RFFIFactory factory) {
         RFFIContextStateFactory.registerFactory(factory);
@@ -52,7 +53,7 @@ public abstract class RFFIFactory {
      * Initialize the factory instance. This method will be called immediately after the factory
      * instance is created allowing any additional initialization that could not be done in the
      * constructor.
-     * 
+     *
      * @param runtime {@code true} if the initialization is being done at runtime. An AOT system may
      *            call this twice, once with {@code false} whern an image is being bilt and once
      *            when starting up.

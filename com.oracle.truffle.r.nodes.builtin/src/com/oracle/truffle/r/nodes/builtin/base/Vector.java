@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -45,7 +46,7 @@ public abstract class Vector extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.convertToInteger(1);
+        casts.arg("length").asIntegerVector().mustBe(singleElement()).findFirst();
     }
 
     protected RType modeToType(String mode) {

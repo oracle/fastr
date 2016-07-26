@@ -51,15 +51,15 @@ import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
-import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
+import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
-import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -68,8 +68,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.ThreadTimings;
@@ -584,7 +584,7 @@ final class REngine implements Engine, Engine.Timings {
         result = RRuntime.asAbstractVector(result);
         // this supports printing of non-R values (via toString for now)
         if (result instanceof RTypedValue) {
-            return PrettyPrinterNode.prettyPrintDefault(result);
+            return ValuePrinterNode.prettyPrint(result);
         } else if (result == null) {
             return "[external object (null)]";
         } else if (result instanceof TruffleObject) {

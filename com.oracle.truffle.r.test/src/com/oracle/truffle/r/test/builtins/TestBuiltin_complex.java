@@ -24,13 +24,12 @@ public class TestBuiltin_complex extends TestBase {
 
     @Test
     public void testcomplex2() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE, FALSE, numeric(0)); .Internal(complex(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(FALSE, FALSE, numeric(0)); .Internal(complex(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testcomplex3() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(0L, 1:10, c(1, 1.4142135623731, 1.73205080756888, 2, 2.23606797749979, 2.44948974278318, 2.64575131106459, 2.82842712474619, 3, 3.16227766016838)); .Internal(complex(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(0L, 1:10, c(1, 1.4142135623731, 1.73205080756888, 2, 2.23606797749979, 2.44948974278318, 2.64575131106459, 2.82842712474619, 3, 3.16227766016838)); .Internal(complex(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -50,7 +49,7 @@ public class TestBuiltin_complex extends TestBase {
 
     @Test
     public void testcomplex7() {
-        assertEval(Ignored.Unknown, "argv <- list(0L, NULL, numeric(0)); .Internal(complex(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(0L, NULL, numeric(0)); .Internal(complex(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -58,6 +57,9 @@ public class TestBuiltin_complex extends TestBase {
         assertEval("{ complex(real=1,imaginary=2) }");
         assertEval("{ complex(real=1,imag=2) }");
         assertEval("{ complex(3) }");
+        assertEval(Output.IgnoreErrorMessage, "{ complex(new.env()) }");
+        assertEval("{ complex(3, new.env()) }");
+        assertEval("{ complex(3, 3, new.env()) }");
         assertEval("{ complex(3, c(1,2,3), c(4,5,6)) }");
         assertEval("{ complex(3, c(1,2,3), c(4,5)) }");
         assertEval("{ complex(3, c(1,2), c(4,5,6)) }");
