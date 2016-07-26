@@ -1061,7 +1061,7 @@ public class RDeparse {
                 root = list.getDataAtAsObject(0);
             }
         }
-        return new DeparseVisitor(false, 80, true, 0, -1, constants).process(root).getContents();
+        return new DeparseVisitor(false, 80, true, SHOWATTRIBUTES, -1, constants).process(root).getContents();
     }
 
     @TruffleBoundary
