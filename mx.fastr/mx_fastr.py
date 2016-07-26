@@ -110,7 +110,7 @@ def _sanitize_vmArgs(jdk, vmArgs):
     chosen jdk. It is easier to allow clients to set anything they want and filter them
     out here.
     '''
-    jvmci_jdk = jdk.tag == 'jvmci'
+    jvmci_jdk = jdk.tag is not None and 'jvmci' in jdk.tag
     jvmci_disabled = '-XX:-EnableJVMCI' in vmArgs
 
     xargs = []
