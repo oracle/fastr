@@ -28,10 +28,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -44,6 +44,7 @@ import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.test.TestBase.Ignored;
 
 /**
  * Utility to analyze builtins implemented in FastR vs. builtins available in GNU R. The GNU R
@@ -62,6 +63,7 @@ import com.oracle.truffle.r.runtime.RVisibility;
 public final class RBuiltinCheck {
 
     private static final String DEFAULT_NAMESC = "com.oracle.truffle.r.native/gnur/R-3.2.4/src/main/names.c";
+    private static final String BUILTIN_TEST_PATH = "com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_%s.java";
 
     // old-style code annotation to get rid of javadoc error.
     /**
@@ -170,7 +172,7 @@ public final class RBuiltinCheck {
             return; // so that gnur can be final
         }
 
-        Set<String> both = new HashSet<>(fastr.keySet());
+        Set<String> both = new TreeSet<>(fastr.keySet());
         both.retainAll(gnur.keySet());
 
         Set<String> fastrOnly = keysWithout(fastr, both);
@@ -181,14 +183,14 @@ public final class RBuiltinCheck {
         both.removeAll(descriptorsDiff.keySet());
 
         // Print the results
-        printOutput(show, both, descriptorsDiff, fastrOnly, gnurOnly);
+        printOutput(suitePath, show, both, descriptorsDiff, fastrOnly, gnurOnly);
     }
 
-    private static void printOutput(EnumSet<FilterOption> show, Set<String> both, Map<String, BuiltinTuple> descriptorsDiff, Set<String> fastrOnly, Set<String> gnurOnly) {
+    private static void printOutput(String suitePath, EnumSet<FilterOption> show, Set<String> both, Map<String, BuiltinTuple> descriptorsDiff, Set<String> fastrOnly, Set<String> gnurOnly) {
         String prefix = "";
         if (show.contains(FilterOption.BOTH)) {
             prefix = printHeader(prefix, show, "Builtins in both GNU R and FastR with matching descriptors: " + both.size());
-            both.stream().forEach(System.out::println);
+            both.stream().forEach(b -> printBuiltinWithTest(b, suitePath));
         }
 
         if (show.contains(FilterOption.BOTH_DIFF)) {
@@ -220,6 +222,24 @@ public final class RBuiltinCheck {
         }
     }
 
+    private static void printBuiltinWithTest(String builtin, String suitePath) {
+        String name = builtin.replace(".", "");
+        name = name.replace("<-", "assign");
+        try {
+            String content = Files.lines(Paths.get(suitePath, String.format(BUILTIN_TEST_PATH, name))).collect(Collectors.joining("\n"));
+            int tests = content.split("assertEval").length - 1;
+            int ignoredTests = content.split(Ignored.class.getSimpleName()).length - 1;
+            if (tests > 0) {
+                String testDetails = String.format("%3d%% (%d/%d)", (tests - ignoredTests) * 100 / tests, tests - ignoredTests, tests);
+                System.out.printf("%-15s %s%n", builtin, testDetails);
+                return;
+            }
+        } catch (IOException e) {
+            // nothing to do
+        }
+        System.out.printf("%-20s (no tests found)%n", builtin);
+    }
+
     private static String formatTableCell(String format, BuiltinTuple tuple, Function<BuiltinInfo, Object> selector, BiPredicate<BuiltinInfo, BuiltinInfo> cmp) {
         String result = String.format(format, selector.apply(tuple.fastr), selector.apply(tuple.gnur));
         if (!cmp.test(tuple.fastr, tuple.gnur)) {
@@ -235,19 +255,18 @@ public final class RBuiltinCheck {
         if (show.size() > 1) {
             System.out.println(prefix + header);
         }
-
         return "\n\n";
     }
 
     private static Set<String> keysWithout(Map<String, BuiltinInfo> map, Set<String> both) {
-        Set<String> mapOnly = new HashSet<>(map.keySet());
+        Set<String> mapOnly = new TreeSet<>(map.keySet());
         mapOnly.removeAll(both);
         return mapOnly;
     }
 
     private static Map<String, BuiltinInfo> extractFastRBuiltins() {
         BasePackage base = new BasePackage();
-        HashMap<String, BuiltinInfo> result = new HashMap<>();
+        Map<String, BuiltinInfo> result = new TreeMap<>();
         for (Map.Entry<String, RBuiltinFactory> builtin : base.getBuiltins().entrySet()) {
             Class<?> clazz = builtin.getValue().getBuiltinNodeClass();
             RBuiltin annotation = clazz.getAnnotation(RBuiltin.class);
@@ -264,7 +283,7 @@ public final class RBuiltinCheck {
     private static Map<String, BuiltinInfo> extractGnuRBuiltins(String suiteDir) throws IOException {
         String content = Files.lines(Paths.get(suiteDir, DEFAULT_NAMESC)).collect(Collectors.joining("\n"));
         Matcher matcher = Pattern.compile(FUNTAB_REGEXP).matcher(content);
-        HashMap<String, BuiltinInfo> result = new HashMap<>();
+        Map<String, BuiltinInfo> result = new TreeMap<>();
         while (matcher.find()) {
             // normalize eval to three digits, e.g. '2' to '002'
             String eval = String.format("%1$3s", matcher.group("eval")).replace(' ', '0');
