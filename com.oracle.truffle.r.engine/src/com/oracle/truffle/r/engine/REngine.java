@@ -87,6 +87,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -384,7 +385,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     @TruffleBoundary
-    public Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, Object... args) {
+    public Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, RStringVector names, Object... args) {
         assert frame == null || caller != null;
         MaterializedFrame actualFrame = frame;
         if (actualFrame == null) {
@@ -396,7 +397,9 @@ final class REngine implements Engine, Engine.Timings {
                 actualFrame = current.materialize();
             }
         }
-        RArgsValuesAndNames reorderedArgs = CallMatcherGenericNode.reorderArguments(args, func, ArgumentsSignature.empty(args.length), false, RError.NO_CALLER);
+        RArgsValuesAndNames reorderedArgs = CallMatcherGenericNode.reorderArguments(args, func,
+                        names == null ? ArgumentsSignature.empty(args.length) : ArgumentsSignature.get(names.getDataWithoutCopying()), false,
+                        RError.NO_CALLER);
         Object[] newArgs = reorderedArgs.getArguments();
         for (int i = 0; i < newArgs.length; i++) {
             Object arg = newArgs[i];

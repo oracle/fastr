@@ -279,7 +279,7 @@ public class CallRFFIHelper {
 
     public static Object R_do_MAKE_CLASS(String clazz) {
         RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(REnvironment.getRegisteredNamespace("methods").get("getClass"));
-        return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), clazz);
+        return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), null, clazz);
     }
 
     public static Object Rf_findVar(Object symbolArg, Object envArg) {
@@ -912,9 +912,10 @@ public class CallRFFIHelper {
             RFunction f = (RFunction) l.car();
             Object args = l.cdr();
             if (args == RNull.instance) {
-                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), topLevel, new Object[0]);
+                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), topLevel, null, new Object[0]);
             } else {
-                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), topLevel, ((RPairList) args).toRList().getDataNonShared());
+                RList argsList = ((RPairList) args).toRList();
+                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), topLevel, argsList.getNames(), argsList.getDataNonShared());
             }
 
         } else {
@@ -991,7 +992,7 @@ public class CallRFFIHelper {
             RFFIUtils.traceUpCall("R_computeIdentical", x, y, flags);
         }
         RFunction indenticalBuiltin = RContext.lookupBuiltin("identical");
-        Object res = RContext.getEngine().evalFunction(indenticalBuiltin, null, null, x, y, RRuntime.asLogical((!((flags & 1) == 0))),
+        Object res = RContext.getEngine().evalFunction(indenticalBuiltin, null, null, null, x, y, RRuntime.asLogical((!((flags & 1) == 0))),
                         RRuntime.asLogical((!((flags & 2) == 0))), RRuntime.asLogical((!((flags & 4) == 0))), RRuntime.asLogical((!((flags & 8) == 0))), RRuntime.asLogical((!((flags & 16) == 0))));
         return (int) res;
     }
@@ -1385,5 +1386,4 @@ public class CallRFFIHelper {
     public static int R_insideBrowser() {
         return RContext.getInstance().stateInstrumentation.getBrowserState().inBrowser() ? 1 : 0;
     }
-
 }
