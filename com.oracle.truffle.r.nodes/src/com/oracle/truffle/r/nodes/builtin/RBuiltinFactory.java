@@ -26,10 +26,10 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class RBuiltinFactory extends RBuiltinDescriptor {

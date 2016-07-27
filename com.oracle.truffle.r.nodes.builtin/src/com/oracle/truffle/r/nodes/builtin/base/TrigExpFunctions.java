@@ -42,13 +42,13 @@ import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.CosNodeGe
 import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.SinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.TanNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;

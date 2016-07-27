@@ -587,7 +587,8 @@ public class TestBase {
         return new CheckResult(ok, result, expected);
     }
 
-    private static String convertReferencesInOutput(String result) {
+    private static String convertReferencesInOutput(String input) {
+        String result = input;
         Matcher matcher = REFERENCE_PATTERN.matcher(result);
         HashMap<String, Integer> idsMap = new HashMap<>();
         int currentId = 1;

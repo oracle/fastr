@@ -50,7 +50,7 @@ import com.oracle.truffle.r.nodes.casts.PredefMappersSamplers;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;

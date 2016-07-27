@@ -22,14 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "length", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Length extends RBuiltinNode {

@@ -22,12 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = ".fastr.identity", kind = PRIMITIVE, parameterNames = {""})
 public abstract class FastRIdentity extends RBuiltinNode {
