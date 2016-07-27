@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -70,7 +71,7 @@ import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "as.vector", kind = INTERNAL, parameterNames = {"x", "mode"})
+@RBuiltin(name = "as.vector", kind = INTERNAL, parameterNames = {"x", "mode"}, behavior = COMPLEX)
 public abstract class AsVector extends RBuiltinNode {
 
     @Child private AsVectorInternal internal = AsVectorInternalNodeGen.create();

@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -32,11 +35,11 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.IsTypeFunctions.IsAtomic;
 import com.oracle.truffle.r.nodes.builtin.base.IsTypeFunctionsFactory.IsAtomicNodeGen;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -44,11 +47,11 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "lengths", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "use.names"})
+@RBuiltin(name = "lengths", kind = INTERNAL, parameterNames = {"x", "use.names"}, behavior = PURE)
 public abstract class Lengths extends RBuiltinNode {
 
     @Child private IsAtomic isAtomicNode;
-    @Child private Length lengthNode;
+    @Child private RLengthNode lengthNode;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -60,7 +63,7 @@ public abstract class Lengths extends RBuiltinNode {
     private void initLengthNode() {
         if (lengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lengthNode = insert(LengthNodeGen.create(null));
+            lengthNode = insert(RLengthNode.create());
         }
     }
 
@@ -70,7 +73,7 @@ public abstract class Lengths extends RBuiltinNode {
         int[] data = new int[list.getLength()];
         for (int i = 0; i < data.length; i++) {
             Object elem = list.getDataAt(i);
-            data[i] = lengthNode.executeInt(frame, elem);
+            data[i] = lengthNode.executeInteger(frame, elem);
         }
         return createResult(list, data, useNames);
     }

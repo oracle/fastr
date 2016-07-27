@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
@@ -33,7 +35,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -81,7 +82,7 @@ public class SerializeFunctions {
         }
     }
 
-    @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"conn", "refhook"})
+    @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"conn", "refhook"}, behavior = IO)
     public abstract static class UnserializeFromConn extends Adapter {
         @Specialization
         protected Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") RNull refhook) {
@@ -95,7 +96,7 @@ public class SerializeFunctions {
         }
     }
 
-    @RBuiltin(name = "serializeToConn", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
+    @RBuiltin(name = "serializeToConn", visibility = OFF, kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"}, behavior = IO)
     public abstract static class SerializeToConn extends Adapter {
         @Specialization
         protected Object doSerializeToConn(Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
@@ -111,7 +112,7 @@ public class SerializeFunctions {
         }
     }
 
-    @RBuiltin(name = "unserialize", kind = INTERNAL, parameterNames = {"conn", "refhook"})
+    @RBuiltin(name = "unserialize", kind = INTERNAL, parameterNames = {"conn", "refhook"}, behavior = IO)
     public abstract static class Unserialize extends Adapter {
         @Specialization
         protected Object unSerialize(RConnection conn, @SuppressWarnings("unused") RNull refhook) {
@@ -124,7 +125,7 @@ public class SerializeFunctions {
         }
     }
 
-    @RBuiltin(name = "serialize", kind = INTERNAL, parameterNames = {"object", "conn", "type", "version", "refhook"})
+    @RBuiltin(name = "serialize", kind = INTERNAL, parameterNames = {"object", "conn", "type", "version", "refhook"}, behavior = IO)
     public abstract static class Serialize extends Adapter {
         @Specialization
         protected Object serialize(Object object, RConnection conn, int type, RNull version, RNull refhook) {
@@ -145,7 +146,7 @@ public class SerializeFunctions {
         }
     }
 
-    @RBuiltin(name = "serializeb", kind = INTERNAL, parameterNames = {"object", "conn", "xdr", "version", "refhook"})
+    @RBuiltin(name = "serializeb", kind = INTERNAL, parameterNames = {"object", "conn", "xdr", "version", "refhook"}, behavior = IO)
     public abstract static class SerializeB extends Adapter {
         @Specialization
         protected Object serializeB(Object object, RConnection conn, byte xdrLogical, RNull version, RNull refhook) {

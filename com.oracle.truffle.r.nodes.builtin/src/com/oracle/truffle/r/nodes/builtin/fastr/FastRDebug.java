@@ -22,20 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = ".fastr.debug", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"values"})
+@RBuiltin(name = ".fastr.debug", visibility = OFF, kind = PRIMITIVE, parameterNames = {"values"}, behavior = COMPLEX)
 public abstract class FastRDebug extends RBuiltinNode {
+
     @Specialization
+    @TruffleBoundary
     protected RNull debug(RAbstractStringVector vec) {
         for (int i = 0; i < vec.getLength(); i++) {
             FastROptions.debugUpdate(vec.getDataAt(i));

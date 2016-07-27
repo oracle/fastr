@@ -23,6 +23,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Cached;
@@ -59,7 +60,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * {@code fun(dots[0][X], dots[1][X], , dots[N][X], MoreArgs)} for {@code X=1..M} where {@code M} is
  * the longest vector, with the usual recycling rule.
  */
-@RBuiltin(name = "mapply", kind = INTERNAL, parameterNames = {"FUN", "dots", "MoreArgs"}, splitCaller = true)
+@RBuiltin(name = "mapply", kind = INTERNAL, parameterNames = {"FUN", "dots", "MoreArgs"}, splitCaller = true, behavior = COMPLEX)
 public abstract class Mapply extends RBuiltinNode {
 
     protected static final class ElementNode extends Node {

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Locale;
@@ -29,7 +30,6 @@ import java.util.Locale;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -43,10 +43,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "sprintf", kind = INTERNAL, parameterNames = {"fmt", "..."})
+@RBuiltin(name = "sprintf", kind = INTERNAL, parameterNames = {"fmt", "..."}, behavior = PURE)
 public abstract class Sprintf extends RBuiltinNode {
 
-    public abstract Object executeObject(VirtualFrame frame, String fmt, Object args);
+    public abstract Object executeObject(String fmt, Object args);
 
     @Child private Sprintf sprintfRecursive;
 
@@ -215,12 +215,12 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "oneElement(args)")
-    protected Object sprintfOneElement(VirtualFrame frame, String fmt, RArgsValuesAndNames args) {
+    protected Object sprintfOneElement(String fmt, RArgsValuesAndNames args) {
         if (sprintfRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             sprintfRecursive = insert(SprintfNodeGen.create(null));
         }
-        return sprintfRecursive.executeObject(frame, fmt, args.getArgument(0));
+        return sprintfRecursive.executeObject(fmt, args.getArgument(0));
     }
 
     @Specialization(guards = {"!oneElement(args)"})
@@ -240,18 +240,18 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = {"oneElement(args)", "fmtLengthOne(fmt)"})
-    protected Object sprintfOneElement(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
-        return sprintfOneElement(frame, fmt.getDataAt(0), args);
+    protected Object sprintfOneElement(RAbstractStringVector fmt, RArgsValuesAndNames args) {
+        return sprintfOneElement(fmt.getDataAt(0), args);
     }
 
     @Specialization(guards = {"oneElement(args)", "!fmtLengthOne(fmt)"})
-    protected Object sprintf(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
+    protected Object sprintf2(RAbstractStringVector fmt, RArgsValuesAndNames args) {
         if (fmt.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
         } else {
             String[] data = new String[fmt.getLength()];
             for (int i = 0; i < data.length; i++) {
-                Object formattedObj = sprintfOneElement(frame, fmt.getDataAt(i), args);
+                Object formattedObj = sprintfOneElement(fmt.getDataAt(i), args);
                 if (formattedObj instanceof String) {
                     data[i] = (String) formattedObj;
                 } else {

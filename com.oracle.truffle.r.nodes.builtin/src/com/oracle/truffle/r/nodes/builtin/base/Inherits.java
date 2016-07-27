@@ -11,6 +11,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
@@ -29,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-@RBuiltin(name = "inherits", kind = INTERNAL, parameterNames = {"x", "what", "which"})
+@RBuiltin(name = "inherits", kind = INTERNAL, parameterNames = {"x", "what", "which"}, behavior = PURE)
 // TODO inherits is applicable to every type of object, if only because of "try-error".
 public abstract class Inherits extends RBuiltinNode {
 

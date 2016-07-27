@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.Arrays;
@@ -46,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-@RBuiltin(name = "attributes", kind = PRIMITIVE, parameterNames = {"obj"})
+@RBuiltin(name = "attributes", kind = PRIMITIVE, parameterNames = {"obj"}, behavior = PURE)
 public abstract class Attributes extends RBuiltinNode {
 
     private final BranchProfile rownamesBranch = BranchProfile.create();

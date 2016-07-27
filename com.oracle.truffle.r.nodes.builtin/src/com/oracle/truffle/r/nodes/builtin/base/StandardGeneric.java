@@ -12,6 +12,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -35,7 +37,6 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -50,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 // transcribed from src/main/objects.c
-@RBuiltin(name = "standardGeneric", visibility = RVisibility.CUSTOM, kind = PRIMITIVE, parameterNames = {"f", "fdef"})
+@RBuiltin(name = "standardGeneric", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"f", "fdef"}, behavior = COMPLEX)
 public abstract class StandardGeneric extends RBuiltinNode {
 
     // TODO: for now, we always go through generic dispatch

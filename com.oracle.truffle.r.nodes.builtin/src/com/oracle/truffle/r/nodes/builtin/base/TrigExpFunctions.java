@@ -22,6 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -42,13 +47,11 @@ import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.CosNodeGe
 import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.SinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.TanNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -173,7 +176,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "exp", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "exp", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Exp extends UnaryArithmeticBuiltinNode {
 
         public Exp() {
@@ -197,7 +200,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "expm1", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "expm1", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class ExpM1 extends UnaryArithmeticBuiltinNode {
 
         public ExpM1() {
@@ -222,7 +225,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "sin", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Sin extends UnaryArithmeticBuiltinNode {
 
         public Sin() {
@@ -242,7 +245,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "sinh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "sinh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Sinh extends UnaryArithmeticBuiltinNode {
 
         public Sinh() {
@@ -262,7 +265,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "sinpi", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "sinpi", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Sinpi extends UnaryArithmeticBuiltinNode {
 
         public Sinpi() {
@@ -286,7 +289,7 @@ public class TrigExpFunctions {
 
     }
 
-    @RBuiltin(name = "cos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "cos", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Cos extends UnaryArithmeticBuiltinNode {
 
         public Cos() {
@@ -306,7 +309,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "cosh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "cosh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Cosh extends UnaryArithmeticBuiltinNode {
 
         public Cosh() {
@@ -326,7 +329,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "cospi", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "cospi", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Cospi extends UnaryArithmeticBuiltinNode {
 
         public Cospi() {
@@ -354,7 +357,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "tan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "tan", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Tan extends UnaryArithmeticBuiltinNode {
 
         public Tan() {
@@ -380,7 +383,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "tanh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "tanh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Tanh extends UnaryArithmeticBuiltinNode {
 
         public Tanh() {
@@ -401,7 +404,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "tanpi", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "tanpi", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Tanpi extends UnaryArithmeticBuiltinNode {
 
         public Tanpi() {
@@ -426,7 +429,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "asin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "asin", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Asin extends UnaryArithmeticBuiltinNode {
 
         @Child private CHypot chypot;
@@ -485,7 +488,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "asinh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "asinh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Asinh extends UnaryArithmeticBuiltinNode {
 
         @Child private Asin asinNode = AsinNodeGen.create(null);
@@ -506,7 +509,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "acos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "acos", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Acos extends UnaryArithmeticBuiltinNode {
 
         public Acos() {
@@ -527,7 +530,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "acosh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "acosh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Acosh extends UnaryArithmeticBuiltinNode {
 
         public Acosh() {
@@ -548,7 +551,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "atan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "atan", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Atan extends UnaryArithmeticBuiltinNode {
 
         public Atan() {
@@ -578,7 +581,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "atanh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "atanh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Atanh extends UnaryArithmeticBuiltinNode {
 
         public Atanh() {
@@ -603,7 +606,7 @@ public class TrigExpFunctions {
      * {@code atan2} takes two args. To avoid combinatorial explosion in specializations we coerce
      * the {@code int} forms to {@code double}.
      */
-    @RBuiltin(name = "atan2", kind = RBuiltinKind.INTERNAL, parameterNames = {"y", "x"})
+    @RBuiltin(name = "atan2", kind = INTERNAL, parameterNames = {"y", "x"}, behavior = PURE)
     public abstract static class Atan2 extends RBuiltinNode {
 
         private final NACheck yNACheck = NACheck.create();

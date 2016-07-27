@@ -13,7 +13,13 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -23,11 +29,10 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 
-@RBuiltin(name = "@", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = 1)
+@RBuiltin(name = "@", kind = PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class Slot extends RBuiltinNode {
 
     @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(true, null, null);
@@ -55,12 +60,14 @@ public abstract class Slot extends RBuiltinNode {
                 return ((ReadVariableNode) rep).getIdentifier();
             }
         }
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(this, RError.Message.GENERIC, "invalid type or length for slot name");
     }
 
     @Specialization
-    protected Object getSlot(Object object, Object nameObj) {
-        String name = getName(nameObj);
+    protected Object getSlot(Object object, Object nameObj,
+                    @Cached("createClassProfile()") ValueProfile nameObjProfile) {
+        String name = getName(nameObjProfile.profile(nameObj));
         assert name == name.intern();
         return accessSlotNode.executeAccess(object, name);
     }

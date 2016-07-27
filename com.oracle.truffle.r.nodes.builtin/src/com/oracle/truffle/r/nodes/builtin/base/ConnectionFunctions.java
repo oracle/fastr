@@ -26,6 +26,10 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElemen
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.trueValue;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.getBaseConnection;
 import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.removeFileURLPrefix;
@@ -53,7 +57,6 @@ import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.WriteD
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
@@ -95,7 +98,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  *
  */
 public abstract class ConnectionFunctions {
-    @RBuiltin(name = "stdin", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "stdin", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class Stdin extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -104,7 +107,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "stdout", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "stdout", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class Stdout extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -113,7 +116,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "stderr", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "stderr", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class Stderr extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -122,7 +125,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "raw"})
+    @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "raw"}, behavior = IO)
     public abstract static class File extends RBuiltinNode {
 
         @Override
@@ -176,7 +179,7 @@ public abstract class ConnectionFunctions {
      * compressed by {@code bzip2, xz, lzma}. Currently we only support {@code gzip} and
      * uncompressed.
      */
-    @RBuiltin(name = "gzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"})
+    @RBuiltin(name = "gzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"}, behavior = IO)
     public abstract static class GZFile extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -202,7 +205,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "textConnection", kind = INTERNAL, parameterNames = {"nm", "object", "open", "env", "type"})
+    @RBuiltin(name = "textConnection", kind = INTERNAL, parameterNames = {"nm", "object", "open", "env", "type"}, behavior = IO)
     public abstract static class TextConnection extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -225,7 +228,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "textConnectionValue", kind = INTERNAL, parameterNames = {"con"})
+    @RBuiltin(name = "textConnectionValue", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
     public abstract static class TextConnectionValue extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -238,7 +241,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "socketConnection", kind = INTERNAL, parameterNames = {"host", "port", "server", "blocking", "open", "encoding", "timeout"})
+    @RBuiltin(name = "socketConnection", kind = INTERNAL, parameterNames = {"host", "port", "server", "blocking", "open", "encoding", "timeout"}, behavior = IO)
     public abstract static class SocketConnection extends RBuiltinNode {
 
         @Override
@@ -266,7 +269,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "url", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding"})
+    @RBuiltin(name = "url", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding"}, behavior = IO)
     public abstract static class URLConnection extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -291,7 +294,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "summary.connection", kind = INTERNAL, parameterNames = {"object}"})
+    @RBuiltin(name = "summary.connection", kind = INTERNAL, parameterNames = {"object}"}, behavior = IO)
     public abstract static class Summary extends CheckIsConnAdapter {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"description", "class", "mode", "text", "opened", "can read", "can write"},
                         RDataFactory.COMPLETE_VECTOR);
@@ -320,7 +323,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "open", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"con", "open", "blocking"})
+    @RBuiltin(name = "open", visibility = OFF, kind = INTERNAL, parameterNames = {"con", "open", "blocking"}, behavior = IO)
     public abstract static class Open extends CheckIsConnAdapter {
         @Specialization
         @TruffleBoundary
@@ -351,7 +354,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "isOpen", kind = INTERNAL, parameterNames = {"con", "rw"})
+    @RBuiltin(name = "isOpen", kind = INTERNAL, parameterNames = {"con", "rw"}, behavior = IO)
     public abstract static class IsOpen extends CheckIsConnAdapter {
         @Specialization
         @TruffleBoundary
@@ -381,7 +384,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "close", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"con", "type"})
+    @RBuiltin(name = "close", visibility = OFF, kind = INTERNAL, parameterNames = {"con", "type"}, behavior = IO)
     public abstract static class Close extends CheckIsConnAdapter {
         @Specialization
         @TruffleBoundary
@@ -418,7 +421,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "readLines", kind = INTERNAL, parameterNames = {"con", "n", "ok", "warn", "encoding", "skipNul"})
+    @RBuiltin(name = "readLines", kind = INTERNAL, parameterNames = {"con", "n", "ok", "warn", "encoding", "skipNul"}, behavior = IO)
     public abstract static class ReadLines extends InternalCloseHelper {
 
         @Override
@@ -456,7 +459,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "writeLines", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"text", "con", "sep", "useBytes"})
+    @RBuiltin(name = "writeLines", visibility = OFF, kind = INTERNAL, parameterNames = {"text", "con", "sep", "useBytes"}, behavior = IO)
     public abstract static class WriteLines extends InternalCloseHelper {
         @Specialization
         @TruffleBoundary
@@ -477,7 +480,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "flush", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"con"})
+    @RBuiltin(name = "flush", visibility = OFF, kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
     public abstract static class Flush extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -491,7 +494,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "pushBack", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"data", "connection", "newLine", "type"})
+    @RBuiltin(name = "pushBack", visibility = OFF, kind = INTERNAL, parameterNames = {"data", "connection", "newLine", "type"}, behavior = IO)
     public abstract static class PushBack extends RBuiltinNode {
 
         @Override
@@ -535,7 +538,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "pushBackLength", kind = INTERNAL, parameterNames = {"connection"})
+    @RBuiltin(name = "pushBackLength", kind = INTERNAL, parameterNames = {"connection"}, behavior = IO)
     public abstract static class PushBackLength extends RBuiltinNode {
 
         @Specialization
@@ -549,7 +552,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "clearPushBack", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"connection"})
+    @RBuiltin(name = "clearPushBack", visibility = OFF, kind = INTERNAL, parameterNames = {"connection"}, behavior = IO)
     public abstract static class PushBackClear extends RBuiltinNode {
 
         @Specialization
@@ -564,7 +567,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "readChar", kind = INTERNAL, parameterNames = {"con", "nchars", "useBytes"})
+    @RBuiltin(name = "readChar", kind = INTERNAL, parameterNames = {"con", "nchars", "useBytes"}, behavior = IO)
     public abstract static class ReadChar extends InternalCloseHelper {
 
         @SuppressWarnings("unused")
@@ -602,7 +605,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "writeChar", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"object", "con", "nchars", "eos", "useBytes"})
+    @RBuiltin(name = "writeChar", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"object", "con", "nchars", "eos", "useBytes"}, behavior = IO)
     public abstract static class WriteChar extends InternalCloseHelper {
         @TruffleBoundary
         @Specialization
@@ -640,7 +643,7 @@ public abstract class ConnectionFunctions {
         return buffer.order(nb);
     }
 
-    @RBuiltin(name = "readBin", kind = INTERNAL, parameterNames = {"con", "what", "n", "size", "signed", "swap"})
+    @RBuiltin(name = "readBin", kind = INTERNAL, parameterNames = {"con", "what", "n", "size", "signed", "swap"}, behavior = IO)
     public abstract static class ReadBin extends InternalCloseHelper {
 
         @Override
@@ -912,7 +915,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "writeBin", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"})
+    @RBuiltin(name = "writeBin", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"}, behavior = IO)
     public abstract static class WriteBin extends InternalCloseHelper {
 
         @Override
@@ -954,7 +957,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "getConnection", kind = INTERNAL, parameterNames = {"what"})
+    @RBuiltin(name = "getConnection", kind = INTERNAL, parameterNames = {"what"}, behavior = IO)
     public abstract static class GetConnection extends RBuiltinNode {
 
         @Override
@@ -974,7 +977,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "getAllConnections", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "getAllConnections", kind = INTERNAL, parameterNames = {}, behavior = IO)
     public abstract static class GetAllConnections extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -983,7 +986,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "isSeekable", kind = INTERNAL, parameterNames = "con")
+    @RBuiltin(name = "isSeekable", kind = INTERNAL, parameterNames = "con", behavior = IO)
     public abstract static class IsSeekable extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -992,7 +995,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "seek", kind = INTERNAL, parameterNames = {"con", "where", "origin", "rw"})
+    @RBuiltin(name = "seek", kind = INTERNAL, parameterNames = {"con", "where", "origin", "rw"}, behavior = IO)
     public abstract static class Seek extends RBuiltinNode {
         @Specialization
         @TruffleBoundary

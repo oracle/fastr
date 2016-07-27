@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Fallback;
@@ -34,9 +35,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
-@RBuiltin(name = ".Primitive", kind = PRIMITIVE, parameterNames = "name")
+@RBuiltin(name = ".Primitive", kind = PRIMITIVE, parameterNames = "name", behavior = PURE)
 public abstract class Primitive extends RBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
+
+    // TODO: implement inline caching
 
     @Specialization
     protected RFunction primitive(String name) {

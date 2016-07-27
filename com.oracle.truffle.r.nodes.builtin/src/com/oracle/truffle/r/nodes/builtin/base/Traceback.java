@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -31,7 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
-@RBuiltin(name = "traceback", kind = INTERNAL, parameterNames = {"x"})
+@RBuiltin(name = "traceback", kind = INTERNAL, parameterNames = {"x"}, behavior = COMPLEX)
 public abstract class Traceback extends RBuiltinNode {
 
     @Override
@@ -44,5 +45,4 @@ public abstract class Traceback extends RBuiltinNode {
     protected Object traceback(int x) {
         return Utils.createTraceback(x);
     }
-
 }

@@ -22,15 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 
 /**
  * FastR does not byte-compile, obviously, but this keeps the package installation code happy.
  */
-@RBuiltin(name = "compilePKGS", kind = RBuiltinKind.INTERNAL, parameterNames = "enable")
+@RBuiltin(name = "compilePKGS", kind = INTERNAL, parameterNames = "enable", behavior = COMPLEX)
 public abstract class CompilePKGS extends RBuiltinNode {
 
     @Specialization

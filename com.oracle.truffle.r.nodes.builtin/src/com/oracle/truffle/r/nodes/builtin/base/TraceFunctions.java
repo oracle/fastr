@@ -25,6 +25,11 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -44,11 +49,9 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.MemoryTracer;
@@ -72,7 +75,7 @@ public class TraceFunctions {
         }
     }
 
-    @RBuiltin(name = ".primTrace", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
+    @RBuiltin(name = ".primTrace", visibility = OFF, kind = PRIMITIVE, parameterNames = "what", behavior = COMPLEX)
     public abstract static class PrimTrace extends Helper {
 
         @Specialization
@@ -92,7 +95,7 @@ public class TraceFunctions {
         }
     }
 
-    @RBuiltin(name = ".primUntrace", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
+    @RBuiltin(name = ".primUntrace", visibility = OFF, kind = PRIMITIVE, parameterNames = "what", behavior = COMPLEX)
     public abstract static class PrimUnTrace extends Helper {
 
         @Specialization
@@ -110,7 +113,7 @@ public class TraceFunctions {
         }
     }
 
-    @RBuiltin(name = "traceOnOff", kind = RBuiltinKind.INTERNAL, parameterNames = "state")
+    @RBuiltin(name = "traceOnOff", kind = INTERNAL, parameterNames = "state", behavior = COMPLEX)
     public abstract static class TraceOnOff extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -188,7 +191,7 @@ public class TraceFunctions {
      * vector class. When these are manipulated as 'vectors', they are wrapped temporarily, such
      * temporary vector wrappers cannot be traced however.
      */
-    @RBuiltin(name = "tracemem", kind = RBuiltinKind.PRIMITIVE, parameterNames = "x")
+    @RBuiltin(name = "tracemem", kind = PRIMITIVE, parameterNames = "x", behavior = COMPLEX)
     public abstract static class Tracemem extends TracememBase {
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -207,7 +210,7 @@ public class TraceFunctions {
      * build with memory tracing support or x is NULL and it has additional parameter with an
      * unclear meaning.
      */
-    @RBuiltin(name = "retracemem", kind = RBuiltinKind.PRIMITIVE, visibility = RVisibility.CUSTOM, parameterNames = {"x", "previous"})
+    @RBuiltin(name = "retracemem", kind = PRIMITIVE, visibility = CUSTOM, parameterNames = {"x", "previous"}, behavior = COMPLEX)
     public abstract static class Retracemem extends TracememBase {
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -245,7 +248,7 @@ public class TraceFunctions {
         }
     }
 
-    @RBuiltin(name = "untracemem", kind = RBuiltinKind.PRIMITIVE, visibility = RVisibility.OFF, parameterNames = "x")
+    @RBuiltin(name = "untracemem", kind = PRIMITIVE, visibility = OFF, parameterNames = "x", behavior = COMPLEX)
     public abstract static class Untracemem extends TracememBase {
         @Specialization
         protected RNull execute(Object x) {

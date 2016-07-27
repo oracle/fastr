@@ -22,17 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RDispatch.COMPLEX_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RComplex;
 
 public class NumericalFunctions {
@@ -52,7 +53,7 @@ public class NumericalFunctions {
 
     }
 
-    @RBuiltin(name = "abs", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "abs", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Abs extends UnaryArithmeticBuiltinNode {
 
         public Abs() {
@@ -90,7 +91,7 @@ public class NumericalFunctions {
         }
     }
 
-    @RBuiltin(name = "Re", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = RDispatch.COMPLEX_GROUP_GENERIC)
+    @RBuiltin(name = "Re", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = COMPLEX_GROUP_GENERIC, behavior = PURE)
     public abstract static class Re extends UnaryArithmeticBuiltinNode {
 
         public Re() {
@@ -128,7 +129,7 @@ public class NumericalFunctions {
         }
     }
 
-    @RBuiltin(name = "Im", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = RDispatch.COMPLEX_GROUP_GENERIC)
+    @RBuiltin(name = "Im", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = COMPLEX_GROUP_GENERIC, behavior = PURE)
     public abstract static class Im extends UnaryArithmeticBuiltinNode {
 
         public Im() {
@@ -166,7 +167,7 @@ public class NumericalFunctions {
         }
     }
 
-    @RBuiltin(name = "Conj", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = RDispatch.COMPLEX_GROUP_GENERIC)
+    @RBuiltin(name = "Conj", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = COMPLEX_GROUP_GENERIC, behavior = PURE)
     public abstract static class Conj extends UnaryArithmeticBuiltinNode {
 
         public Conj() {
@@ -194,7 +195,7 @@ public class NumericalFunctions {
         }
     }
 
-    @RBuiltin(name = "Mod", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = RDispatch.COMPLEX_GROUP_GENERIC)
+    @RBuiltin(name = "Mod", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = COMPLEX_GROUP_GENERIC, behavior = PURE)
     public abstract static class Mod extends UnaryArithmeticBuiltinNode {
 
         public Mod() {
@@ -232,7 +233,7 @@ public class NumericalFunctions {
         }
     }
 
-    @RBuiltin(name = "sign", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "sign", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Sign extends UnaryArithmeticBuiltinNode {
 
         public Sign() {
@@ -256,7 +257,7 @@ public class NumericalFunctions {
 
     }
 
-    @RBuiltin(name = "sqrt", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "sqrt", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Sqrt extends UnaryArithmeticBuiltinNode {
 
         public Sqrt() {

@@ -13,6 +13,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
@@ -52,7 +54,7 @@ import com.sun.org.apache.bcel.internal.generic.INSTANCEOF;
 
 @SuppressWarnings("unused")
 @RBuiltin(name = "scan", kind = INTERNAL, parameterNames = {"file", "what", "nmax", "sep", "dec", "quote", "skip", "nlines", "na.strings", "flush", "fill", "strip.white", "quiet", "blank.lines.skip",
-                "multi.line", "comment.char", "allowEscapes", "encoding", "skipNull"})
+                "multi.line", "comment.char", "allowEscapes", "encoding", "skipNull"}, behavior = IO)
 public abstract class Scan extends RBuiltinNode {
 
     private static final int SCAN_BLOCKSIZE = 1000;

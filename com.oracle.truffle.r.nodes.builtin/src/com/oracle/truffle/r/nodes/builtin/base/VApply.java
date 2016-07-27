@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -72,7 +73,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  *
  * TODO Set dimnames on result if necessary.
  */
-@RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "USE.NAMES"}, splitCaller = true)
+@RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "USE.NAMES"}, splitCaller = true, behavior = COMPLEX)
 public abstract class VApply extends RBuiltinNode {
 
     private final ValueProfile funValueProfile = ValueProfile.createClassProfile();

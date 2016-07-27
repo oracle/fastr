@@ -23,6 +23,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -40,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 // oldClass<- (as opposed to class<-), simply sets the attribute (without handling "implicit" attributes)
-@RBuiltin(name = "oldClass<-", kind = PRIMITIVE, parameterNames = {"x", "value"})
+@RBuiltin(name = "oldClass<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
 public abstract class UpdateOldClass extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;

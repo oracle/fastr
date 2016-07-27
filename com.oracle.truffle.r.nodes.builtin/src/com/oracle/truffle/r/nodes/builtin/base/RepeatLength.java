@@ -11,6 +11,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Arrays;
@@ -34,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-@RBuiltin(name = "rep_len", kind = INTERNAL, parameterNames = {"x", "length.out"})
+@RBuiltin(name = "rep_len", kind = INTERNAL, parameterNames = {"x", "length.out"}, behavior = PURE)
 public abstract class RepeatLength extends RBuiltinNode {
 
     @Override

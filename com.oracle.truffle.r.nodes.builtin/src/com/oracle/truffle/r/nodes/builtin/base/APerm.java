@@ -10,6 +10,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -27,7 +28,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 //TODO: Implement permuting with DimNames
-@RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "resize"})
+@RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "resize"}, behavior = PURE)
 public abstract class APerm extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();

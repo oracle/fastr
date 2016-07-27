@@ -12,12 +12,15 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.HashMap;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -26,7 +29,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -42,7 +44,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 // TODO rowsum_df
 public class RowsumFunctions {
 
-    @RBuiltin(name = "rowsum_matrix", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "g", "uniqueg", "snarm", "rn"})
+    @RBuiltin(name = "rowsum_matrix", kind = INTERNAL, parameterNames = {"x", "g", "uniqueg", "snarm", "rn"}, behavior = PURE)
     public abstract static class Rowsum extends RBuiltinNode {
 
         private final ConditionProfile typeProfile = ConditionProfile.createBinaryProfile();

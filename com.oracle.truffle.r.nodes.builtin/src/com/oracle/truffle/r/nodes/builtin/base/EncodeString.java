@@ -10,7 +10,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte0;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notLogicalNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -20,14 +29,13 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "encodeString", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "width", "quote", "justify", "na.encode"})
+@RBuiltin(name = "encodeString", kind = INTERNAL, parameterNames = {"x", "width", "quote", "justify", "na.encode"}, behavior = READS_STATE)
 public abstract class EncodeString extends RBuiltinNode {
 
     private enum JUSTIFY {

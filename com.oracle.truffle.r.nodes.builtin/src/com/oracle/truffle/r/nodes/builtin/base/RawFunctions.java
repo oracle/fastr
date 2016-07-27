@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -32,7 +35,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -44,7 +46,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  */
 public class RawFunctions {
 
-    @RBuiltin(name = "charToRaw", kind = RBuiltinKind.INTERNAL, parameterNames = "x")
+    @RBuiltin(name = "charToRaw", kind = INTERNAL, parameterNames = "x", behavior = PURE)
     public abstract static class CharToRaw extends RBuiltinNode {
         @Specialization
         protected RRawVector charToRaw(RAbstractStringVector x) {
@@ -65,7 +67,7 @@ public class RawFunctions {
         }
     }
 
-    @RBuiltin(name = "rawToChar", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "multiple"})
+    @RBuiltin(name = "rawToChar", kind = INTERNAL, parameterNames = {"x", "multiple"}, behavior = PURE)
     public abstract static class RawToChar extends RBuiltinNode {
         @Specialization
         protected RStringVector rawToChar(RAbstractRawVector x, byte multiple) {
@@ -100,7 +102,7 @@ public class RawFunctions {
         }
     }
 
-    @RBuiltin(name = "rawShift", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "n"})
+    @RBuiltin(name = "rawShift", kind = INTERNAL, parameterNames = {"x", "n"}, behavior = PURE)
     public abstract static class RawShift extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {

@@ -12,6 +12,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -26,12 +28,11 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "quit", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"save", "status", "runLast"})
+@RBuiltin(name = "quit", visibility = OFF, kind = INTERNAL, parameterNames = {"save", "status", "runLast"}, behavior = COMPLEX)
 public abstract class Quit extends RBuiltinNode {
 
     @Override
@@ -80,5 +81,4 @@ public abstract class Quit extends RBuiltinNode {
         }
         throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
-
 }

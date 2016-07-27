@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.Arrays;
@@ -31,7 +33,6 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -64,7 +65,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * </ul>
  * </ol>
  */
-@RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"}, dispatch = RDispatch.INTERNAL_GENERIC)
+@RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Repeat extends RBuiltinNode {
 
     protected abstract Object execute(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each);

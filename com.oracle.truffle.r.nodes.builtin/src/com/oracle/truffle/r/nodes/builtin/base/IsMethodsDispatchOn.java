@@ -22,14 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
 
-@RBuiltin(name = ".isMethodsDispatchOn", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
+@RBuiltin(name = ".isMethodsDispatchOn", kind = PRIMITIVE, parameterNames = {}, behavior = READS_STATE)
 public abstract class IsMethodsDispatchOn extends RBuiltinNode {
 
     public abstract byte execute();

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.ArrayList;
@@ -47,7 +48,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
-@RBuiltin(name = "all.names", kind = INTERNAL, parameterNames = {"expr", "function", "max.names", "unique"})
+@RBuiltin(name = "all.names", kind = INTERNAL, parameterNames = {"expr", "function", "max.names", "unique"}, behavior = PURE)
 public abstract class AllNames extends RBuiltinNode {
 
     @Override

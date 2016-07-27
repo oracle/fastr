@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -38,7 +41,6 @@ import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -53,7 +55,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * here.
  *
  */
-@RBuiltin(name = "args", kind = RBuiltinKind.INTERNAL, parameterNames = {"name"})
+@RBuiltin(name = "args", kind = INTERNAL, parameterNames = {"name"}, behavior = COMPLEX)
 public abstract class Args extends RBuiltinNode {
 
     @Child private GetFunctions.Get getNode;

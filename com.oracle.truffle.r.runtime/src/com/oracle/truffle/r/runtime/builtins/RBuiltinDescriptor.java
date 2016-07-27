@@ -35,6 +35,8 @@ public abstract class RBuiltinDescriptor {
     private static int primitiveMethodCount;
 
     private final String name;
+    private final Class<?> builtinNodeClass;
+    private final RVisibility visibility;
     private final String[] aliases;
     private final RBuiltinKind kind;
     private final ArgumentsSignature signature;
@@ -42,13 +44,13 @@ public abstract class RBuiltinDescriptor {
     private final boolean splitCaller;
     private final boolean alwaysSplit;
     private final RDispatch dispatch;
+    private final RBehavior behavior;
+
     private final int primitiveMethodIndex;
-    private final RVisibility visibility;
     @CompilationFinal private final boolean[] evaluatesArgument;
-    private final Class<?> builtinNodeClass;
 
     public RBuiltinDescriptor(String name, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller,
-                    boolean alwaysSplit, RDispatch dispatch) {
+                    boolean alwaysSplit, RDispatch dispatch, RBehavior behavior) {
         this.name = name.intern();
         this.builtinNodeClass = builtinNodeClass;
         this.visibility = visibility;
@@ -59,6 +61,7 @@ public abstract class RBuiltinDescriptor {
         this.splitCaller = splitCaller;
         this.alwaysSplit = alwaysSplit;
         this.dispatch = dispatch;
+        this.behavior = behavior;
 
         evaluatesArgument = new boolean[signature.getLength()];
         Arrays.fill(evaluatesArgument, true);
@@ -123,5 +126,9 @@ public abstract class RBuiltinDescriptor {
 
     public Class<?> getBuiltinNodeClass() {
         return builtinNodeClass;
+    }
+
+    public RBehavior getBehavior() {
+        return behavior;
     }
 }

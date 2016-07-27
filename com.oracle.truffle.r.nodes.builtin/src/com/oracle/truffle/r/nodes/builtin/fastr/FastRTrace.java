@@ -22,6 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -44,9 +49,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -106,7 +109,7 @@ public class FastRTrace {
 
     }
 
-    @RBuiltin(name = ".fastr.trace", visibility = RVisibility.CUSTOM, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"what", "tracer", "exit", "at", "print", "signature", "where"})
+    @RBuiltin(name = ".fastr.trace", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"what", "tracer", "exit", "at", "print", "signature", "where"}, behavior = COMPLEX)
     public abstract static class Trace extends Helper {
 
         @Child private TraceFunctions.PrimTrace primTrace;
@@ -171,7 +174,7 @@ public class FastRTrace {
 
     }
 
-    @RBuiltin(name = ".fastr.untrace", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"what", "signature", "where"})
+    @RBuiltin(name = ".fastr.untrace", visibility = OFF, kind = PRIMITIVE, parameterNames = {"what", "signature", "where"}, behavior = COMPLEX)
     public abstract static class Untrace extends Helper {
 
         @Child private TraceFunctions.PrimUnTrace primUnTrace;

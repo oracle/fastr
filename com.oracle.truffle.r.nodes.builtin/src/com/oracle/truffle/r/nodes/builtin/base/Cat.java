@@ -33,6 +33,9 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogica
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,10 +49,8 @@ import com.oracle.truffle.r.nodes.unary.ToStringNode;
 import com.oracle.truffle.r.nodes.unary.ToStringNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -62,7 +63,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 /**
  * The {@code cat .Internal}.
  */
-@RBuiltin(name = "cat", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"})
+@RBuiltin(name = "cat", visibility = OFF, kind = INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"}, behavior = IO)
 public abstract class Cat extends RBuiltinNode {
 
     @Child private ToStringNode toString;

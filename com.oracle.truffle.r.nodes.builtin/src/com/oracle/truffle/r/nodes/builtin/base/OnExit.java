@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.ArrayList;
@@ -39,7 +41,6 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -52,7 +53,7 @@ import com.oracle.truffle.r.runtime.ops.na.NAProfile;
  * evaluated, but {@code add} is. TODO arrange for the {@code expr} be stored with the currently
  * evaluating function using a new slot in {@link RArguments} and run it on function exit.
  */
-@RBuiltin(name = "on.exit", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = 0)
+@RBuiltin(name = "on.exit", visibility = OFF, kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = 0, behavior = COMPLEX)
 public abstract class OnExit extends RBuiltinNode {
 
     @Child private FrameSlotNode onExitSlot = FrameSlotNode.create(RFrameSlot.OnExit, true);

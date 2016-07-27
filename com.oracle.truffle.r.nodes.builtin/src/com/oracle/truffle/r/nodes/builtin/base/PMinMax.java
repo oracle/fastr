@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -332,7 +333,7 @@ public abstract class PMinMax extends RBuiltinNode {
         throw RError.error(this, RError.Message.INVALID_INPUT_TYPE);
     }
 
-    @RBuiltin(name = "pmax", kind = INTERNAL, parameterNames = {"na.rm", "..."})
+    @RBuiltin(name = "pmax", kind = INTERNAL, parameterNames = {"na.rm", "..."}, behavior = PURE)
     public abstract static class PMax extends PMinMax {
 
         public PMax() {
@@ -341,7 +342,7 @@ public abstract class PMinMax extends RBuiltinNode {
         }
     }
 
-    @RBuiltin(name = "pmin", kind = INTERNAL, parameterNames = {"na.rm", "..."})
+    @RBuiltin(name = "pmin", kind = INTERNAL, parameterNames = {"na.rm", "..."}, behavior = PURE)
     public abstract static class PMin extends PMinMax {
 
         public PMin() {

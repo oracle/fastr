@@ -11,6 +11,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -19,14 +22,13 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 // Part of this transcribed from GnuR src/main/deparse.c
 
-@RBuiltin(name = "deparse", kind = RBuiltinKind.INTERNAL, parameterNames = {"expr", "width.cutoff", "backtick", "control", "nlines"})
+@RBuiltin(name = "deparse", kind = INTERNAL, parameterNames = {"expr", "width.cutoff", "backtick", "control", "nlines"}, behavior = PURE)
 public abstract class Deparse extends RBuiltinNode {
 
     @Override

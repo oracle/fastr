@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Arrays;
@@ -397,7 +398,7 @@ public abstract class Bind extends RBaseNode {
         return false;
     }
 
-    @RBuiltin(name = "cbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."})
+    @RBuiltin(name = "cbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."}, behavior = COMPLEX)
     public abstract static class CbindInternal extends RBuiltinNode {
 
         @Child private Bind bind = BindNodeGen.create(BindType.cbind);
@@ -511,7 +512,7 @@ public abstract class Bind extends RBaseNode {
         return result;
     }
 
-    @RBuiltin(name = "rbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."})
+    @RBuiltin(name = "rbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."}, behavior = COMPLEX)
     public abstract static class RbindInternal extends RBuiltinNode {
 
         @Child private Bind bind = BindNodeGen.create(BindType.rbind);

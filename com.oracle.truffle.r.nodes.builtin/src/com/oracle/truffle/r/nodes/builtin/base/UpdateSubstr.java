@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -42,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "substr<-", kind = INTERNAL, parameterNames = {"x", "start", "stop", "value"})
+@RBuiltin(name = "substr<-", kind = INTERNAL, parameterNames = {"x", "start", "stop", "value"}, behavior = PURE)
 public abstract class UpdateSubstr extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();

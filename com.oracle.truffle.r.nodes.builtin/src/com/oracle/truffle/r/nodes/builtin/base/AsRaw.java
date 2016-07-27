@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -39,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "as.raw", kind = PRIMITIVE, parameterNames = {"x"})
+@RBuiltin(name = "as.raw", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class AsRaw extends RBuiltinNode {
 
     @Child private CastIntegerNode castInteger;

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Arrays;
@@ -133,7 +134,7 @@ public class SortFunctions {
      *
      * N.B. The R code strips out {@code NA} and {@code NaN} values before calling the builtin.
      */
-    @RBuiltin(name = "sort", kind = INTERNAL, parameterNames = {"x", "decreasing"})
+    @RBuiltin(name = "sort", kind = INTERNAL, parameterNames = {"x", "decreasing"}, behavior = PURE)
     public abstract static class Sort extends Adapter {
         @Specialization
         protected RDoubleVector sort(RAbstractDoubleVector vec, byte decreasing) {
@@ -162,7 +163,7 @@ public class SortFunctions {
         }
     }
 
-    @RBuiltin(name = "qsort", kind = INTERNAL, parameterNames = {"x", "decreasing"})
+    @RBuiltin(name = "qsort", kind = INTERNAL, parameterNames = {"x", "decreasing"}, behavior = PURE)
     public abstract static class QSort extends Adapter {
 
         @Specialization
@@ -176,7 +177,7 @@ public class SortFunctions {
         }
     }
 
-    @RBuiltin(name = "psort", kind = INTERNAL, parameterNames = {"x", "partial"})
+    @RBuiltin(name = "psort", kind = INTERNAL, parameterNames = {"x", "partial"}, behavior = PURE)
     public abstract static class PartialSort extends Adapter {
         @SuppressWarnings("unused")
         @Specialization
@@ -209,7 +210,7 @@ public class SortFunctions {
         }
     }
 
-    @RBuiltin(name = "radixsort", kind = INTERNAL, parameterNames = {"zz", "na.last", "decreasing"})
+    @RBuiltin(name = "radixsort", kind = INTERNAL, parameterNames = {"zz", "na.last", "decreasing"}, behavior = PURE)
     public abstract static class RadixSort extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization

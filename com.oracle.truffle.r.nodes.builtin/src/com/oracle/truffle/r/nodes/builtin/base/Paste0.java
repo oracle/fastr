@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -34,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RList;
  * A straightforward implementation in terms of {@code paste} that doesn't attempt to be more
  * efficient.
  */
-@RBuiltin(name = "paste0", kind = INTERNAL, parameterNames = {"list", "collapse"})
+@RBuiltin(name = "paste0", kind = INTERNAL, parameterNames = {"list", "collapse"}, behavior = PURE)
 public abstract class Paste0 extends RBuiltinNode {
 
     @Child private Paste pasteNode;

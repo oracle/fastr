@@ -28,6 +28,7 @@ import java.util.function.Function;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -37,8 +38,8 @@ public final class RBuiltinFactory extends RBuiltinDescriptor {
     private final Function<RNode[], RBuiltinNode> constructor;
 
     RBuiltinFactory(String name, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller,
-                    boolean alwaysSplit, RDispatch dispatch, Function<RNode[], RBuiltinNode> constructor) {
-        super(name, builtinNodeClass, visibility, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch);
+                    boolean alwaysSplit, RDispatch dispatch, Function<RNode[], RBuiltinNode> constructor, RBehavior behavior) {
+        super(name, builtinNodeClass, visibility, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch, behavior);
         this.constructor = constructor;
     }
 
@@ -49,6 +50,6 @@ public final class RBuiltinFactory extends RBuiltinDescriptor {
     @Override
     public String toString() {
         return "RBuiltinFactory [name=" + getName() + ", aliases=" + Arrays.toString(getAliases()) + ", kind=" + getKind() + ", siagnature=" + getSignature() + ", nonEvaledArgs=" +
-                        Arrays.toString(getNonEvalArgs()) + ", splitCaller=" + isSplitCaller() + ", dispatch=" + getDispatch() + "]";
+                        Arrays.toString(getNonEvalArgs()) + ", splitCaller=" + isSplitCaller() + ", dispatch=" + getDispatch() + ", behavior=" + getBehavior() + "]";
     }
 }

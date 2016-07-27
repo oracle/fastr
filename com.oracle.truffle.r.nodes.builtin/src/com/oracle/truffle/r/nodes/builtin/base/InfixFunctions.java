@@ -23,6 +23,12 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_FRAME;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.Arrays;
 
@@ -50,8 +56,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -139,7 +145,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"}, dispatch = INTERNAL_GENERIC)
+    @RBuiltin(name = "[", kind = PRIMITIVE, parameterNames = {"x", "...", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
     public abstract static class AccessArraySubsetBuiltin extends AccessArrayBuiltin {
 
         @Override
@@ -171,12 +177,12 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = ".subset", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "drop"})
+    @RBuiltin(name = ".subset", kind = PRIMITIVE, parameterNames = {"", "...", "drop"}, behavior = PURE)
     public abstract static class AccessArraySubsetDefaultBuiltin {
 
     }
 
-    @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC)
+    @RBuiltin(name = "[[", kind = PRIMITIVE, parameterNames = {"", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
     public abstract static class AccessArraySubscriptBuiltin extends AccessArrayBuiltin {
 
         @Override
@@ -225,7 +231,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = ".subset2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"})
+    @RBuiltin(name = ".subset2", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, behavior = PURE)
     public abstract static class AccessArraySubscriptDefaultBuiltin {
     }
 
@@ -260,7 +266,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."}, dispatch = INTERNAL_GENERIC)
+    @RBuiltin(name = "[<-", kind = PRIMITIVE, parameterNames = {"", "..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
     public abstract static class UpdateArraySubsetBuiltin extends UpdateArrayBuiltin {
 
         private static final boolean IS_SUBSET = true;
@@ -272,7 +278,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "[[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."}, dispatch = INTERNAL_GENERIC)
+    @RBuiltin(name = "[[<-", kind = PRIMITIVE, parameterNames = {"", "..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
     public abstract static class UpdateArrayNodeSubscriptBuiltin extends UpdateArrayBuiltin {
 
         private static final boolean IS_SUBSET = false;
@@ -284,7 +290,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "<-", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
+    @RBuiltin(name = "<-", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"x", "i"}, behavior = RBehavior.MODIFIES_FRAME)
     public abstract static class AssignBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -293,7 +299,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "=", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
+    @RBuiltin(name = "=", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"x", "i"}, behavior = RBehavior.MODIFIES_FRAME)
     public abstract static class AssignBuiltinEq extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -302,7 +308,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "<<-", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
+    @RBuiltin(name = "<<-", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"x", "i"}, behavior = COMPLEX)
     public abstract static class AssignOuterBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -311,7 +317,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "$", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, dispatch = INTERNAL_GENERIC)
+    @RBuiltin(name = "$", kind = PRIMITIVE, parameterNames = {"", ""}, dispatch = INTERNAL_GENERIC, behavior = PURE)
     public abstract static class AccessFieldBuiltin extends RBuiltinNode {
 
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
@@ -336,7 +342,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", "value"}, dispatch = INTERNAL_GENERIC)
+    @RBuiltin(name = "$<-", kind = PRIMITIVE, parameterNames = {"", "", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
     public abstract static class UpdateFieldBuiltin extends RBuiltinNode {
 
         private final BranchProfile coerceList = BranchProfile.create();
@@ -374,7 +380,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "{", visibility = RVisibility.CUSTOM, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "{", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class BraceBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -383,7 +389,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "(", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "(", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class ParenBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -398,7 +404,7 @@ public class InfixFunctions {
      * handled by an evaluated argument of type {@link RMissing}, although it appears as if the
      * "model" argument is missing, i.e. {@code ~ x} result in {@code `~`(x)}.
      */
-    @RBuiltin(name = "~", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "y"}, nonEvalArgs = {0, 1})
+    @RBuiltin(name = "~", kind = PRIMITIVE, parameterNames = {"x", "y"}, nonEvalArgs = {0, 1}, behavior = READS_FRAME)
     public abstract static class TildeBuiltin extends RBuiltinNode {
         private static final RStringVector FORMULA_CLASS = RDataFactory.createStringVectorFromScalar(RRuntime.FORMULA_CLASS);
 
@@ -427,7 +433,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "if", visibility = RVisibility.CUSTOM, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "if", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IfBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -436,7 +442,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "while", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "while", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class WhileBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -445,7 +451,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "repeat", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "repeat", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class RepeatBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -454,7 +460,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "for", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "for", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class ForBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -463,7 +469,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "break", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "break", kind = PRIMITIVE, parameterNames = {"x"}, behavior = COMPLEX)
     public abstract static class BreakBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -472,7 +478,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "next", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "next", kind = PRIMITIVE, parameterNames = {"x"}, behavior = COMPLEX)
     public abstract static class NextBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -481,7 +487,7 @@ public class InfixFunctions {
         }
     }
 
-    @RBuiltin(name = "function", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "function", kind = PRIMITIVE, parameterNames = {"x"}, behavior = READS_FRAME)
     public abstract static class FunctionBuiltin extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization

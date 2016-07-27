@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -56,7 +57,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@RBuiltin(name = "match.fun", kind = SUBSTITUTE, parameterNames = {"fun", "descend"}, nonEvalArgs = 0)
+@RBuiltin(name = "match.fun", kind = SUBSTITUTE, parameterNames = {"fun", "descend"}, nonEvalArgs = 0, behavior = COMPLEX)
 public abstract class MatchFun extends RBuiltinNode {
 
     @CompilationFinal private String lastFun;

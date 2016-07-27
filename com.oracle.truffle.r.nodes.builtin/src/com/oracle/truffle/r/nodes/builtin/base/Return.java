@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -44,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
  * evaluating that in the context of a PromiseEvalFrame and the frame we need to return to is that
  * given by the PromiseEvalFrame.
  */
-@RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"}, nonEvalArgs = {0})
+@RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"}, nonEvalArgs = {0}, behavior = COMPLEX)
 public abstract class Return extends RBuiltinNode {
 
     private final BranchProfile isPromiseEvalProfile = BranchProfile.create();

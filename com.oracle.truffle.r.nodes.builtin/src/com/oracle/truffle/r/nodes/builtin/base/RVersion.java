@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -31,7 +32,7 @@ import com.oracle.truffle.r.runtime.RVersionInfo;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 
-@RBuiltin(name = "Version", kind = INTERNAL, parameterNames = {})
+@RBuiltin(name = "Version", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
 public abstract class RVersion extends RBuiltinNode {
 
     @Specialization
