@@ -162,6 +162,6 @@ public abstract class RBuiltinPackage {
         ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
 
         putBuiltin(new RBuiltinFactory(annotation.name(), builtinClass, annotation.visibility(), annotation.aliases(), annotation.kind(), signature, annotation.nonEvalArgs(), annotation.splitCaller(),
-                        annotation.alwaysSplit(), annotation.dispatch(), constructor));
+                        annotation.alwaysSplit(), annotation.dispatch(), constructor, annotation.behavior()));
     }
 }
