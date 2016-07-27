@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
@@ -32,7 +33,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-@RBuiltin(name = "body", kind = INTERNAL, parameterNames = {"fun"})
+@RBuiltin(name = "body", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
 public abstract class Body extends RBuiltinNode {
 
     @Specialization

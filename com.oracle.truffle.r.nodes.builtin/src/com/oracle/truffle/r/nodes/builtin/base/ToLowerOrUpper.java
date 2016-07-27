@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -41,11 +42,11 @@ import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 public abstract class ToLowerOrUpper extends RBuiltinNode {
 
-    @RBuiltin(name = "tolower", kind = INTERNAL, parameterNames = {"x"})
+    @RBuiltin(name = "tolower", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
     public static final class ToLower {
     }
 
-    @RBuiltin(name = "toupper", kind = INTERNAL, parameterNames = {"x"})
+    @RBuiltin(name = "toupper", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
     public static final class ToUpper {
     }
 

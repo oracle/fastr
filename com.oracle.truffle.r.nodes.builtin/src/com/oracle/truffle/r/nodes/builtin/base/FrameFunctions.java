@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
@@ -59,10 +60,10 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -153,7 +154,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.call", kind = INTERNAL, parameterNames = {"which"})
+    @RBuiltin(name = "sys.call", kind = INTERNAL, parameterNames = {"which"}, behavior = COMPLEX)
     public abstract static class SysCall extends FrameHelper {
 
         @Override
@@ -200,7 +201,7 @@ public class FrameFunctions {
      * In summary, although the simple cases are indeed simple, there are many possible variants
      * using "..." that make the code a lot more complex that it seems it ought to be.
      */
-    @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots", "envir"})
+    @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots", "envir"}, behavior = COMPLEX)
     public abstract static class MatchCall extends FrameHelper {
 
         @Override
@@ -386,7 +387,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class SysNFrame extends RBuiltinNode {
 
         private final BranchProfile isPromiseCurrentProfile = BranchProfile.create();
@@ -413,7 +414,7 @@ public class FrameFunctions {
 
     }
 
-    @RBuiltin(name = "sys.frame", kind = INTERNAL, parameterNames = {"which"})
+    @RBuiltin(name = "sys.frame", kind = INTERNAL, parameterNames = {"which"}, behavior = COMPLEX)
     public abstract static class SysFrame extends DeoptHelper {
 
         private final ConditionProfile zeroProfile = ConditionProfile.createBinaryProfile();
@@ -445,7 +446,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class SysFrames extends DeoptHelper {
         @Override
         protected final FrameAccess frameAccess() {
@@ -477,7 +478,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.calls", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "sys.calls", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class SysCalls extends FrameHelper {
 
         @Override
@@ -518,7 +519,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.parent", kind = INTERNAL, parameterNames = {"n"})
+    @RBuiltin(name = "sys.parent", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class SysParent extends RBuiltinNode {
 
         private final BranchProfile nullCallerProfile = BranchProfile.create();
@@ -549,7 +550,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.function", kind = INTERNAL, parameterNames = {"which"}, splitCaller = true, alwaysSplit = true)
+    @RBuiltin(name = "sys.function", kind = INTERNAL, parameterNames = {"which"}, splitCaller = true, alwaysSplit = true, behavior = COMPLEX)
     public abstract static class SysFunction extends FrameHelper {
 
         public abstract Object executeObject(VirtualFrame frame, int which);
@@ -578,7 +579,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.parents", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "sys.parents", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class SysParents extends FrameHelper {
 
         @Override
@@ -622,7 +623,7 @@ public class FrameFunctions {
     /**
      * The environment of the caller of the function that called parent.frame.
      */
-    @RBuiltin(name = "parent.frame", kind = SUBSTITUTE, parameterNames = {"n"})
+    @RBuiltin(name = "parent.frame", kind = SUBSTITUTE, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class ParentFrame extends FrameHelper {
 
         private final BranchProfile nullCallerProfile = BranchProfile.create();

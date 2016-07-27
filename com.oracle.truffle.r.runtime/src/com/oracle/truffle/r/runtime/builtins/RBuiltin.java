@@ -77,7 +77,7 @@ public @interface RBuiltin {
      * The behavior defines which conditions can be expected to hold for calls to this builtin,
      * .e.g., whether repeated calls with the same arguments are expected to return the same result.
      */
-    RBehavior behavior() default RBehavior.UNKNOWN;
+    RBehavior behavior();
 
     /**
      * Indicates whether or not function containing a call of the form

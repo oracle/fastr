@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -35,9 +39,7 @@ import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -66,7 +68,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  * </ol>
  *
  */
-@RBuiltin(name = ".fastr.syntaxtree", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func", "visitMode", "printSource", "printTags"})
+@RBuiltin(name = ".fastr.syntaxtree", visibility = OFF, kind = PRIMITIVE, parameterNames = {"func", "visitMode", "printSource", "printTags"}, behavior = IO)
 public abstract class FastRSyntaxTree extends RBuiltinNode {
 
     @Override

@@ -22,14 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-
-import java.util.ArrayList;
-
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
+import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -39,9 +41,7 @@ import com.oracle.truffle.r.nodes.instrumentation.RFunctionProfiler;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -55,7 +55,7 @@ import com.oracle.truffle.tools.Profiler;
 
 public class FastRFunctionProfiler {
 
-    @RBuiltin(name = ".fastr.profiler.create", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func", "mode"})
+    @RBuiltin(name = ".fastr.profiler.create", visibility = OFF, kind = PRIMITIVE, parameterNames = {"func", "mode"}, behavior = COMPLEX)
     public abstract static class Create extends RBuiltinNode {
         private static final int COUNTING = 1;
         private static final int TIMING = 2;
@@ -112,7 +112,7 @@ public class FastRFunctionProfiler {
 
     }
 
-    @RBuiltin(name = ".fastr.profiler.get", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func", "threshold", "scale"})
+    @RBuiltin(name = ".fastr.profiler.get", kind = PRIMITIVE, parameterNames = {"func", "threshold", "scale"}, behavior = COMPLEX)
     public abstract static class Get extends RBuiltinNode {
 
         private static final RStringVector COLNAMES = RDataFactory.createStringVector(new String[]{"Invocations", "TotalTime", "SelfTime"}, RDataFactory.COMPLETE_VECTOR);
@@ -235,7 +235,7 @@ public class FastRFunctionProfiler {
         }
     }
 
-    @RBuiltin(name = ".fastr.profiler.reset", kind = RBuiltinKind.PRIMITIVE, parameterNames = {}, visibility = RVisibility.OFF)
+    @RBuiltin(name = ".fastr.profiler.reset", visibility = OFF, kind = PRIMITIVE, parameterNames = {}, behavior = COMPLEX)
     public abstract static class Reset extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -245,7 +245,7 @@ public class FastRFunctionProfiler {
         }
     }
 
-    @RBuiltin(name = ".fastr.profiler.clear", kind = RBuiltinKind.PRIMITIVE, parameterNames = {}, visibility = RVisibility.OFF)
+    @RBuiltin(name = ".fastr.profiler.clear", visibility = OFF, kind = PRIMITIVE, parameterNames = {}, behavior = COMPLEX)
     public abstract static class Clear extends RBuiltinNode {
         @Specialization
         @TruffleBoundary

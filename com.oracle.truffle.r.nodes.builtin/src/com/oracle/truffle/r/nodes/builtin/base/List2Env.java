@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Cached;
@@ -32,7 +33,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-@RBuiltin(name = "list2env", kind = INTERNAL, parameterNames = {"x", "envir"})
+@RBuiltin(name = "list2env", kind = INTERNAL, parameterNames = {"x", "envir"}, behavior = PURE)
 public abstract class List2Env extends RBuiltinNode {
 
     @Specialization

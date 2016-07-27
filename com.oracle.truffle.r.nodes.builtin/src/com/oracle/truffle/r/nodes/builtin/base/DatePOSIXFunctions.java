@@ -11,6 +11,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import java.text.ParsePosition;
 import java.time.DateTimeException;
 import java.time.Instant;
@@ -34,7 +38,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -126,7 +129,7 @@ public class DatePOSIXFunctions {
         }
     }
 
-    @RBuiltin(name = "Date2POSIXlt", kind = RBuiltinKind.INTERNAL, parameterNames = "x")
+    @RBuiltin(name = "Date2POSIXlt", kind = INTERNAL, parameterNames = "x", behavior = PURE)
     public abstract static class Date2POSIXlt extends RBuiltinNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
@@ -162,7 +165,7 @@ public class DatePOSIXFunctions {
         }
     }
 
-    @RBuiltin(name = "as.POSIXlt", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "tz"})
+    @RBuiltin(name = "as.POSIXlt", kind = INTERNAL, parameterNames = {"x", "tz"}, behavior = READS_STATE)
     public abstract static class AsPOSIXlt extends RBuiltinNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
@@ -204,7 +207,7 @@ public class DatePOSIXFunctions {
         }
     }
 
-    @RBuiltin(name = "as.POSIXct", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "tz"})
+    @RBuiltin(name = "as.POSIXct", kind = INTERNAL, parameterNames = {"x", "tz"}, behavior = READS_STATE)
     public abstract static class AsPOSIXct extends RBuiltinNode {
 
         @Specialization
@@ -257,7 +260,7 @@ public class DatePOSIXFunctions {
         }
     }
 
-    @RBuiltin(name = "POSIXlt2Date", kind = RBuiltinKind.INTERNAL, parameterNames = {"x"})
+    @RBuiltin(name = "POSIXlt2Date", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
     public abstract static class POSIXlt2Date extends RBuiltinNode {
         private static final RStringVector CLASS_ATTR = RDataFactory.createStringVector(new String[]{"Date"}, RDataFactory.COMPLETE_VECTOR);
 
@@ -302,7 +305,7 @@ public class DatePOSIXFunctions {
         }
     }
 
-    @RBuiltin(name = "format.POSIXlt", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "format", "usetz"})
+    @RBuiltin(name = "format.POSIXlt", kind = INTERNAL, parameterNames = {"x", "format", "usetz"}, behavior = READS_STATE)
     public abstract static class FormatPOSIXlt extends RBuiltinNode {
 
         private static final HashMap<String, String> TIME_ZONE_MAPPING = new HashMap<>();
@@ -356,7 +359,7 @@ public class DatePOSIXFunctions {
         }
     }
 
-    @RBuiltin(name = "strptime", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "format", "tz"})
+    @RBuiltin(name = "strptime", kind = INTERNAL, parameterNames = {"x", "format", "tz"}, behavior = PURE)
     public abstract static class StrPTime extends RBuiltinNode {
 
         @Specialization

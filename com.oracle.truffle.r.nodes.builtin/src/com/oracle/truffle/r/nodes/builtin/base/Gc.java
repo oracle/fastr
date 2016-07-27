@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Arrays;
@@ -34,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
-@RBuiltin(name = "gc", kind = INTERNAL, parameterNames = {"verbose", "reset"})
+@RBuiltin(name = "gc", kind = INTERNAL, parameterNames = {"verbose", "reset"}, behavior = COMPLEX)
 public abstract class Gc extends RBuiltinNode {
 
     @SuppressWarnings("unused")

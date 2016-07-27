@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.Arrays;
@@ -126,7 +127,7 @@ public class IsFiniteFunctions {
         }
     }
 
-    @RBuiltin(name = "is.finite", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.finite", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsFinite extends Adapter {
 
         @Specialization
@@ -160,7 +161,7 @@ public class IsFiniteFunctions {
         }
     }
 
-    @RBuiltin(name = "is.infinite", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.infinite", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsInfinite extends Adapter {
 
         @Specialization
@@ -184,7 +185,7 @@ public class IsFiniteFunctions {
         }
     }
 
-    @RBuiltin(name = "is.nan", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.nan", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsNaN extends Adapter {
 
         private static boolean isNaN(double value) {

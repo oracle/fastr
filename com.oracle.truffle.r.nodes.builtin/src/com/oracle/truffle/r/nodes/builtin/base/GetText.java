@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
@@ -31,7 +32,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "gettext", kind = INTERNAL, parameterNames = {"domain", "args"})
+@RBuiltin(name = "gettext", kind = INTERNAL, parameterNames = {"domain", "args"}, behavior = PURE)
 public abstract class GetText extends RBuiltinNode {
 
     @Override

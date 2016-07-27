@@ -19,6 +19,8 @@ import static com.oracle.truffle.r.library.stats.StatsUtil.DBL_MIN_EXP;
 import static com.oracle.truffle.r.library.stats.StatsUtil.M_LOG10_2;
 import static com.oracle.truffle.r.library.stats.StatsUtil.M_PI;
 import static com.oracle.truffle.r.library.stats.StatsUtil.fmax2;
+import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -31,7 +33,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.stats.GammaFunctions;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.BaseGammaFunctionsFactory.DpsiFnCalcNodeGen;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -47,7 +48,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class BaseGammaFunctions {
 
-    @RBuiltin(name = "gamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "gamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Gamma extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -56,7 +57,7 @@ public class BaseGammaFunctions {
         }
     }
 
-    @RBuiltin(name = "trigamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "trigamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class TriGamma extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -65,7 +66,7 @@ public class BaseGammaFunctions {
         }
     }
 
-    @RBuiltin(name = "lgamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "lgamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Lgamma extends RBuiltinNode {
 
         private final NACheck naValCheck = NACheck.create();
@@ -105,7 +106,7 @@ public class BaseGammaFunctions {
         }
     }
 
-    @RBuiltin(name = "digamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "digamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class DiGamma extends RBuiltinNode {
 
         @Child private DpsiFnCalc dpsiFnCalc;

@@ -22,6 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -34,14 +39,12 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RChannel;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.RStartParams;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
@@ -57,7 +60,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public class FastRContext {
 
-    @RBuiltin(name = ".fastr.context.create", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"args", "kind"})
+    @RBuiltin(name = ".fastr.context.create", kind = PRIMITIVE, parameterNames = {"args", "kind"}, behavior = COMPLEX)
     public abstract static class Create extends RBuiltinNode {
 
         @Override
@@ -84,7 +87,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.context.get", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
+    @RBuiltin(name = ".fastr.context.get", kind = PRIMITIVE, parameterNames = {}, behavior = READS_STATE)
     public abstract static class Get extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -115,7 +118,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.context.spawn", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts", "exprs"})
+    @RBuiltin(name = ".fastr.context.spawn", visibility = OFF, kind = PRIMITIVE, parameterNames = {"contexts", "exprs"}, behavior = COMPLEX)
     public abstract static class Spawn extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -138,7 +141,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.context.join", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts"})
+    @RBuiltin(name = ".fastr.context.join", visibility = OFF, kind = PRIMITIVE, parameterNames = {"contexts"}, behavior = COMPLEX)
     public abstract static class Join extends RBuiltinNode {
         @Specialization
         protected RNull eval(RAbstractIntVector contexts) {
@@ -172,7 +175,7 @@ public class FastRContext {
      * It may also have an attribute "error" if the evaluation threw an exception, in which case the
      * result will be NA.
      */
-    @RBuiltin(name = ".fastr.context.eval", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"contexts", "exprs", "par"})
+    @RBuiltin(name = ".fastr.context.eval", kind = PRIMITIVE, parameterNames = {"contexts", "exprs", "par"}, behavior = COMPLEX)
     public abstract static class Eval extends RBuiltinNode {
         @Override
         public Object[] getDefaultParameterValues() {
@@ -252,7 +255,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.channel.create", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"key"})
+    @RBuiltin(name = ".fastr.channel.create", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)
     public abstract static class CreateChannel extends RBuiltinNode {
         @Specialization(guards = "key.getLength() == 1")
         @TruffleBoundary
@@ -266,7 +269,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.channel.get", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"key"})
+    @RBuiltin(name = ".fastr.channel.get", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)
     public abstract static class GetChannel extends RBuiltinNode {
         @Specialization(guards = "key.getLength() == 1")
         @TruffleBoundary
@@ -280,7 +283,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.channel.close", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
+    @RBuiltin(name = ".fastr.channel.close", visibility = OFF, kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
     public abstract static class CloseChannel extends RBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
@@ -295,7 +298,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.channel.send", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id", "data"})
+    @RBuiltin(name = ".fastr.channel.send", visibility = OFF, kind = PRIMITIVE, parameterNames = {"id", "data"}, behavior = COMPLEX)
     public abstract static class ChannelSend extends RBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
@@ -310,7 +313,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.channel.receive", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
+    @RBuiltin(name = ".fastr.channel.receive", kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
     public abstract static class ChannelReceive extends RBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
@@ -324,7 +327,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.channel.poll", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"id"})
+    @RBuiltin(name = ".fastr.channel.poll", kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
     public abstract static class ChannelPoll extends RBuiltinNode {
         @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
@@ -338,7 +341,7 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.channel.select", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"ids"})
+    @RBuiltin(name = ".fastr.channel.select", kind = PRIMITIVE, parameterNames = {"ids"}, behavior = COMPLEX)
     public abstract static class ChannelSelect extends RBuiltinNode {
         @Specialization
         @TruffleBoundary

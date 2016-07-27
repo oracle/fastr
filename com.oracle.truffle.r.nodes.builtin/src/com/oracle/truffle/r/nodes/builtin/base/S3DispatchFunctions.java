@@ -10,6 +10,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
@@ -40,12 +42,11 @@ import com.oracle.truffle.r.nodes.function.signature.CombineSignaturesNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -87,7 +88,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         return result;
     }
 
-    @RBuiltin(name = "UseMethod", visibility = RVisibility.CUSTOM, kind = PRIMITIVE, parameterNames = {"generic", "object"})
+    @RBuiltin(name = "UseMethod", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"generic", "object"}, behavior = COMPLEX)
     public abstract static class UseMethod extends S3DispatchFunctions {
 
         /*
@@ -172,7 +173,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         }
     }
 
-    @RBuiltin(name = "NextMethod", visibility = RVisibility.CUSTOM, kind = SUBSTITUTE, parameterNames = {"generic", "object", "..."})
+    @RBuiltin(name = "NextMethod", visibility = CUSTOM, kind = SUBSTITUTE, parameterNames = {"generic", "object", "..."}, behavior = COMPLEX)
     public abstract static class NextMethod extends S3DispatchFunctions {
 
         @Child private LocalReadVariableNode rvnGroup = LocalReadVariableNode.create(RRuntime.R_DOT_GROUP, false);

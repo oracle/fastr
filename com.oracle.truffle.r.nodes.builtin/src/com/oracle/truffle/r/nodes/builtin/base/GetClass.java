@@ -10,6 +10,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
@@ -19,7 +20,7 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "class", kind = PRIMITIVE, parameterNames = {"x"})
+@RBuiltin(name = "class", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class GetClass extends RBuiltinNode {
 
     @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(true, false);

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.File;
@@ -90,7 +91,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * <p>
  * On the R side, GnuR adds similar R attributes to the result, which is important for R tooling.
  */
-@RBuiltin(name = "parse", kind = INTERNAL, parameterNames = {"conn", "n", "text", "prompt", "srcfile", "encoding"})
+@RBuiltin(name = "parse", kind = INTERNAL, parameterNames = {"conn", "n", "text", "prompt", "srcfile", "encoding"}, behavior = IO)
 public abstract class Parse extends RBuiltinNode {
     @Child private CastIntegerNode castIntNode;
     @Child private CastStringNode castStringNode;

@@ -12,6 +12,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
 import com.oracle.truffle.api.dsl.Specialization;
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@RBuiltin(name = "t.default", kind = SUBSTITUTE, parameterNames = {"x"})
+@RBuiltin(name = "t.default", kind = SUBSTITUTE, parameterNames = {"x"}, behavior = PURE)
 // TODO INTERNAL
 public abstract class Transpose extends RBuiltinNode {
 

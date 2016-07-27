@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -58,7 +59,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  *
  * TODO complete. This is sufficient for the b25 benchmark use.
  */
-@RBuiltin(name = "array", kind = INTERNAL, parameterNames = {"data", "dim", "dimnames"})
+@RBuiltin(name = "array", kind = INTERNAL, parameterNames = {"data", "dim", "dimnames"}, behavior = PURE)
 public abstract class Array extends RBuiltinNode {
 
     @Child private UpdateDimNames updateDimNames;

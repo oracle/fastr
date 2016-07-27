@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -46,7 +47,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *
  * Does not perform argument matching for first parameter "name".
  */
-@RBuiltin(name = "call", kind = PRIMITIVE, parameterNames = {"", "..."})
+@RBuiltin(name = "call", kind = PRIMITIVE, parameterNames = {"", "..."}, behavior = PURE)
 public abstract class Call extends RBuiltinNode {
 
     @Override

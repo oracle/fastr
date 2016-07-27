@@ -12,6 +12,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.BufferedInputStream;
@@ -29,10 +31,8 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperN
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class LoadSaveFunctions {
 
-    @RBuiltin(name = "loadFromConn2", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"con", "envir", "verbose"})
+    @RBuiltin(name = "loadFromConn2", visibility = OFF, kind = INTERNAL, parameterNames = {"con", "envir", "verbose"}, behavior = IO)
     public abstract static class LoadFromConn2 extends RBuiltinNode {
 
         private final NACheck naCheck = NACheck.create();
@@ -98,7 +98,7 @@ public class LoadSaveFunctions {
         }
     }
 
-    @RBuiltin(name = "load", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"con", "envir"})
+    @RBuiltin(name = "load", visibility = OFF, kind = INTERNAL, parameterNames = {"con", "envir"}, behavior = IO)
     public abstract static class Load extends RBuiltinNode {
         // now deprecated but still used by some packages
 
@@ -169,7 +169,7 @@ public class LoadSaveFunctions {
         }
     }
 
-    @RBuiltin(name = "saveToConn", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"list", "conn", "ascii", "version", "envir", "eval.promises"})
+    @RBuiltin(name = "saveToConn", visibility = OFF, kind = INTERNAL, parameterNames = {"list", "conn", "ascii", "version", "envir", "eval.promises"}, behavior = IO)
     public abstract static class SaveToConn extends Adapter {
         private static final String ASCII_HEADER = "RDA2\n";
         private static final String XDR_HEADER = "RDX2\n";

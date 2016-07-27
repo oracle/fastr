@@ -194,7 +194,9 @@ abstract class S4Class extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "classAttr == cachedClassAttr")
-    protected RStringVector getS4ClassCachedEqOp(String classAttr, @Cached("classAttr") String cachedClassAttr, @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
+    protected RStringVector getS4ClassCachedEqOp(String classAttr,
+                    @Cached("classAttr") String cachedClassAttr,
+                    @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
         return s4Classes;
     }
 
@@ -204,7 +206,9 @@ abstract class S4Class extends RBaseNode {
      */
     @SuppressWarnings("unused")
     @Specialization(contains = "getS4ClassCachedEqOp", guards = "classAttr.equals(cachedClassAttr)")
-    protected RStringVector getS4ClassCachedEqMethod(String classAttr, @Cached("classAttr") String cachedClassAttr, @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
+    protected RStringVector getS4ClassCachedEqMethod(String classAttr,
+                    @Cached("classAttr") String cachedClassAttr,
+                    @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
         return s4Classes;
     }
 
