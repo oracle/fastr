@@ -72,7 +72,7 @@ public final class RList extends RListBase {
     }
 
     @Override
-    public RList copyResized(int size, boolean fillNA) {
+    protected RList internalCopyResized(int size, boolean fillNA) {
         return RDataFactory.createList(copyResizedData(size, fillNA));
     }
 

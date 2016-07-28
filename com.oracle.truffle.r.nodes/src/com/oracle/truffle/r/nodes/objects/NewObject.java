@@ -12,15 +12,14 @@
  */
 package com.oracle.truffle.r.nodes.objects;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastLogicalScalarNode;
-import com.oracle.truffle.r.nodes.unary.CastStringScalarNode;
+import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.DuplicateNode;
 import com.oracle.truffle.r.nodes.unary.DuplicateNodeGen;
 import com.oracle.truffle.r.runtime.RError;
@@ -36,22 +35,26 @@ public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
     @Child private AccessSlotNode accessSlotVirtual = AccessSlotNodeGen.create(true, null, null);
     @Child private AccessSlotNode accessSlotClassName = AccessSlotNodeGen.create(true, null, null);
     @Child private AccessSlotNode accessSlotPrototypeName = AccessSlotNodeGen.create(true, null, null);
-    @Child private CastStringScalarNode castStringScalar;
-    @Child private CastLogicalScalarNode castLogicalScalar = CastLogicalScalarNode.create();
     @Child private DuplicateNode duplicate = DuplicateNodeGen.create(true);
     @Child private AttributeAccess pckgAttrAccess = AttributeAccessNodeGen.create(RRuntime.PCKG_ATTR_KEY);
+
+    @Child private CastNode castStringScalar;
+    @Child private CastNode castLogicalScalar;
+    {
+        CastBuilder builder = new CastBuilder();
+        builder.arg(0).asStringVector().findFirst(RRuntime.STRING_NA);
+        builder.arg(1).asLogicalVector().findFirst(RRuntime.LOGICAL_NA);
+        castStringScalar = builder.getCasts()[0];
+        castLogicalScalar = builder.getCasts()[1];
+    }
 
     @Specialization(guards = "!isNull(classDef)")
     protected Object doNewObject(Object classDef) {
 
         Object e = accessSlotVirtual.executeAccess(classDef, RRuntime.S_VIRTUAL);
-        if (castLogicalScalar.executeByte(e) != RRuntime.LOGICAL_FALSE) {
-            if (castStringScalar == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                castStringScalar = insert(CastStringScalarNode.create());
-            }
+        if (((byte) castLogicalScalar.execute(e)) != RRuntime.LOGICAL_FALSE) {
             e = accessSlotClassName.executeAccess(classDef, RRuntime.S_CLASSNAME);
-            throw RError.error(this, RError.Message.OBJECT_FROM_VIRTUAL, castStringScalar.executeString(e));
+            throw RError.error(this, RError.Message.OBJECT_FROM_VIRTUAL, castStringScalar.execute(e));
         }
         e = accessSlotClassName.executeAccess(classDef, RRuntime.S_CLASSNAME);
         Object prototype = accessSlotPrototypeName.executeAccess(classDef, RRuntime.S_PROTOTYPE);

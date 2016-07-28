@@ -22,62 +22,54 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "complex", kind = INTERNAL, parameterNames = {"length.out", "real", "imaginary"})
 public abstract class Complex extends RBuiltinNode {
 
-    private static final RDoubleVector ZERO = RDataFactory.createDoubleVectorFromScalar(0.0);
-
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(0);
+        casts.arg("length.out").asIntegerVector().findFirst(0);
+        casts.arg("real").map(defaultValue(RDataFactory.createEmptyDoubleVector())).asDoubleVector();
+        casts.arg("imaginary").map(defaultValue(RDataFactory.createEmptyDoubleVector())).asDoubleVector();
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "resultEmpty(lengthOut, realAbsVec, imaginaryAbsVec)")
-    protected RComplexVector complexEmpty(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
-        return RDataFactory.createEmptyComplexVector();
-    }
-
-    @Specialization(guards = "!resultEmpty(lengthOut, realAbsVec, imaginaryAbsVec)")
-    protected RComplexVector complex(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
-        RDoubleVector real = checkLength(realAbsVec);
-        RDoubleVector imaginary = checkLength(imaginaryAbsVec);
-        int realLength = real.getLength();
-        int imaginaryLength = imaginary.getLength();
-        int length = Math.max(Math.max(realLength, imaginaryLength), lengthOut);
-        boolean complete = RDataFactory.COMPLETE_VECTOR;
+    @Specialization
+    protected RComplexVector complex(int lengthOut, RAbstractDoubleVector real, RAbstractDoubleVector imaginary, //
+                    @Cached("create()") NACheck realNA, //
+                    @Cached("create()") NACheck imaginaryNA, //
+                    @Cached("create()") VectorLengthProfile realLengthProfile, //
+                    @Cached("create()") VectorLengthProfile imaginaryLengthProfile, //
+                    @Cached("create()") VectorLengthProfile lengthProfile, //
+                    @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        int realLength = realLengthProfile.profile(real.getLength());
+        int imaginaryLength = imaginaryLengthProfile.profile(imaginary.getLength());
+        int length = lengthProfile.profile(Math.max(Math.max(lengthOut, realLength), imaginaryLength));
         double[] data = new double[length << 1];
-        for (int i = 0; i < data.length; i += 2) {
-            data[i] = real.getDataAt((i >> 1) % realLength);
-            data[i + 1] = imaginary.getDataAt((i >> 1) % imaginaryLength);
-            if (RRuntime.isNA(data[i]) || RRuntime.isNA(data[i + 1])) {
-                complete = RDataFactory.INCOMPLETE_VECTOR;
-            }
+        realNA.enable(real);
+        imaginaryNA.enable(imaginary);
+        loopProfile.profileCounted(length);
+        for (int i = 0; loopProfile.inject(i < data.length); i += 2) {
+            double realValue = realLength == 0 ? 0 : real.getDataAt((i >> 1) % realLength);
+            double imaginaryValue = imaginaryLength == 0 ? 0 : imaginary.getDataAt((i >> 1) % imaginaryLength);
+            data[i] = realValue;
+            data[i + 1] = imaginaryValue;
+            realNA.check(realValue);
+            imaginaryNA.check(imaginaryValue);
         }
-        return RDataFactory.createComplexVector(data, complete);
-    }
-
-    private static RDoubleVector checkLength(RAbstractDoubleVector v) {
-        if (v.getLength() == 0) {
-            return ZERO;
-        } else {
-            return v.materialize();
-        }
-    }
-
-    protected static boolean resultEmpty(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
-        return lengthOut == 0 && realAbsVec.getLength() == 0 && imaginaryAbsVec.getLength() == 0;
+        return RDataFactory.createComplexVector(data, realNA.neverSeenNA() && imaginaryNA.neverSeenNA());
     }
 }

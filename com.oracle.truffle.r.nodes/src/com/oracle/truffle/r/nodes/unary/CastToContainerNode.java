@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -34,6 +35,15 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public abstract class CastToContainerNode extends CastBaseNode {
 
     public abstract Object executeObject(Object value);
+
+    protected CastToContainerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    @Override
+    protected final RType getTargetType() {
+        return RType.Any;
+    }
 
     @Specialization
     @SuppressWarnings("unused")

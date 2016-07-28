@@ -29,11 +29,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.nodes.unary.ConversionFailedException;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -49,11 +46,7 @@ public abstract class NZChar extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             convertString = insert(CastStringNodeGen.create(false, true, false, false));
         }
-        try {
-            return (String) convertString.execute(content);
-        } catch (ConversionFailedException e) {
-            throw RError.error(this, RError.Message.TYPE_EXPECTED, RType.Character.getName());
-        }
+        return (String) convertString.execute(content);
     }
 
     private static byte isNonZeroLength(String s) {

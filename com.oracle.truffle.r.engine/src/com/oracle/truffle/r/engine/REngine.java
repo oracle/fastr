@@ -51,13 +51,15 @@ import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
-import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
+import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
-import com.oracle.truffle.r.runtime.JumpToTopLevelException;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -66,8 +68,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.ThreadTimings;
@@ -76,6 +78,7 @@ import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -84,6 +87,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -381,7 +385,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     @TruffleBoundary
-    public Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, Object... args) {
+    public Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, RStringVector names, Object... args) {
         assert frame == null || caller != null;
         MaterializedFrame actualFrame = frame;
         if (actualFrame == null) {
@@ -393,7 +397,17 @@ final class REngine implements Engine, Engine.Timings {
                 actualFrame = current.materialize();
             }
         }
-        Object[] rArgs = RArguments.create(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, args, null);
+        RArgsValuesAndNames reorderedArgs = CallMatcherGenericNode.reorderArguments(args, func,
+                        names == null ? ArgumentsSignature.empty(args.length) : ArgumentsSignature.get(names.getDataWithoutCopying()), false,
+                        RError.NO_CALLER);
+        Object[] newArgs = reorderedArgs.getArguments();
+        for (int i = 0; i < newArgs.length; i++) {
+            Object arg = newArgs[i];
+            if (arg instanceof RPromise) {
+                newArgs[i] = PromiseHelperNode.evaluateSlowPath(null, (RPromise) arg);
+            }
+        }
+        Object[] rArgs = RArguments.create(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, newArgs, null);
         return func.getTarget().call(rArgs);
     }
 
@@ -570,7 +584,7 @@ final class REngine implements Engine, Engine.Timings {
         result = RRuntime.asAbstractVector(result);
         // this supports printing of non-R values (via toString for now)
         if (result instanceof RTypedValue) {
-            return PrettyPrinterNode.prettyPrintDefault(result);
+            return ValuePrinterNode.prettyPrint(result);
         } else if (result == null) {
             return "[external object (null)]";
         } else if (result instanceof TruffleObject) {

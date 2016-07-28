@@ -43,7 +43,6 @@ import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastLogicalScalarNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastStringBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastStringBaseNodeGen;
@@ -53,7 +52,6 @@ import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.nodes.unary.ChainedCastNode;
 import com.oracle.truffle.r.nodes.unary.ConditionalMapNodeGen;
-import com.oracle.truffle.r.nodes.unary.ConvertIntNodeGen;
 import com.oracle.truffle.r.nodes.unary.FilterNodeGen;
 import com.oracle.truffle.r.nodes.unary.FindFirstNodeGen;
 import com.oracle.truffle.r.nodes.unary.FirstBooleanNodeGen;
@@ -162,10 +160,6 @@ public final class CastBuilder {
         return insert(index, FirstIntNode.createWithWarning(RError.Message.FIRST_ELEMENT_USED, name, intNa));
     }
 
-    public CastBuilder convertToInteger(int index) {
-        return insert(index, ConvertIntNodeGen.create());
-    }
-
     public CastBuilder firstIntegerWithError(int index, RError.Message error, String name) {
         insert(index, CastIntegerNodeGen.create(false, false, false));
         return insert(index, FirstIntNode.createWithError(error, name));
@@ -184,7 +178,8 @@ public final class CastBuilder {
     }
 
     public CastBuilder firstLogical(int index) {
-        return insert(index, CastLogicalScalarNode.create());
+        arg(index).asLogicalVector().findFirst(RRuntime.LOGICAL_NA);
+        return this;
     }
 
     public InitialPhaseBuilder<Object> arg(int argumentIndex, String argumentName) {
@@ -387,7 +382,7 @@ public final class CastBuilder {
 
         @Override
         public <T, R extends T> TypePredicateArgumentFilter<T, R> nullValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x == RNull.instance || x == null);
+            return new TypePredicateArgumentFilter<>(x -> x == RNull.instance || x == null, true);
         }
 
         @Override

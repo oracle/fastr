@@ -22,14 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -48,6 +47,15 @@ public abstract class CastRawNode extends CastBaseNode {
 
     private final NACheck naCheck = NACheck.create();
     private final BranchProfile warningBranch = BranchProfile.create();
+
+    protected CastRawNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    @Override
+    protected final RType getTargetType() {
+        return RType.Raw;
+    }
 
     public abstract Object executeRaw(int o);
 
@@ -130,7 +138,7 @@ public abstract class CastRawNode extends CastBaseNode {
     private RRawVector createResultVector(RAbstractVector operand, byte[] bdata) {
         RRawVector ret = RDataFactory.createRawVector(bdata, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -269,12 +277,6 @@ public abstract class CastRawNode extends CastBaseNode {
     @Specialization
     protected RRawVector doRawVector(RRawVector operand) {
         return operand;
-    }
-
-    @Fallback
-    @TruffleBoundary
-    protected int doOther(Object operand) {
-        throw new ConversionFailedException(operand.getClass().getName());
     }
 
     public static CastRawNode createNonPreserving() {

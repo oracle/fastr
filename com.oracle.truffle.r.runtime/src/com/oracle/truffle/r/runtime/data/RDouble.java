@@ -89,7 +89,9 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
 
     @Override
     public RDoubleVector materialize() {
-        return RDataFactory.createDoubleVectorFromScalar(getValue());
+        RDoubleVector result = RDataFactory.createDoubleVectorFromScalar(getValue());
+        MemoryTracer.reportCopying(this, result);
+        return result;
     }
 
     @Override

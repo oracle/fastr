@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -33,8 +32,18 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
 public abstract class CastStringNode extends CastStringBaseNode {
+
+    private final boolean convertEmptyVectorToNull;
+
+    protected CastStringNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean convertEmptyVectorToNull) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+        this.convertEmptyVectorToNull = convertEmptyVectorToNull;
+    }
+
+    public boolean convertEmptyVectorToNull() {
+        return convertEmptyVectorToNull;
+    }
 
     public abstract Object executeString(int o);
 
@@ -44,8 +53,6 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     public abstract Object executeString(Object o);
 
-    public abstract boolean isEmptyVectorConvertedToNull();
-
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
@@ -53,7 +60,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     @Specialization(guards = "vector.getLength() == 0")
     protected Object doEmptyVector(@SuppressWarnings("unused") RAbstractVector vector) {
-        return isEmptyVectorConvertedToNull() ? RNull.instance : RDataFactory.createStringVector(0);
+        return convertEmptyVectorToNull ? RNull.instance : RDataFactory.createStringVector(0);
     }
 
     @Specialization(guards = "vector.getLength() != 0")
@@ -75,7 +82,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
         }
         RStringVector ret = RDataFactory.createStringVector(sdata, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;

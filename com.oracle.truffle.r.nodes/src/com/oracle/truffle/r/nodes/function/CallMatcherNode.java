@@ -246,18 +246,18 @@ public abstract class CallMatcherNode extends RBaseNode {
                 // Note: see CallMatcherNode#specialize for details on suppliedSignature/Arguments
 
                 // this unrolls all varargs instances in suppliedArgs into a flat array of arguments
-                RArgsValuesAndNames preparedArguments = prepareSuppliedArgument(preparePermutation, suppliedArguments, suppliedSignature);
+                Object[] preparedArguments = prepareSuppliedArgument(preparePermutation, suppliedArguments);
 
                 // This is then matched to formal signature: the result is non-flat array of
                 // arguments possibly containing varargs -- something that argument matching for a
                 // direct function call would create would this be a direct function call
-                RArgsValuesAndNames matchedArgs = ArgumentMatcher.matchArgumentsEvaluated(permutation, preparedArguments.getArguments(), null, formals);
+                RArgsValuesAndNames matchedArgs = ArgumentMatcher.matchArgumentsEvaluated(permutation, preparedArguments, null, formals);
                 Object[] reorderedArgs = matchedArgs.getArguments();
                 evaluatePromises(frame, cachedFunction, reorderedArgs, formals.getSignature().getVarArgIndex());
                 if (call != null) {
                     RCaller parent = RArguments.getCall(frame).getParent();
                     String genFunctionName = functionName == null ? function.getName() : functionName;
-                    Supplier<RSyntaxNode> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, preparedArguments);
+                    Supplier<RSyntaxNode> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, preparePermutation, suppliedArguments, suppliedSignature);
                     RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent) : RCaller.create(frame, parent, argsSupplier);
                     Object[] arguments = prepareArguments(reorderedArgs, matchedArgs.getSignature(), cachedFunction, dispatchArgs, caller);
                     return call.call(frame, arguments);
@@ -311,27 +311,24 @@ public abstract class CallMatcherNode extends RBaseNode {
         }
 
         @ExplodeLoop
-        private static RArgsValuesAndNames prepareSuppliedArgument(long[] preparePermutation, Object[] arguments, ArgumentsSignature suppliedSignature) {
+        private static Object[] prepareSuppliedArgument(long[] preparePermutation, Object[] arguments) {
             Object[] values = new Object[preparePermutation.length];
-            String[] names = new String[preparePermutation.length];
             for (int i = 0; i < values.length; i++) {
                 long source = preparePermutation[i];
-                if (!ArgumentsSignature.isVarArgsIndex(source)) {
-                    values[i] = arguments[(int) source];
-                    names[i] = suppliedSignature.getName((int) source);
-                } else {
+                if (ArgumentsSignature.isVarArgsIndex(source)) {
                     int varArgsIdx = ArgumentsSignature.extractVarArgsIndex(source);
                     int argsIdx = ArgumentsSignature.extractVarArgsArgumentIndex(source);
                     RArgsValuesAndNames varargs = (RArgsValuesAndNames) arguments[varArgsIdx];
                     values[i] = varargs.getArguments()[argsIdx];
-                    names[i] = varargs.getSignature().getName(argsIdx);
+                } else {
+                    values[i] = arguments[(int) source];
                 }
             }
-            return new RArgsValuesAndNames(values, ArgumentsSignature.get(names));
+            return values;
         }
     }
 
-    private static final class CallMatcherGenericNode extends CallMatcherNode {
+    public static final class CallMatcherGenericNode extends CallMatcherNode {
 
         CallMatcherGenericNode(boolean forNextMethod, boolean argsAreEvaluated) {
             super(forNextMethod, argsAreEvaluated);
@@ -339,12 +336,9 @@ public abstract class CallMatcherNode extends RBaseNode {
 
         @Child private IndirectCallNode call = Truffle.getRuntime().createIndirectCallNode();
 
-        private final ConditionProfile hasVarArgsProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile hasUnmatchedProfile = ConditionProfile.createBinaryProfile();
-
         @Override
         public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
-            RArgsValuesAndNames reorderedArgs = reorderArguments(suppliedArguments, function, suppliedSignature);
+            RArgsValuesAndNames reorderedArgs = reorderArguments(suppliedArguments, function, suppliedSignature, forNextMethod, this);
             evaluatePromises(frame, function, reorderedArgs.getArguments(), reorderedArgs.getSignature().getVarArgIndex());
 
             RCaller parent = RArguments.getCall(frame).getParent();
@@ -368,7 +362,7 @@ public abstract class CallMatcherNode extends RBaseNode {
         }
 
         @TruffleBoundary
-        protected RArgsValuesAndNames reorderArguments(Object[] args, RFunction function, ArgumentsSignature paramSignature) {
+        public static RArgsValuesAndNames reorderArguments(Object[] args, RFunction function, ArgumentsSignature paramSignature, boolean forNextMethod, RBaseNode callingNode) {
             assert paramSignature.getLength() == args.length;
 
             int argCount = args.length;
@@ -378,10 +372,10 @@ public abstract class CallMatcherNode extends RBaseNode {
             boolean hasUnmatched = false;
             for (int fi = 0; fi < argCount; fi++) {
                 Object arg = args[fi];
-                if (hasVarArgsProfile.profile(arg instanceof RArgsValuesAndNames)) {
+                if (arg instanceof RArgsValuesAndNames) {
                     hasVarArgs = true;
                     argListSize += ((RArgsValuesAndNames) arg).getLength() - 1;
-                } else if (hasUnmatchedProfile.profile(paramSignature.isUnmatched(fi))) {
+                } else if (paramSignature.isUnmatched(fi)) {
                     hasUnmatched = true;
                     argListSize--;
                 }
@@ -429,7 +423,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             RArgsValuesAndNames evaledArgs = new RArgsValuesAndNames(argValues, signature);
 
             // ...to match them against the chosen function's formal arguments
-            RArgsValuesAndNames evaluated = ArgumentMatcher.matchArgumentsEvaluated((RRootNode) function.getRootNode(), evaledArgs, null, forNextMethod, this);
+            RArgsValuesAndNames evaluated = ArgumentMatcher.matchArgumentsEvaluated((RRootNode) function.getRootNode(), evaledArgs, null, forNextMethod, callingNode);
             return evaluated;
         }
 

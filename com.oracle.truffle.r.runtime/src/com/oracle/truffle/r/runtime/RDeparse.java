@@ -596,7 +596,10 @@ public class RDeparse {
                         append("list(").appendListContents(obj).append(')');
                     }
                 } else if (value instanceof RAbstractVector) {
-                    appendVector((RAbstractVector) value);
+                    RAbstractVector obj = (RAbstractVector) value;
+                    try (C c = withAttributes(obj)) {
+                        appendVector((RAbstractVector) value);
+                    }
                 } else if (value instanceof RNull) {
                     append("NULL");
                 } else if (value instanceof RFunction) {

@@ -24,14 +24,13 @@ import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.objects.CollectGenericArgumentsNode;
 import com.oracle.truffle.r.nodes.objects.CollectGenericArgumentsNodeGen;
 import com.oracle.truffle.r.nodes.objects.DispatchGeneric;
 import com.oracle.truffle.r.nodes.objects.DispatchGenericNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastIntegerScalarNode;
-import com.oracle.truffle.r.nodes.unary.CastStringScalarNode;
-import com.oracle.truffle.r.nodes.unary.CastStringScalarNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -58,13 +57,21 @@ public abstract class StandardGeneric extends RBuiltinNode {
 
     @Child private AttributeAccess genericAttrAccess;
     @Child private FrameFunctions.SysFunction sysFunction;
-    @Child private CastStringScalarNode castStringScalar = CastStringScalarNodeGen.create();
     @Child private LocalReadVariableNode readMTableFirst = LocalReadVariableNode.create(RRuntime.DOT_ALL_MTABLE, true);
     @Child private LocalReadVariableNode readSigLength = LocalReadVariableNode.create(RRuntime.DOT_SIG_LENGTH, true);
     @Child private LocalReadVariableNode readSigARgs = LocalReadVariableNode.create(RRuntime.DOT_SIG_ARGS, true);
-    @Child private CastIntegerScalarNode castIntScalar = CastIntegerScalarNode.create();
     @Child private CollectGenericArgumentsNode collectArgumentsNode;
     @Child private DispatchGeneric dispatchGeneric = DispatchGenericNodeGen.create();
+
+    @Child private CastNode castIntScalar;
+    @Child private CastNode castStringScalar;
+    {
+        CastBuilder builder = new CastBuilder();
+        builder.arg(0).asIntegerVector().findFirst(RRuntime.INT_NA);
+        builder.arg(1).asStringVector().findFirst(RRuntime.STRING_NA);
+        castIntScalar = builder.getCasts()[0];
+        castStringScalar = builder.getCasts()[1];
+    }
 
     private final BranchProfile noGenFunFound = BranchProfile.create();
     private final ConditionProfile sameNamesProfile = ConditionProfile.createBinaryProfile();
@@ -81,10 +88,10 @@ public abstract class StandardGeneric extends RBuiltinNode {
             // and this slow path should not be executed again
             REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
             RFunction currentFunction = ReadVariableNode.lookupFunction(".getMethodsTable", methodsEnv.getFrame(), true);
-            mtable = (REnvironment) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), fdef);
+            mtable = (REnvironment) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), null, fdef);
         }
         RList sigArgs = (RList) readSigARgs.execute(null, fnFrame);
-        int sigLength = castIntScalar.executeInt(readSigLength.execute(null, fnFrame));
+        int sigLength = (int) castIntScalar.execute(readSigLength.execute(null, fnFrame));
         if (sigLength > sigArgs.getLength()) {
             throw RError.error(this, RError.Message.GENERIC, "'.SigArgs' is shorter than '.SigLength' says it should be");
         }
@@ -118,7 +125,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
             noGenFunFound.enter();
             return null;
         }
-        String gen = castStringScalar.executeString(genObj);
+        String gen = (String) castStringScalar.execute(genObj);
         if (sameNamesProfile.profile(gen == fname)) {
             return stdGenericInternal(frame, fVec, fn);
         } else {
