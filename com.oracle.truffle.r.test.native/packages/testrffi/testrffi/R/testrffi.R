@@ -95,3 +95,12 @@ rffi.iterate_iptr <- function(x) {
 	.Call("iterate_iptr", x, PACKAGE = "testrffi")
 }
 
+rffi.preserve_object <- function() {
+	.Call("preserve_object", PACKAGE = "testrffi")
+}
+
+rffi.release_object <- function(x) {
+	invisible(.Call("release_object", x, PACKAGE = "testrffi"))
+}
+
+

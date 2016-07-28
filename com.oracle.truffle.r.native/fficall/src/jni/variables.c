@@ -104,7 +104,7 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 			} else if (strcmp(nameChars, "R_NaInt") == 0) {
 				R_NaInt = (*env)->CallIntMethod(env, value, intValueMethodID);
 			} else {
-				SEXP ref = mkNamedGlobalRef(env, value);
+				SEXP ref = createGlobalRef(env, value, 1);
 				if (strcmp(nameChars, "R_EmptyEnv") == 0) {
 					R_EmptyEnv = ref;
 				} else if (strcmp(nameChars, "R_NilValue") == 0) {
