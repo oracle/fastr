@@ -72,7 +72,7 @@ public class PrintFunctions {
         }
 
         protected static RFunction createShowFunction(VirtualFrame frame) {
-            return ReadVariableNode.lookupFunction("show", frame, false);
+            return ReadVariableNode.lookupFunction("show", frame);
         }
 
         @SuppressWarnings("unused")

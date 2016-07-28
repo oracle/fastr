@@ -378,9 +378,9 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public Object forcePromise(Object val) {
+    public Object forcePromise(String identifier, Object val) {
         if (val instanceof RPromise) {
-            return PromiseHelperNode.evaluateSlowPath(null, (RPromise) val);
+            return ReadVariableNode.evalPromiseSlowPathWithName(identifier, null, (RPromise) val);
         } else {
             return val;
         }

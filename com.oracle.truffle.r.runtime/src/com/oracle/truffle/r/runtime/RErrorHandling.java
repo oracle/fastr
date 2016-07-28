@@ -138,8 +138,9 @@ public class RErrorHandling {
         private RFunction getDotSignalSimpleWarning() {
             if (dotSignalSimpleWarning == null) {
                 CompilerDirectives.transferToInterpreter();
-                Object f = REnvironment.baseEnv().findFunction(".signalSimpleWarning");
-                dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
+                String name = ".signalSimpleWarning";
+                Object f = REnvironment.baseEnv().findFunction(name);
+                dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, f);
             }
             return dotSignalSimpleWarning;
         }

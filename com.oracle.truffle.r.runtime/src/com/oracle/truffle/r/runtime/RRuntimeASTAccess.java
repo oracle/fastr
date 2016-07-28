@@ -134,7 +134,7 @@ public interface RRuntimeASTAccess {
     /**
      * Force a promise by slow-path evaluation.
      */
-    Object forcePromise(Object val);
+    Object forcePromise(String identifier, Object val);
 
     /**
      * Returns the {@link ArgumentsSignature} for {@code f}.

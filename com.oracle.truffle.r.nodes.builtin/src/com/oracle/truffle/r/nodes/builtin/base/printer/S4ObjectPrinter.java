@@ -68,6 +68,6 @@ final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
     }
 
     private static RFunction createShowFunction(Frame frame) {
-        return ReadVariableNode.lookupFunction("show", frame, false);
+        return ReadVariableNode.lookupFunction("show", frame);
     }
 }
