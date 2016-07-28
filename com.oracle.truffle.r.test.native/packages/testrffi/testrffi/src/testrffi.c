@@ -258,3 +258,15 @@ SEXP iterate_iptr(SEXP x) {
     UNPROTECT(1);
     return v;
 }
+
+SEXP preserve_object(void) {
+	SEXP v;
+	v = allocVector(INTSXP, 1);
+	R_PreserveObject(v);
+	return v;
+}
+
+SEXP release_object(SEXP x) {
+	R_ReleaseObject(x);
+    return R_NilValue;
+}

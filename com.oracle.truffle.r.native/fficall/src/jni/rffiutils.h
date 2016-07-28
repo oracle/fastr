@@ -46,10 +46,14 @@ void *unimplemented(char *msg);
 void fatalError(char *msg);
 // makes a call to the VM with x as an argument (for debugger validation)
 void validate(SEXP x);
-// checks x against the list of canonical (named) refs, returning the canonical version if a match
+// checks x against the list of global JNI refs, returning the global version if x matches (IsSameObject)
 SEXP checkRef(JNIEnv *env, SEXP x);
-// creates a canonical (named) JNI global ref from x
-SEXP mkNamedGlobalRef(JNIEnv *env, SEXP x);
+// creates a global JNI global ref from x. If permanent is non-zero, calls to
+// releaseGlobalRef are ignored and the global ref persists for the entire execution
+// (used for the R global variables such as R_NilValue).
+SEXP createGlobalRef(JNIEnv *env, SEXP x, int permanent);
+// release a previously created JNI global ref
+void releaseGlobalRef(JNIEnv *env, SEXP x);
 // validate a JNI reference
 void validateRef(JNIEnv *env, SEXP x, const char *msg);
 
