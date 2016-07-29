@@ -44,7 +44,9 @@ public abstract class WithVisible extends RBuiltinNode {
 
     @Specialization(guards = "!isRMissing(x)")
     protected RList withVisible(Object x) {
-        assert !FastROptions.IgnoreVisibility.getBooleanValue() : "using withVisible with IgnoreVisibility";
+        if (FastROptions.IgnoreVisibility.getBooleanValue()) {
+            RError.warning(this, RError.Message.GENERIC, "using withVisible with IgnoreVisibility");
+        }
 
         Object[] data = new Object[]{x, RRuntime.asLogical(RContext.getInstance().isVisible())};
         // Visibility is changed by the evaluation (else this code would not work),
