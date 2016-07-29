@@ -96,13 +96,13 @@ public abstract class UpdateDimNames extends RBuiltinNode {
                     @Cached("create(DIMNAMES_ATTR_KEY)") RemoveAttributeNode remove) {
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (isRVectorProfile.profile(container instanceof RVector)) {
-            RVector vector = (RVector) container;
+            RVector vector = (RVector) result;
             if (vector.getInternalDimNames() != null) {
                 vector.setInternalDimNames(null);
                 remove.execute(vector.getAttributes());
             }
         } else {
-            container.setDimNames(null);
+            result.setDimNames(null);
         }
         return result;
     }
