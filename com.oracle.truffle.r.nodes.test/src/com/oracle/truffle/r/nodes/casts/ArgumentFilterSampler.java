@@ -26,9 +26,11 @@ import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 
 public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
 
-    Samples<R> collectSamples(Samples<? extends R> downStreamSamples);
+    Samples<R> collectSamples(TypeExpr inputType);
 
-    TypeExpr allowedTypes();
+    TypeExpr trueBranchType();
+
+    TypeExpr falseBranchType();
 
     interface NarrowingArgumentFilterSampler<T, R extends T> extends NarrowingArgumentFilter<T, R>, ArgumentFilterSampler<T, R> {
 
@@ -48,21 +50,15 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
                 }
 
                 @Override
-                public TypeExpr allowedTypes() {
-                    return NarrowingArgumentFilterSampler.this.allowedTypes().or(other.allowedTypes());
+                public TypeExpr trueBranchType() {
+                    return NarrowingArgumentFilterSampler.this.trueBranchType().or(other.trueBranchType());
                 }
 
-                @SuppressWarnings("unchecked")
                 @Override
-                public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
-
-                    Samples<R> downStreamSamplesForThis = downStreamSamples.filter(x -> NarrowingArgumentFilterSampler.this.allowedTypes().isInstance(x)).map(x -> (R) x, x -> x);
-                    Samples<R> thisSamples = NarrowingArgumentFilterSampler.this.collectSamples(downStreamSamplesForThis);
-
-                    Samples<S> downStreamSamplesForOther = downStreamSamples.filter(x -> other.allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
-                    Samples<S> otherSamples = other.collectSamples(downStreamSamplesForOther);
-
-                    return Samples.<T> empty().or(thisSamples).or(otherSamples);
+                public Samples<T> collectSamples(TypeExpr inputType) {
+                    Samples<R> thisSamples = NarrowingArgumentFilterSampler.this.collectSamples(inputType);
+                    Samples<S> otherSamples = other.collectSamples(inputType);
+                    return Samples.<T> anything().and(thisSamples).or(otherSamples);
                 }
 
             };
@@ -70,6 +66,42 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
     }
 
     interface ArgumentValueFilterSampler<T> extends ArgumentValueFilter<T>, NarrowingArgumentFilterSampler<T, T> {
+
+        @Override
+        default TypeExpr falseBranchType() {
+            this.or(null);
+            return trueBranchType();
+        }
+
+        @Override
+        default <S extends T> ArgumentValueFilterSampler<T> or(ArgumentValueFilter<T> o) {
+            final ArgumentValueFilterSampler<T> other = (ArgumentValueFilterSampler<T>) o;
+
+            return new ArgumentValueFilterSampler<T>() {
+
+                @Override
+                public boolean test(T arg) {
+                    if (ArgumentValueFilterSampler.this.test(arg)) {
+                        return true;
+                    } else {
+                        return other.test(arg);
+                    }
+                }
+
+                @Override
+                public TypeExpr trueBranchType() {
+                    return ArgumentValueFilterSampler.this.trueBranchType().or(other.trueBranchType());
+                }
+
+                @Override
+                public Samples<T> collectSamples(TypeExpr inputType) {
+                    Samples<T> thisSamples = ArgumentValueFilterSampler.this.collectSamples(inputType);
+                    Samples<T> otherSamples = other.collectSamples(inputType);
+                    return Samples.<T> anything().and(thisSamples).or(otherSamples);
+                }
+
+            };
+        }
 
         @Override
         default ArgumentValueFilterSampler<T> and(ArgumentValueFilter<T> o) {
@@ -83,14 +115,14 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
                 }
 
                 @Override
-                public TypeExpr allowedTypes() {
-                    return ArgumentValueFilterSampler.this.allowedTypes().and(other.allowedTypes());
+                public TypeExpr trueBranchType() {
+                    return ArgumentValueFilterSampler.this.trueBranchType().and(other.trueBranchType());
                 }
 
                 @Override
-                public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
-                    Samples<T> thisSamples = ArgumentValueFilterSampler.this.collectSamples(downStreamSamples);
-                    Samples<T> otherSamples = other.collectSamples(downStreamSamples);
+                public Samples<T> collectSamples(TypeExpr inputType) {
+                    Samples<T> thisSamples = ArgumentValueFilterSampler.this.collectSamples(inputType);
+                    Samples<T> otherSamples = other.collectSamples(inputType);
 
                     return thisSamples.and(otherSamples);
                 }
@@ -109,17 +141,17 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
                 }
 
                 @Override
-                public TypeExpr allowedTypes() {
-                    return ArgumentValueFilterSampler.this.allowedTypes().and(other.allowedTypes());
+                public TypeExpr trueBranchType() {
+                    return ArgumentValueFilterSampler.this.trueBranchType().and(other.trueBranchType());
                 }
 
                 @SuppressWarnings("unchecked")
                 @Override
-                public Samples<S> collectSamples(Samples<? extends S> downStreamSamples) {
-                    Samples<S> thisSamples = ArgumentValueFilterSampler.this.collectSamples(downStreamSamples).filter(x -> allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
-                    Samples<S> otherSamples = other.collectSamples(downStreamSamples);
+                public Samples<S> collectSamples(TypeExpr inputType) {
+                    Samples<T> thisSamples = ArgumentValueFilterSampler.this.collectSamples(inputType);
+                    Samples<S> otherSamples = other.collectSamples(inputType);
 
-                    return thisSamples.and(otherSamples);
+                    return (Samples<S>) thisSamples.and(otherSamples);
                 }
             };
         }
@@ -134,22 +166,26 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
                 }
 
                 @Override
-                public TypeExpr allowedTypes() {
-                    return ArgumentValueFilterSampler.this.allowedTypes();
+                public TypeExpr trueBranchType() {
+                    return ArgumentValueFilterSampler.this.trueBranchType();
                 }
 
                 @SuppressWarnings("unchecked")
                 @Override
-                public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
-                    Samples<T> thisSamples = ArgumentValueFilterSampler.this.collectSamples(downStreamSamples);
-                    return thisSamples.swap().filter(x -> allowedTypes().isInstance(x)).map(x -> (T) x, x -> x);
+                public Samples<T> collectSamples(TypeExpr inputType) {
+                    Samples<T> thisSamples = ArgumentValueFilterSampler.this.collectSamples(inputType);
+                    return (Samples<T>) thisSamples.swap();
                 }
             };
         }
-
     }
 
     interface ArgumentTypeFilterSampler<T, R extends T> extends ArgumentTypeFilter<T, R>, NarrowingArgumentFilterSampler<T, R> {
+
+        @Override
+        default TypeExpr falseBranchType() {
+            return trueBranchType().not();
+        }
 
         @Override
         default <S extends R> ArgumentTypeFilterSampler<T, S> and(ArgumentTypeFilter<R, S> o) {
@@ -164,17 +200,17 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
                 }
 
                 @Override
-                public TypeExpr allowedTypes() {
-                    return ArgumentTypeFilterSampler.this.allowedTypes().and(other.allowedTypes());
+                public TypeExpr trueBranchType() {
+                    return ArgumentTypeFilterSampler.this.trueBranchType().and(other.trueBranchType());
                 }
 
                 @SuppressWarnings("unchecked")
                 @Override
-                public Samples<S> collectSamples(Samples<? extends S> downStreamSamples) {
-                    Samples<S> thisSamples = ArgumentTypeFilterSampler.this.collectSamples(downStreamSamples).filter(x -> other.allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
-                    Samples<S> otherSamples = other.collectSamples(downStreamSamples);
+                public Samples<S> collectSamples(TypeExpr inputType) {
+                    Samples<R> thisSamples = ArgumentTypeFilterSampler.this.collectSamples(inputType);
+                    Samples<S> otherSamples = other.collectSamples(inputType);
 
-                    return thisSamples.and(otherSamples);
+                    return (Samples<S>) thisSamples.and(otherSamples);
                 }
             };
         }
@@ -192,17 +228,17 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
                 }
 
                 @Override
-                public TypeExpr allowedTypes() {
-                    return ArgumentTypeFilterSampler.this.allowedTypes().and(other.allowedTypes());
+                public TypeExpr trueBranchType() {
+                    return ArgumentTypeFilterSampler.this.trueBranchType().and(other.trueBranchType());
                 }
 
                 @SuppressWarnings("cast")
                 @Override
-                public Samples<R> collectSamples(Samples<? extends R> downStreamSamples) {
-                    Samples<R> thisSamples = ArgumentTypeFilterSampler.this.collectSamples(downStreamSamples);
-                    Samples<R> otherSamples = other.collectSamples(downStreamSamples).filter(x -> ArgumentTypeFilterSampler.this.allowedTypes().isInstance(x)).map(x -> (R) x, x -> x);
+                public Samples<R> collectSamples(TypeExpr inputType) {
+                    Samples<R> thisSamples = ArgumentTypeFilterSampler.this.collectSamples(inputType);
+                    Samples<R> otherSamples = other.collectSamples(inputType);
 
-                    return thisSamples.and(otherSamples);
+                    return otherSamples.and(thisSamples);
                 }
             };
         }
@@ -224,15 +260,19 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
         }
 
         @Override
-        public TypeExpr allowedTypes() {
-            return orig.allowedTypes().not();
+        public TypeExpr trueBranchType() {
+            return orig.trueBranchType().not();
+        }
+
+        @Override
+        public TypeExpr falseBranchType() {
+            return orig.falseBranchType().not();
         }
 
         @SuppressWarnings("unchecked")
         @Override
-        public Samples<Object> collectSamples(Samples<?> downStreamSamples) {
-            Samples<R> swappedSamples = downStreamSamples.swap().filter(x -> orig.allowedTypes().isInstance(x)).map(x -> (R) x, x -> x);
-            Samples<R> thisSamples = orig.collectSamples(swappedSamples);
+        public Samples<Object> collectSamples(TypeExpr inputType) {
+            Samples<? extends R> thisSamples = orig.collectSamples(inputType);
             return thisSamples.swap();
         }
 
@@ -253,17 +293,17 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
                 }
 
                 @Override
-                public TypeExpr allowedTypes() {
-                    return InverseArgumentFilterSampler.this.allowedTypes().and(other.allowedTypes());
+                public TypeExpr trueBranchType() {
+                    return InverseArgumentFilterSampler.this.trueBranchType().and(other.trueBranchType());
                 }
 
                 @SuppressWarnings("unchecked")
                 @Override
-                public Samples<S> collectSamples(Samples<? extends S> downStreamSamples) {
-                    Samples<S> thisSamples = InverseArgumentFilterSampler.this.collectSamples(downStreamSamples).filter(x -> other.allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
-                    Samples<S> otherSamples = other.collectSamples(downStreamSamples);
+                public Samples<S> collectSamples(TypeExpr inputType) {
+                    Samples<Object> thisSamples = InverseArgumentFilterSampler.this.collectSamples(inputType);
+                    Samples<S> otherSamples = other.collectSamples(inputType);
 
-                    return thisSamples.and(otherSamples);
+                    return (Samples<S>) thisSamples.and(otherSamples);
                 }
             };
         }
@@ -280,17 +320,17 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
                 }
 
                 @Override
-                public TypeExpr allowedTypes() {
-                    return InverseArgumentFilterSampler.this.allowedTypes().and(other.allowedTypes());
+                public TypeExpr trueBranchType() {
+                    return InverseArgumentFilterSampler.this.trueBranchType().and(other.trueBranchType());
                 }
 
                 @SuppressWarnings("unchecked")
                 @Override
-                public Samples<S> collectSamples(Samples<? extends S> downStreamSamples) {
-                    Samples<S> thisSamples = InverseArgumentFilterSampler.this.collectSamples(downStreamSamples).filter(x -> other.allowedTypes().isInstance(x)).map(x -> (S) x, x -> x);
-                    Samples<S> otherSamples = other.collectSamples(downStreamSamples);
+                public Samples<S> collectSamples(TypeExpr inputType) {
+                    Samples<Object> thisSamples = InverseArgumentFilterSampler.this.collectSamples(inputType);
+                    Samples<S> otherSamples = other.collectSamples(inputType);
 
-                    return thisSamples.and(otherSamples);
+                    return (Samples<S>) thisSamples.and(otherSamples);
                 }
             };
         }
