@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -48,14 +49,14 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
-@RBuiltin(name = "all.names", kind = INTERNAL, parameterNames = {"expr", "function", "max.names", "unique"}, behavior = PURE)
+@RBuiltin(name = "all.names", kind = INTERNAL, parameterNames = {"expr", "functions", "max.names", "unique"}, behavior = PURE)
 public abstract class AllNames extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toLogical(1);
-        casts.toInteger(2);
-        casts.toLogical(3);
+        casts.arg("functions").mapIf(nullValue(), constant(RRuntime.LOGICAL_FALSE)).asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA(RRuntime.LOGICAL_FALSE);
+        casts.arg("max.names").mapIf(nullValue(), constant(0)).asIntegerVector().findFirst(0).notNA(0);
+        casts.arg("unique").mapIf(nullValue(), constant(RRuntime.LOGICAL_TRUE)).asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).notNA(RRuntime.LOGICAL_TRUE);
     }
 
     @Specialization
@@ -144,7 +145,7 @@ public abstract class AllNames extends RBuiltinNode {
     @TruffleBoundary
     protected Object doAllNames(RSymbol symbol, @SuppressWarnings("unused") byte functions, int maxNames, @SuppressWarnings("unused") byte unique) {
         if (maxNames > 0 || maxNames == -1) {
-            return RDataFactory.createStringVector(0);
+            return RDataFactory.createEmptyStringVector();
         } else {
             return RDataFactory.createStringVectorFromScalar(symbol.getName());
         }
@@ -153,6 +154,6 @@ public abstract class AllNames extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     protected Object doAllNames(Object expr, Object functions, Object maxNames, Object unique) {
-        return RDataFactory.createStringVector(0);
+        return RDataFactory.createEmptyStringVector();
     }
 }
