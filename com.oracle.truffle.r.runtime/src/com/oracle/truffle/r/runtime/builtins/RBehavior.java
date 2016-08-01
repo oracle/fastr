@@ -22,16 +22,47 @@
  */
 package com.oracle.truffle.r.runtime.builtins;
 
+import com.oracle.truffle.r.runtime.context.RContext;
+
 /**
  * The different ways in which an {@link RBuiltin} interacts with its parameters and the rest of the
  * system.
  */
 public enum RBehavior {
+    /**
+     * This builtin always returns the same result or raises the same error if it is called with the
+     * same arguments. It cannot depend on any external state, on the frame or on IO input.
+     */
     PURE,
+    /**
+     * This builtin performs IO operations.
+     */
     IO,
+    /**
+     * This builtin reads from the frame, but does not depend on any other state. It will return the
+     * same result or raise the same error if called with the same arguments, as long as the frame
+     * is not changed.
+     */
     READS_FRAME,
+    /**
+     * This builtin modifies the frame, changing values or other state that is stored in the frame.
+     * It also depends on the frame, similar to {@link #READS_FRAME}.
+     */
     MODIFIES_FRAME,
+    /**
+     * This builtin reads from the global state ({@link RContext}, etc.), but not the frame. It will
+     * return the same result or raise the same error if called with the same arguments, as long as
+     * the global state is not changed.
+     */
     READS_STATE,
+    /**
+     * This builtin modifies the global state ({@link RContext}, etc.), but not the frame. It also
+     * depends on the global state, similar to {@link #READS_STATE}.
+     */
     MODIFIES_STATE,
+    /**
+     * This builtin has arbitrary effects on the global state, on IO components, the frame, and the
+     * AST itself. It also depends on the global state, IO and the frame.
+     */
     COMPLEX
 }
