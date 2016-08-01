@@ -72,6 +72,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class CastBuilder {
 
@@ -896,8 +897,18 @@ public final class CastBuilder {
             return state().castBuilder();
         }
 
+        default THIS defaultError(RBaseNode callObj, RError.Message message, Object... args) {
+            state().setDefaultError(callObj, message, args);
+            return (THIS) this;
+        }
+
         default THIS defaultError(RError.Message message, Object... args) {
             state().setDefaultError(message, args);
+            return (THIS) this;
+        }
+
+        default THIS defaultWarning(RBaseNode callObj, RError.Message message, Object... args) {
+            state().setDefaultWarning(callObj, message, args);
             return (THIS) this;
         }
 
@@ -907,7 +918,12 @@ public final class CastBuilder {
         }
 
         default THIS shouldBe(ArgumentFilter<? super T, ?> argFilter, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), FilterNodeGen.create(argFilter, true, message, messageArgs, state().boxPrimitives));
+            state().castBuilder().insert(state().index(), FilterNodeGen.create(argFilter, true, null, message, messageArgs, state().boxPrimitives));
+            return (THIS) this;
+        }
+
+        default THIS shouldBe(ArgumentFilter<? super T, ?> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), FilterNodeGen.create(argFilter, true, callObj, message, messageArgs, state().boxPrimitives));
             return (THIS) this;
         }
 
@@ -934,10 +950,12 @@ public final class CastBuilder {
     }
 
     static class DefaultError {
+        final RBaseNode callObj;
         final RError.Message message;
         final Object[] args;
 
-        DefaultError(RError.Message message, Object... args) {
+        DefaultError(RBaseNode callObj, RError.Message message, Object... args) {
+            this.callObj = callObj;
             this.message = message;
             this.args = args;
         }
@@ -961,7 +979,7 @@ public final class CastBuilder {
             this.factory = fact;
             this.cb = cb;
             this.boxPrimitives = boxPrimitives;
-            this.defaultDefaultError = new DefaultError(RError.Message.INVALID_ARGUMENT, argumentName);
+            this.defaultDefaultError = new DefaultError(null, RError.Message.INVALID_ARGUMENT, argumentName);
         }
 
         ArgCastBuilderState(ArgCastBuilderState prevState, boolean boxPrimitives) {
@@ -972,7 +990,7 @@ public final class CastBuilder {
             this.boxPrimitives = boxPrimitives;
             this.defError = prevState.defError;
             this.defWarning = prevState.defWarning;
-            this.defaultDefaultError = new DefaultError(RError.Message.INVALID_ARGUMENT, argumentName);
+            this.defaultDefaultError = new DefaultError(null, RError.Message.INVALID_ARGUMENT, argumentName);
         }
 
         public int index() {
@@ -995,44 +1013,60 @@ public final class CastBuilder {
             return defWarning != null;
         }
 
+        void setDefaultError(RBaseNode callObj, RError.Message message, Object... args) {
+            defError = new DefaultError(callObj, message, args);
+        }
+
         void setDefaultError(RError.Message message, Object... args) {
-            defError = new DefaultError(message, args);
+            defError = new DefaultError(null, message, args);
+        }
+
+        void setDefaultWarning(RBaseNode callObj, RError.Message message, Object... args) {
+            defWarning = new DefaultError(callObj, message, args);
         }
 
         void setDefaultWarning(RError.Message message, Object... args) {
-            defWarning = new DefaultError(message, args);
+            defWarning = new DefaultError(null, message, args);
         }
 
         DefaultError defaultError() {
             return defError == null ? defaultDefaultError : defError;
         }
 
+        DefaultError defaultError(RBaseNode callObj, RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
+            return defError == null ? new DefaultError(callObj, defaultDefaultMessage, defaultDefaultArgs) : defError;
+        }
+
         DefaultError defaultError(RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
-            return defError == null ? new DefaultError(defaultDefaultMessage, defaultDefaultArgs) : defError;
+            return defError == null ? new DefaultError(null, defaultDefaultMessage, defaultDefaultArgs) : defError;
         }
 
         DefaultError defaultWarning() {
             return defWarning == null ? defaultDefaultError : defWarning;
         }
 
-        DefaultError defaultWarning(RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
-            return defWarning == null ? new DefaultError(defaultDefaultMessage, defaultDefaultArgs) : defWarning;
+        DefaultError defaultWarning(RBaseNode callObj, RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
+            return defWarning == null ? new DefaultError(callObj, defaultDefaultMessage, defaultDefaultArgs) : defWarning;
         }
 
-        void mustBe(ArgumentFilter<?, ?> argFilter, RError.Message message, Object... messageArgs) {
-            castBuilder().insert(index(), FilterNodeGen.create(argFilter, false, message, messageArgs, boxPrimitives));
+        DefaultError defaultWarning(RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
+            return defWarning == null ? new DefaultError(null, defaultDefaultMessage, defaultDefaultArgs) : defWarning;
+        }
+
+        void mustBe(ArgumentFilter<?, ?> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            castBuilder().insert(index(), FilterNodeGen.create(argFilter, false, callObj, message, messageArgs, boxPrimitives));
         }
 
         void mustBe(ArgumentFilter<?, ?> argFilter) {
-            mustBe(argFilter, defaultError().message, defaultError().args);
+            mustBe(argFilter, defaultError().callObj, defaultError().message, defaultError().args);
         }
 
-        void shouldBe(ArgumentFilter<?, ?> argFilter, RError.Message message, Object... messageArgs) {
-            castBuilder().insert(index(), FilterNodeGen.create(argFilter, true, message, messageArgs, boxPrimitives));
+        void shouldBe(ArgumentFilter<?, ?> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            castBuilder().insert(index(), FilterNodeGen.create(argFilter, true, callObj, message, messageArgs, boxPrimitives));
         }
 
         void shouldBe(ArgumentFilter<?, ?> argFilter) {
-            shouldBe(argFilter, defaultWarning().message, defaultWarning().args);
+            shouldBe(argFilter, defaultWarning().callObj, defaultWarning().message, defaultWarning().args);
         }
 
     }
@@ -1053,13 +1087,23 @@ public final class CastBuilder {
 
     public interface InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilder<T>> {
 
+        default <S> InitialPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            state().mustBe(argFilter, callObj, message, messageArgs);
+            return state().factory.newInitialPhaseBuilder(this);
+        }
+
         default <S> InitialPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
-            state().mustBe(argFilter, message, messageArgs);
+            state().mustBe(argFilter, null, message, messageArgs);
             return state().factory.newInitialPhaseBuilder(this);
         }
 
         default <S> InitialPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter) {
             return mustBe(argFilter, state().defaultError().message, state().defaultError().args);
+        }
+
+        default <S> InitialPhaseBuilder<S> mustBe(Class<S> cls, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            mustBe(Predef.instanceOf(cls), callObj, message, messageArgs);
+            return state().factory.newInitialPhaseBuilder(this);
         }
 
         default <S> InitialPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
@@ -1104,13 +1148,23 @@ public final class CastBuilder {
             return this;
         }
 
+        default InitialPhaseBuilder<T> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(callObj, message, messageArgs, null));
+            return this;
+        }
+
         default InitialPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), NonNANodeGen.create(message, messageArgs, null));
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(null, message, messageArgs, null));
+            return this;
+        }
+
+        default InitialPhaseBuilder<T> notNA(T naReplacement, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(callObj, message, messageArgs, naReplacement));
             return this;
         }
 
         default InitialPhaseBuilder<T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), NonNANodeGen.create(message, messageArgs, naReplacement));
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(null, message, messageArgs, naReplacement));
             return this;
         }
 
@@ -1120,7 +1174,7 @@ public final class CastBuilder {
         }
 
         default InitialPhaseBuilder<T> notNA() {
-            state().castBuilder().insert(state().index(), NonNANodeGen.create(state().defaultError().message, state().defaultError().args, null));
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(state().defaultError().callObj, state().defaultError().message, state().defaultError().args, null));
             return this;
         }
 
@@ -1171,7 +1225,12 @@ public final class CastBuilder {
          * reports the warning message.
          */
         default HeadPhaseBuilder<S> findFirst(S defaultValue, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), FindFirstNodeGen.create(elementClass(), message, messageArgs, defaultValue));
+            state().castBuilder().insert(state().index(), FindFirstNodeGen.create(elementClass(), null, message, messageArgs, defaultValue));
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
+        default HeadPhaseBuilder<S> findFirst(S defaultValue, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), FindFirstNodeGen.create(elementClass(), callObj, message, messageArgs, defaultValue));
             return state().factory.newHeadPhaseBuilder(this);
         }
 
@@ -1179,7 +1238,12 @@ public final class CastBuilder {
          * The inserted cast node raises an error if the input vector is empty.
          */
         default HeadPhaseBuilder<S> findFirst(RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), FindFirstNodeGen.create(elementClass(), message, messageArgs, null));
+            state().castBuilder().insert(state().index(), FindFirstNodeGen.create(elementClass(), null, message, messageArgs, null));
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
+        default HeadPhaseBuilder<S> findFirst(RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), FindFirstNodeGen.create(elementClass(), callObj, message, messageArgs, null));
             return state().factory.newHeadPhaseBuilder(this);
         }
 
@@ -1188,9 +1252,9 @@ public final class CastBuilder {
          * RError.Message.LENGTH_ZERO error if the input vector is empty.
          */
         default HeadPhaseBuilder<S> findFirst() {
-            DefaultError err = state().isDefaultErrorDefined() ? state().defaultError() : new DefaultError(RError.Message.LENGTH_ZERO);
+            DefaultError err = state().isDefaultErrorDefined() ? state().defaultError() : new DefaultError(null, RError.Message.LENGTH_ZERO);
             state().castBuilder().insert(state().index(),
-                            FindFirstNodeGen.create(elementClass(), err.message, err.args, null));
+                            FindFirstNodeGen.create(elementClass(), err.callObj, err.message, err.args, null));
             return state().factory.newHeadPhaseBuilder(this);
         }
 
@@ -1205,8 +1269,13 @@ public final class CastBuilder {
 
         Class<?> elementClass();
 
+        default CoercedPhaseBuilder<T, S> mustBe(ArgumentFilter<? super T, ? extends T> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            state().mustBe(argFilter, callObj, message, messageArgs);
+            return this;
+        }
+
         default CoercedPhaseBuilder<T, S> mustBe(ArgumentFilter<? super T, ? extends T> argFilter, RError.Message message, Object... messageArgs) {
-            state().mustBe(argFilter, message, messageArgs);
+            state().mustBe(argFilter, null, message, messageArgs);
             return this;
         }
 
@@ -1250,8 +1319,13 @@ public final class CastBuilder {
             return state().factory.newHeadPhaseBuilder(this);
         }
 
+        default <S> HeadPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            state().mustBe(argFilter, callObj, message, messageArgs);
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
         default <S> HeadPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
-            state().mustBe(argFilter, message, messageArgs);
+            state().mustBe(argFilter, null, message, messageArgs);
             return state().factory.newHeadPhaseBuilder(this);
         }
 
@@ -1269,18 +1343,28 @@ public final class CastBuilder {
             return state().factory.newHeadPhaseBuilder(this);
         }
 
+        default HeadPhaseBuilder<T> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(callObj, message, messageArgs, null));
+            return this;
+        }
+
         default HeadPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), NonNANodeGen.create(message, messageArgs, null));
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(null, message, messageArgs, null));
+            return this;
+        }
+
+        default HeadPhaseBuilder<T> notNA(T naReplacement, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(callObj, message, messageArgs, naReplacement));
             return this;
         }
 
         default HeadPhaseBuilder<T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), NonNANodeGen.create(message, messageArgs, naReplacement));
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(null, message, messageArgs, naReplacement));
             return this;
         }
 
         default HeadPhaseBuilder<T> notNA() {
-            state().castBuilder().insert(state().index(), NonNANodeGen.create(state().defaultError().message, state().defaultError().args, null));
+            state().castBuilder().insert(state().index(), NonNANodeGen.create(state().defaultError().callObj, state().defaultError().message, state().defaultError().args, null));
             return this;
         }
 

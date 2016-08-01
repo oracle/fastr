@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Cast nodes behave like unary nodes, but in many cases it is useful to have a specific type for
@@ -34,16 +35,16 @@ import com.oracle.truffle.r.runtime.context.RContext;
 public abstract class CastNode extends UnaryNode {
 
     @TruffleBoundary
-    public static void handleArgumentError(Object arg, CastNode node, RError.Message message, Object[] messageArgs) {
+    public static void handleArgumentError(Object arg, RBaseNode callObj, RError.Message message, Object[] messageArgs) {
         if (RContext.getInstance() == null) {
             throw new IllegalArgumentException(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg, messageArgs)));
         } else {
-            throw RError.error(RError.NO_CALLER, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
+            throw RError.error(callObj, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
         }
     }
 
     @TruffleBoundary
-    public static void handleArgumentWarning(Object arg, CastNode node, RError.Message message, Object[] messageArgs) {
+    public static void handleArgumentWarning(Object arg, RBaseNode callObj, RError.Message message, Object[] messageArgs) {
         if (message == null) {
             return;
         }
@@ -52,7 +53,7 @@ public abstract class CastNode extends UnaryNode {
             System.err.println(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg,
                             messageArgs)));
         } else {
-            RError.warning(RError.NO_CALLER, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
+            RError.warning(callObj, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
         }
     }
 

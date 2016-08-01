@@ -24,14 +24,13 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.sun.scenario.effect.impl.Renderer.RendererState;
 
 //Implements .colMeans
 @RBuiltin(name = "colMeans", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
@@ -44,13 +43,13 @@ public abstract class ColMeans extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("X").mustBe(numericValue(), RError.Message.X_NUMERIC);
+        casts.arg("X").mustBe(numericValue(), RError.NO_CALLER, RError.Message.X_NUMERIC);
 
-        casts.arg("m").defaultError(RError.Message.INVALID_ARGUMENT, "n").asIntegerVector().findFirst().notNA(RError.Message.VECTOR_SIZE_NA);
+        casts.arg("m").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "n").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
 
-        casts.arg("n").defaultError(RError.Message.INVALID_ARGUMENT, "p").asIntegerVector().findFirst().notNA(RError.Message.VECTOR_SIZE_NA);
+        casts.arg("n").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "p").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
 
-        casts.arg("na.rm").defaultError(RError.Message.INVALID_ARGUMENT, "na.rm").asLogicalVector().findFirst().notNA().map(toBoolean());
+        casts.arg("na.rm").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "na.rm").asLogicalVector().findFirst().notNA().map(toBoolean());
     }
 
     private void checkVectorLength(RAbstractVector x, int rowNum, int colNum) {

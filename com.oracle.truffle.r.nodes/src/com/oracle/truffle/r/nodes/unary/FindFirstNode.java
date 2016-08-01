@@ -28,17 +28,20 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class FindFirstNode extends CastNode {
 
     private final Class<?> elementClass;
+    private final RBaseNode callObj;
     private final RError.Message message;
     private final Object[] messageArgs;
     private final Object defaultValue;
 
     private final BranchProfile warningProfile = BranchProfile.create();
 
-    protected FindFirstNode(Class<?> elementClass, RError.Message message, Object[] messageArgs, Object defaultValue) {
+    protected FindFirstNode(Class<?> elementClass, RBaseNode callObj, RError.Message message, Object[] messageArgs, Object defaultValue) {
+        this.callObj = callObj == null ? this : callObj;
         this.elementClass = elementClass;
         this.defaultValue = defaultValue;
         this.message = message;
@@ -46,7 +49,7 @@ public abstract class FindFirstNode extends CastNode {
     }
 
     protected FindFirstNode(Class<?> elementClass, Object defaultValue) {
-        this(elementClass, null, null, defaultValue);
+        this(elementClass, null, null, null, defaultValue);
     }
 
     public Class<?> getElementClass() {
@@ -81,11 +84,11 @@ public abstract class FindFirstNode extends CastNode {
         if (defaultValue != null) {
             if (message != null) {
                 warningProfile.enter();
-                handleArgumentWarning(x, this, message, messageArgs);
+                handleArgumentWarning(x, callObj, message, messageArgs);
             }
             return defaultValue;
         } else {
-            handleArgumentError(x, this, message, messageArgs);
+            handleArgumentError(x, callObj, message, messageArgs);
             return null;
         }
     }
