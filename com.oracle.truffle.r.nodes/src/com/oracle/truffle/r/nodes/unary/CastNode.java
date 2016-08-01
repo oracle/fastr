@@ -38,7 +38,7 @@ public abstract class CastNode extends UnaryNode {
         if (RContext.getInstance() == null) {
             throw new IllegalArgumentException(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg, messageArgs)));
         } else {
-            throw RError.error(node, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
+            throw RError.error(RError.NO_CALLER, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
         }
     }
 
@@ -52,7 +52,7 @@ public abstract class CastNode extends UnaryNode {
             System.err.println(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg,
                             messageArgs)));
         } else {
-            RError.warning(node, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
+            RError.warning(RError.NO_CALLER, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
         }
     }
 
