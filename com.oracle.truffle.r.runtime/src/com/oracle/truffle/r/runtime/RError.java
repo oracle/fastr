@@ -430,6 +430,7 @@ public final class RError extends RuntimeException {
         ATTRIBUTE_VECTOR_SAME_LENGTH("'%s' attribute [%d] must be the same length as the vector [%d]"),
         SCAN_UNEXPECTED("scan() expected '%s', got '%s'"),
         MUST_BE_ENVIRON("'%s' must be an environment"),
+        MUST_BE_INTEGER("'%s' must be an integer"),
         UNUSED_ARGUMENT("unused argument (%s)"),
         UNUSED_ARGUMENTS("unused arguments (%s)"),
         INFINITE_MISSING_VALUES("infinite or missing values in '%s'"),
