@@ -26,8 +26,6 @@ import com.oracle.truffle.r.nodes.casts.ArgumentMapperSampler;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
-import com.oracle.truffle.r.nodes.casts.CastUtils.Cast.Coverage;
-import com.oracle.truffle.r.runtime.data.RNull;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class MapNodeGenSampler extends CastNodeSampler<MapNodeGen> {
@@ -41,12 +39,8 @@ public class MapNodeGenSampler extends CastNodeSampler<MapNodeGen> {
     }
 
     @Override
-    public TypeExpr resultTypes(TypeExpr inputType) {
-        if (inputType.coverageFrom(RNull.class, true) == Coverage.none) {
-            return mapFn.resultTypes().and(TypeExpr.atom(RNull.class).not());
-        } else {
-            return mapFn.resultTypes().or(TypeExpr.atom(RNull.class));
-        }
+    public TypeExpr resultTypes(TypeExpr inputTypes) {
+        return mapFn.resultTypes(inputTypes);
     }
 
     @Override
