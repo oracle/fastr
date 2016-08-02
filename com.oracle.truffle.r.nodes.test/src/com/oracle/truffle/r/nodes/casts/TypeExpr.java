@@ -186,7 +186,7 @@ public final class TypeExpr {
         }).findAny().isPresent();
     }
 
-    public Cast.Coverage coverageFrom(Type from, boolean includeImplicits) {
+    public Cast.Coverage isConvertibleFrom(Type from, boolean includeImplicits) {
         return normalize().stream().map(t -> CastUtils.Casts.isConvertible(from, t, includeImplicits)).reduce((res, cvg) -> res.or(cvg)).orElse(Cast.Coverage.none);
     }
 

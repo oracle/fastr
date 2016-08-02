@@ -126,7 +126,7 @@ public class FindFirstNodeGenSampler extends CastNodeSampler<FindFirstNodeGen> {
                 return TypeExpr.union(resTypes);
             }
         } else {
-            return TypeExpr.atom(elementClass).or(TypeExpr.atom(RNull.class)).or(TypeExpr.atom(RMissing.class));
+            return TypeExpr.atom(elementClass);
         }
     }
 

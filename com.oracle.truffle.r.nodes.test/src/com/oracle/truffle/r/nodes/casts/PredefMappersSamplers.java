@@ -86,8 +86,6 @@ public final class PredefMappersSamplers implements PredefMappers {
 
         assert (defVal != null);
 
-        final TypeExpr defType = TypeExpr.atom(defVal.getClass()).or(TypeExpr.atom(RNull.class).not());
-
         return new ArgumentMapperSampler<T, T>() {
 
             final ConditionProfile profile = ConditionProfile.createBinaryProfile();
@@ -102,8 +100,8 @@ public final class PredefMappersSamplers implements PredefMappers {
             }
 
             @Override
-            public TypeExpr resultTypes() {
-                return defType;
+            public TypeExpr resultTypes(TypeExpr inputTypes) {
+                return inputTypes.and(TypeExpr.atom(RNull.class).not());
             }
 
             @SuppressWarnings("unchecked")

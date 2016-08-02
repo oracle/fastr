@@ -51,7 +51,7 @@ public class ValuePredicateArgumentMapperSampler<T, R> extends ValuePredicateArg
     }
 
     @Override
-    public TypeExpr resultTypes() {
+    public TypeExpr resultTypes(TypeExpr it) {
         return resTypes;
     }
 
