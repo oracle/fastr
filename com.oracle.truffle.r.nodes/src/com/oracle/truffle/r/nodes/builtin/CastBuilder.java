@@ -78,13 +78,6 @@ public final class CastBuilder {
 
     private static final CastNode[] EMPTY_CASTS_ARRAY = new CastNode[0];
 
-    /**
-     * This object is used as a placeholder for the cast argument in error/warning messages.
-     *
-     * @see CastBuilder#substituteArgPlaceholder(Object, Object...)
-     */
-    public static final Object ARG = new Object();
-
     private final RBuiltinNode builtinNode;
 
     private CastNode[] casts = EMPTY_CASTS_ARRAY;
@@ -205,21 +198,15 @@ public final class CastBuilder {
         throw RInternalError.shouldNotReachHere(String.format("Argument %s not found in builtin %s", argumentName, builtinNode.getRBuiltin().name()));
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static Object[] substituteArgPlaceholder(Object arg, Object[] messageArgs) {
-        int argPlaceholderIndex = -1;
-        for (int i = 0; i < messageArgs.length; i++) {
-            if (messageArgs[i] == ARG) {
-                argPlaceholderIndex = i;
-                break;
-            }
-        }
+        Object[] newMsgArgs = Arrays.copyOf(messageArgs, messageArgs.length);
 
-        Object[] newMsgArgs;
-        if (argPlaceholderIndex >= 0) {
-            newMsgArgs = Arrays.copyOf(messageArgs, messageArgs.length);
-            newMsgArgs[argPlaceholderIndex] = arg;
-        } else {
-            newMsgArgs = messageArgs;
+        for (int i = 0; i < messageArgs.length; i++) {
+            final Object msgArg = messageArgs[i];
+            if (msgArg instanceof Function) {
+                newMsgArgs[i] = ((Function) msgArg).apply(arg);
+            }
         }
 
         return newMsgArgs;

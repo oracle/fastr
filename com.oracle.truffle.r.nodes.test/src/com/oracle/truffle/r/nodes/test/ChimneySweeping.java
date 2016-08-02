@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.stream.Collectors;
 
 import org.junit.Assert;
@@ -60,6 +61,7 @@ import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
 import com.oracle.truffle.r.test.generate.TestOutputManager;
+import com.oracle.truffle.r.test.generate.TestOutputManager.TestInfo;
 
 class ChimneySweeping extends SingleBuiltinDiagnostics {
 
@@ -271,11 +273,25 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         final PolyglotEngine vm = diagSuite.fastRSession.createTestContext(null);
 
         try {
+            String snippetAnchor;
+            switch (annotation.kind()) {
+                case INTERNAL:
+                    snippetAnchor = ".Internal(" + builtinName + "(";
+                    break;
+                default:
+                    snippetAnchor = builtinName + "(";
+                    break;
+            }
+
             String builtinNameSimple = builtinName.replace(".", "");
-            Set<String> validArgs = diagSuite.outputManager.getTestMaps().entrySet().stream().filter(
-                            e -> e.getKey().startsWith(TEST_PREFIX + builtinName) || e.getKey().startsWith(TEST_PREFIX + builtinNameSimple)).flatMap(
-                                            e -> e.getValue().keySet().stream()).filter(a -> a.contains(".Internal(" + builtinName)).map(ChimneySweeping::cutOffInternal).filter(
-                                                            a -> a != null).collect(Collectors.toSet());
+            Map<String, SortedMap<String, TestInfo>> snippets = diagSuite.outputManager.getTestMaps().entrySet().stream().filter(
+                            e -> e.getKey().startsWith(TEST_PREFIX + builtinName) || e.getKey().startsWith(TEST_PREFIX + builtinNameSimple)).collect(
+                                            Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+            Set<String> flatSnippets = snippets.entrySet().stream().flatMap(
+                            e -> e.getValue().keySet().stream()).collect(Collectors.toSet());
+            Set<String> filteredSnippets = flatSnippets.stream().filter(a -> a.contains(snippetAnchor)).collect(Collectors.toSet());
+            Set<String> validArgs = filteredSnippets.stream().map(a -> cutOffInvocation(a, snippetAnchor)).filter(
+                            a -> a != null && !"".equals(a)).collect(Collectors.toSet());
             Set<RList> args = validArgs.stream().map(a -> evalValidArgs(a, vm)).filter(a -> a != null).collect(Collectors.toSet());
 
             if (args.isEmpty()) {
@@ -374,7 +390,16 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
                 sb.append(deparsedValidArg);
             }
 
-            String call = ".Internal(" + builtinName + "(" + sb + "))";
+            String call;
+            switch (annotation.kind()) {
+                case INTERNAL:
+                    call = ".Internal(" + builtinName + "(" + sb + "))";
+                    break;
+                default:
+                    call = builtinName + "(" + sb + ")";
+                    break;
+            }
+
             String output;
             try {
                 output = diagSuite.fastRSession.eval(call, null, false);
@@ -458,7 +483,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         return sampleArgsList.stream().map(sampleArgs -> {
             List<Object> newSampleArgs = new ArrayList<>();
             for (int i = 0; i < validArgs.getLength(); i++) {
-                if (sampleArgs.get(i) == null) {
+                if (i >= sampleArgs.size() || sampleArgs.get(i) == null) {
                     newSampleArgs.add(validArgs.getDataAt(i));
                 } else {
                     newSampleArgs.add(sampleArgs.get(i));
@@ -468,8 +493,8 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         }).collect(Collectors.toList());
     }
 
-    private static String cutOffInternal(String a) {
-        int i = a.indexOf(".Internal(");
+    private static String cutOffInvocation(String a, String anchor) {
+        int i = a.indexOf(anchor);
         if (i >= 0) {
             return a.substring(0, i);
         } else {

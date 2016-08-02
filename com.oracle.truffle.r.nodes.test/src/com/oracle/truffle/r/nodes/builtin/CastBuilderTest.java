@@ -44,6 +44,8 @@ import static com.oracle.truffle.r.nodes.casts.CastUtils.samples;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.util.function.Function;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -95,7 +97,7 @@ public class CastBuilderTest {
     public void testError() {
         cb.arg(0).mustBe(
                         ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof String, String.class),
-                        RError.Message.DLL_LOAD_ERROR, CastBuilder.ARG, "123");
+                        RError.Message.DLL_LOAD_ERROR, Function.identity(), "123");
         testPipeline();
 
         assertEquals("A", cast("A"));
@@ -125,7 +127,7 @@ public class CastBuilderTest {
 
     @Test
     public void testWarning() {
-        cb.arg(0).shouldBe(ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof String, Object.class), RError.Message.DLL_LOAD_ERROR, CastBuilder.ARG, "123");
+        cb.arg(0).shouldBe(ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof String, Object.class), RError.Message.DLL_LOAD_ERROR, Function.identity(), "123");
         testPipeline();
 
         assertEquals("A", cast("A"));
@@ -365,7 +367,7 @@ public class CastBuilderTest {
 
         assertEquals("a", cast("a"));
         assertEquals("b", cast("b"));
-        assertEquals("c", cast("c"));
+        assertEquals("sss", cast("c"));
         assertEquals("a", cast(RNull.instance));
 
         try {
@@ -513,7 +515,7 @@ public class CastBuilderTest {
 
     @Test
     public void testSample8() {
-        cb.arg(0, "blocking").asLogicalVector().findFirst().map(toBoolean()).mustBe(trueValue(), RError.Message.NYI, "non-blocking mode not supported");
+        cb.arg(0, "blocking").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).map(toBoolean()).mustBe(trueValue(), RError.Message.NYI, "non-blocking mode not supported");
         cast(RNull.instance);
     }
 
