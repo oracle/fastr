@@ -11,6 +11,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -47,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -58,8 +62,8 @@ public class DatePOSIXFunctions {
     private static final class POSIXltBuilder {
 
         private static final String[] LT_NAMES = new String[]{"sec", "min", "hour", "mday", "mon", "year", "wday", "yday", "isdst"};
-        private static final RStringVector LT_NAMES_VEC = RDataFactory.createStringVector(LT_NAMES, RDataFactory.COMPLETE_VECTOR);
-        private static final RStringVector CLASS_ATTR = RDataFactory.createStringVector(new String[]{"POSIXlt", "POSIXt"}, RDataFactory.COMPLETE_VECTOR);
+        private static final RStringVector LT_NAMES_VEC = (RStringVector) RDataFactory.createStringVector(LT_NAMES, RDataFactory.COMPLETE_VECTOR).makeSharedPermanent();
+        private static final RStringVector CLASS_ATTR = (RStringVector) RDataFactory.createStringVector(new String[]{"POSIXlt", "POSIXt"}, RDataFactory.COMPLETE_VECTOR).makeSharedPermanent();
 
         public final double[] sec;
         public final int[] min;
@@ -136,7 +140,7 @@ public class DatePOSIXFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toVector(0).toDouble(0, true, false, false);
+            casts.arg("x").map(defaultValue(RDataFactory.createEmptyDoubleVector())).asDoubleVector();
         }
 
         @Specialization
@@ -172,18 +176,18 @@ public class DatePOSIXFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toVector(0).toDouble(0, true, false, false);
+            casts.arg("x").map(defaultValue(RDataFactory.createEmptyDoubleVector())).asDoubleVector(true, false, false);
+            casts.arg("tz").asStringVector().findFirst("");
         }
 
         @Specialization
         @TruffleBoundary
-        protected RList asPOSIXlt(RAbstractDoubleVector x, RAbstractStringVector tz) {
+        protected RList asPOSIXlt(RAbstractDoubleVector x, String tz) {
             TimeZone zone;
-            String tzone = RRuntime.asString(tz);
-            if (tzone.isEmpty()) {
+            if (tz.isEmpty()) {
                 zone = RContext.getInstance().getSystemTimeZone();
             } else {
-                zone = TimeZone.getTimeZone(tzone);
+                zone = TimeZone.getTimeZone(tz);
             }
             int xLen = x.getLength();
             POSIXltBuilder builder = new POSIXltBuilder(xLen, zone.getDisplayName(false, TimeZone.SHORT));
@@ -210,9 +214,15 @@ public class DatePOSIXFunctions {
     @RBuiltin(name = "as.POSIXct", kind = INTERNAL, parameterNames = {"x", "tz"}, behavior = READS_STATE)
     public abstract static class AsPOSIXct extends RBuiltinNode {
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(RAbstractListVector.class);
+            casts.arg("tz").asStringVector().findFirst("");
+        }
+
         @Specialization
         @TruffleBoundary
-        protected RDoubleVector asPOSIXct(RList x, RAbstractStringVector tz) {
+        protected RDoubleVector asPOSIXct(RAbstractListVector x, String tz) {
             RAbstractVector secVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(0));
             RAbstractVector minVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(1));
             RAbstractVector hourVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(2));
@@ -220,11 +230,10 @@ public class DatePOSIXFunctions {
             RAbstractVector monVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(4));
             RAbstractVector yearVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(5));
             TimeZone zone;
-            String tzone = RRuntime.asString(tz);
-            if (tzone.isEmpty()) {
+            if (tz.isEmpty()) {
                 zone = RContext.getInstance().getSystemTimeZone();
             } else {
-                zone = TimeZone.getTimeZone(tzone);
+                zone = TimeZone.getTimeZone(tz);
             }
 
             ZoneId zoneId = zone.toZoneId();
@@ -262,11 +271,16 @@ public class DatePOSIXFunctions {
 
     @RBuiltin(name = "POSIXlt2Date", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
     public abstract static class POSIXlt2Date extends RBuiltinNode {
-        private static final RStringVector CLASS_ATTR = RDataFactory.createStringVector(new String[]{"Date"}, RDataFactory.COMPLETE_VECTOR);
+        private static final RStringVector CLASS_ATTR = (RStringVector) RDataFactory.createStringVectorFromScalar("Date").makeSharedPermanent();
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(RAbstractListVector.class);
+        }
 
         @Specialization
         @TruffleBoundary
-        protected RDoubleVector posix2date(RList x) {
+        protected RDoubleVector posix2date(RAbstractListVector x) {
             RAbstractVector secVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(0));
             RAbstractVector minVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(1));
             RAbstractVector hourVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(2));
@@ -316,9 +330,16 @@ public class DatePOSIXFunctions {
             // TODO: find a proper source for this mapping
         }
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(RAbstractListVector.class);
+            casts.arg("format").mustBe(nullValue().not()).asStringVector().mustBe(notEmpty());
+            casts.arg("usetz").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        }
+
         @Specialization
         @TruffleBoundary
-        protected RStringVector format(RList x, RAbstractStringVector format, RAbstractLogicalVector usetz) {
+        protected RStringVector format(RAbstractListVector x, RAbstractStringVector format, boolean usetz) {
             RAbstractDoubleVector secVector = (RAbstractDoubleVector) RRuntime.asAbstractVector(x.getDataAt(0));
             RAbstractIntVector minVector = (RAbstractIntVector) RRuntime.asAbstractVector(x.getDataAt(1));
             RAbstractIntVector hourVector = (RAbstractIntVector) RRuntime.asAbstractVector(x.getDataAt(2));
@@ -326,16 +347,21 @@ public class DatePOSIXFunctions {
             RAbstractIntVector monVector = (RAbstractIntVector) RRuntime.asAbstractVector(x.getDataAt(4));
             RAbstractIntVector yearVector = (RAbstractIntVector) RRuntime.asAbstractVector(x.getDataAt(5));
             ZoneId zone;
-            DateTimeFormatterBuilder builder = createFormatter(format.getDataAt(0), false);
+            DateTimeFormatterBuilder[] builders = createFormatters(format, false);
             String tzone = getTimeZomeFromAttribute(x);
-            if (usetz.getDataAt(0) == RRuntime.LOGICAL_TRUE && !tzone.isEmpty()) {
+            if (usetz && !tzone.isEmpty()) {
                 zone = ZoneId.of(tzone, TIME_ZONE_MAPPING);
-                builder.appendLiteral(' ').appendZoneText(TextStyle.SHORT);
+                for (DateTimeFormatterBuilder builder : builders) {
+                    builder.appendLiteral(' ').appendZoneText(TextStyle.SHORT);
+                }
             } else {
                 zone = RContext.getInstance().getSystemTimeZone().toZoneId();
             }
 
-            DateTimeFormatter formatter = builder.toFormatter();
+            DateTimeFormatter[] formatters = new DateTimeFormatter[builders.length];
+            for (int i = 0; i < builders.length; i++) {
+                formatters[i] = builders[i].toFormatter();
+            }
             int length = secVector.getLength();
             String[] data = new String[length];
             boolean complete = true;
@@ -349,7 +375,7 @@ public class DatePOSIXFunctions {
                     int year = yearVector.getDataAt(i) + 1900;
                     LocalDateTime time = LocalDateTime.of(year, mon, mday, hour, min, (int) sec, (int) ((sec - Math.floor(sec)) * 1000000000L));
                     ZonedDateTime zoned = time.atZone(zone);
-                    data[i] = formatter.format(zoned);
+                    data[i] = formatters[i % formatters.length].format(zoned);
                 } else {
                     data[i] = RRuntime.STRING_NA;
                     complete = false;
@@ -361,6 +387,13 @@ public class DatePOSIXFunctions {
 
     @RBuiltin(name = "strptime", kind = INTERNAL, parameterNames = {"x", "format", "tz"}, behavior = PURE)
     public abstract static class StrPTime extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").map(defaultValue(RDataFactory.createEmptyStringVector())).asStringVector();
+            casts.arg("format").map(defaultValue(RDataFactory.createEmptyStringVector())).asStringVector();
+            casts.arg("tz").map(defaultValue(RDataFactory.createEmptyStringVector())).asStringVector();
+        }
 
         @Specialization
         @TruffleBoundary
@@ -374,13 +407,17 @@ public class DatePOSIXFunctions {
             }
             int length = x.getLength();
             POSIXltBuilder builder = new POSIXltBuilder(length, zone.getDisplayName(false, TimeZone.SHORT));
-            DateTimeFormatter formatter = createFormatter(format.getDataAt(0), true).toFormatter();
+            DateTimeFormatterBuilder[] builders = createFormatters(format, true);
+            DateTimeFormatter[] formatters = new DateTimeFormatter[builders.length];
+            for (int i = 0; i < builders.length; i++) {
+                formatters[i] = builders[i].toFormatter();
+            }
 
             for (int i = 0; i < length; i++) {
                 String str = x.getDataAt(i);
                 TemporalAccessor parse;
                 try {
-                    parse = formatter.parse(str, new ParsePosition(0));
+                    parse = formatters[i % formatters.length].parse(str, new ParsePosition(0));
                 } catch (DateTimeParseException e) {
                     builder.setIncompleteEntry(i);
                     continue;
@@ -402,6 +439,14 @@ public class DatePOSIXFunctions {
             }
             return builder.finish();
         }
+    }
+
+    private static DateTimeFormatterBuilder[] createFormatters(RAbstractStringVector formats, boolean forInput) {
+        DateTimeFormatterBuilder[] result = new DateTimeFormatterBuilder[formats.getLength()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = createFormatter(formats.getDataAt(i), forInput);
+        }
+        return result;
     }
 
     private static DateTimeFormatterBuilder createFormatter(String format, boolean forInput) {
@@ -682,7 +727,7 @@ public class DatePOSIXFunctions {
         return result;
     }
 
-    private static String getTimeZomeFromAttribute(RList x) {
+    private static String getTimeZomeFromAttribute(RAbstractListVector x) {
         Object attr = x.getAttributes().get("tzone");
         RAbstractVector vector = (RAbstractVector) RRuntime.asAbstractVector(attr);
         if (vector.getLength() == 0) {
