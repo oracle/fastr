@@ -54,9 +54,9 @@ public abstract class AllNames extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("functions").mapIf(nullValue(), constant(RRuntime.LOGICAL_FALSE)).asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA(RRuntime.LOGICAL_FALSE);
-        casts.arg("max.names").mapIf(nullValue(), constant(0)).asIntegerVector().findFirst(0).notNA(0);
-        casts.arg("unique").mapIf(nullValue(), constant(RRuntime.LOGICAL_TRUE)).asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).notNA(RRuntime.LOGICAL_TRUE);
+        casts.arg("functions").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA(RRuntime.LOGICAL_FALSE);
+        casts.arg("max.names").asIntegerVector().findFirst(0).notNA(0);
+        casts.arg("unique").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).notNA(RRuntime.LOGICAL_TRUE);
     }
 
     @Specialization
