@@ -66,8 +66,9 @@ public abstract class UpdateSlotNode extends RNode {
     protected Object updateSlotS4Data(RAttributable object, @SuppressWarnings("unused") String name, Object value) {
         // TODO: any way to cache it or use a mechanism similar to overrides?
         REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
-        Object f = methodsNamespace.findFunction("setDataPart");
-        RFunction dataPart = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
+        String identifier = "setDataPart";
+        Object f = methodsNamespace.findFunction(identifier);
+        RFunction dataPart = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(identifier, f);
         return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(Utils.getActualCurrentFrame(), RASTUtils.getOriginalCall(this)), null, object,
                         prepareValue(value),
                         RRuntime.LOGICAL_TRUE);

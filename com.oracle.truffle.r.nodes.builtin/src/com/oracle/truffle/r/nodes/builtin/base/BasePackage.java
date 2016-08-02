@@ -631,7 +631,7 @@ public class BasePackage extends RBuiltinPackage {
     }
 
     private static void addFastPath(MaterializedFrame baseFrame, String name, FastPathFactory factory) {
-        RFunction function = ReadVariableNode.lookupFunction(name, baseFrame, false);
+        RFunction function = ReadVariableNode.lookupFunction(name, baseFrame);
         ((RRootNode) function.getRootNode()).setFastPath(factory);
     }
 
@@ -663,7 +663,7 @@ public class BasePackage extends RBuiltinPackage {
 
     private static void setContainsDispatch(MaterializedFrame baseFrame, String... functions) {
         for (String name : functions) {
-            RFunction function = ReadVariableNode.lookupFunction(name, baseFrame, false);
+            RFunction function = ReadVariableNode.lookupFunction(name, baseFrame);
             ((RRootNode) function.getRootNode()).setContainsDispatch(true);
         }
     }

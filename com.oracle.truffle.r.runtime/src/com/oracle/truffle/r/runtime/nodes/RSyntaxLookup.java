@@ -60,6 +60,11 @@ public interface RSyntaxLookup extends RSyntaxElement {
             public void setSourceSection(SourceSection src) {
                 // ignored
             }
+
+            @Override
+            public String toString() {
+                return "`" + identifier + "`";
+            }
         };
     }
 }

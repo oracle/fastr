@@ -127,8 +127,9 @@ public abstract class AccessSlotNode extends RNode {
 
     @TruffleBoundary
     private static RFunction getDataPartFunction(REnvironment methodsNamespace) {
-        Object f = methodsNamespace.findFunction("getDataPart");
-        return (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
+        String name = "getDataPart";
+        Object f = methodsNamespace.findFunction(name);
+        return (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, f);
     }
 
     @SuppressWarnings("unused")

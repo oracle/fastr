@@ -193,8 +193,9 @@ public class RSerialize {
         RFunction getDotDotFindNamespace() {
             if (dotDotFindNamespace == null) {
                 CompilerDirectives.transferToInterpreter();
-                Object f = REnvironment.baseEnv().findFunction("..getNamespace");
-                dotDotFindNamespace = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
+                String name = "..getNamespace";
+                Object f = REnvironment.baseEnv().findFunction(name);
+                dotDotFindNamespace = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, f);
             }
             return dotDotFindNamespace;
         }

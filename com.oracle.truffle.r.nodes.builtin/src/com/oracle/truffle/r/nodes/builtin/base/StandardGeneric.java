@@ -88,7 +88,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
             // mtable can be null the first time around, but the following call will initialize it
             // and this slow path should not be executed again
             REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
-            RFunction currentFunction = ReadVariableNode.lookupFunction(".getMethodsTable", methodsEnv.getFrame(), true);
+            RFunction currentFunction = ReadVariableNode.lookupFunction(".getMethodsTable", methodsEnv.getFrame(), true, true);
             mtable = (REnvironment) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), null, fdef);
         }
         RList sigArgs = (RList) readSigARgs.execute(null, fnFrame);

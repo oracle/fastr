@@ -38,6 +38,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.CallInlineCacheNode;
 import com.oracle.truffle.r.nodes.CallInlineCacheNodeGen;
 import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -55,6 +56,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -64,6 +66,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.REnvironment.Function;
 
 /**
  * assert: not expected to be fast even when called as, e.g., {@code get("x")}.
@@ -87,8 +90,12 @@ public class GetFunctions {
             }
         }
 
-        protected Object checkPromise(VirtualFrame frame, Object r) {
+        protected Object checkPromise(VirtualFrame frame, Object r, String identifier, boolean evaluateOnSlowPath) {
             if (r instanceof RPromise) {
+                if (evaluateOnSlowPath) {
+                    CompilerDirectives.transferToInterpreter();
+                    return ReadVariableNode.evalPromiseSlowPathWithName(identifier, frame, (RPromise) r);
+                }
                 return promiseHelper.evaluate(frame, (RPromise) r);
             } else {
                 return r;
@@ -101,7 +108,7 @@ public class GetFunctions {
 
         protected Object getAndCheck(VirtualFrame frame, RAbstractStringVector xv, REnvironment env, RType modeType, boolean fail) throws RError {
             String x = xv.getDataAt(0);
-            Object obj = checkPromise(frame, env.get(x));
+            Object obj = checkPromise(frame, env.get(x), x, !(env instanceof Function));
             if (obj != null && RRuntime.checkType(obj, modeType)) {
                 return obj;
             } else {
@@ -122,7 +129,7 @@ public class GetFunctions {
                 while (env != REnvironment.emptyEnv()) {
                     env = env.getParent();
                     if (env != REnvironment.emptyEnv()) {
-                        r = checkPromise(frame, env.get(x));
+                        r = checkPromise(frame, env.get(x), x, !(env instanceof Function));
                         if (r != null && RRuntime.checkType(r, modeType)) {
                             break;
                         }
@@ -276,7 +283,7 @@ public class GetFunctions {
                 String x = state.checkNA(xv.getDataAt(i));
                 state.names[i] = x;
                 RType modeType = typeFromMode.execute(mode.getDataAt(state.modeLength == 1 ? 0 : i));
-                Object r = checkPromise(frame, env.get(x));
+                Object r = checkPromise(frame, env.get(x), x, !(env instanceof Function));
                 if (r != null && RRuntime.checkType(r, modeType)) {
                     state.data[i] = r;
                 } else {
@@ -300,7 +307,7 @@ public class GetFunctions {
                     while (env != REnvironment.emptyEnv()) {
                         env = env.getParent();
                         if (env != REnvironment.emptyEnv()) {
-                            r = checkPromise(frame, env.get(x));
+                            r = checkPromise(frame, env.get(x), x, !(env instanceof Function));
                             if (r != null && RRuntime.checkType(r, modeType)) {
                                 break;
                             }
