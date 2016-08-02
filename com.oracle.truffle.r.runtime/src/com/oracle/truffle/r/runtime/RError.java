@@ -296,7 +296,6 @@ public final class RError extends RuntimeException {
         INVALID_SEPARATOR("invalid separator"),
         INCORRECT_DIMENSIONS("incorrect number of dimensions"),
         LOGICAL_SUBSCRIPT_LONG("(subscript) logical subscript too long"),
-        DECREASING_TRUE_FALSE("'decreasing' must be TRUE or FALSE"),
         ARGUMENT_LENGTHS_DIFFER("argument lengths differ"),
         ZERO_LENGTH_PATTERN("zero-length pattern"),
         UNSUPPORTED_MODE("unsupported mode"),
@@ -706,7 +705,8 @@ public final class RError extends RuntimeException {
         ERR_MSG_BAD("bad error message"),
         BAD_ENVIRONMENT("bad %s environment argument"),
         CANNOT_BE_LENGTH("'%s' cannot be of length %d"),
-        SECOND_ARGUMENT_LIST("second argument must be a list");
+        SECOND_ARGUMENT_LIST("second argument must be a list"),
+        DOES_NOT_HAVE_DIMNAMES("'%s' does not have named dimnames");
 
         public final String message;
         final boolean hasArgs;
