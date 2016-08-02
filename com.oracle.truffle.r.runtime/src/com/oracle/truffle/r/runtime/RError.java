@@ -685,7 +685,8 @@ public final class RError extends RuntimeException {
         CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'"),
         ROWSUM_NAMES_NOT_CHAR("row names are not character"),
         ROWSUM_NON_NUMERIC("non-numeric matrix in rowsum(): this should not happen"),
-        ARGUMENTS_REQUIRED_COUNT("%d arguments to '%s' which requires %d");
+        ARGUMENTS_REQUIRED_COUNT("%d arguments to '%s' which requires %d"),
+        ARGUMENT_LENGTH_0("argument of length 0");
 
         public final String message;
         final boolean hasArgs;
