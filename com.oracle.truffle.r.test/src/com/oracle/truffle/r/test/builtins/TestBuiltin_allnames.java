@@ -53,5 +53,16 @@ public class TestBuiltin_allnames extends TestBase {
         assertEval("all.names(quote(a+y+z+y*y*function(x=bar/2) baz(1)), functions=TRUE, max.names=10, unique=FALSE)");
         assertEval("all.names(quote(a+y+z+y*y*function(x=bar/2) baz(1)), functions=TRUE, max.names=2, unique=TRUE)");
         assertEval("all.names(quote(a+y+z+y*y*function(x=bar/2) baz(1)), functions=FALSE, max.names=10, unique=TRUE)");
+
+        assertEval("{ all.names(expression(sin(x+y+x)), functions=F) }");
+        assertEval("{ all.names(expression(sin(x+y+x)), functions=T) }");
+        assertEval("{ all.names(expression(sin(x+y+x)), functions=NULL) }");
+        assertEval("{ all.names(expression(sin(x+y+x)), functions=NA) }");
+        assertEval("{ all.names(expression(sin(x+y+x)), max.names=NULL) }");
+        assertEval("{ all.names(expression(sin(x+y+x)), max.names=NA) }");
+        assertEval("{ all.names(expression(sin(x+y+x)), unique=F) }");
+        assertEval("{ all.names(expression(sin(x+y+x)), unique=T) }");
+        assertEval("{ all.names(expression(sin(x+y+x)), unique=NULL) }");
+        assertEval("{ all.names(expression(sin(x+y+x)), unique=(NA) }");
     }
 }
