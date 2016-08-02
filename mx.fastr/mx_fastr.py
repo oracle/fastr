@@ -460,6 +460,8 @@ def rbdiag(args):
 
     setREnvironment()
     os.environ["FASTR_TESTGEN_GNUR"] = "internal"
+    # this should work for Linux and Mac:
+    os.environ["TZDIR"] = "/usr/share/zoneinfo/"
 
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics'] + args)
 
