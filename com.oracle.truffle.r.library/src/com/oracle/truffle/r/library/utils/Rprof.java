@@ -50,12 +50,36 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RObjectSize;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.MemoryTracer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofState;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofState.MemoryQuad;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
+/**
+ * Implements the {@code Rprof} external.
+ *
+ * The output is basically a sequence of call stacks, output at each sample interval, with entries
+ * in the stack identified by quoted function names. If memory profiling, the stack is preceded by a
+ * auad of numbers {@code :smallv:bigv:nodes:duplicate_counter:} allocated in the interval. If line
+ * profiling is enabled source files are listed as
+ *
+ * <pre>
+ * #File N: path
+ * </pre>
+ *
+ * and then the {@code N} is used in line number references of the form {@code N#L},which precede
+ * the function name.
+ *
+ */
+public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFactory.Listener, MemoryTracer.Listener {
+
+    private RprofState profState;
 
     @SuppressWarnings("unused")
     @Specialization
@@ -64,13 +88,13 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
         if (!RContext.getInstance().isInitial()) {
             throw RError.error(this, RError.Message.GENERIC, "profiling not supported in created contexts");
         }
-        RprofState profState = RContext.getInstance().stateInstrumentation.getRprof();
+        profState = RContext.getInstance().stateInstrumentation.getRprof();
         String filename = filenameVec.getDataAt(0);
         if (filename.length() == 0) {
             // disable
             endProfiling();
         } else {
-            // enable
+            // enable after ending any previous session
             if (profState.out() != null) {
                 endProfiling();
             }
@@ -79,18 +103,21 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
             boolean gcProfiling = RRuntime.fromLogical(gcProfilingL);
             try {
                 PrintWriter out = new PrintWriter(new FileWriter(filename, append));
-                if (memProfiling) {
-                    RError.warning(this, RError.Message.GENERIC, "Rprof: memory profiling not supported");
-                }
                 if (gcProfiling) {
                     RError.warning(this, RError.Message.GENERIC, "Rprof: gc profiling not supported");
+                }
+                if (memProfiling) {
+                    RDataFactory.setListener(this);
+                    RDataFactory.setAllocationTracing(true);
+                    MemoryTracer.setListener(this);
+                    MemoryTracer.reportEvents();
                 }
                 // interval is in seconds, we convert to millis
                 long intervalInMillis = (long) (1E3 * intervalD);
                 StatementListener statementListener = new StatementListener();
                 ProfileThread profileThread = new ProfileThread(intervalInMillis, statementListener);
                 profileThread.setDaemon(true);
-                profState.initialize(out, profileThread, statementListener, intervalInMillis, RRuntime.fromLogical(lineProfilingL));
+                profState.initialize(out, profileThread, statementListener, intervalInMillis, RRuntime.fromLogical(lineProfilingL), memProfiling);
                 profileThread.start();
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.GENERIC, String.format("Rprof: cannot open profile file '%s'", filename));
@@ -99,13 +126,37 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
         return RNull.instance;
     }
 
-    private static void endProfiling() {
-        RprofState profState = RContext.getInstance().stateInstrumentation.getRprof();
+    @Override
+    @TruffleBoundary
+    public void reportAllocation(RTypedValue data) {
+        long size = RObjectSize.getObjectSize(data, Rprofmem.myIgnoreObjectHandler);
+        if (data instanceof RAbstractVector) {
+            if (size >= Rprofmem.LARGE_VECTOR) {
+                profState.memoryQuad().largeV += size;
+            } else {
+                profState.memoryQuad().smallV += size;
+            }
+        } else {
+            profState.memoryQuad().nodes += size;
+        }
+
+    }
+
+    @Override
+    @TruffleBoundary
+    public void reportCopying(RAbstractVector source, RAbstractVector dest) {
+        profState.memoryQuad().copied += RObjectSize.getObjectSize(source, Rprofmem.myIgnoreObjectHandler);
+    }
+
+    private void endProfiling() {
         ProfileThread profileThread = (ProfileThread) profState.profileThread();
         profileThread.running = false;
         HashMap<String, Integer> fileMap = null;
         PrintWriter out = profState.out();
         StatementListener statementListener = (StatementListener) profState.statementListener();
+        if (profState.memoryProfiling()) {
+            out.print("memory profiling: ");
+        }
         if (profState.lineProfiling()) {
             out.print("line profiling: ");
         }
@@ -124,7 +175,12 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
                 }
             }
         }
+        int index = 0;
         for (ArrayList<RSyntaxNode> intervalStack : statementListener.intervalStacks) {
+            if (profState.memoryProfiling()) {
+                MemoryQuad mq = statementListener.intervalMemory.get(index);
+                out.printf(":%d:%d:%d:%d:", mq.largeV, mq.smallV, mq.nodes, mq.copied);
+            }
             for (RSyntaxNode node : intervalStack) {
                 RootNode rootNode = node.asRNode().getRootNode();
                 if (rootNode instanceof FunctionDefinitionNode) {
@@ -139,8 +195,10 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
                 }
             }
             out.println();
+            index++;
         }
         out.close();
+        profState.setOut(null);
     }
 
     private static String getPath(RSyntaxNode node) {
@@ -177,8 +235,9 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
      * Emulates a sampling timer by checking when the sample interval rolls over and at that point
      * collects the stack of functions.
      */
-    private static final class StatementListener implements ExecutionEventListener {
+    private final class StatementListener implements ExecutionEventListener {
         private ArrayList<ArrayList<RSyntaxNode>> intervalStacks = new ArrayList<>();
+        private ArrayList<MemoryQuad> intervalMemory = new ArrayList<>();
         private volatile boolean newInterval;
 
         private StatementListener() {
@@ -200,12 +259,16 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 {
                 stack.add((RSyntaxNode) context.getInstrumentedNode());
                 collectStack(stack);
                 intervalStacks.add(stack);
+                if (profState.memoryProfiling()) {
+                    intervalMemory.add(profState.memoryQuad().copyAndClear());
+                }
+
                 newInterval = false;
             }
         }
 
         @TruffleBoundary
-        private static void collectStack(final ArrayList<RSyntaxNode> stack) {
+        private void collectStack(final ArrayList<RSyntaxNode> stack) {
             Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
 
                 @Override
