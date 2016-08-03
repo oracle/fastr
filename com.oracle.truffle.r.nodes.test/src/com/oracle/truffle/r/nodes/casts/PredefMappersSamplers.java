@@ -61,6 +61,11 @@ public final class PredefMappersSamplers implements PredefMappers {
     }
 
     @Override
+    public <T> ValuePredicateArgumentMapperSampler<T, RNull> nullConstant() {
+        return ValuePredicateArgumentMapperSampler.<T, RNull> fromLambda((T x) -> RNull.instance, null, null, RNull.class);
+    }
+
+    @Override
     public ValuePredicateArgumentMapperSampler<String, String> constant(String s) {
         return ValuePredicateArgumentMapperSampler.<String, String> fromLambda((String x) -> s, (String x) -> s, CastUtils.<String> samples(), CastUtils.<String> samples(), String.class,
                         String.class);

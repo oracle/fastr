@@ -22,20 +22,29 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asLogicalVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.equalTo;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.map;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullConstant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarStringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.shouldBe;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -43,6 +52,8 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.trueValue;
 import static com.oracle.truffle.r.nodes.casts.CastUtils.samples;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+
+import java.util.function.Function;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -52,6 +63,7 @@ import org.junit.Test;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentValueFilter;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.InitialPhaseBuilder;
@@ -64,13 +76,15 @@ import com.oracle.truffle.r.nodes.casts.ValuePredicateArgumentFilterSampler;
 import com.oracle.truffle.r.nodes.test.TestUtilities;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.nodes.unary.CastNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -95,7 +109,7 @@ public class CastBuilderTest {
     public void testError() {
         cb.arg(0).mustBe(
                         ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof String, String.class),
-                        RError.Message.DLL_LOAD_ERROR, CastBuilder.ARG, "123");
+                        RError.Message.DLL_LOAD_ERROR, Function.identity(), "123");
         testPipeline();
 
         assertEquals("A", cast("A"));
@@ -125,7 +139,7 @@ public class CastBuilderTest {
 
     @Test
     public void testWarning() {
-        cb.arg(0).shouldBe(ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof String, Object.class), RError.Message.DLL_LOAD_ERROR, CastBuilder.ARG, "123");
+        cb.arg(0).shouldBe(ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof String, Object.class), RError.Message.DLL_LOAD_ERROR, Function.identity(), "123");
         testPipeline();
 
         assertEquals("A", cast("A"));
@@ -353,7 +367,7 @@ public class CastBuilderTest {
         for (String opt : optValues) {
             opts = opts == null ? equalTo(opt) : opts.or(equalTo(opt));
         }
-        return phaseBuilder.mustBe(nullValue().or(scalarStringValue().and(opts))).mapIf(nullValue(), constant("a"));
+        return phaseBuilder.mustBe(scalarStringValue().and(opts));
     }
 
     @Test
@@ -365,7 +379,7 @@ public class CastBuilderTest {
 
         assertEquals("a", cast("a"));
         assertEquals("b", cast("b"));
-        assertEquals("c", cast("c"));
+        assertEquals("sss", cast("c"));
         assertEquals("a", cast(RNull.instance));
 
         try {
@@ -513,9 +527,80 @@ public class CastBuilderTest {
 
     @Test
     public void testSample8() {
-        cb.arg(0, "blocking").asLogicalVector().findFirst().map(toBoolean()).mustBe(trueValue(), RError.Message.NYI, "non-blocking mode not supported");
+        cb.arg(0, "blocking").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).map(toBoolean()).mustBe(trueValue(), RError.Message.NYI, "non-blocking mode not supported");
         cast(RNull.instance);
     }
+
+    @Test
+    public void testSample9() {
+        cb.arg(0, "arg").mapIf(instanceOf(RList.class).not(), nullConstant());
+
+        RList list = RDataFactory.createList();
+        assertEquals(list, cast(list));
+        assertEquals(RNull.instance, cast("abc"));
+    }
+
+    @Test
+    public void testSample10() {
+        cb.arg(0, "arg").mapIf(instanceOf(RList.class), nullConstant());
+
+        RList list = RDataFactory.createList();
+        assertEquals(RNull.instance, cast(list));
+        assertEquals("abc", cast("abc"));
+    }
+
+    //@formatter:off
+    @Test
+    public void testSample11() {
+        cb.arg(0, "arg").
+            mapIf(instanceOf(RList.class).not(),
+               chain(asLogicalVector()).
+                  with(findFirst().logicalElement()).
+                  with(notNA()).
+                  with(map(toBoolean())).
+                  with(mustBe(instanceOf(Boolean.class), false)).
+                  with(shouldBe(instanceOf(Object.class), false)).
+                  end());
+
+        RList list = RDataFactory.createList();
+        assertEquals(list, cast(list));
+        assertEquals(true, cast(1));
+        try {
+            cast(RRuntime.INT_NA);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // ok
+        }
+    }
+
+    public Function<InitialPhaseBuilder<Object>, InitialPhaseBuilder<Object>> nonListToBoolean() {
+        return phaseBuilder -> phaseBuilder.
+                        mapIf(instanceOf(RList.class).not(),
+                           chain(asLogicalVector()).
+                              with(findFirst().logicalElement()).
+                              with(toBoolean()).
+                              end());
+    }
+
+    @Test
+    public void testSample12() {
+        cb.arg(0, "arg").alias(nonListToBoolean());
+
+        RList list = RDataFactory.createList();
+        assertEquals(list, cast(list));
+        assertEquals(true, cast(1));
+    }
+
+    @Test
+    public void testSample13() {
+        cb.arg(0, "arg").mapIf(numericValue(), BoxPrimitiveNodeGen.create());
+
+        Object res = cast(1);
+        Assert.assertTrue(res instanceof RInteger);
+        res = cast(RRuntime.LOGICAL_TRUE);
+        Assert.assertTrue(res instanceof RLogical);
+    }
+    //@formatter:on
 
     class RBuiltinRootNode extends RootNode {
 
