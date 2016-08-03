@@ -635,12 +635,20 @@ public final class CastBuilder {
             return phaseBuilder -> CastIntegerNodeGen.create(false, false, false);
         }
 
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+            return phaseBuilder -> CastIntegerNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
+        }
+
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asDouble() {
             return phaseBuilder -> CastDoubleBaseNodeGen.create(false, false, false);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asDoubleVector() {
             return phaseBuilder -> CastDoubleNodeGen.create(false, false, false);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+            return phaseBuilder -> CastDoubleNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asString() {
@@ -651,12 +659,20 @@ public final class CastBuilder {
             return phaseBuilder -> CastStringNodeGen.create(false, false, false, false);
         }
 
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asStringVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+            return phaseBuilder -> CastStringNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, false);
+        }
+
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asLogical() {
             return phaseBuilder -> CastLogicalBaseNodeGen.create(false, false, false);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asLogicalVector() {
             return phaseBuilder -> CastLogicalNodeGen.create(false, false, false);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asLogicalVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+            return phaseBuilder -> CastLogicalNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
         }
 
         public static <T> FindFirstNodeBuilder<T> findFirst(RBaseNode callObj, RError.Message message, Object... messageArgs) {
