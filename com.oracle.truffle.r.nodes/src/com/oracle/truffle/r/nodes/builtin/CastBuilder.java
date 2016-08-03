@@ -30,22 +30,14 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentValueFilter;
-import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
-import com.oracle.truffle.r.nodes.unary.CastStringBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastStringBaseNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
@@ -56,10 +48,10 @@ import com.oracle.truffle.r.nodes.unary.FindFirstNodeGen;
 import com.oracle.truffle.r.nodes.unary.FirstBooleanNodeGen;
 import com.oracle.truffle.r.nodes.unary.FirstIntNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
-import com.oracle.truffle.r.nodes.unary.MapNode;
 import com.oracle.truffle.r.nodes.unary.MapNodeGen;
 import com.oracle.truffle.r.nodes.unary.NonNANodeGen;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -295,6 +287,8 @@ public final class CastBuilder {
 
         ValuePredicateArgumentMapper<String, Integer> charAt0(int defaultValue);
 
+        <T> ValuePredicateArgumentMapper<T, RNull> nullConstant();
+
         ValuePredicateArgumentMapper<String, String> constant(String s);
 
         ValuePredicateArgumentMapper<Integer, Integer> constant(int i);
@@ -521,6 +515,11 @@ public final class CastBuilder {
         }
 
         @Override
+        public <T> ValuePredicateArgumentMapper<T, RNull> nullConstant() {
+            return ValuePredicateArgumentMapper.fromLambda(x -> RNull.instance);
+        }
+
+        @Override
         public ValuePredicateArgumentMapper<String, String> constant(String s) {
             return ValuePredicateArgumentMapper.<String, String> fromLambda((String x) -> s);
         }
@@ -593,44 +592,107 @@ public final class CastBuilder {
             return predefMappers;
         }
 
-        public static <T, R> MapNode mapNode(ArgumentMapper<T, R> mapper) {
-            return MapNodeGen.create(mapper);
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> mustBe(ArgumentFilter<?, ?> argFilter, RBaseNode callObj, boolean boxPrimitives, RError.Message message, Object... messageArgs) {
+            return phaseBuilder -> FilterNodeGen.create(argFilter, false, callObj, message, messageArgs, boxPrimitives);
         }
 
-        public static CastIntegerBaseNode asInteger() {
-            return CastIntegerBaseNodeGen.create(false, false, false);
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> mustBe(ArgumentFilter<?, ?> argFilter, boolean boxPrimitives) {
+            return phaseBuilder -> FilterNodeGen.create(argFilter, false, phaseBuilder.state().defaultError().callObj, phaseBuilder.state().defaultError().message,
+                            phaseBuilder.state().defaultError().args, boxPrimitives);
         }
 
-        public static CastIntegerNode asIntegerVector() {
-            return CastIntegerNodeGen.create(false, false, false);
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> shouldBe(ArgumentFilter<?, ?> argFilter, RBaseNode callObj, boolean boxPrimitives, RError.Message message, Object... messageArgs) {
+            return phaseBuilder -> FilterNodeGen.create(argFilter, true, callObj, message, messageArgs, boxPrimitives);
         }
 
-        public static CastDoubleBaseNode asDouble() {
-            return CastDoubleBaseNodeGen.create(false, false, false);
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> shouldBe(ArgumentFilter<?, ?> argFilter, boolean boxPrimitives) {
+            return phaseBuilder -> FilterNodeGen.create(argFilter, true, phaseBuilder.state().defaultError().callObj, phaseBuilder.state().defaultError().message,
+                            phaseBuilder.state().defaultError().args, boxPrimitives);
         }
 
-        public static CastDoubleNode asDoubleVector() {
-            return CastDoubleNodeGen.create(false, false, false);
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> map(ArgumentMapper<?, ?> mapper) {
+            return phaseBuilder -> MapNodeGen.create(mapper);
         }
 
-        public static CastStringBaseNode asString() {
-            return CastStringBaseNodeGen.create(false, false, false);
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> mapIf(ArgumentFilter<?, ?> filter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchFactory,
+                        Function<ArgCastBuilder<T, ?>, CastNode> falseBranchFactory) {
+            return phaseBuilder -> ConditionalMapNodeGen.create(filter, trueBranchFactory.apply(phaseBuilder), falseBranchFactory.apply(phaseBuilder));
         }
 
-        public static CastStringNode asStringVector() {
-            return CastStringNodeGen.create(false, false, false, false);
+        public static <T> ChainBuilder<T> chain(CastNode firstCast) {
+            return new ChainBuilder<>(pb -> firstCast);
         }
 
-        public static CastLogicalBaseNode asLogical() {
-            return CastLogicalBaseNodeGen.create(false, false, false);
+        public static <T> ChainBuilder<T> chain(Function<ArgCastBuilder<T, ?>, CastNode> firstCastNodeFactory) {
+            return new ChainBuilder<>(firstCastNodeFactory);
         }
 
-        public static CastLogicalNode asLogicalVector() {
-            return CastLogicalNodeGen.create(false, false, false);
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asInteger() {
+            return phaseBuilder -> CastIntegerBaseNodeGen.create(false, false, false);
         }
 
-        public static MapNode asBoolean() {
-            return mapNode(toBoolean());
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asIntegerVector() {
+            return phaseBuilder -> CastIntegerNodeGen.create(false, false, false);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asDouble() {
+            return phaseBuilder -> CastDoubleBaseNodeGen.create(false, false, false);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asDoubleVector() {
+            return phaseBuilder -> CastDoubleNodeGen.create(false, false, false);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asString() {
+            return phaseBuilder -> CastStringBaseNodeGen.create(false, false, false);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asStringVector() {
+            return phaseBuilder -> CastStringNodeGen.create(false, false, false, false);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asLogical() {
+            return phaseBuilder -> CastLogicalBaseNodeGen.create(false, false, false);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asLogicalVector() {
+            return phaseBuilder -> CastLogicalNodeGen.create(false, false, false);
+        }
+
+        public static <T> FindFirstNodeBuilder<T> findFirst(RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            return new FindFirstNodeBuilder<>(callObj, message, messageArgs);
+        }
+
+        public static <T> FindFirstNodeBuilder<T> findFirst(RError.Message message, Object... messageArgs) {
+            return new FindFirstNodeBuilder<>(null, message, messageArgs);
+        }
+
+        public static <T> FindFirstNodeBuilder<T> findFirst() {
+            return new FindFirstNodeBuilder<>(null, null, null);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            return phaseBuilder -> NonNANodeGen.create(callObj, message, messageArgs, null);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> notNA(RError.Message message, Object... messageArgs) {
+            return phaseBuilder -> NonNANodeGen.create(null, message, messageArgs, null);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
+            return phaseBuilder -> NonNANodeGen.create(null, message, messageArgs, naReplacement);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> notNA(T naReplacement) {
+            return phaseBuilder -> NonNANodeGen.create(naReplacement);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> notNA() {
+            return phaseBuilder -> NonNANodeGen.create(phaseBuilder.state().defaultError().callObj, phaseBuilder.state().defaultError().message, phaseBuilder.state().defaultError().args, null);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asBoolean() {
+            return map(toBoolean());
         }
 
         public static <T> ValuePredicateArgumentFilter<T> sameAs(T x) {
@@ -851,6 +913,10 @@ public final class CastBuilder {
 
         public static ValuePredicateArgumentMapper<String, Integer> charAt0(int defaultValue) {
             return predefMappers().charAt0(defaultValue);
+        }
+
+        public static <T> ValuePredicateArgumentMapper<T, RNull> nullConstant() {
+            return predefMappers().nullConstant();
         }
 
         public static ValuePredicateArgumentMapper<String, String> constant(String s) {
@@ -1123,19 +1189,25 @@ public final class CastBuilder {
             return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default <S, R> InitialPhaseBuilder<S> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper) {
+        default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper) {
             state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, MapNodeGen.create(trueBranchMapper), null));
 
             return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default <S, R> InitialPhaseBuilder<S> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode) {
+        default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode) {
             state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNode, null));
 
             return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default <S, R> InitialPhaseBuilder<T> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper, ArgumentMapper<T, T> falseBranchMapper) {
+        default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchNode) {
+            state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNode.apply(this), null));
+
+            return state().factory.newInitialPhaseBuilder(this);
+        }
+
+        default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper, ArgumentMapper<T, T> falseBranchMapper) {
             state().castBuilder().insert(
                             state().index(),
                             ConditionalMapNodeGen.create(argFilter, MapNodeGen.create(trueBranchMapper),
@@ -1144,10 +1216,17 @@ public final class CastBuilder {
             return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default <S, R> InitialPhaseBuilder<T> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode, CastNode falseBranchNode) {
+        default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode, CastNode falseBranchNode) {
             state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNode, falseBranchNode));
 
-            return this;
+            return state().factory.newInitialPhaseBuilder(this);
+        }
+
+        default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchNodeFactory,
+                        Function<ArgCastBuilder<T, ?>, CastNode> falseBranchNodeFactory) {
+            state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNodeFactory.apply(this), falseBranchNodeFactory.apply(this)));
+
+            return state().factory.newInitialPhaseBuilder(this);
         }
 
         default InitialPhaseBuilder<T> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {
@@ -1294,19 +1373,19 @@ public final class CastBuilder {
             return state().factory.newHeadPhaseBuilder(this);
         }
 
-        default <S, R> HeadPhaseBuilder<S> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper) {
+        default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper) {
             state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, MapNodeGen.create(trueBranchMapper), null));
 
             return state().factory.newHeadPhaseBuilder(this);
         }
 
-        default <S, R> HeadPhaseBuilder<S> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode) {
+        default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode) {
             state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNode, null));
 
             return state().factory.newHeadPhaseBuilder(this);
         }
 
-        default <S, R> HeadPhaseBuilder<T> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper, ArgumentMapper<T, T> falseBranchMapper) {
+        default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper, ArgumentMapper<T, T> falseBranchMapper) {
             state().castBuilder().insert(
                             state().index(),
                             ConditionalMapNodeGen.create(argFilter, MapNodeGen.create(trueBranchMapper),
@@ -1315,7 +1394,14 @@ public final class CastBuilder {
             return state().factory.newHeadPhaseBuilder(this);
         }
 
-        default <S, R> HeadPhaseBuilder<T> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode, CastNode falseBranchNode) {
+        default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchNodeFactory,
+                        Function<ArgCastBuilder<T, ?>, CastNode> falseBranchNodeFactory) {
+            state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNodeFactory.apply(this), falseBranchNodeFactory.apply(this)));
+
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
+        default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode, CastNode falseBranchNode) {
             state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNode, falseBranchNode));
 
             return state().factory.newHeadPhaseBuilder(this);
@@ -1451,6 +1537,107 @@ public final class CastBuilder {
             HeadPhaseBuilderImpl(ArgCastBuilderState state) {
                 super(new ArgCastBuilderState(state, false));
             }
+        }
+
+    }
+
+    public static final class ChainBuilder<T> {
+        private final Function<ArgCastBuilder<T, ?>, CastNode> firstCastNodeFactory;
+
+        private ChainBuilder(Function<ArgCastBuilder<T, ?>, CastNode> firstCastNodeFactory) {
+            this.firstCastNodeFactory = firstCastNodeFactory;
+        }
+
+        private Function<ArgCastBuilder<T, ?>, CastNode> makeChain(Function<ArgCastBuilder<T, ?>, CastNode> secondCastNodeFactory) {
+            return phaseBuilder -> {
+                CastNode firstCast = firstCastNodeFactory.apply(phaseBuilder);
+                CastNode secondCast = secondCastNodeFactory.apply(phaseBuilder);
+                return new ChainedCastNode(firstCast, secondCast);
+            };
+        }
+
+        public ChainBuilder<T> with(Function<ArgCastBuilder<T, ?>, CastNode> secondCastNodeFactory) {
+            return new ChainBuilder<>(makeChain(secondCastNodeFactory));
+        }
+
+        public ChainBuilder<T> with(ArgumentMapper<?, ?> mapper) {
+            return with(Predef.map(mapper));
+        }
+
+        public ChainBuilder<T> with(CastNode secondCastNode) {
+            return new ChainBuilder<>(makeChain(pb -> secondCastNode));
+        }
+
+        public Function<ArgCastBuilder<T, ?>, CastNode> end() {
+            return firstCastNodeFactory;
+        }
+
+    }
+
+    public static final class FindFirstNodeBuilder<T> {
+        private final RBaseNode callObj;
+        private final Message message;
+        private final Object[] messageArgs;
+
+        private FindFirstNodeBuilder(RBaseNode callObj, Message message, Object[] messageArgs) {
+            this.callObj = callObj;
+            this.message = message;
+            this.messageArgs = messageArgs;
+        }
+
+        private Function<ArgCastBuilder<T, ?>, CastNode> create(Class<?> elementClass, Object defaultValue) {
+            return phaseBuilder -> {
+                Message actualMessage = message;
+                Object[] actualMessageArgs = messageArgs;
+                RBaseNode actualCallObj = callObj;
+                if (message == null) {
+                    DefaultError err = phaseBuilder.state().isDefaultErrorDefined() ? phaseBuilder.state().defaultError() : new DefaultError(null, RError.Message.LENGTH_ZERO);
+                    actualMessage = err.message;
+                    actualMessageArgs = err.args;
+                    actualCallObj = err.callObj;
+                }
+                return FindFirstNodeGen.create(elementClass, actualCallObj, actualMessage, actualMessageArgs, defaultValue);
+            };
+        }
+
+        public Function<ArgCastBuilder<T, ?>, CastNode> logicalElement() {
+            return create(Byte.class, null);
+        }
+
+        public Function<ArgCastBuilder<T, ?>, CastNode> logicalElement(byte defaultValue) {
+            return create(Byte.class, defaultValue);
+        }
+
+        public Function<ArgCastBuilder<T, ?>, CastNode> doubleElement() {
+            return create(Double.class, null);
+        }
+
+        public Function<ArgCastBuilder<T, ?>, CastNode> doubleElement(double defaultValue) {
+            return create(Double.class, defaultValue);
+        }
+
+        public Function<ArgCastBuilder<T, ?>, CastNode> integerElement() {
+            return create(Integer.class, null);
+        }
+
+        public Function<ArgCastBuilder<T, ?>, CastNode> integerElement(int defaultValue) {
+            return create(Integer.class, defaultValue);
+        }
+
+        public Function<ArgCastBuilder<T, ?>, CastNode> stringElement() {
+            return create(String.class, null);
+        }
+
+        public Function<ArgCastBuilder<T, ?>, CastNode> stringElement(String defaultValue) {
+            return create(String.class, defaultValue);
+        }
+
+        public Function<ArgCastBuilder<T, ?>, CastNode> objectElement() {
+            return create(Object.class, null);
+        }
+
+        public Function<ArgCastBuilder<T, ?>, CastNode> objectElement(Object defaultValue) {
+            return create(Object.class, defaultValue);
         }
 
     }

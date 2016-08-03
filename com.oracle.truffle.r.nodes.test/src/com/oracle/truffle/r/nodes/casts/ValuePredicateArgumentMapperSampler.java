@@ -35,9 +35,8 @@ public class ValuePredicateArgumentMapperSampler<T, R> extends ValuePredicateArg
     private final Function<R, T> unmapper;
     private final TypeExpr inputTypes;
     private final TypeExpr resTypes;
-    private final Set<? extends T> positiveSamples;
-    private final Set<?> negativeSamples;
     private final String desc;
+    private final Samples<T> samples;
 
     public ValuePredicateArgumentMapperSampler(String desc, Function<T, R> mapper, Function<R, T> unmapper, Set<? extends T> positiveSamples, Set<?> negativeSamples, Set<Class<?>> inputTypeSet,
                     Set<Class<?>> resultTypeSet) {
@@ -45,9 +44,9 @@ public class ValuePredicateArgumentMapperSampler<T, R> extends ValuePredicateArg
         this.unmapper = unmapper;
         this.inputTypes = inputTypeSet.isEmpty() ? TypeExpr.ANYTHING : TypeExpr.union(inputTypeSet);
         this.resTypes = resultTypeSet.isEmpty() ? TypeExpr.ANYTHING : TypeExpr.union(resultTypeSet);
-        this.positiveSamples = positiveSamples;
-        this.negativeSamples = negativeSamples;
         this.desc = desc;
+        Predicate<Object> posMembership = x -> inputTypes.isInstance(x) && !negativeSamples.contains(x);
+        this.samples = new Samples<>(desc, positiveSamples, negativeSamples, posMembership);
     }
 
     @Override
@@ -61,8 +60,9 @@ public class ValuePredicateArgumentMapperSampler<T, R> extends ValuePredicateArg
     }
 
     public static <T, R> ValuePredicateArgumentMapperSampler<T, R> fromLambda(Function<T, R> mapper, Function<R, T> unmapper, Class<T> inputClass, Class<R> resultClass) {
-        return new ValuePredicateArgumentMapperSampler<>(CastUtils.getPredefStepDesc(), mapper, unmapper, Collections.emptySet(), Collections.emptySet(), Collections.singleton(inputClass),
-                        Collections.singleton(resultClass));
+        return new ValuePredicateArgumentMapperSampler<>(CastUtils.getPredefStepDesc(), mapper, unmapper, Collections.emptySet(), Collections.emptySet(),
+                        inputClass == null ? Collections.emptySet() : Collections.singleton(inputClass),
+                        resultClass == null ? Collections.emptySet() : Collections.singleton(resultClass));
     }
 
     public static <T, R> ValuePredicateArgumentMapperSampler<T, R> fromLambda(Function<T, R> mapper, Function<R, T> unmapper, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples,
@@ -73,15 +73,18 @@ public class ValuePredicateArgumentMapperSampler<T, R> extends ValuePredicateArg
 
     @Override
     public Samples<T> collectSamples(Samples<R> downStreamSamples) {
-        Samples<R> filtered = downStreamSamples.filter(x -> resTypes.isInstance(x), x -> resTypes.isInstance(x));
-        @SuppressWarnings("unchecked")
-        Samples<T> unmappedSamples = filtered.map(x -> unmapper.apply(x), x -> unmapper.apply((R) x),
-                        x -> inputTypes.isInstance(x) ? Optional.of(mapper.apply((T) x)) : Optional.empty(),
-                        x -> inputTypes.isInstance(x) ? Optional.of(mapper.apply((T) x)) : Optional.empty());
+        if (unmapper == null) {
+            return samples;
+        } else {
+            Samples<R> filtered = downStreamSamples.filter(x -> resTypes.isInstance(x), x -> resTypes.isInstance(x));
+            @SuppressWarnings("unchecked")
+            Samples<T> unmappedSamples = filtered.map(x -> unmapper.apply(x), x -> unmapper.apply((R) x),
+                            x -> inputTypes.isInstance(x) ? Optional.of(mapper.apply((T) x)) : Optional.empty(),
+                            x -> inputTypes.isInstance(x) ? Optional.of(mapper.apply((T) x)) : Optional.empty());
 
-        Predicate<Object> posMembership = x -> inputTypes.isInstance(x) && !negativeSamples.contains(x);
-        Samples<T> combined = new Samples<T>(desc, positiveSamples, negativeSamples, posMembership).and(unmappedSamples);
-        return combined;
+            Samples<T> combined = samples.and(unmappedSamples);
+            return combined;
+        }
     }
 
 }
