@@ -63,6 +63,7 @@ import com.oracle.truffle.r.test.generate.TestOutputManager;
 
 class ChimneySweeping extends SingleBuiltinDiagnostics {
 
+    private static final String TEST_PREFIX = "com.oracle.truffle.r.test.builtins.TestBuiltin_";
     private static final String SWEEP_MODE_ARG = "--sweep";
     private static final String SWEEP_MODE_ARG_SPEC = SWEEP_MODE_ARG + "-";
 
@@ -270,8 +271,9 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         final PolyglotEngine vm = diagSuite.fastRSession.createTestContext(null);
 
         try {
+            String builtinNameSimple = builtinName.replace(".", "");
             Set<String> validArgs = diagSuite.outputManager.getTestMaps().entrySet().stream().filter(
-                            e -> e.getKey().startsWith("com.oracle.truffle.r.test.builtins.TestBuiltin_" + builtinName)).flatMap(
+                            e -> e.getKey().startsWith(TEST_PREFIX + builtinName) || e.getKey().startsWith(TEST_PREFIX + builtinNameSimple)).flatMap(
                                             e -> e.getValue().keySet().stream()).filter(a -> a.contains(".Internal(" + builtinName)).map(ChimneySweeping::cutOffInternal).filter(
                                                             a -> a != null).collect(Collectors.toSet());
             Set<RList> args = validArgs.stream().map(a -> evalValidArgs(a, vm)).filter(a -> a != null).collect(Collectors.toSet());

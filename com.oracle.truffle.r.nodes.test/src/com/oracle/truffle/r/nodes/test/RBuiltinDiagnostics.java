@@ -52,12 +52,6 @@ import com.oracle.truffle.r.nodes.test.ChimneySweeping.ChimneySweepingSuite;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -117,6 +111,11 @@ public class RBuiltinDiagnostics {
         }
 
         createBuiltinDiagnostics(bf).diagnoseBuiltin();
+
+        System.out.println("Finished");
+        System.out.println("--------");
+
+        System.exit(0);
     }
 
     public void diagnoseAllBuiltins() {
