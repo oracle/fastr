@@ -1189,6 +1189,7 @@ public final class CastBuilder {
             return state().factory.newInitialPhaseBuilder(this);
         }
 
+        @SuppressWarnings("overloads")
         default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper) {
             state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, MapNodeGen.create(trueBranchMapper), null));
 
@@ -1201,12 +1202,14 @@ public final class CastBuilder {
             return state().factory.newInitialPhaseBuilder(this);
         }
 
+        @SuppressWarnings("overloads")
         default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchNode) {
             state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNode.apply(this), null));
 
             return state().factory.newInitialPhaseBuilder(this);
         }
 
+        @SuppressWarnings("overloads")
         default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper, ArgumentMapper<T, T> falseBranchMapper) {
             state().castBuilder().insert(
                             state().index(),
@@ -1222,6 +1225,7 @@ public final class CastBuilder {
             return state().factory.newInitialPhaseBuilder(this);
         }
 
+        @SuppressWarnings("overloads")
         default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchNodeFactory,
                         Function<ArgCastBuilder<T, ?>, CastNode> falseBranchNodeFactory) {
             state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNodeFactory.apply(this), falseBranchNodeFactory.apply(this)));
@@ -1385,6 +1389,7 @@ public final class CastBuilder {
             return state().factory.newHeadPhaseBuilder(this);
         }
 
+        @SuppressWarnings("overloads")
         default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper, ArgumentMapper<T, T> falseBranchMapper) {
             state().castBuilder().insert(
                             state().index(),
@@ -1394,6 +1399,7 @@ public final class CastBuilder {
             return state().factory.newHeadPhaseBuilder(this);
         }
 
+        @SuppressWarnings("overloads")
         default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchNodeFactory,
                         Function<ArgCastBuilder<T, ?>, CastNode> falseBranchNodeFactory) {
             state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNodeFactory.apply(this), falseBranchNodeFactory.apply(this)));
@@ -1556,10 +1562,12 @@ public final class CastBuilder {
             };
         }
 
+        @SuppressWarnings("overloads")
         public ChainBuilder<T> with(Function<ArgCastBuilder<T, ?>, CastNode> secondCastNodeFactory) {
             return new ChainBuilder<>(makeChain(secondCastNodeFactory));
         }
 
+        @SuppressWarnings("overloads")
         public ChainBuilder<T> with(ArgumentMapper<?, ?> mapper) {
             return with(Predef.map(mapper));
         }

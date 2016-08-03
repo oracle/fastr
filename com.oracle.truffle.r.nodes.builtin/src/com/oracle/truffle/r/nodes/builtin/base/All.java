@@ -59,7 +59,7 @@ public abstract class All extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         // casts.arg("...").mustBe(integerValue().or(logicalValue())).asLogicalVector();
-        casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean()).mustBe(trueValue());
+        casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
     }
 
     @Specialization
