@@ -1116,6 +1116,21 @@ public final class CastBuilder {
             return state().factory.newInitialPhaseBuilder(this);
         }
 
+        default <S> InitialPhaseBuilder<S> shouldBe(Class<S> cls, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            shouldBe(Predef.instanceOf(cls), callObj, message, messageArgs);
+            return state().factory.newInitialPhaseBuilder(this);
+        }
+
+        default <S> InitialPhaseBuilder<S> shouldBe(Class<S> cls, RError.Message message, Object... messageArgs) {
+            shouldBe(Predef.instanceOf(cls), message, messageArgs);
+            return state().factory.newInitialPhaseBuilder(this);
+        }
+
+        default <S> InitialPhaseBuilder<S> shouldBe(Class<S> cls) {
+            shouldBe(Predef.instanceOf(cls));
+            return state().factory.newInitialPhaseBuilder(this);
+        }
+
         default <S> InitialPhaseBuilder<S> map(ArgumentMapper<T, S> mapFn) {
             state().castBuilder().insert(state().index(), MapNodeGen.create(mapFn));
             return state().factory.newInitialPhaseBuilder(this);
@@ -1340,6 +1355,21 @@ public final class CastBuilder {
 
         default <S> HeadPhaseBuilder<S> mustBe(Class<S> cls) {
             mustBe(Predef.instanceOf(cls));
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
+        default <S> HeadPhaseBuilder<S> shouldBe(Class<S> cls, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            shouldBe(Predef.instanceOf(cls), callObj, message, messageArgs);
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
+        default <S> HeadPhaseBuilder<S> shouldBe(Class<S> cls, RError.Message message, Object... messageArgs) {
+            shouldBe(Predef.instanceOf(cls), message, messageArgs);
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
+        default <S> HeadPhaseBuilder<S> shouldBe(Class<S> cls) {
+            shouldBe(Predef.instanceOf(cls));
             return state().factory.newHeadPhaseBuilder(this);
         }
 
