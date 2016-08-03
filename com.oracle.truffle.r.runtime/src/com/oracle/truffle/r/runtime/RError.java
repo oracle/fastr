@@ -300,6 +300,7 @@ public final class RError extends RuntimeException {
         DECREASING_TRUE_FALSE("'decreasing' must be TRUE or FALSE"),
         ARGUMENT_LENGTHS_DIFFER("argument lengths differ"),
         ZERO_LENGTH_PATTERN("zero-length pattern"),
+        UNSUPPORTED_MODE("unsupported mode"),
         ALL_CONNECTIONS_IN_USE("all connections are in use"),
         CANNOT_READ_CONNECTION("cannot read from this connection"),
         CONNECTION_NOT_OPEN_READ("connection not open for reading"),
