@@ -25,6 +25,8 @@ package com.oracle.truffle.r.nodes.binary;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -33,13 +35,14 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -52,6 +55,8 @@ public abstract class ColonNode extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
+        // These casts should not be custom, but they are very hard to get right in a generic way.
+        // Also, the proper warnings cannot be produced at the moment.
         casts.custom(0, ColonCastNodeGen.create()).custom(1, ColonCastNodeGen.create());
     }
 
@@ -125,10 +130,16 @@ public abstract class ColonNode extends RBuiltinNode {
     abstract static class ColonCastNode extends CastNode {
 
         private final ConditionProfile lengthGreaterOne = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile lengthEqualsZero = ConditionProfile.createBinaryProfile();
 
         @Specialization(guards = "isIntValue(operand)")
         protected int doDoubleToInt(double operand) {
             return (int) operand;
+        }
+
+        @Specialization
+        protected int doInt(int operand) {
+            return operand;
         }
 
         @Specialization(guards = "!isIntValue(operand)")
@@ -136,41 +147,31 @@ public abstract class ColonNode extends RBuiltinNode {
             return operand;
         }
 
-        @Specialization
-        protected int doSequence(RIntSequence sequence) {
-            if (lengthGreaterOne.profile(sequence.getLength() > 1)) {
-                RError.warning(this, RError.Message.ONLY_FIRST_USED, sequence.getLength());
+        private void checkLength(int length) {
+            if (lengthGreaterOne.profile(length > 1)) {
+                RError.warning(this, RError.Message.ONLY_FIRST_USED, length);
             }
-            return sequence.getStart();
+            if (lengthEqualsZero.profile(length == 0)) {
+                throw RError.error(this, Message.ARGUMENT_LENGTH_0);
+            }
         }
 
         @Specialization
-        protected int doSequence(RIntVector vector) {
-            if (lengthGreaterOne.profile(vector.getLength() > 1)) {
-                RError.warning(this, RError.Message.ONLY_FIRST_USED, vector.getLength());
-            }
+        protected int doSequence(RAbstractIntVector vector) {
+            checkLength(vector.getLength());
             return vector.getDataAt(0);
         }
 
         @Specialization(guards = "isFirstIntValue(vector)")
-        protected int doDoubleVectorFirstIntValue(RDoubleVector vector) {
-            if (lengthGreaterOne.profile(vector.getLength() > 1)) {
-                RError.warning(this, RError.Message.ONLY_FIRST_USED, vector.getLength());
-            }
+        protected int doDoubleVectorFirstIntValue(RAbstractDoubleVector vector) {
+            checkLength(vector.getLength());
             return (int) vector.getDataAt(0);
         }
 
         @Specialization(guards = "!isFirstIntValue(vector)")
-        protected double doDoubleVector(RDoubleVector vector) {
-            if (lengthGreaterOne.profile(vector.getLength() > 1)) {
-                RError.warning(this, RError.Message.ONLY_FIRST_USED, vector.getLength());
-            }
+        protected double doDoubleVector(RAbstractDoubleVector vector) {
+            checkLength(vector.getLength());
             return vector.getDataAt(0);
-        }
-
-        @Specialization
-        protected int doInt(int operand) {
-            return operand;
         }
 
         @Specialization
@@ -180,9 +181,7 @@ public abstract class ColonNode extends RBuiltinNode {
 
         @Specialization
         protected int doString(RAbstractStringVector vector) {
-            if (lengthGreaterOne.profile(vector.getLength() > 1)) {
-                RError.warning(this, RError.Message.ONLY_FIRST_USED, vector.getLength());
-            }
+            checkLength(vector.getLength());
             String val = vector.getDataAt(0);
             if (RRuntime.isNA(val)) {
                 throw RError.error(this, RError.Message.NA_OR_NAN);
@@ -196,12 +195,18 @@ public abstract class ColonNode extends RBuiltinNode {
             return result;
         }
 
+        @Fallback
+        @TruffleBoundary
+        protected int doOther(@SuppressWarnings("unused") Object value) {
+            throw RError.error(this, Message.ARGUMENT_LENGTH_0);
+        }
+
         protected static boolean isIntValue(double d) {
             return (((int) d)) == d;
         }
 
-        protected static boolean isFirstIntValue(RDoubleVector d) {
-            return (((int) d.getDataAt(0))) == d.getDataAt(0);
+        protected static boolean isFirstIntValue(RAbstractDoubleVector d) {
+            return d.getLength() > 0 && (((int) d.getDataAt(0))) == d.getDataAt(0);
         }
     }
 }
