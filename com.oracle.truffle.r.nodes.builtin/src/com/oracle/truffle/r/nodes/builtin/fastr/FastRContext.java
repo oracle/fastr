@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -50,7 +49,6 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * The FastR builtins that allow multiple "virtual" R sessions potentially executing in parallel.
@@ -59,7 +57,7 @@ public class FastRContext {
 
     private abstract static class CastHelper extends RBuiltinNode {
         protected void exprs(CastBuilder casts) {
-            casts.arg("exprs").asStringVector().mustBe(notEmpty());
+            casts.arg("exprs").asStringVector().mustBe(nullValue().not().and(notEmpty()));
         }
 
         protected void kind(CastBuilder casts) {
@@ -68,7 +66,7 @@ public class FastRContext {
         }
 
         protected void args(CastBuilder casts) {
-            casts.arg("args").asStringVector();
+            casts.arg("args").asStringVector().mustBe(nullValue().not().and(notEmpty()));
         }
 
         protected void pc(CastBuilder casts) {
@@ -129,7 +127,7 @@ public class FastRContext {
     public abstract static class Join extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("handle").asIntegerVector();
+            casts.arg("handle").asIntegerVector().mustBe(nullValue().not().and(notEmpty()));
         }
 
         @Specialization
@@ -212,83 +210,116 @@ public class FastRContext {
         return info;
     }
 
-    private static int wrongChannelArg(RBaseNode baseNode, Object arg, String argName) {
-        if (!(arg instanceof RAbstractIntVector)) {
-            throw RError.error(baseNode, RError.Message.INVALID_ARG_TYPE);
-        } else {
-            // guard failed
-            throw RError.error(baseNode, RError.Message.WRONG_LENGTH_ARG, argName);
+    private abstract static class ChannelCastAdapter extends RBuiltinNode {
+        protected void key(CastBuilder casts) {
+            casts.arg("key").asIntegerVector().mustBe(nullValue().not().and(notEmpty())).findFirst();
+        }
+
+        protected void id(CastBuilder casts) {
+            casts.arg("id").asIntegerVector().mustBe(nullValue().not().and(notEmpty())).findFirst();
         }
     }
 
     @RBuiltin(name = ".fastr.channel.create", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)
-    public abstract static class CreateChannel extends RBuiltinNode {
-        @Specialization(guards = "key.getLength() == 1")
-        @TruffleBoundary
-        protected int createChannel(RAbstractIntVector key) {
-            return RChannel.createChannel(key.getDataAt(0));
+    public abstract static class CreateChannel extends ChannelCastAdapter {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            key(casts);
         }
 
-        @Fallback
-        protected int error(Object key) {
-            return wrongChannelArg(this, key, "key");
+        @Specialization
+        @TruffleBoundary
+        protected int createChannel(int key) {
+            return RChannel.createChannel(key);
         }
+
     }
 
     @RBuiltin(name = ".fastr.channel.get", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)
-    public abstract static class GetChannel extends RBuiltinNode {
-        @Specialization(guards = "key.getLength() == 1")
+    public abstract static class GetChannel extends ChannelCastAdapter {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            key(casts);
+        }
+
+        @Specialization
         @TruffleBoundary
-        protected int getChannel(RAbstractIntVector key) {
-            return RChannel.getChannel(key.getDataAt(0));
+        protected int getChannel(int key) {
+            return RChannel.getChannel(key);
         }
 
     }
 
     @RBuiltin(name = ".fastr.channel.close", visibility = OFF, kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
-    public abstract static class CloseChannel extends RBuiltinNode {
-        @Specialization(guards = "id.getLength() == 1")
+    public abstract static class CloseChannel extends ChannelCastAdapter {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            id(casts);
+        }
+
+        @Specialization
         @TruffleBoundary
-        protected RNull getChannel(RAbstractIntVector id) {
-            RChannel.closeChannel(id.getDataAt(0));
+        protected RNull getChannel(int id) {
+            RChannel.closeChannel(id);
             return RNull.instance;
         }
 
     }
 
     @RBuiltin(name = ".fastr.channel.send", visibility = OFF, kind = PRIMITIVE, parameterNames = {"id", "data"}, behavior = COMPLEX)
-    public abstract static class ChannelSend extends RBuiltinNode {
-        @Specialization(guards = "id.getLength() == 1")
+    public abstract static class ChannelSend extends ChannelCastAdapter {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            id(casts);
+        }
+
+        @Specialization
         @TruffleBoundary
-        protected RNull send(RAbstractIntVector id, Object data) {
-            RChannel.send(id.getDataAt(0), data);
+        protected RNull send(int id, Object data) {
+            RChannel.send(id, data);
             return RNull.instance;
         }
 
     }
 
     @RBuiltin(name = ".fastr.channel.receive", kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
-    public abstract static class ChannelReceive extends RBuiltinNode {
-        @Specialization(guards = "id.getLength() == 1")
+    public abstract static class ChannelReceive extends ChannelCastAdapter {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            id(casts);
+        }
+
+        @Specialization
         @TruffleBoundary
-        protected Object receive(RAbstractIntVector id) {
-            return RChannel.receive(id.getDataAt(0));
+        protected Object receive(int id) {
+            return RChannel.receive(id);
         }
 
     }
 
     @RBuiltin(name = ".fastr.channel.poll", kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
-    public abstract static class ChannelPoll extends RBuiltinNode {
-        @Specialization(guards = "id.getLength() == 1")
+    public abstract static class ChannelPoll extends ChannelCastAdapter {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            id(casts);
+        }
+
+        @Specialization
         @TruffleBoundary
-        protected Object poll(RAbstractIntVector id) {
-            return RChannel.poll(id.getDataAt(0));
+        protected Object poll(int id) {
+            return RChannel.poll(id);
         }
 
     }
 
     @RBuiltin(name = ".fastr.channel.select", kind = PRIMITIVE, parameterNames = {"ids"}, behavior = COMPLEX)
     public abstract static class ChannelSelect extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("ids").mustBe(instanceOf(RList.class));
+        }
+
         @Specialization
         @TruffleBoundary
         protected RList select(RList nodes) {
