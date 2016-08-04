@@ -50,10 +50,6 @@ public class DebugFunctions {
             casts.arg("fun").mustBe(RFunction.class, Message.ARG_MUST_BE_CLOSURE);
         }
 
-        protected RError arg1Closure() throws RError {
-            throw RError.error(this, RError.Message.ARG_MUST_BE_CLOSURE);
-        }
-
         protected void doDebug(RFunction fun, Object text, Object condition, boolean once) throws RError {
             // GnuR does not generate an error for builtins, but debug (obviously) has no effect
             if (!fun.isBuiltin()) {
@@ -67,13 +63,6 @@ public class DebugFunctions {
     @RBuiltin(name = "debug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
     public abstract static class Debug extends ErrorAndFunAdapter {
 
-        @SuppressWarnings("unused")
-        @Fallback
-        @TruffleBoundary
-        protected Object doDebug(Object fun, Object text, Object condition) {
-            throw arg1Closure();
-        }
-
         @Specialization
         @TruffleBoundary
         protected RNull doDebug(RFunction fun, Object text, Object condition) {
@@ -84,13 +73,6 @@ public class DebugFunctions {
 
     @RBuiltin(name = "debugonce", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
     public abstract static class DebugOnce extends ErrorAndFunAdapter {
-
-        @SuppressWarnings("unused")
-        @Fallback
-        @TruffleBoundary
-        protected Object doDebug(Object fun, Object text, Object condition) {
-            throw arg1Closure();
-        }
 
         @Specialization
         @TruffleBoundary
@@ -104,12 +86,6 @@ public class DebugFunctions {
     @RBuiltin(name = "undebug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun"}, behavior = COMPLEX)
     public abstract static class UnDebug extends ErrorAndFunAdapter {
 
-        @Fallback
-        @TruffleBoundary
-        protected Object doDebug(@SuppressWarnings("unused") Object fun) {
-            throw arg1Closure();
-        }
-
         @Specialization
         @TruffleBoundary
         protected RNull undebug(RFunction func) {
@@ -122,12 +98,6 @@ public class DebugFunctions {
 
     @RBuiltin(name = "isdebugged", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
     public abstract static class IsDebugged extends ErrorAndFunAdapter {
-
-        @Fallback
-        @TruffleBoundary
-        protected Object doDebug(@SuppressWarnings("unused") Object fun) {
-            throw arg1Closure();
-        }
 
         @Specialization
         @TruffleBoundary
