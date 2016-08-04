@@ -33,6 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -57,6 +58,7 @@ public abstract class Attr extends RBuiltinNode {
 
     private final ConditionProfile searchPartialProfile = ConditionProfile.createBinaryProfile();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     @CompilationFinal private String cachedName = "";
     @CompilationFinal private String cachedInternedName = "";
@@ -68,7 +70,8 @@ public abstract class Attr extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mustBe(RAttributable.class, Message.UNIMPLEMENTED_ARGUMENT_TYPE);
+        // Note: checking RAttributable.class does not work for scalars
+        // casts.arg("x").mustBe(RAttributable.class, Message.UNIMPLEMENTED_ARGUMENT_TYPE);
         casts.arg("which").mustBe(stringValue(), Message.MUST_BE_CHARACTER, "which").asStringVector().mustBe(singleElement(), RError.Message.EXACTLY_ONE_WHICH).findFirst();
         casts.arg("exact").asLogicalVector().findFirst().map(toBoolean());
     }
@@ -149,8 +152,13 @@ public abstract class Attr extends RBuiltinNode {
      */
     @Fallback
     @TruffleBoundary
-    protected Object attr(RAttributable object, String name, boolean exact) {
-        return attrRA(object, intern(name), exact);
+    protected Object attr(Object object, String name, boolean exact) {
+        if (object instanceof RAttributable) {
+            return attrRA((RAttributable) object, intern(name), exact);
+        } else {
+            errorProfile.enter();
+            throw RError.nyi(this, "object cannot be attributed");
+        }
     }
 
     public static Object getFullRowNames(Object a) {

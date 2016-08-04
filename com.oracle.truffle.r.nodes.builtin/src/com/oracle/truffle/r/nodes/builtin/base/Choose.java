@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * Binomial coefficients (n, k) for real n and integral k (rounded with warning).
@@ -49,10 +50,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 @RBuiltin(name = "choose", kind = INTERNAL, parameterNames = {"n", "k"}, behavior = PURE)
 public abstract class Choose extends RBuiltinNode {
 
+    private final NACheck na = NACheck.create();
+
     @Override
     protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
-        casts.arg("n").mustBe(numericValue(), Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asInteger());
-        casts.arg("k").mustBe(numericValue(), Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asInteger());
+        casts.arg("n").mustBe(numericValue(), RError.SHOW_CALLER, Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
+        casts.arg("k").mustBe(numericValue(), RError.SHOW_CALLER, Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
     }
 
     @Specialization
@@ -95,17 +98,17 @@ public abstract class Choose extends RBuiltinNode {
         return (int) result;
     }
 
-    private static RAbstractDoubleVector choose(int nLength, IntToDoubleFunction getN, int kLength, IntUnaryOperator getK) {
+    private RAbstractDoubleVector choose(int nLength, IntToDoubleFunction getN, int kLength, IntUnaryOperator getK) {
         int resultLen = Math.max(nLength, kLength);
-        boolean complete = true;
         double[] result = new double[resultLen];
+        na.enable(true);
         for (int i = 0, nIdx = 0, kIdx = 0; i < resultLen; i++) {
             result[i] = choose(getN.applyAsDouble(nIdx), getK.applyAsInt(kIdx));
-            complete &= result[i] != RRuntime.DOUBLE_NA;
+            na.check(result[i]);
             nIdx = Utils.incMod(nIdx, nLength);
             kIdx = Utils.incMod(kIdx, kLength);
         }
-        return RDataFactory.createDoubleVector(result, complete);
+        return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
     private static double choose(double n, int ka) {

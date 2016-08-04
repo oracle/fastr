@@ -40,7 +40,8 @@ public class TestBuiltin_choose extends TestBase {
 
     @Test
     public void testWithNonNumericArgs() {
-        assertEval(".Internal(choose('hello', 3))");
-        assertEval(".Internal(choose(3, 'hello'))");
+        // GnuR choose error message does not show args evaluated
+        assertEval(Output.IgnoreErrorContext, ".Internal(choose('hello', 3))");
+        assertEval(Output.IgnoreErrorContext, ".Internal(choose(3, 'hello'))");
     }
 }
