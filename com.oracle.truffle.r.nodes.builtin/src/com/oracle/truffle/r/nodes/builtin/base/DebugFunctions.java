@@ -30,9 +30,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -41,7 +43,12 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 public class DebugFunctions {
 
-    protected abstract static class ErrorAdapter extends RBuiltinNode {
+    protected abstract static class ErrorAndFunAdapter extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
+            casts.arg("fun").mustBe(RFunction.class, Message.ARG_MUST_BE_CLOSURE);
+        }
 
         protected RError arg1Closure() throws RError {
             throw RError.error(this, RError.Message.ARG_MUST_BE_CLOSURE);
@@ -58,7 +65,7 @@ public class DebugFunctions {
     }
 
     @RBuiltin(name = "debug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
-    public abstract static class Debug extends ErrorAdapter {
+    public abstract static class Debug extends ErrorAndFunAdapter {
 
         @SuppressWarnings("unused")
         @Fallback
@@ -76,7 +83,7 @@ public class DebugFunctions {
     }
 
     @RBuiltin(name = "debugonce", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
-    public abstract static class DebugOnce extends ErrorAdapter {
+    public abstract static class DebugOnce extends ErrorAndFunAdapter {
 
         @SuppressWarnings("unused")
         @Fallback
@@ -95,7 +102,7 @@ public class DebugFunctions {
     }
 
     @RBuiltin(name = "undebug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun"}, behavior = COMPLEX)
-    public abstract static class UnDebug extends ErrorAdapter {
+    public abstract static class UnDebug extends ErrorAndFunAdapter {
 
         @Fallback
         @TruffleBoundary
@@ -114,7 +121,7 @@ public class DebugFunctions {
     }
 
     @RBuiltin(name = "isdebugged", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
-    public abstract static class IsDebugged extends ErrorAdapter {
+    public abstract static class IsDebugged extends ErrorAndFunAdapter {
 
         @Fallback
         @TruffleBoundary
