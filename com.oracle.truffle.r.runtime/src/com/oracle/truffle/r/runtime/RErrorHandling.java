@@ -60,7 +60,7 @@ public class RErrorHandling {
     private static final RStringVector RESTART_CLASS = RDataFactory.createStringVectorFromScalar("restart");
 
     private static class Warnings {
-        private static ArrayList<Warning> list = new ArrayList<>();
+        private ArrayList<Warning> list = new ArrayList<>();
 
         int size() {
             return list.size();
