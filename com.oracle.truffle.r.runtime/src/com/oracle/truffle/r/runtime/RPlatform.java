@@ -49,7 +49,7 @@ public class RPlatform {
                 default:
                     osSubDir = null;
                     libExt = null;
-                    Utils.fail("CallRFFI: unsupported OS: " + osName);
+                    Utils.rSuicide("CallRFFI: unsupported OS: " + osName);
             }
         }
     }

@@ -36,8 +36,10 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.nodes.builtin.base.Quit;
+import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RCmdOptions;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RStartParams;
@@ -180,6 +182,7 @@ public class RCommand {
      * exiting. So,in either case, we never return.
      */
     static void readEvalPrint(PolyglotEngine vm) {
+        int lastStatus = 0;
         ConsoleHandler consoleHandler = ContextInfo.getContextInfo(vm).getConsoleHandler();
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
@@ -206,6 +209,7 @@ public class RCommand {
                          * exceptions that are <: Exception are converted to IOException, Error
                          * subclasses pass through.
                          */
+                        lastStatus = 0;
                         try {
                             vm.eval(source);
                             emitIO();
@@ -224,26 +228,24 @@ public class RCommand {
                             e.report(consoleHandler);
                         } catch (IOException e) {
                             /*
-                             * We have to extract QuitException and DebugExitException and rethrow
-                             * them explicitly
+                             * We have to extract the underlying cause and handle the special cases
+                             * appropriately.
                              */
+                            lastStatus = 1;
                             Throwable cause = e.getCause();
-                            if (cause instanceof JumpToTopLevelException) {
+                            if (cause instanceof RError) {
+                                // drop through to continue REPL and remember last eval was an error
+                            } else if (cause instanceof JumpToTopLevelException) {
                                 // drop through to continue REPL
                             } else if (cause instanceof DebugExitException) {
                                 throw (RuntimeException) cause;
-                            } else if (cause instanceof RInternalError) {
-                                /*
-                                 * Placing this here makes it a non-fatal error. With default error
-                                 * logging the report will go to a file, so we print a message on
-                                 * the console as well.
-                                 */
-                                RInternalError.reportError(e);
-                                consoleHandler.println("internal error: " + e.getMessage() + " (see fastr_errors.log)");
+                            } else if (cause instanceof ExitException) {
+                                // usually from quit
+                                vm.dispose();
+                                System.exit(((ExitException) cause).getStatus());
                             } else {
-                                // Something else, e.g. NPE
-                                RInternalError.reportError(e);
-                                consoleHandler.println("unexpected internal error (" + e.getClass().getSimpleName() + "); " + e.getMessage());
+                                RInternalError.reportErrorAndConsoleLog(cause, consoleHandler, 0);
+                                // We continue the repl even though the system may be broken
                             }
                         }
                         continue REPL;
@@ -258,6 +260,10 @@ public class RCommand {
             try {
                 vm.eval(QUIT_EOF);
             } catch (Throwable e) {
+                if (e.getCause() instanceof ExitException) {
+                    // normal quit, but with exit code based on lastStatus
+                    System.exit(lastStatus);
+                }
                 throw RInternalError.shouldNotReachHere(e);
             }
         } finally {

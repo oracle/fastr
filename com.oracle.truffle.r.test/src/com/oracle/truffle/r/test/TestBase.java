@@ -192,8 +192,7 @@ public class TestBase {
                     if (updated) {
                         if (expectedOutputManager.checkOnly) {
                             // fail fast
-                            System.err.println("Test file:" + expectedOutputManager.outputFile + " is out of sync with unit tests");
-                            Utils.exit(1);
+                            Utils.rSuicideDefault("Test file:" + expectedOutputManager.outputFile + " is out of sync with unit tests");
                         }
                         System.out.println("updating " + expectedOutputManager.outputFile);
                     }

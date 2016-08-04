@@ -56,8 +56,7 @@ fastr.newSHAREDnode <- function(rank, options = defaultClusterOptions)
     context_code <- paste0("commandArgs<-function() c('--args', 'PORT=", port, "'); source('", script, "')")
 	if (isTRUE(debug)) cat(sprintf("Starting context: %d with code %s\n", rank, context_code))
 
-    cx <- .fastr.context.create("SHARED_NOTHING")
-    .fastr.context.spawn(cx, context_code)
+    cx <- .fastr.context.spawn(context_code)
 
 	## Need to return a list here, in the same form as the
 	## "cluster" data structure.

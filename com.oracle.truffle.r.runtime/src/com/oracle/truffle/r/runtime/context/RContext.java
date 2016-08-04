@@ -41,6 +41,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
@@ -206,11 +207,15 @@ public final class RContext extends ExecutionContext implements TruffleObject {
                     evalResult = createErrorResult(e.getMessage());
                 } catch (IOException e) {
                     Throwable cause = e.getCause();
-                    if (cause instanceof RInternalError) {
-                        info.getConsoleHandler().println("internal error: " + e.getMessage() + " (see fastr_errors.log)");
-                        RInternalError.reportError(e);
+                    if (cause instanceof ExitException) {
+                        // termination, treat this as "success"
+                        ExitException exitException = (ExitException) cause;
+                        evalResult = RDataFactory.createList(new Object[]{exitException.getStatus()});
+                    } else {
+                        // some internal error
+                        RInternalError.reportErrorAndConsoleLog(cause, info.getConsoleHandler(), info.getId());
+                        evalResult = createErrorResult(cause.getClass().getSimpleName());
                     }
-                    evalResult = createErrorResult(e.getCause().getMessage());
                 }
             } finally {
                 vm.dispose();
@@ -417,7 +422,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
         this.env = env;
         if (info.getConsoleHandler() == null) {
-            throw Utils.fail("no console handler set");
+            throw Utils.rSuicide("no console handler set");
         }
 
         if (singleContextAssumption.isValid()) {
@@ -701,7 +706,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     @Override
     public String toString() {
-        new RuntimeException().printStackTrace();
         return "context: " + info.getId();
     }
 
