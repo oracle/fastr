@@ -30,11 +30,17 @@ public class TestBuiltin_choose extends TestBase {
 
     @Test
     public void testchooseWithLogical() {
-        assertEval(Ignored.Unimplemented, ".Internal(choose(logical(0), logical(0)))");
+        assertEval(".Internal(choose(logical(0), logical(0)))");
     }
 
     @Test
     public void testchoose4() {
         assertEval(".Internal(choose(0.5, 0:10))");
+    }
+
+    @Test
+    public void testWithNonNumericArgs() {
+        assertEval(".Internal(choose('hello', 3))");
+        assertEval(".Internal(choose(3, 'hello'))");
     }
 }

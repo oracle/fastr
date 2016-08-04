@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -29,6 +32,7 @@ import java.util.function.IntToDoubleFunction;
 import java.util.function.IntUnaryOperator;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -45,11 +49,15 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 @RBuiltin(name = "choose", kind = INTERNAL, parameterNames = {"n", "k"}, behavior = PURE)
 public abstract class Choose extends RBuiltinNode {
 
-    // TODO: cast of logicals to integers
+    @Override
+    protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
+        casts.arg("n").mustBe(numericValue(), Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asInteger());
+        casts.arg("k").mustBe(numericValue(), Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asInteger());
+    }
 
     @Specialization
     protected RAbstractDoubleVector doInts(RAbstractIntVector n, RAbstractIntVector k) {
-        // TODO: check overflow, return int vector if possible, otherwise specialize
+        // Note: we may check overflow, return int vector if possible, otherwise specialize
         // Note: may be useful to specialize on small n and k and do only integer arithmetic
         return choose(n.getLength(), idx -> (double) n.getDataAt(idx), k.getLength(), idx -> k.getDataAt(idx));
     }
