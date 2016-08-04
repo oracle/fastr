@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -30,10 +33,11 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -42,8 +46,8 @@ import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -52,11 +56,22 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class Attr extends RBuiltinNode {
 
     private final ConditionProfile searchPartialProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile errorProfile = BranchProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @CompilationFinal private String cachedName = "";
     @CompilationFinal private String cachedInternedName = "";
+
+    @Override
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RMissing.instance, RRuntime.asLogical(false)};
+    }
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mustBe(RAttributable.class, Message.UNIMPLEMENTED_ARGUMENT_TYPE);
+        casts.arg("which").mustBe(stringValue(), Message.MUST_BE_CHARACTER, "which").asStringVector().mustBe(singleElement(), RError.Message.EXACTLY_ONE_WHICH).findFirst();
+        casts.arg("exact").asLogicalVector().findFirst().map(toBoolean());
+    }
 
     private String intern(String name) {
         if (cachedName == null) {
@@ -95,27 +110,47 @@ public abstract class Attr extends RBuiltinNode {
         return val;
     }
 
-    private Object attrRA(RAttributable attributable, String name) {
+    private Object attrRA(RAttributable attributable, String name, boolean exact) {
         RAttributes attributes = attributable.getAttributes();
         if (attributes == null) {
             return RNull.instance;
         } else {
             Object result = attributes.get(name);
-            if (searchPartialProfile.profile(result == null)) {
+            if (searchPartialProfile.profile(!exact && result == null)) {
                 return searchKeyPartial(attributes, name);
             }
-            return result;
+            return result == null ? RNull.instance : result;
         }
     }
 
     @Specialization
-    protected RNull attr(RNull container, @SuppressWarnings("unused") String name) {
+    protected RNull attr(RNull container, @SuppressWarnings("unused") String name, @SuppressWarnings("unused") boolean exact) {
         return container;
     }
 
     @Specialization(guards = "!isRowNamesAttr(name)")
-    protected Object attr(RAbstractContainer container, String name) {
-        return attrRA(container, intern(name));
+    protected Object attr(RAbstractContainer container, String name, boolean exact) {
+        return attrRA(container, intern(name), exact);
+    }
+
+    @Specialization(guards = "isRowNamesAttr(name)")
+    protected Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name, @SuppressWarnings("unused") boolean exact) {
+        // TODO: if exact == false, check for partial match (there is an ignored tests for it)
+        RAttributes attributes = container.getAttributes();
+        if (attributes == null) {
+            return RNull.instance;
+        } else {
+            return getFullRowNames(container.getRowNames(attrProfiles));
+        }
+    }
+
+    /**
+     * All other, non-performance centric, {@link RAttributable} types.
+     */
+    @Fallback
+    @TruffleBoundary
+    protected Object attr(RAttributable object, String name, boolean exact) {
+        return attrRA(object, intern(name), exact);
     }
 
     public static Object getFullRowNames(Object a) {
@@ -128,59 +163,7 @@ public abstract class Attr extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = "isRowNamesAttr(name)")
-    protected Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name) {
-        RAttributes attributes = container.getAttributes();
-        if (attributes == null) {
-            return RNull.instance;
-        } else {
-            return getFullRowNames(container.getRowNames(attrProfiles));
-        }
-    }
-
-    @Specialization(guards = {"exactlyOne(name)", "isRowNamesAttr(name)"})
-    protected Object attrRowNames(RAbstractContainer container, RStringVector name) {
-        return attrRowNames(container, name.getDataAt(0));
-    }
-
-    @Specialization(guards = {"exactlyOne(name)", "!isRowNamesAttr(name)"})
-    protected Object attr(RAbstractContainer container, RStringVector name) {
-        return attr(container, name.getDataAt(0));
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "!exactlyOne(name)")
-    protected Object attrEmtpyName(RAbstractContainer container, RStringVector name) {
-        throw RError.error(this, RError.Message.EXACTLY_ONE_WHICH);
-    }
-
-    /**
-     * All other, non-performance centric, {@link RAttributable} types.
-     */
-    @Fallback
-    @TruffleBoundary
-    protected Object attr(Object object, Object name) {
-        String sname = RRuntime.asString(name);
-        if (sname == null) {
-            throw RError.error(this, RError.Message.MUST_BE_CHARACTER, "which");
-        }
-        if (object instanceof RAttributable) {
-            return attrRA((RAttributable) object, intern(sname));
-        } else {
-            errorProfile.enter();
-            throw RError.nyi(this, "object cannot be attributed");
-        }
-    }
-
     protected static boolean isRowNamesAttr(String name) {
         return name.equals(RRuntime.ROWNAMES_ATTR_KEY);
-    }
-
-    protected static boolean isRowNamesAttr(RStringVector name) {
-        return isRowNamesAttr(name.getDataAt(0));
-    }
-
-    protected static boolean exactlyOne(RStringVector name) {
-        return name.getLength() == 1;
     }
 }
