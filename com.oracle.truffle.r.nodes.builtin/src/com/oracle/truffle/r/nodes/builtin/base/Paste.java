@@ -59,23 +59,9 @@ public abstract class Paste extends RBuiltinNode {
     @Child private CastStringNode castCharacterNode;
 
     private final ValueProfile lengthProfile = PrimitiveValueProfile.createEqualityProfile();
-    private final ConditionProfile vectorOrSequence = ConditionProfile.createBinaryProfile();
     private final ConditionProfile reusedResultProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonNullElementsProfile = BranchProfile.create();
     private final BranchProfile onlyNullElementsProfile = BranchProfile.create();
-
-    private RStringVector castCharacter(Object o) {
-        if (asCharacterNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            asCharacterNode = insert(AsCharacterNodeGen.create(null));
-        }
-        Object ret = asCharacterNode.execute(o);
-        if (ret instanceof String) {
-            return RDataFactory.createStringVector((String) ret);
-        } else {
-            return (RStringVector) ret;
-        }
-    }
 
     /**
      * FIXME The exact semantics needs checking regarding the use of {@code as.character}. Currently
@@ -90,6 +76,8 @@ public abstract class Paste extends RBuiltinNode {
         Object ret = castCharacterNode.executeString(o);
         if (ret instanceof String) {
             return RDataFactory.createStringVector((String) ret);
+        } else if (ret == RNull.instance) {
+            return RDataFactory.createEmptyStringVector();
         } else {
             return (RStringVector) ret;
         }
@@ -142,12 +130,7 @@ public abstract class Paste extends RBuiltinNode {
         int maxLength = 1;
         for (int i = 0; i < length; i++) {
             Object element = values.getDataAt(i);
-            String[] array;
-            if (vectorOrSequence.profile(element instanceof RVector || element instanceof RSequence)) {
-                array = castCharacterVector(element).getDataWithoutCopying();
-            } else {
-                array = castCharacter(element).getDataWithoutCopying();
-            }
+            String[] array = castCharacterVector(element).getDataWithoutCopying();
             maxLength = Math.max(maxLength, array.length);
             converted[i] = array.length == 0 ? ONE_EMPTY_STRING : array;
         }

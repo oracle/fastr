@@ -47,8 +47,6 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
 
-    public abstract Object execute(Object obj);
-
     public static AsCharacter create() {
         return AsCharacterNodeGen.create(null);
     }

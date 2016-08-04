@@ -61,7 +61,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     private Object castString(Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(true, true, false, false));
+            castStringNode = insert(CastStringNodeGen.create(true, true, true, false));
         }
         return castStringNode.execute(o);
     }

@@ -362,7 +362,7 @@ public abstract class Combine extends RBuiltinNode {
             case LOGICAL_PRECEDENCE:
                 return CastLogicalNodeGen.create(true, false, false);
             case STRING_PRECEDENCE:
-                return CastStringNodeGen.create(false, true, false, false);
+                return CastStringNodeGen.create(true, false, false, false);
             case RAW_PRECEDENCE:
                 return CastRawNodeGen.create(true, false, false);
             case EXPRESSION_PRECEDENCE:
