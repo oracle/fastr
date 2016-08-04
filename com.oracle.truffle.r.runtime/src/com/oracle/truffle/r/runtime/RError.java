@@ -694,6 +694,7 @@ public final class RError extends RuntimeException {
         ROWSUM_NAMES_NOT_CHAR("row names are not character"),
         ROWSUM_NON_NUMERIC("non-numeric matrix in rowsum(): this should not happen"),
         ARGUMENTS_REQUIRED_COUNT("%d arguments to '%s' which requires %d"),
+        ARG_IS_NOT_OF_MODE("argument is not of mode %s"),
         ARGUMENT_LENGTH_0("argument of length 0"),
         MUST_BE_VECTOR_BUT_WAS("'%s' must be of a vector type, was '%s'"),
         SYSTEM_CHAR_ARG("non-empty character argument expected"),
