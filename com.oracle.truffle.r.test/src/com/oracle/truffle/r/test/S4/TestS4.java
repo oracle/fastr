@@ -77,7 +77,7 @@ public class TestS4 extends TestRBase {
         assertEval("{ x<-42; isS4(x) }");
         assertEval("{ x<-42; y<-asS4(x); isS4(y) }");
         assertEval("{ isS4(NULL) }");
-        assertEval("{ asS4(NULL); isS4(NULL }");
+        assertEval("{ asS4(NULL); isS4(NULL) }");
         assertEval("{  asS4(7:42) }");
     }
 
