@@ -68,7 +68,7 @@ public class TestBuiltin_c extends TestBase {
     @Test
     public void testc10() {
         assertEval(Ignored.Unknown,
-                        "argv <- list(NULL, structure(list(class = 'try-error', condition = structure(list(message = 'supply both 'x' and 'y' or a matrix-like 'x'', call = quote(cor(rnorm(10), NULL))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), .Names = c('class', 'condition')));c(argv[[1]],argv[[2]]);");
+                        "argv <- list(NULL, structure(list(class = 'try-error', condition = structure(list(message = 'supply both x and y or a matrix-like x', call = quote(cor(rnorm(10), NULL))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), .Names = c('class', 'condition')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -127,7 +127,7 @@ public class TestBuiltin_c extends TestBase {
     @Test
     public void testc21() {
         assertEval(Ignored.Unknown,
-                        "argv <- list(NULL, structure(list(class = 'try-error', condition = structure(list(message = \''x' is empty', call = quote(cor(Z[, FALSE], use = 'pairwise.complete.obs', method = 'kendall'))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), .Names = c('class', 'condition')));c(argv[[1]],argv[[2]]);");
+                        "argv <- list(NULL, structure(list(class = 'try-error', condition = structure(list(message = 'x is empty', call = quote(cor(Z[, FALSE], use = 'pairwise.complete.obs', method = 'kendall'))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), .Names = c('class', 'condition')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test

@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 public abstract class CastNode extends UnaryNode {
 
     @TruffleBoundary
-    public static void handleArgumentError(Object arg, RBaseNode callObj, RError.Message message, Object[] messageArgs) {
+    protected static void handleArgumentError(Object arg, RBaseNode callObj, RError.Message message, Object[] messageArgs) {
         if (RContext.getInstance() == null) {
             throw new IllegalArgumentException(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg, messageArgs)));
         } else {
@@ -44,7 +44,7 @@ public abstract class CastNode extends UnaryNode {
     }
 
     @TruffleBoundary
-    public static void handleArgumentWarning(Object arg, RBaseNode callObj, RError.Message message, Object[] messageArgs) {
+    protected static void handleArgumentWarning(Object arg, RBaseNode callObj, RError.Message message, Object[] messageArgs) {
         if (message == null) {
             return;
         }
@@ -56,5 +56,4 @@ public abstract class CastNode extends UnaryNode {
             RError.warning(callObj, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
         }
     }
-
 }

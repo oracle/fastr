@@ -24,7 +24,7 @@ public class TestBuiltin_dput extends TestBase {
 
     @Test
     public void testdput2() {
-        assertEval(Ignored.Unimplemented, "argv <- list(structure(1, .Dim = 1L), structure(1L, class = c('terminal', 'connection')), 95); .Internal(dput(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(1, .Dim = 1L), structure(1L, class = c('terminal', 'connection')), 95); .Internal(dput(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -34,8 +34,7 @@ public class TestBuiltin_dput extends TestBase {
 
     @Test
     public void testdput4() {
-        assertEval(Ignored.Unimplemented,
-                        "argv <- list(structure(numeric(0), .Dim = c(0L, 0L)), structure(1L, class = c('terminal', 'connection')), 69); .Internal(dput(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)), structure(1L, class = c('terminal', 'connection')), 69); .Internal(dput(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
