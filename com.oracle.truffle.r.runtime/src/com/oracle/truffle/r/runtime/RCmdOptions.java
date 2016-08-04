@@ -54,7 +54,7 @@ public final class RCmdOptions {
         EITHER {
             @Override
             public String usage() {
-                throw Utils.fail("can't call usage() on Client.EITHER");
+                throw Utils.rSuicide("can't call usage() on Client.EITHER");
             }
         };
 

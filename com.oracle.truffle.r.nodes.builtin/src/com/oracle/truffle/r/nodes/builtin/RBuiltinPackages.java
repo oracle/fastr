@@ -84,7 +84,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
                     baseEnv.put(methodName, function);
                     baseEnv.lockBinding(methodName);
                 } catch (PutException ex) {
-                    Utils.fail("failed to install builtin function: " + methodName);
+                    Utils.rSuicide("failed to install builtin function: " + methodName);
                 }
             }
         }
@@ -95,13 +95,13 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         try {
             baseSource = RSource.fromFileName(basePathbase.toString());
         } catch (IOException ex) {
-            Utils.fail(String.format("unable to open the base package %s", basePathbase));
+            Utils.rSuicide(String.format("unable to open the base package %s", basePathbase));
         }
         // Load the (stub) DLL for base
         try {
             DLL.loadPackageDLL(baseDirPath.resolve("libs").resolve("base.so").toString(), true, true);
         } catch (DLLException ex) {
-            Utils.fail(ex.getMessage());
+            Utils.rSuicide(ex.getMessage());
         }
         // Any RBuiltinKind.SUBSTITUTE functions installed above should not be overridden
         try {

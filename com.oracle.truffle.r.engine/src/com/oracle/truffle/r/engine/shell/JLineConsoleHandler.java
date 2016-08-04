@@ -48,7 +48,7 @@ class JLineConsoleHandler implements ConsoleHandler {
             console.setHandleUserInterrupt(true);
             console.setExpandEvents(false);
         } catch (IOException ex) {
-            throw Utils.fail("unexpected error opening console reader");
+            throw Utils.rSuicide("unexpected error opening console reader");
         }
         // long start = System.currentTimeMillis();
         printWriter = new PrintWriter(console.getOutput());
@@ -82,7 +82,7 @@ class JLineConsoleHandler implements ConsoleHandler {
         } catch (UserInterruptException e) {
             throw e;
         } catch (Exception ex) {
-            throw Utils.fail("unexpected error reading console input: " + ex);
+            throw Utils.rSuicide("unexpected error reading console input: " + ex);
         }
     }
 

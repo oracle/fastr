@@ -126,7 +126,7 @@ public abstract class RBuiltinPackage {
                 }
             }
         } catch (IOException ex) {
-            Utils.fail("error loading R code from " + pkgName + " : " + ex);
+            Utils.rSuicide("error loading R code from " + pkgName + " : " + ex);
         }
         return componentList;
     }

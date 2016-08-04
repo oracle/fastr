@@ -115,7 +115,7 @@ public final class Utils {
             } catch (IOException ex) {
             }
         }
-        throw Utils.fail("resource " + resourceName + " not found");
+        throw Utils.rSuicide("resource " + resourceName + " not found");
     }
 
     private static String getResourceAsString(InputStream is) throws IOException {
@@ -147,42 +147,26 @@ public final class Utils {
     }
 
     /**
-     * All terminations that happen within a PolyglotEngine context should go through this method.
+     * Called when the system encounters a fatal internal error and must commit suicide (i.e.
+     * terminate). It allows an embedded client to override the default (although they typically
+     * invoke the default eventually).
      */
-    public static RuntimeException exit(int status) {
-        /*
-         * TODO: Ultimately, destroying the context should be triggered from the "outside" of a
-         * PolyglotEngine. This ultimately depends on what the expected semantics of "quit()" in a
-         * polyglot context are.
-         */
-        RPerfStats.report();
-        try {
-            /*
-             * This is not the proper way to dispose a PolyglotEngine, but it doesn't matter since
-             * we're going to System.exit anyway.
-             */
-            RContext.getInstance().destroy();
-        } catch (Throwable t) {
-            // ignore
-        }
-        System.exit(status);
-        return null;
-    }
-
-    public static RuntimeException fail(String msg) {
-        // CheckStyle: stop system..print check
-        System.err.println("FastR internal error: " + msg);
-        // CheckStyle: resume system..print check
-        throw Utils.exit(2);
-    }
-
     public static RuntimeException rSuicide(String msg) {
         if (RInterfaceCallbacks.R_Suicide.isOverridden()) {
             RFFIFactory.getRFFI().getREmbedRFFI().suicide(msg);
-        } else {
-            System.err.println("Fatal error: " + msg);
         }
-        throw Utils.exit(2);
+        throw rSuicideDefault(msg);
+    }
+
+    /**
+     * The default, non-overrideable, suicide call. It prints the message and throws
+     * {@link ExitException}.
+     *
+     * @param msg
+     */
+    public static RuntimeException rSuicideDefault(String msg) {
+        System.err.println("FastR unexpected failure: " + msg);
+        throw new ExitException(2);
     }
 
     private static String userHome;
