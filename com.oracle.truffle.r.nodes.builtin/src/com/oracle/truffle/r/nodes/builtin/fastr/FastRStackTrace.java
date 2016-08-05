@@ -22,19 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-@RBuiltin(name = ".fastr.stacktrace", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"print.frame.contents"})
+@RBuiltin(name = ".fastr.stacktrace", visibility = OFF, kind = PRIMITIVE, parameterNames = {"print.frame.contents"}, behavior = COMPLEX)
 public abstract class FastRStackTrace extends RBuiltinNode {
 
     @Override

@@ -193,8 +193,9 @@ public class RSerialize {
         RFunction getDotDotFindNamespace() {
             if (dotDotFindNamespace == null) {
                 CompilerDirectives.transferToInterpreter();
-                Object f = REnvironment.baseEnv().findFunction("..getNamespace");
-                dotDotFindNamespace = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
+                String name = "..getNamespace";
+                Object f = REnvironment.baseEnv().findFunction(name);
+                dotDotFindNamespace = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, f);
             }
             return dotDotFindNamespace;
         }
@@ -310,7 +311,6 @@ public class RSerialize {
     }
 
     private static class Input extends Common {
-        private static final String UNKNOWN_PACKAGE_SOURCE_PREFIX = "<package:";
 
         protected final PInputStream stream;
         /**
@@ -446,7 +446,7 @@ public class RSerialize {
                      * only used in a warning message in the unlikely event that the namespace
                      * cannot be found.
                      */
-                    Object r = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), null, null, s, "");
+                    Object r = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), null, null, null, s, "");
                     return checkResult(addReadRef(r));
                 }
 
@@ -569,7 +569,7 @@ public class RSerialize {
                                 MaterializedFrame enclosingFrame = ((REnvironment) rpl.getTag()).getFrame();
                                 RFunction func = parseFunction(constants, deparse, enclosingFrame, currentFunctionName);
 
-                                copyAttributes(func, rpl.getAttributes());
+                                RAttributes.copyAttributes(func, rpl.getAttributes());
                                 result = func;
                             } catch (Throwable ex) {
                                 throw new RInternalError(ex, "unserialize - failed to eval deparsed closure");
@@ -594,7 +594,7 @@ public class RSerialize {
                                 result = expr.getDataAt(0);
                                 RAttributes attrs = pl.getAttributes();
                                 if (result instanceof RAttributable) {
-                                    copyAttributes((RAttributable) result, attrs);
+                                    RAttributes.copyAttributes((RAttributable) result, attrs);
                                 }
                             }
                             break;
@@ -847,20 +847,9 @@ public class RSerialize {
             return result;
         }
 
-        private static void copyAttributes(RAttributable obj, RAttributes attrs) {
-            if (attrs == null) {
-                return;
-            }
-            Iterator<RAttribute> iter = attrs.iterator();
-            while (iter.hasNext()) {
-                RAttribute attr = iter.next();
-                obj.setAttr(attr.getName(), attr.getValue());
-            }
-        }
-
         private RExpression parse(Map<String, Object> constants, String deparseRaw) throws IOException {
             try {
-                Source source = RSource.fromText(deparseRaw, UNKNOWN_PACKAGE_SOURCE_PREFIX + packageName + " deparse>");
+                Source source = RSource.fromPackageTextInternal(deparseRaw, packageName);
                 return RContext.getEngine().parse(constants, source);
             } catch (Throwable ex) {
                 /*
@@ -893,7 +882,7 @@ public class RSerialize {
                 Source source;
                 String name;
                 if (sourcePath == null) {
-                    source = RSource.fromText(deparse, UNKNOWN_PACKAGE_SOURCE_PREFIX + packageName + " deparse>");
+                    source = RSource.fromPackageTextInternalWithName(deparse, packageName, currentFunctionName);
                     name = currentFunctionName;
                 } else {
                     source = RSource.fromFileName(deparse, sourcePath);
@@ -930,7 +919,7 @@ public class RSerialize {
         }
 
         private static final String FAILED_DEPARSE_FUNCTION = "function(...) stop(\"FastR error: proxy for lazily loaded function that did not deparse/parse\")";
-        private static final Source FAILED_DEPARSE_FUNCTION_SOURCE = RSource.fromText(FAILED_DEPARSE_FUNCTION, UNKNOWN_PACKAGE_SOURCE_PREFIX + "deparse_error>");
+        private static final Source FAILED_DEPARSE_FUNCTION_SOURCE = RSource.fromTextInternal(FAILED_DEPARSE_FUNCTION, RSource.Internal.DEPARSE_ERROR);
 
         /**
          * GnuR uses a pairlist to represent attributes, whereas FastR uses the abstract RAttributes

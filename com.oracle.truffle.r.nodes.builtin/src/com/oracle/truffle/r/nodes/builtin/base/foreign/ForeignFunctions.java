@@ -11,6 +11,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -60,6 +64,8 @@ import com.oracle.truffle.r.library.utils.CountFields;
 import com.oracle.truffle.r.library.utils.Crc64NodeGen;
 import com.oracle.truffle.r.library.utils.Download;
 import com.oracle.truffle.r.library.utils.MenuNodeGen;
+import com.oracle.truffle.r.library.utils.ObjectSizeNodeGen;
+import com.oracle.truffle.r.library.utils.RprofNodeGen;
 import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
 import com.oracle.truffle.r.library.utils.WriteTable;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
@@ -70,13 +76,11 @@ import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -211,7 +215,7 @@ public class ForeignFunctions {
      * Interface to .Fortran native functions. Some functions have explicit implementations in
      * FastR, otherwise the .Fortran interface uses the machinery that implements the .C interface.
      */
-    @RBuiltin(name = ".Fortran", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"})
+    @RBuiltin(name = ".Fortran", kind = PRIMITIVE, parameterNames = {".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"}, behavior = COMPLEX)
     public abstract static class Fortran extends LookupAdapter {
 
         @Override
@@ -269,7 +273,7 @@ public class ForeignFunctions {
      * Handles the generic case, but also many special case functions that are called from the
      * default packages.
      */
-    @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    @RBuiltin(name = ".Call", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotCall extends LookupAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
@@ -474,7 +478,9 @@ public class ForeignFunctions {
                 case "menu":
                     return MenuNodeGen.create();
                 case "nsl":
+                    return new UnimplementedExternal(name);
                 case "objectSize":
+                    return ObjectSizeNodeGen.create();
                 case "processevents":
                 case "octsize":
                 case "sockconnect":
@@ -538,7 +544,7 @@ public class ForeignFunctions {
         }
     }
 
-    @RBuiltin(name = ".External", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    @RBuiltin(name = ".External", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternal extends LookupAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
@@ -568,8 +574,9 @@ public class ForeignFunctions {
                     return new Download();
                 case "termsform":
                     return getExternalModelBuiltinNode("termsform");
-                case "unzip":
                 case "Rprof":
+                    return RprofNodeGen.create();
+                case "unzip":
                 case "Rprofmem":
                 case "addhistory":
                 case "loadhistory":
@@ -623,7 +630,7 @@ public class ForeignFunctions {
         }
     }
 
-    @RBuiltin(name = ".External2", visibility = RVisibility.CUSTOM, kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    @RBuiltin(name = ".External2", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternal2 extends LookupAdapter {
         private static final Object CALL = "call";
         private static final Object OP = "op";
@@ -696,7 +703,7 @@ public class ForeignFunctions {
         }
     }
 
-    @RBuiltin(name = ".External.graphics", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    @RBuiltin(name = ".External.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternalGraphics extends LookupAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
@@ -752,7 +759,7 @@ public class ForeignFunctions {
         }
     }
 
-    @RBuiltin(name = ".Call.graphics", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    @RBuiltin(name = ".Call.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotCallGraphics extends LookupAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();

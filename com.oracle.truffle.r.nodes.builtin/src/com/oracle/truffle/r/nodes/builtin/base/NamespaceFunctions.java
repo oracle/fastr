@@ -22,13 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.MODIFIES_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -36,7 +39,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class NamespaceFunctions {
 
-    @RBuiltin(name = "getRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"})
+    @RBuiltin(name = "getRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = READS_STATE)
     public abstract static class GetRegisteredNamespace extends RBuiltinNode {
         @Specialization
         protected Object doGetRegisteredNamespace(RAbstractStringVector name) {
@@ -59,7 +62,7 @@ public class NamespaceFunctions {
         }
     }
 
-    @RBuiltin(name = "isRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"})
+    @RBuiltin(name = "isRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = READS_STATE)
     public abstract static class IsRegisteredNamespace extends RBuiltinNode {
         @Specialization
         protected byte doIsRegisteredNamespace(RAbstractStringVector name) {
@@ -82,7 +85,7 @@ public class NamespaceFunctions {
         }
     }
 
-    @RBuiltin(name = "isNamespaceEnv", kind = INTERNAL, parameterNames = {"env"})
+    @RBuiltin(name = "isNamespaceEnv", kind = INTERNAL, parameterNames = {"env"}, behavior = PURE)
     public abstract static class IsNamespaceEnv extends RBuiltinNode {
         @Specialization
         protected byte doIsNamespaceEnv(REnvironment env) {
@@ -95,7 +98,7 @@ public class NamespaceFunctions {
         }
     }
 
-    @RBuiltin(name = "getNamespaceRegistry", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "getNamespaceRegistry", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class GetNamespaceRegistry extends RBuiltinNode {
         @Specialization
         protected REnvironment doGetNamespaceRegistry() {
@@ -103,7 +106,7 @@ public class NamespaceFunctions {
         }
     }
 
-    @RBuiltin(name = "registerNamespace", kind = INTERNAL, parameterNames = {"name", "env"})
+    @RBuiltin(name = "registerNamespace", kind = INTERNAL, parameterNames = {"name", "env"}, behavior = MODIFIES_STATE)
     public abstract static class RegisterNamespace extends RBuiltinNode {
         @Specialization
         protected RNull registerNamespace(String name, REnvironment env) {
@@ -114,7 +117,7 @@ public class NamespaceFunctions {
         }
     }
 
-    @RBuiltin(name = "unregisterNamespace", kind = INTERNAL, parameterNames = {"name"})
+    @RBuiltin(name = "unregisterNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = MODIFIES_STATE)
     public abstract static class UnregisterNamespace extends RBuiltinNode {
         @Specialization
         protected RNull unregisterNamespace(RAbstractStringVector name) {

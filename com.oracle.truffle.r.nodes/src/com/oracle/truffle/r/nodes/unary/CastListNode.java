@@ -27,6 +27,7 @@ import java.util.Iterator;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -45,9 +46,16 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public abstract class CastListNode extends CastBaseNode {
 
-    @Child private CastListNode castListRecursive;
-
     public abstract RList executeList(Object o);
+
+    protected CastListNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    @Override
+    protected final RType getTargetType() {
+        return RType.List;
+    }
 
     @Specialization
     protected RList doNull(@SuppressWarnings("unused") RNull operand) {
@@ -72,7 +80,7 @@ public abstract class CastListNode extends CastBaseNode {
         }
         RList ret = RDataFactory.createList(data, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;

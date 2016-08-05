@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
@@ -67,7 +66,7 @@ public final class REnvVars implements RContext.ContextState {
             // This gets expanded by R code in the system profile
         }
 
-        if (!context.getOptions().getBoolean(RCmdOption.NO_ENVIRON)) {
+        if (!context.getStartParams().getNoRenviron()) {
             String siteFile = envVars.get("R_ENVIRON");
             if (siteFile == null) {
                 siteFile = fileSystem.getPath(rHome, "etc", "Renviron.site").toString();

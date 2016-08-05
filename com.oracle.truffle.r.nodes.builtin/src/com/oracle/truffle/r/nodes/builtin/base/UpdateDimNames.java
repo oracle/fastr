@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -35,10 +36,9 @@ import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "dimnames<-", visibility = RVisibility.ON, kind = PRIMITIVE, parameterNames = {"x", "value"})
+@RBuiltin(name = "dimnames<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
 public abstract class UpdateDimNames extends RBuiltinNode {
 
     protected static final String DIMNAMES_ATTR_KEY = RRuntime.DIMNAMES_ATTR_KEY;
@@ -164,7 +164,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
             RList resDimNames = newDimNames;
             if (newDimNamesLength < dimensions.length) {
                 // resize the array and fill the missing entries with NULL-s
-                resDimNames = resDimNames.copyResized(dimensions.length, true);
+                resDimNames = (RList) resDimNames.copyResized(dimensions.length, true);
                 resDimNames.setAttributes(newDimNames);
                 for (int i = newDimNamesLength; i < dimensions.length; i++) {
                     resDimNames.updateDataAt(i, RNull.instance, null);

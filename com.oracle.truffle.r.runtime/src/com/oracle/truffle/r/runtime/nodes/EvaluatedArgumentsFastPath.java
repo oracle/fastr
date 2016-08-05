@@ -26,7 +26,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.data.FastPathFactory;
+import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 
 final class EvaluatedArgumentsFastPath implements FastPathFactory {
 

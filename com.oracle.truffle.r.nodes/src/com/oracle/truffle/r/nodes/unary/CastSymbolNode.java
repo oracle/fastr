@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -36,6 +37,15 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 public abstract class CastSymbolNode extends CastBaseNode {
 
     @Child private ToStringNode toString = ToStringNodeGen.create();
+
+    protected CastSymbolNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    @Override
+    protected final RType getTargetType() {
+        return RType.Symbol;
+    }
 
     public abstract Object executeSymbol(Object o);
 

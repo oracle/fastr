@@ -23,15 +23,28 @@
 package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * Simple generic base class for pairs of {@link #values} and {@link #signature} (that are not
- * {@link Node}s).
+ * Simple generic base class for pairs of values and signature.
  *
- * @param <T> The type of {@link #values}
+ * @param <T> The type of values
  */
 public class Arguments<T> {
+
+    public static Arguments<RNode> create(RNode[] arguments, ArgumentsSignature signature) {
+        return new Arguments<>(arguments, signature);
+    }
+
+    public static Arguments<RSyntaxNode> create(RSyntaxNode[] arguments, ArgumentsSignature signature) {
+        return new Arguments<>(arguments, signature);
+    }
+
+    public static Arguments<RSyntaxElement> create(RSyntaxElement[] arguments, ArgumentsSignature signature) {
+        return new Arguments<>(arguments, signature);
+    }
 
     /**
      * Array of arguments; semantics have to be specified by child classes.
@@ -43,7 +56,7 @@ public class Arguments<T> {
      */
     private final ArgumentsSignature signature;
 
-    public Arguments(T[] arguments, ArgumentsSignature signature) {
+    protected Arguments(T[] arguments, ArgumentsSignature signature) {
         this.values = arguments;
         this.signature = signature;
     }

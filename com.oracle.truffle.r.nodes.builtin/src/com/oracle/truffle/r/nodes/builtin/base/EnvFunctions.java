@@ -22,9 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_FRAME;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -48,13 +52,12 @@ import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -67,6 +70,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -86,7 +90,7 @@ public class EnvFunctions {
         protected final BranchProfile errorProfile = BranchProfile.create();
     }
 
-    @RBuiltin(name = "as.environment", kind = PRIMITIVE, parameterNames = {"fun"}, dispatch = INTERNAL_GENERIC)
+    @RBuiltin(name = "as.environment", kind = PRIMITIVE, parameterNames = {"fun"}, dispatch = INTERNAL_GENERIC, behavior = COMPLEX)
     public abstract static class AsEnvironment extends Adapter {
 
         @Specialization
@@ -170,7 +174,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "emptyenv", kind = PRIMITIVE, parameterNames = {})
+    @RBuiltin(name = "emptyenv", kind = PRIMITIVE, parameterNames = {}, behavior = PURE)
     public abstract static class EmptyEnv extends RBuiltinNode {
 
         @Specialization
@@ -179,7 +183,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "globalenv", kind = PRIMITIVE, parameterNames = {})
+    @RBuiltin(name = "globalenv", kind = PRIMITIVE, parameterNames = {}, behavior = PURE)
     public abstract static class GlobalEnv extends RBuiltinNode {
 
         @Specialization
@@ -191,7 +195,7 @@ public class EnvFunctions {
     /**
      * Returns the "package:base" environment.
      */
-    @RBuiltin(name = "baseenv", kind = PRIMITIVE, parameterNames = {})
+    @RBuiltin(name = "baseenv", kind = PRIMITIVE, parameterNames = {}, behavior = PURE)
     public abstract static class BaseEnv extends RBuiltinNode {
 
         @Specialization
@@ -200,7 +204,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "topenv", kind = INTERNAL, parameterNames = {"envir", "matchThisEnv"})
+    @RBuiltin(name = "topenv", kind = INTERNAL, parameterNames = {"envir", "matchThisEnv"}, behavior = COMPLEX)
     public abstract static class TopEnv extends Adapter {
 
         @Child private FrameFunctions.ParentFrame parentFrameNode;
@@ -249,7 +253,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "parent.env", kind = INTERNAL, parameterNames = {"env"})
+    @RBuiltin(name = "parent.env", kind = INTERNAL, parameterNames = {"env"}, behavior = READS_FRAME)
     public abstract static class ParentEnv extends Adapter {
 
         @Specialization
@@ -262,7 +266,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "parent.env<-", kind = INTERNAL, parameterNames = {"env", "value"})
+    @RBuiltin(name = "parent.env<-", kind = INTERNAL, parameterNames = {"env", "value"}, behavior = COMPLEX)
     public abstract static class SetParentEnv extends Adapter {
 
         @Specialization
@@ -276,7 +280,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "is.environment", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.environment", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsEnvironment extends RBuiltinNode {
 
         @Specialization
@@ -285,7 +289,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "environment", kind = INTERNAL, parameterNames = {"fun"})
+    @RBuiltin(name = "environment", kind = INTERNAL, parameterNames = {"fun"}, behavior = COMPLEX)
     public abstract static class Environment extends RBuiltinNode {
 
         @Specialization
@@ -331,7 +335,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "environment<-", kind = PRIMITIVE, parameterNames = {"env", "value"})
+    @RBuiltin(name = "environment<-", kind = PRIMITIVE, parameterNames = {"env", "value"}, behavior = COMPLEX)
     public abstract static class UpdateEnvironment extends RBuiltinNode {
 
         private static RAttributeProfiles attributeProfile = RAttributeProfiles.create();
@@ -355,9 +359,7 @@ public class EnvFunctions {
             throw RError.error(this, RError.Message.USE_NULL_ENV_DEFUNCT);
         }
 
-        @Fallback
-        @TruffleBoundary
-        protected Object updateEnvironment(Object obj, Object env) {
+        protected Object updateEnvironmentNonFunction(Object obj, Object env) {
             if (env == RNull.instance || env instanceof REnvironment) {
                 if (obj instanceof RAttributable) {
                     RAttributable attributable = (RAttributable) obj;
@@ -374,9 +376,22 @@ public class EnvFunctions {
                 throw RError.error(this, RError.Message.REPLACEMENT_NOT_ENVIRONMENT);
             }
         }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object updateEnvironment(RAbstractContainer obj, Object env) {
+            return updateEnvironmentNonFunction(obj, env);
+        }
+
+        @Fallback
+        @TruffleBoundary
+        protected Object updateEnvironment(Object obj, Object env) {
+            return updateEnvironmentNonFunction(obj, env);
+        }
+
     }
 
-    @RBuiltin(name = "environmentName", kind = INTERNAL, parameterNames = {"fun"})
+    @RBuiltin(name = "environmentName", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
     public abstract static class EnvironmentName extends RBuiltinNode {
 
         @Specialization
@@ -391,7 +406,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "new.env", kind = INTERNAL, parameterNames = {"hash", "parent", "size"})
+    @RBuiltin(name = "new.env", kind = INTERNAL, parameterNames = {"hash", "parent", "size"}, behavior = COMPLEX)
     public abstract static class NewEnv extends RBuiltinNode {
 
         @Override
@@ -408,7 +423,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "search", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "search", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class Search extends RBuiltinNode {
         @Specialization
         protected RStringVector search() {
@@ -416,7 +431,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "lockEnvironment", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"env", "bindings"})
+    @RBuiltin(name = "lockEnvironment", visibility = OFF, kind = INTERNAL, parameterNames = {"env", "bindings"}, behavior = COMPLEX)
     public abstract static class LockEnvironment extends RBuiltinNode {
 
         @Specialization
@@ -426,7 +441,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "environmentIsLocked", kind = INTERNAL, parameterNames = {"env"})
+    @RBuiltin(name = "environmentIsLocked", kind = INTERNAL, parameterNames = {"env"}, behavior = PURE)
     public abstract static class EnvironmentIsLocked extends RBuiltinNode {
         @Specialization
         protected Object lockEnvironment(REnvironment env) {
@@ -443,7 +458,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "lockBinding", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "env"})
+    @RBuiltin(name = "lockBinding", visibility = OFF, kind = INTERNAL, parameterNames = {"sym", "env"}, behavior = COMPLEX)
     public abstract static class LockBinding extends RBuiltinNode {
         @Specialization
         protected Object lockBinding(RSymbol sym, REnvironment env) {
@@ -457,7 +472,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "unlockBinding", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "env"})
+    @RBuiltin(name = "unlockBinding", visibility = OFF, kind = INTERNAL, parameterNames = {"sym", "env"}, behavior = COMPLEX)
     public abstract static class UnlockBinding extends RBuiltinNode {
         @Specialization
         protected RNull unlockBinding(RSymbol sym, REnvironment env) {
@@ -471,7 +486,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "bindingIsLocked", kind = INTERNAL, parameterNames = {"sym", "env"})
+    @RBuiltin(name = "bindingIsLocked", kind = INTERNAL, parameterNames = {"sym", "env"}, behavior = PURE)
     public abstract static class BindingIsLocked extends RBuiltinNode {
         @Specialization
         protected Object bindingIsLocked(RSymbol sym, REnvironment env) {
@@ -484,7 +499,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "makeActiveBinding", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "fun", "env"})
+    @RBuiltin(name = "makeActiveBinding", visibility = OFF, kind = INTERNAL, parameterNames = {"sym", "fun", "env"}, behavior = COMPLEX)
     public abstract static class MakeActiveBinding extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -494,7 +509,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "bindingIsActive", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"sym", "env"})
+    @RBuiltin(name = "bindingIsActive", kind = INTERNAL, parameterNames = {"sym", "env"}, behavior = PURE)
     public abstract static class BindingIsActive extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -504,7 +519,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "env2list", kind = INTERNAL, parameterNames = {"x", "all.names", "sorted"})
+    @RBuiltin(name = "env2list", kind = INTERNAL, parameterNames = {"x", "all.names", "sorted"}, behavior = PURE)
     public abstract static class EnvToList extends RBuiltinNode {
 
         @Child private CopyNode copy;

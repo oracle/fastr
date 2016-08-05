@@ -44,14 +44,12 @@ import com.oracle.truffle.r.nodes.builtin.base.foreign.DotC;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.DotCNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.ForeignFunctions;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.ForeignFunctionsFactory;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRCallCounting;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRCallCountingFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContext;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebug;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebugNodeGen;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRFunctionTimer;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRFunctionTimerFactory;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRFunctionProfiler;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRFunctionProfilerFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRIdentity;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRIdentityNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInspect;
@@ -76,8 +74,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrls;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrlsNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNode;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.data.FastPathFactory;
+import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -138,6 +136,7 @@ public class BasePackage extends RBuiltinPackage {
         add(AsInteger.class, AsIntegerNodeGen::create);
         add(AsLogical.class, AsLogicalNodeGen::create);
         add(SetS4Object.class, SetS4ObjectNodeGen::create);
+        add(SetTimeLimit.class, SetTimeLimitNodeGen::create);
         add(AsRaw.class, AsRawNodeGen::create);
         add(AsVector.class, AsVectorNodeGen::create);
         add(Assign.class, AssignNodeGen::create);
@@ -277,10 +276,7 @@ public class BasePackage extends RBuiltinPackage {
         add(WithVisible.class, WithVisibleNodeGen::create);
         add(Exists.class, ExistsNodeGen::create);
         add(Expression.class, ExpressionNodeGen::create);
-        add(FastRCallCounting.CreateCallCounter.class, FastRCallCountingFactory.CreateCallCounterNodeGen::create);
-        add(FastRCallCounting.GetCallCounter.class, FastRCallCountingFactory.GetCallCounterNodeGen::create);
         add(FastRContext.CloseChannel.class, FastRContextFactory.CloseChannelNodeGen::create);
-        add(FastRContext.Create.class, FastRContextFactory.CreateNodeGen::create);
         add(FastRContext.CreateChannel.class, FastRContextFactory.CreateChannelNodeGen::create);
         add(FastRContext.Eval.class, FastRContextFactory.EvalNodeGen::create);
         add(FastRContext.Get.class, FastRContextFactory.GetNodeGen::create);
@@ -293,8 +289,10 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRContext.Join.class, FastRContextFactory.JoinNodeGen::create);
         add(FastrDqrls.class, FastrDqrlsNodeGen::create);
         add(FastRDebug.class, FastRDebugNodeGen::create);
-        add(FastRFunctionTimer.CreateFunctionTimer.class, FastRFunctionTimerFactory.CreateFunctionTimerNodeGen::create);
-        add(FastRFunctionTimer.GetFunctionTimer.class, FastRFunctionTimerFactory.GetFunctionTimerNodeGen::create);
+        add(FastRFunctionProfiler.Create.class, FastRFunctionProfilerFactory.CreateNodeGen::create);
+        add(FastRFunctionProfiler.Get.class, FastRFunctionProfilerFactory.GetNodeGen::create);
+        add(FastRFunctionProfiler.Reset.class, FastRFunctionProfilerFactory.ResetNodeGen::create);
+        add(FastRFunctionProfiler.Clear.class, FastRFunctionProfilerFactory.ClearNodeGen::create);
         add(FastRIdentity.class, FastRIdentityNodeGen::create);
         add(FastRInspect.class, FastRInspectNodeGen::create);
         add(FastRInterop.Eval.class, FastRInteropFactory.EvalNodeGen::create);
@@ -471,7 +469,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Mean.class, MeanNodeGen::create);
         add(Merge.class, MergeNodeGen::create);
         add(Min.class, MinNodeGen::create);
-        add(Missing.class, MissingNodeGen::create);
+        add(Missing.class, Missing::create);
         add(NumericalFunctions.Mod.class, NumericalFunctionsFactory.ModNodeGen::create);
         add(NArgs.class, NArgsNodeGen::create);
         add(NChar.class, NCharNodeGen::create);
@@ -526,6 +524,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Row.class, RowNodeGen::create);
         add(RowMeans.class, RowMeansNodeGen::create);
         add(RowSums.class, RowSumsNodeGen::create);
+        add(RowsumFunctions.Rowsum.class, RowsumFunctionsFactory.RowsumNodeGen::create);
         add(S3DispatchFunctions.NextMethod.class, S3DispatchFunctionsFactory.NextMethodNodeGen::create);
         add(S3DispatchFunctions.UseMethod.class, S3DispatchFunctionsFactory.UseMethodNodeGen::create);
         add(Sample.class, SampleNodeGen::create);
@@ -581,6 +580,9 @@ public class BasePackage extends RBuiltinPackage {
         add(TraceFunctions.PrimTrace.class, TraceFunctionsFactory.PrimTraceNodeGen::create);
         add(TraceFunctions.PrimUnTrace.class, TraceFunctionsFactory.PrimUnTraceNodeGen::create);
         add(TraceFunctions.TraceOnOff.class, TraceFunctionsFactory.TraceOnOffNodeGen::create);
+        add(TraceFunctions.Tracemem.class, TraceFunctionsFactory.TracememNodeGen::create);
+        add(TraceFunctions.Retracemem.class, TraceFunctionsFactory.RetracememNodeGen::create);
+        add(TraceFunctions.Untracemem.class, TraceFunctionsFactory.UntracememNodeGen::create);
         add(Transpose.class, TransposeNodeGen::create);
         add(TrigExpFunctions.Acos.class, TrigExpFunctionsFactory.AcosNodeGen::create);
         add(TrigExpFunctions.Acosh.class, TrigExpFunctionsFactory.AcoshNodeGen::create);
@@ -628,7 +630,7 @@ public class BasePackage extends RBuiltinPackage {
     }
 
     private static void addFastPath(MaterializedFrame baseFrame, String name, FastPathFactory factory) {
-        RFunction function = ReadVariableNode.lookupFunction(name, baseFrame, false);
+        RFunction function = ReadVariableNode.lookupFunction(name, baseFrame);
         ((RRootNode) function.getRootNode()).setFastPath(factory);
     }
 
@@ -660,7 +662,7 @@ public class BasePackage extends RBuiltinPackage {
 
     private static void setContainsDispatch(MaterializedFrame baseFrame, String... functions) {
         for (String name : functions) {
-            RFunction function = ReadVariableNode.lookupFunction(name, baseFrame, false);
+            RFunction function = ReadVariableNode.lookupFunction(name, baseFrame);
             ((RRootNode) function.getRootNode()).setContainsDispatch(true);
         }
     }

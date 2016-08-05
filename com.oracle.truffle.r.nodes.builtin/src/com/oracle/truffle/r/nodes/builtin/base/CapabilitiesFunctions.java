@@ -22,12 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public class CapabilitiesFunctions {
 
-    @RBuiltin(name = "capabilities", kind = RBuiltinKind.INTERNAL, parameterNames = {})
+    @RBuiltin(name = "capabilities", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class Capabilities extends RBuiltinNode {
         private enum Capability {
             jpeg(false, null),
@@ -82,7 +83,7 @@ public class CapabilitiesFunctions {
                 boolean value = c.defValue;
                 switch (c) {
                     case cledit:
-                        value = RContext.getInstance().isInteractive() && !RContext.getInstance().getOptions().getBoolean(RCmdOptions.RCmdOption.NO_READLINE);
+                        value = RContext.getInstance().isInteractive() && !RContext.getInstance().getStartParams().getNoReadline();
                         break;
                 }
                 data[c.ordinal()] = RRuntime.asLogical(value);

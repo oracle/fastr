@@ -10,17 +10,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
-@RBuiltin(name = "date", kind = RBuiltinKind.INTERNAL, parameterNames = {})
+@RBuiltin(name = "date", kind = INTERNAL, parameterNames = {}, behavior = IO)
 public abstract class Date extends RBuiltinNode {
 
     @Specialization

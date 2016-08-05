@@ -22,71 +22,32 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import java.util.Arrays;
-
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@SuppressWarnings("unused")
-@RBuiltin(name = "gettext", kind = INTERNAL, parameterNames = {"...", "domain"})
+@RBuiltin(name = "gettext", kind = INTERNAL, parameterNames = {"domain", "args"}, behavior = PURE)
 public abstract class GetText extends RBuiltinNode {
 
-    @Child private CastToVectorNode castVector;
-    @Child private CastStringNode castString;
-
-    private final NACheck elementNACheck = NACheck.create();
-
-    private Object castString(Object operand) {
-        if (castString == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(false, true, false, false));
-        }
-        return castString.execute(operand);
-    }
-
-    private Object castVector(Object value) {
-        if (castVector == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeGen.create(false));
-        }
-        return castVector.execute(value);
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("domain").asStringVector().findFirst("");
+        casts.arg("args").asStringVector();
     }
 
     @Specialization
-    protected RStringVector getText(RArgsValuesAndNames varargs, Object domain) {
-        Object[] argValues = varargs.getArguments();
-        String[] a = new String[0];
-        int aLength = 0;
-        int index = 0;
-        for (int i = 0; i < argValues.length; i++) {
-            Object v = castVector(argValues[i]);
-            if (v != RNull.instance) {
-                RStringVector vector = (RStringVector) castString(v);
-                elementNACheck.enable(vector);
-                aLength += vector.getLength();
-                a = Utils.resizeArray(a, Math.max(aLength, a.length * 2));
-                for (int j = 0; j < vector.getLength(); j++) {
-                    a[index] = vector.getDataAt(j);
-                    elementNACheck.check(a[index]);
-                    index++;
-                }
-            }
-        }
+    protected RAbstractStringVector getText(@SuppressWarnings("unused") String domain, RAbstractStringVector texts) {
+        return texts;
+    }
 
-        return RDataFactory.createStringVector(a.length == aLength ? a : Arrays.copyOf(a, aLength), elementNACheck.neverSeenNA());
+    @Specialization
+    protected RNull getText(@SuppressWarnings("unused") String domain, RNull texts) {
+        return texts;
     }
 }

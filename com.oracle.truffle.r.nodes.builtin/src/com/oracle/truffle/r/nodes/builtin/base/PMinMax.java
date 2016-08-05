@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -42,9 +43,9 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -332,7 +333,7 @@ public abstract class PMinMax extends RBuiltinNode {
         throw RError.error(this, RError.Message.INVALID_INPUT_TYPE);
     }
 
-    @RBuiltin(name = "pmax", kind = INTERNAL, parameterNames = {"na.rm", "..."})
+    @RBuiltin(name = "pmax", kind = INTERNAL, parameterNames = {"na.rm", "..."}, behavior = PURE)
     public abstract static class PMax extends PMinMax {
 
         public PMax() {
@@ -341,7 +342,7 @@ public abstract class PMinMax extends RBuiltinNode {
         }
     }
 
-    @RBuiltin(name = "pmin", kind = INTERNAL, parameterNames = {"na.rm", "..."})
+    @RBuiltin(name = "pmin", kind = INTERNAL, parameterNames = {"na.rm", "..."}, behavior = PURE)
     public abstract static class PMin extends PMinMax {
 
         public PMin() {

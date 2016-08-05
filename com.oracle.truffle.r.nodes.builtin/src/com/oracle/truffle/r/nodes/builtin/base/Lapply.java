@@ -11,7 +11,8 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -20,9 +21,11 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -34,12 +37,12 @@ import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeG
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize.State;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -59,10 +62,10 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *
  * See the comment in {@link VApply} regarding "...".
  */
-@RBuiltin(name = "lapply", kind = INTERNAL, parameterNames = {"X", "FUN"}, splitCaller = true)
+@RBuiltin(name = "lapply", kind = INTERNAL, parameterNames = {"X", "FUN"}, splitCaller = true, behavior = COMPLEX)
 public abstract class Lapply extends RBuiltinNode {
 
-    private static final Source CALL_SOURCE = RSource.fromText("FUN(X[[i]], ...)", "lapply");
+    private static final Source CALL_SOURCE = RSource.fromTextInternal("FUN(X[[i]], ...)", RSource.Internal.LAPPLY);
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -128,23 +131,35 @@ public abstract class Lapply extends RBuiltinNode {
 
         public abstract Object[] execute(VirtualFrame frame, Object vector, RFunction function);
 
-        protected static FrameSlot createSlot(Frame frame, String name) {
-            return frame.getFrameDescriptor().findOrAddFrameSlot(name);
+        protected static FrameSlot createIndexSlot(Frame frame) {
+            return frame.getFrameDescriptor().findOrAddFrameSlot(INDEX_NAME, FrameSlotKind.Int);
+        }
+
+        protected static FrameSlot createVectorSlot(Frame frame) {
+            return frame.getFrameDescriptor().findOrAddFrameSlot(VECTOR_NAME, FrameSlotKind.Object);
         }
 
         @Specialization
         protected Object[] cachedLApply(VirtualFrame frame, Object vector, RFunction function, //
-                        @Cached("createSlot(frame, INDEX_NAME)") FrameSlot indexSlot, //
-                        @Cached("createSlot(frame, VECTOR_NAME)") FrameSlot vectorSlot, //
+                        @Cached("createIndexSlot(frame)") FrameSlot indexSlot, //
+                        @Cached("createVectorSlot(frame)") FrameSlot vectorSlot, //
                         @Cached("create()") RLengthNode lengthNode, //
+                        @Cached("createCountingProfile()") LoopConditionProfile loop, //
+                        @Cached("createCallNode()") RCallNode firstCallNode, //
                         @Cached("createCallNode()") RCallNode callNode) {
             // TODO: R switches to double if x.getLength() is greater than 2^31-1
             frame.setObject(vectorSlot, vector);
             int length = lengthNode.executeInteger(frame, vector);
             Object[] result = new Object[length];
-            for (int i = 1; i <= length; i++) {
-                frame.setInt(indexSlot, i);
-                result[i - 1] = callNode.execute(frame, function);
+            if (length > 0) {
+                reportWork(this, length);
+                loop.profileCounted(length);
+                frame.setInt(indexSlot, 1);
+                result[0] = firstCallNode.execute(frame, function);
+                for (int i = 2; loop.inject(i <= length); i++) {
+                    frame.setInt(indexSlot, i);
+                    result[i - 1] = callNode.execute(frame, function);
+                }
             }
             return result;
         }

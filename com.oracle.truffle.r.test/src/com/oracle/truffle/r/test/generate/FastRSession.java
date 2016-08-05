@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
+import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
@@ -117,11 +117,6 @@ public final class FastRSession implements RSession {
         }
 
         @Override
-        public int getWidth() {
-            return RContext.CONSOLE_WIDTH;
-        }
-
-        @Override
         public String getInputDescription() {
             return "<test input>";
         }
@@ -142,7 +137,7 @@ public final class FastRSession implements RSession {
         return singleton;
     }
 
-    public static final Source GET_CONTEXT = RSource.fromText("invisible(.fastr.context.get())", "<get_context>");
+    public static final Source GET_CONTEXT = RSource.fromTextInternal("invisible(.fastr.context.get())", RSource.Internal.GET_CONTEXT);
 
     public PolyglotEngine createTestContext(ContextInfo contextInfoArg) {
         create();
@@ -152,22 +147,23 @@ public final class FastRSession implements RSession {
         } else {
             contextInfo = contextInfoArg;
         }
-        return contextInfo.apply(PolyglotEngine.newBuilder()).build();
+        return contextInfo.createVM();
     }
 
     public ContextInfo createContextInfo(ContextKind contextKind) {
-        RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
-        return ContextInfo.create(options, contextKind, mainContext, consoleHandler, TimeZone.getTimeZone("CET"));
+        RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[0], false), false);
+        return ContextInfo.create(params, contextKind, mainContext, consoleHandler, TimeZone.getTimeZone("CET"));
     }
 
     private FastRSession() {
         consoleHandler = new TestConsoleHandler();
         try {
-            RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[]{"--no-restore"});
-            ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
-            main = info.apply(PolyglotEngine.newBuilder()).build();
+            RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[]{"--no-restore"}, false), false);
+            ContextInfo info = ContextInfo.create(params, ContextKind.SHARE_NOTHING, null, consoleHandler);
+            main = info.createVM();
             try {
                 mainContext = main.eval(GET_CONTEXT).as(RContext.class);
+                emitIO();
             } catch (IOException e) {
                 throw new RuntimeException("error while retrieving test context", e);
             }
@@ -244,10 +240,11 @@ public final class FastRSession implements RSession {
                     try {
                         String input = consoleHandler.readLine();
                         while (input != null) {
-                            Source source = RSource.fromText(input, RInternalSourceDescriptions.UNIT_TEST);
+                            Source source = RSource.fromTextInternal(input, RSource.Internal.UNIT_TEST);
                             try {
                                 vm.eval(source);
                                 input = consoleHandler.readLine();
+                                emitIO();
                             } catch (IncompleteSourceException | com.oracle.truffle.api.vm.IncompleteSourceException e) {
                                 String additionalInput = consoleHandler.readLine();
                                 if (additionalInput == null) {
@@ -288,5 +285,9 @@ public final class FastRSession implements RSession {
     @Override
     public String name() {
         return "FastR";
+    }
+
+    @SuppressWarnings("unused")
+    static void emitIO() throws IOException {
     }
 }

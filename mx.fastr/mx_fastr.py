@@ -46,7 +46,9 @@ _r_command_project = 'com.oracle.truffle.r.engine'
 _repl_command = 'com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient'
 _command_class_dict = {'r': _r_command_project + ".shell.RCommand",
                        'rscript': _r_command_project + ".shell.RscriptCommand",
-                        'rrepl': _repl_command}
+                        'rrepl': _repl_command,
+                        'rembed': _r_command_project + ".shell.REmbedded",
+                    }
 # benchmarking support
 def r_path():
     return join(_fastr_suite.dir, 'bin', 'R')
@@ -99,13 +101,16 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
         vmArgs.append(_command_class_dict[command.lower()])
     return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
 
+def r_classpath(args):
+    print mx.classpath(_r_command_project)
+
 def _sanitize_vmArgs(jdk, vmArgs):
     '''
     jdk dependent analysis of vmArgs to remove those that are not appropriate for the
     chosen jdk. It is easier to allow clients to set anything they want and filter them
     out here.
     '''
-    jvmci_jdk = jdk.tag == 'jvmci'
+    jvmci_jdk = jdk.tag is not None and 'jvmci' in jdk.tag
     jvmci_disabled = '-XX:-EnableJVMCI' in vmArgs
 
     xargs = []
@@ -130,8 +135,8 @@ def _graal_options(nocompile=False):
     else:
         return []
 
-def _get_ldpaths(lib_env_name):
-    ldpaths = os.path.join(os.environ['R_HOME'], 'etc', 'ldpaths')
+def _get_ldpaths(env, lib_env_name):
+    ldpaths = os.path.join(env['R_HOME'], 'etc', 'ldpaths')
     command = ['bash', '-c', 'source ' + ldpaths + ' && env']
 
     try:
@@ -168,7 +173,7 @@ def setREnvironment(env=None):
         if lib_env in env:
             lib_value = env[lib_env]
         else:
-            lib_value = _get_ldpaths(lib_env)
+            lib_value = _get_ldpaths(env, lib_env)
 
         env[lib_env] = lib_value
 
@@ -213,6 +218,9 @@ def rscript(args, parser=None, **kwargs):
 def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
     run_r(args, 'rrepl')
+
+def rembed(args, nonZeroIsFatal=True, extraVmArgs=None):
+    run_r(args, 'rembed')
 
 def _fastr_gate_runner(args, tasks):
     # Until fixed, we call Checkstyle here and limit to primary
@@ -432,9 +440,12 @@ def rbcheck(args):
 def rbdiag(args):
     '''Diagnoses FastR builtins
 
-	-v	Verbose output including the list of unimplemented specializations
-	-n	Ignore RNull as an argument type
-	-m	Ignore RMissing as an argument type
+	-v		Verbose output including the list of unimplemented specializations
+	-n		Ignore RNull as an argument type
+	-m		Ignore RMissing as an argument type
+    --sweep		Performs the 'chimney-sweeping'. The sample combination selection method is determined automatically.
+    --sweep-lite	Performs the 'chimney-sweeping'. The diagonal sample selection method is used.
+    --sweep-total	Performs the 'chimney-sweeping'. The total sample selection method is used.
 
 	If no builtin is specified, all registered builtins are diagnosed.
 
@@ -443,8 +454,15 @@ def rbdiag(args):
     	mx rbdiag
 		mx rbdiag colSums colMeans -v
 		mx rbdiag scan -m -n
+    	mx rbdiag colSums --sweep
     '''
     cp = mx.classpath('com.oracle.truffle.r.nodes.test')
+
+    setREnvironment()
+    os.environ["FASTR_TESTGEN_GNUR"] = "internal"
+    # this should work for Linux and Mac:
+    os.environ["TZDIR"] = "/usr/share/zoneinfo/"
+
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics'] + args)
 
 def rcmplib(args):
@@ -500,12 +518,14 @@ _commands = {
     'junitnoapps' : [junit_noapps, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
-    'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m]'],
+    'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep-lite | --sweep-total'],
     'rcmplib' : [rcmplib, ['options']],
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'rrepl' : [rrepl, '[options]'],
+    'rembed' : [rembed, '[options]'],
     'installpkgs' : [installpkgs, '[options]'],
     'installcran' : [installpkgs, '[options]'],
+    'r-cp' : [r_classpath, '[options]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)

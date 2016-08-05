@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.util.Map;
 import java.util.Map.Entry;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -39,7 +40,6 @@ public enum FastROptions {
     PrintErrorStacktracesToFile("Dumps Java and R stack traces to 'fastr_errors.log' for all errors", true),
     CheckResultCompleteness("Assert completeness of results vectors after evaluating unit tests and R shell commands", true),
     Debug("Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.", null, true),
-    Instrument("Enable (Old) Instrumentation", false),
     TraceCalls("Trace all R function calls", false),
     TraceCallsToFile("TraceCalls output is sent to 'fastr_tracecalls.log'", false),
     TraceNativeCalls("Trace all native function calls (performed via .Call, .External, etc.)", false),
@@ -162,6 +162,20 @@ public enum FastROptions {
                         System.exit(2);
                     }
                     FastROptions.setValue(name, entry.getValue());
+                }
+            }
+        }
+        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+            String name = entry.getKey();
+            if (name.startsWith("FASTR_OPTION_")) {
+                name = name.replace("FASTR_OPTION_", "");
+                String value = entry.getValue();
+                if (value == null || value.equals("true") || value.equals("")) {
+                    FastROptions.setValue(name, true);
+                } else if (value.equals("false")) {
+                    FastROptions.setValue(name, false);
+                } else {
+                    FastROptions.setValue(name, value);
                 }
             }
         }

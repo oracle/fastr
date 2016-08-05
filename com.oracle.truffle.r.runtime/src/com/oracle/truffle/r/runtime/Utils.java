@@ -50,7 +50,6 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.nodes.GraphPrintVisitor;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -61,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class Utils {
@@ -95,11 +95,11 @@ public final class Utils {
         try {
             URL url = ResourceHandlerFactory.getHandler().getResource(clazz, resourceName);
             if (url == null) {
-                throw new IOException();
+                throw RInternalError.shouldNotReachHere("resource " + resourceName + " not found, context: " + clazz);
             }
-            return RSource.fromFileName(url.getPath());
+            return RSource.fromURL(url, resourceName);
         } catch (IOException ex) {
-            throw Utils.fail("resource " + resourceName + " not found");
+            throw RInternalError.shouldNotReachHere("resource " + resourceName + " not found, context: " + clazz);
         }
     }
 
@@ -115,7 +115,7 @@ public final class Utils {
             } catch (IOException ex) {
             }
         }
-        throw Utils.fail("resource " + resourceName + " not found");
+        throw Utils.rSuicide("resource " + resourceName + " not found");
     }
 
     private static String getResourceAsString(InputStream is) throws IOException {
@@ -147,42 +147,26 @@ public final class Utils {
     }
 
     /**
-     * All terminations that happen within a PolyglotEngine context should go through this method.
+     * Called when the system encounters a fatal internal error and must commit suicide (i.e.
+     * terminate). It allows an embedded client to override the default (although they typically
+     * invoke the default eventually).
      */
-    public static RuntimeException exit(int status) {
-        /*
-         * TODO: Ultimately, destroying the context should be triggered from the "outside" of a
-         * PolyglotEngine. This ultimately depends on what the expected semantics of "quit()" in a
-         * polyglot context are.
-         */
-        RPerfStats.report();
-        if (RContext.getInstance() != null && RContext.getInstance().getOptions() != null && RContext.getInstance().getOptions().getString(RCmdOption.DEBUGGER) != null) {
-            throw new DebugExitException();
-        } else {
-            try {
-                /*
-                 * This is not the proper way to dispose a PolyglotEngine, but it doesn't matter
-                 * since we're going to System.exit anyway.
-                 */
-                RContext.getInstance().destroy();
-            } catch (Throwable t) {
-                // ignore
-            }
-            System.exit(status);
-            return null;
+    public static RuntimeException rSuicide(String msg) {
+        if (RInterfaceCallbacks.R_Suicide.isOverridden()) {
+            RFFIFactory.getRFFI().getREmbedRFFI().suicide(msg);
         }
+        throw rSuicideDefault(msg);
     }
 
-    public static RuntimeException fail(String msg) {
-        // CheckStyle: stop system..print check
-        System.err.println("FastR internal error: " + msg);
-        // CheckStyle: resume system..print check
-        throw Utils.exit(2);
-    }
-
-    public static RuntimeException fatalError(String msg) {
-        System.err.println("Fatal error: " + msg);
-        throw Utils.exit(2);
+    /**
+     * The default, non-overrideable, suicide call. It prints the message and throws
+     * {@link ExitException}.
+     *
+     * @param msg
+     */
+    public static RuntimeException rSuicideDefault(String msg) {
+        System.err.println("FastR unexpected failure: " + msg);
+        throw new ExitException(2);
     }
 
     private static String userHome;
@@ -247,6 +231,19 @@ public final class Utils {
 
     public static void updateCurwd(String path) {
         wdState().setCurrent(path);
+    }
+
+    /**
+     * Returns a {@link Path} for a log file with base name {@code fileName}, taking into account
+     * whether the system is running in embedded mode. In the latter case, we can't assume that the
+     * cwd is writable. Plus some embedded apps, e.g. RStudio, spawn multiple R sub-processes
+     * concurrently so we tag the file with the pid.
+     */
+    public static Path getLogPath(String fileName) {
+        String root = RContext.isEmbedded() ? "/tmp" : REnvVars.rHome();
+        int pid = RFFIFactory.getRFFI().getBaseRFFI().getpid();
+        String baseName = RContext.isEmbedded() ? fileName + "-" + Integer.toString(pid) : fileName;
+        return FileSystems.getDefault().getPath(root, baseName);
     }
 
     /**
@@ -446,10 +443,7 @@ public final class Utils {
                     SourceSection ss = sn != null ? sn.getSourceSection() : null;
                     // fabricate a srcref attribute from ss
                     Source source = ss != null ? ss.getSource() : null;
-                    String path = source != null ? source.getPath() : null;
-                    if (path != null && RInternalSourceDescriptions.isInternal(path)) {
-                        path = null;
-                    }
+                    String path = RSource.getPath(source);
                     RStringVector callerSource = RDataFactory.createStringVectorFromScalar(RContext.getRRuntimeASTAccess().getCallerSource(call));
                     if (path != null) {
                         callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(ss, path));
@@ -531,11 +525,6 @@ public final class Utils {
             }
             RCaller call = RArguments.getCall(unwrapped);
             if (call != null) {
-                /*
-                 * Log the frame depths as a triple: d,e,p, where 'd' is the actual depth, 'e' is
-                 * the effective depth and 'p' is the promise frame depth, or -1 if no promise
-                 * evaluation in progress.
-                 */
                 String callSrc = call.isValidCaller() ? RContext.getRRuntimeASTAccess().getCallerSource(call) : "<invalid call>";
                 int depth = RArguments.getDepth(unwrapped);
                 str.append("Frame(d=").append(depth).append("): ").append(callTarget).append(isVirtual ? " (virtual)" : "");

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -24,11 +24,18 @@
 .PHONY: all clean
 
 export TOPDIR = $(CURDIR)
+OSNAME := $(shell uname)
 
 all:
 	$(MAKE) -C urand
 	$(MAKE) -C packages
+ifneq ($(OSNAME), SunOS)
+	$(MAKE) -C embedded
+endif
 
 clean:
 	$(MAKE) -C urand clean
 	$(MAKE) -C packages clean
+ifneq ($(OSNAME), SunOS)
+	$(MAKE) -C embedded clean
+endif

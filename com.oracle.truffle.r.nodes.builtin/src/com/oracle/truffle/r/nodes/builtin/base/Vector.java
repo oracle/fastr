@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -31,12 +33,12 @@ import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 
-@RBuiltin(name = "vector", kind = INTERNAL, parameterNames = {"mode", "length"})
+@RBuiltin(name = "vector", kind = INTERNAL, parameterNames = {"mode", "length"}, behavior = PURE)
 public abstract class Vector extends RBuiltinNode {
 
     private static final String CACHED_MODES_LIMIT = "3";
@@ -45,7 +47,7 @@ public abstract class Vector extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.convertToInteger(1);
+        casts.arg("length").asIntegerVector().mustBe(singleElement()).findFirst();
     }
 
     protected RType modeToType(String mode) {
@@ -56,9 +58,10 @@ public abstract class Vector extends RBuiltinNode {
         return type;
     }
 
-    @SuppressWarnings("unused")
     @Specialization(guards = {"mode == cachedMode"}, limit = CACHED_MODES_LIMIT)
-    Object vectorCached(String mode, int length, @Cached("mode") String cachedMode, @Cached("modeToType(mode)") RType type) {
+    Object vectorCached(@SuppressWarnings("unused") String mode, int length,
+                    @SuppressWarnings("unused") @Cached("mode") String cachedMode,
+                    @Cached("modeToType(mode)") RType type) {
         return createType(type, length);
     }
 

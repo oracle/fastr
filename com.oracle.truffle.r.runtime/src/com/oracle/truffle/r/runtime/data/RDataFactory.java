@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
@@ -434,6 +435,10 @@ public final class RDataFactory {
             throw RInternalError.shouldNotReachHere();
         }
         return traceDataCreated(new RPromise.PromisedPromise(exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback));
+    }
+
+    public static Object createLangPairList(int size) {
+        return size == 0 ? RNull.instance : traceDataCreated(RPairList.create(size, SEXPTYPE.LANGSXP));
     }
 
     public static Object createPairList(int size) {

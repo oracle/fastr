@@ -56,11 +56,11 @@ public abstract class ConditionalMapNode extends CastNode {
 
     @Specialization(guards = "doMap(x)")
     protected Object map(Object x) {
-        return trueBranch.execute(x);
+        return trueBranch == null ? x : trueBranch.execute(x);
     }
 
     @Specialization(guards = "!doMap(x)")
     protected Object noMap(Object x) {
-        return x;
+        return falseBranch == null ? x : falseBranch.execute(x);
     }
 }

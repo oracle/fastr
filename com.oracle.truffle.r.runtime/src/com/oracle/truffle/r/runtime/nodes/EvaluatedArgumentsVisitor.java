@@ -28,6 +28,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 final class Info {
     public static final Info EMPTY = new Info(Collections.emptySet(), Collections.emptySet(), false);
@@ -85,9 +88,39 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
 
     @Override
     protected Info visit(RSyntaxCall element) {
-        if (element.getSyntaxLHS() instanceof RSyntaxLookup) {
-            String symbol = ((RSyntaxLookup) element.getSyntaxLHS()).getIdentifier();
+        RSyntaxElement lhs = element.getSyntaxLHS();
+        if (lhs instanceof RSyntaxLookup) {
+            String symbol = ((RSyntaxLookup) lhs).getIdentifier();
             RSyntaxElement[] arguments = element.getSyntaxArguments();
+            if (".Internal".equals(symbol) && arguments.length == 1 && arguments[0] instanceof RSyntaxCall) {
+                RSyntaxCall innerCall = (RSyntaxCall) arguments[0];
+                if (innerCall.getSyntaxLHS() instanceof RSyntaxLookup) {
+                    String innerSymbol = ((RSyntaxLookup) innerCall.getSyntaxLHS()).getIdentifier();
+                    RSyntaxElement[] innerArguments = innerCall.getSyntaxArguments();
+                    RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(innerSymbol);
+                    if (builtin != null && builtin.getKind() == RBuiltinKind.INTERNAL) {
+                        ArgumentsSignature signature = builtin.getSignature();
+                        if (signature.getVarArgCount() == 0) {
+                            assert innerArguments.length == signature.getLength();
+                        } else {
+                            assert signature.getVarArgCount() == 1 : signature;
+                            assert innerArguments.length == signature.getLength() || signature.getVarArgIndex() == signature.getLength() - 1 : signature;
+                            assert innerArguments.length >= signature.getLength() - 1 : signature + " " + innerArguments.length;
+                        }
+                        Info info = Info.createNew();
+                        for (int i = innerArguments.length - 1; i >= 0; i--) {
+                            if (innerArguments[i] != null) {
+                                if (builtin.evaluatesArg(Math.min(i, signature.getLength() - 1))) {
+                                    info.addBefore(accept(innerArguments[i]));
+                                } else {
+                                    info.addBefore(Info.alternative(accept(innerArguments[i]), Info.EMPTY));
+                                }
+                            }
+                        }
+                        return info;
+                    }
+                }
+            }
             if (wellKnownFunctions.contains(symbol)) {
                 Info info = Info.createNew();
                 switch (symbol) {
@@ -173,7 +206,7 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
         int cnt = 0;
         for (int i = 0; i < signature.getLength(); i++) {
             String argName = signature.getName(i);
-            if (argName != null && !ArgumentsSignature.VARARG_NAME.equals(argName) && info.evaluatedNames.contains(argName)) {
+            if (argName != null && info.evaluatedNames.contains(argName)) {
                 forcedArguments[i] = true;
                 cnt++;
             }

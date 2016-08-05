@@ -192,7 +192,7 @@ public final class RError extends RuntimeException {
 
     /**
      * A temporary error that indicates an unimplemented feature where terminating the VM using
-     * {@link Utils#fatalError(String)} would be inappropriate.
+     * {@link Utils#rSuicide(String)} would be inappropriate.
      */
     @TruffleBoundary
     public static RError nyi(RBaseNode node, String msg) {
@@ -229,6 +229,7 @@ public final class RError extends RuntimeException {
          * available.
          */
         GENERIC("%s"),
+        TOO_SHORT("'%s' is too short"),
         ARG_RECYCYLED("an argument will be fractionally recycled"),
         LENGTH_GT_1("the condition has length > 1 and only the first element will be used"),
         LENGTH_ZERO("argument is of length zero"),
@@ -248,6 +249,7 @@ public final class RError extends RuntimeException {
         INVALID_ARG_TYPE("invalid argument type"),
         INVALID_ARG_TYPE_UNARY("invalid argument to unary operator"),
         VECTOR_SIZE_NEGATIVE("vector size cannot be negative"),
+        VECTOR_SIZE_NA("vector size cannot be NA"),
         NO_LOOP_FOR_BREAK_NEXT("no loop for break/next, jumping to top level"),
         INVALID_FOR_SEQUENCE("invalid for() loop sequence"),
         NO_NONMISSING_MAX("no non-missing arguments to max; returning -Inf"),
@@ -270,6 +272,7 @@ public final class RError extends RuntimeException {
         EMPTY_WHAT("empty 'what' specified"),
         LINE_ELEMENTS("line %d did not have %d elements"),
         ITEMS_NOT_MULTIPLE("number of items read is not a multiple of the number of columns"),
+        TRACEMEM_NOT_NULL("cannot trace NULL"),
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("'%s' is not a function, character or symbol"),
         NON_CHARACTER("non-character argument"),
@@ -675,8 +678,15 @@ public final class RError extends RuntimeException {
         BROWSER_QUIT("cannot quit from browser"),
         QUIT_ASK("one of \"yes\", \"no\", \"ask\" or \"default\" expected."),
         QUIT_SAVE("unrecognized value of 'save'"),
+        QUIT_ASK_INTERACTIVE("save=\"ask\" in non-interactive use: command-line default will be used"),
+        QUIT_INVALID_STATUS("invalid 'status', 0 assumed"),
+        QUIT_INVALID_RUNLAST("invalid 'runLast', FALSE assumed"),
         ENVIRONMENTS_COERCE("environments cannot be coerced to other types"),
-        CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'");
+        CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'"),
+        ROWSUM_NAMES_NOT_CHAR("row names are not character"),
+        ROWSUM_NON_NUMERIC("non-numeric matrix in rowsum(): this should not happen"),
+        ARGUMENTS_REQUIRED_COUNT("%d arguments to '%s' which requires %d"),
+        ARGUMENT_LENGTH_0("argument of length 0");
 
         public final String message;
         final boolean hasArgs;

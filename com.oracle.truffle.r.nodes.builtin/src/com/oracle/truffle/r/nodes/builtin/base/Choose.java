@@ -22,17 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import java.util.function.IntToDoubleFunction;
 import java.util.function.IntUnaryOperator;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -40,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 /**
  * Binomial coefficients (n, k) for real n and integral k (rounded with warning).
  */
-@RBuiltin(name = "choose", kind = RBuiltinKind.INTERNAL, parameterNames = {"n", "k"})
+@RBuiltin(name = "choose", kind = INTERNAL, parameterNames = {"n", "k"}, behavior = PURE)
 public abstract class Choose extends RBuiltinNode {
 
     // TODO: cast of logicals to integers

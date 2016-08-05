@@ -30,7 +30,6 @@ import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
-import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
@@ -48,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -106,6 +106,11 @@ public class RASTUtils {
             result[i] = nodes[i] == null ? null : nodes[i].asRSyntaxNode();
         }
         return result;
+    }
+
+    public static boolean isLookup(RBaseNode node, String identifier) {
+        RSyntaxNode element = node.asRSyntaxNode();
+        return element instanceof RSyntaxLookup && identifier.equals(((RSyntaxLookup) element).getIdentifier());
     }
 
     /**
@@ -227,20 +232,13 @@ public class RASTUtils {
             fn = ((ConstantNode) fn).getValue();
         }
         SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.EAGER_DEPARSE;
-        if (fn instanceof String) {
-            return RCallNode.createCall(sourceSection, RASTUtils.createReadVariableNode(((String) fn)), signature, arguments);
-        } else if (fn instanceof ReadVariableNode) {
+        if (fn instanceof ReadVariableNode) {
             return RCallNode.createCall(sourceSection, (ReadVariableNode) fn, signature, arguments);
-        } else if (fn instanceof NamedRNode) {
-            return RCallNode.createCall(RSyntaxNode.SOURCE_UNAVAILABLE, (NamedRNode) fn, signature, arguments);
-        } else if (fn instanceof RFunction) {
-            RFunction rfn = (RFunction) fn;
-            return RCallNode.createCall(sourceSection, ConstantNode.create(rfn), signature, arguments);
         } else if (fn instanceof RCallNode) {
             return RCallNode.createCall(sourceSection, (RCallNode) fn, signature, arguments);
         } else {
-            // this of course would not make much sense if trying to evaluate this call, yet it's
-            // syntactically possible, for example as a result of:
+            // apart from RFunction, this of course would not make much sense if trying to evaluate
+            // this call, yet it's syntactically possible, for example as a result of:
             // f<-function(x,y) sys.call(); x<-f(7, 42); x[c(2,3)]
             return RCallNode.createCall(sourceSection, ConstantNode.create(fn), signature, arguments);
         }

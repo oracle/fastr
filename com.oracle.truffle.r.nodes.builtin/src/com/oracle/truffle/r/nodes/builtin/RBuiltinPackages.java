@@ -35,17 +35,17 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
 import com.oracle.truffle.r.nodes.builtin.base.BaseVariables;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -84,7 +84,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
                     baseEnv.put(methodName, function);
                     baseEnv.lockBinding(methodName);
                 } catch (PutException ex) {
-                    Utils.fail("failed to install builtin function: " + methodName);
+                    Utils.rSuicide("failed to install builtin function: " + methodName);
                 }
             }
         }
@@ -95,13 +95,13 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         try {
             baseSource = RSource.fromFileName(basePathbase.toString());
         } catch (IOException ex) {
-            Utils.fail(String.format("unable to open the base package %s", basePathbase));
+            Utils.rSuicide(String.format("unable to open the base package %s", basePathbase));
         }
         // Load the (stub) DLL for base
         try {
             DLL.loadPackageDLL(baseDirPath.resolve("libs").resolve("base.so").toString(), true, true);
         } catch (DLLException ex) {
-            Utils.fail(ex.getMessage());
+            Utils.rSuicide(ex.getMessage());
         }
         // Any RBuiltinKind.SUBSTITUTE functions installed above should not be overridden
         try {

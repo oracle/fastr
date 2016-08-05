@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.RPlatform;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
@@ -33,6 +35,7 @@ import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
@@ -58,7 +61,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
          * Some package C code calls these functions and, therefore, expects the linpack symbols to
          * be available, which will not be the case unless one of the functions has already been
          * called from R code. So we eagerly load the library to define the symbols.
-         * 
+         *
          * There is an additional problem when running without a *_LIBRARY_PATH being set which is
          * mandated by Mac OSX El Capitan, which is we must tell JNR where to find the libraries.
          */
@@ -89,113 +92,135 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
         return this;
     }
 
-    private BaseRFFI baseRFFI;
+    @CompilationFinal private BaseRFFI baseRFFI;
 
     @Override
     public BaseRFFI getBaseRFFI() {
         if (baseRFFI == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             baseRFFI = new JNR_Base();
         }
         return baseRFFI;
     }
 
-    private LapackRFFI lapackRFFI;
+    @CompilationFinal private LapackRFFI lapackRFFI;
 
     @Override
     public LapackRFFI getLapackRFFI() {
         if (lapackRFFI == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             lapackRFFI = new JNR_Lapack();
         }
         return lapackRFFI;
     }
 
-    private RApplRFFI rApplRFFI;
+    @CompilationFinal private RApplRFFI rApplRFFI;
 
     @Override
     public RApplRFFI getRApplRFFI() {
         if (rApplRFFI == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             rApplRFFI = new JNR_RAppl();
         }
         return rApplRFFI;
     }
 
-    private StatsRFFI statsRFFI;
+    @CompilationFinal private StatsRFFI statsRFFI;
 
     @Override
     public StatsRFFI getStatsRFFI() {
         if (statsRFFI == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             statsRFFI = new JNR_Stats();
         }
         return statsRFFI;
     }
 
-    private ToolsRFFI toolsRFFI;
+    @CompilationFinal private ToolsRFFI toolsRFFI;
 
     @Override
     public ToolsRFFI getToolsRFFI() {
         if (toolsRFFI == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             toolsRFFI = new Generic_Tools();
         }
         return toolsRFFI;
     }
 
-    private GridRFFI gridRFFI;
+    @CompilationFinal private GridRFFI gridRFFI;
 
     @Override
     public GridRFFI getGridRFFI() {
         if (gridRFFI == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             gridRFFI = new Generic_Grid();
         }
         return gridRFFI;
     }
 
-    private UserRngRFFI userRngRFFI;
+    @CompilationFinal private UserRngRFFI userRngRFFI;
 
     @Override
     public UserRngRFFI getUserRngRFFI() {
         if (userRngRFFI == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             userRngRFFI = new JNR_UserRng();
         }
         return userRngRFFI;
     }
 
-    private CRFFI cRFFI;
+    @CompilationFinal private CRFFI cRFFI;
 
     @Override
     public CRFFI getCRFFI() {
         if (cRFFI == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             cRFFI = new CRFFI_JNR_Invoke();
         }
         return cRFFI;
     }
 
-    private CallRFFI callRFFI;
+    @CompilationFinal private CallRFFI callRFFI;
 
     @Override
     public CallRFFI getCallRFFI() {
         if (callRFFI == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             callRFFI = new JNI_CallRFFI();
         }
         return callRFFI;
     }
 
-    private ZipRFFI zipRFFI;
+    @CompilationFinal private ZipRFFI zipRFFI;
 
     @Override
     public ZipRFFI getZipRFFI() {
         if (zipRFFI == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             zipRFFI = new JNR_Zip();
         }
         return zipRFFI;
     }
 
-    private PCRERFFI pcreRFFI;
+    @CompilationFinal private PCRERFFI pcreRFFI;
 
     @Override
     public PCRERFFI getPCRERFFI() {
         if (pcreRFFI == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             pcreRFFI = new JNR_PCRE();
         }
         return pcreRFFI;
     }
+
+    private REmbedRFFI rEmbedRFFI;
+
+    @Override
+    public REmbedRFFI getREmbedRFFI() {
+        if (rEmbedRFFI == null) {
+            rEmbedRFFI = new JNI_REmbed();
+        }
+        return rEmbedRFFI;
+    }
+
 }

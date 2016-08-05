@@ -11,7 +11,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +25,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RegExp;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -266,7 +267,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "perl", "value", "fixed", "useBytes", "invert"})
+    @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "perl", "value", "fixed", "useBytes", "invert"}, behavior = PURE)
     public abstract static class Grep extends GrepAdapter {
 
         @Specialization
@@ -277,7 +278,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "grepl", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "perl", "fixed", "useBytes", "invert"})
+    @RBuiltin(name = "grepl", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "perl", "fixed", "useBytes", "invert"}, behavior = PURE)
     public abstract static class GrepL extends GrepAdapter {
 
         @Specialization
@@ -539,7 +540,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "sub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"})
+    @RBuiltin(name = "sub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Sub extends SubAdapter {
 
         @Specialization
@@ -550,7 +551,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "gsub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"})
+    @RBuiltin(name = "gsub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class GSub extends SubAdapter {
 
         @Specialization
@@ -561,7 +562,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"})
+    @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Regexp extends CommonCodeAdapter {
 
         @Specialization
@@ -608,7 +609,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "gregexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"})
+    @RBuiltin(name = "gregexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Gregexpr extends Regexp {
 
         @Specialization
@@ -637,7 +638,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "agrep", kind = INTERNAL, parameterNames = {"pattern", "x", "max.distance", "costs", "ignore.case", "value", "fixed", "useBytes"})
+    @RBuiltin(name = "agrep", kind = INTERNAL, parameterNames = {"pattern", "x", "max.distance", "costs", "ignore.case", "value", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class AGrep extends CommonCodeAdapter {
 
         @SuppressWarnings("unused")
@@ -741,7 +742,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "agrepl", kind = INTERNAL, parameterNames = {"pattern", "x", "max.distance", "costs", "ignore.case", "fixed", "useBytes"})
+    @RBuiltin(name = "agrepl", kind = INTERNAL, parameterNames = {"pattern", "x", "max.distance", "costs", "ignore.case", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class AGrepL extends CommonCodeAdapter {
 
         @SuppressWarnings("unused")
@@ -759,7 +760,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "strsplit", kind = INTERNAL, parameterNames = {"x", "split", "fixed", "perl", "useBytes"})
+    @RBuiltin(name = "strsplit", kind = INTERNAL, parameterNames = {"x", "split", "fixed", "perl", "useBytes"}, behavior = PURE)
     public abstract static class Strsplit extends CommonCodeAdapter {
 
         private final NACheck na = NACheck.create();
@@ -808,6 +809,13 @@ public class GrepFunctions {
                             resultItem = splitPerl(data, pcreSplits[i % splits.length]);
                         } else {
                             resultItem = splitIntl(data, currentSplit);
+                        }
+                        if (resultItem.getLength() == 0) {
+                            if (fixed) {
+                                resultItem = RDataFactory.createStringVector(data);
+                            } else {
+                                resultItem = RDataFactory.createStringVector(data.length());
+                            }
                         }
                     }
                     result[i] = resultItem;

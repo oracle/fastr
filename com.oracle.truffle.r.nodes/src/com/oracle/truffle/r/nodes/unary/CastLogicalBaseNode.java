@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -33,14 +33,13 @@ public abstract class CastLogicalBaseNode extends CastBaseNode {
 
     protected final NACheck naCheck = NACheck.create();
 
-    @Child private CastLogicalNode recursiveCastLogical;
+    protected CastLogicalBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
 
-    protected Object castLogicalRecursive(Object o) {
-        if (recursiveCastLogical == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastLogical = insert(CastLogicalNodeGen.create(isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
-        }
-        return recursiveCastLogical.execute(o);
+    @Override
+    protected final RType getTargetType() {
+        return RType.Logical;
     }
 
     @Specialization

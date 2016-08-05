@@ -848,7 +848,7 @@ public abstract class REnvironment extends RAttributeStorage {
         try {
             put(key, value);
         } catch (PutException ex) {
-            Utils.fail("exception in safePut");
+            Utils.rSuicide("exception in safePut");
         }
     }
 
@@ -1048,6 +1048,11 @@ public abstract class REnvironment extends RAttributeStorage {
 
         private Empty() {
             super(EMPTY_ENV_NAME, new REnvEmptyFrameAccess());
+        }
+
+        @Override
+        public REnvironment getParent() {
+            return null;
         }
 
         @Override

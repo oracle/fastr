@@ -25,6 +25,11 @@
 
 // Most everything in RInternals.h
 
+// N.B. When implementing a new method that returns a SEXP, you MUST
+// explicitly (or implicitly) return via "checkRef(thisenv, result)"
+// to ensure that a global JNI handle is created (if necessary) and returned,
+// otherwise a GC might reclaim the result.
+
 static jmethodID Rf_ScalarIntegerMethodID;
 static jmethodID Rf_ScalarDoubleMethodID;
 static jmethodID Rf_ScalarStringMethodID;
@@ -40,6 +45,7 @@ static jmethodID Rf_findfunMethodID;
 static jmethodID Rf_defineVarMethodID;
 static jmethodID Rf_findVarMethodID;
 static jmethodID Rf_findVarInFrameMethodID;
+static jmethodID Rf_findVarInFrame3MethodID;
 static jmethodID Rf_getAttribMethodID;
 static jmethodID Rf_setAttribMethodID;
 static jmethodID Rf_isStringMethodID;
@@ -52,6 +58,7 @@ static jmethodID Rf_rPsortMethodID;
 static jmethodID Rf_iPsortMethodID;
 static jmethodID RprintfMethodID;
 static jmethodID R_FindNamespaceMethodID;
+static jmethodID R_BindingIsLockedID;
 static jmethodID Rf_GetOption1MethodID;
 static jmethodID Rf_gsetVarMethodID;
 static jmethodID Rf_inheritsMethodID;
@@ -61,15 +68,18 @@ static jmethodID TAG_MethodID;
 static jmethodID PRINTNAME_MethodID;
 static jmethodID CAR_MethodID;
 static jmethodID CDR_MethodID;
+static jmethodID CDDR_MethodID;
 static jmethodID SET_TAG_MethodID;
 static jmethodID SETCAR_MethodID;
 static jmethodID SETCDR_MethodID;
+static jmethodID SYMVALUE_MethodID;
+static jmethodID SET_SYMVALUE_MethodID;
 static jmethodID SET_STRING_ELT_MethodID;
 static jmethodID SET_VECTOR_ELT_MethodID;
-static jmethodID RAW_MethodID;
-static jmethodID INTEGER_MethodID;
-static jmethodID REAL_MethodID;
-static jmethodID LOGICAL_MethodID;
+jmethodID RAW_MethodID;
+jmethodID INTEGER_MethodID;
+jmethodID REAL_MethodID;
+jmethodID LOGICAL_MethodID;
 static jmethodID STRING_ELT_MethodID;
 static jmethodID VECTOR_ELT_MethodID;
 static jmethodID LENGTH_MethodID;
@@ -87,6 +97,20 @@ static jmethodID OBJECT_MethodID;
 static jmethodID DUPLICATE_ATTRIB_MethodID;
 static jmethodID isS4ObjectMethodID;
 static jmethodID logObject_MethodID;
+static jmethodID R_tryEvalMethodID;
+static jmethodID RDEBUGMethodID;
+static jmethodID SET_RDEBUGMethodID;
+static jmethodID RSTEPMethodID;
+static jmethodID SET_RSTEPMethodID;
+static jmethodID ENCLOSMethodID;
+static jmethodID PRVALUEMethodID;
+static jmethodID R_lsInternal3MethodID;
+static jmethodID R_do_MAKE_CLASS_MethodID;
+
+static jclass rErrorHandlingClass;
+static jclass handlerStacksClass;
+static jmethodID resetAndGetHandlerStacksMethodID;
+static jmethodID restoreHandlerStacksMethodID;
 
 static jclass RExternalPtrClass;
 static jmethodID createExternalPtrMethodID;
@@ -102,7 +126,7 @@ static jmethodID Rf_copyListMatrixMethodID;
 static jmethodID Rf_copyMatrixMethodID;
 
 static jclass CharSXPWrapperClass;
-static jfieldID CharXSPWrapperContentsFieldID;
+static jfieldID CharSXPWrapperContentsFieldID;
 
 void init_internals(JNIEnv *env) {
 	Rf_ScalarIntegerMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ScalarInteger", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
@@ -115,6 +139,7 @@ void init_internals(JNIEnv *env) {
 	Rf_defineVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_defineVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	Rf_findVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVar", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_findVarInFrameMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVarInFrame", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	Rf_findVarInFrame3MethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVarInFrame3", "(Ljava/lang/Object;Ljava/lang/Object;I)Ljava/lang/Object;", 1);
 	Rf_getAttribMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_getAttrib", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_setAttribMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_setAttrib", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	Rf_isStringMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_isString", "(Ljava/lang/Object;)I", 1);
@@ -129,7 +154,9 @@ void init_internals(JNIEnv *env) {
 	Rf_anyDuplicatedMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_anyDuplicated", "(Ljava/lang/Object;I)I", 1);
 	Rf_NewHashedEnvMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_createNewEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/String;ZI)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 1);
 	RprintfMethodID = checkGetMethodID(env, CallRFFIHelperClass, "printf", "(Ljava/lang/String;)V", 1);
+	R_do_MAKE_CLASS_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_do_MAKE_CLASS", "(Ljava/lang/String;)Ljava/lang/Object;", 1);
 	R_FindNamespaceMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_FindNamespace", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	R_BindingIsLockedID = checkGetMethodID(env, CallRFFIHelperClass, "R_BindingIsLocked", "(Ljava/lang/Object;Ljava/lang/Object;)I", 1);
 	Rf_GetOption1MethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_GetOption1", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_gsetVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_gsetVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	Rf_inheritsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_inherits", "(Ljava/lang/Object;Ljava/lang/String;)I", 1);
@@ -141,9 +168,12 @@ void init_internals(JNIEnv *env) {
 	PRINTNAME_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "PRINTNAME", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	CAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CAR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	CDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	CDDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CDDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	SET_TAG_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_TAG", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	SETCAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCAR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	SETCDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCDR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	SYMVALUE_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SYMVALUE", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	SET_SYMVALUE_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_SYMVALUE", "(Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	SET_STRING_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_STRING_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
 	SET_VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_VECTOR_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
 	RAW_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "RAW", "(Ljava/lang/Object;)[B", 1);
@@ -166,6 +196,19 @@ void init_internals(JNIEnv *env) {
 	DUPLICATE_ATTRIB_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "DUPLICATE_ATTRIB", "(Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	isS4ObjectMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isS4Object", "(Ljava/lang/Object;)I", 1);
 	logObject_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "logObject", "(Ljava/lang/Object;)V", 1);
+	R_tryEvalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_tryEval", "(Ljava/lang/Object;Ljava/lang/Object;Z)Ljava/lang/Object;", 1);
+	RDEBUGMethodID = checkGetMethodID(env, CallRFFIHelperClass, "RDEBUG", "(Ljava/lang/Object;)I", 1);
+	SET_RDEBUGMethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_RDEBUG", "(Ljava/lang/Object;I)V", 1);
+	RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "RSTEP", "(Ljava/lang/Object;)I", 1);
+	SET_RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_RSTEP", "(Ljava/lang/Object;I)V", 1);
+	ENCLOSMethodID = checkGetMethodID(env, CallRFFIHelperClass, "ENCLOS", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	PRVALUEMethodID = checkGetMethodID(env, CallRFFIHelperClass, "PRVALUE", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	R_lsInternal3MethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_lsInternal3", "(Ljava/lang/Object;II)Ljava/lang/Object;", 1);
+
+	rErrorHandlingClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RErrorHandling");
+	handlerStacksClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RErrorHandling$HandlerStacks");
+	resetAndGetHandlerStacksMethodID = checkGetMethodID(env, rErrorHandlingClass, "resetAndGetHandlerStacks", "()Lcom/oracle/truffle/r/runtime/RErrorHandling$HandlerStacks;", 1);
+	restoreHandlerStacksMethodID = checkGetMethodID(env, rErrorHandlingClass, "restoreHandlerStacks", "(Lcom/oracle/truffle/r/runtime/RErrorHandling$HandlerStacks;)V", 1);
 
 	RExternalPtrClass = checkFindClass(env, "com/oracle/truffle/r/runtime/data/RExternalPtr");
 	createExternalPtrMethodID = checkGetMethodID(env, RDataFactoryClass, "createExternalPtr", "(JLjava/lang/Object;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RExternalPtr;", 1);
@@ -177,7 +220,7 @@ void init_internals(JNIEnv *env) {
 	externalPtrSetProtMethodID = checkGetMethodID(env, RExternalPtrClass, "setProt", "(Ljava/lang/Object;)V", 0);
 
 	CharSXPWrapperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper$CharSXPWrapper");
-	CharXSPWrapperContentsFieldID = checkGetFieldID(env, CharSXPWrapperClass, "contents", "Ljava/lang/String;", 0);
+	CharSXPWrapperContentsFieldID = checkGetFieldID(env, CharSXPWrapperClass, "contents", "Ljava/lang/String;", 0);
 
     R_computeIdenticalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_computeIdentical", "(Ljava/lang/Object;Ljava/lang/Object;I)I", 1);
     Rf_copyListMatrixMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_copyListMatrix", "(Ljava/lang/Object;Ljava/lang/Object;I)V", 1);
@@ -193,11 +236,11 @@ static jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp) {
 	    fatalError("only CharSXPWrapper expected in stringFromCharSXP");
 	}
 #endif
-	return (*thisenv)->GetObjectField(thisenv, charsxp, CharXSPWrapperContentsFieldID);
+	return (*thisenv)->GetObjectField(thisenv, charsxp, CharSXPWrapperContentsFieldID);
 }
 
 SEXP Rf_ScalarInteger(int value) {
-	TRACE("%s(%d)\n", value);
+	TRACE(TARGp, value);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarIntegerMethodID, value);
     return checkRef(thisenv, result);
@@ -209,15 +252,33 @@ SEXP Rf_ScalarReal(double value) {
     return checkRef(thisenv, result);
 }
 
+// JNR calls to PCRE do not work properly (via JNR) without these wrappers
+
+char *pcre_maketables();
+void *pcre_compile(char * pattern, int options, char ** errorMessage, int *errOffset, char * tables);
+int  pcre_exec(void * code, void *extra, char* subject, int subjectLength, int startOffset, int options, int *ovector, int ovecSize);
+
+char *fastr_pcre_maketables() {
+	return pcre_maketables();
+}
+
+void *fastr_pcre_compile(char * pattern, int options, char ** errorMessage, int *errOffset, char * tables) {
+	return pcre_compile(pattern, options, errorMessage, errOffset, tables);
+}
+
+int fastr_pcre_exec(void * code, void *extra,  char* subject, int subjectLength, int startOffset, int options, int *ovector, int ovecSize) {
+	return pcre_exec(code, extra, subject, subjectLength, startOffset, options, ovector, ovecSize);
+}
+
 SEXP Rf_ScalarString(SEXP value) {
-	TRACE(TARG1, value);
+	TRACE(TARGp, value);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarStringMethodID, value);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_ScalarLogical(int value) {
-	TRACE(TARG1, value);
+	TRACE(TARGp, value);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarLogicalMethodID, value);
     return checkRef(thisenv, result);
@@ -225,17 +286,17 @@ SEXP Rf_ScalarLogical(int value) {
 
 SEXP Rf_allocVector3(SEXPTYPE t, R_xlen_t len, R_allocator_t* allocator) {
     if (allocator != NULL) {
-	unimplemented("RF_allocVector with custom allocator");
-	return NULL;
+  	    unimplemented("RF_allocVector with custom allocator");
+	    return NULL;
     }
-    TRACE(TARG2d, t, len);
+    TRACE(TARGpd, t, len);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateVectorMethodID, t, len);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_allocArray(SEXPTYPE t, SEXP dims) {
-	TRACE(TARG2d, t, dims);
+	TRACE(TARGppd, t, dims);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateArrayMethodID, t, dims);
 	return checkRef(thisenv, result);
@@ -246,7 +307,7 @@ SEXP Rf_alloc3DArray(SEXPTYPE t, int x, int y, int z) {
 }
 
 SEXP Rf_allocMatrix(SEXPTYPE mode, int nrow, int ncol) {
-	TRACE(TARG2d, mode, nrow, ncol);
+	TRACE(TARGppd, mode, nrow, ncol);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateMatrixMethodID, mode, nrow, ncol);
 	return checkRef(thisenv, result);
@@ -262,12 +323,14 @@ SEXP Rf_allocSExp(SEXPTYPE t) {
 }
 
 SEXP Rf_cons(SEXP car, SEXP cdr) {
+	TRACE(TARGpp, car, cdr);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_consMethodID, car, cdr);
     return checkRef(thisenv, result);
 }
 
 void Rf_defineVar(SEXP symbol, SEXP value, SEXP rho) {
+	TRACE(TARGppp, symbol, value, rho);
 	JNIEnv *thisenv = getEnv();
 	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_defineVarMethodID, symbol, value, rho);
 }
@@ -285,48 +348,63 @@ SEXP Rf_dimnamesgets(SEXP x, SEXP y) {
 }
 
 SEXP Rf_eval(SEXP expr, SEXP env) {
+	TRACE(TARGpp, expr, env);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_evalMethodID, expr, env);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_findFun(SEXP symbol, SEXP rho) {
+	TRACE(TARGpp, symbol, rho);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findfunMethodID, symbol, rho);
 	return checkRef(thisenv, result);
 }
 
-SEXP Rf_findVar(SEXP symbol, SEXP rho) {
+SEXP Rf_findVar(SEXP sym, SEXP rho) {
+	TRACE(TARGpp, sym, rho);
 	JNIEnv *thisenv = getEnv();
-	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarMethodID, symbol, rho);
+	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarMethodID, sym, rho);
     return checkRef(thisenv, result);
 }
 
-SEXP Rf_findVarInFrame(SEXP symbol, SEXP rho) {
+SEXP Rf_findVarInFrame(SEXP rho, SEXP sym) {
+	TRACE(TARGpp, rho, sym);
 	JNIEnv *thisenv = getEnv();
-	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarInFrameMethodID, symbol, rho);
+	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarInFrameMethodID, rho, sym);
+    return checkRef(thisenv, result);
+}
+
+SEXP Rf_findVarInFrame3(SEXP rho, SEXP sym, Rboolean b) {
+	TRACE(TARGppd, rho, sym, b);
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarInFrame3MethodID, rho, sym, b);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_getAttrib(SEXP vec, SEXP name) {
+	TRACE(TARGpp, vec, name);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_getAttribMethodID, vec, name);
 	return checkRef(thisenv, result);
 }
 
 SEXP Rf_setAttrib(SEXP vec, SEXP name, SEXP val) {
+	TRACE(TARGppp, vec,name, val);
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_setAttribMethodID, vec, name, val);
+	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, Rf_setAttribMethodID, vec, name, val);
 	return val;
 }
 
 SEXP Rf_duplicate(SEXP x) {
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_duplicateMethodID, x);
 	return checkRef(thisenv, result);
 }
 
 R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
+	TRACE(TARGpd, x, from_last);
     if (!isVector(x)) error(_("'duplicated' applies only to vectors"));
 	JNIEnv *thisenv = getEnv();
     return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_anyDuplicatedMethodID, x, from_last);
@@ -349,7 +427,12 @@ void Rf_copyVector(SEXP x, SEXP y) {
 	unimplemented("Rf_copyVector");
 }
 
+int Rf_countContexts(int x, int y) {
+	return (int) unimplemented("Rf_countContexts");
+}
+
 Rboolean Rf_inherits(SEXP x, const char * klass) {
+	TRACE(TARGps, x, klass);
     JNIEnv *thisenv = getEnv();
     jstring klazz = (*thisenv)->NewStringUTF(thisenv, klass);
     return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_inheritsMethodID, x, klazz);
@@ -389,6 +472,7 @@ void Rf_PrintValue(SEXP x) {
 }
 
 SEXP Rf_install(const char *name) {
+	TRACE(TARGs, name);
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, name);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createSymbolMethodID, string);
@@ -396,7 +480,7 @@ SEXP Rf_install(const char *name) {
 }
 
 SEXP Rf_installChar(SEXP charsxp) {
-	TRACE("%s(%p)\n", charsxp);
+	TRACE(TARGp, charsxp);
 	JNIEnv *thisenv = getEnv();
 	jstring string = stringFromCharSXP(thisenv, charsxp);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createSymbolMethodID, string);
@@ -437,6 +521,7 @@ SEXP Rf_mkCharLen(const char *x, int y) {
 }
 
 SEXP Rf_mkCharLenCE(const char *x, int len, cetype_t enc) {
+	TRACE(TARGsdd, x, len, enc);
 	JNIEnv *thisenv = getEnv();
 	jbyteArray bytes = (*thisenv)->NewByteArray(thisenv, len);
 	(*thisenv)->SetByteArrayRegion(thisenv, bytes, 0, len, x);
@@ -465,24 +550,25 @@ int Rf_nrows(SEXP x) {
 
 
 SEXP Rf_protect(SEXP x) {
+	TRACE(TARGp, x);
 	return x;
 }
 
 void Rf_unprotect(int x) {
-	// TODO perhaps we can use this
+	TRACE(TARGp, x);
 }
 
 void R_ProtectWithIndex(SEXP x, PROTECT_INDEX *y) {
-
+	TRACE(TARGpd, x,y);
 }
 
 void R_Reprotect(SEXP x, PROTECT_INDEX y) {
-
+	TRACE(TARGpd, x,y);
 }
 
 
 void Rf_unprotect_ptr(SEXP x) {
-	// TODO perhaps we can use this
+	TRACE(TARGp, x);
 }
 
 #define BUFSIZE 8192
@@ -603,31 +689,28 @@ SEXP Rf_classgets(SEXP x, SEXP y) {
 }
 
 const char *Rf_translateChar(SEXP x) {
-//	unimplemented("Rf_translateChar");
 	// TODO: proper implementation
+	TRACE(TARGp, x);
 	const char *result = CHAR(x);
-//	printf("translateChar: '%s'\n", result);
 	return result;
 }
 
 const char *Rf_translateChar0(SEXP x) {
-	unimplemented("Rf_translateChar0");
-	return NULL;
+	// TODO: proper implementation
+	TRACE(TARGp, x);
+	const char *result = CHAR(x);
+	return result;
 }
 
 const char *Rf_translateCharUTF8(SEXP x) {
-	unimplemented("Rf_translateCharUTF8");
-	return NULL;
-}
-
-SEXP R_FindNamespace(SEXP info) {
-	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_FindNamespaceMethodID, info);
-	return checkRef(thisenv, result);
+	// TODO: proper implementation
+	TRACE(TARGp, x);
+	const char *result = CHAR(x);
+	return result;
 }
 
 SEXP Rf_lengthgets(SEXP x, R_len_t y) {
-	TRACE("%s(%p)\n", x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	invalidateCopiedObject(thisenv, x);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_lengthgetsMethodID, x, y);
@@ -637,6 +720,16 @@ SEXP Rf_lengthgets(SEXP x, R_len_t y) {
 SEXP Rf_xlengthgets(SEXP x, R_xlen_t y) {
 	return unimplemented("Rf_xlengthgets");
 
+}
+
+SEXP R_lsInternal(SEXP env, Rboolean all) {
+	return R_lsInternal3(env, all, TRUE);
+}
+
+SEXP R_lsInternal3(SEXP env, Rboolean all, Rboolean sorted) {
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_lsInternal3MethodID, env, all, sorted);
+	return checkRef(thisenv, result);
 }
 
 SEXP Rf_namesgets(SEXP x, SEXP y) {
@@ -711,28 +804,28 @@ void Rf_gsetVar(SEXP symbol, SEXP value, SEXP rho)
 }
 
 SEXP TAG(SEXP e) {
-    TRACE(TARG1, e);
+    TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, TAG_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP PRINTNAME(SEXP e) {
-    TRACE(TARG1, e);
+    TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, PRINTNAME_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP CAR(SEXP e) {
-    TRACE(TARG1, e);
+    TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CAR_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP CDR(SEXP e) {
-    TRACE(TARG1, e);
+    TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CDR_MethodID, e);
     return checkRef(thisenv, result);
@@ -749,15 +842,17 @@ SEXP CDAR(SEXP e) {
 }
 
 SEXP CADR(SEXP e) {
-    TRACE(TARG1, e);
+    TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CADR_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP CDDR(SEXP e) {
-    unimplemented("CDDR");
-    return NULL;
+    TRACE(TARG1, e);
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CDDR_MethodID, e);
+    return checkRef(thisenv, result);
 }
 
 SEXP CDDDR(SEXP e) {
@@ -790,20 +885,20 @@ void SET_MISSING(SEXP x, int v) {
 }
 
 void SET_TAG(SEXP x, SEXP y) {
-    TRACE(TARG2, x, y);
+    TRACE(TARGpp, x, y);
     JNIEnv *thisenv = getEnv();
     (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SET_TAG_MethodID, x, y);
 }
 
 SEXP SETCAR(SEXP x, SEXP y) {
-    TRACE(TARG2, x, y);
+    TRACE(TARGpp, x, y);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCAR_MethodID, x, y);
     return checkRef(thisenv, result);
 }
 
 SEXP SETCDR(SEXP x, SEXP y) {
-    TRACE(TARG2, x, y);
+    TRACE(TARGpp, x, y);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCDR_MethodID, x, y);
     return checkRef(thisenv, result);
@@ -842,13 +937,13 @@ SEXP CLOENV(SEXP x) {
 }
 
 int RDEBUG(SEXP x) {
-    unimplemented("RDEBUG");
-    return 0;
+    JNIEnv *thisenv = getEnv();
+    return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, RDEBUGMethodID, x);
 }
 
 int RSTEP(SEXP x) {
-	unimplemented("RSTEP");
-    return 0;
+    JNIEnv *thisenv = getEnv();
+    return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, RSTEPMethodID, x);
 }
 
 int RTRACE(SEXP x) {
@@ -857,11 +952,13 @@ int RTRACE(SEXP x) {
 }
 
 void SET_RDEBUG(SEXP x, int v) {
-    unimplemented("SET_RDEBUG");
+    JNIEnv *thisenv = getEnv();
+    (*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_RDEBUGMethodID, x, v);
 }
 
 void SET_RSTEP(SEXP x, int v) {
-    unimplemented("SET_RSTEP");
+    JNIEnv *thisenv = getEnv();
+    (*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_RSTEPMethodID, x, v);
 }
 
 void SET_RTRACE(SEXP x, int v) {
@@ -881,7 +978,9 @@ void SET_CLOENV(SEXP x, SEXP v) {
 }
 
 SEXP SYMVALUE(SEXP x) {
-	return unimplemented("SYMVALUE");
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SYMVALUE_MethodID, x);
+    return checkRef(thisenv, result);
 }
 
 SEXP INTERNAL(SEXP x) {
@@ -898,20 +997,22 @@ void SET_DDVAL(SEXP x, int v) {
 }
 
 void SET_SYMVALUE(SEXP x, SEXP v) {
-    unimplemented("SET_SYMVALUE");
+	JNIEnv *thisenv = getEnv();
+	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_SYMVALUE_MethodID, x, v);
 }
 
 void SET_INTERNAL(SEXP x, SEXP v) {
     unimplemented("SET_INTERNAL");
 }
 
-
 SEXP FRAME(SEXP x) {
 	return unimplemented("FRAME");
 }
 
 SEXP ENCLOS(SEXP x) {
-	return unimplemented("ENCLOS");
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, ENCLOSMethodID, x);
+    return checkRef(thisenv, result);
 }
 
 SEXP HASHTAB(SEXP x) {
@@ -950,7 +1051,9 @@ SEXP PRENV(SEXP x) {
 }
 
 SEXP PRVALUE(SEXP x) {
-	return unimplemented("PRVALUE");
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, PRVALUEMethodID, x);
+    return checkRef(thisenv, result);
 }
 
 int PRSEEN(SEXP x) {
@@ -974,7 +1077,7 @@ void SET_PRCODE(SEXP x, SEXP v) {
 }
 
 int LENGTH(SEXP x) {
-    TRACE(TARG1, x);
+    TRACE(TARGp, x);
     JNIEnv *thisenv = getEnv();
     return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, LENGTH_MethodID, x);
 }
@@ -1025,60 +1128,30 @@ int SETLEVELS(SEXP x, int v){
 }
 
 int *LOGICAL(SEXP x){
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	jint *data = (jint *) findCopiedObject(thisenv, x);
-	if (data == NULL) {
-	    jbyteArray byteArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, LOGICAL_MethodID, x);
-	    int len = (*thisenv)->GetArrayLength(thisenv, byteArray);
-	    jbyte* internalData = (*thisenv)->GetByteArrayElements(thisenv, byteArray, NULL);
-	    data = malloc(len * sizeof(int));
-	    for (int i = 0; i < len; i++) {
-	    	char value = internalData[i];
-	    	data[i] = value == 0 ? FALSE : value == 1 ? TRUE : NA_INTEGER;
-	    }
-	    (*thisenv)->ReleaseByteArrayElements(thisenv, byteArray, internalData, JNI_ABORT);
-	    addCopiedObject(thisenv, x, LGLSXP, byteArray, data);
-	}
+	jint *data = (jint *) getNativeArray(thisenv, x, LGLSXP);
 	return data;
 }
 
 int *INTEGER(SEXP x){
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	jint *data = (jint *) findCopiedObject(thisenv, x);
-	if (data == NULL) {
-	    jintArray intArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, INTEGER_MethodID, x);
-	    int len = (*thisenv)->GetArrayLength(thisenv, intArray);
-	    data = (*thisenv)->GetIntArrayElements(thisenv, intArray, NULL);
-	    addCopiedObject(thisenv, x, INTSXP, intArray, data);
-	}
+	jint *data = (jint *) getNativeArray(thisenv, x, INTSXP);
 	return data;
 }
 
 
 Rbyte *RAW(SEXP x){
 	JNIEnv *thisenv = getEnv();
-	jbyte *data = (jbyte *) findCopiedObject(thisenv, x);
-	if (data == NULL) {
-	    jbyteArray byteArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, RAW_MethodID, x);
-	    int len = (*thisenv)->GetArrayLength(thisenv, byteArray);
-	    data = (*thisenv)->GetByteArrayElements(thisenv, byteArray, NULL);
-        addCopiedObject(thisenv, x, RAWSXP, byteArray, data);
-    }
-	return (Rbyte*) data;
+	Rbyte *data = (Rbyte*) getNativeArray(thisenv, x, RAWSXP);
+	return data;
 }
 
 
 double *REAL(SEXP x){
     JNIEnv *thisenv = getEnv();
-    jdouble *data = (jdouble *) findCopiedObject(thisenv, x);
-    if (data == NULL) {
-	jdoubleArray doubleArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, REAL_MethodID, x);
-	int len = (*thisenv)->GetArrayLength(thisenv, doubleArray);
-	data = (*thisenv)->GetDoubleArrayElements(thisenv, doubleArray, NULL);
-	addCopiedObject(thisenv, x, REALSXP, doubleArray, data);
-    }
+    jdouble *data = (jdouble *) getNativeArray(thisenv, x, REALSXP);
     return data;
 }
 
@@ -1090,7 +1163,7 @@ Rcomplex *COMPLEX(SEXP x){
 
 
 SEXP STRING_ELT(SEXP x, R_xlen_t i){
-	TRACE(TARG2d, x, i);
+	TRACE(TARGpd, x, i);
 	JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, STRING_ELT_MethodID, x, i);
     return checkRef(thisenv, result);
@@ -1098,7 +1171,7 @@ SEXP STRING_ELT(SEXP x, R_xlen_t i){
 
 
 SEXP VECTOR_ELT(SEXP x, R_xlen_t i){
-	TRACE(TARG2d, x, i);
+	TRACE(TARGpd, x, i);
 	JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, VECTOR_ELT_MethodID, x, i);
     return checkRef(thisenv, result);
@@ -1131,14 +1204,14 @@ SEXP *VECTOR_PTR(SEXP x){
 }
 
 SEXP Rf_asChar(SEXP x){
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_asCharMethodID, x);
 	return checkRef(thisenv, result);
 }
 
 SEXP Rf_PairToVectorList(SEXP x){
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_PairToVectorListMethodID, x);
 	return checkRef(thisenv, result);
@@ -1155,19 +1228,19 @@ SEXP Rf_asCharacterFactor(SEXP x){
 }
 
 int Rf_asLogical(SEXP x){
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_asLogicalMethodID, x);
 }
 
 int Rf_asInteger(SEXP x) {
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_asIntegerMethodID, x);
 }
 
 //double Rf_asReal(SEXP x) {
-//	TRACE(TARG1, x);
+//	TRACE(TARGp, x);
 //	JNIEnv *thisenv = getEnv();
 //	return (*thisenv)->CallStaticDoubleMethod(thisenv, CallRFFIHelperClass, Rf_asRealMethodID, x);
 //}
@@ -1178,7 +1251,7 @@ Rcomplex Rf_asComplex(SEXP x){
 }
 
 int TYPEOF(SEXP x) {
-	TRACE(TARG1, x);
+	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, TYPEOF_MethodID, x);
 }
@@ -1248,22 +1321,25 @@ char *dngettext(const char *domainname, const char *msgid, const char * msgid_pl
 const char *R_CHAR(SEXP charsxp) {
 	TRACE("%s(%p)", charsxp);
 	JNIEnv *thisenv = getEnv();
-	// This is nasty:
-	// 1. the resulting character array has to be copied and zero-terminated.
-	// 2. It causes an (inevitable?) memory leak
 	jstring string = stringFromCharSXP(thisenv, charsxp);
-	jsize len = (*thisenv)->GetStringUTFLength(thisenv, string);
-	const char *stringChars = (*thisenv)->GetStringUTFChars(thisenv, string, NULL);
-	char *copyChars = malloc(len + 1);
-	memcpy(copyChars, stringChars, len);
-	copyChars[len] = 0;
+	char *copyChars = stringToChars(thisenv, string);
 	TRACE(" %s(%s)\n", copyChars);
 	return copyChars;
 }
 
-void *(R_DATAPTR)(SEXP x) {
-    unimplemented("R_DATAPTR");
-	return NULL;
+void *DATAPTR(SEXP x) {
+	int type = TYPEOF(x);
+	if (type == INTSXP) {
+		return INTEGER(x);
+	} else if (type == REALSXP) {
+		return REAL(x);
+	} else if (type == LGLSXP) {
+		return LOGICAL(x);
+	} else {
+		printf("DATAPTR %d\n", type);
+		unimplemented("R_DATAPTR");
+		return NULL;
+	}
 }
 
 void R_qsort_I  (double *v, int *II, int i, int j) {
@@ -1291,7 +1367,12 @@ void UNSET_S4_OBJECT(SEXP x) {
 }
 
 Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
-	return (Rboolean) unimplemented("R_ToplevelExec");
+	JNIEnv *env = getEnv();
+	jobject handlerStacks = (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, resetAndGetHandlerStacksMethodID);
+	fun(data);
+	(*env)->CallStaticVoidMethod(env, CallRFFIHelperClass, restoreHandlerStacksMethodID, handlerStacks);
+	// TODO how do we detect error
+	return TRUE;
 }
 
 SEXP R_ExecWithCleanup(SEXP (*fun)(void *), void *data,
@@ -1299,12 +1380,95 @@ SEXP R_ExecWithCleanup(SEXP (*fun)(void *), void *data,
 	return unimplemented("R_ExecWithCleanup");
 }
 
-SEXP R_tryEval(SEXP x, SEXP y, int *z) {
-	return unimplemented("R_tryEval");
+/* Environment and Binding Features */
+void R_RestoreHashCount(SEXP rho) {
+	unimplemented("R_RestoreHashCount");
 }
 
-SEXP R_tryEvalSilent(SEXP x, SEXP y, int *z) {
-	return unimplemented("R_tryEvalSilent");
+Rboolean R_IsPackageEnv(SEXP rho) {
+	unimplemented("R_IsPackageEnv");
+}
+
+SEXP R_PackageEnvName(SEXP rho) {
+	return unimplemented("R_PackageEnvName");
+}
+
+SEXP R_FindPackageEnv(SEXP info) {
+	return unimplemented("R_FindPackageEnv");
+}
+
+Rboolean R_IsNamespaceEnv(SEXP rho) {
+	return (Rboolean) unimplemented("R_IsNamespaceEnv");
+}
+
+SEXP R_NamespaceEnvSpec(SEXP rho) {
+	return unimplemented("R_NamespaceEnvSpec");
+}
+
+SEXP R_FindNamespace(SEXP info) {
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_FindNamespaceMethodID, info);
+	return checkRef(thisenv, result);
+}
+
+void R_LockEnvironment(SEXP env, Rboolean bindings) {
+	unimplemented("R_LockEnvironment");
+}
+
+Rboolean R_EnvironmentIsLocked(SEXP env) {
+	unimplemented("");
+}
+
+void R_LockBinding(SEXP sym, SEXP env) {
+	unimplemented("R_LockBinding");
+}
+
+void R_unLockBinding(SEXP sym, SEXP env) {
+	unimplemented("R_unLockBinding");
+}
+
+void R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env) {
+	unimplemented("R_MakeActiveBinding");
+}
+
+Rboolean R_BindingIsLocked(SEXP sym, SEXP env) {
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, R_BindingIsLockedID, sym, env);
+}
+
+Rboolean R_BindingIsActive(SEXP sym, SEXP env) {
+    // TODO: for now, I belive all bindings are false
+    return (Rboolean)0;
+}
+
+Rboolean R_HasFancyBindings(SEXP rho) {
+	return (Rboolean) unimplemented("R_HasFancyBindings");
+}
+
+Rboolean Rf_isS4(SEXP x) {
+    return IS_S4_OBJECT(x);
+}
+
+SEXP Rf_asS4(SEXP x, Rboolean b, int i) {
+	unimplemented("Rf_asS4");
+}
+
+static SEXP R_tryEvalInternal(SEXP x, SEXP y, int *ErrorOccurred, jboolean silent) {
+	JNIEnv *thisenv = getEnv();
+	jobject tryResult =  (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_tryEvalMethodID, x, y, silent);
+	// If tryResult is NULL, an error occurred
+	if (ErrorOccurred) {
+		*ErrorOccurred = tryResult == NULL;
+	}
+	return checkRef(thisenv, tryResult);
+}
+
+SEXP R_tryEval(SEXP x, SEXP y, int *ErrorOccurred) {
+	return R_tryEvalInternal(x, y, ErrorOccurred, JNI_FALSE);
+}
+
+SEXP R_tryEvalSilent(SEXP x, SEXP y, int *ErrorOccurred) {
+	return R_tryEvalInternal(x, y, ErrorOccurred, JNI_TRUE);
 }
 
 double R_atof(const char *str) {
@@ -1391,6 +1555,26 @@ void R_RunPendingFinalizers(void) {
 	// TODO implement, but not fail for now
 }
 
+SEXP R_MakeWeakRef(SEXP key, SEXP val, SEXP fin, Rboolean onexit) {
+	unimplemented("R_MakeWeakRef");
+}
+
+SEXP R_MakeWeakRefC(SEXP key, SEXP val, R_CFinalizer_t fin, Rboolean onexit) {
+	unimplemented("R_MakeWeakRefC");
+}
+
+SEXP R_WeakRefKey(SEXP w) {
+	unimplemented("R_WeakRefKey");
+}
+
+SEXP R_WeakRefValue(SEXP w) {
+	unimplemented("R_WeakRefValue");
+}
+
+void R_RunWeakRefFinalizer(SEXP w) {
+	// TODO implement, but not fail for now
+}
+
 SEXP R_do_slot(SEXP obj, SEXP name) {
 	return unimplemented("R_do_slot");
 }
@@ -1404,7 +1588,9 @@ int R_has_slot(SEXP obj, SEXP name) {
 }
 
 SEXP R_do_MAKE_CLASS(const char *what) {
-	return unimplemented("R_do_MAKE_CLASS");
+	JNIEnv *thisenv = getEnv();
+	jstring string = (*thisenv)->NewStringUTF(thisenv, what);
+	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_do_MAKE_CLASS_MethodID, string);
 }
 
 SEXP R_getClassDef (const char *what) {
@@ -1431,6 +1617,11 @@ void R_ReleaseObject(SEXP x) {
 	// Not applicable
 }
 
+void R_dot_Last(void) {
+	unimplemented("R_dot_Last");
+}
+
+
 Rboolean R_compute_identical(SEXP x, SEXP y, int flags) {
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, R_computeIdenticalMethodID, x, y, flags);
@@ -1438,10 +1629,10 @@ Rboolean R_compute_identical(SEXP x, SEXP y, int flags) {
 
 void Rf_copyListMatrix(SEXP s, SEXP t, Rboolean byrow) {
 	JNIEnv *thisenv = getEnv();
-    (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_copyListMatrixMethodID, s, t, byrow);  
+    (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_copyListMatrixMethodID, s, t, byrow);
 }
 
 void Rf_copyMatrix(SEXP s, SEXP t, Rboolean byrow) {
 	JNIEnv *thisenv = getEnv();
-    (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_copyMatrixMethodID, s, t, byrow);  
+    (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_copyMatrixMethodID, s, t, byrow);
 }

@@ -15,6 +15,7 @@ common : {
   environment : {
   }
   logs : [
+    "fastr_errors.log"
     "com.oracle.truffle.r.native/gnur/R-*/gnur_configure.log"
     "com.oracle.truffle.r.native/gnur/R-*/gnur_make.log"
     "com.oracle.truffle.r.native/gnur/R-*/Makeconf"

@@ -24,8 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -46,6 +45,29 @@ import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
     private final NAProfile naProfile = NAProfile.create();
+
+    @Child private CastLogicalNode recursiveCastLogical;
+    @Child private InheritsCheckNode inheritsFactorCheck;
+
+    protected CastLogicalNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    protected Object castLogicalRecursive(Object o) {
+        if (recursiveCastLogical == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            recursiveCastLogical = insert(CastLogicalNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
+        }
+        return recursiveCastLogical.execute(o);
+    }
+
+    protected boolean isFactor(Object o) {
+        if (inheritsFactorCheck == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            inheritsFactorCheck = insert(new InheritsCheckNode(RRuntime.CLASS_FACTOR));
+        }
+        return inheritsFactorCheck.execute(o);
+    }
 
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
@@ -68,7 +90,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(bdata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -82,6 +104,13 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     @Specialization(guards = "!isFactor(operand)")
     protected RLogicalVector doIntVector(RAbstractIntVector operand) {
         return createResultVector(operand, index -> naCheck.convertIntToLogical(operand.getDataAt(index)));
+    }
+
+    @Specialization(guards = "isFactor(factor)")
+    protected RLogicalVector asLogical(RAbstractIntVector factor) {
+        byte[] data = new byte[factor.getLength()];
+        Arrays.fill(data, RRuntime.LOGICAL_NA);
+        return RDataFactory.createLogicalVector(data, RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @Specialization
@@ -138,7 +167,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
             }
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !seenNA);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(list);
         }
         return ret;
@@ -154,26 +183,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         return missing;
     }
 
-    @Specialization(guards = "isFactor(factor)")
-    protected RLogicalVector asLogical(RAbstractIntVector factor) {
-        byte[] data = new byte[factor.getLength()];
-        Arrays.fill(data, RRuntime.LOGICAL_NA);
-        return RDataFactory.createLogicalVector(data, RDataFactory.INCOMPLETE_VECTOR);
-    }
-
-    @Fallback
-    @TruffleBoundary
-    protected int doOther(Object operand) {
-        throw new ConversionFailedException(operand.getClass().getName());
-    }
-
     public static CastLogicalNode createNonPreserving() {
         return CastLogicalNodeGen.create(false, false, false);
-    }
-
-    @Child private InheritsCheckNode inheritsFactorCheck = new InheritsCheckNode(RRuntime.CLASS_FACTOR);
-
-    protected boolean isFactor(Object o) {
-        return inheritsFactorCheck.execute(o);
     }
 }

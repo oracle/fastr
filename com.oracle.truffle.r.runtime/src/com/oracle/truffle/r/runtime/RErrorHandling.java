@@ -60,7 +60,7 @@ public class RErrorHandling {
     private static final RStringVector RESTART_CLASS = RDataFactory.createStringVectorFromScalar("restart");
 
     private static class Warnings {
-        private static ArrayList<Warning> list = new ArrayList<>();
+        private ArrayList<Warning> list = new ArrayList<>();
 
         int size() {
             return list.size();
@@ -138,8 +138,9 @@ public class RErrorHandling {
         private RFunction getDotSignalSimpleWarning() {
             if (dotSignalSimpleWarning == null) {
                 CompilerDirectives.transferToInterpreter();
-                Object f = REnvironment.baseEnv().findFunction(".signalSimpleWarning");
-                dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
+                String name = ".signalSimpleWarning";
+                Object f = REnvironment.baseEnv().findFunction(name);
+                dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, f);
             }
             return dotSignalSimpleWarning;
         }
@@ -163,10 +164,26 @@ public class RErrorHandling {
         }
     }
 
+    public static final class HandlerStacks {
+        public final Object handlerStack;
+        public final Object restartStack;
+
+        private HandlerStacks(Object handlerStack, Object restartStack) {
+            this.handlerStack = handlerStack;
+            this.restartStack = restartStack;
+        }
+    }
+
     private static final Object RESTART_TOKEN = new Object();
 
     private static ContextStateImpl getRErrorHandlingState() {
         return RContext.getInstance().stateRErrorHandling;
+    }
+
+    public static HandlerStacks resetAndGetHandlerStacks() {
+        HandlerStacks result = new HandlerStacks(getRErrorHandlingState().handlerStack, getRErrorHandlingState().restartStack);
+        resetStacks();
+        return result;
     }
 
     public static Object getHandlerStack() {
@@ -175,6 +192,21 @@ public class RErrorHandling {
 
     public static Object getRestartStack() {
         return getRErrorHandlingState().restartStack;
+    }
+
+    /**
+     * Resets the handler stacks for a "top-level" evaluation ({@code Rf_tryEval} in the R FFI. This
+     * must be preceded by calls to {@link #getHandlerStack} and {@link #getRestartStack()} and
+     * followed by {@link #restoreStacks} after the evaluation completes.
+     */
+    public static void resetStacks() {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        errorHandlingState.handlerStack = RNull.instance;
+        errorHandlingState.restartStack = RNull.instance;
+    }
+
+    public static void restoreHandlerStacks(HandlerStacks handlerStacks) {
+        restoreStacks(handlerStacks.handlerStack, handlerStacks.restartStack);
     }
 
     public static void restoreStacks(Object savedHandlerStack, Object savedRestartStack) {
@@ -309,7 +341,7 @@ public class RErrorHandling {
                     errorcallDfltWithCall(fromCall(call), Message.GENERIC, msg);
                 } else {
                     RFunction hf = (RFunction) h;
-                    RContext.getEngine().evalFunction(hf, null, null, cond);
+                    RContext.getEngine().evalFunction(hf, null, null, null, cond);
                 }
             } else {
                 throw gotoExitingHandler(cond, call, entry);
@@ -472,7 +504,7 @@ public class RErrorHandling {
                             evaluatedArgs[i] = RMissing.instance;
                         }
                     }
-                    RContext.getEngine().evalFunction(errorFunction, null, null, evaluatedArgs);
+                    RContext.getEngine().evalFunction(errorFunction, null, null, null, evaluatedArgs);
                 } else if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
                     if (errorExpr instanceof RLanguage) {
                         RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);

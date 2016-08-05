@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
-import com.oracle.truffle.r.nodes.access.variables.NamedRNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
@@ -233,19 +232,18 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             return RNull.instance;
         } else if (repType == RLanguage.RepType.CALL) {
             RStringVector formals = list.getNames();
-            boolean nullFormals = formals == null;
-            RNode fn = unwrapToRNode(list.getDataAtAsObject(0));
-            if (!nullFormals && formals.getLength() > 0 && formals.getDataAt(0).length() > 0) {
-                fn = new NamedRNode(fn, formals.getDataAt(0));
-            }
             RSyntaxNode[] arguments = new RSyntaxNode[length - 1];
             String[] sigNames = new String[arguments.length];
             for (int i = 1; i < length; i++) {
                 arguments[i - 1] = (RSyntaxNode) unwrapToRNode(list.getDataAtAsObject(i));
-                String formal = nullFormals ? null : formals.getDataAt(i);
+                String formal = formals == null ? null : formals.getDataAt(i);
                 sigNames[i - 1] = formal != null && formal.length() > 0 ? formal : null;
             }
+            RNode fn = unwrapToRNode(list.getDataAtAsObject(0));
             RLanguage result = RDataFactory.createLanguage(RASTUtils.createCall(fn, false, ArgumentsSignature.get(sigNames), arguments).asRNode());
+            if (formals != null && formals.getLength() > 0 && formals.getDataAt(0).length() > 0) {
+                result.setCallLHSName(formals.getDataAt(0));
+            }
             return addAttributes(result, list);
         } else if (repType == RLanguage.RepType.FUNCTION) {
             RList argsList = (RList) list.getDataAt(1);
@@ -315,10 +313,9 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
              */
             boolean hasName = false;
             String functionName = "";
-            RNode fnNode = call.getFunctionNode();
-            if (fnNode instanceof NamedRNode) {
+            if (rl.getCallLHSName() != null) {
                 hasName = true;
-                functionName = ((NamedRNode) fnNode).name;
+                functionName = rl.getCallLHSName();
             }
             ArgumentsSignature sig = call.getSyntaxSignature();
             if (!hasName) {
@@ -369,21 +366,21 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public Object callback(RFunction f, Object[] args) {
-        boolean gd = DebugHandling.globalDisable(true);
+        boolean gd = RContext.getInstance().stateInstrumentation.setDebugGloballyDisabled(true);
         try {
-            return RContext.getEngine().evalFunction(f, null, null, args);
+            return RContext.getEngine().evalFunction(f, null, null, null, args);
         } catch (ReturnException ex) {
             // cannot throw return exceptions further up.
             return ex.getResult();
         } finally {
-            DebugHandling.globalDisable(gd);
+            RContext.getInstance().stateInstrumentation.setDebugGloballyDisabled(gd);
         }
     }
 
     @Override
-    public Object forcePromise(Object val) {
+    public Object forcePromise(String identifier, Object val) {
         if (val instanceof RPromise) {
-            return PromiseHelperNode.evaluateSlowPath(null, (RPromise) val);
+            return ReadVariableNode.evalPromiseSlowPathWithName(identifier, null, (RPromise) val);
         } else {
             return val;
         }
@@ -450,7 +447,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public void setFunctionName(RootNode node, String name) {
-        ((FunctionDefinitionNode) node).setDescription(name);
+        ((FunctionDefinitionNode) node).setName(name);
     }
 
     @Override
@@ -586,11 +583,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public void enableDebug(RFunction func) {
-        DebugHandling.enableDebug(func, "", RNull.instance, false);
-    }
-
-    @Override
     public boolean isTaggedWith(Node node, Class<?> tag) {
         if (!(node instanceof RSyntaxNode)) {
             return false;
@@ -650,6 +642,21 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public RBaseNode createConstantNode(Object o) {
         return ConstantNode.create(o);
+    }
+
+    @Override
+    public boolean enableDebug(RFunction func, boolean once) {
+        return DebugHandling.enableDebug(func, "", RNull.instance, once, false);
+    }
+
+    @Override
+    public boolean isDebugged(RFunction func) {
+        return DebugHandling.isDebugged(func);
+    }
+
+    @Override
+    public boolean disableDebug(RFunction func) {
+        return DebugHandling.undebug(func);
     }
 
 }

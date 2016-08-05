@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVersionInfo;
 import com.oracle.truffle.r.runtime.TempPathName;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -76,9 +77,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             RPackageSource.initialize();
             RContext.initialize(new RASTBuilder(), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), new RForeignAccessFactoryImpl());
         } catch (Throwable t) {
-            System.out.println("error during engine initialization:");
-            t.printStackTrace();
-            System.exit(-1);
+            Utils.rSuicide("error during R language initialization");
         }
     }
 

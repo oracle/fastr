@@ -26,6 +26,8 @@ import shutil, os, re
 import mx
 import mx_fastr
 
+quiet = False
+
 def _mx_gnur():
     return mx.suite('gnur')
 
@@ -44,13 +46,20 @@ def _create_libinstall(s):
     return libinstall, install_tmp
 
 def _log_step(state, step, rvariant):
-    print "{0} {1} with {2}".format(state, step, rvariant)
+    if not quiet:
+        print "{0} {1} with {2}".format(state, step, rvariant)
 
 def pkgtest(args):
-    '''used for package installation/testing'''
+    '''
+    Package installation/testing.
+    rc: 0 for success; 1: install fail, 2: test fail, 3: install&test fail
+    '''
 
     libinstall, install_tmp = _create_libinstall(mx.suite('fastr'))
     stacktrace_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
+    if "--quiet" in args:
+        global quiet
+        quiet = True
 
     install_args = args
 
@@ -61,6 +70,7 @@ def pkgtest(args):
             self.mode = None
             self.start_install_pattern = re.compile(r"^BEGIN processing: (?P<package>[a-zA-Z0-9\.\-]+) .*")
             self.test_pattern = re.compile(r"^(?P<status>BEGIN|END) testing: (?P<package>[a-zA-Z0-9\.\-]+) .*")
+            self.time_pattern = re.compile(r"^TEST_TIME: (?P<package>[a-zA-Z0-9\.\-]+) (?P<time>[0-9\.\-]+) .*")
             self.status_pattern = re.compile(r"^(?P<package>[a-zA-Z0-9\.\-]+): (?P<status>OK|FAILED).*")
             self.install_data = dict()
             self.install_status = dict()
@@ -100,7 +110,13 @@ def pkgtest(args):
                     pkg_name = test_match.group(2)
                     if begin_end == "END":
                         _get_test_outputs('fastr', pkg_name, self.test_info)
-
+                else:
+                    time_match = re.match(self.time_pattern, data)
+                    if time_match:
+                        pkg_name = time_match.group(1)
+                        test_time = time_match.group(2)
+                        with open(join('test', pkg_name, 'test_time'), 'w') as f:
+                            f.write(test_time)
     env = os.environ.copy()
     env["TMPDIR"] = install_tmp
     env['R_LIBS_USER'] = libinstall
@@ -109,16 +125,28 @@ def pkgtest(args):
     #_install_vignette_support('FastR', env)
 
     out = OutputCapture()
-    # install and (optionally) test the packages
-    if not '--install-only' in install_args:
+    # install and test the packages, unless just listing versions
+    if not '--list-versions' in install_args:
         install_args += ['--run-tests']
         if not '--print-install-status' in install_args:
             install_args += ['--print-install-status']
 
     _log_step('BEGIN', 'install/test', 'FastR')
+    # Currently installpkgs does not set a return code (in install.cran.packages.R)
     rc = mx_fastr._installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
+    if rc == 100:
+        # fatal error connecting to package repo
+        mx.abort(rc)
+
+    rc = 0
+    for status in out.install_status.itervalues():
+        if not status:
+            rc = 1
     _log_step('END', 'install/test', 'FastR')
-    if '--run-tests' in install_args:
+
+    single_pkg = len(out.install_status) == 1
+    install_failure = single_pkg and rc == 1
+    if '--run-tests' in install_args and not install_failure:
         # in order to compare the test output with GnuR we have to install/test the same
         # set of packages with GnuR, which must be present as a sibling suite
         ok_pkgs = [k for k, v in out.install_status.iteritems() if v]
@@ -126,6 +154,8 @@ def pkgtest(args):
         _set_test_status(out.test_info)
         print 'Test Status'
         for pkg, test_status in out.test_info.iteritems():
+            if test_status.status != "OK":
+                rc = rc | 2
             print '{0}: {1}'.format(pkg, test_status.status)
 
     shutil.rmtree(install_tmp, ignore_errors=True)
@@ -160,7 +190,7 @@ def _get_test_outputs(suite, pkg_name, test_info):
             test_info[pkg_name] = TestStatus()
         for f in files:
             ext = os.path.splitext(f)[1]
-            if ext == '.R' or ext == '.prev':
+            if f == 'test_time' or ext == '.R' or ext == '.prev':
                 continue
             # suppress .pdf's for now (we can't compare them)
             if ext == '.pdf':
@@ -239,26 +269,37 @@ def _set_test_status(fastr_test_info):
         gnur_outputs = gnur_test_status.testfile_outputs
         fastr_outputs = fastr_test_status.testfile_outputs
         if _failed_outputs(gnur_outputs):
+            # What this likely means is that some native package is not
+            # installed on the system so GNUR can't run the tests.
+            # Ideally this never happens.
             print "{0}: GnuR test had .fail outputs".format(pkg)
-            continue
 
         if _failed_outputs(fastr_outputs):
+            # In addition to the similar comment for GNU R, this can happen
+            # if, say, the JVM crashes (possible with native code packages)
             print "{0}: FastR test had .fail outputs".format(pkg)
             fastr_test_status.status = "FAILED"
-            continue
 
-
+        # Now for each successful GNU R output we compare content (assuming FastR didn't fail)
         for gnur_test_output_relpath, gnur_testfile_status in gnur_outputs.iteritems():
+            # Can't compare if either GNUR or FastR failed
+            if gnur_testfile_status.status == "FAILED":
+                break
+
             if not gnur_test_output_relpath in fastr_outputs:
+                # FastR crashed on this test
                 fastr_test_status.status = "FAILED"
                 print "{0}: FastR is missing output file: {1}".format(pkg, gnur_test_output_relpath)
+                break
+
+            fastr_testfile_status = fastr_outputs[gnur_test_output_relpath]
+            if fastr_testfile_status.status == "FAILED":
                 break
 
             gnur_content = None
             with open(gnur_testfile_status.abspath) as f:
                 gnur_content = f.readlines()
             fastr_content = None
-            fastr_testfile_status = fastr_outputs[gnur_test_output_relpath]
             with open(fastr_testfile_status.abspath) as f:
                 fastr_content = f.readlines()
 
@@ -269,11 +310,27 @@ def _set_test_status(fastr_test_info):
                 break
             if result != 0:
                 fastr_test_status.status = "FAILED"
+                fastr_testfile_status.status = "FAILED"
                 print "{0}: FastR output mismatch: {1}".format(pkg, gnur_test_output_relpath)
                 break
         # we started out as UNKNOWN
         if not (fastr_test_status.status == "INDETERMINATE" or fastr_test_status.status == "FAILED"):
             fastr_test_status.status = "OK"
+
+        # write out a file with the test status for each output (that exists)
+        with open(join(_pkg_testdir('fastr', pkg), 'testfile_status'), 'w') as f:
+            for fastr_relpath, fastr_testfile_status in fastr_outputs.iteritems():
+                if fastr_testfile_status.status == "FAILED":
+                    relpath = fastr_relpath + ".fail"
+                else:
+                    relpath = fastr_relpath
+
+                if os.path.exists(join(_pkg_testdir('fastr', pkg), relpath)):
+                    f.write(relpath)
+                    f.write(' ')
+                    f.write(fastr_testfile_status.status)
+                    f.write('\n')
+
         print 'END checking ' + pkg
 
 def _find_start(content):

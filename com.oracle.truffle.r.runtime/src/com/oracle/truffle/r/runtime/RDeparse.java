@@ -322,7 +322,6 @@ public class RDeparse {
         }
 
         private DeparseVisitor append(String str) {
-            assert !str.contains("\n");
             sb.append(str);
             return this;
         }
@@ -342,7 +341,7 @@ public class RDeparse {
         }
 
         public void fixupSources() {
-            Source source = RSource.fromText(sb.toString(), "deparse");
+            Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);
             for (SourceSectionElement s : sources) {
                 s.element.setSourceSection(source.createSection(null, s.start, s.length));
             }
@@ -549,7 +548,12 @@ public class RDeparse {
                         } else if (args.length == 1) {
                             append(args[0]).append(symbol).append("NULL");
                         } else {
-                            append(args[0]).append(symbol).append(args[1]);
+                            // FIXME use call syntax until parser fixed to accept literals
+                            if (args[1] instanceof RSyntaxConstant) {
+                                append('`').append(symbol).append('`').append('(').append(args[0]).append(", ").append(args[1]).append(')');
+                            } else {
+                                append(args[0]).append(symbol).append(args[1]);
+                            }
                         }
                         return null;
                     }
@@ -577,7 +581,7 @@ public class RDeparse {
                 // coerce scalar values to vectors and unwrap data frames and factors:
                 Object value = RRuntime.asAbstractVector(constant.getValue());
 
-                if (constants != null && !(value instanceof RAbstractVector)) {
+                if (constants != null && !(value instanceof RAbstractVector || value instanceof RNull)) {
                     String name = "C.." + constants.size();
                     constants.put(name, value);
                     append(name);
@@ -592,7 +596,10 @@ public class RDeparse {
                         append("list(").appendListContents(obj).append(')');
                     }
                 } else if (value instanceof RAbstractVector) {
-                    appendVector((RAbstractVector) value);
+                    RAbstractVector obj = (RAbstractVector) value;
+                    try (C c = withAttributes(obj)) {
+                        appendVector((RAbstractVector) value);
+                    }
                 } else if (value instanceof RNull) {
                     append("NULL");
                 } else if (value instanceof RFunction) {
@@ -847,8 +854,7 @@ public class RDeparse {
             }
             RSyntaxElement[] arguments = argElements.toArray(new RSyntaxElement[argElements.size()]);
             ArgumentsSignature signature = ArgumentsSignature.get(argNames.toArray(new String[argNames.size()]));
-            Arguments<RSyntaxElement> arg = new Arguments<>(arguments, signature);
-            return arg;
+            return Arguments.create(arguments, signature);
         }
 
         private static RPairList next(RPairList pairlist) {

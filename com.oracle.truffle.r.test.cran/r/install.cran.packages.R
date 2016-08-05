@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -72,6 +72,8 @@
 # --pkg-filelist a file containing an explicit list of package names (not regexps), one per line
 # --alpha-daily implicitly sets --pkg-pattern from the day of the year modulo 26. E.g., 0 is ^[Aa], 1 is ^[Bb]
 # --ok-only implicitly sets --pkg-filelist to a list of packages known to install
+
+# TODO At some point this will need to upgraded to support installation from other repos, e.g. BioConductor, github
 
 args <- commandArgs(TRUE)
 
@@ -329,8 +331,27 @@ check.installed.pkgs <- function() {
 # requested set of candidate packages
 # sets global variables avail.pkgs and toinstall.pkgs, the latter being
 # of the same type as avail.pkgs but containing only those packages to install
+# returns a vector of package names to install/test
 get.pkgs <- function() {
-	avail.pkgs <<- available.packages(contriburl=contriburl, type="source")
+	my.warning <- function(war) {
+		if (!quiet) {
+			cat("Fatal error:", war$message, "\n")
+		}
+		quit(save="no", status=100)
+	}
+	tryCatch({
+	    avail.pkgs <<- available.packages(contriburl=contriburl, type="source")
+    }, warning=my.warning)
+
+    # Owing to a FastR bug, we may not invoke the handler above, but
+	# if length(avail.pkgs) == 0, that also means it failed
+	if (length(avail.pkgs) == 0) {
+		if (!quiet) {
+		  print("Fatal error: no packages found in repo")
+    	}
+		quit(save="no", status=100)
+	}
+
 	avail.pkgs.rownames <<- rownames(avail.pkgs)
 	# get/create the blacklist
 	blacklist <- get.blacklist()
@@ -369,7 +390,29 @@ get.pkgs <- function() {
 	}
 	matched.avail.pkgs <- apply(avail.pkgs, 1, match.fun)
 	toinstall.pkgs <<-avail.pkgs[matched.avail.pkgs, , drop=F]
-	toinstall.pkgs
+
+	if (!is.na(random.count)) {
+		# install random.count packages taken at random from toinstall.pkgs
+		test.avail.pkgnames <- rownames(toinstall.pkgs)
+		rands <- sample(1:length(test.avail.pkgnames))
+		test.pkgnames <- character(random.count)
+		for (i in (1:random.count)) {
+			test.pkgnames[[i]] <- test.avail.pkgnames[[rands[[i]]]]
+		}
+	} else {
+		test.pkgnames <- rownames(toinstall.pkgs)
+		if (!is.na(count.daily)) {
+			# extract count from index given by yday
+			npkgs <- length(test.pkgnames)
+			yday <- as.POSIXlt(Sys.Date())$yday
+			chunk <- as.integer(npkgs / count.daily)
+			start <- (yday %% chunk) * count.daily
+			end <- ifelse(start + count.daily > npkgs, npkgs, start + count.daily - 1)
+			test.pkgnames <- test.pkgnames[start:end]
+		}
+	}
+
+	test.pkgnames
 }
 
 # Serially install the packages in pkgnames.
@@ -474,33 +517,12 @@ get.blacklist <- function() {
 
 # performs the installation, or logs what it would install if dry.run = T
 do.it <- function() {
-	get.pkgs()
+	test.pkgnames <- get.pkgs()
 
 	if (list.versions) {
-		for (i in (1:length(rownames(toinstall.pkgs)))) {
-			pkg <- toinstall.pkgs[i, ]
-			cat(pkg["Package"], pkg["Version"], "\n", sep=",")
-		}
-	}
-
-	if (!is.na(random.count)) {
-		# install random.count packages taken at random from toinstall.pkgs
-		test.avail.pkgnames <- rownames(toinstall.pkgs)
-		rands <- sample(1:length(test.avail.pkgnames))
-		test.pkgnames <- character(random.count)
-		for (i in (1:random.count)) {
-			test.pkgnames[[i]] <- test.avail.pkgnames[[rands[[i]]]]
-		}
-	} else {
-		test.pkgnames <- rownames(toinstall.pkgs)
-		if (!is.na(count.daily)) {
-			# extract count from index given by yday
-			npkgs <- length(test.pkgnames)
-			yday <- as.POSIXlt(Sys.Date())$yday
-			chunk <- as.integer(npkgs / count.daily)
-			start <- (yday %% chunk) * count.daily
-			end <- ifelse(start + count.daily > npkgs, npkgs, start + count.daily - 1)
-			test.pkgnames <- test.pkgnames[start:end]
+		for (pkgname in test.pkgnames) {
+			pkg <- toinstall.pkgs[pkgname, ]
+			cat(pkg["Package"], pkg["Version"], paste0(contriburl, "/", pkg["Version"], ".tar.gz"), "\n", sep=",")
 		}
 	}
 
@@ -539,7 +561,6 @@ do.it <- function() {
 				if (dry.run) {
 					cat("would test:", pkgname, "\n")
 				} else {
-
 					cat("BEGIN testing:", pkgname, "(", test.count, "of", test.total, ")", "\n")
 					test.package(pkgname)
 					cat("END testing:", pkgname, "\n")
@@ -612,6 +633,7 @@ test.package <- function(pkgname) {
 	testdir.path <- testdir
 	check.create.dir(testdir.path)
 	check.create.dir(file.path(testdir.path, pkgname))
+	start.time <- proc.time()[[3]]
 	if (run.mode == "system") {
 		system.test(pkgname)
 	} else if (run.mode == "internal") {
@@ -619,6 +641,8 @@ test.package <- function(pkgname) {
 	} else if (run.mode == "context") {
 		stop("context run-mode not implemented\n")
 	}
+	end.time <- proc.time()[[3]]
+	cat("TEST_TIME:", pkgname, end.time - start.time, "\n")
 }
 
 is.fastr <- function() {
@@ -660,6 +684,8 @@ parse.args <- function() {
 		} else if (a == "-V") {
 			verbose <<- T
 			very.verbose <<- T
+		} else if (a == "--quiet") {
+			quiet <<- T
 		} else if (a == "--no-install" || a == "-n") {
 			install <<- F
 		} else if (a == "--dryrun" || a == "--dry-run") {
@@ -730,6 +756,11 @@ parse.args <- function() {
 	if (is.na(pkg.pattern) && is.na(pkg.filelistfile)) {
 	    pkg.pattern <<- "^.*"
 	}
+	# list.versions is just that
+    if (list.versions) {
+		install <<- F
+		run.tests <<- F
+	}
 }
 
 cat.args <- function() {
@@ -798,6 +829,7 @@ run <- function() {
     do.it()
 }
 
+quiet <- F
 cran.mirror <- NA
 contriburl <- NA
 blacklist.file <- NA

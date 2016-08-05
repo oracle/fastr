@@ -27,7 +27,7 @@
 # but in FastR it is just a slight variant of "R". However, we cannot put
 # a FastR-specific Rscript in "exec" because the install_packages code
 # treats everything in there except "R" as a sub-architecture, so we put in
-# execRscript.
+# execRextras.
 #
 # The R script defines the R_HOME environment variable from R_HOME_DIR
 # which is set in the script during the GnuR build. This has to be changed.
@@ -38,12 +38,15 @@
 .PHONY: bindir all rcmd
 
 FASTR_BIN_DIR := $(FASTR_R_HOME)/bin
+FASTR_DOC_DIR := $(FASTR_R_HOME)/doc
 FASTR_ETC_DIR := $(FASTR_R_HOME)/etc
 FASTR_SHARE_DIR := $(FASTR_R_HOME)/share
 FASTR_INCLUDE_DIR := $(FASTR_R_HOME)/include
 
 R_SCRIPT := $(addprefix $(GNUR_HOME)/bin/,R)
 SUPPORT_SCRIPTS := $(addprefix $(GNUR_HOME)/bin/,BATCH COMPILE INSTALL SHLIB Rcmd config javareconf)
+
+DOC_FILES := $(wildcard $(GNUR_HOME)/doc/*)
 
 # Not all of these work unchanged
 ETC_FILES := $(addprefix $(GNUR_HOME)/etc/,javaconf ldpaths Renviron repositories)
@@ -54,18 +57,20 @@ all: rundirs rcmds includedir
 
 rundirs:
 	mkdir -p $(FASTR_BIN_DIR)
+	mkdir -p $(FASTR_DOC_DIR)
 	mkdir -p $(FASTR_BIN_DIR)/exec
-	mkdir -p $(FASTR_BIN_DIR)/execRscript
+	mkdir -p $(FASTR_BIN_DIR)/execRextras
 	mkdir -p $(FASTR_ETC_DIR)
 	mkdir -p $(FASTR_SHARE_DIR)
 	
 rcmds: $(FASTR_BIN_DIR)/R
 
-$(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh
+$(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cp R.sh $(FASTR_BIN_DIR)/exec/R
-	cp Rscript_exec.sh $(FASTR_BIN_DIR)/execRscript/Rscript
+	cp Rscript_exec.sh $(FASTR_BIN_DIR)/execRextras/Rscript
 	cp Rscript.sh $(FASTR_BIN_DIR)/Rscript
-	chmod +x $(FASTR_BIN_DIR)/exec/R $(FASTR_BIN_DIR)/execRscript/Rscript $(FASTR_BIN_DIR)/Rscript
+	cp Rclasspath.sh $(FASTR_BIN_DIR)/execRextras/Rclasspath
+	chmod +x $(FASTR_BIN_DIR)/exec/R $(FASTR_BIN_DIR)/execRextras/Rscript $(FASTR_BIN_DIR)/Rscript $(FASTR_BIN_DIR)/execRextras/Rclasspath
 	cp $(SUPPORT_SCRIPTS) $(FASTR_BIN_DIR)
 	sed -e 's!^\(R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
 	chmod +x $(FASTR_BIN_DIR)/R 
@@ -80,6 +85,8 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh
 	ed Makeconf.etc < edMakeconf.etc
 	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf
 	cp -r $(SHARE_FILES) $(FASTR_SHARE_DIR)
+	# TODO may need filtering
+	cp -r $(DOC_FILES) $(FASTR_DOC_DIR)
 	# overrides
 	cp examples-header.R examples-footer.R $(FASTR_SHARE_DIR)/R
 

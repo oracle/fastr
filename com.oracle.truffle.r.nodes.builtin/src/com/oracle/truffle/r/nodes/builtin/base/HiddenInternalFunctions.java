@@ -11,8 +11,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -40,8 +43,6 @@ import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -50,8 +51,8 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -80,7 +81,7 @@ public class HiddenInternalFunctions {
     /**
      * Transcribed from GnuR {@code do_makeLazy} in src/main/builtin.c.
      */
-    @RBuiltin(name = "makeLazy", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"names", "values", "expr", "eenv", "aenv"})
+    @RBuiltin(name = "makeLazy", visibility = OFF, kind = INTERNAL, parameterNames = {"names", "values", "expr", "eenv", "aenv"}, behavior = COMPLEX)
     public abstract static class MakeLazy extends RBuiltinNode {
         @Child private Eval eval;
 
@@ -137,7 +138,7 @@ public class HiddenInternalFunctions {
      * This function copies values of variables from one environment to another environment,
      * possibly with different names. Promises are not forced and active bindings are preserved.
      */
-    @RBuiltin(name = "importIntoEnv", kind = INTERNAL, parameterNames = {"impEnv", "impNames", "expEnv", "expNames"})
+    @RBuiltin(name = "importIntoEnv", kind = INTERNAL, parameterNames = {"impEnv", "impNames", "expEnv", "expNames"}, behavior = COMPLEX)
     public abstract static class ImportIntoEnv extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -171,7 +172,7 @@ public class HiddenInternalFunctions {
     /**
      * Transcribed from {@code lazyLoaadDBFetch} in src/serialize.c.
      */
-    @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE, parameterNames = {"key", "datafile", "compressed", "envhook"})
+    @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE, parameterNames = {"key", "datafile", "compressed", "envhook"}, behavior = PURE)
     public abstract static class LazyLoadDBFetch extends RBuiltinNode {
 
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
@@ -276,7 +277,7 @@ public class HiddenInternalFunctions {
         }
     }
 
-    @RBuiltin(name = "getRegisteredRoutines", kind = INTERNAL, parameterNames = "info")
+    @RBuiltin(name = "getRegisteredRoutines", kind = INTERNAL, parameterNames = "info", behavior = COMPLEX)
     public abstract static class GetRegisteredRoutines extends RBuiltinNode {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{".C", ".Call", ".Fortran", ".External"}, RDataFactory.COMPLETE_VECTOR);
         private static final RStringVector NATIVE_ROUTINE_LIST = RDataFactory.createStringVectorFromScalar("NativeRoutineList");
@@ -321,7 +322,7 @@ public class HiddenInternalFunctions {
         }
     }
 
-    @RBuiltin(name = "getVarsFromFrame", kind = INTERNAL, parameterNames = {"vars", "e", "force"})
+    @RBuiltin(name = "getVarsFromFrame", kind = INTERNAL, parameterNames = {"vars", "e", "force"}, behavior = COMPLEX)
     public abstract static class GetVarsFromFrame extends RBuiltinNode {
         @Child private PromiseHelperNode promiseHelper;
 
@@ -354,7 +355,7 @@ public class HiddenInternalFunctions {
         }
     }
 
-    @RBuiltin(name = "lazyLoadDBinsertValue", kind = INTERNAL, parameterNames = {"value", "file", "ascii", "compsxp", "hook"})
+    @RBuiltin(name = "lazyLoadDBinsertValue", kind = INTERNAL, parameterNames = {"value", "file", "ascii", "compsxp", "hook"}, behavior = COMPLEX)
     public abstract static class LazyLoadDBinsertValue extends RBuiltinNode {
 
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
@@ -458,7 +459,7 @@ public class HiddenInternalFunctions {
         }
     }
 
-    @RBuiltin(name = "lazyLoadDBflush", kind = INTERNAL, parameterNames = "path")
+    @RBuiltin(name = "lazyLoadDBflush", kind = INTERNAL, parameterNames = "path", behavior = COMPLEX)
     public abstract static class LazyLoadDBFlush extends RBuiltinNode {
         @Specialization
         protected RNull doLazyLoadDBFlush(RAbstractStringVector dbPath) {

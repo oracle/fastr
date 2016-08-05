@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -30,16 +31,16 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "names<-", kind = PRIMITIVE, parameterNames = {"x", "value"})
+@RBuiltin(name = "names<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
 public abstract class UpdateNames extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
@@ -72,7 +73,7 @@ public abstract class UpdateNames extends RBuiltinNode {
         }
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (stringVector.getLength() < result.getLength()) {
-            stringVector = stringVector.copyResized(result.getLength(), true);
+            stringVector = (RStringVector) stringVector.copyResized(result.getLength(), true);
         } else if (stringVector.getLength() > result.getLength()) {
             throw RError.error(this, Message.NAMES_LONGER, stringVector.getLength(), result.getLength());
         } else if (stringVector == container) {

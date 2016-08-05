@@ -398,7 +398,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
                         }
                     } else {
                         RStringVector dimVector = (RStringVector) dimObject;
-                        if (dimVector == null || dimVector.getLength() == 0) {
+                        if (dimVector == null) {
                             newDimNames.updateDataAt(i, RNull.instance, null);
                         } else if (dimVector.getLength() != dimensions[i]) {
                             throw RError.error(invokingNode, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
@@ -410,7 +410,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
             RList resDimNames = newDimNames;
             if (newDimNamesLength < dimensions.length) {
                 // resize the array and fill the missing entries with NULL-s
-                resDimNames = resDimNames.copyResized(dimensions.length, true);
+                resDimNames = (RList) resDimNames.copyResized(dimensions.length, true);
                 resDimNames.setAttributes(newDimNames);
                 for (int i = newDimNamesLength; i < dimensions.length; i++) {
                     resDimNames.updateDataAt(i, RNull.instance, null);
@@ -547,9 +547,11 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         }
     }
 
+    // public interface *copy* methods are final and delegate to *internalCopyAndReport* methods
+
     @Override
     public final RVector copy() {
-        RVector result = internalCopy();
+        RVector result = internalCopyAndReport();
         setAttributes(result);
         incCopyCount();
         result.setTypedValueInfo(getTypedValueInfo());
@@ -558,20 +560,54 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
 
     @Override
     public final RVector copyDropAttributes() {
-        return internalCopy();
+        RVector result = internalCopyAndReport();
+        return result;
     }
 
     @Override
-    public RVector deepCopy() {
-        RVector result = internalDeepCopy();
+    public final RVector deepCopy() {
+        RVector result = internalDeepCopyAndReport();
         setAttributes(result);
         return result;
     }
+
+    @Override
+    public final RVector copyResized(int size, boolean fillNA) {
+        return internalCopyResizedAndReport(size, fillNA);
+    }
+
+    // *internalCopyAndReport* methods do just the copy and report it to MemoryTracer. These should
+    // be used if additional logic in public interface *copy* method is not desired.
+
+    protected final RVector internalCopyAndReport() {
+        RVector result = internalCopy();
+        MemoryTracer.reportCopying(this, result);
+        return result;
+    }
+
+    protected final RVector internalDeepCopyAndReport() {
+        RVector result = internalDeepCopy();
+        MemoryTracer.reportCopying(this, result);
+        return result;
+    }
+
+    protected final RVector internalCopyResizedAndReport(int size, boolean fillNA) {
+        RVector result = internalCopyResized(size, fillNA);
+        MemoryTracer.reportCopying(this, result);
+        return result;
+    }
+
+    // *internalCopy* methods should only be overridden, but never invoked from anywhere but
+    // *internalCopyAndReport*
+
+    protected abstract RVector internalCopyResized(int size, boolean fillNA);
 
     // to be overridden by recursive structures
     protected RVector internalDeepCopy() {
         return internalCopy();
     }
+
+    protected abstract RVector internalCopy();
 
     @Override
     public RVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
@@ -587,8 +623,6 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     }
 
     protected abstract String getDataAtAsString(int index);
-
-    protected abstract RVector internalCopy();
 
     protected abstract boolean internalVerify();
 

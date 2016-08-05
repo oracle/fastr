@@ -12,6 +12,8 @@ a
 i
 #ifdef FASTR
 typedef void *SEXP;
+#define DATAPTR(x)		R_DATAPTR(x)
+void *(R_DATAPTR)(SEXP x);
 #else
 .
 +1

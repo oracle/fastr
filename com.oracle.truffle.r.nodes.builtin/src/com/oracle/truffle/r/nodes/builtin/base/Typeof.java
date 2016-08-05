@@ -22,27 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
-@RBuiltin(name = "typeof", kind = INTERNAL, parameterNames = {"x"})
+@RBuiltin(name = "typeof", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
 public abstract class Typeof extends RBuiltinNode {
 
-    @Child private TypeofNode typeofNode;
-
-    public abstract String execute(VirtualFrame frame, Object x);
+    @Child private TypeofNode typeofNode = TypeofNodeGen.create();
 
     @Specialization
     protected String typeof(Object obj) {
-        if (typeofNode == null) {
-            typeofNode = insert(TypeofNodeGen.create());
-        }
         return typeofNode.execute(obj).getName();
     }
 }

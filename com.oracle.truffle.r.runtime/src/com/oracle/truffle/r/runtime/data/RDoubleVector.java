@@ -211,7 +211,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     }
 
     @Override
-    public RDoubleVector copyResized(int size, boolean fillNA) {
+    protected RDoubleVector internalCopyResized(int size, boolean fillNA) {
         boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createDoubleVector(copyResizedData(size, fillNA), isComplete);
     }
