@@ -107,7 +107,7 @@ public abstract class RFFIFactory {
     }
 
     private static RuntimeException missing(String ffi) throws RuntimeException {
-        throw Utils.fail(ffi + " FFI not implemented");
+        throw Utils.rSuicide(ffi + " FFI not implemented");
     }
 
     public abstract ContextState newContext(RContext context);

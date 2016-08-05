@@ -36,6 +36,7 @@ import java.util.Date;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
@@ -129,9 +130,19 @@ public final class RInternalError extends Error {
     }
 
     @TruffleBoundary
+    public static void reportErrorAndConsoleLog(Throwable throwable, ConsoleHandler consoleHandler, int contextId) {
+        reportError(throwable, consoleHandler, contextId);
+    }
+
+    @TruffleBoundary
     public static void reportError(Throwable throwable) {
+        reportError(throwable, null, 0);
+    }
+
+    private static void reportError(Throwable throwable, ConsoleHandler consoleHandler, int contextId) {
         Throwable t = throwable;
         if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue() || FastROptions.PrintErrorStacktraces.getBooleanValue()) {
+
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             t.printStackTrace(new PrintStream(out));
             String verboseStackTrace;
@@ -150,7 +161,8 @@ public final class RInternalError extends Error {
                 System.err.println(verboseStackTrace);
             }
             if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
-                Path logfile = Utils.getLogPath("fastr_errors.log");
+                String suffix = contextId == 0 ? "" : "-" + Integer.toString(contextId);
+                Path logfile = Utils.getLogPath("fastr_errors.log" + suffix);
                 try (BufferedWriter writer = Files.newBufferedWriter(logfile, StandardCharsets.UTF_8, StandardOpenOption.APPEND,
                                 StandardOpenOption.CREATE)) {
                     writer.append(new Date().toString()).append('\n');
@@ -161,6 +173,9 @@ public final class RInternalError extends Error {
                 }
                 if (RContext.isEmbedded()) {
                     Utils.rSuicide("FastR internal error");
+                }
+                if (consoleHandler != null) {
+                    consoleHandler.println("internal error: " + t.getClass().getSimpleName() + " (see fastr_errors.log" + suffix + ")");
                 }
             }
         }

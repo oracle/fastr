@@ -104,8 +104,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse17() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('Version of 'graph' is too old --- no tests done here!\\n', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list('Version of graph is too old --- no tests done here!\\n', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -173,7 +172,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse30() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(FALSE, .Dim = 1L), 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(structure(FALSE, .Dim = 1L), 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test

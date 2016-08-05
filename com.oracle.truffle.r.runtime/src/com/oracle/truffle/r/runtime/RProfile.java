@@ -86,7 +86,7 @@ public final class RProfile implements RContext.ContextState {
         Path path = FileSystems.getDefault().getPath(REnvVars.rHome(), "library", "base", "R", "Rprofile");
         Source source = getProfile(path.toString());
         if (source == null) {
-            Utils.fail("can't find system profile");
+            Utils.rSuicide("can't find system profile");
         }
         return source;
     }
