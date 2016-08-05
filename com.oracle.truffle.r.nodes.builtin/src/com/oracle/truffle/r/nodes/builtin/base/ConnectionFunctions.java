@@ -49,13 +49,11 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.HeadPhaseBuilder;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.InitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.WriteDataNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
@@ -69,9 +67,9 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -703,26 +701,43 @@ public abstract class ConnectionFunctions {
         return buffer.order(nb);
     }
 
+    private abstract static class BinCastHelper extends InternalCloseHelper {
+        protected void n(CastBuilder casts) {
+            casts.arg("n").asIntegerVector().findFirst().mustBe(gte(0));
+        }
+
+        protected void size(CastBuilder casts) {
+            casts.arg("size").asIntegerVector().findFirst();
+        }
+
+        protected void swap(CastBuilder casts) {
+            casts.arg("swap").asLogicalVector().findFirst().notNA().map(toBoolean());
+        }
+    }
+
     @RBuiltin(name = "readBin", kind = INTERNAL, parameterNames = {"con", "what", "n", "size", "signed", "swap"}, behavior = IO)
-    public abstract static class ReadBin extends InternalCloseHelper {
+    public abstract static class ReadBin extends BinCastHelper {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toInteger(2);
+            // TODO con can be a RAWSXP (not implemented)
+            connection(casts);
+            casts.arg("what").asStringVector().findFirst();
+            n(casts);
+            size(casts);
+            casts.arg("signed").asLogicalVector().findFirst().notNA().map(toBoolean());
+            swap(casts);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object readBin(RConnection con, RAbstractStringVector whatVec, RAbstractIntVector nVec, @SuppressWarnings("unused") int size, @SuppressWarnings("unused") byte signedArg,
-                        byte swapArg) {
-            boolean swap = RRuntime.fromLogical(swapArg);
+        protected Object readBin(RConnection con, String what, int n, @SuppressWarnings("unused") int size, @SuppressWarnings("unused") boolean signed,
+                        boolean swap) {
             RVector result = null;
-            int n = nVec.getDataAt(0);
             try (RConnection openConn = con.forceOpen("rb")) {
                 if (getBaseConnection(openConn).getOpenMode().isText()) {
                     throw RError.error(this, RError.Message.ONLY_READ_BINARY_CONNECTION);
                 }
-                String what = whatVec.getDataAt(0);
                 switch (what) {
                     case "int":
                     case "integer":
@@ -971,19 +986,25 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "writeBin", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"}, behavior = IO)
-    public abstract static class WriteBin extends InternalCloseHelper {
+    public abstract static class WriteBin extends BinCastHelper {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstIntegerWithError(2, null, null);
+            // TODO atomic, i.e. not RList or RExpression
+            casts.arg("object").asVector().mustBe(nullValue().not().and(instanceOf(RAbstractVector.class)));
+            connection(casts);
+            size(casts);
+            swap(casts);
+            useBytes(casts);
         }
 
         @TruffleBoundary
         @Specialization
-        protected Object writeBin(RAbstractVector object, RConnection con, int size, byte swapArg, byte useBytesArg, //
+        protected Object writeBin(RAbstractVector object, RConnection con, int size, boolean swap, boolean useBytes, //
                         @Cached("create()") WriteDataNode writeData) {
-            boolean swap = RRuntime.fromLogical(swapArg);
-            boolean useBytes = RRuntime.fromLogical(useBytesArg);
+            if (object instanceof RList || object instanceof RExpression) {
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "object");
+            }
             if (object.getLength() > 0) {
                 try (RConnection openConn = con.forceOpen("wb")) {
                     if (getBaseConnection(openConn).isTextMode()) {
