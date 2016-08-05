@@ -76,8 +76,12 @@ public abstract class UpdateNames extends RBuiltinNode {
             stringVector = (RStringVector) stringVector.copyResized(result.getLength(), true);
         } else if (stringVector.getLength() > result.getLength()) {
             throw RError.error(this, Message.NAMES_LONGER, stringVector.getLength(), result.getLength());
-        } else if (stringVector == container) {
+        } else if (stringVector == names) {
             stringVector = (RStringVector) stringVector.copy();
+        }
+        if (stringVector.isTemporary()) {
+            stringVector.incRefCount();
+
         }
         result.setNames(stringVector);
         return result;
