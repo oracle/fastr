@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -82,7 +83,7 @@ public abstract class AsVector extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstStringWithError(1, RError.Message.INVALID_ARGUMENT, "mode");
+        casts.arg("mode").mustBe(scalarStringValue(), RError.Message.INVALID_ARGUMENT, "mode");
     }
 
     protected static AsVectorInternal createInternal() {

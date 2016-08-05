@@ -153,7 +153,7 @@ public abstract class MatchFun extends RBuiltinNode {
 
         @TruffleBoundary
         private static Object slowPathLookup(String name, MaterializedFrame frame, boolean descend) {
-            Object result = descend ? ReadVariableNode.lookupFunction(name, frame, false) : ReadVariableNode.lookupAny(name, frame, false);
+            Object result = descend ? ReadVariableNode.lookupFunction(name, frame) : ReadVariableNode.lookupAny(name, frame, false);
             if (result == null) {
                 throw RError.error(RError.SHOW_CALLER, descend ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, name);
             }

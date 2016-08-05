@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -36,8 +37,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -48,30 +51,130 @@ public abstract class ColSums extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
     private final ConditionProfile removeNA = ConditionProfile.createBinaryProfile();
+    private final ValueProfile concreteVectorProfile = ValueProfile.createClassProfile();
+    private final ConditionProfile vectorLengthProfile = ConditionProfile.createBinaryProfile();
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("X").mustBe(numericValue(), RError.Message.X_NUMERIC);
+        casts.arg("X").mustBe(numericValue(), RError.NO_CALLER, RError.Message.X_NUMERIC);
 
-        casts.arg("m").asIntegerVector().findFirst().notNA();
+        casts.arg("m").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "n").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
 
-        casts.arg("n").asIntegerVector().findFirst().notNA();
+        casts.arg("n").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "p").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
 
-        casts.arg("na.rm").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("na.rm").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "na.rm").asLogicalVector().findFirst().notNA().map(toBoolean());
+    }
+
+    private void checkVectorLength(RAbstractVector x, int rowNum, int colNum) {
+        if (vectorLengthProfile.profile(x.getLength() < rowNum * colNum)) {
+            throw RError.error(RError.NO_CALLER, RError.Message.TOO_SHORT, "X");
+        }
+    }
+
+    protected boolean isEmptyMatrix(int rowNum, int colNum) {
+        return rowNum == 0 && colNum == 0;
+    }
+
+    @Specialization(guards = "isEmptyMatrix(rowNum, colNum)")
+    @SuppressWarnings("unused")
+    protected RDoubleVector colSumsEmptyMatrix(Object x, int rowNum, int colNum, boolean naRm) {
+        return RDataFactory.createEmptyDoubleVector();
+    }
+
+    @Specialization(guards = "!naRm")
+    protected RDoubleVector colSumsScalarNaRmFalse(double x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+        if (vectorLengthProfile.profile(rowNum * colNum > 1)) {
+            throw RError.error(RError.NO_CALLER, RError.Message.TOO_SHORT, "X");
+        }
+
+        return RDataFactory.createDoubleVectorFromScalar(x);
+    }
+
+    @Specialization(guards = "naRm")
+    protected RDoubleVector colSumsScalarNaRmTrue(double x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+        if (vectorLengthProfile.profile(rowNum * colNum > 1)) {
+            throw RError.error(RError.NO_CALLER, RError.Message.TOO_SHORT, "X");
+        }
+
+        na.enable(x);
+        if (!na.check(x) && !Double.isNaN(x)) {
+            return RDataFactory.createDoubleVectorFromScalar(x);
+        } else {
+            return RDataFactory.createDoubleVectorFromScalar(Double.NaN);
+        }
+    }
+
+    @Specialization(guards = "!naRm")
+    protected RDoubleVector colSumsScalarNaRmFalse(int x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+        if (vectorLengthProfile.profile(rowNum * colNum > 1)) {
+            throw RError.error(RError.NO_CALLER, RError.Message.TOO_SHORT, "X");
+        }
+
+        na.enable(x);
+        if (!na.check(x)) {
+            return RDataFactory.createDoubleVectorFromScalar(x);
+        } else {
+            return RDataFactory.createDoubleVectorFromScalar(RRuntime.DOUBLE_NA);
+        }
+    }
+
+    @Specialization(guards = "naRm")
+    protected RDoubleVector colSumsScalarNaRmTrue(int x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+        if (vectorLengthProfile.profile(rowNum * colNum > 1)) {
+            throw RError.error(RError.NO_CALLER, RError.Message.TOO_SHORT, "X");
+        }
+
+        na.enable(x);
+        if (!na.check(x)) {
+            return RDataFactory.createDoubleVectorFromScalar(x);
+        } else {
+            return RDataFactory.createDoubleVectorFromScalar(Double.NaN);
+        }
+    }
+
+    @Specialization(guards = "!naRm")
+    protected RDoubleVector colSumsScalarNaRmFalse(byte x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+        if (vectorLengthProfile.profile(rowNum * colNum > 1)) {
+            throw RError.error(RError.NO_CALLER, RError.Message.TOO_SHORT, "X");
+        }
+
+        na.enable(x);
+        if (!na.check(x)) {
+            return RDataFactory.createDoubleVectorFromScalar(x);
+        } else {
+            return RDataFactory.createDoubleVectorFromScalar(RRuntime.DOUBLE_NA);
+        }
+    }
+
+    @Specialization(guards = "naRm")
+    protected RDoubleVector colSumsScalarNaRmTrue(byte x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+        if (vectorLengthProfile.profile(rowNum * colNum > 1)) {
+            throw RError.error(RError.NO_CALLER, RError.Message.TOO_SHORT, "X");
+        }
+
+        na.enable(x);
+        if (!na.check(x)) {
+            return RDataFactory.createDoubleVectorFromScalar(x);
+        } else {
+            return RDataFactory.createDoubleVectorFromScalar(Double.NaN);
+        }
     }
 
     @Specialization
-    protected RDoubleVector colSums(RDoubleVector x, int rowNum, int colNum, boolean rnaParam) {
+    protected RDoubleVector colSums(RAbstractDoubleVector x, int rowNum, int colNum, boolean rnaParam) {
+        checkVectorLength(x, rowNum, colNum);
+
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
         final boolean rna = removeNA.profile(rnaParam);
-        double[] data = x.getDataWithoutCopying();
+        final RAbstractDoubleVector profiledX = concreteVectorProfile.profile(x);
+
         int pos = 0;
         nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
             for (int i = 0; i < rowNum; i++) {
-                double el = data[pos++];
+                final double el = profiledX.getDataAt(pos++);
                 if (rna) {
                     if (!na.check(el) && !Double.isNaN(el)) {
                         sum = add.op(sum, el);
@@ -97,16 +200,18 @@ public abstract class ColSums extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector colSums(RLogicalVector x, int rowNum, int colNum, boolean rna) {
+    protected RDoubleVector colSums(RAbstractLogicalVector x, int rowNum, int colNum, boolean rna) {
+        checkVectorLength(x, rowNum, colNum);
+
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
-        byte[] data = x.getDataWithoutCopying();
+        final RAbstractLogicalVector profiledX = concreteVectorProfile.profile(x);
         int pos = 0;
         nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
             for (int i = 0; i < rowNum; i++) {
-                byte el = data[pos++];
+                final byte el = profiledX.getDataAt(pos++);
                 if (rna) {
                     if (!na.check(el)) {
                         sum = add.op(sum, el);
@@ -127,16 +232,18 @@ public abstract class ColSums extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector colSums(RIntVector x, int rowNum, int colNum, boolean rna) {
+    protected RDoubleVector colSums(RAbstractIntVector x, int rowNum, int colNum, boolean rna) {
+        checkVectorLength(x, rowNum, colNum);
+
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
-        int[] data = x.getDataWithoutCopying();
+        final RAbstractIntVector profiledX = concreteVectorProfile.profile(x);
         int pos = 0;
         nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
             for (int i = 0; i < rowNum; i++) {
-                int el = data[pos++];
+                final int el = profiledX.getDataAt(pos++);
                 if (rna) {
                     if (!na.check(el)) {
                         sum = add.op(sum, el);

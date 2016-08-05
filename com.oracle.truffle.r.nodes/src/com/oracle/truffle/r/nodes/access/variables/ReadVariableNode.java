@@ -540,7 +540,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         if (lookup != null) {
             try {
                 if (lookup.getValue() instanceof RPromise) {
-                    evalPromiseSlowPathWithName(frame, (RPromise) lookup.getValue());
+                    evalPromiseSlowPathWithName(identifierAsString, frame, (RPromise) lookup.getValue());
                 }
                 if (lookup != null) {
                     if (lookup.getValue() == null || checkTypeSlowPath(frame, lookup.getValue())) {
@@ -639,8 +639,12 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         return lastLevel;
     }
 
+    public static RFunction lookupFunction(String identifier, Frame variableFrame) {
+        return lookupFunction(identifier, variableFrame, false, true);
+    }
+
     @TruffleBoundary
-    public static RFunction lookupFunction(String identifier, Frame variableFrame, boolean localOnly) {
+    public static RFunction lookupFunction(String identifier, Frame variableFrame, boolean localOnly, boolean forcePromises) {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name
@@ -657,8 +661,12 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
                         if (promise.isEvaluated()) {
                             value = promise.getValue();
                         } else {
-                            value = PromiseHelperNode.evaluateSlowPath(null, promise);
-                            return (RFunction) value;
+                            if (forcePromises) {
+                                value = evalPromiseSlowPathWithName(identifier, null, promise);
+                                return (RFunction) value;
+                            } else {
+                                return null;
+                            }
                         }
                     }
                     if (RRuntime.checkType(value, RType.Function)) {
@@ -840,7 +848,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
                     // we recover from a wrong type later
                     return true;
                 } else {
-                    obj = evalPromiseSlowPathWithName(frame, promise);
+                    obj = evalPromiseSlowPathWithName(identifierAsString, frame, promise);
                 }
             } else {
                 obj = promise.getValue();
@@ -849,9 +857,9 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         return RRuntime.checkType(obj, mode);
     }
 
-    private Object evalPromiseSlowPathWithName(VirtualFrame frame, RPromise promise) {
+    public static Object evalPromiseSlowPathWithName(String identifier, VirtualFrame frame, RPromise promise) {
         Object obj;
-        slowPathEvaluationName.set(identifierAsString);
+        slowPathEvaluationName.set(identifier);
         try {
             obj = PromiseHelperNode.evaluateSlowPath(frame, promise);
         } finally {

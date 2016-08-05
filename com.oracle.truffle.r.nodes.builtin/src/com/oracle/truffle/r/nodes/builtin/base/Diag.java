@@ -37,6 +37,8 @@ public abstract class Diag extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
+        casts.arg("x").asVector();
+
         casts.arg("nrow").asIntegerVector().findFirst().mustBe(notIntNA(), Message.INVALID_LARGE_NA_VALUE, "nrow").mustBe(gte0(), Message.INVALID_NEGATIVE_VALUE, "nrow");
 
         casts.arg("ncol").asIntegerVector().findFirst().mustBe(notIntNA(), Message.INVALID_LARGE_NA_VALUE, "ncol").mustBe(gte0(), Message.INVALID_NEGATIVE_VALUE, "ncol");

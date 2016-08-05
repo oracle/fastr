@@ -40,18 +40,18 @@ public class TestBuiltin_Encoding extends TestBase {
 
     @Test
     public void testEncoding5() {
-        assertEval(Ignored.Unknown, "argv <- list(structure('Type 'demo(PKG::FOO)' to run demonstration 'PKG::FOO'.', .Names = 'demo')); .Internal(Encoding(argv[[1]]))");
+        assertEval("argv <- list(structure('Type demo(PKG::FOO) to run demonstration PKG::FOO.', .Names = 'demo')); .Internal(Encoding(argv[[1]]))");
     }
 
     @Test
     public void testEncoding6() {
-        assertEval(Ignored.Unknown, "argv <- list('A shell of class documentation has been written to the file './myTst2/man/DocLink-class.Rd'.\\n'); .Internal(Encoding(argv[[1]]))");
+        assertEval("argv <- list('A shell of class documentation has been written to the file ./myTst2/man/DocLink-class.Rd.\\n'); .Internal(Encoding(argv[[1]]))");
     }
 
     @Test
     public void testEncoding7() {
         assertEval(Ignored.Unknown,
-                        "argv <- list(c('* Edit the help file skeletons in 'man', possibly combining help files for multiple functions.', '* Edit the exports in 'NAMESPACE', and add necessary imports.', '* Put any C/C++/Fortran code in 'src'.', '* If you have compiled code, add a useDynLib() directive to 'NAMESPACE'.', '* Run R CMD build to build the package tarball.', '* Run R CMD check to check the package tarball.', '', 'Read \\\'Writing R Extensions\\\' for more information.')); .Internal(Encoding(argv[[1]]))");
+                        "argv <- list(c('* Edit the help file skeletons in man, possibly combining help files for multiple functions.', '* Edit the exports in NAMESPACE, and add necessary imports.', '* Put any C/C++/Fortran code in src.', '* If you have compiled code, add a useDynLib() directive to NAMESPACE.', '* Run R CMD build to build the package tarball.', '* Run R CMD check to check the package tarball.', '', 'Read Writing R Extensions for more information.')); .Internal(Encoding(argv[[1]]))");
     }
 
     @Test

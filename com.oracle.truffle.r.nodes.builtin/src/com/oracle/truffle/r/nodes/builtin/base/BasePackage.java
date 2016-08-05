@@ -277,7 +277,6 @@ public class BasePackage extends RBuiltinPackage {
         add(Exists.class, ExistsNodeGen::create);
         add(Expression.class, ExpressionNodeGen::create);
         add(FastRContext.CloseChannel.class, FastRContextFactory.CloseChannelNodeGen::create);
-        add(FastRContext.Create.class, FastRContextFactory.CreateNodeGen::create);
         add(FastRContext.CreateChannel.class, FastRContextFactory.CreateChannelNodeGen::create);
         add(FastRContext.Eval.class, FastRContextFactory.EvalNodeGen::create);
         add(FastRContext.Get.class, FastRContextFactory.GetNodeGen::create);
@@ -631,7 +630,7 @@ public class BasePackage extends RBuiltinPackage {
     }
 
     private static void addFastPath(MaterializedFrame baseFrame, String name, FastPathFactory factory) {
-        RFunction function = ReadVariableNode.lookupFunction(name, baseFrame, false);
+        RFunction function = ReadVariableNode.lookupFunction(name, baseFrame);
         ((RRootNode) function.getRootNode()).setFastPath(factory);
     }
 
@@ -663,7 +662,7 @@ public class BasePackage extends RBuiltinPackage {
 
     private static void setContainsDispatch(MaterializedFrame baseFrame, String... functions) {
         for (String name : functions) {
-            RFunction function = ReadVariableNode.lookupFunction(name, baseFrame, false);
+            RFunction function = ReadVariableNode.lookupFunction(name, baseFrame);
             ((RRootNode) function.getRootNode()).setContainsDispatch(true);
         }
     }

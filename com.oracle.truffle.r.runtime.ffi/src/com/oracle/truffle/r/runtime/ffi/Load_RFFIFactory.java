@@ -60,7 +60,7 @@ public class Load_RFFIFactory {
                 instance = (RFFIFactory) Class.forName(prop).newInstance();
                 RFFIFactory.setRFFIFactory(instance);
             } catch (Exception ex) {
-                throw Utils.fail("Failed to instantiate class: " + prop + ": " + ex);
+                throw Utils.rSuicide("Failed to instantiate class: " + prop + ": " + ex);
             }
         }
         instance.initialize(runtime);

@@ -22,28 +22,27 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.io.PrintWriter;
-
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class NonNANode extends CastNode {
 
+    private final RBaseNode callObj;
     private final RError.Message message;
     private final Object[] messageArgs;
-    private final PrintWriter out;
     private final Object naReplacement;
 
     private final BranchProfile warningProfile = BranchProfile.create();
 
-    protected NonNANode(RError.Message message, Object[] messageArgs, PrintWriter out, Object naReplacement) {
+    protected NonNANode(RBaseNode callObj, RError.Message message, Object[] messageArgs, Object naReplacement) {
+        this.callObj = callObj == null ? this : callObj;
         this.message = message;
         this.messageArgs = messageArgs;
-        this.out = out;
         this.naReplacement = naReplacement;
     }
 
@@ -59,11 +58,11 @@ public abstract class NonNANode extends CastNode {
         if (naReplacement != null) {
             if (message != null) {
                 warningProfile.enter();
-                handleArgumentWarning(arg, this, message, messageArgs, out);
+                handleArgumentWarning(arg, callObj, message, messageArgs);
             }
             return naReplacement;
         } else {
-            handleArgumentError(arg, this, message, messageArgs);
+            handleArgumentError(arg, callObj, message, messageArgs);
             return null;
         }
     }

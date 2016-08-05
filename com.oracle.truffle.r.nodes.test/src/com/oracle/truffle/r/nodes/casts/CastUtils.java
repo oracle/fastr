@@ -31,7 +31,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.dsl.Specialization;
@@ -39,14 +41,18 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RListBase;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+
+import sun.java2d.xr.XRCompositeManager;
 
 public class CastUtils {
 
@@ -447,13 +453,13 @@ public class CastUtils {
     }
 
     public static Type elementType(Class<?> vectorType) {
-        if (RAbstractIntVector.class.isAssignableFrom(vectorType) || Integer.class.isAssignableFrom(vectorType)) {
+        if (RAbstractIntVector.class.isAssignableFrom(vectorType) || Integer.class.isAssignableFrom(vectorType) || int.class.isAssignableFrom(vectorType)) {
             return Integer.class;
         }
-        if (RAbstractDoubleVector.class.isAssignableFrom(vectorType) || Double.class.isAssignableFrom(vectorType)) {
+        if (RAbstractDoubleVector.class.isAssignableFrom(vectorType) || Double.class.isAssignableFrom(vectorType) || double.class.isAssignableFrom(vectorType)) {
             return Double.class;
         }
-        if (RAbstractLogicalVector.class.isAssignableFrom(vectorType) || Byte.class.isAssignableFrom(vectorType)) {
+        if (RAbstractLogicalVector.class.isAssignableFrom(vectorType) || Byte.class.isAssignableFrom(vectorType) || byte.class.isAssignableFrom(vectorType)) {
             return Byte.class;
         }
         if (RAbstractStringVector.class.isAssignableFrom(vectorType) || String.class.isAssignableFrom(vectorType)) {
@@ -471,7 +477,7 @@ public class CastUtils {
         return Not.negateType(RAbstractVector.class);
     }
 
-    public static Object emptyVector(Class<?> elementType) {
+    public static RAbstractVector emptyVector(Class<?> elementType) {
         if (Integer.class.isAssignableFrom(elementType)) {
             return RDataFactory.createEmptyIntVector();
         }
@@ -489,6 +495,28 @@ public class CastUtils {
         }
         if (RComplex.class.isAssignableFrom(elementType)) {
             return RDataFactory.createEmptyComplexVector();
+        }
+        return null;
+    }
+
+    public static RAbstractVector vectorOfSize(Class<?> vectorType, int size) {
+        if (RAbstractIntVector.class.isAssignableFrom(vectorType) || Integer.class.isAssignableFrom(vectorType) || int.class.isAssignableFrom(vectorType)) {
+            return RDataFactory.createIntVector(size);
+        }
+        if (RAbstractDoubleVector.class.isAssignableFrom(vectorType) || Double.class.isAssignableFrom(vectorType) || double.class.isAssignableFrom(vectorType)) {
+            return RDataFactory.createDoubleVector(size);
+        }
+        if (RAbstractLogicalVector.class.isAssignableFrom(vectorType) || Byte.class.isAssignableFrom(vectorType) || byte.class.isAssignableFrom(vectorType)) {
+            return RDataFactory.createLogicalVector(size);
+        }
+        if (RAbstractStringVector.class.isAssignableFrom(vectorType) || String.class.isAssignableFrom(vectorType)) {
+            return RDataFactory.createStringVector(size);
+        }
+        if (RAbstractComplexVector.class.isAssignableFrom(vectorType) || RComplex.class.isAssignableFrom(vectorType)) {
+            return RDataFactory.createComplexVector(size);
+        }
+        if (RAbstractVector.class.isAssignableFrom(vectorType) || vectorType == Object.class) {
+            return RDataFactory.createIntVector(size);
         }
         return null;
     }
@@ -537,6 +565,25 @@ public class CastUtils {
         return null;
     }
 
+    public static boolean isNaValue(Object x) {
+        if (x instanceof Integer) {
+            return RRuntime.isNA((Integer) x);
+        }
+        if (x instanceof Double) {
+            return RRuntime.isNA((Double) x);
+        }
+        if (x instanceof Byte) {
+            return RRuntime.isNA((Byte) x);
+        }
+        if (x instanceof String) {
+            return RRuntime.isNA((String) x);
+        }
+        if (x instanceof RComplex) {
+            return RRuntime.isNA((RComplex) x);
+        }
+        return false;
+    }
+
     public static Object singletonVector(Object element) {
         if (element == RNull.instance) {
             return RNull.instance;
@@ -560,6 +607,69 @@ public class CastUtils {
             return RDataFactory.createComplexVectorFromScalar((RComplex) element);
         }
         return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<T> firstElement(Object vectorOrScalar, Object defaultValue) {
+        if (vectorOrScalar == RNull.instance) {
+            return defaultValue == null ? Optional.of((T) RNull.instance) : Optional.of((T) defaultValue);
+        }
+        if (vectorOrScalar == RMissing.instance) {
+            return defaultValue == null ? Optional.of((T) RMissing.instance) : Optional.of((T) defaultValue);
+        }
+        if (vectorOrScalar instanceof RAbstractContainer) {
+            if (((RAbstractContainer) vectorOrScalar).getLength() == 0) {
+                return defaultValue == null ? Optional.empty() : Optional.of((T) defaultValue);
+            } else {
+                if (vectorOrScalar instanceof RAbstractIntVector) {
+                    return Optional.of((T) ((RAbstractIntVector) vectorOrScalar).getDataAtAsObject(0));
+                }
+                if (vectorOrScalar instanceof RAbstractDoubleVector) {
+                    return Optional.of((T) ((RAbstractDoubleVector) vectorOrScalar).getDataAtAsObject(0));
+                }
+                if (vectorOrScalar instanceof RAbstractComplexVector) {
+                    return Optional.of((T) ((RAbstractComplexVector) vectorOrScalar).getDataAtAsObject(0));
+                }
+                if (vectorOrScalar instanceof RAbstractLogicalVector) {
+                    return Optional.of((T) ((RAbstractLogicalVector) vectorOrScalar).getDataAtAsObject(0));
+                }
+                if (vectorOrScalar instanceof RAbstractStringVector) {
+                    return Optional.of((T) ((RAbstractStringVector) vectorOrScalar).getDataAtAsObject(0));
+                }
+                return defaultValue == null ? Optional.empty() : Optional.of((T) defaultValue);
+            }
+        } else {
+            return Optional.of((T) vectorOrScalar);
+        }
+
+    }
+
+    public static Optional<Class<?>> vectorElementType(Object vector) {
+        if (vector instanceof RAbstractContainer) {
+            if (vector instanceof RAbstractIntVector) {
+                return Optional.of(Integer.class);
+            }
+            if (vector instanceof RAbstractDoubleVector) {
+                return Optional.of(Double.class);
+            }
+            if (vector instanceof RAbstractComplexVector) {
+                return Optional.of(RComplex.class);
+            }
+            if (vector instanceof RAbstractLogicalVector) {
+                return Optional.of(Byte.class);
+            }
+            if (vector instanceof RAbstractStringVector) {
+                return Optional.of(String.class);
+            }
+            return Optional.of(Object.class);
+        } else {
+            return Optional.empty();
+        }
+
+    }
+
+    public static Set<?> sampleValuesForTypeExpr(TypeExpr te) {
+        return te.normalize().stream().flatMap(t -> CastUtils.sampleValuesForType(t).stream()).collect(Collectors.toSet());
     }
 
     public static Set<?> sampleValuesForType(Type t) {
@@ -683,7 +793,11 @@ public class CastUtils {
         return sampleSet;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> Set<? extends T> samples(T s) {
+        if (s == null) {
+            return Collections.singleton((T) RNull.instance);
+        }
         return Collections.singleton(s);
     }
 
@@ -691,4 +805,34 @@ public class CastUtils {
         return Collections.emptySet();
     }
 
+    public static String getPredefStepDesc() {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        return stackTrace[3].toString();
+    }
+
+    private static int instrIndent = 0;
+
+    static <T> Predicate<T> instrument(Predicate<T> predicate, String desc) {
+        if (Boolean.getBoolean("rbdiag.instrument")) {
+            return x -> {
+                char[] indentChars = new char[instrIndent];
+                Arrays.fill(indentChars, ' ');
+                String indent = String.valueOf(indentChars);
+
+                System.out.println(indent + "{ " + desc + ": " + x);
+                instrIndent++;
+                boolean res;
+                try {
+                    res = predicate.test(x);
+                } finally {
+                    instrIndent--;
+                }
+                System.out.println(indent + "} " + desc + ": " + x + "->" + res);
+                return res;
+            };
+        } else {
+            return predicate;
+        }
+
+    }
 }

@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -44,7 +43,10 @@ public abstract class WithVisible extends RBuiltinNode {
 
     @Specialization(guards = "!isRMissing(x)")
     protected RList withVisible(Object x) {
-        assert !FastROptions.IgnoreVisibility.getBooleanValue() : "using withVisible with IgnoreVisibility";
+        // (LS) temporarily disabled to enable parallel benchmarks
+        // if (FastROptions.IgnoreVisibility.getBooleanValue()) {
+        // RError.warning(this, RError.Message.GENERIC, "using withVisible with IgnoreVisibility");
+        // }
 
         Object[] data = new Object[]{x, RRuntime.asLogical(RContext.getInstance().isVisible())};
         // Visibility is changed by the evaluation (else this code would not work),

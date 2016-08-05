@@ -275,7 +275,8 @@ public class CallRFFIHelper {
     }
 
     public static Object R_do_MAKE_CLASS(String clazz) {
-        RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(REnvironment.getRegisteredNamespace("methods").get("getClass"));
+        String name = "getClass";
+        RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, REnvironment.getRegisteredNamespace("methods").get(name));
         return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), null, clazz);
     }
 
@@ -899,7 +900,7 @@ public class CallRFFIHelper {
         guarantee(env instanceof REnvironment);
         Object result;
         if (expr instanceof RPromise) {
-            result = RContext.getRRuntimeASTAccess().forcePromise(expr);
+            result = RContext.getRRuntimeASTAccess().forcePromise(null, expr);
         } else if (expr instanceof RExpression) {
             result = RContext.getEngine().eval((RExpression) expr, (REnvironment) env, topLevel);
         } else if (expr instanceof RLanguage) {

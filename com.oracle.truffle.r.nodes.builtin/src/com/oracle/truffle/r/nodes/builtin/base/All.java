@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RDispatch.SUMMARY_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -57,31 +58,32 @@ public abstract class All extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toLogical(0);
+        // casts.arg("...").mustBe(integerValue().or(logicalValue())).asLogicalVector();
+        casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
     }
 
     @Specialization
-    protected byte all(byte value, @SuppressWarnings("unused") byte naRm) {
+    protected byte all(byte value, @SuppressWarnings("unused") boolean naRm) {
         return value;
     }
 
     @Specialization
-    protected byte all(RLogicalVector vector, byte naRm) {
+    protected byte all(RLogicalVector vector, boolean naRm) {
         return accumulate(vector, naRm);
     }
 
     @Specialization
-    protected byte all(@SuppressWarnings("unused") RNull vector, @SuppressWarnings("unused") byte naRm) {
+    protected byte all(@SuppressWarnings("unused") RNull vector, @SuppressWarnings("unused") boolean naRm) {
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
-    protected byte all(@SuppressWarnings("unused") RMissing vector, @SuppressWarnings("unused") byte naRm) {
+    protected byte all(@SuppressWarnings("unused") RMissing vector, @SuppressWarnings("unused") boolean naRm) {
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
-    protected byte all(RArgsValuesAndNames args, byte naRm) {
+    protected byte all(RArgsValuesAndNames args, boolean naRm) {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogicalNode = insert(CastLogicalNodeGen.create(true, false, false));
@@ -95,7 +97,7 @@ public abstract class All extends RBuiltinNode {
                 result = RRuntime.LOGICAL_TRUE;
             } else {
                 result = (byte) castLogicalNode.execute(argValue);
-                if (result == RRuntime.LOGICAL_NA && naRm != RRuntime.LOGICAL_FALSE) {
+                if (result == RRuntime.LOGICAL_NA && naRm) {
                     continue;
                 }
             }
@@ -106,10 +108,10 @@ public abstract class All extends RBuiltinNode {
         return RRuntime.LOGICAL_TRUE;
     }
 
-    private static byte accumulate(RLogicalVector vector, byte naRm) {
+    private static byte accumulate(RLogicalVector vector, boolean naRm) {
         for (int i = 0; i < vector.getLength(); i++) {
             byte b = vector.getDataAt(i);
-            if (b == RRuntime.LOGICAL_NA && naRm != RRuntime.LOGICAL_FALSE) {
+            if (b == RRuntime.LOGICAL_NA && naRm) {
                 continue;
             }
             if (b != RRuntime.LOGICAL_TRUE) {

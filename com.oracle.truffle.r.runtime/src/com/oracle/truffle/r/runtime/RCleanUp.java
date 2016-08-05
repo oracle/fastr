@@ -90,7 +90,7 @@ public class RCleanUp {
         }
         // TODO run exit finalizers (FFI)
         // TODO clean tmpdir
-        Utils.exit(status);
+        throw new ExitException(status);
 
     }
 

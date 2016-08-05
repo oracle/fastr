@@ -135,6 +135,7 @@ public abstract class Scan extends RBuiltinNode {
         casts.arg("encoding").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
 
         casts.arg("skipNull").asLogicalVector().findFirst().notNA().map(toBoolean());
+
     }
 
     @Specialization

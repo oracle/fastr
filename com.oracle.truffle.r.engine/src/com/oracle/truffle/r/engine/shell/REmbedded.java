@@ -74,7 +74,7 @@ public class REmbedded {
         try {
             vm.eval(INIT);
         } catch (IOException ex) {
-            Utils.rSuicide("initializeR");
+            Utils.rSuicideDefault("initializeR");
         }
         return vm;
     }
@@ -116,11 +116,14 @@ public class REmbedded {
     // Checkstyle: stop method name check
 
     /**
-     * Upcalled from embedded mode to commit suicide.
+     * Upcalled from embedded mode to (really) commit suicide. This provides the default
+     * implementation of the {@code R_Suicide} function in the {@code Rinterface} API. If an
+     * embeddee overrides it, it typically will save this value and invoke it after its own
+     * customization.
      */
     @SuppressWarnings("unused")
     private static void R_Suicide(String msg) {
-        Utils.exit(2);
+        Utils.rSuicideDefault(msg);
     }
 
 }

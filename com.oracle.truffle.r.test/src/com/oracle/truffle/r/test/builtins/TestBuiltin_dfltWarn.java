@@ -19,7 +19,7 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn1() {
-        assertEval(Ignored.Unknown, "argv <- list(\''f' is deprecated.\\nUse 'convertY' instead.\\nSee help(\\\'Deprecated\\\')', NULL); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('f is deprecated.\\nUse convertY instead.\\nSee help(Deprecated)', NULL); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -35,8 +35,8 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn4() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('header and 'col.names' are of different lengths', quote(read.table('foo3', header = TRUE, col.names = letters[1:4]))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval(Output.IgnoreWarningContext,
+                        "argv <- list('header and col.names are of different lengths', quote(read.table('foo3', header = TRUE, col.names = letters[1:4]))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -51,7 +51,7 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn7() {
-        assertEval(Ignored.Unknown, "argv <- list(\''drop' argument will be ignored', quote(`[.data.frame`(women, 'height', drop = FALSE))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(\'drop argument will be ignored', quote(`[.data.frame`(women, 'height', drop = FALSE))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -67,17 +67,19 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn10() {
-        assertEval(Ignored.Unknown, "argv <- list(\''x' is neither a vector nor a matrix: using as.numeric(x)', quote(dotchart(table(infert$education)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval(Output.IgnoreWarningContext,
+                        "argv <- list(\'x is neither a vector nor a matrix: using as.numeric(x)', quote(dotchart(table(infert$education)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testdfltWarn11() {
         assertEval(Ignored.Unknown,
-                        "argv <- list('Invalid file name(s) for R code in ./myTst/R:\\n  'file55711ba85492'\\n are now renamed to 'z<name>.R'', quote(package.skeleton('myTst', code_files = tmp))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+                        "argv <- list('Invalid file name(s) for R code in ./myTst/R:\\n  file55711ba85492\\n are now renamed to z<name>.R', quote(package.skeleton('myTst', code_files = tmp))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testdfltWarn12() {
-        assertEval(Ignored.Unknown, "argv <- list('incomplete final line found by readTableHeader on 'foo4'', quote(read.table('foo4', header = TRUE))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval(Output.IgnoreWarningContext,
+                        "argv <- list('incomplete final line found by readTableHeader on foo4', quote(read.table('foo4', header = TRUE))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 }
