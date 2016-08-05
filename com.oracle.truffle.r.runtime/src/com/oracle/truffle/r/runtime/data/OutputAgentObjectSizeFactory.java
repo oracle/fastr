@@ -42,7 +42,7 @@ public class OutputAgentObjectSizeFactory extends AgentObjectSizeFactory {
         try {
             printWriter = new PrintWriter(new FileWriter(Utils.getLogPath("fastr_objectsize.log").toString()));
         } catch (IOException ex) {
-            Utils.fail(ex.getMessage());
+            Utils.rSuicide(ex.getMessage());
         }
 
     }

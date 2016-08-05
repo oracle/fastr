@@ -23,8 +23,10 @@
 package com.oracle.truffle.r.runtime.data;
 
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.Assumption;
@@ -499,7 +501,7 @@ public final class RDataFactory {
      * allocated. Owing to the use of the Assumption, there should be no overhead when disabled.
      */
 
-    private static Listener listener;
+    private static Deque<Listener> listeners = new ConcurrentLinkedDeque<>();
     @CompilationFinal private static boolean enabled;
     private static final CyclicAssumption noAllocationTracingAssumption = new CyclicAssumption("data allocation");
 
@@ -512,7 +514,9 @@ public final class RDataFactory {
 
     private static <T> T traceDataCreated(T data) {
         if (enabled) {
-            listener.reportAllocation((RTypedValue) data);
+            for (Listener listener : listeners) {
+                listener.reportAllocation((RTypedValue) data);
+            }
         }
         return data;
     }
@@ -533,8 +537,8 @@ public final class RDataFactory {
      * Sets the listener of memory tracing events. For the time being there can only be one
      * listener. This can be extended to an array should we need more listeners.
      */
-    public static void setListener(Listener newListener) {
-        listener = newListener;
+    public static void addListener(Listener listener) {
+        listeners.addLast(listener);
     }
 
     /*
@@ -552,7 +556,7 @@ public final class RDataFactory {
         @Override
         public void initialize(String optionData) {
             histMap = new HashMap<>();
-            setListener(this);
+            addListener(this);
             setAllocationTracing(true);
         }
 

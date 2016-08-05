@@ -41,11 +41,12 @@ public class ObjSizeAgent {
         instrumentation = inst;
     }
 
-    /**
-     * Invoked via reflection.
-     */
     public static long objectSize(Object obj) {
         return instrumentation.getObjectSize(obj);
+    }
+
+    static boolean isInitialized() {
+        return instrumentation != null;
     }
 
 }

@@ -70,7 +70,7 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDat
             try {
                 PrintWriter out = new PrintWriter(new FileWriter(filename, append));
                 profmemState.initialize(out, thresholdVec.getDataAt(0));
-                RDataFactory.setListener(this);
+                RDataFactory.addListener(this);
                 RDataFactory.setAllocationTracing(true);
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filename));

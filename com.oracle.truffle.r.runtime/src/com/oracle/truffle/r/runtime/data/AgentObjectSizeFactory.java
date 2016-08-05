@@ -62,11 +62,13 @@ public class AgentObjectSizeFactory extends ObjectSizeFactory {
     private static Map<Class<?>, TypeCustomizer> customizerMap = new HashMap<>(); // system wide
 
     public AgentObjectSizeFactory() {
-        try {
-            createAgentJar();
-        } catch (Exception ex) {
-            // not available
-            Utils.fail("failed to load ObjSizeAgent: " + ex.getMessage());
+        if (!ObjSizeAgent.isInitialized()) {
+            try {
+                createAgentJar();
+            } catch (Exception ex) {
+                // not available
+                Utils.rSuicide("failed to load ObjSizeAgent: " + ex.getMessage());
+            }
         }
     }
 
@@ -94,6 +96,7 @@ public class AgentObjectSizeFactory extends ObjectSizeFactory {
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         Attributes mainAttrs = manifest.getMainAttributes();
         mainAttrs.putValue("Agent-Class", ObjSizeAgent.class.getName());
+        mainAttrs.putValue("Premain-Class", ObjSizeAgent.class.getName());
 
         Path jar = Files.createTempFile("myagent", ".jar");
         try {
@@ -130,10 +133,11 @@ public class AgentObjectSizeFactory extends ObjectSizeFactory {
             long size = basicSize;
             Class<?> klass = obj.getClass();
             if (klass.isArray() && !klass.getComponentType().isPrimitive()) {
-                // only non-primitive array types are String
                 for (int i = 0; i < Array.getLength(obj); i++) {
                     Object elem = Array.get(obj, i);
-                    if (elem != null && !RRuntime.isNA((String) elem)) {
+                    if (elem == null || isNa(elem)) {
+                        continue;
+                    } else {
                         size += getObjectSize(rootObj, elem, ignoreObjectHandler);
                     }
                 }
@@ -160,9 +164,23 @@ public class AgentObjectSizeFactory extends ObjectSizeFactory {
             }
             return size;
         } catch (Throwable t) {
-            throw RInternalError.shouldNotReachHere();
+            throw RInternalError.shouldNotReachHere(t);
         }
 
+    }
+
+    private static boolean isNa(Object elem) {
+        String typeName = elem.getClass().getSimpleName();
+        switch (typeName) {
+            case "Integer":
+                return RRuntime.isNA((int) elem);
+            case "Double":
+                return RRuntime.isNA((double) elem);
+            case "String":
+                return RRuntime.isNA((String) elem);
+            default:
+                return false;
+        }
     }
 
     /**

@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObjectSize;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.MemoryTracer;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofState;
@@ -77,7 +77,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * the function name.
  *
  */
-public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFactory.Listener, MemoryTracer.Listener {
+public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFactory.Listener, MemoryCopyTracer.Listener {
 
     private RprofState profState;
 
@@ -107,10 +107,10 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
                     RError.warning(this, RError.Message.GENERIC, "Rprof: gc profiling not supported");
                 }
                 if (memProfiling) {
-                    RDataFactory.setListener(this);
+                    RDataFactory.addListener(this);
                     RDataFactory.setAllocationTracing(true);
-                    MemoryTracer.setListener(this);
-                    MemoryTracer.reportEvents();
+                    MemoryCopyTracer.addListener(this);
+                    MemoryCopyTracer.setTracingState(true);
                 }
                 // interval is in seconds, we convert to millis
                 long intervalInMillis = (long) (1E3 * intervalD);

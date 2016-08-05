@@ -242,7 +242,7 @@ public class RCommand {
                             } else if (cause instanceof ExitException) {
                                 // usually from quit
                                 vm.dispose();
-                                System.exit(((ExitException) cause).getStatus());
+                                Utils.systemExit(((ExitException) cause).getStatus());
                             } else {
                                 RInternalError.reportErrorAndConsoleLog(cause, consoleHandler, 0);
                                 // We continue the repl even though the system may be broken
@@ -262,7 +262,7 @@ public class RCommand {
             } catch (Throwable e) {
                 if (e.getCause() instanceof ExitException) {
                     // normal quit, but with exit code based on lastStatus
-                    System.exit(lastStatus);
+                    Utils.systemExit(lastStatus);
                 }
                 throw RInternalError.shouldNotReachHere(e);
             }

@@ -74,7 +74,7 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
     @Override
     public RStringVector materialize() {
         RStringVector result = RDataFactory.createStringVector(new String[]{getValue()}, isComplete());
-        MemoryTracer.reportCopying(this, result);
+        MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 

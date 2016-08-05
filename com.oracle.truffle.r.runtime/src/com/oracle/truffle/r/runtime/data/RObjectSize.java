@@ -29,22 +29,23 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 /**
  * Support for the sizing of the objects that flow through the interpreter, i.e., mostly
- * {@link RTypedValue}, but also including scalar types like {@code String} and dimension daya for
+ * {@link RTypedValue}, but also including scalar types like {@code String} and dimension data for
  * arrays, i.e., {@code int[]}.
  *
  * The actually implementation is controlled by {@link ObjectSizeFactory} to finesse problems with
  * Java VMs that do not support reflection.
  *
- * Owing to the (implementation) complexity of some of the types, two levels customization are
+ * Owing to the (implementation) complexity of some of the types, two levels of customization are
  * provided:
  * <ol>
  * <li>A completely custom sizing implementation can be provided for a specific type. This effects
  * all sizing computations.</li>
  * <li>In any given call to {@link #getObjectSize} an instance of {@IgnoreObjectHandler} can passed.
- * This allows some additional dynamic control over certain fields dependning of the context of the
+ * This allows some additional dynamic control over certain fields depending of the context of the
  * call. For example, when tracking the incremental memory allocation via {@link RDataFactory}, we
  * do not want to (double) count fields of type {@link RTypedValue}. However, when computing the
  * total size of the object, e.g. for the {@code utils::object.size} builtin, we do want to count
@@ -126,6 +127,7 @@ public class RObjectSize {
         registerTypeCustomizer(RPromise.Closure.class, IGNORE);
         registerTypeCustomizer(Assumption.class, IGNORE);
         registerTypeCustomizer(RCaller.class, IGNORE);
+        registerTypeCustomizer(SEXPTYPE.class, IGNORE);
     }
 
 }
