@@ -624,8 +624,8 @@ public class BasePackage extends RBuiltinPackage {
         add(Vector.class, VectorNodeGen::create);
         add(Warning.class, WarningNodeGen::create);
         add(WhichFunctions.Which.class, WhichFunctionsFactory.WhichNodeGen::create);
-        add(WhichFunctions.WhichMax.class, WhichFunctionsFactory.WhichMaxNodeGen::create);
-        add(WhichFunctions.WhichMin.class, WhichFunctionsFactory.WhichMinNodeGen::create);
+        add(WhichFunctions.WhichMax.class, WhichFunctions.WhichMax::create);
+        add(WhichFunctions.WhichMin.class, WhichFunctions.WhichMin::create);
         add(Xtfrm.class, XtfrmNodeGen::create);
     }
 
