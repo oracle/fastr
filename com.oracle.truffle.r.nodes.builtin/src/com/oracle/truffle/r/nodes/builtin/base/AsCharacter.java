@@ -22,105 +22,48 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "as.character", kind = PRIMITIVE, parameterNames = {"x", "..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class AsCharacter extends RBuiltinNode {
-
-    @Child private CastStringNode castStringNode;
 
     public static AsCharacter create() {
         return AsCharacterNodeGen.create(null);
     }
 
-    private void initCast() {
-        if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(false, false, false, false));
-        }
-    }
-
-    private String castString(int o) {
-        initCast();
-        return (String) castStringNode.executeString(o);
-    }
-
-    private String castString(double o) {
-        initCast();
-        return (String) castStringNode.executeString(o);
-    }
-
-    private String castString(byte o) {
-        initCast();
-        return (String) castStringNode.executeString(o);
-    }
-
-    private RStringVector castStringVector(Object o) {
-        initCast();
-        return (RStringVector) ((RStringVector) castStringNode.executeString(o)).copyDropAttributes();
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mapIf(instanceOf(RList.class).not(), asStringVector());
     }
 
     @Specialization
-    protected String doInt(int value) {
-        return castString(value);
+    protected RAbstractStringVector asCharacter(@SuppressWarnings("unused") RNull n) {
+        return RDataFactory.createEmptyStringVector();
     }
 
     @Specialization
-    protected String doDouble(double value) {
-        return castString(value);
+    protected RAbstractStringVector asCharacter(RAbstractStringVector v) {
+        return v;
     }
 
     @Specialization
-    protected String doLogical(byte value) {
-        return castString(value);
-    }
-
-    @Specialization
-    protected String doRaw(RRaw value) {
-        initCast();
-        return (String) castStringNode.executeString(value);
-    }
-
-    @Specialization
-    protected String doString(String value) {
-        return value;
-    }
-
-    @Specialization
-    protected String doSymbol(RSymbol value) {
-        return value.getName();
-    }
-
-    @Specialization
-    protected RStringVector doNull(@SuppressWarnings("unused") RNull value) {
-        return RDataFactory.createStringVector(0);
-    }
-
-    @Specialization
-    protected RStringVector doStringVector(RStringVector vector) {
-        return RDataFactory.createStringVector(vector.getDataCopy(), vector.isComplete());
-    }
-
-    @Specialization
-    protected RStringVector doList(RList list) {
+    protected RStringVector asCharacter(Object l) {
+        RList list = (RList) l;
         int len = list.getLength();
         boolean complete = RDataFactory.COMPLETE_VECTOR;
         String[] data = new String[len];
@@ -140,8 +83,4 @@ public abstract class AsCharacter extends RBuiltinNode {
         return RDataFactory.createStringVector(data, complete);
     }
 
-    @Specialization(guards = "!isRList(container)")
-    protected RStringVector doVector(RAbstractContainer container) {
-        return castStringVector(container);
-    }
 }
