@@ -74,6 +74,31 @@ public final class PredefFiltersSamplers implements PredefFilters {
     }
 
     @Override
+    public VectorPredicateArgumentFilterSampler<RAbstractStringVector> elementAt(int index, String value) {
+        return new VectorPredicateArgumentFilterSampler<>("elementAt", x -> index < x.getLength() && value.equals(x.getDataAtAsObject(index)), false, 0, index);
+    }
+
+    @Override
+    public VectorPredicateArgumentFilterSampler<RAbstractIntVector> elementAt(int index, int value) {
+        return new VectorPredicateArgumentFilterSampler<>("elementAt", x -> index < x.getLength() && value == (int) (x.getDataAtAsObject(index)), false, 0, index);
+    }
+
+    @Override
+    public VectorPredicateArgumentFilterSampler<RAbstractDoubleVector> elementAt(int index, double value) {
+        return new VectorPredicateArgumentFilterSampler<>("elementAt", x -> index < x.getLength() && value == (double) (x.getDataAtAsObject(index)), false, 0, index);
+    }
+
+    @Override
+    public VectorPredicateArgumentFilterSampler<RAbstractComplexVector> elementAt(int index, RComplex value) {
+        return new VectorPredicateArgumentFilterSampler<>("elementAt", x -> index < x.getLength() && value.equals(x.getDataAtAsObject(index)), false, 0, index);
+    }
+
+    @Override
+    public VectorPredicateArgumentFilterSampler<RAbstractLogicalVector> elementAt(int index, byte value) {
+        return new VectorPredicateArgumentFilterSampler<>("elementAt", x -> index < x.getLength() && value == (byte) (x.getDataAtAsObject(index)), false, 0, index);
+    }
+
+    @Override
     public <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilterSampler<T> size(int s) {
         if (s == 0) {
             return new VectorPredicateArgumentFilterSampler<>("size(int)", x -> x.getLength() == s, false, s - 1, s + 1);

@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.elementAt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asLogicalVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
@@ -67,6 +69,8 @@ import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentValueFilter;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.InitialPhaseBuilder;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
+import com.oracle.truffle.r.nodes.builtin.base.IsNA;
 import com.oracle.truffle.r.nodes.casts.ArgumentFilterSampler;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.PredefFiltersSamplers;
@@ -601,6 +605,51 @@ public class CastBuilderTest {
         Assert.assertTrue(res instanceof RLogical);
     }
     //@formatter:on
+
+    @Test
+    public void testSample14() {
+        cb.arg(0, "arg").mustBe(stringValue().or(nullValue())).mapIf(stringValue(), chain(asStringVector()).with(findFirst().stringElement()).end());
+
+        assertEquals("abc", cast("abc"));
+        assertEquals("abc", cast(RDataFactory.createStringVector(new String[]{"abc", "xyz"}, true)));
+        assertEquals(RNull.instance, cast(RNull.instance));
+    }
+
+    @Test
+    public void testSample15() {
+        // cb.arg(0, "dim").asIntegerVector().mustBe(Predef.notEmpty());
+
+        cb.arg(0, "open").mustBe(instanceOf(RAbstractStringVector.class).and(singleElement()).and(elementAt(0, RRuntime.STRING_NA).not()));
+
+        cast(RDataFactory.createStringVector(new String[]{"abc"}, true));
+        try {
+            cast(RDataFactory.createStringVector(new String[]{"abc", "xyz"}, true));
+        } catch (IllegalArgumentException e) {
+            // ok
+        }
+        try {
+            cast(RRuntime.STRING_NA);
+        } catch (IllegalArgumentException e) {
+            // ok
+        }
+    }
+
+    private String argType(Object arg) {
+        return arg.getClass().getSimpleName();
+    }
+
+    private String argMsg(Object arg) {
+        return "'data' must be of a vector type, was " + argType(arg);
+    }
+
+    @Test
+    public void testSample16() {
+        // cb.arg(0, "dim").asIntegerVector().mustBe(Predef.notEmpty());
+        Function<Object, Object> argMsg = this::argMsg;
+        cb.arg(0, "open").shouldBe(stringValue(), RError.Message.GENERIC, argMsg);
+
+        cast(RNull.instance);
+    }
 
     class RBuiltinRootNode extends RootNode {
 

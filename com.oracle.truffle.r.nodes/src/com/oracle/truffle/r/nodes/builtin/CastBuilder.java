@@ -218,6 +218,16 @@ public final class CastBuilder {
 
         <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilter<T> size(int s);
 
+        VectorPredicateArgumentFilter<RAbstractStringVector> elementAt(int index, String value);
+
+        VectorPredicateArgumentFilter<RAbstractIntVector> elementAt(int index, int value);
+
+        VectorPredicateArgumentFilter<RAbstractDoubleVector> elementAt(int index, double value);
+
+        VectorPredicateArgumentFilter<RAbstractComplexVector> elementAt(int index, RComplex value);
+
+        VectorPredicateArgumentFilter<RAbstractLogicalVector> elementAt(int index, byte value);
+
         ValuePredicateArgumentFilter<Boolean> trueValue();
 
         ValuePredicateArgumentFilter<Boolean> falseValue();
@@ -331,6 +341,31 @@ public final class CastBuilder {
         @Override
         public <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilter<T> size(int s) {
             return new VectorPredicateArgumentFilter<>(x -> x.getLength() == s, false);
+        }
+
+        @Override
+        public VectorPredicateArgumentFilter<RAbstractStringVector> elementAt(int index, String value) {
+            return new VectorPredicateArgumentFilter<>(x -> index < x.getLength() && value.equals(x.getDataAtAsObject(index)), false);
+        }
+
+        @Override
+        public VectorPredicateArgumentFilter<RAbstractIntVector> elementAt(int index, int value) {
+            return new VectorPredicateArgumentFilter<>(x -> index < x.getLength() && value == (int) x.getDataAtAsObject(index), false);
+        }
+
+        @Override
+        public VectorPredicateArgumentFilter<RAbstractDoubleVector> elementAt(int index, double value) {
+            return new VectorPredicateArgumentFilter<>(x -> index < x.getLength() && value == (double) x.getDataAtAsObject(index), false);
+        }
+
+        @Override
+        public VectorPredicateArgumentFilter<RAbstractComplexVector> elementAt(int index, RComplex value) {
+            return new VectorPredicateArgumentFilter<>(x -> index < x.getLength() && value.equals(x.getDataAtAsObject(index)), false);
+        }
+
+        @Override
+        public VectorPredicateArgumentFilter<RAbstractLogicalVector> elementAt(int index, byte value) {
+            return new VectorPredicateArgumentFilter<>(x -> index < x.getLength() && value == (byte) (x.getDataAtAsObject(index)), false);
         }
 
         @Override
@@ -733,6 +768,26 @@ public final class CastBuilder {
 
         public static <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilter<T> size(int s) {
             return predefFilters().size(s);
+        }
+
+        public static VectorPredicateArgumentFilter<RAbstractStringVector> elementAt(int index, String value) {
+            return predefFilters().elementAt(index, value);
+        }
+
+        public static VectorPredicateArgumentFilter<RAbstractIntVector> elementAt(int index, int value) {
+            return predefFilters().elementAt(index, value);
+        }
+
+        public static VectorPredicateArgumentFilter<RAbstractDoubleVector> elementAt(int index, double value) {
+            return predefFilters().elementAt(index, value);
+        }
+
+        public static VectorPredicateArgumentFilter<RAbstractComplexVector> elementAt(int index, RComplex value) {
+            return predefFilters().elementAt(index, value);
+        }
+
+        public static VectorPredicateArgumentFilter<RAbstractLogicalVector> elementAt(int index, byte value) {
+            return predefFilters().elementAt(index, value);
         }
 
         public static ValuePredicateArgumentFilter<Boolean> trueValue() {
