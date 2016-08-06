@@ -199,6 +199,11 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
         }
         out.close();
         profState.setOut(null);
+        if (profState.memoryProfiling()) {
+            RDataFactory.setAllocationTracing(false);
+            MemoryCopyTracer.setTracingState(false);
+        }
+
     }
 
     private static String getPath(RSyntaxNode node) {
