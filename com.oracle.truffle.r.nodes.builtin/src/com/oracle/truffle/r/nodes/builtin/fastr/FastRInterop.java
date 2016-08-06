@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import java.io.IOException;
 
 import com.oracle.truffle.api.CallTarget;
@@ -35,19 +39,18 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public class FastRInterop {
-    @RBuiltin(name = ".fastr.interop.eval", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"mimeType", "source"})
+
+    @RBuiltin(name = ".fastr.interop.eval", visibility = OFF, kind = PRIMITIVE, parameterNames = {"mimeType", "source"}, behavior = COMPLEX)
     public abstract static class Eval extends RBuiltinNode {
 
         @Override
@@ -92,7 +95,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.export", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"name", "value"})
+    @RBuiltin(name = ".fastr.interop.export", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name", "value"}, behavior = COMPLEX)
     public abstract static class Export extends RBuiltinNode {
 
         @Specialization
@@ -107,7 +110,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.import", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"name"})
+    @RBuiltin(name = ".fastr.interop.import", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name"}, behavior = COMPLEX)
     public abstract static class Import extends RBuiltinNode {
 
         @Specialization
@@ -124,5 +127,4 @@ public class FastRInterop {
             return object;
         }
     }
-
 }

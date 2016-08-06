@@ -59,5 +59,7 @@ public class TestBuiltin_ascall extends TestBase {
 
         assertEval("{ f <- function(x) x ; l <- list(f, 42) ; cl <- as.call(l); typeof(cl[[1]]) }");
         assertEval("{ f <- function(x) x ; l <- list(f, 42) ; cl <- as.call(l); typeof(cl[[2]]) }");
+
+        assertEval("{ as.call(42) }");
     }
 }

@@ -2,9 +2,8 @@
 
 if (length(grep("FastR", R.Version()$version.string)) == 1) {
     ch <- .fastr.channel.create(1L)
-    cx <- .fastr.context.create("SHARED_NOTHING")
     code <- "ch <- .fastr.channel.get(1L); env<-.fastr.channel.receive(ch); assign('y', 7, pos=env); .fastr.channel.send(ch, y)"
-    .fastr.context.spawn(cx, code)
+    cx <- .fastr.context.spawn(code)
     .fastr.channel.send(ch, .GlobalEnv)
     x<-.fastr.channel.receive(ch)
     .fastr.context.join(cx)

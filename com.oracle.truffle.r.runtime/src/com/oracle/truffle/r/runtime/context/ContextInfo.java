@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.context;
 
 import java.io.IOException;
 import java.util.TimeZone;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -43,7 +42,6 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 public final class ContextInfo implements TruffleObject {
     public static final String GLOBAL_SYMBOL = "fastrContextInfo";
 
-    private static final ConcurrentHashMap<Integer, ContextInfo> contextInfos = new ConcurrentHashMap<>();
     private static final AtomicInteger contextInfoIds = new AtomicInteger();
 
     private final RStartParams startParams;
@@ -91,16 +89,6 @@ public final class ContextInfo implements TruffleObject {
 
     public static ContextInfo create(RStartParams startParams, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
         return create(startParams, kind, parent, consoleHandler, TimeZone.getDefault());
-    }
-
-    public static int createDeferred(RStartParams startParams, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
-        ContextInfo info = create(startParams, kind, parent, consoleHandler, TimeZone.getDefault());
-        contextInfos.put(info.id, info);
-        return info.id;
-    }
-
-    public static ContextInfo get(int id) {
-        return contextInfos.get(id);
     }
 
     public static ContextInfo getContextInfo(PolyglotEngine vm) {

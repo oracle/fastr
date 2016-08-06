@@ -22,17 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections.StdConnection;
 
-@SuppressWarnings("unused")
-@RBuiltin(name = "isatty", kind = PRIMITIVE, parameterNames = {"con"})
+@RBuiltin(name = "isatty", kind = PRIMITIVE, parameterNames = {"con"}, behavior = PURE)
 public abstract class IsATTY extends RBuiltinNode {
 
     @Specialization
@@ -41,7 +41,7 @@ public abstract class IsATTY extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isRConnection(con)")
-    protected byte isATTYNonConnection(Object con) {
+    protected byte isATTYNonConnection(@SuppressWarnings("unused") Object con) {
         return RRuntime.LOGICAL_FALSE;
     }
 }

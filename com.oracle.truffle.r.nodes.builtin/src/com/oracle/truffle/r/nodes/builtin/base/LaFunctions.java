@@ -11,7 +11,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -24,9 +26,9 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -49,7 +51,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  */
 public class LaFunctions {
 
-    @RBuiltin(name = "La_version", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "La_version", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class Version extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -60,7 +62,7 @@ public class LaFunctions {
         }
     }
 
-    @RBuiltin(name = "La_rg", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"})
+    @RBuiltin(name = "La_rg", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"}, behavior = PURE)
     public abstract static class Rg extends RBuiltinNode {
 
         @CompilationFinal private static final String[] NAMES = new String[]{"values", "vectors"};
@@ -145,7 +147,7 @@ public class LaFunctions {
         }
     }
 
-    @RBuiltin(name = "La_qr", kind = INTERNAL, parameterNames = {"in"})
+    @RBuiltin(name = "La_qr", kind = INTERNAL, parameterNames = {"in"}, behavior = PURE)
     public abstract static class Qr extends RBuiltinNode {
 
         @CompilationFinal private static final String[] NAMES = new String[]{"qr", "rank", "qraux", "pivot"};
@@ -197,7 +199,7 @@ public class LaFunctions {
         }
     }
 
-    @RBuiltin(name = "qr_coef_real", kind = INTERNAL, parameterNames = {"q", "b"})
+    @RBuiltin(name = "qr_coef_real", kind = INTERNAL, parameterNames = {"q", "b"}, behavior = PURE)
     public abstract static class QrCoefReal extends RBuiltinNode {
 
         private final BranchProfile errorProfile = BranchProfile.create();
@@ -261,7 +263,7 @@ public class LaFunctions {
         }
     }
 
-    @RBuiltin(name = "det_ge_real", kind = INTERNAL, parameterNames = {"a", "uselog"})
+    @RBuiltin(name = "det_ge_real", kind = INTERNAL, parameterNames = {"a", "uselog"}, behavior = PURE)
     public abstract static class DetGeReal extends RBuiltinNode {
 
         private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(new String[]{"modulus", "sign"}, RDataFactory.COMPLETE_VECTOR);
@@ -331,7 +333,7 @@ public class LaFunctions {
         }
     }
 
-    @RBuiltin(name = "La_chol", kind = INTERNAL, parameterNames = {"a", "pivot", "tol"})
+    @RBuiltin(name = "La_chol", kind = INTERNAL, parameterNames = {"a", "pivot", "tol"}, behavior = PURE)
     public abstract static class LaChol extends RBuiltinNode {
 
         private final BranchProfile errorProfile = BranchProfile.create();
@@ -393,7 +395,7 @@ public class LaFunctions {
         }
     }
 
-    @RBuiltin(name = "La_solve", kind = INTERNAL, parameterNames = {"a", "bin", "tolin"})
+    @RBuiltin(name = "La_solve", kind = INTERNAL, parameterNames = {"a", "bin", "tolin"}, behavior = PURE)
     public abstract static class LaSolve extends RBuiltinNode {
         protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
         @Child private CastDoubleNode castDouble = CastDoubleNodeGen.create(false, false, false);

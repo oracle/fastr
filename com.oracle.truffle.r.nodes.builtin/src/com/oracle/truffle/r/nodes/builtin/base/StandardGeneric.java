@@ -12,7 +12,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -32,11 +34,10 @@ import com.oracle.truffle.r.nodes.objects.DispatchGeneric;
 import com.oracle.truffle.r.nodes.objects.DispatchGenericNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -50,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 // transcribed from src/main/objects.c
-@RBuiltin(name = "standardGeneric", visibility = RVisibility.CUSTOM, kind = PRIMITIVE, parameterNames = {"f", "fdef"})
+@RBuiltin(name = "standardGeneric", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"f", "fdef"}, behavior = COMPLEX)
 public abstract class StandardGeneric extends RBuiltinNode {
 
     // TODO: for now, we always go through generic dispatch
@@ -87,7 +88,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
             // mtable can be null the first time around, but the following call will initialize it
             // and this slow path should not be executed again
             REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
-            RFunction currentFunction = ReadVariableNode.lookupFunction(".getMethodsTable", methodsEnv.getFrame(), true);
+            RFunction currentFunction = ReadVariableNode.lookupFunction(".getMethodsTable", methodsEnv.getFrame(), true, true);
             mtable = (REnvironment) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), null, fdef);
         }
         RList sigArgs = (RList) readSigARgs.execute(null, fnFrame);

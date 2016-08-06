@@ -22,23 +22,24 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.api.nodes.NodeCost.NONE;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -59,8 +60,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * parent of the the {@code .Internal}, which will be an {@code RNodeWrapper}, will remain so any
  * instrumentation at that level will remain in place.
  */
-@NodeInfo(cost = NodeCost.NONE)
-@RBuiltin(name = ".Internal", visibility = RVisibility.CUSTOM, kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = 0)
+@NodeInfo(cost = NONE)
+@RBuiltin(name = ".Internal", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = 0, behavior = COMPLEX)
 public abstract class Internal extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();

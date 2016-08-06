@@ -68,7 +68,7 @@ public class StdConnections {
             try {
                 return new ContextStateImpl(new StdinConnection(), new StdoutConnection(consoleHandler), new StderrConnection(consoleHandler));
             } catch (IOException ex) {
-                throw Utils.fail("failed to open stdconnections:");
+                throw Utils.rSuicide("failed to open stdconnections:");
             }
         }
     }

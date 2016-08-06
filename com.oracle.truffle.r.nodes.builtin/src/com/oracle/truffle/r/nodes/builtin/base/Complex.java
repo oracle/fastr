@@ -23,7 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -31,29 +32,30 @@ import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "complex", kind = INTERNAL, parameterNames = {"length.out", "real", "imaginary"})
+@RBuiltin(name = "complex", kind = INTERNAL, parameterNames = {"length.out", "real", "imaginary"}, behavior = PURE)
 public abstract class Complex extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("length.out").asIntegerVector().findFirst(0);
+        casts.arg("length.out").asIntegerVector().findFirst(Message.INVALID_LENGTH);
         casts.arg("real").map(defaultValue(RDataFactory.createEmptyDoubleVector())).asDoubleVector();
         casts.arg("imaginary").map(defaultValue(RDataFactory.createEmptyDoubleVector())).asDoubleVector();
     }
 
     @Specialization
-    protected RComplexVector complex(int lengthOut, RAbstractDoubleVector real, RAbstractDoubleVector imaginary, //
-                    @Cached("create()") NACheck realNA, //
-                    @Cached("create()") NACheck imaginaryNA, //
-                    @Cached("create()") VectorLengthProfile realLengthProfile, //
-                    @Cached("create()") VectorLengthProfile imaginaryLengthProfile, //
-                    @Cached("create()") VectorLengthProfile lengthProfile, //
+    protected RComplexVector complex(int lengthOut, RAbstractDoubleVector real, RAbstractDoubleVector imaginary,
+                    @Cached("create()") NACheck realNA,
+                    @Cached("create()") NACheck imaginaryNA,
+                    @Cached("create()") VectorLengthProfile realLengthProfile,
+                    @Cached("create()") VectorLengthProfile imaginaryLengthProfile,
+                    @Cached("create()") VectorLengthProfile lengthProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         int realLength = realLengthProfile.profile(real.getLength());
         int imaginaryLength = imaginaryLengthProfile.profile(imaginary.getLength());

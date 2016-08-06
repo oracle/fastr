@@ -22,19 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class EncodingFunctions {
 
-    @RBuiltin(name = "Encoding", kind = RBuiltinKind.INTERNAL, parameterNames = "x")
+    @RBuiltin(name = "Encoding", kind = INTERNAL, parameterNames = "x", behavior = PURE)
     public abstract static class Encoding extends RBuiltinNode {
         @Specialization
         protected RStringVector encoding(@SuppressWarnings("unused") RAbstractStringVector x) {
@@ -49,7 +51,7 @@ public class EncodingFunctions {
         }
     }
 
-    @RBuiltin(name = "setEncoding", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "value"})
+    @RBuiltin(name = "setEncoding", kind = INTERNAL, parameterNames = {"x", "value"}, behavior = PURE)
     public abstract static class SetEncoding extends RBuiltinNode {
         @Specialization
         protected Object setEncoding(RAbstractStringVector x) {

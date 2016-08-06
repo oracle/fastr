@@ -22,6 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -33,13 +38,11 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNodeGen;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -58,7 +61,7 @@ public class BrowserFunctions {
 
     private static final ArrayList<HelperState> helperState = new ArrayList<>();
 
-    @RBuiltin(name = "browser", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"})
+    @RBuiltin(name = "browser", visibility = OFF, kind = PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"}, behavior = COMPLEX)
     public abstract static class BrowserNode extends RBuiltinNode {
 
         @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
@@ -115,7 +118,7 @@ public class BrowserFunctions {
         }
     }
 
-    @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
+    @RBuiltin(name = "browserText", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class BrowserText extends RetrieveAdapter {
 
         @Specialization
@@ -131,7 +134,7 @@ public class BrowserFunctions {
         }
     }
 
-    @RBuiltin(name = "browserCondition", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
+    @RBuiltin(name = "browserCondition", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class BrowserCondition extends RetrieveAdapter {
 
         @Specialization
@@ -147,7 +150,7 @@ public class BrowserFunctions {
         }
     }
 
-    @RBuiltin(name = "browserSetDebug", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
+    @RBuiltin(name = "browserSetDebug", visibility = OFF, kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class BrowserSetDebug extends RetrieveAdapter {
 
         @Specialization

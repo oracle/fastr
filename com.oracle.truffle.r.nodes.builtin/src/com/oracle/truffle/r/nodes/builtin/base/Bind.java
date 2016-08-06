@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Arrays;
 
@@ -53,11 +54,11 @@ import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -397,7 +398,7 @@ public abstract class Bind extends RBaseNode {
         return false;
     }
 
-    @RBuiltin(name = "cbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."})
+    @RBuiltin(name = "cbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."}, behavior = COMPLEX)
     public abstract static class CbindInternal extends RBuiltinNode {
 
         @Child private Bind bind = BindNodeGen.create(BindType.cbind);
@@ -511,7 +512,7 @@ public abstract class Bind extends RBaseNode {
         return result;
     }
 
-    @RBuiltin(name = "rbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."})
+    @RBuiltin(name = "rbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."}, behavior = COMPLEX)
     public abstract static class RbindInternal extends RBuiltinNode {
 
         @Child private Bind bind = BindNodeGen.create(BindType.rbind);

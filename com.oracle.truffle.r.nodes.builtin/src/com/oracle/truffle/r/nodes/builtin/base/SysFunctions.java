@@ -22,7 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.MODIFIES_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,12 +44,11 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -57,7 +62,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public class SysFunctions {
 
-    @RBuiltin(name = "Sys.getpid", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "Sys.getpid", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class SysGetpid extends RBuiltinNode {
 
         @Specialization
@@ -68,7 +73,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.getenv", kind = INTERNAL, parameterNames = {"x", "unset"})
+    @RBuiltin(name = "Sys.getenv", kind = INTERNAL, parameterNames = {"x", "unset"}, behavior = READS_STATE)
     public abstract static class SysGetenv extends RBuiltinNode {
         private final ConditionProfile zeroLengthProfile = ConditionProfile.createBinaryProfile();
 
@@ -123,7 +128,7 @@ public class SysFunctions {
         private static final String LOADNAMESPACE = "loadNamespace";
 
         protected void checkNSLoad(VirtualFrame frame, RAbstractStringVector names, RAbstractStringVector values, boolean setting) {
-            if (names.getLength() == 1 && names.getDataAt(0).equals(NS_LOAD)) {
+            if (names.getLength() == 1 && NS_LOAD.equals(names.getDataAt(0))) {
                 Frame caller = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
                 RFunction func = RArguments.getFunction(caller);
                 if (func.toString().equals(LOADNAMESPACE)) {
@@ -140,7 +145,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.setenv", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"nm", "values"})
+    @RBuiltin(name = "Sys.setenv", visibility = OFF, kind = INTERNAL, parameterNames = {"nm", "values"}, behavior = MODIFIES_STATE)
     public abstract static class SysSetEnv extends LoadNamespaceAdapter {
 
         @Specialization
@@ -161,7 +166,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.unsetenv", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x"})
+    @RBuiltin(name = "Sys.unsetenv", visibility = OFF, kind = INTERNAL, parameterNames = {"x"}, behavior = READS_STATE)
     public abstract static class SysUnSetEnv extends LoadNamespaceAdapter {
 
         @Specialization
@@ -182,7 +187,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.sleep", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"time"})
+    @RBuiltin(name = "Sys.sleep", visibility = OFF, kind = INTERNAL, parameterNames = {"time"}, behavior = COMPLEX)
     public abstract static class SysSleep extends RBuiltinNode {
 
         @Specialization
@@ -242,7 +247,7 @@ public class SysFunctions {
     /**
      * TODO: Handle ~ expansion which is not handled by POSIX.
      */
-    @RBuiltin(name = "Sys.readlink", kind = INTERNAL, parameterNames = {"paths"})
+    @RBuiltin(name = "Sys.readlink", kind = INTERNAL, parameterNames = {"paths"}, behavior = IO)
     public abstract static class SysReadlink extends RBuiltinNode {
 
         @Specialization
@@ -292,7 +297,7 @@ public class SysFunctions {
     }
 
     // TODO implement
-    @RBuiltin(name = "Sys.chmod", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"paths", "octmode", "use_umask"})
+    @RBuiltin(name = "Sys.chmod", visibility = OFF, kind = INTERNAL, parameterNames = {"paths", "octmode", "use_umask"}, behavior = IO)
     public abstract static class SysChmod extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -311,7 +316,7 @@ public class SysFunctions {
     }
 
     // TODO implement
-    @RBuiltin(name = "Sys.umask", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"octmode"})
+    @RBuiltin(name = "Sys.umask", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"octmode"}, behavior = COMPLEX)
     public abstract static class SysUmask extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -321,7 +326,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.time", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "Sys.time", kind = INTERNAL, parameterNames = {}, behavior = IO)
     public abstract static class SysTime extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -330,7 +335,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.info", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "Sys.info", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class SysInfo extends RBuiltinNode {
         private static final String[] NAMES = new String[]{"sysname", "release", "version", "nodename", "machine", "login", "user", "effective_user"};
         private static final RStringVector NAMES_ATTR = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
@@ -354,7 +359,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.glob", kind = INTERNAL, parameterNames = {"paths", "dirmask"})
+    @RBuiltin(name = "Sys.glob", kind = INTERNAL, parameterNames = {"paths", "dirmask"}, behavior = IO)
     public abstract static class SysGlob extends RBuiltinNode {
 
         @Specialization

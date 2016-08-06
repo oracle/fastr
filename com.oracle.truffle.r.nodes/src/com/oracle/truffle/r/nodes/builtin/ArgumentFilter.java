@@ -52,6 +52,24 @@ public interface ArgumentFilter<T, R> {
     interface ArgumentValueFilter<T> extends NarrowingArgumentFilter<T, T> {
 
         @SuppressWarnings("overloads")
+        default <S extends T> ArgumentValueFilter<T> or(ArgumentValueFilter<T> other) {
+            return new ArgumentValueFilter<T>() {
+
+                private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
+                @Override
+                public boolean test(T arg) {
+                    if (profile.profile(ArgumentValueFilter.this.test(arg))) {
+                        return true;
+                    } else {
+                        return other.test(arg);
+                    }
+                }
+
+            };
+        }
+
+        @SuppressWarnings("overloads")
         default ArgumentValueFilter<T> and(ArgumentValueFilter<T> other) {
             return new ArgumentValueFilter<T>() {
 

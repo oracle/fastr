@@ -22,7 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.MODIFIES_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Map;
 import java.util.Set;
@@ -33,13 +36,12 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.ROptions.OptionsException;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -55,7 +57,7 @@ public class OptionsFunctions {
      * This could be refactored using a recursive child node to handle simple cases, but it's
      * unlikely to be the fast path.
      */
-    @RBuiltin(name = "options", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"..."})
+    @RBuiltin(name = "options", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"..."}, behavior = MODIFIES_STATE)
     public abstract static class Options extends RBuiltinNode {
 
         private final ConditionProfile argNameNull = ConditionProfile.createBinaryProfile();
@@ -164,7 +166,7 @@ public class OptionsFunctions {
         }
     }
 
-    @RBuiltin(name = "getOption", kind = INTERNAL, parameterNames = "x")
+    @RBuiltin(name = "getOption", kind = INTERNAL, parameterNames = "x", behavior = READS_STATE)
     public abstract static class GetOption extends RBuiltinNode {
 
         @TruffleBoundary

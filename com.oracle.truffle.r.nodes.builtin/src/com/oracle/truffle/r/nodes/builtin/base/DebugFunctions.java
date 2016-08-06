@@ -22,16 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -54,7 +57,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "debug", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
+    @RBuiltin(name = "debug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
     public abstract static class Debug extends ErrorAdapter {
 
         @SuppressWarnings("unused")
@@ -72,7 +75,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "debugonce", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
+    @RBuiltin(name = "debugonce", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
     public abstract static class DebugOnce extends ErrorAdapter {
 
         @SuppressWarnings("unused")
@@ -91,7 +94,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "undebug", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
+    @RBuiltin(name = "undebug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun"}, behavior = COMPLEX)
     public abstract static class UnDebug extends ErrorAdapter {
 
         @Fallback
@@ -110,7 +113,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "isdebugged", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
+    @RBuiltin(name = "isdebugged", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
     public abstract static class IsDebugged extends ErrorAdapter {
 
         @Fallback

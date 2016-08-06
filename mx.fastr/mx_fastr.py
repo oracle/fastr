@@ -110,7 +110,7 @@ def _sanitize_vmArgs(jdk, vmArgs):
     chosen jdk. It is easier to allow clients to set anything they want and filter them
     out here.
     '''
-    jvmci_jdk = jdk.tag == 'jvmci'
+    jvmci_jdk = jdk.tag is not None and 'jvmci' in jdk.tag
     jvmci_disabled = '-XX:-EnableJVMCI' in vmArgs
 
     xargs = []
@@ -440,9 +440,12 @@ def rbcheck(args):
 def rbdiag(args):
     '''Diagnoses FastR builtins
 
-	-v	Verbose output including the list of unimplemented specializations
-	-n	Ignore RNull as an argument type
-	-m	Ignore RMissing as an argument type
+	-v		Verbose output including the list of unimplemented specializations
+	-n		Ignore RNull as an argument type
+	-m		Ignore RMissing as an argument type
+    --sweep		Performs the 'chimney-sweeping'. The sample combination selection method is determined automatically.
+    --sweep-lite	Performs the 'chimney-sweeping'. The diagonal sample selection method is used.
+    --sweep-total	Performs the 'chimney-sweeping'. The total sample selection method is used.
 
 	If no builtin is specified, all registered builtins are diagnosed.
 
@@ -451,8 +454,15 @@ def rbdiag(args):
     	mx rbdiag
 		mx rbdiag colSums colMeans -v
 		mx rbdiag scan -m -n
+    	mx rbdiag colSums --sweep
     '''
     cp = mx.classpath('com.oracle.truffle.r.nodes.test')
+
+    setREnvironment()
+    os.environ["FASTR_TESTGEN_GNUR"] = "internal"
+    # this should work for Linux and Mac:
+    os.environ["TZDIR"] = "/usr/share/zoneinfo/"
+
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics'] + args)
 
 def rcmplib(args):
@@ -508,7 +518,7 @@ _commands = {
     'junitnoapps' : [junit_noapps, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
-    'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m]'],
+    'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep-lite | --sweep-total'],
     'rcmplib' : [rcmplib, ['options']],
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'rrepl' : [rrepl, '[options]'],

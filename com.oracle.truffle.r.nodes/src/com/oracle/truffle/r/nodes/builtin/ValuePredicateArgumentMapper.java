@@ -26,7 +26,7 @@ import java.util.function.Function;
 
 public class ValuePredicateArgumentMapper<T, R> implements ArgumentMapper<T, R> {
 
-    private final Function<T, R> mapper;
+    protected final Function<T, R> mapper;
 
     public ValuePredicateArgumentMapper(Function<T, R> mapper) {
         this.mapper = mapper;

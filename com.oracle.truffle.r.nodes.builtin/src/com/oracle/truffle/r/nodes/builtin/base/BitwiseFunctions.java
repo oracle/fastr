@@ -11,6 +11,9 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
@@ -19,12 +22,11 @@ import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -169,7 +171,7 @@ public class BitwiseFunctions {
         }
     }
 
-    @RBuiltin(name = "bitwiseAnd", kind = RBuiltinKind.INTERNAL, parameterNames = {"a", "b"})
+    @RBuiltin(name = "bitwiseAnd", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE)
     public abstract static class BitwiseAnd extends BasicBitwise {
 
         @Specialization
@@ -178,7 +180,7 @@ public class BitwiseFunctions {
         }
     }
 
-    @RBuiltin(name = "bitwiseOr", kind = RBuiltinKind.INTERNAL, parameterNames = {"a", "b"})
+    @RBuiltin(name = "bitwiseOr", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE)
     public abstract static class BitwiseOr extends BasicBitwise {
 
         @Specialization
@@ -187,7 +189,7 @@ public class BitwiseFunctions {
         }
     }
 
-    @RBuiltin(name = "bitwiseXor", kind = RBuiltinKind.INTERNAL, parameterNames = {"a", "b"})
+    @RBuiltin(name = "bitwiseXor", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE)
     public abstract static class BitwiseXor extends BasicBitwise {
 
         @Specialization
@@ -196,7 +198,7 @@ public class BitwiseFunctions {
         }
     }
 
-    @RBuiltin(name = "bitwiseShiftR", kind = RBuiltinKind.INTERNAL, parameterNames = {"a", "n"})
+    @RBuiltin(name = "bitwiseShiftR", kind = INTERNAL, parameterNames = {"a", "n"}, behavior = PURE)
     public abstract static class BitwiseShiftR extends BasicBitwise {
 
         @Specialization(guards = {"!shiftByCharacter(n)"})
@@ -212,7 +214,7 @@ public class BitwiseFunctions {
         }
     }
 
-    @RBuiltin(name = "bitwiseShiftL", kind = RBuiltinKind.INTERNAL, parameterNames = {"a", "n"})
+    @RBuiltin(name = "bitwiseShiftL", kind = INTERNAL, parameterNames = {"a", "n"}, behavior = PURE)
     public abstract static class BitwiseShiftL extends BasicBitwise {
 
         @Specialization(guards = {"!shiftByCharacter(n)"})
@@ -228,7 +230,7 @@ public class BitwiseFunctions {
         }
     }
 
-    @RBuiltin(name = "bitwiseNot", kind = RBuiltinKind.INTERNAL, parameterNames = {"a"})
+    @RBuiltin(name = "bitwiseNot", kind = INTERNAL, parameterNames = {"a"}, behavior = PURE)
     public abstract static class BitwiseNot extends BasicBitwise {
 
         @Specialization

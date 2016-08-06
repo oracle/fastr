@@ -1971,4 +1971,13 @@ public class TestBuiltin_operators extends TestBase {
         assertEval("{ c(\"hello\", \"say\") %in% c(\"I\", \"say\", \"hello\", \"world\") }");
         assertEval("{ `%in%`(2,c(1,2,3)) }");
     }
+
+    @Test
+    public void testColon() {
+        assertEval("NULL:5");
+        assertEval("8.2:NULL");
+        assertEval("8.2:c(9,8)");
+        assertEval("new.env():new.env()");
+        assertEval("numeric(0):numeric(0)");
+    }
 }

@@ -26,6 +26,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -47,20 +48,11 @@ public class CastNodeSampler<T extends CastNode> {
     }
 
     public TypeExpr resultTypes(TypeExpr inputType) {
-        return CastUtils.Casts.createCastNodeCasts(getClass()).narrow(inputType);
+        return CastUtils.Casts.createCastNodeCasts(castNode.getClass().getSuperclass()).narrow(inputType);
     }
 
     public final Samples<?> collectSamples() {
-        Set<Type> resTypes = resultTypes().normalize().stream().filter(cls -> cls != Object.class).collect(Collectors.toSet());
-
-        Set<?> defaultPositiveSamples;
-        if (resTypes.isEmpty()) {
-            defaultPositiveSamples = CastUtils.sampleValuesForType(Object.class);
-        } else {
-            defaultPositiveSamples = resTypes.stream().flatMap(cls -> CastUtils.sampleValuesForType(cls).stream()).collect(Collectors.toSet());
-        }
-
-        return collectSamples(TypeExpr.ANYTHING, new Samples<>(defaultPositiveSamples, Collections.emptySet()));
+        return collectSamples(TypeExpr.ANYTHING, Samples.anything());
     }
 
     @SuppressWarnings("unused")

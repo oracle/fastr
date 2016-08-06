@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -32,9 +33,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RSubstitute;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -43,25 +44,25 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-@RBuiltin(name = "substitute", kind = PRIMITIVE, parameterNames = {"expr", "env"}, nonEvalArgs = 0)
+@RBuiltin(name = "substitute", kind = PRIMITIVE, parameterNames = {"expr", "env"}, nonEvalArgs = 0, behavior = COMPLEX)
 public abstract class Substitute extends RBuiltinNode {
 
     @Child private Quote quote;
 
     @Specialization
     protected Object doSubstitute(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envMissing) {
-        return doSubstituteWithEnv(frame, expr, REnvironment.frameToEnvironment(frame.materialize()));
+        return doSubstituteWithEnv(expr, REnvironment.frameToEnvironment(frame.materialize()));
     }
 
     @Specialization
-    protected Object doSubstitute(VirtualFrame frame, RPromise expr, REnvironment env) {
-        return doSubstituteWithEnv(frame, expr, env);
+    protected Object doSubstitute(RPromise expr, REnvironment env) {
+        return doSubstituteWithEnv(expr, env);
     }
 
     @Specialization
-    protected Object doSubstitute(VirtualFrame frame, RPromise expr, RList list, //
+    protected Object doSubstitute(RPromise expr, RList list,
                     @Cached("create()") RAttributeProfiles attrProfiles) {
-        return doSubstituteWithEnv(frame, expr, REnvironment.createFromList(attrProfiles, list, REnvironment.baseEnv()));
+        return doSubstituteWithEnv(expr, REnvironment.createFromList(attrProfiles, list, REnvironment.baseEnv()));
     }
 
     @Fallback
@@ -76,14 +77,13 @@ public abstract class Substitute extends RBuiltinNode {
      * language element). E.g. {@link IfNode} is a special case because it is not (currently)
      * represented as a function, as are several other nodes.
      *
-     * @param frame
      * @param expr
      * @param env {@code null} if the {@code env} argument was {@code RMissing} to avoid always
      *            materializing the current frame.
      * @return in general an {@link RLanguage} instance, but simple cases could be a constant value
      *         or {@link RSymbol}
      */
-    private Object doSubstituteWithEnv(VirtualFrame frame, RPromise expr, REnvironment env) {
+    private Object doSubstituteWithEnv(RPromise expr, REnvironment env) {
         // In the global environment, substitute behaves like quote
         // TODO It may be too early to do this check, GnuR doesn't work this way (re promises)
         if (env == REnvironment.globalEnv()) {
@@ -91,7 +91,7 @@ public abstract class Substitute extends RBuiltinNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 quote = insert(QuoteNodeGen.create(null));
             }
-            return quote.execute(frame, expr);
+            return quote.execute(expr);
         }
 
         // The "expr" promise comes from the no-evalarg aspect of the builtin,

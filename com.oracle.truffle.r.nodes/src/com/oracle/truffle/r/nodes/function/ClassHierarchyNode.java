@@ -181,7 +181,7 @@ abstract class S4Class extends RBaseNode {
         RStringVector s4Extends = RContext.getInstance().getS4Extends(classAttr);
         if (s4Extends == null) {
             REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
-            RFunction sExtendsForS3Function = ReadVariableNode.lookupFunction(".extendsForS3", methodsEnv.getFrame(), false);
+            RFunction sExtendsForS3Function = ReadVariableNode.lookupFunction(".extendsForS3", methodsEnv.getFrame());
             // the assumption here is that the R function can only return either a String or
             // RStringVector
             s4Extends = (RStringVector) castToVector.execute(
@@ -194,7 +194,9 @@ abstract class S4Class extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "classAttr == cachedClassAttr")
-    protected RStringVector getS4ClassCachedEqOp(String classAttr, @Cached("classAttr") String cachedClassAttr, @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
+    protected RStringVector getS4ClassCachedEqOp(String classAttr,
+                    @Cached("classAttr") String cachedClassAttr,
+                    @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
         return s4Classes;
     }
 
@@ -204,7 +206,9 @@ abstract class S4Class extends RBaseNode {
      */
     @SuppressWarnings("unused")
     @Specialization(contains = "getS4ClassCachedEqOp", guards = "classAttr.equals(cachedClassAttr)")
-    protected RStringVector getS4ClassCachedEqMethod(String classAttr, @Cached("classAttr") String cachedClassAttr, @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
+    protected RStringVector getS4ClassCachedEqMethod(String classAttr,
+                    @Cached("classAttr") String cachedClassAttr,
+                    @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
         return s4Classes;
     }
 

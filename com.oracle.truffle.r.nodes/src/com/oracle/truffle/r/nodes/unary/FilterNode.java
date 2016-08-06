@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.io.PrintWriter;
-
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -31,28 +29,29 @@ import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class FilterNode extends CastNode {
 
     private final ArgumentFilter filter;
     private final RError.Message message;
+    private final RBaseNode callObj;
     private final Object[] messageArgs;
     private final boolean boxPrimitives;
     private final boolean isWarning;
-    private final PrintWriter out;
 
     private final BranchProfile warningProfile = BranchProfile.create();
 
     @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNodeGen.create();
 
-    protected FilterNode(ArgumentFilter<?, ?> filter, boolean isWarning, RError.Message message, Object[] messageArgs, boolean boxPrimitives, PrintWriter out) {
+    protected FilterNode(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives) {
         this.filter = filter;
         this.isWarning = isWarning;
+        this.callObj = callObj == null ? this : callObj;
         this.message = message;
         this.messageArgs = messageArgs;
         this.boxPrimitives = boxPrimitives;
-        this.out = out;
     }
 
     public ArgumentFilter getFilter() {
@@ -67,10 +66,10 @@ public abstract class FilterNode extends CastNode {
         if (isWarning) {
             if (message != null) {
                 warningProfile.enter();
-                handleArgumentWarning(x, this, message, messageArgs, out);
+                handleArgumentWarning(x, callObj, message, messageArgs);
             }
         } else {
-            handleArgumentError(x, this, message, messageArgs);
+            handleArgumentError(x, callObj, message, messageArgs);
         }
     }
 

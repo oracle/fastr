@@ -60,7 +60,7 @@ public class RErrorHandling {
     private static final RStringVector RESTART_CLASS = RDataFactory.createStringVectorFromScalar("restart");
 
     private static class Warnings {
-        private static ArrayList<Warning> list = new ArrayList<>();
+        private ArrayList<Warning> list = new ArrayList<>();
 
         int size() {
             return list.size();
@@ -138,8 +138,9 @@ public class RErrorHandling {
         private RFunction getDotSignalSimpleWarning() {
             if (dotSignalSimpleWarning == null) {
                 CompilerDirectives.transferToInterpreter();
-                Object f = REnvironment.baseEnv().findFunction(".signalSimpleWarning");
-                dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
+                String name = ".signalSimpleWarning";
+                Object f = REnvironment.baseEnv().findFunction(name);
+                dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, f);
             }
             return dotSignalSimpleWarning;
         }

@@ -28,9 +28,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 
 final class Info {
     public static final Info EMPTY = new Info(Collections.emptySet(), Collections.emptySet(), false);
