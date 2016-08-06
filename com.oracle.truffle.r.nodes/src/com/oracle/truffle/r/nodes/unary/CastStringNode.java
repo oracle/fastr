@@ -63,9 +63,22 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return convertEmptyVectorToNull ? RNull.instance : RDataFactory.createStringVector(0);
     }
 
+    private RStringVector vectorCopy(RAbstractContainer operand, String[] data) {
+        RStringVector ret = RDataFactory.createStringVector(data, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand));
+        preserveDimensionNames(operand, ret);
+        if (preserveAttributes()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
+    }
+
     @Specialization(guards = "vector.getLength() != 0")
     protected RStringVector doStringVector(RStringVector vector) {
-        return vector;
+        if (preserveAttributes() && preserveDimensions() && preserveNames()) {
+            return vector;
+        } else {
+            return vectorCopy(vector, vector.getDataCopy());
+        }
     }
 
     @Specialization(guards = "operand.getLength() != 0")
@@ -80,12 +93,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
                 sdata[i] = toString(o);
             }
         }
-        RStringVector ret = RDataFactory.createStringVector(sdata, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
+        return vectorCopy(operand, sdata);
     }
 
     @Specialization
@@ -94,7 +102,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     public static CastStringNode create() {
-        return CastStringNodeGen.create(false, true, true, true);
+        return CastStringNodeGen.create(true, true, true, false);
     }
 
     public static CastStringNode createNonPreserving() {
