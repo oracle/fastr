@@ -85,9 +85,4 @@ public abstract class NormalizePath extends RBuiltinNode {
         return RDataFactory.createStringVector(results, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @SuppressWarnings("unused")
-    @Specialization
-    protected Object doNormalizePath(Object path, Object winslash, Object mustWork) {
-        throw RError.error(this, RError.Message.WRONG_TYPE);
-    }
 }

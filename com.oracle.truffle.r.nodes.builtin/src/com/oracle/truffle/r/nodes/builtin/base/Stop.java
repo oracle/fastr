@@ -22,24 +22,34 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 
-@RBuiltin(name = "stop", kind = INTERNAL, parameterNames = {"call.", "message"}, behavior = COMPLEX)
+@RBuiltin(name = "stop", kind = INTERNAL, parameterNames = {"call", "message"}, behavior = COMPLEX)
 public abstract class Stop extends RBuiltinNode {
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("call").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("message").mustBe(stringValue().or(nullValue())).asStringVector().mustBe(notEmpty(), RError.Message.INVALID_STRING_IN_STOP).findFirst();
+    }
 
     @Specialization
-    protected Object stop(byte call, RAbstractStringVector msgVec) {
-        assert msgVec.getLength() == 1;
+    protected Object stop(boolean call, @SuppressWarnings("unused") RNull msgVec) {
+        throw stop(call, "");
+    }
+
+    @Specialization
+    protected RError stop(boolean call, String message) throws RError {
         CompilerDirectives.transferToInterpreter();
-        throw RError.stop(RRuntime.fromLogical(call), RError.SHOW_CALLER2, RError.Message.GENERIC, msgVec.getDataAt(0));
+        throw RError.stop(call, RError.SHOW_CALLER2, RError.Message.GENERIC, message);
     }
 }

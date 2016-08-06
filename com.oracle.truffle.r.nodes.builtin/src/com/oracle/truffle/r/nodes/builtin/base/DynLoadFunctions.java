@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
@@ -30,20 +31,17 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
@@ -57,25 +55,19 @@ public class DynLoadFunctions {
 
     @RBuiltin(name = "dyn.load", visibility = OFF, kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"}, behavior = COMPLEX)
     public abstract static class DynLoad extends RBuiltinNode {
-
         @Override
         protected void createCasts(CastBuilder casts) {
-            // TODO: not sure if the behavior is 100% compliant
-            casts.arg("now").asLogicalVector().findFirst();
+            casts.arg("lib").mustBe(stringValue()).asStringVector().mustBe(size(1), RError.Message.CHAR_ARGUMENT).findFirst();
+            casts.arg("local").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("now").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("unused").mustBe(stringValue()).asStringVector().findFirst();
         }
 
         @Specialization
         @TruffleBoundary
-        protected RList doDynLoad(RAbstractStringVector libVec, RAbstractLogicalVector localVec, byte now, @SuppressWarnings("unused") String unused) {
-            // Length checked by GnuR
-            if (libVec.getLength() > 1) {
-                throw RError.error(this, RError.Message.TYPE_EXPECTED, RType.Character.getName());
-            }
-            String lib = libVec.getDataAt(0);
-            // Length not checked by GnuR
-            byte local = localVec.getDataAt(0);
+        protected RList doDynLoad(String lib, boolean local, boolean now, @SuppressWarnings("unused") String unused) {
             try {
-                DLLInfo dllInfo = DLL.loadPackageDLL(lib, asBoolean(local), asBoolean(now));
+                DLLInfo dllInfo = DLL.loadPackageDLL(lib, local, now);
                 return dllInfo.toRList();
             } catch (DLLException ex) {
                 // This is not a recoverable error
@@ -85,13 +77,15 @@ public class DynLoadFunctions {
             }
         }
 
-        private static boolean asBoolean(byte b) {
-            return b == RRuntime.LOGICAL_TRUE ? true : false;
-        }
     }
 
     @RBuiltin(name = "dyn.unload", visibility = OFF, kind = INTERNAL, parameterNames = {"lib"}, behavior = COMPLEX)
     public abstract static class DynUnload extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("lib").mustBe(stringValue()).asStringVector().mustBe(size(1), RError.Message.CHAR_ARGUMENT).findFirst();
+        }
+
         @Specialization
         @TruffleBoundary
         protected RNull doDynunload(RAbstractStringVector lib) {
@@ -124,12 +118,18 @@ public class DynLoadFunctions {
         }
     }
 
-    @RBuiltin(name = "is.loaded", kind = INTERNAL, parameterNames = {"symbol", "package", "type"}, behavior = READS_STATE)
+    @RBuiltin(name = "is.loaded", kind = INTERNAL, parameterNames = {"symbol", "PACKAGE", "type"}, behavior = READS_STATE)
     public abstract static class IsLoaded extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("symbol").mustBe(stringValue()).asStringVector().mustBe(notEmpty()).findFirst();
+            casts.arg("PACKAGE").mustBe(stringValue()).asStringVector().mustBe(notEmpty()).findFirst();
+            casts.arg("type").mustBe(stringValue()).asStringVector().mustBe(notEmpty()).findFirst();
+        }
+
         @Specialization
         @TruffleBoundary
-        protected byte isLoaded(RAbstractStringVector symbol, RAbstractStringVector packageName, RAbstractStringVector typeVec) {
-            String type = typeVec.getDataAt(0);
+        protected byte isLoaded(String symbol, String packageName, String type) {
             NativeSymbolType nst = null;
             switch (type) {
                 case "":
@@ -147,24 +147,22 @@ public class DynLoadFunctions {
                     // Not an error in GnuR
             }
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(nst, null, null);
-            boolean found = DLL.findSymbol(symbol.getDataAt(0), packageName.getDataAt(0), rns) != DLL.SYMBOL_NOT_FOUND;
+            boolean found = DLL.findSymbol(symbol, packageName, rns) != DLL.SYMBOL_NOT_FOUND;
             return RRuntime.asLogical(found);
         }
     }
 
-    @RBuiltin(name = "getSymbolInfo", kind = INTERNAL, parameterNames = {"symbol", "package", "withReg"}, behavior = READS_STATE)
+    @RBuiltin(name = "getSymbolInfo", kind = INTERNAL, parameterNames = {"symbol", "package", "withRegistrationInfo"}, behavior = READS_STATE)
     public abstract static class GetSymbolInfo extends RBuiltinNode {
-
         @Override
         protected void createCasts(CastBuilder casts) {
-            // TODO: not sure if the behavior is 100% compliant
-            casts.arg("withReg").asLogicalVector().findFirst();
+            casts.arg("symbol").mustBe(stringValue()).asStringVector().mustBe(notEmpty()).findFirst();
+            casts.arg("withRegistrationInfo").mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object getSymbolInfo(RAbstractStringVector symbolVec, String packageName, byte withReg) {
-            String symbol = symbolVec.getDataAt(0);
+        protected Object getSymbolInfo(String symbol, String packageName, boolean withReg) {
             DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
             long f = DLL.findSymbol(RRuntime.asString(symbol), packageName, rns);
             SymbolInfo symbolInfo = null;
@@ -176,7 +174,7 @@ public class DynLoadFunctions {
 
         @Specialization(guards = "isDLLInfo(externalPtr)")
         @TruffleBoundary
-        protected Object getSymbolInfo(RAbstractStringVector symbolVec, RExternalPtr externalPtr, byte withReg) {
+        protected Object getSymbolInfo(RAbstractStringVector symbolVec, RExternalPtr externalPtr, boolean withReg) {
             DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.getAddr());
             if (dllInfo == null) {
                 throw RError.error(this, RError.Message.REQUIRES_NAME_DLLINFO);
@@ -192,18 +190,12 @@ public class DynLoadFunctions {
             return getResult(symbolInfo, withReg);
         }
 
-        private static Object getResult(DLL.SymbolInfo symbolInfo, byte withReg) {
+        private static Object getResult(DLL.SymbolInfo symbolInfo, boolean withReg) {
             if (symbolInfo != null) {
-                return symbolInfo.createRSymbolObject(new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Any, null, null), RRuntime.fromLogical(withReg));
+                return symbolInfo.createRSymbolObject(new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Any, null, null), withReg);
             } else {
                 return RNull.instance;
             }
-        }
-
-        @SuppressWarnings("unused")
-        @Fallback
-        protected Object getSymbolInfo(Object symbol, Object packageName, Object withReg) {
-            throw RError.error(this, RError.Message.REQUIRES_NAME_DLLINFO);
         }
 
         protected static boolean isDLLInfo(RExternalPtr externalPtr) {
