@@ -80,7 +80,7 @@ public abstract class Match extends RBuiltinNode {
     private RAbstractStringVector castString(RAbstractVector operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(false, false, false, false));
+            castString = insert(CastStringNodeGen.create(false, false, false));
         }
         return (RAbstractStringVector) castString.execute(operand);
     }

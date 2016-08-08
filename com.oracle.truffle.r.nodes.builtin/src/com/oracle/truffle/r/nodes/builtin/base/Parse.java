@@ -113,7 +113,7 @@ public abstract class Parse extends RBuiltinNode {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVectorNode = insert(CastToVectorNodeGen.create(false));
-            castStringNode = insert(CastStringNodeGen.create(false, false, false, false));
+            castStringNode = insert(CastStringNodeGen.create(false, false, false));
         }
         return (RStringVector) castStringNode.executeString(castVectorNode.execute(s));
     }
