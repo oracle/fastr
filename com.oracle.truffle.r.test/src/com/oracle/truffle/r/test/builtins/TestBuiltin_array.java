@@ -154,4 +154,19 @@ public class TestBuiltin_array extends TestBase {
     public void testarray27() {
         assertEval("argv <- list(-1, c(3L, 2L), list(c('a', 'b', 'c'), NULL)); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }
+
+    @Test
+    public void testArray() {
+        assertEval(Output.MayIgnoreWarningContext, "{ array(1:4, 1:2, 4) }");
+        assertEval(Output.MayIgnoreWarningContext, "{ array(1:4, c(1+2i, 2+2i)) }");
+        assertEval("{ array(as.raw(1:4)) }");
+        assertEval("{ array(1:4, integer()) }");
+        assertEval("{ array(NULL) }");
+        assertEval("{ array(NA) }");
+        assertEval("{ array(1:4, NULL) }");
+        assertEval("{ .Internal(array(NULL, 1, NULL)) }");
+        assertEval("{ .Internal(array(NA, 1, NULL)) }");
+        assertEval("{ f<-function() 42; .Internal(array(f, 1, NULL)) }");
+    }
+
 }
