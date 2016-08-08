@@ -34,10 +34,12 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -247,6 +249,12 @@ public final class PredefFiltersSamplers implements PredefFilters {
     public <R extends RAbstractComplexVector> TypePredicateArgumentFilterSampler<Object, R> complexValue() {
         return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof RComplex ||
                         x instanceof RAbstractComplexVector, RAbstractComplexVector.class, RComplex.class);
+    }
+
+    @Override
+    public <R extends RAbstractRawVector> TypePredicateArgumentFilterSampler<Object, R> rawValue() {
+        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof RRaw ||
+                        x instanceof RAbstractRawVector, RAbstractRawVector.class, RRaw.class);
     }
 
     @Override

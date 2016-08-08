@@ -58,10 +58,12 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -278,6 +280,8 @@ public final class CastBuilder {
 
         <R extends RAbstractComplexVector> TypePredicateArgumentFilter<Object, R> complexValue();
 
+        <R extends RAbstractRawVector> TypePredicateArgumentFilter<Object, R> rawValue();
+
         TypePredicateArgumentFilter<Object, String> scalarStringValue();
 
         TypePredicateArgumentFilter<Object, Integer> scalarIntegerValue();
@@ -491,6 +495,11 @@ public final class CastBuilder {
         @Override
         public <R extends RAbstractComplexVector> TypePredicateArgumentFilter<Object, R> complexValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RComplex || x instanceof RAbstractComplexVector);
+        }
+
+        @Override
+        public <R extends RAbstractRawVector> TypePredicateArgumentFilter<Object, R> rawValue() {
+            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RRaw || x instanceof RAbstractRawVector);
         }
 
         @Override
@@ -948,6 +957,10 @@ public final class CastBuilder {
 
         public static <R extends RAbstractComplexVector> TypePredicateArgumentFilter<Object, R> complexValue() {
             return predefFilters().complexValue();
+        }
+
+        public static <R extends RAbstractRawVector> TypePredicateArgumentFilter<Object, R> rawValue() {
+            return predefFilters().rawValue();
         }
 
         public static ArgumentTypeFilter<Object, Object> numericValue() {
