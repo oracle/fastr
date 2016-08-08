@@ -45,7 +45,7 @@ public abstract class NZChar extends RBuiltinNode {
     private String coerceContent(Object content) {
         if (convertString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            convertString = insert(CastStringNodeGen.create(false, false, false, false));
+            convertString = insert(CastStringNodeGen.create(false, false, false));
         }
         return (String) convertString.execute(content);
     }
