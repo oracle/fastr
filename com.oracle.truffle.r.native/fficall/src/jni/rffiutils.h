@@ -64,6 +64,7 @@ void callExit(JNIEnv *env);
 // called by callExit to deallocate transient memory
 void allocExit();
 
+// returns the jmp_buf at the current call depth
 jmp_buf *getErrorJmpBuf();
 
 // Given the x denotes an R vector type, return a pointer to

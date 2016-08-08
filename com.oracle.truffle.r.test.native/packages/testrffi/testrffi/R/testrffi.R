@@ -30,8 +30,8 @@ rffi.TYPEOF <- function(x) {
 	.Call("invoke_TYPEOF", x, PACKAGE = "testrffi")
 }
 
-rffi.error <- function() {
-	.Call("invoke_error", PACKAGE = "testrffi")
+rffi.error <- function(msg = "invoke_error in testrffi") {
+	.Call("invoke_error", msg, PACKAGE = "testrffi")
 }
 
 rffi.dotExternalAccessArgs <- function(...) {
@@ -103,4 +103,10 @@ rffi.release_object <- function(x) {
 	invisible(.Call("release_object", x, PACKAGE = "testrffi"))
 }
 
+rffi.findvar <- function(x, env) {
+	if (is.character(x)) {
+		x = as.symbol(x)
+	}
+	.Call("findvar", x, env, PACKAGE = "testrffi")
+}
 

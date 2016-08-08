@@ -406,14 +406,19 @@ void setupOverrides(void) {
 }
 
 static void REmbed_nativeWriteConsole(JNIEnv *jniEnv, jclass c, jstring string, int otype) {
-	int len = (*jniEnv)->GetStringUTFLength(jniEnv, string);
-	const char *cbuf =  (*jniEnv)->GetStringUTFChars(jniEnv, string, NULL);
-	if (ptr_R_WriteConsole == NULL) {
-		(*ptr_R_WriteConsoleEx)(cbuf, len, otype);
-	} else {
-	    (*ptr_R_WriteConsole)(cbuf, len);
+	jmp_buf error_jmpbuf;
+	callEnter(jniEnv, &error_jmpbuf);
+	if (!setjmp(error_jmpbuf)) {
+		int len = (*jniEnv)->GetStringUTFLength(jniEnv, string);
+		const char *cbuf =  (*jniEnv)->GetStringUTFChars(jniEnv, string, NULL);
+		if (ptr_R_WriteConsole == NULL) {
+			(*ptr_R_WriteConsoleEx)(cbuf, len, otype);
+		} else {
+			(*ptr_R_WriteConsole)(cbuf, len);
+		}
+		(*jniEnv)->ReleaseStringUTFChars(jniEnv, string, cbuf);
 	}
-	(*jniEnv)->ReleaseStringUTFChars(jniEnv, string, cbuf);
+	callExit(jniEnv);
 }
 
 JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeWriteConsole(JNIEnv *jniEnv, jclass c, jstring string) {
@@ -425,22 +430,37 @@ JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nat
 }
 
 JNIEXPORT jstring JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeReadConsole(JNIEnv *jniEnv, jclass c, jstring prompt) {
-	const char *cprompt =  (*jniEnv)->GetStringUTFChars(jniEnv, prompt, NULL);
-	unsigned char cbuf[1024];
-	int n = (*ptr_R_ReadConsole)(cprompt, cbuf, 1024, 0);
-	jstring result;
-	result = (*jniEnv)->NewStringUTF(jniEnv, (const char *)cbuf);
-	(*jniEnv)->ReleaseStringUTFChars(jniEnv, prompt, cprompt);
+	jmp_buf error_jmpbuf;
+	jstring result = NULL;
+	callEnter(jniEnv, &error_jmpbuf);
+	if (!setjmp(error_jmpbuf)) {
+		const char *cprompt =  (*jniEnv)->GetStringUTFChars(jniEnv, prompt, NULL);
+		unsigned char cbuf[1024];
+		int n = (*ptr_R_ReadConsole)(cprompt, cbuf, 1024, 0);
+		result = (*jniEnv)->NewStringUTF(jniEnv, (const char *)cbuf);
+		(*jniEnv)->ReleaseStringUTFChars(jniEnv, prompt, cprompt);
+	}
+	callExit(jniEnv);
 	return result;
 }
 
 JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeCleanUp(JNIEnv *jniEnv, jclass c, jint x, jint y, jint z) {
+	jmp_buf error_jmpbuf;
+	callEnter(jniEnv, &error_jmpbuf);
+	if (!setjmp(error_jmpbuf)) {
 	(*ptr_R_CleanUp)(x, y, z);
+	}
+	callExit(jniEnv);
 }
 
 JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeSuicide(JNIEnv *jniEnv, jclass c, jstring string) {
-	const char *cbuf =  (*jniEnv)->GetStringUTFChars(jniEnv, string, NULL);
-	(*ptr_R_Suicide)(cbuf);
+	jmp_buf error_jmpbuf;
+	callEnter(jniEnv, &error_jmpbuf);
+	if (!setjmp(error_jmpbuf)) {
+		const char *cbuf =  (*jniEnv)->GetStringUTFChars(jniEnv, string, NULL);
+		(*ptr_R_Suicide)(cbuf);
+	}
+	callExit(jniEnv);
 }
 
 void uR_PolledEvents(void) {

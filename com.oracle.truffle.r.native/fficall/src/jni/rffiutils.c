@@ -43,7 +43,6 @@ jmethodID createSymbolMethodID;
 static jmethodID validateMethodID;
 
 static JNIEnv *curenv = NULL;
-jmp_buf *callErrorJmpBuf;
 
 // default for trace output when enabled
 FILE *traceFile = NULL;
@@ -84,10 +83,14 @@ void setEmbedded() {
 }
 
 // native down call depth, indexes nativeArrayTableHwmStack
-int callDepth;
+int callDepth = 0;
 
-#define NATIVE_ARRAY_TABLE_HWM_STACK_SIZE 16
-int nativeArrayTableHwmStack[NATIVE_ARRAY_TABLE_HWM_STACK_SIZE] ;
+#define CALLDEPTH_STACK_SIZE 16
+static int nativeArrayTableHwmStack[CALLDEPTH_STACK_SIZE];
+
+// stack of jmp_buf ptrs for non-local control transfer on error
+static jmp_buf* callErrorJmpBufTable[CALLDEPTH_STACK_SIZE];
+
 
 void init_utils(JNIEnv *env) {
 	curenv = env;
@@ -140,8 +143,9 @@ const char *stringToChars(JNIEnv *jniEnv, jstring string) {
 
 void callEnter(JNIEnv *env, jmp_buf *jmpbuf) {
 	setEnv(env);
-	callErrorJmpBuf = jmpbuf;
-	if (callDepth >= NATIVE_ARRAY_TABLE_HWM_STACK_SIZE) {
+	//printf("callEnter: callDepth %d, jmpbufptr %p\n", callDepth, jmpbuf);
+	callErrorJmpBufTable[callDepth] = jmpbuf;
+	if (callDepth >= CALLDEPTH_STACK_SIZE) {
 		fatalError("call stack overflow\n");
 	}
 	nativeArrayTableHwmStack[callDepth] = nativeArrayTableHwm;
@@ -149,7 +153,8 @@ void callEnter(JNIEnv *env, jmp_buf *jmpbuf) {
 }
 
 jmp_buf *getErrorJmpBuf() {
-	return callErrorJmpBuf;
+	// printf("getErrorJmpBuf: callDepth %d, jmpbufptr %p\n", callDepth, callErrorJmpBufTable[callDepth - 1]);
+	return callErrorJmpBufTable[callDepth - 1];
 }
 
 void callExit(JNIEnv *env) {
