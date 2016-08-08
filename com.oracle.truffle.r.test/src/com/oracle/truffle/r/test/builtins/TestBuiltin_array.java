@@ -157,13 +157,14 @@ public class TestBuiltin_array extends TestBase {
 
     @Test
     public void testArray() {
-        assertEval(Output.MayIgnoreWarningContext, "{ array(1:4, 1:2, 4) }");
-        assertEval(Output.MayIgnoreWarningContext, "{ array(1:4, c(1+2i, 2+2i)) }");
+        assertEval(Output.IgnoreWarningContext, "{ array(1:4, 1:2, 4) }");
+        assertEval(Output.IgnoreWarningContext, "{ array(1:4, c(1+2i, 2+2i)) }");
         assertEval("{ array(as.raw(1:4)) }");
         assertEval("{ array(1:4, integer()) }");
         assertEval("{ array(NULL) }");
         assertEval("{ array(NA) }");
         assertEval("{ array(1:4, NULL) }");
+        assertEval("{ .Internal(array(1:4, NULL, NULL)) }");
         assertEval("{ .Internal(array(NULL, 1, NULL)) }");
         assertEval("{ .Internal(array(NA, 1, NULL)) }");
         assertEval("{ f<-function() 42; .Internal(array(f, 1, NULL)) }");

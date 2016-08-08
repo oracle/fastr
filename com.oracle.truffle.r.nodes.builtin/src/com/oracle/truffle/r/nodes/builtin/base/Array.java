@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -86,7 +87,7 @@ public abstract class Array extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         Function<Object, Object> argType = this::argType;
-        casts.arg("data").mustBe(instanceOf(RList.class).or(numericValue()).or(stringValue()).or(complexValue().or(rawValue())),
+        casts.arg("data").mustBe(instanceOf(RAbstractListVector.class).or(numericValue()).or(stringValue()).or(complexValue().or(rawValue())),
                         RError.SHOW_CALLER, RError.Message.MUST_BE_VECTOR_BUT_WAS, "data",
                         argType);
         casts.arg("dim").asIntegerVector().mustBe(notEmpty(), RError.SHOW_CALLER, RError.Message.CANNOT_BE_LENGTH, "dims", 0);
