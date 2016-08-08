@@ -89,8 +89,8 @@ SEXP invoke_TYPEOF(SEXP x) {
 	return ScalarInteger(TYPEOF(x));
 }
 
-SEXP invoke_error() {
-	error("invoke_error in testrffi");
+SEXP invoke_error(SEXP msg) {
+	error(R_CHAR(STRING_ELT(msg, 0)));
 }
 
 // returns a
@@ -270,3 +270,13 @@ SEXP release_object(SEXP x) {
 	R_ReleaseObject(x);
     return R_NilValue;
 }
+
+SEXP findvar(SEXP x, SEXP env) {
+	SEXP v = Rf_findVar(x, env);
+	if (v == R_UnboundValue) {
+		Rf_error("'%s' not found", R_CHAR(PRINTNAME(x)));
+	} else {
+		return v;
+	}
+}
+
