@@ -849,7 +849,7 @@ SEXP CADR(SEXP e) {
 }
 
 SEXP CDDR(SEXP e) {
-    TRACE(TARG1, e);
+    TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CDDR_MethodID, e);
     return checkRef(thisenv, result);
