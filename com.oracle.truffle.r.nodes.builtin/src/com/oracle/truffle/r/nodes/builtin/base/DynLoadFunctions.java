@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -56,6 +57,13 @@ public class DynLoadFunctions {
 
     @RBuiltin(name = "dyn.load", visibility = OFF, kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"}, behavior = COMPLEX)
     public abstract static class DynLoad extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            // TODO: not sure if the behavior is 100% compliant
+            casts.arg("now").asLogicalVector().findFirst();
+        }
+
         @Specialization
         @TruffleBoundary
         protected RList doDynLoad(RAbstractStringVector libVec, RAbstractLogicalVector localVec, byte now, @SuppressWarnings("unused") String unused) {
@@ -146,6 +154,12 @@ public class DynLoadFunctions {
 
     @RBuiltin(name = "getSymbolInfo", kind = INTERNAL, parameterNames = {"symbol", "package", "withReg"}, behavior = READS_STATE)
     public abstract static class GetSymbolInfo extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            // TODO: not sure if the behavior is 100% compliant
+            casts.arg("withReg").asLogicalVector().findFirst();
+        }
 
         @Specialization
         @TruffleBoundary
