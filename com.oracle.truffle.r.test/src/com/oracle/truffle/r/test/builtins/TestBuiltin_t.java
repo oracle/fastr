@@ -40,5 +40,11 @@ public class TestBuiltin_t extends TestBase {
         assertEval("{ t(t(matrix(1:4, nrow=2))) }");
 
         assertEval("{ x<-matrix(1:2, ncol=2, dimnames=list(\"a\", c(\"b\", \"c\"))); t(x) }");
+
+        assertEval("t(new.env())");
+        assertEval("v <- as.complex(1:50); dim(v) <- c(5,10); dimnames(v) <- list(as.character(40:44), as.character(10:19)); t(v)");
+        assertEval("t(1)");
+        assertEval("t(TRUE)");
+        assertEval("t(as.raw(c(1,2,3,4)))");
     }
 }
