@@ -38,7 +38,9 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -67,6 +69,15 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return ret;
     }
 
+    private RDoubleVector vectorCopy(RAbstractContainer operand, double[] data, boolean isComplete) {
+        RDoubleVector ret = RDataFactory.createDoubleVector(data, isComplete, getPreservedDimensions(operand), getPreservedNames(operand));
+        preserveDimensionNames(operand, ret);
+        if (preserveAttributes()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
+    }
+
     private RDoubleVector createResultVector(RAbstractVector operand, IntToDoubleFunction elementFunction) {
         naCheck.enable(operand);
         double[] ddata = new double[operand.getLength()];
@@ -76,12 +87,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
             ddata[i] = value;
             seenNA = seenNA || naProfile.isNA(value);
         }
-        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
+        return vectorCopy(operand, ddata, !seenNA);
     }
 
     @Specialization
@@ -156,16 +162,21 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
     @Specialization
     protected RDoubleVector doDoubleVector(RDoubleVector operand) {
+        if (preserveAttributes() && preserveDimensions() && preserveNames()) {
+            return operand;
+        } else {
+            return vectorCopy(operand, operand.getDataCopy(), operand.isComplete());
+        }
+    }
+
+    @Specialization
+    protected RDoubleSequence doDoubleVector(RDoubleSequence operand) {
+        // sequence does not have attributes - nothing to copy or drop
         return operand;
     }
 
     @Specialization
-    protected RDoubleSequence doDoubleSequence(RDoubleSequence operand) {
-        return operand;
-    }
-
-    @Specialization
-    protected RDoubleVector doList(RList list) {
+    protected RDoubleVector doList(RAbstractListVector list) {
         int length = list.getLength();
         double[] result = new double[length];
         boolean seenNA = false;

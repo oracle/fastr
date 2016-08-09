@@ -35,7 +35,7 @@ public final class Dqrdc2 extends RExternalBuiltinNode {
             int ldx = argValues[1] instanceof Integer ? (int) argValues[1] : ((RAbstractIntVector) argValues[1]).getDataAt(0);
             int n = argValues[2] instanceof Integer ? (int) argValues[2] : ((RAbstractIntVector) argValues[2]).getDataAt(0);
             int p = argValues[3] instanceof Integer ? (int) argValues[3] : ((RAbstractIntVector) argValues[3]).getDataAt(0);
-            double tol = (double) argValues[4];
+            double tol = argValues[4] instanceof Double ? (double) argValues[4] : ((RAbstractDoubleVector) argValues[4]).getDataAt(0);
             RAbstractIntVector rankVec = (RAbstractIntVector) argValues[5];
             RAbstractDoubleVector qrauxVec = (RAbstractDoubleVector) argValues[6];
             RAbstractIntVector pivotVec = (RAbstractIntVector) argValues[7];
