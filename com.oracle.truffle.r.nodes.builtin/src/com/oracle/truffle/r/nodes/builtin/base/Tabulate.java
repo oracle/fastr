@@ -35,7 +35,9 @@ public abstract class Tabulate extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
+        // TODO: not sure if the behavior is 100% compliant
+        casts.arg("bin").asIntegerVector();
+        casts.arg("nbins").asIntegerVector().findFirst();
     }
 
     @Specialization

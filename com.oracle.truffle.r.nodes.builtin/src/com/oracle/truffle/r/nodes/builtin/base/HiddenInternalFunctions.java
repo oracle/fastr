@@ -362,7 +362,9 @@ public class HiddenInternalFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toInteger(2).toInteger(3);
+            // TODO: not sure if the behavior is 100% compliant
+            casts.arg("ascii").asIntegerVector().findFirst();
+            casts.arg("compsxp").asIntegerVector().findFirst();
         }
 
         @Specialization
