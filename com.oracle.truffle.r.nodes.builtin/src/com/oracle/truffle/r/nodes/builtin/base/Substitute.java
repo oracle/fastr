@@ -96,6 +96,6 @@ public abstract class Substitute extends RBuiltinNode {
 
         // The "expr" promise comes from the no-evalarg aspect of the builtin,
         // so get the actual expression (AST) from that
-        return RASTUtils.createLanguageElement(RSubstitute.substitute(env, expr.getRep()).asRNode());
+        return RASTUtils.createLanguageElement(RSubstitute.substitute(env, expr.getRep()));
     }
 }

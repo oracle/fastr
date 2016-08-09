@@ -642,16 +642,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public RBaseNode createReadVariableNode(String name) {
-        return RASTUtils.createReadVariableNode(name);
-    }
-
-    @Override
-    public RBaseNode createConstantNode(Object o) {
-        return ConstantNode.create(o);
-    }
-
-    @Override
     public boolean enableDebug(RFunction func, boolean once) {
         return DebugHandling.enableDebug(func, "", RNull.instance, once, false);
     }
