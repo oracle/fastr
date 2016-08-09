@@ -101,7 +101,7 @@ public final class RFactorNodes {
             } else {
                 if (castString == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    castString = insert(CastStringNodeGen.create(false, false, false, false));
+                    castString = insert(CastStringNodeGen.create(false, false, false));
                 }
                 RStringVector slevels = (RStringVector) castString.executeString(vec);
                 return RDataFactory.createStringVector(slevels.getDataWithoutCopying(), RDataFactory.COMPLETE_VECTOR);

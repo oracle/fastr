@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -108,6 +109,11 @@ public class NamespaceFunctions {
 
     @RBuiltin(name = "registerNamespace", kind = INTERNAL, parameterNames = {"name", "env"}, behavior = MODIFIES_STATE)
     public abstract static class RegisterNamespace extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("name").asStringVector().findFirst();
+        }
+
         @Specialization
         protected RNull registerNamespace(String name, REnvironment env) {
             if (REnvironment.registerNamespace(name, env) == null) {

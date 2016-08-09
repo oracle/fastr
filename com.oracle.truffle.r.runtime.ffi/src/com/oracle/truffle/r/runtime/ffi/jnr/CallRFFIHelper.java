@@ -23,8 +23,6 @@
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -35,17 +33,16 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.RSrcref;
+import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;

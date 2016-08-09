@@ -19,6 +19,13 @@ public class TestBuiltin_Primitive extends TestBase {
 
     @Test
     public void testPrimitive1() {
-        assertEval(Ignored.Unknown, "argv <- list('c');.Primitive(argv[[1]]);");
+        // our c() primitive is missing an argument
+        assertEval(Ignored.ImplementationError, "argv <- list('c');.Primitive(argv[[1]]);");
+
+        assertEval(".Primitive(c('c', 'b'))");
+        assertEval(".Primitive('any')");
+        assertEval(".Primitive('foo')");
+        assertEval(".Primitive('complex')");
+        assertEval(".Primitive(1)");
     }
 }

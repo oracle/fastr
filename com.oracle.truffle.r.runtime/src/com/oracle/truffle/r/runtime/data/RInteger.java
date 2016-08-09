@@ -88,7 +88,7 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
     @Override
     public RIntVector materialize() {
         RIntVector result = RDataFactory.createIntVectorFromScalar(value);
-        MemoryTracer.reportCopying(this, result);
+        MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 

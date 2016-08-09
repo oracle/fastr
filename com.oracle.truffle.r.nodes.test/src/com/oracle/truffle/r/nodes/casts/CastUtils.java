@@ -52,8 +52,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-import sun.java2d.xr.XRCompositeManager;
-
 public class CastUtils {
 
     public static final class Cast {

@@ -58,10 +58,12 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -127,7 +129,11 @@ public final class CastBuilder {
     }
 
     public CastBuilder toCharacter(int index) {
-        return insert(index, CastStringNodeGen.create(false, false, false, false));
+        return insert(index, CastStringNodeGen.create(false, false, false));
+    }
+
+    public CastBuilder toCharacter(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+        return insert(index, CastStringNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
     }
 
     public CastBuilder boxPrimitive(int index) {
@@ -277,6 +283,8 @@ public final class CastBuilder {
         <R extends RAbstractLogicalVector> TypePredicateArgumentFilter<Object, R> logicalValue();
 
         <R extends RAbstractComplexVector> TypePredicateArgumentFilter<Object, R> complexValue();
+
+        <R extends RAbstractRawVector> TypePredicateArgumentFilter<Object, R> rawValue();
 
         TypePredicateArgumentFilter<Object, String> scalarStringValue();
 
@@ -494,6 +502,11 @@ public final class CastBuilder {
         }
 
         @Override
+        public <R extends RAbstractRawVector> TypePredicateArgumentFilter<Object, R> rawValue() {
+            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RRaw || x instanceof RAbstractRawVector);
+        }
+
+        @Override
         public TypePredicateArgumentFilter<Object, String> scalarStringValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof String);
         }
@@ -691,11 +704,11 @@ public final class CastBuilder {
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asStringVector() {
-            return phaseBuilder -> CastStringNodeGen.create(false, false, false, false);
+            return phaseBuilder -> CastStringNodeGen.create(false, false, false);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asStringVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return phaseBuilder -> CastStringNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, false);
+            return phaseBuilder -> CastStringNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asLogical() {
@@ -948,6 +961,10 @@ public final class CastBuilder {
 
         public static <R extends RAbstractComplexVector> TypePredicateArgumentFilter<Object, R> complexValue() {
             return predefFilters().complexValue();
+        }
+
+        public static <R extends RAbstractRawVector> TypePredicateArgumentFilter<Object, R> rawValue() {
+            return predefFilters().rawValue();
         }
 
         public static ArgumentTypeFilter<Object, Object> numericValue() {
@@ -1355,6 +1372,11 @@ public final class CastBuilder {
         default CoercedPhaseBuilder<RAbstractLogicalVector, Byte> asLogicalVector() {
             state().castBuilder().toLogical(state().index());
             return state().factory.newCoercedPhaseBuilder(this, Byte.class);
+        }
+
+        default CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+            state().castBuilder().toCharacter(state().index(), preserveNames, dimensionsPreservation, attrPreservation);
+            return state().factory.newCoercedPhaseBuilder(this, String.class);
         }
 
         default CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector() {

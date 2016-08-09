@@ -22,14 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.elementAt;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asLogicalVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.elementAt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.equalTo;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
@@ -69,8 +69,6 @@ import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentValueFilter;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.InitialPhaseBuilder;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
-import com.oracle.truffle.r.nodes.builtin.base.IsNA;
 import com.oracle.truffle.r.nodes.casts.ArgumentFilterSampler;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.PredefFiltersSamplers;
@@ -85,7 +83,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -634,7 +631,7 @@ public class CastBuilderTest {
         }
     }
 
-    private String argType(Object arg) {
+    private static String argType(Object arg) {
         return arg.getClass().getSimpleName();
     }
 

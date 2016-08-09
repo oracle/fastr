@@ -50,6 +50,7 @@ import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastSymbolNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
@@ -120,8 +121,8 @@ public abstract class AsVector extends RBuiltinNode {
 
         @Specialization(guards = "castToString(mode)")
         protected Object asVectorString(Object x, @SuppressWarnings("unused") String mode, //
-                        @Cached("create()") AsCharacter asCharacter) {
-            return asCharacter.execute(x);
+                        @Cached("createNonPreserving()") CastStringNode cast) {
+            return cast.execute(x);
         }
 
         @Specialization(guards = "castToInt(x, mode)")
