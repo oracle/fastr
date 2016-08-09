@@ -1609,12 +1609,9 @@ int R_check_class_etc (SEXP x, const char **valid) {
 	return (int) unimplemented("R_check_class_etc");
 }
 
-void R_PreserveObject(SEXP x) {
+SEXP R_PreserveObject(SEXP x) {
 	// convert to a JNI global ref until explicitly released
-	// N.B. Since this returns void we can't do anything
-	// about the fact that the "value" of "x" may change from
-	// a C perspective, so an "==" will fail
-	SEXP result = createGlobalRef(getEnv(), x, 0);
+	return createGlobalRef(getEnv(), x, 0);
 }
 
 void R_ReleaseObject(SEXP x) {

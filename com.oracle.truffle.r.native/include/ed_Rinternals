@@ -64,4 +64,14 @@ LibExtern SEXP FASTR_NamespaceRegistry();
 a
 #endif
 .
+/R_PreserveObject/
+i
+#ifdef FASTR
+SEXP R_PreserveObject(SEXP);
+#else
+.
++1
+a
+#endif
+.
 w Rinternals.h
