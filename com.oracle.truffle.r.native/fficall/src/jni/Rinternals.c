@@ -350,6 +350,7 @@ SEXP Rf_dimnamesgets(SEXP x, SEXP y) {
 SEXP Rf_eval(SEXP expr, SEXP env) {
 	TRACE(TARGpp, expr, env);
     JNIEnv *thisenv = getEnv();
+    updateNativeArrays(thisenv);
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_evalMethodID, expr, env);
     return checkRef(thisenv, result);
 }
@@ -1455,6 +1456,7 @@ SEXP Rf_asS4(SEXP x, Rboolean b, int i) {
 
 static SEXP R_tryEvalInternal(SEXP x, SEXP y, int *ErrorOccurred, jboolean silent) {
 	JNIEnv *thisenv = getEnv();
+    updateNativeArrays(thisenv);
 	jobject tryResult =  (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_tryEvalMethodID, x, y, silent);
 	// If tryResult is NULL, an error occurred
 	if (ErrorOccurred) {
