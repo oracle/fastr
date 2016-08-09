@@ -96,13 +96,10 @@ public class RInstrumentation {
      * Activate the instrumentation system for {@code context}. Currently this simply checks for the
      * global (command-line) options for tracing and timing. They are applied to every context.
      */
-    public static void activate(RContext context) {
+    public static void activate(@SuppressWarnings("unused") RContext context) {
         String rdebugValue = FastROptions.Rdebug.getStringValue();
         if (rdebugValue != null) {
             debugFunctionNames = rdebugValue.split(",");
-        }
-        if (RFunctionProfiler.enabled()) {
-            RFunctionProfiler.installTimers(context);
         }
         // Check for function tracing
         RContext.getRRuntimeASTAccess().traceAllFunctions();

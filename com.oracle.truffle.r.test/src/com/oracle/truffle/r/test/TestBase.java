@@ -38,7 +38,6 @@ import org.junit.runner.Description;
 import org.junit.runner.Result;
 
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
@@ -203,7 +202,6 @@ public class TestBase {
                 if (diffsOutputFile != null) {
                     TestOutputManager.writeDiffsTestOutputFile(diffsOutputFile, expectedOutputManager, fastROutputManager);
                 }
-                RPerfStats.report();
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }

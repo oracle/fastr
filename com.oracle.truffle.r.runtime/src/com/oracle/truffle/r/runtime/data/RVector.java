@@ -26,12 +26,9 @@ import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
@@ -553,7 +550,6 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     public final RVector copy() {
         RVector result = internalCopyAndReport();
         setAttributes(result);
-        incCopyCount();
         result.setTypedValueInfo(getTypedValueInfo());
         return result;
     }
@@ -839,45 +835,6 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         if (length != vectorLength && vectorLength > 0) {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(invokingNode, RError.Message.DIMS_DONT_MATCH_LENGTH, length, vectorLength);
-        }
-    }
-
-    private static final ConditionProfile statsProfile = ConditionProfile.createBinaryProfile();
-
-    @CompilationFinal private static PerfHandler stats;
-
-    private static void incCopyCount() {
-        if (statsProfile.profile(stats != null)) {
-            stats.record(null);
-        }
-    }
-
-    static {
-        RPerfStats.register(new PerfHandler());
-    }
-
-    private static class PerfHandler implements RPerfStats.Handler {
-
-        private static int count;
-
-        void record(@SuppressWarnings("unused") Object data) {
-            count++;
-        }
-
-        @Override
-        public void initialize(String optionData) {
-            stats = this;
-            count = 0;
-        }
-
-        @Override
-        public String getName() {
-            return "vectorcopies";
-        }
-
-        @Override
-        public void report() {
-            RPerfStats.out().printf("NUMBER OF VECTOR COPIES: %d\n", count);
         }
     }
 

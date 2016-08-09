@@ -41,7 +41,6 @@ import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVersionInfo;
 import com.oracle.truffle.r.runtime.TempPathName;
@@ -69,7 +68,6 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     private static void initialize() {
         try {
             Load_RFFIFactory.initialize(true);
-            RPerfStats.initialize();
             Locale.setDefault(Locale.ROOT);
             RAccuracyInfo.initialize();
             RVersionInfo.initialize();

@@ -47,7 +47,6 @@ import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;

@@ -43,8 +43,6 @@ public enum FastROptions {
     TraceCalls("Trace all R function calls", false),
     TraceCallsToFile("TraceCalls output is sent to 'fastr_tracecalls.log'", false),
     TraceNativeCalls("Trace all native function calls (performed via .Call, .External, etc.)", false),
-    PerfStats("PerfStats=p1,p2,...; Collect performance stats identified by p1, etc.", null, true),
-    PerfStatsFile("PerfStatsFile=file; Send performance stats to 'file', default stdout", null, true),
     Rdebug("Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)", null, true),
     PerformanceWarnings("Print FastR performance warning", false),
     LoadBase("Load base package", true),
