@@ -96,5 +96,9 @@ public class TestBuiltin_ascomplex extends TestBase {
         assertEval(Ignored.Unknown, "{ as.complex(\"-.1e10+5i\") }");
         assertEval(Ignored.Unknown, "{ as.complex(\"1e-2+3i\") }");
         assertEval(Ignored.Unknown, "{ as.complex(\"+.1e+2-3i\") }");
+
+        assertEval("{ as.complex(list(42)) }");
+        assertEval(Output.IgnoreErrorContext, "{ as.complex(list(NULL)) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.complex(list(\"foo\")) }");
     }
 }
