@@ -23,48 +23,56 @@
 
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.r.runtime.context.RContext;
+import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedDeque;
+
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
- * Helper for tracing memory related events. All implementors of {@link RAbstractVector} are
- * expected to report to {@link MemoryTracer} and others can listen to them through {@link Listener}
- * interface. Use method {@link #reportEvents()} to start the tracing.
+ * Helper for tracing memory copying events, as used by the {@code tracemem} bultin. All
+ * implementors of {@link RAbstractVector} are expected to report to {@link MemoryCopyTracer} and
+ * others can listen to them through {@link Listener} interface. Use method
+ * {@link #setTracingState(boolean)} to enable/disable the tracing.
  */
-public final class MemoryTracer {
-    private static Listener listener;
-    private static final Assumption noMemoryTracingAssumption = Truffle.getRuntime().createAssumption();
+public final class MemoryCopyTracer {
+    private static Deque<Listener> listeners = new ConcurrentLinkedDeque<>();
+    @CompilationFinal private static boolean enabled;
 
-    private MemoryTracer() {
+    private static final CyclicAssumption noMemoryCopyTracingAssumption = new CyclicAssumption("data copying");
+
+    private MemoryCopyTracer() {
         // only static methods
     }
 
     /**
-     * Sets the listener of memory tracing events. For the time being there can only be one
-     * listener. This can be extended to an array should we need more listeners.
+     * Adds a listener of memory copying events.
      */
-    public static void setListener(Listener newListener) {
-        listener = newListener;
+    public static void addListener(Listener listener) {
+        listeners.addLast(listener);
     }
 
     /**
      * After calling this method memory related events will be reported to the listener. This
      * invalidates global assumption and should be used with caution.
      */
-    public static void reportEvents() {
-        noMemoryTracingAssumption.invalidate();
+    public static void setTracingState(boolean newState) {
+        if (enabled != newState) {
+            noMemoryCopyTracingAssumption.invalidate();
+            enabled = newState;
+        }
     }
 
     /**
      * Reports copy event to the listener. If there are no traced objects, this should turn into
-     * no-op. TODO might be worth interposing on a change in {@code tracingState} to turn off the
-     * collection.
+     * no-op.
      */
     public static void reportCopying(RAbstractVector source, RAbstractVector dest) {
-        if (!noMemoryTracingAssumption.isValid() && listener != null && RContext.getInstance().stateInstrumentation.getTracingState()) {
-            listener.reportCopying(source, dest);
+        if (enabled) {
+            for (Listener listener : listeners) {
+                listener.reportCopying(source, dest);
+            }
         }
     }
 

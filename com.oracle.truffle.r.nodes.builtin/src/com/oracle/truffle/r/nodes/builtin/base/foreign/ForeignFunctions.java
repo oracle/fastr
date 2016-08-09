@@ -66,6 +66,7 @@ import com.oracle.truffle.r.library.utils.Download;
 import com.oracle.truffle.r.library.utils.MenuNodeGen;
 import com.oracle.truffle.r.library.utils.ObjectSizeNodeGen;
 import com.oracle.truffle.r.library.utils.RprofNodeGen;
+import com.oracle.truffle.r.library.utils.RprofmemNodeGen;
 import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
 import com.oracle.truffle.r.library.utils.WriteTable;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
@@ -576,8 +577,9 @@ public class ForeignFunctions {
                     return getExternalModelBuiltinNode("termsform");
                 case "Rprof":
                     return RprofNodeGen.create();
-                case "unzip":
                 case "Rprofmem":
+                    return RprofmemNodeGen.create();
+                case "unzip":
                 case "addhistory":
                 case "loadhistory":
                 case "savehistory":

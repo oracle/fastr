@@ -81,7 +81,7 @@ public abstract class RSequence implements RAbstractVector {
 
     public final RVector createVector() {
         RVector result = internalCreateVector();
-        MemoryTracer.reportCopying(this, result);
+        MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 

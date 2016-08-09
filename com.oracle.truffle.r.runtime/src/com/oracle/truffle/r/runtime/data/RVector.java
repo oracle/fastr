@@ -581,19 +581,19 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
 
     protected final RVector internalCopyAndReport() {
         RVector result = internalCopy();
-        MemoryTracer.reportCopying(this, result);
+        MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 
     protected final RVector internalDeepCopyAndReport() {
         RVector result = internalDeepCopy();
-        MemoryTracer.reportCopying(this, result);
+        MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 
     protected final RVector internalCopyResizedAndReport(int size, boolean fillNA) {
         RVector result = internalCopyResized(size, fillNA);
-        MemoryTracer.reportCopying(this, result);
+        MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 
