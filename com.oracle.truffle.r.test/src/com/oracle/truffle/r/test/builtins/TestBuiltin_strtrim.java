@@ -51,4 +51,10 @@ public class TestBuiltin_strtrim extends TestBase {
     public void teststrtrim8() {
         assertEval("argv <- list(character(0), 40L); .Internal(strtrim(argv[[1]], argv[[2]]))");
     }
+
+    @Test
+    public void teststrtrim() {
+        assertEval("v <- c('a', 'fooooo', 'bbbbbb', 'cccccccccc', 'dd', NA); names(v) <- as.character(1:6); strtrim(v, c(2L, 5L))");
+        assertEval("v <- c('a', 'fooooo', 'bbbbbb', 'cccccccccc', 'dd', NA); names(v) <- as.character(1:6); strtrim(v, c(2, 5))");
+    }
 }
