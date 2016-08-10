@@ -44,13 +44,13 @@ import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.nodes.unary.ChainedCastNode;
-import com.oracle.truffle.r.nodes.unary.ConditionalMapNodeGen;
-import com.oracle.truffle.r.nodes.unary.FilterNodeGen;
+import com.oracle.truffle.r.nodes.unary.ConditionalMapNode;
+import com.oracle.truffle.r.nodes.unary.FilterNode;
 import com.oracle.truffle.r.nodes.unary.FindFirstNodeGen;
 import com.oracle.truffle.r.nodes.unary.FirstBooleanNodeGen;
 import com.oracle.truffle.r.nodes.unary.FirstIntNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
-import com.oracle.truffle.r.nodes.unary.MapNodeGen;
+import com.oracle.truffle.r.nodes.unary.MapNode;
 import com.oracle.truffle.r.nodes.unary.NonNANodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -343,7 +343,7 @@ public final class CastBuilder {
 
         @Override
         public <T, R extends T> TypePredicateArgumentFilter<T, R> nullValue() {
-            return new TypePredicateArgumentFilter<>(x -> x == RNull.instance || x == null, true);
+            return new TypePredicateArgumentFilter<>(x -> x == RNull.instance, true);
         }
 
         @Override
@@ -483,6 +483,7 @@ public final class CastBuilder {
 
         @Override
         public <R> TypePredicateArgumentFilter<Object, R> instanceOf(Class<R> cls) {
+            assert cls != RNull.class : "cannot handle RNull.class with an isNullable=false filter";
             return TypePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x));
         }
 
@@ -608,7 +609,8 @@ public final class CastBuilder {
 
                 @Override
                 public T map(T arg) {
-                    if (profile.profile(arg == RNull.instance || arg == null)) {
+                    assert arg != null;
+                    if (profile.profile(arg == RNull.instance)) {
                         return defVal;
                     } else {
                         return arg;
@@ -651,30 +653,30 @@ public final class CastBuilder {
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> mustBe(ArgumentFilter<?, ?> argFilter, RBaseNode callObj, boolean boxPrimitives, RError.Message message, Object... messageArgs) {
-            return phaseBuilder -> FilterNodeGen.create(argFilter, false, callObj, message, messageArgs, boxPrimitives);
+            return phaseBuilder -> FilterNode.create(argFilter, false, callObj, message, messageArgs, boxPrimitives);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> mustBe(ArgumentFilter<?, ?> argFilter, boolean boxPrimitives) {
-            return phaseBuilder -> FilterNodeGen.create(argFilter, false, phaseBuilder.state().defaultError().callObj, phaseBuilder.state().defaultError().message,
+            return phaseBuilder -> FilterNode.create(argFilter, false, phaseBuilder.state().defaultError().callObj, phaseBuilder.state().defaultError().message,
                             phaseBuilder.state().defaultError().args, boxPrimitives);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> shouldBe(ArgumentFilter<?, ?> argFilter, RBaseNode callObj, boolean boxPrimitives, RError.Message message, Object... messageArgs) {
-            return phaseBuilder -> FilterNodeGen.create(argFilter, true, callObj, message, messageArgs, boxPrimitives);
+            return phaseBuilder -> FilterNode.create(argFilter, true, callObj, message, messageArgs, boxPrimitives);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> shouldBe(ArgumentFilter<?, ?> argFilter, boolean boxPrimitives) {
-            return phaseBuilder -> FilterNodeGen.create(argFilter, true, phaseBuilder.state().defaultError().callObj, phaseBuilder.state().defaultError().message,
+            return phaseBuilder -> FilterNode.create(argFilter, true, phaseBuilder.state().defaultError().callObj, phaseBuilder.state().defaultError().message,
                             phaseBuilder.state().defaultError().args, boxPrimitives);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> map(ArgumentMapper<?, ?> mapper) {
-            return phaseBuilder -> MapNodeGen.create(mapper);
+            return phaseBuilder -> MapNode.create(mapper);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> mapIf(ArgumentFilter<?, ?> filter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchFactory,
                         Function<ArgCastBuilder<T, ?>, CastNode> falseBranchFactory) {
-            return phaseBuilder -> ConditionalMapNodeGen.create(filter, trueBranchFactory.apply(phaseBuilder), falseBranchFactory.apply(phaseBuilder));
+            return phaseBuilder -> ConditionalMapNode.create(filter, trueBranchFactory.apply(phaseBuilder), falseBranchFactory.apply(phaseBuilder));
         }
 
         public static <T> ChainBuilder<T> chain(CastNode firstCast) {
@@ -1077,12 +1079,12 @@ public final class CastBuilder {
         }
 
         default THIS shouldBe(ArgumentFilter<? super T, ?> argFilter, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), FilterNodeGen.create(argFilter, true, null, message, messageArgs, state().boxPrimitives));
+            state().castBuilder().insert(state().index(), FilterNode.create(argFilter, true, null, message, messageArgs, state().boxPrimitives));
             return (THIS) this;
         }
 
         default THIS shouldBe(ArgumentFilter<? super T, ?> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), FilterNodeGen.create(argFilter, true, callObj, message, messageArgs, state().boxPrimitives));
+            state().castBuilder().insert(state().index(), FilterNode.create(argFilter, true, callObj, message, messageArgs, state().boxPrimitives));
             return (THIS) this;
         }
 
@@ -1213,7 +1215,7 @@ public final class CastBuilder {
         }
 
         void mustBe(ArgumentFilter<?, ?> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            castBuilder().insert(index(), FilterNodeGen.create(argFilter, false, callObj, message, messageArgs, boxPrimitives));
+            castBuilder().insert(index(), FilterNode.create(argFilter, false, callObj, message, messageArgs, boxPrimitives));
         }
 
         void mustBe(ArgumentFilter<?, ?> argFilter) {
@@ -1221,7 +1223,7 @@ public final class CastBuilder {
         }
 
         void shouldBe(ArgumentFilter<?, ?> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            castBuilder().insert(index(), FilterNodeGen.create(argFilter, true, callObj, message, messageArgs, boxPrimitives));
+            castBuilder().insert(index(), FilterNode.create(argFilter, true, callObj, message, messageArgs, boxPrimitives));
         }
 
         void shouldBe(ArgumentFilter<?, ?> argFilter) {
@@ -1291,26 +1293,26 @@ public final class CastBuilder {
         }
 
         default <S> InitialPhaseBuilder<S> map(ArgumentMapper<T, S> mapFn) {
-            state().castBuilder().insert(state().index(), MapNodeGen.create(mapFn));
+            state().castBuilder().insert(state().index(), MapNode.create(mapFn));
             return state().factory.newInitialPhaseBuilder(this);
         }
 
         @SuppressWarnings("overloads")
         default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper) {
-            state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, MapNodeGen.create(trueBranchMapper), null));
+            state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, MapNode.create(trueBranchMapper), null));
 
             return state().factory.newInitialPhaseBuilder(this);
         }
 
         default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode) {
-            state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNode, null));
+            state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, trueBranchNode, null));
 
             return state().factory.newInitialPhaseBuilder(this);
         }
 
         @SuppressWarnings("overloads")
         default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchNode) {
-            state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNode.apply(this), null));
+            state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, trueBranchNode.apply(this), null));
 
             return state().factory.newInitialPhaseBuilder(this);
         }
@@ -1319,14 +1321,14 @@ public final class CastBuilder {
         default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper, ArgumentMapper<T, T> falseBranchMapper) {
             state().castBuilder().insert(
                             state().index(),
-                            ConditionalMapNodeGen.create(argFilter, MapNodeGen.create(trueBranchMapper),
-                                            MapNodeGen.create(falseBranchMapper)));
+                            ConditionalMapNode.create(argFilter, MapNode.create(trueBranchMapper),
+                                            MapNode.create(falseBranchMapper)));
 
             return state().factory.newInitialPhaseBuilder(this);
         }
 
         default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode, CastNode falseBranchNode) {
-            state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNode, falseBranchNode));
+            state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, trueBranchNode, falseBranchNode));
 
             return state().factory.newInitialPhaseBuilder(this);
         }
@@ -1334,7 +1336,7 @@ public final class CastBuilder {
         @SuppressWarnings("overloads")
         default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchNodeFactory,
                         Function<ArgCastBuilder<T, ?>, CastNode> falseBranchNodeFactory) {
-            state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNodeFactory.apply(this), falseBranchNodeFactory.apply(this)));
+            state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, trueBranchNodeFactory.apply(this), falseBranchNodeFactory.apply(this)));
 
             return state().factory.newInitialPhaseBuilder(this);
         }
@@ -1494,18 +1496,18 @@ public final class CastBuilder {
     public interface HeadPhaseBuilder<T> extends ArgCastBuilder<T, HeadPhaseBuilder<T>> {
 
         default <S> HeadPhaseBuilder<S> map(ArgumentMapper<T, S> mapFn) {
-            state().castBuilder().insert(state().index(), MapNodeGen.create(mapFn));
+            state().castBuilder().insert(state().index(), MapNode.create(mapFn));
             return state().factory.newHeadPhaseBuilder(this);
         }
 
         default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper) {
-            state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, MapNodeGen.create(trueBranchMapper), null));
+            state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, MapNode.create(trueBranchMapper), null));
 
             return state().factory.newHeadPhaseBuilder(this);
         }
 
         default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode) {
-            state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNode, null));
+            state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, trueBranchNode, null));
 
             return state().factory.newHeadPhaseBuilder(this);
         }
@@ -1514,8 +1516,8 @@ public final class CastBuilder {
         default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper, ArgumentMapper<T, T> falseBranchMapper) {
             state().castBuilder().insert(
                             state().index(),
-                            ConditionalMapNodeGen.create(argFilter, MapNodeGen.create(trueBranchMapper),
-                                            MapNodeGen.create(falseBranchMapper)));
+                            ConditionalMapNode.create(argFilter, MapNode.create(trueBranchMapper),
+                                            MapNode.create(falseBranchMapper)));
 
             return state().factory.newHeadPhaseBuilder(this);
         }
@@ -1523,13 +1525,13 @@ public final class CastBuilder {
         @SuppressWarnings("overloads")
         default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchNodeFactory,
                         Function<ArgCastBuilder<T, ?>, CastNode> falseBranchNodeFactory) {
-            state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNodeFactory.apply(this), falseBranchNodeFactory.apply(this)));
+            state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, trueBranchNodeFactory.apply(this), falseBranchNodeFactory.apply(this)));
 
             return state().factory.newHeadPhaseBuilder(this);
         }
 
         default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode, CastNode falseBranchNode) {
-            state().castBuilder().insert(state().index(), ConditionalMapNodeGen.create(argFilter, trueBranchNode, falseBranchNode));
+            state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, trueBranchNode, falseBranchNode));
 
             return state().factory.newHeadPhaseBuilder(this);
         }

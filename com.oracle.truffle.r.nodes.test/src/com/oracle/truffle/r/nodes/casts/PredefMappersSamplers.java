@@ -97,7 +97,7 @@ public final class PredefMappersSamplers implements PredefMappers {
 
             @Override
             public T map(T arg) {
-                if (profile.profile(arg == RNull.instance || arg == null)) {
+                if (profile.profile(arg == RNull.instance)) {
                     return defVal;
                 } else {
                     return arg;
