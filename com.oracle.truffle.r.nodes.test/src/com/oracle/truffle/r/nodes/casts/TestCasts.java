@@ -45,9 +45,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogica
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 import org.junit.Test;
 
 import com.oracle.truffle.api.CompilerAsserts;

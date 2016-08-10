@@ -26,7 +26,7 @@ import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 
-public class TestInteropEval extends TestBase {
+public class TestInterop extends TestBase {
 
     @Test
     public void testInteropEval() {
@@ -35,5 +35,13 @@ public class TestInteropEval extends TestBase {
         assertEvalFastR(".fastr.interop.eval('application/x-r', '1L')", "1L");
         assertEvalFastR(".fastr.interop.eval('application/x-r', 'TRUE')", "TRUE");
         assertEvalFastR(".fastr.interop.eval('application/x-r', 'as.character(123)')", "as.character(123)");
+    }
+
+    @Test
+    public void testInteropExport() {
+        assertEvalFastR(".fastr.interop.export('foo', 14 + 2)", "invisible()");
+        assertEvalFastR(".fastr.interop.export('foo', 'foo')", "invisible()");
+        assertEvalFastR(".fastr.interop.export('foo', 1:100)", "invisible()");
+        assertEvalFastR(".fastr.interop.export('foo', new.env())", "invisible()");
     }
 }

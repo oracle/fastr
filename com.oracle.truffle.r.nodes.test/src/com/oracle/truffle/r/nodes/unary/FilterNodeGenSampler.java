@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.r.nodes.casts.ArgumentFilterSampler;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
-import com.oracle.truffle.r.nodes.casts.CastUtils;
 import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 

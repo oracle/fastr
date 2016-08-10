@@ -126,7 +126,7 @@ public abstract class VApply extends RBuiltinNode {
     private Object castString(Object operand, boolean preserveAllAttr) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(false, true, preserveAllAttr, preserveAllAttr));
+            castString = insert(CastStringNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
         return castString.execute(operand);
     }
