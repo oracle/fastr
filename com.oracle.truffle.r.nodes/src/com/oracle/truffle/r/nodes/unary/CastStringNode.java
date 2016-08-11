@@ -61,11 +61,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     @Specialization
     protected RStringVector doStringVector(RStringVector vector) {
-        if (preserveAttributes() && preserveDimensions() && preserveNames()) {
-            return vector;
-        } else {
-            return vectorCopy(vector, vector.getDataCopy());
-        }
+        return vector;
     }
 
     @Specialization

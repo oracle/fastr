@@ -33,11 +33,11 @@ public final class Dqrcf extends RExternalBuiltinNode {
         Object[] argValues = args.getArguments();
         try {
             RAbstractDoubleVector xVec = (RAbstractDoubleVector) argValues[0];
-            int n = (int) argValues[1];
+            int n = argValues[1] instanceof Integer ? (int) argValues[1] : ((RAbstractIntVector) argValues[1]).getDataAt(0);
             RAbstractIntVector k = (RAbstractIntVector) argValues[2];
             RAbstractDoubleVector qrauxVec = (RAbstractDoubleVector) argValues[3];
             RAbstractDoubleVector yVec = (RAbstractDoubleVector) argValues[4];
-            int ny = (int) argValues[5];
+            int ny = argValues[5] instanceof Integer ? (int) argValues[5] : ((RAbstractIntVector) argValues[5]).getDataAt(0);
             RAbstractDoubleVector bVec = (RAbstractDoubleVector) argValues[6];
             RAbstractIntVector infoVec = (RAbstractIntVector) argValues[7];
             double[] x = xVec.materialize().getDataTemp();

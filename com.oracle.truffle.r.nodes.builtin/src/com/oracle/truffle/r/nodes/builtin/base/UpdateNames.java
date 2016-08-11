@@ -69,7 +69,7 @@ public abstract class UpdateNames extends RBuiltinNode {
         if (newNames instanceof String) {
             stringVector = RDataFactory.createStringVector((String) newNames);
         } else {
-            stringVector = (RStringVector) ((RAbstractVector) newNames).materialize();
+            stringVector = (RStringVector) ((RAbstractVector) newNames).materialize().copyDropAttributes();
         }
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (stringVector.getLength() < result.getLength()) {

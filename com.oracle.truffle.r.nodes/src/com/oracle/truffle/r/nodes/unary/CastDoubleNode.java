@@ -38,7 +38,9 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -58,8 +60,8 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return recursiveCastDouble.executeDouble(o);
     }
 
-    private RDoubleVector createResultVector(RAbstractVector operand, double[] ddata) {
-        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), getPreservedDimensions(operand), getPreservedNames(operand));
+    private RDoubleVector vectorCopy(RAbstractContainer operand, double[] data, boolean isComplete) {
+        RDoubleVector ret = RDataFactory.createDoubleVector(data, isComplete, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
         if (preserveAttributes()) {
             ret.copyRegAttributesFrom(operand);
@@ -76,12 +78,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
             ddata[i] = value;
             seenNA = seenNA || naProfile.isNA(value);
         }
-        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
+        return vectorCopy(operand, ddata, !seenNA);
     }
 
     @Specialization
@@ -146,7 +143,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
             warningBranch.enter();
             RError.warning(this, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
-        return createResultVector(operand, ddata);
+        return vectorCopy(operand, ddata, naCheck.neverSeenNA());
     }
 
     @Specialization
@@ -160,12 +157,13 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     @Specialization
-    protected RDoubleSequence doDoubleSequence(RDoubleSequence operand) {
+    protected RDoubleSequence doDoubleVector(RDoubleSequence operand) {
+        // sequence does not have attributes - nothing to copy or drop
         return operand;
     }
 
     @Specialization
-    protected RDoubleVector doList(RList list) {
+    protected RDoubleVector doList(RAbstractListVector list) {
         int length = list.getLength();
         double[] result = new double[length];
         boolean seenNA = false;

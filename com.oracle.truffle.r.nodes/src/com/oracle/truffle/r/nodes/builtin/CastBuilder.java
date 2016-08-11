@@ -30,6 +30,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentValueFilter;
+import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNodeGen;
@@ -37,6 +38,7 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.nodes.unary.CastRawNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
@@ -134,6 +136,14 @@ public final class CastBuilder {
 
     public CastBuilder toCharacter(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
         return insert(index, CastStringNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
+    }
+
+    public CastBuilder toComplex(int index) {
+        return insert(index, CastComplexNodeGen.create(false, false, false));
+    }
+
+    public CastBuilder toRaw(int index) {
+        return insert(index, CastRawNodeGen.create(false, false, false));
     }
 
     public CastBuilder boxPrimitive(int index) {
@@ -705,6 +715,14 @@ public final class CastBuilder {
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asStringVector() {
             return phaseBuilder -> CastStringNodeGen.create(false, false, false);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asComplexVector() {
+            return phaseBuilder -> CastComplexNodeGen.create(false, false, false);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asRawVector() {
+            return phaseBuilder -> CastRawNodeGen.create(false, false, false);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asStringVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
@@ -1382,6 +1400,16 @@ public final class CastBuilder {
         default CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector() {
             state().castBuilder().toCharacter(state().index());
             return state().factory.newCoercedPhaseBuilder(this, String.class);
+        }
+
+        default CoercedPhaseBuilder<RAbstractComplexVector, RComplex> asComplexVector() {
+            state().castBuilder().toComplex(state().index());
+            return state().factory.newCoercedPhaseBuilder(this, RComplex.class);
+        }
+
+        default CoercedPhaseBuilder<RAbstractRawVector, RRaw> asRawVector() {
+            state().castBuilder().toRaw(state().index());
+            return state().factory.newCoercedPhaseBuilder(this, RRaw.class);
         }
 
         default CoercedPhaseBuilder<RAbstractVector, Object> asVector() {

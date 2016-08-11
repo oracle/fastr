@@ -273,6 +273,12 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
             result = (RPairList) result.cdr;
             original = origList.cdr;
         }
+        if (getAttributes() != null) {
+            RAttributes newAttributes = result.initAttributes();
+            for (RAttribute attr : getAttributes()) {
+                newAttributes.put(attr.getName(), attr.getValue());
+            }
+        }
         return result;
     }
 

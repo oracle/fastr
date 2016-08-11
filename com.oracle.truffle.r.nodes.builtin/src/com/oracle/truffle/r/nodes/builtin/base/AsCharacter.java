@@ -28,27 +28,26 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "as.character", kind = PRIMITIVE, parameterNames = {"x", "..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class AsCharacter extends RBuiltinNode {
 
-    public static AsCharacter create() {
-        return AsCharacterNodeGen.create(null);
-    }
+    private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mapIf(instanceOf(RList.class).not(), asStringVector());
+        casts.arg("x").mapIf(instanceOf(RAbstractListVector.class).not(), asStringVector());
     }
 
     @Specialization
@@ -58,12 +57,15 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @Specialization
     protected RAbstractStringVector asCharacter(RAbstractStringVector v) {
-        return v;
+        if (noAttributes.profile(v.getAttributes() == null)) {
+            return v;
+        } else {
+            return (RAbstractStringVector) v.copyDropAttributes();
+        }
     }
 
     @Specialization
-    protected RStringVector asCharacter(Object l) {
-        RList list = (RList) l;
+    protected RStringVector asCharacter(RAbstractListVector list) {
         int len = list.getLength();
         boolean complete = RDataFactory.COMPLETE_VECTOR;
         String[] data = new String[len];

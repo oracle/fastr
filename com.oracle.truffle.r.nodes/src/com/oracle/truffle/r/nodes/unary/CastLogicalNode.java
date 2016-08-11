@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
@@ -79,6 +80,15 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         byte apply(int value);
     }
 
+    private RLogicalVector vectorCopy(RAbstractVector operand, byte[] bdata, boolean isComplete) {
+        RLogicalVector ret = RDataFactory.createLogicalVector(bdata, isComplete, getPreservedDimensions(operand), getPreservedNames(operand));
+        preserveDimensionNames(operand, ret);
+        if (preserveAttributes()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
+    }
+
     private RLogicalVector createResultVector(RAbstractVector operand, IntToByteFunction elementFunction) {
         naCheck.enable(operand);
         byte[] bdata = new byte[operand.getLength()];
@@ -88,12 +98,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
             bdata[i] = value;
             seenNA = seenNA || naProfile.isNA(value);
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(bdata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
+        return vectorCopy(operand, bdata, !seenNA);
     }
 
     @Specialization
@@ -134,7 +139,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     }
 
     @Specialization
-    protected RLogicalVector doList(RList list) {
+    protected RLogicalVector doList(RAbstractListVector list) {
         int length = list.getLength();
         byte[] result = new byte[length];
         boolean seenNA = false;
