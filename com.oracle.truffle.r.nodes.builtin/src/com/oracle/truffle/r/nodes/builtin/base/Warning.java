@@ -47,7 +47,7 @@ public abstract class Warning extends RBuiltinNode {
     private Object castString(Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(false, false, false, false));
+            castString = insert(CastStringNodeGen.create(false, false, false));
         }
         return castString.execute(operand);
     }

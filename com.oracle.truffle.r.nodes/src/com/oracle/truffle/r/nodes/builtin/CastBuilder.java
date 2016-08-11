@@ -131,7 +131,11 @@ public final class CastBuilder {
     }
 
     public CastBuilder toCharacter(int index) {
-        return insert(index, CastStringNodeGen.create(false, false, false, false));
+        return insert(index, CastStringNodeGen.create(false, false, false));
+    }
+
+    public CastBuilder toCharacter(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+        return insert(index, CastStringNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
     }
 
     public CastBuilder toComplex(int index) {
@@ -710,7 +714,7 @@ public final class CastBuilder {
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asStringVector() {
-            return phaseBuilder -> CastStringNodeGen.create(false, false, false, false);
+            return phaseBuilder -> CastStringNodeGen.create(false, false, false);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asComplexVector() {
@@ -722,7 +726,7 @@ public final class CastBuilder {
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asStringVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return phaseBuilder -> CastStringNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, false);
+            return phaseBuilder -> CastStringNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asLogical() {
@@ -1386,6 +1390,11 @@ public final class CastBuilder {
         default CoercedPhaseBuilder<RAbstractLogicalVector, Byte> asLogicalVector() {
             state().castBuilder().toLogical(state().index());
             return state().factory.newCoercedPhaseBuilder(this, Byte.class);
+        }
+
+        default CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+            state().castBuilder().toCharacter(state().index(), preserveNames, dimensionsPreservation, attrPreservation);
+            return state().factory.newCoercedPhaseBuilder(this, String.class);
         }
 
         default CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector() {

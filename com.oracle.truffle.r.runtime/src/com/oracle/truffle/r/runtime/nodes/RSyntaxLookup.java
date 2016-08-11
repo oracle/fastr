@@ -29,6 +29,9 @@ import com.oracle.truffle.api.source.SourceSection;
  */
 public interface RSyntaxLookup extends RSyntaxElement {
 
+    /**
+     * @return The identifier that this lookup represents - this needs to be an interned string.
+     */
     String getIdentifier();
 
     boolean isFunctionLookup();

@@ -181,23 +181,30 @@ public class FastRContext {
         @TruffleBoundary
         protected Object eval(RAbstractStringVector exprs, int pc, String kind, RAbstractStringVector args) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
+
             Object[] results = new Object[pc];
-            // separate threads that run in parallel; invoking thread waits for completion
-            RContext.EvalThread[] threads = new RContext.EvalThread[pc];
-            for (int i = 0; i < pc; i++) {
+            if (pc == 1) {
                 ContextInfo info = createContextInfo(contextKind, args);
-                threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
-            }
-            for (int i = 0; i < pc; i++) {
-                threads[i].start();
-            }
-            try {
+                PolyglotEngine vm = info.createVM();
+                results[0] = RContext.EvalThread.run(vm, info, RSource.fromTextInternal(exprs.getDataAt(0), RSource.Internal.CONTEXT_EVAL));
+            } else {
+                // separate threads that run in parallel; invoking thread waits for completion
+                RContext.EvalThread[] threads = new RContext.EvalThread[pc];
                 for (int i = 0; i < pc; i++) {
-                    threads[i].join();
-                    results[i] = threads[i].getEvalResult();
+                    ContextInfo info = createContextInfo(contextKind, args);
+                    threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
                 }
-            } catch (InterruptedException ex) {
-                throw RError.error(this, RError.Message.GENERIC, "error finishing eval thread");
+                for (int i = 0; i < pc; i++) {
+                    threads[i].start();
+                }
+                try {
+                    for (int i = 0; i < pc; i++) {
+                        threads[i].join();
+                        results[i] = threads[i].getEvalResult();
+                    }
+                } catch (InterruptedException ex) {
+                    throw RError.error(this, RError.Message.GENERIC, "error finishing eval thread");
+                }
             }
             return RDataFactory.createList(results);
         }

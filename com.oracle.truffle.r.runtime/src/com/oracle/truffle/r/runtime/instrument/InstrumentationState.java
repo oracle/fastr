@@ -68,6 +68,11 @@ public final class InstrumentationState implements RContext.ContextState {
      */
     private final RprofState rprofState;
 
+    /**
+     * The {@link RprofmemState} state, if any, associated with this {@link RContext}.
+     */
+    private final RprofmemState rprofmemState;
+
     private final TracememContext tracememContext;
 
     /**
@@ -96,32 +101,72 @@ public final class InstrumentationState implements RContext.ContextState {
      */
     private boolean debugGloballyDisabled;
 
+    private abstract static class RprofAdapter {
+        protected PrintWriter out;
+
+        /**
+         * Return current output or {@code null} if not profiling.
+         */
+        public PrintWriter out() {
+            return out;
+        }
+
+        public void setOut(PrintWriter out) {
+            this.out = out;
+        }
+    }
+
     /**
      * State used by {@code Rprof}.
      *
      */
-    public static final class RprofState {
-        private PrintWriter out;
+    public static final class RprofState extends RprofAdapter {
         private Thread profileThread;
         private ExecutionEventListener statementListener;
         private long intervalInMillis;
         private boolean lineProfiling;
+        private MemoryQuad memoryQuad;
+
+        public static final class MemoryQuad {
+            public long smallV;
+            public long largeV;
+            public long nodes;
+            public long copied;
+
+            public MemoryQuad copyAndClear() {
+                MemoryQuad result = new MemoryQuad();
+                result.copied = copied;
+                result.largeV = largeV;
+                result.smallV = smallV;
+                result.nodes = nodes;
+                copied = 0;
+                largeV = 0;
+                smallV = 0;
+                nodes = 0;
+                return result;
+            }
+        }
 
         public void initialize(PrintWriter outA, Thread profileThreadA, ExecutionEventListener statementListenerA, long intervalInMillisA,
-                        boolean lineProfilingA) {
+                        boolean lineProfilingA, boolean memoryProfilingA) {
             this.out = outA;
             this.profileThread = profileThreadA;
             this.statementListener = statementListenerA;
             this.intervalInMillis = intervalInMillisA;
             this.lineProfiling = lineProfilingA;
+            this.memoryQuad = memoryProfilingA ? new MemoryQuad() : null;
         }
 
         public boolean lineProfiling() {
             return lineProfiling;
         }
 
-        public PrintWriter out() {
-            return out;
+        public boolean memoryProfiling() {
+            return memoryQuad != null;
+        }
+
+        public MemoryQuad memoryQuad() {
+            return memoryQuad;
         }
 
         public long intervalInMillis() {
@@ -136,6 +181,28 @@ public final class InstrumentationState implements RContext.ContextState {
             return profileThread;
         }
 
+    }
+
+    public static final class RprofmemState extends RprofAdapter {
+        private double threshold;
+        private int pageCount;
+
+        public void initialize(PrintWriter outA, double thresholdA) {
+            this.out = outA;
+            this.threshold = thresholdA;
+        }
+
+        public double threshold() {
+            return threshold;
+        }
+
+        public int pageCount() {
+            return pageCount;
+        }
+
+        public void setPageCount(int pageCount) {
+            this.pageCount = pageCount;
+        }
     }
 
     public static class BrowserState {
@@ -162,6 +229,7 @@ public final class InstrumentationState implements RContext.ContextState {
     private InstrumentationState(Instrumenter instrumenter) {
         this.instrumenter = instrumenter;
         this.rprofState = new RprofState();
+        this.rprofmemState = new RprofmemState();
         this.tracememContext = new TracememContext();
         this.browserState = new BrowserState();
     }
@@ -213,6 +281,10 @@ public final class InstrumentationState implements RContext.ContextState {
 
     public RprofState getRprof() {
         return rprofState;
+    }
+
+    public RprofmemState getRprofmem() {
+        return rprofmemState;
     }
 
     public TracememContext getTracemem() {

@@ -35,7 +35,7 @@ public abstract class FormatC extends RBuiltinNode {
     private RStringVector castStringVector(Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(true, true, true, false));
+            castStringNode = insert(CastStringNodeGen.create(true, true, true));
         }
         return (RStringVector) ((RStringVector) castStringNode.executeString(o)).copyDropAttributes();
     }

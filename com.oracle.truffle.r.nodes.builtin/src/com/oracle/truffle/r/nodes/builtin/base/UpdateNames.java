@@ -48,7 +48,7 @@ public abstract class UpdateNames extends RBuiltinNode {
     private Object castString(Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(false, false, false, false));
+            castStringNode = insert(CastStringNodeGen.create(false, false, false));
         }
         return castStringNode.executeString(o);
     }

@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.data.MemoryTracer;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -129,14 +129,14 @@ abstract class RToVectorClosure implements RAbstractVector {
     @Override
     public final RAbstractVector copy() {
         RAbstractVector result = vector.copy();
-        MemoryTracer.reportCopying(this, result);
+        MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 
     @Override
     public final RVector copyResized(int size, boolean fillNA) {
         RVector result = vector.copyResized(size, fillNA);
-        MemoryTracer.reportCopying(this, result);
+        MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 
@@ -152,7 +152,7 @@ abstract class RToVectorClosure implements RAbstractVector {
     @Override
     public final RAbstractVector copyDropAttributes() {
         RAbstractVector result = vector.copyDropAttributes();
-        MemoryTracer.reportCopying(this, result);
+        MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 
