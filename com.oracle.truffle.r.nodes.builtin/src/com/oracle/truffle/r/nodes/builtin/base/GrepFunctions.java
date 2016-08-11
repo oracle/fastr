@@ -565,6 +565,16 @@ public class GrepFunctions {
     @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Regexp extends CommonCodeAdapter {
 
+        protected final static class IndexAndSize {
+            protected int index;
+            protected int size;
+
+            public IndexAndSize(int index, int size) {
+                this.index = index;
+                this.size = size;
+            }
+        }
+
         @Specialization
         @TruffleBoundary
         protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCaseL, byte perlL, byte fixedL, byte useBytesL) {
@@ -572,34 +582,45 @@ public class GrepFunctions {
             boolean ignoreCase = RRuntime.fromLogical(ignoreCaseL);
             String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
             int[] result = new int[vector.getLength()];
+            int[] matchLength = new int[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
-                result[i] = findIndex(pattern, vector.getDataAt(i), ignoreCase, fixedL == RRuntime.LOGICAL_TRUE).get(0);
+                IndexAndSize res = findIndexAndSize(pattern, vector.getDataAt(i), ignoreCase, fixedL == RRuntime.LOGICAL_TRUE).get(0);
+                result[i] = res.index;
+                matchLength[i] = res.size;
             }
-            // TODO attribute as per spec
-            return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
+            // TODO useBytes attribute as per spec
+            RIntVector ret = RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
+            ret.setAttr("match.length", RDataFactory.createIntVector(matchLength, RDataFactory.COMPLETE_VECTOR));
+            return ret;
         }
 
-        protected static List<Integer> findIndex(String pattern, String text, boolean ignoreCase, boolean fixed) {
-            List<Integer> list = new ArrayList<>();
+        protected static List<IndexAndSize> findIndexAndSize(String pattern, String text, boolean ignoreCase, boolean fixed) {
+            List<IndexAndSize> list = new ArrayList<>();
             if (fixed) {
-                int index;
-                if (ignoreCase) {
-                    index = text.toLowerCase().indexOf(pattern.toLowerCase());
-                } else {
-                    index = text.indexOf(pattern);
+                int index = 0;
+                while (true) {
+                    if (ignoreCase) {
+                        index = text.toLowerCase().indexOf(pattern.toLowerCase(), index);
+                    } else {
+                        index = text.indexOf(pattern, index);
+                    }
+                    if (index == -1) {
+                        break;
+                    }
+                    list.add(new IndexAndSize(index + 1, pattern.length()));
+                    index += pattern.length();
                 }
-                list.add(index == -1 ? index : index + 1);
             } else {
                 Matcher m = getPatternMatcher(pattern, text, ignoreCase);
                 while (m.find()) {
                     // R starts counting at index 1
-                    list.add(m.start() + 1);
+                    list.add(new IndexAndSize(m.start() + 1, m.end() - m.start()));
                 }
-                if (list.size() > 0) {
-                    return list;
-                }
-                list.add(-1);
             }
+            if (list.size() > 0) {
+                return list;
+            }
+            list.add(new IndexAndSize(-1, -1));
             return list;
         }
 
@@ -622,17 +643,22 @@ public class GrepFunctions {
             boolean fixed = RRuntime.fromLogical(fixedL);
             Object[] result = new Object[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
-                int[] data = toIntArray(findIndex(pattern, vector.getDataAt(i), ignoreCase, fixed));
-                result[i] = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
-                // TODO attributes as per spec
+                List<IndexAndSize> l = findIndexAndSize(pattern, vector.getDataAt(i), ignoreCase, fixed);
+                int[] indexes = toIndexOrSizeArray(l, true);
+                int[] sizes = toIndexOrSizeArray(l, false);
+                RIntVector res = RDataFactory.createIntVector(indexes, RDataFactory.COMPLETE_VECTOR);
+                res.setAttr("match.length", RDataFactory.createIntVector(sizes, RDataFactory.COMPLETE_VECTOR));
+                result[i] = res;
+                // TODO useBytes attributes as per spec
             }
             return RDataFactory.createList(result);
         }
 
-        private static int[] toIntArray(List<Integer> list) {
+        private static int[] toIndexOrSizeArray(List<IndexAndSize> list, boolean index) {
             int[] arr = new int[list.size()];
             for (int i = 0; i < list.size(); i++) {
-                arr[i] = list.get(i);
+                IndexAndSize res = list.get(i);
+                arr[i] = index ? res.index : res.size;
             }
             return arr;
         }
