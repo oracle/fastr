@@ -565,7 +565,7 @@ public class GrepFunctions {
     @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Regexp extends CommonCodeAdapter {
 
-        protected final static class IndexAndSize {
+        protected static final class IndexAndSize {
             protected int index;
             protected int size;
 
