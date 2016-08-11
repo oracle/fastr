@@ -232,7 +232,6 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
                     return ArgumentTypeFilterSampler.this.trueBranchType().and(other.trueBranchType());
                 }
 
-                @SuppressWarnings("cast")
                 @Override
                 public Samples<R> collectSamples(TypeExpr inputType) {
                     Samples<R> thisSamples = ArgumentTypeFilterSampler.this.collectSamples(inputType);
@@ -269,7 +268,6 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
             return orig.falseBranchType().not();
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public Samples<Object> collectSamples(TypeExpr inputType) {
             Samples<? extends R> thisSamples = orig.collectSamples(inputType);

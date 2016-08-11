@@ -59,7 +59,7 @@ public abstract class UpdateOldClass extends RBuiltinNode {
     private void initCastStringNode() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(false, false, false, false));
+            castStringNode = insert(CastStringNodeGen.create(false, false, false));
         }
     }
 

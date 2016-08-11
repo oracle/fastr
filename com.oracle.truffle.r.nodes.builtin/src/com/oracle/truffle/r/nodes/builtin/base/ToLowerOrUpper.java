@@ -22,73 +22,121 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import java.util.function.BiFunction;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
+import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNodeGen;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
-public abstract class ToLowerOrUpper extends RBuiltinNode {
+public abstract class ToLowerOrUpper {
+
+    public static final class StringMapNode extends RBaseNode {
+
+        private final VectorLengthProfile lengthProfile = VectorLengthProfile.create();
+        private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
+        private final NACheck na = NACheck.create();
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+        @Child private CopyOfRegAttributesNode copyAttributes = CopyOfRegAttributesNodeGen.create();
+
+        private StringMapNode() {
+            // nothing to do
+        }
+
+        public static StringMapNode create() {
+            return new StringMapNode();
+        }
+
+        private String elementFunction(String value, int i, BiFunction<String, Integer, String> function) {
+            return na.check(value) ? RRuntime.STRING_NA : function.apply(value, i);
+        }
+
+        public String apply(String value, BiFunction<String, Integer, String> function) {
+            na.enable(value);
+            return elementFunction(value, 0, function);
+        }
+
+        public RStringVector apply(RAbstractStringVector vector, BiFunction<String, Integer, String> function) {
+            na.enable(vector);
+            int length = lengthProfile.profile(vector.getLength());
+            String[] stringVector = new String[length];
+            loopProfile.profileCounted(length);
+            for (int i = 0; loopProfile.inject(i < length); i++) {
+                String value = vector.getDataAt(i);
+                stringVector[i] = elementFunction(value, i, function);
+            }
+            RStringVector result = RDataFactory.createStringVector(stringVector, vector.isComplete(), vector.getDimensions(), vector.getNames(attrProfiles));
+            copyAttributes.execute(vector, result);
+            return result;
+        }
+    }
 
     @RBuiltin(name = "tolower", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-    public static final class ToLower {
+    public abstract static class ToLower extends RBuiltinNode {
+
+        @Child private StringMapNode mapNode = StringMapNode.create();
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg(0, "x").mustBe(stringValue()).asStringVector(true, true, true);
+        }
+
+        @TruffleBoundary
+        private static String processElement(String value, @SuppressWarnings("unused") int i) {
+            return value.toLowerCase();
+        }
+
+        @Specialization
+        protected String toLower(String value) {
+            return mapNode.apply(value, ToLower::processElement);
+        }
+
+        @Specialization
+        protected RStringVector toLower(RAbstractStringVector vector) {
+            return mapNode.apply(vector, ToLower::processElement);
+        }
     }
 
     @RBuiltin(name = "toupper", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-    public static final class ToUpper {
-    }
+    public abstract static class ToUpper extends RBuiltinNode {
 
-    public static ToLowerOrUpper createToLower(RNode[] arguments) {
-        return ToLowerOrUpperNodeGen.create(true, arguments);
-    }
+        @Child private StringMapNode mapNode = StringMapNode.create();
 
-    public static ToLowerOrUpper createToUpper(RNode[] arguments) {
-        return ToLowerOrUpperNodeGen.create(false, arguments);
-    }
-
-    private final boolean lower;
-
-    public ToLowerOrUpper(boolean lower) {
-        this.lower = lower;
-    }
-
-    @TruffleBoundary
-    private String processElement(String value) {
-        return lower ? value.toLowerCase() : value.toUpperCase();
-    }
-
-    @Specialization
-    protected String toLower(String value, //
-                    @Cached("create()") NAProfile na) {
-        return na.isNA(value) ? RRuntime.STRING_NA : processElement(value);
-    }
-
-    @Specialization
-    protected RStringVector toLower(RAbstractStringVector vector, //
-                    @Cached("createCountingProfile()") LoopConditionProfile loopProfile, //
-                    @Cached("create()") NACheck na, //
-                    @Cached("create()") CopyOfRegAttributesNode copyAttributes) {
-        na.enable(vector);
-        String[] stringVector = new String[vector.getLength()];
-        loopProfile.profileCounted(vector.getLength());
-        for (int i = 0; loopProfile.inject(i < vector.getLength()); i++) {
-            String value = vector.getDataAt(i);
-            stringVector[i] = na.check(value) ? RRuntime.STRING_NA : processElement(value);
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg(0, "x").mustBe(stringValue()).asStringVector(true, true, true);
         }
-        RStringVector result = RDataFactory.createStringVector(stringVector, vector.isComplete(), vector.getDimensions());
-        copyAttributes.execute(vector, result);
-        return result;
+
+        @TruffleBoundary
+        private static String processElement(String value, @SuppressWarnings("unused") int i) {
+            return value.toUpperCase();
+        }
+
+        @Specialization
+        protected String toLower(String value) {
+            return mapNode.apply(value, ToUpper::processElement);
+        }
+
+        @Specialization
+        protected RStringVector toLower(RAbstractStringVector vector) {
+            return mapNode.apply(vector, ToUpper::processElement);
+        }
     }
 }

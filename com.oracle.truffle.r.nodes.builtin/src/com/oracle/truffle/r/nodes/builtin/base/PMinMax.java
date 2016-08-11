@@ -118,7 +118,7 @@ public abstract class PMinMax extends RBuiltinNode {
     private CastNode getStringCastNode() {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(true, true, true, false));
+            castString = insert(CastStringNodeGen.create(true, true, true));
         }
         return castString;
     }

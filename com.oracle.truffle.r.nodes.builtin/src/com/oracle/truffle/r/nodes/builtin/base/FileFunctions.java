@@ -741,7 +741,7 @@ public class FileFunctions {
         private CastStringNode initCastStringNode() {
             if (castStringNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castStringNode = insert(CastStringNodeGen.create(false, false, false, false));
+                castStringNode = insert(CastStringNodeGen.create(false, false, false));
             }
             return castStringNode;
         }

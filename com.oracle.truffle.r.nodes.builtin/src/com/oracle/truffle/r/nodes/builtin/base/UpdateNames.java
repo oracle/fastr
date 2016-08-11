@@ -48,7 +48,7 @@ public abstract class UpdateNames extends RBuiltinNode {
     private Object castString(Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(false, true, false, false));
+            castStringNode = insert(CastStringNodeGen.create(false, false, false));
         }
         return castStringNode.executeString(o);
     }
@@ -69,15 +69,19 @@ public abstract class UpdateNames extends RBuiltinNode {
         if (newNames instanceof String) {
             stringVector = RDataFactory.createStringVector((String) newNames);
         } else {
-            stringVector = (RStringVector) ((RAbstractVector) newNames).materialize();
+            stringVector = (RStringVector) ((RAbstractVector) newNames).materialize().copyDropAttributes();
         }
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (stringVector.getLength() < result.getLength()) {
             stringVector = (RStringVector) stringVector.copyResized(result.getLength(), true);
         } else if (stringVector.getLength() > result.getLength()) {
             throw RError.error(this, Message.NAMES_LONGER, stringVector.getLength(), result.getLength());
-        } else if (stringVector == container) {
+        } else if (stringVector == names) {
             stringVector = (RStringVector) stringVector.copy();
+        }
+        if (stringVector.isTemporary()) {
+            stringVector.incRefCount();
+
         }
         result.setNames(stringVector);
         return result;

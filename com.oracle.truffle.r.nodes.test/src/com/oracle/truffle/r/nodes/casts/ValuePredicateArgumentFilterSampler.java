@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentFilter;
 import com.oracle.truffle.r.nodes.casts.ArgumentFilterSampler.ArgumentValueFilterSampler;
-import com.sun.source.doctree.AttributeTree.ValueKind;
 
 public class ValuePredicateArgumentFilterSampler<T> extends ValuePredicateArgumentFilter<T> implements ArgumentValueFilterSampler<T> {
 

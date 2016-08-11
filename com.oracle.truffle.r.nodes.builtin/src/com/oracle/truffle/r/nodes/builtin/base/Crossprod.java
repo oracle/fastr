@@ -52,7 +52,7 @@ public abstract class Crossprod extends RBuiltinNode {
         return matMult.executeObject(op1, op2);
     }
 
-    private Object transpose(Object value) {
+    private Object transpose(RAbstractVector value) {
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             transpose = insert(TransposeNodeGen.create(null));

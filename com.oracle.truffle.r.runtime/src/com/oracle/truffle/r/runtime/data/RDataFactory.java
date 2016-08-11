@@ -23,8 +23,10 @@
 package com.oracle.truffle.r.runtime.data;
 
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.Assumption;
@@ -32,7 +34,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -48,11 +50,6 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class RDataFactory {
-
-    /**
-     * Profile for creation tracing; must precede following declarations.
-     */
-    private static final ConditionProfile statsProfile = ConditionProfile.createBinaryProfile();
 
     public static final boolean INCOMPLETE_VECTOR = false;
     public static final boolean COMPLETE_VECTOR = true;
@@ -498,24 +495,79 @@ public final class RDataFactory {
         return traceDataCreated(new RExternalPtr(value, tag, RNull.instance));
     }
 
-    @CompilationFinal private static PerfHandler stats;
+    /*
+     * Support for collecting information on allocations in this class. Rprofmem/Rprof register a
+     * listener when active which, when memory profiling is enabled, is called with the object being
+     * allocated. Owing to the use of the Assumption, there should be no overhead when disabled.
+     */
+
+    private static Deque<Listener> listeners = new ConcurrentLinkedDeque<>();
+    @CompilationFinal private static boolean enabled;
+    private static final CyclicAssumption noAllocationTracingAssumption = new CyclicAssumption("data allocation");
+
+    public static void setAllocationTracing(boolean newState) {
+        if (enabled != newState) {
+            noAllocationTracingAssumption.invalidate();
+            enabled = newState;
+        }
+    }
 
     private static <T> T traceDataCreated(T data) {
-        if (statsProfile.profile(stats != null)) {
-            stats.record(data);
+        if (enabled) {
+            for (Listener listener : listeners) {
+                listener.reportAllocation((RTypedValue) data);
+            }
         }
         return data;
     }
 
+    public interface Listener {
+        /**
+         * Invoked when an instance of an {@link RTypedValue} is created. Note that the initial
+         * state of the complex objects, i.e., those with additional {@code Object} subclass fields,
+         * which may also be {@link RTypedValue} instances is undefined other than by inspection. A
+         * listener that computes the "size" of an object must take into account that
+         * {@link RTypedValue} instances passed to a {@code createXXX} method will already have been
+         * reported, but other data such as {@code int[]} instances for array dimensions will not.
+         */
+        void reportAllocation(RTypedValue data);
+    }
+
+    /**
+     * Sets the listener of memory tracing events. For the time being there can only be one
+     * listener. This can be extended to an array should we need more listeners.
+     */
+    public static void addListener(Listener listener) {
+        listeners.addLast(listener);
+    }
+
+    /*
+     * (Legacy) support for R:PerfStats option. This does produce more information than Rprofmem
+     * regarding the types and length of the objects being allocated, but it does not record where
+     * in R the allocation took place.
+     */
     static {
         RPerfStats.register(new PerfHandler());
     }
 
-    private static class PerfHandler implements RPerfStats.Handler {
+    private static class PerfHandler implements RPerfStats.Handler, Listener {
         private static Map<Class<?>, RPerfStats.Histogram> histMap;
 
+        @Override
+        public void initialize(String optionData) {
+            histMap = new HashMap<>();
+            addListener(this);
+            setAllocationTracing(true);
+        }
+
+        @Override
+        public String getName() {
+            return "datafactory";
+        }
+
+        @Override
         @TruffleBoundary
-        void record(Object data) {
+        public void reportAllocation(RTypedValue data) {
             Class<?> klass = data.getClass();
             boolean isBounded = data instanceof RAbstractVector;
             RPerfStats.Histogram hist = histMap.get(klass);
@@ -525,17 +577,6 @@ public final class RDataFactory {
             }
             int length = isBounded ? ((RAbstractVector) data).getLength() : 0;
             hist.inc(length);
-        }
-
-        @Override
-        public void initialize(String optionData) {
-            stats = this;
-            histMap = new HashMap<>();
-        }
-
-        @Override
-        public String getName() {
-            return "datafactory";
         }
 
         @Override
@@ -558,5 +599,6 @@ public final class RDataFactory {
             }
             RPerfStats.out().println();
         }
+
     }
 }

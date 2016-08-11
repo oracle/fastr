@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.MemoryTracer;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -79,7 +79,7 @@ public class TraceFunctions {
     public abstract static class PrimTrace extends Helper {
 
         @Specialization
-        protected RNull primUnTrace(VirtualFrame frame, RAbstractStringVector funcName) {
+        protected RNull primTrace(VirtualFrame frame, RAbstractStringVector funcName) {
             return primTrace((RFunction) getFunction(frame, funcName.getDataAt(0)));
         }
 
@@ -118,10 +118,12 @@ public class TraceFunctions {
         @Specialization
         @TruffleBoundary
         protected byte traceOnOff(byte state) {
+            /* TODO GnuR appears to accept ANY value as an argument */
             boolean prevState = RContext.getInstance().stateInstrumentation.getTracingState();
             boolean newState = RRuntime.fromLogical(state);
             if (newState != prevState) {
                 RContext.getInstance().stateInstrumentation.setTracingState(newState);
+                MemoryCopyTracer.setTracingState(newState);
             }
             return RRuntime.asLogical(prevState);
         }
@@ -135,7 +137,7 @@ public class TraceFunctions {
 
     public abstract static class TracememBase extends RBuiltinNode {
         static {
-            MemoryTracer.setListener(new TracememBase.TracememListener());
+            MemoryCopyTracer.addListener(new TracememBase.TracememListener());
         }
 
         protected static HashSet<Object> getTracedObjects() {
@@ -147,8 +149,16 @@ public class TraceFunctions {
         }
 
         protected static void startTracing(Object x) {
+            /*
+             * There is no explicit command to enable tracing, it is implicit in the call to
+             * tracemem. However, it can be disabled by tracingState(F), so we can't unilaterally
+             * turn on tracing here.
+             */
             getTracedObjects().add(x);
-            MemoryTracer.reportEvents();
+            boolean tracingState = RContext.getInstance().stateInstrumentation.getTracingState();
+            if (tracingState) {
+                MemoryCopyTracer.setTracingState(true);
+            }
         }
 
         protected static void printToStdout(String msg) {
@@ -176,7 +186,7 @@ public class TraceFunctions {
             return result.toString();
         }
 
-        private static final class TracememListener implements MemoryTracer.Listener {
+        private static final class TracememListener implements MemoryCopyTracer.Listener {
             @Override
             public void reportCopying(RAbstractVector src, RAbstractVector dest) {
                 if (getTracedObjects().contains(src)) {

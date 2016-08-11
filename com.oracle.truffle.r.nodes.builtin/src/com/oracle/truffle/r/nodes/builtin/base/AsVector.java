@@ -34,6 +34,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -50,12 +51,14 @@ import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastSymbolNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -117,41 +120,54 @@ public abstract class AsVector extends RBuiltinNode {
         public abstract Object execute(Object x, String mode);
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        private final BranchProfile hasAttributes = BranchProfile.create();
+
+        private Object dropAttributesIfNeeded(Object o) {
+            Object res = o;
+            if (res instanceof RAttributable && ((RAttributable) res).getAttributes() != null) {
+                // the assertion should hold because of how cast works and it's only used for
+                // vectors (as per as.vector docs)
+                assert res instanceof RAbstractVector;
+                hasAttributes.enter();
+                res = ((RAbstractVector) res).copyDropAttributes();
+            }
+            return res;
+        }
 
         @Specialization(guards = "castToString(mode)")
         protected Object asVectorString(Object x, @SuppressWarnings("unused") String mode, //
-                        @Cached("create()") AsCharacter asCharacter) {
-            return asCharacter.execute(x);
+                        @Cached("createNonPreserving()") CastStringNode cast) {
+            return dropAttributesIfNeeded(cast.execute(x));
         }
 
         @Specialization(guards = "castToInt(x, mode)")
         protected Object asVectorInt(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
                         @Cached("createNonPreserving()") CastIntegerNode cast) {
-            return cast.execute(x);
+            return dropAttributesIfNeeded(cast.execute(x));
         }
 
         @Specialization(guards = "castToDouble(x, mode)")
         protected Object asVectorDouble(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
                         @Cached("createNonPreserving()") CastDoubleNode cast) {
-            return cast.execute(x);
+            return dropAttributesIfNeeded(cast.execute(x));
         }
 
         @Specialization(guards = "castToComplex(x, mode)")
         protected Object asVectorComplex(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
                         @Cached("createNonPreserving()") CastComplexNode cast) {
-            return cast.execute(x);
+            return dropAttributesIfNeeded(cast.execute(x));
         }
 
         @Specialization(guards = "castToLogical(x, mode)")
         protected Object asVectorLogical(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
                         @Cached("createNonPreserving()") CastLogicalNode cast) {
-            return cast.execute(x);
+            return dropAttributesIfNeeded(cast.execute(x));
         }
 
         @Specialization(guards = "castToRaw(x, mode)")
         protected Object asVectorRaw(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
                         @Cached("createNonPreserving()") CastRawNode cast) {
-            return cast.execute(x);
+            return dropAttributesIfNeeded(cast.execute(x));
         }
 
         protected static CastListNode createListCast() {

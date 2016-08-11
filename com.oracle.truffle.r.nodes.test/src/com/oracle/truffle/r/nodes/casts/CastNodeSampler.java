@@ -23,11 +23,6 @@
 package com.oracle.truffle.r.nodes.casts;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.nodes.unary.CastNode;
 
