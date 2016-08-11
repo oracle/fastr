@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -29,11 +30,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
@@ -44,7 +45,6 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -76,13 +76,19 @@ public abstract class FastRSyntaxTree extends RBuiltinNode {
         return new Object[]{RMissing.instance, "rsyntaxnode", RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE};
     }
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("func").mustBe(instanceOf(RFunction.class));
+        casts.arg("visitMode").asStringVector().findFirst();
+        casts.arg("printSource").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("printTags").asLogicalVector().findFirst().map(toBoolean());
+    }
+
     @Specialization
     @TruffleBoundary
-    protected RNull printTree(RFunction function, RAbstractStringVector visitMode, byte printSourceLogical, byte printTagsLogical) {
-        boolean printSource = RRuntime.fromLogical(printSourceLogical);
-        boolean printTags = RRuntime.fromLogical(printTagsLogical);
+    protected RNull printTree(RFunction function, String visitMode, boolean printSource, boolean printTags) {
         FunctionDefinitionNode root = (FunctionDefinitionNode) function.getTarget().getRootNode();
-        switch (visitMode.getDataAt(0)) {
+        switch (visitMode) {
             case "node":
                 root.accept(new NodeVisitor() {
 
@@ -182,12 +188,6 @@ public abstract class FastRSyntaxTree extends RBuiltinNode {
             parent = parent.getParent();
         }
         return result;
-    }
-
-    @SuppressWarnings("unused")
-    @Fallback
-    protected Object fallback(Object a1, Object a2, Object a3, Object a4) {
-        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
     private static void printIndent(int depth) {
