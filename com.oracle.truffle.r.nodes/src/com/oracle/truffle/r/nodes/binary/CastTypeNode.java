@@ -70,7 +70,7 @@ public abstract class CastTypeNode extends BinaryNode {
     public static CastNode createCast(RType type, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         switch (type) {
             case Character:
-                return CastStringNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, false);
+                return CastStringNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case Complex:
                 return CastComplexNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case Double:

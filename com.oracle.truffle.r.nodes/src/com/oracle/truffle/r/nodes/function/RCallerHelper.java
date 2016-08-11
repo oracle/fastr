@@ -51,7 +51,7 @@ public final class RCallerHelper {
      * S3/S4 dispatch), and that can then be used to retrieve correct syntax nodes.
      *
      * @param arguments array with arguments and corresponding names. This method strips any
-     *            {@code RMissing} arguments and unrolls all varargs withint arguments array.
+     *            {@code RMissing} arguments and unrolls all varargs within the arguments array.
      */
     public static Supplier<RSyntaxNode> createFromArguments(RFunction function, RArgsValuesAndNames arguments) {
         return createFromArgumentsInternal(function, arguments);
@@ -105,17 +105,50 @@ public final class RCallerHelper {
                 }
                 return syntaxNode;
             }
+        };
+    }
 
-            private RSyntaxNode getArgumentNode(Object arg) {
-                if (arg instanceof RPromise) {
-                    RPromise p = (RPromise) arg;
-                    return p.getRep().asRSyntaxNode();
-                } else if (!(arg instanceof RMissing)) {
-                    return ConstantNode.create(arg);
+    private static RSyntaxNode getArgumentNode(Object arg) {
+        if (arg instanceof RPromise) {
+            RPromise p = (RPromise) arg;
+            return p.getRep().asRSyntaxNode();
+        } else if (!(arg instanceof RMissing)) {
+            return ConstantNode.create(arg);
+        }
+        return null;
+    }
+
+    /**
+     * This method calculates the signature of the permuted arguments lazily.
+     */
+    public static Supplier<RSyntaxNode> createFromArguments(String function, long[] preparePermutation, Object[] suppliedArguments, ArgumentsSignature suppliedSignature) {
+        return new Supplier<RSyntaxNode>() {
+
+            RSyntaxNode syntaxNode = null;
+
+            @Override
+            public RSyntaxNode get() {
+                if (syntaxNode == null) {
+                    Object[] values = new Object[preparePermutation.length];
+                    String[] names = new String[preparePermutation.length];
+                    for (int i = 0; i < values.length; i++) {
+                        long source = preparePermutation[i];
+                        if (!ArgumentsSignature.isVarArgsIndex(source)) {
+                            values[i] = suppliedArguments[(int) source];
+                            names[i] = suppliedSignature.getName((int) source);
+                        } else {
+                            int varArgsIdx = ArgumentsSignature.extractVarArgsIndex(source);
+                            int argsIdx = ArgumentsSignature.extractVarArgsArgumentIndex(source);
+                            RArgsValuesAndNames varargs = (RArgsValuesAndNames) suppliedArguments[varArgsIdx];
+                            values[i] = varargs.getArguments()[argsIdx];
+                            names[i] = varargs.getSignature().getName(argsIdx);
+                        }
+                    }
+                    RArgsValuesAndNames arguments = new RArgsValuesAndNames(values, ArgumentsSignature.get(names));
+                    syntaxNode = createFromArguments(function, arguments).get();
                 }
-                return null;
+                return syntaxNode;
             }
-
         };
     }
 }

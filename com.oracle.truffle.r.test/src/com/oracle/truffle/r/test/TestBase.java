@@ -192,8 +192,7 @@ public class TestBase {
                     if (updated) {
                         if (expectedOutputManager.checkOnly) {
                             // fail fast
-                            System.err.println("Test file:" + expectedOutputManager.outputFile + " is out of sync with unit tests");
-                            Utils.exit(1);
+                            Utils.rSuicideDefault("Test file:" + expectedOutputManager.outputFile + " is out of sync with unit tests");
                         }
                         System.out.println("updating " + expectedOutputManager.outputFile);
                     }
@@ -587,7 +586,8 @@ public class TestBase {
         return new CheckResult(ok, result, expected);
     }
 
-    private static String convertReferencesInOutput(String result) {
+    private static String convertReferencesInOutput(String input) {
+        String result = input;
         Matcher matcher = REFERENCE_PATTERN.matcher(result);
         HashMap<String, Integer> idsMap = new HashMap<>();
         int currentId = 1;

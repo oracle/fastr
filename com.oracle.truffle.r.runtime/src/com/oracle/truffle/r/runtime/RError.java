@@ -229,6 +229,7 @@ public final class RError extends RuntimeException {
          * available.
          */
         GENERIC("%s"),
+        TOO_SHORT("'%s' is too short"),
         ARG_RECYCYLED("an argument will be fractionally recycled"),
         LENGTH_GT_1("the condition has length > 1 and only the first element will be used"),
         LENGTH_ZERO("argument is of length zero"),
@@ -248,6 +249,7 @@ public final class RError extends RuntimeException {
         INVALID_ARG_TYPE("invalid argument type"),
         INVALID_ARG_TYPE_UNARY("invalid argument to unary operator"),
         VECTOR_SIZE_NEGATIVE("vector size cannot be negative"),
+        VECTOR_SIZE_NA("vector size cannot be NA"),
         NO_LOOP_FOR_BREAK_NEXT("no loop for break/next, jumping to top level"),
         INVALID_FOR_SEQUENCE("invalid for() loop sequence"),
         NO_NONMISSING_MAX("no non-missing arguments to max; returning -Inf"),
@@ -683,7 +685,10 @@ public final class RError extends RuntimeException {
         CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'"),
         ROWSUM_NAMES_NOT_CHAR("row names are not character"),
         ROWSUM_NON_NUMERIC("non-numeric matrix in rowsum(): this should not happen"),
-        ARGUMENTS_REQUIRED_COUNT("%d arguments to '%s' which requires %d");
+        ARGUMENTS_REQUIRED_COUNT("%d arguments to '%s' which requires %d"),
+        ARGUMENT_LENGTH_0("argument of length 0"),
+        MUST_BE_VECTOR_BUT_WAS("'%s' must be of a vector type, was '%s'"),
+        CANNOT_BE_LENGTH("'%s' cannot be of length %d");
 
         public final String message;
         final boolean hasArgs;

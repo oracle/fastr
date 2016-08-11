@@ -12,8 +12,18 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.charAt0;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.length;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthLte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -26,10 +36,10 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -43,16 +53,13 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-import com.sun.org.apache.bcel.internal.generic.INSTANCEOF;
 
-@SuppressWarnings("unused")
 @RBuiltin(name = "scan", kind = INTERNAL, parameterNames = {"file", "what", "nmax", "sep", "dec", "quote", "skip", "nlines", "na.strings", "flush", "fill", "strip.white", "quiet", "blank.lines.skip",
-                "multi.line", "comment.char", "allowEscapes", "encoding", "skipNull"})
+                "multi.line", "comment.char", "allowEscapes", "encoding", "skipNull"}, behavior = IO)
 public abstract class Scan extends RBuiltinNode {
 
     private static final int SCAN_BLOCKSIZE = 1000;
@@ -72,6 +79,7 @@ public abstract class Scan extends RBuiltinNode {
         return ((RAbstractVector) castVector.execute(value)).materialize();
     }
 
+    @SuppressWarnings("unused")
     private static class LocalData {
         RAbstractStringVector naStrings = null;
         boolean quiet = false;
@@ -133,6 +141,7 @@ public abstract class Scan extends RBuiltinNode {
         casts.arg("encoding").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
 
         casts.arg("skipNull").asLogicalVector().findFirst().notNA().map(toBoolean());
+
     }
 
     @Specialization
@@ -178,7 +187,6 @@ public abstract class Scan extends RBuiltinNode {
         // TODO: quite a few more things happen in GNU R around connections
         data.con = file;
 
-        Object result = RNull.instance;
         data.save = 0;
 
         try (RConnection openConn = data.con.forceOpen("r")) {
@@ -194,14 +202,6 @@ public abstract class Scan extends RBuiltinNode {
         } catch (IOException x) {
             throw RError.error(this, RError.Message.CANNOT_READ_CONNECTION);
         }
-    }
-
-    private static int firstElementOrNA(RAbstractIntVector nmaxVec) {
-        return nmaxVec.getLength() == 0 ? RRuntime.INT_NA : nmaxVec.getDataAt(0);
-    }
-
-    private static byte firstElementOrNA(RAbstractLogicalVector flushVec) {
-        return flushVec.getLength() == 0 ? RRuntime.LOGICAL_NA : flushVec.getDataAt(0);
     }
 
     private static int getFirstQuoteInd(String str, char sepChar) {
@@ -317,7 +317,8 @@ public abstract class Scan extends RBuiltinNode {
         }
     }
 
-    private RVector scanFrame(RList what, int maxRecords, int maxLines, boolean flush, boolean fill, boolean stripWhite, boolean blSkip, boolean multiLine, LocalData data) throws IOException {
+    private RVector scanFrame(RList what, int maxRecords, int maxLines, boolean flush, boolean fill, @SuppressWarnings("unused") boolean stripWhite, boolean blSkip, boolean multiLine, LocalData data)
+                    throws IOException {
 
         int nc = what.getLength();
         if (nc == 0) {
@@ -439,7 +440,8 @@ public abstract class Scan extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private RVector scanVector(RAbstractVector what, int maxItems, int maxLines, boolean flush, boolean stripWhite, boolean blSkip, LocalData data) throws IOException {
+    private RVector scanVector(RAbstractVector what, int maxItems, int maxLines, @SuppressWarnings("unused") boolean flush, @SuppressWarnings("unused") boolean stripWhite, boolean blSkip,
+                    LocalData data) throws IOException {
         int blockSize = maxItems > 0 ? maxItems : SCAN_BLOCKSIZE;
         RVector vec = what.createEmptySameType(blockSize, RDataFactory.COMPLETE_VECTOR);
         naCheck.enable(true);

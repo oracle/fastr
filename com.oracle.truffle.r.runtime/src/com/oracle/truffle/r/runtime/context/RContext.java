@@ -41,17 +41,19 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalCode.ContextStateImpl;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.RProfile;
@@ -65,7 +67,6 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
-import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -198,20 +199,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
                 throw new RInternalError(e1, "error while initializing eval thread");
             }
             try {
-                try {
-                    PolyglotEngine.Value resultValue = vm.eval(source);
-                    evalResult = createEvalResult(resultValue);
-                } catch (ParseException e) {
-                    e.report(info.getConsoleHandler());
-                    evalResult = createErrorResult(e.getMessage());
-                } catch (IOException e) {
-                    Throwable cause = e.getCause();
-                    if (cause instanceof RInternalError) {
-                        info.getConsoleHandler().println("internal error: " + e.getMessage() + " (see fastr_errors.log)");
-                        RInternalError.reportError(e);
-                    }
-                    evalResult = createErrorResult(e.getCause().getMessage());
-                }
+                evalResult = run(vm, info, source);
             } finally {
                 vm.dispose();
                 threads.remove(info.getId());
@@ -219,10 +207,36 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         }
 
         /**
+         * Convenience method for {@code .fastr.context.eval} in same thread.
+         */
+        public static RList run(PolyglotEngine vm, ContextInfo info, Source source) {
+            RList evalResult;
+            try {
+                PolyglotEngine.Value resultValue = vm.eval(source);
+                evalResult = createEvalResult(resultValue);
+            } catch (ParseException e) {
+                e.report(info.getConsoleHandler());
+                evalResult = createErrorResult(e.getMessage());
+            } catch (IOException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof ExitException) {
+                    // termination, treat this as "success"
+                    ExitException exitException = (ExitException) cause;
+                    evalResult = RDataFactory.createList(new Object[]{exitException.getStatus()});
+                } else {
+                    // some internal error
+                    RInternalError.reportErrorAndConsoleLog(cause, info.getConsoleHandler(), info.getId());
+                    evalResult = createErrorResult(cause.getClass().getSimpleName());
+                }
+            }
+            return evalResult;
+        }
+
+        /**
          * The result is an {@link RList} contain the value, plus an "error" attribute if the
          * evaluation resulted in an error.
          */
-        public static RList createEvalResult(PolyglotEngine.Value resultValue) throws IOException {
+        private static RList createEvalResult(PolyglotEngine.Value resultValue) throws IOException {
             Object result = resultValue.get();
             Object listResult = result;
             String error = null;
@@ -417,7 +431,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
         this.env = env;
         if (info.getConsoleHandler() == null) {
-            throw Utils.fail("no console handler set");
+            throw Utils.rSuicide("no console handler set");
         }
 
         if (singleContextAssumption.isValid()) {
@@ -701,7 +715,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     @Override
     public String toString() {
-        new RuntimeException().printStackTrace();
         return "context: " + info.getId();
     }
 

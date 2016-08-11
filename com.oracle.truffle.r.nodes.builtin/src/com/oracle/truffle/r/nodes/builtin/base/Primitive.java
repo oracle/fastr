@@ -22,36 +22,54 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
-@RBuiltin(name = ".Primitive", kind = PRIMITIVE, parameterNames = "name")
+@RBuiltin(name = ".Primitive", kind = PRIMITIVE, parameterNames = "name", behavior = PURE)
 public abstract class Primitive extends RBuiltinNode {
+
     private final BranchProfile errorProfile = BranchProfile.create();
 
-    @Specialization
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("name").defaultError(Message.STRING_ARGUMENT_REQUIRED).mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+    }
+
+    @Specialization(guards = "name == cachedName")
+    protected RFunction primitiveCached(@SuppressWarnings("unused") String name,
+                    @Cached("name") @SuppressWarnings("unused") String cachedName,
+                    @Cached("lookup(name)") RFunction function) {
+        return function;
+    }
+
+    @Specialization(contains = "primitiveCached")
     protected RFunction primitive(String name) {
+        RFunction function = lookup(name);
+        return function;
+    }
+
+    @TruffleBoundary
+    protected RFunction lookup(String name) {
         RFunction function = RContext.lookupBuiltin(name);
         if (function == null || function.getRBuiltin() != null && function.getRBuiltin().getKind() != RBuiltinKind.PRIMITIVE) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.NO_SUCH_PRIMITIVE, name);
         }
-
-        // .Primitive function is validated
         return function;
-    }
-
-    @Fallback
-    protected RFunction primitive(@SuppressWarnings("unused") Object name) {
-        throw RError.error(this, RError.Message.STRING_ARGUMENT_REQUIRED);
     }
 }

@@ -22,18 +22,20 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
  * Just a convenient way to inspect values in the Java debugger from the R shell.
  */
-@RBuiltin(name = ".fastr.inspect", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"..."})
+@RBuiltin(name = ".fastr.inspect", visibility = OFF, kind = PRIMITIVE, parameterNames = {"..."}, behavior = COMPLEX)
 public abstract class FastRInspect extends RBuiltinNode {
     @Specialization
     public Object call(@SuppressWarnings("unused") RArgsValuesAndNames args) {

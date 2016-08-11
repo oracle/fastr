@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -31,10 +30,12 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
 public abstract class CastStringNode extends CastStringBaseNode {
+
+    protected CastStringNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
 
     public abstract Object executeString(int o);
 
@@ -44,24 +45,26 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     public abstract Object executeString(Object o);
 
-    public abstract boolean isEmptyVectorConvertedToNull();
-
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
     }
 
-    @Specialization(guards = "vector.getLength() == 0")
-    protected Object doEmptyVector(@SuppressWarnings("unused") RAbstractVector vector) {
-        return isEmptyVectorConvertedToNull() ? RNull.instance : RDataFactory.createStringVector(0);
+    private RStringVector vectorCopy(RAbstractContainer operand, String[] data) {
+        RStringVector ret = RDataFactory.createStringVector(data, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand));
+        preserveDimensionNames(operand, ret);
+        if (preserveAttributes()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
-    @Specialization(guards = "vector.getLength() != 0")
+    @Specialization
     protected RStringVector doStringVector(RStringVector vector) {
         return vector;
     }
 
-    @Specialization(guards = "operand.getLength() != 0")
+    @Specialization
     protected RStringVector doIntVector(RAbstractContainer operand) {
         String[] sdata = new String[operand.getLength()];
         // conversions to character will not introduce new NAs
@@ -73,12 +76,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
                 sdata[i] = toString(o);
             }
         }
-        RStringVector ret = RDataFactory.createStringVector(sdata, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
+        return vectorCopy(operand, sdata);
     }
 
     @Specialization
@@ -87,10 +85,10 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     public static CastStringNode create() {
-        return CastStringNodeGen.create(false, true, true, true);
+        return CastStringNodeGen.create(true, true, true);
     }
 
     public static CastStringNode createNonPreserving() {
-        return CastStringNodeGen.create(false, false, false, false);
+        return CastStringNodeGen.create(false, false, false);
     }
 }

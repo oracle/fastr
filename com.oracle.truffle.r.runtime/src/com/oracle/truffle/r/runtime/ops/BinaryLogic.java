@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RDispatch;
+import static com.oracle.truffle.r.runtime.RDispatch.OPS_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RLogical;
 
@@ -37,19 +40,19 @@ public abstract class BinaryLogic extends BooleanOperation {
 
     /* Fake RBuiltins to unify the binary operations */
 
-    @RBuiltin(name = "&&", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = {1})
+    @RBuiltin(name = "&&", kind = PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = {1}, behavior = COMPLEX)
     public static class NonVectorAndBuiltin {
     }
 
-    @RBuiltin(name = "||", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = {1})
+    @RBuiltin(name = "||", kind = PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = {1}, behavior = COMPLEX)
     public static class NonVectorOrBuiltin {
     }
 
-    @RBuiltin(name = "&", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, dispatch = RDispatch.OPS_GROUP_GENERIC)
+    @RBuiltin(name = "&", kind = PRIMITIVE, parameterNames = {"", ""}, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
     public static class AndBuiltin {
     }
 
-    @RBuiltin(name = "|", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, dispatch = RDispatch.OPS_GROUP_GENERIC)
+    @RBuiltin(name = "|", kind = PRIMITIVE, parameterNames = {"", ""}, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
     public static class OrBuiltin {
     }
 

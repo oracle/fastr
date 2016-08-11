@@ -22,94 +22,46 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
-import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "as.integer", kind = PRIMITIVE, parameterNames = {"x", "..."})
+@RBuiltin(name = "as.integer", kind = PRIMITIVE, parameterNames = {"x", "..."}, behavior = PURE)
 public abstract class AsInteger extends RBuiltinNode {
 
-    @Child private CastIntegerNode castIntNode;
+    private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
 
-    private void initCast() {
-        if (castIntNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castIntNode = insert(CastIntegerNodeGen.create(false, false, false));
-        }
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").asIntegerVector();
     }
 
     @Specialization
-    protected int asInteger(int value) {
-        return value;
-    }
-
-    @Specialization
-    protected int asInteger(double value) {
-        initCast();
-        return (int) castIntNode.executeInt(value);
-    }
-
-    @Specialization
-    protected int asInteger(byte value) {
-        initCast();
-        return (int) castIntNode.executeInt(value);
-    }
-
-    @Specialization
-    protected int asInteger(RComplex value) {
-        initCast();
-        return (int) castIntNode.executeInt(value);
-    }
-
-    @Specialization
-    protected int asInteger(RRaw value) {
-        initCast();
-        return (int) castIntNode.executeInt(value);
-    }
-
-    @Specialization
-    protected int asInteger(String value) {
-        initCast();
-        return (int) castIntNode.executeInt(value);
-    }
-
-    @Specialization
-    protected RIntVector asInteger(@SuppressWarnings("unused") RNull value) {
+    protected RAbstractIntVector asInteger(@SuppressWarnings("unused") RNull n) {
         return RDataFactory.createEmptyIntVector();
     }
 
     @Specialization
-    protected RIntVector asInteger(RIntVector vector) {
-        return RDataFactory.createIntVector(vector.getDataCopy(), vector.isComplete());
-    }
-
-    @Specialization
-    protected RIntVector asInteger(RIntSequence sequence) {
-        return (RIntVector) sequence.createVector();
-    }
-
-    @Specialization
-    protected RAbstractIntVector asInteger(RAbstractVector vector) {
-        initCast();
-        return (RAbstractIntVector) castIntNode.executeInt(vector);
+    protected RAbstractIntVector asInteger(RAbstractIntVector v) {
+        if (noAttributes.profile(v.getAttributes() == null)) {
+            return v;
+        } else {
+            return (RAbstractIntVector) v.copyDropAttributes();
+        }
     }
 
     @Specialization
     protected int asInteger(RConnection conn) {
         return conn.getDescriptor();
     }
+
 }

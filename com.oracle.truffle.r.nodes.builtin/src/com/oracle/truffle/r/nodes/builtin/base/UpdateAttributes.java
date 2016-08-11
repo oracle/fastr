@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -35,9 +36,9 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -48,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "attributes<-", kind = PRIMITIVE, parameterNames = {"obj", "value"})
+@RBuiltin(name = "attributes<-", kind = PRIMITIVE, parameterNames = {"obj", "value"}, behavior = PURE)
 public abstract class UpdateAttributes extends RBuiltinNode {
     private final ConditionProfile numAttributesProfile = ConditionProfile.createBinaryProfile();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
@@ -62,20 +63,20 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     // it's OK for the following two methods to update attributes in-place as the container has been
     // already materialized to non-shared
 
-    private void updateNames(RAbstractContainer container, Object o) {
+    private RAbstractContainer updateNames(RAbstractContainer container, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateNames = insert(UpdateNamesNodeGen.create(null));
         }
-        updateNames.executeStringVector(container, o);
+        return (RAbstractContainer) updateNames.executeStringVector(container, o);
     }
 
-    private void updateDimNames(RAbstractContainer container, Object o) {
+    private RAbstractContainer updateDimNames(RAbstractContainer container, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateDimNames = insert(UpdateDimNamesNodeGen.create(null));
         }
-        updateDimNames.executeRAbstractContainer(container, o);
+        return updateDimNames.executeRAbstractContainer(container, o);
     }
 
     private RAbstractIntVector castInteger(RAbstractVector vector) {
@@ -175,9 +176,9 @@ public abstract class UpdateAttributes extends RBuiltinNode {
             if (attrName.equals(RRuntime.DIM_ATTR_KEY)) {
                 continue;
             } else if (attrName.equals(RRuntime.NAMES_ATTR_KEY)) {
-                updateNames(res, value);
+                res = updateNames(res, value);
             } else if (attrName.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
-                updateDimNames(res, value);
+                res = updateDimNames(res, value);
             } else if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
                 if (value == RNull.instance) {
                     res = (RAbstractContainer) result.setClassAttr(null);

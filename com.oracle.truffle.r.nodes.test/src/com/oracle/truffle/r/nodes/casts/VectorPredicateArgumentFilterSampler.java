@@ -22,25 +22,59 @@
  */
 package com.oracle.truffle.r.nodes.casts;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.nodes.builtin.VectorPredicateArgumentFilter;
 import com.oracle.truffle.r.nodes.casts.ArgumentFilterSampler.ArgumentValueFilterSampler;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class VectorPredicateArgumentFilterSampler<T extends RAbstractVector> extends VectorPredicateArgumentFilter<T> implements ArgumentValueFilterSampler<T> {
 
-    public VectorPredicateArgumentFilterSampler(Predicate<T> valuePredicate, boolean isNullable) {
+    private final String desc;
+    private final List<Integer> invalidVectorSize;
+
+    public VectorPredicateArgumentFilterSampler(String desc, Predicate<T> valuePredicate, boolean isNullable, Integer... invalidVectorSize) {
         super(valuePredicate, isNullable);
+        this.desc = desc;
+        this.invalidVectorSize = invalidVectorSize == null ? Collections.emptyList() : Arrays.asList(invalidVectorSize);
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean testVector(Object x) {
+        if (x instanceof RAbstractVector) {
+            return test((T) x);
+        } else {
+            Object v = CastUtils.singletonVector(x);
+            if (v == RNull.instance) {
+                v = null;
+            }
+            return test((T) v);
+        }
     }
 
     @Override
-    public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
-        return Samples.empty();
+    public String toString() {
+        return this.desc;
     }
 
     @Override
-    public TypeExpr allowedTypes() {
+    public Samples<T> collectSamples(TypeExpr inputType) {
+        Set<RAbstractVector> negSamples = inputType.toClasses().stream().flatMap(vt -> invalidVectorSize.stream().map(sz -> CastUtils.vectorOfSize(vt, sz))).collect(Collectors.toSet());
+
+        Predicate<Object> posMembership = this::testVector;
+        final Samples<T> samples = new Samples<>(desc, Collections.emptySet(), negSamples, posMembership);
+
+        return samples;
+    }
+
+    @Override
+    public TypeExpr trueBranchType() {
         return TypeExpr.ANYTHING;
     }
 

@@ -269,7 +269,7 @@ public class RPackageSource {
                 wr.append('\n');
             }
         } catch (IOException ex) {
-            Utils.fail("error writing package source index");
+            Utils.rSuicide("error writing package source index");
         }
     }
 

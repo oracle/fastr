@@ -12,6 +12,9 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RErrorHandling.getHandlerStack;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -20,12 +23,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -49,7 +50,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = ".addCondHands", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"classes", "handlers", "parentenv", "target", "calling"})
+    @RBuiltin(name = ".addCondHands", visibility = OFF, kind = INTERNAL, parameterNames = {"classes", "handlers", "parentenv", "target", "calling"}, behavior = COMPLEX)
     public abstract static class AddCondHands extends RBuiltinNode {
 
         @SuppressWarnings("unused")
@@ -74,7 +75,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = ".resetCondHands", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"stack"})
+    @RBuiltin(name = ".resetCondHands", visibility = OFF, kind = INTERNAL, parameterNames = {"stack"}, behavior = COMPLEX)
     public abstract static class ResetCondHands extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -95,7 +96,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = ".addRestart", kind = RBuiltinKind.INTERNAL, parameterNames = "restart")
+    @RBuiltin(name = ".addRestart", kind = INTERNAL, parameterNames = "restart", behavior = COMPLEX)
     public abstract static class AddRestart extends RestartAdapter {
         @Specialization
         protected Object addRestart(RList restart) {
@@ -109,7 +110,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = ".getRestart", kind = RBuiltinKind.INTERNAL, parameterNames = "restart")
+    @RBuiltin(name = ".getRestart", kind = INTERNAL, parameterNames = "restart", behavior = COMPLEX)
     public abstract static class GetRestart extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -123,7 +124,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = ".invokeRestart", kind = RBuiltinKind.INTERNAL, parameterNames = {"restart", "args"})
+    @RBuiltin(name = ".invokeRestart", kind = INTERNAL, parameterNames = {"restart", "args"}, behavior = COMPLEX)
     public abstract static class InvokeRestart extends RestartAdapter {
         @Specialization(guards = "lengthok(restart)")
         protected RNull invokeRestart(RList restart, Object args) {
@@ -141,7 +142,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = ".signalCondition", kind = RBuiltinKind.INTERNAL, parameterNames = {"condition", "msg", "call"})
+    @RBuiltin(name = ".signalCondition", kind = INTERNAL, parameterNames = {"condition", "msg", "call"}, behavior = COMPLEX)
     public abstract static class SignalCondition extends RBuiltinNode {
         @Specialization
         protected RNull signalCondition(RList condition, RAbstractStringVector msg, Object call) {
@@ -150,7 +151,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = "geterrmessage", kind = RBuiltinKind.INTERNAL, parameterNames = {})
+    @RBuiltin(name = "geterrmessage", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class Geterrmessage extends RBuiltinNode {
         @Specialization
         protected String geterrmessage() {
@@ -158,7 +159,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = "seterrmessage", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = "msg")
+    @RBuiltin(name = "seterrmessage", visibility = OFF, kind = INTERNAL, parameterNames = "msg", behavior = COMPLEX)
     public abstract static class Seterrmessage extends RBuiltinNode {
         @Specialization
         protected RNull seterrmessage(RAbstractStringVector msg) {
@@ -168,7 +169,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = ".dfltWarn", kind = RBuiltinKind.INTERNAL, parameterNames = {"message", "call"})
+    @RBuiltin(name = ".dfltWarn", kind = INTERNAL, parameterNames = {"message", "call"}, behavior = COMPLEX)
     public abstract static class DfltWarn extends RBuiltinNode {
         @Specialization
         protected RNull dfltWarn(RAbstractStringVector msg, Object call) {
@@ -177,7 +178,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = ".dfltStop", kind = RBuiltinKind.INTERNAL, parameterNames = {"message", "call"})
+    @RBuiltin(name = ".dfltStop", kind = INTERNAL, parameterNames = {"message", "call"}, behavior = COMPLEX)
     public abstract static class DfltStop extends RBuiltinNode {
         @Specialization
         protected Object dfltStop(RAbstractStringVector message, Object call) {
@@ -186,7 +187,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = "printDeferredWarnings", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {})
+    @RBuiltin(name = "printDeferredWarnings", visibility = OFF, kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class PrintDeferredWarnings extends RBuiltinNode {
         @Specialization
         @TruffleBoundary

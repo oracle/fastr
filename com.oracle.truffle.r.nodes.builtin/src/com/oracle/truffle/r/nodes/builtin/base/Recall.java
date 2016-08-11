@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -34,17 +36,16 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
 /**
  * The {@code Recall} {@code .Internal}.
  */
-@RBuiltin(name = "Recall", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"..."}, nonEvalArgs = {0})
+@RBuiltin(name = "Recall", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"..."}, nonEvalArgs = {0}, behavior = COMPLEX)
 public abstract class Recall extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();

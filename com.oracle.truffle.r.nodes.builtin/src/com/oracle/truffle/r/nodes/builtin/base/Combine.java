@@ -31,7 +31,9 @@ import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.LOGICAL_PRECEDENCE
 import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.NO_PRECEDENCE;
 import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.RAW_PRECEDENCE;
 import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.STRING_PRECEDENCE;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -57,10 +59,9 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributes;
@@ -74,7 +75,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"..."}, dispatch = RDispatch.INTERNAL_GENERIC)
+@RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Combine extends RBuiltinNode {
 
     public static Combine create() {
@@ -361,7 +362,7 @@ public abstract class Combine extends RBuiltinNode {
             case LOGICAL_PRECEDENCE:
                 return CastLogicalNodeGen.create(true, false, false);
             case STRING_PRECEDENCE:
-                return CastStringNodeGen.create(false, true, false, false);
+                return CastStringNodeGen.create(true, false, false);
             case RAW_PRECEDENCE:
                 return CastRawNodeGen.create(true, false, false);
             case EXPRESSION_PRECEDENCE:

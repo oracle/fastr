@@ -22,18 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "crossprod", kind = INTERNAL, parameterNames = {"x", "y"})
+@RBuiltin(name = "crossprod", kind = INTERNAL, parameterNames = {"x", "y"}, behavior = PURE)
 public abstract class Crossprod extends RBuiltinNode {
 
     @Child private MatMult matMult;
@@ -51,7 +52,7 @@ public abstract class Crossprod extends RBuiltinNode {
         return matMult.executeObject(op1, op2);
     }
 
-    private Object transpose(Object value) {
+    private Object transpose(RAbstractVector value) {
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             transpose = insert(TransposeNodeGen.create(null));

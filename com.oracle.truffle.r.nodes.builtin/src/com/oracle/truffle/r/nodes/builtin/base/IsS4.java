@@ -22,24 +22,24 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
-@SuppressWarnings("unused")
-@RBuiltin(name = "isS4", kind = PRIMITIVE, parameterNames = {"object"})
+@RBuiltin(name = "isS4", kind = PRIMITIVE, parameterNames = {"object"}, behavior = PURE)
 public abstract class IsS4 extends RBuiltinNode {
 
     public abstract byte execute(Object value);
 
     @Specialization
-    protected byte isS4(RNull object) {
+    protected byte isS4(@SuppressWarnings("unused") RNull object) {
         return RRuntime.asLogical(RContext.getInstance().isNullS4Object());
     }
 
@@ -49,7 +49,7 @@ public abstract class IsS4 extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isTypedValue(object)")
-    protected byte isS4(Object object) {
+    protected byte isS4(@SuppressWarnings("unused") Object object) {
         return RRuntime.LOGICAL_FALSE;
     }
 

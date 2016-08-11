@@ -22,74 +22,40 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastComplexNode;
-import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 
-@RBuiltin(name = "as.complex", kind = PRIMITIVE, parameterNames = {"x", "..."})
+@RBuiltin(name = "as.complex", kind = PRIMITIVE, parameterNames = {"x", "..."}, behavior = PURE)
 public abstract class AsComplex extends RBuiltinNode {
 
-    @Child private CastComplexNode castComplexNode;
+    private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
 
-    private void initCast() {
-        if (castComplexNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplexNode = insert(CastComplexNodeGen.create(false, false, false));
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").asComplexVector();
+    }
+
+    @Specialization
+    protected RAbstractComplexVector asComplex(@SuppressWarnings("unused") RNull n) {
+        return RDataFactory.createEmptyComplexVector();
+    }
+
+    @Specialization
+    protected RAbstractComplexVector asComplex(RAbstractComplexVector v) {
+        if (noAttributes.profile(v.getAttributes() == null)) {
+            return v;
+        } else {
+            return (RAbstractComplexVector) v.copyDropAttributes();
         }
     }
 
-    @Specialization
-    protected RComplex doComplex(RComplex value) {
-        return value;
-    }
-
-    @Specialization
-    protected RComplex doInt(int value) {
-        initCast();
-        return (RComplex) castComplexNode.executeComplex(value);
-    }
-
-    @Specialization
-    protected RComplex doDouble(double value) {
-        initCast();
-        return (RComplex) castComplexNode.executeComplex(value);
-    }
-
-    @Specialization
-    protected RComplex doLogical(byte value) {
-        initCast();
-        return (RComplex) castComplexNode.executeComplex(value);
-    }
-
-    @Specialization
-    protected RComplex doString(String value) {
-        initCast();
-        return (RComplex) castComplexNode.executeComplex(value);
-    }
-
-    @Specialization
-    protected RComplexVector doNull(@SuppressWarnings("unused") RNull value) {
-        return RDataFactory.createComplexVector(0);
-    }
-
-    @Specialization
-    protected RComplexVector doComplexVector(RComplexVector vector) {
-        return RDataFactory.createComplexVector(vector.getDataCopy(), vector.isComplete());
-    }
-
-    @Specialization
-    protected RComplexVector doIntVector(RAbstractVector vector) {
-        initCast();
-        return (RComplexVector) castComplexNode.executeComplex(vector);
-    }
 }

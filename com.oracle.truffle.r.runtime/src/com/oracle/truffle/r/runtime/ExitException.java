@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,20 +23,19 @@
 package com.oracle.truffle.r.runtime;
 
 /**
- * The {@link RBuiltin} "kinds".
+ * This exception is thrown when a Polyglot R engine wants to exit, usually via the {@code quit}
+ * builtin. It allows systems using multiple contexts via {@code .fastr.context.op} to handle exits
+ * gracefully.
  */
-public enum RBuiltinKind {
-    /**
-     * A "primitive" function built into the implementation and called directly by name.
-     */
-    PRIMITIVE,
-    /**
-     * A function built into the implement and called by {@code .Internal(name(args)}.
-     */
-    INTERNAL,
-    /**
-     * A function that, in GnuR, is defined in R (possibly calling an {@code .Internal}), but is
-     * built into the implementation (and called directly) in FastR.
-     */
-    SUBSTITUTE,
+public class ExitException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+    private int status;
+
+    public ExitException(int status) {
+        this.status = status;
+    }
+
+    public int getStatus() {
+        return status;
+    }
 }

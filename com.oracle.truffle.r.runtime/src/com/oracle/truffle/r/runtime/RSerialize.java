@@ -193,8 +193,9 @@ public class RSerialize {
         RFunction getDotDotFindNamespace() {
             if (dotDotFindNamespace == null) {
                 CompilerDirectives.transferToInterpreter();
-                Object f = REnvironment.baseEnv().findFunction("..getNamespace");
-                dotDotFindNamespace = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
+                String name = "..getNamespace";
+                Object f = REnvironment.baseEnv().findFunction(name);
+                dotDotFindNamespace = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, f);
             }
             return dotDotFindNamespace;
         }
@@ -445,7 +446,7 @@ public class RSerialize {
                      * only used in a warning message in the unlikely event that the namespace
                      * cannot be found.
                      */
-                    Object r = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), null, null, s, "");
+                    Object r = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), null, null, null, s, "");
                     return checkResult(addReadRef(r));
                 }
 

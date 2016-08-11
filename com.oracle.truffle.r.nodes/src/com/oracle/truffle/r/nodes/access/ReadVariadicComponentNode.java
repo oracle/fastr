@@ -102,7 +102,7 @@ public class ReadVariadicComponentNode extends RSourceSectionNode implements RSy
 
     @Override
     public String getIdentifier() {
-        return getPrintForm();
+        return getPrintForm().intern();
     }
 
     @Override

@@ -45,7 +45,7 @@ public abstract class AbstractPredicateArgumentFilter<T, R extends T> implements
         if (profile.profile(!isNullable && (arg == RNull.instance || arg == null))) {
             return false;
         } else {
-            return valuePredicate.test(arg);
+            return valuePredicate.test(arg == RNull.instance ? null : arg);
         }
     }
 

@@ -74,8 +74,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrls;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrlsNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNode;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.data.FastPathFactory;
+import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -277,7 +277,6 @@ public class BasePackage extends RBuiltinPackage {
         add(Exists.class, ExistsNodeGen::create);
         add(Expression.class, ExpressionNodeGen::create);
         add(FastRContext.CloseChannel.class, FastRContextFactory.CloseChannelNodeGen::create);
-        add(FastRContext.Create.class, FastRContextFactory.CreateNodeGen::create);
         add(FastRContext.CreateChannel.class, FastRContextFactory.CreateChannelNodeGen::create);
         add(FastRContext.Eval.class, FastRContextFactory.EvalNodeGen::create);
         add(FastRContext.Get.class, FastRContextFactory.GetNodeGen::create);
@@ -575,8 +574,8 @@ public class BasePackage extends RBuiltinPackage {
         add(Tabulate.class, TabulateNodeGen::create);
         add(TempDir.class, TempDirNodeGen::create);
         add(TempFile.class, TempFileNodeGen::create);
-        add(ToLowerOrUpper.ToLower.class, ToLowerOrUpper::createToLower);
-        add(ToLowerOrUpper.ToUpper.class, ToLowerOrUpper::createToUpper);
+        add(ToLowerOrUpper.ToLower.class, ToLowerOrUpperFactory.ToLowerNodeGen::create);
+        add(ToLowerOrUpper.ToUpper.class, ToLowerOrUpperFactory.ToUpperNodeGen::create);
         add(Traceback.class, TracebackNodeGen::create);
         add(TraceFunctions.PrimTrace.class, TraceFunctionsFactory.PrimTraceNodeGen::create);
         add(TraceFunctions.PrimUnTrace.class, TraceFunctionsFactory.PrimUnTraceNodeGen::create);
@@ -625,13 +624,13 @@ public class BasePackage extends RBuiltinPackage {
         add(Vector.class, VectorNodeGen::create);
         add(Warning.class, WarningNodeGen::create);
         add(WhichFunctions.Which.class, WhichFunctionsFactory.WhichNodeGen::create);
-        add(WhichFunctions.WhichMax.class, WhichFunctionsFactory.WhichMaxNodeGen::create);
-        add(WhichFunctions.WhichMin.class, WhichFunctionsFactory.WhichMinNodeGen::create);
+        add(WhichFunctions.WhichMax.class, WhichFunctions.WhichMax::create);
+        add(WhichFunctions.WhichMin.class, WhichFunctions.WhichMin::create);
         add(Xtfrm.class, XtfrmNodeGen::create);
     }
 
     private static void addFastPath(MaterializedFrame baseFrame, String name, FastPathFactory factory) {
-        RFunction function = ReadVariableNode.lookupFunction(name, baseFrame, false);
+        RFunction function = ReadVariableNode.lookupFunction(name, baseFrame);
         ((RRootNode) function.getRootNode()).setFastPath(factory);
     }
 
@@ -663,7 +662,7 @@ public class BasePackage extends RBuiltinPackage {
 
     private static void setContainsDispatch(MaterializedFrame baseFrame, String... functions) {
         for (String name : functions) {
-            RFunction function = ReadVariableNode.lookupFunction(name, baseFrame, false);
+            RFunction function = ReadVariableNode.lookupFunction(name, baseFrame);
             ((RRootNode) function.getRootNode()).setContainsDispatch(true);
         }
     }

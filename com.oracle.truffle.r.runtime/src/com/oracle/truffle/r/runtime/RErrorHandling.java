@@ -60,7 +60,7 @@ public class RErrorHandling {
     private static final RStringVector RESTART_CLASS = RDataFactory.createStringVectorFromScalar("restart");
 
     private static class Warnings {
-        private static ArrayList<Warning> list = new ArrayList<>();
+        private ArrayList<Warning> list = new ArrayList<>();
 
         int size() {
             return list.size();
@@ -138,8 +138,9 @@ public class RErrorHandling {
         private RFunction getDotSignalSimpleWarning() {
             if (dotSignalSimpleWarning == null) {
                 CompilerDirectives.transferToInterpreter();
-                Object f = REnvironment.baseEnv().findFunction(".signalSimpleWarning");
-                dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
+                String name = ".signalSimpleWarning";
+                Object f = REnvironment.baseEnv().findFunction(name);
+                dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, f);
             }
             return dotSignalSimpleWarning;
         }
@@ -340,7 +341,7 @@ public class RErrorHandling {
                     errorcallDfltWithCall(fromCall(call), Message.GENERIC, msg);
                 } else {
                     RFunction hf = (RFunction) h;
-                    RContext.getEngine().evalFunction(hf, null, null, cond);
+                    RContext.getEngine().evalFunction(hf, null, null, null, cond);
                 }
             } else {
                 throw gotoExitingHandler(cond, call, entry);
@@ -503,7 +504,7 @@ public class RErrorHandling {
                             evaluatedArgs[i] = RMissing.instance;
                         }
                     }
-                    RContext.getEngine().evalFunction(errorFunction, null, null, evaluatedArgs);
+                    RContext.getEngine().evalFunction(errorFunction, null, null, null, evaluatedArgs);
                 } else if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
                     if (errorExpr instanceof RLanguage) {
                         RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);

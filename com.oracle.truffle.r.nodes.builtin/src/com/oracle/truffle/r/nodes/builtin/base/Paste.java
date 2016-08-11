@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -34,17 +35,15 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"})
+@RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"}, behavior = PURE)
 public abstract class Paste extends RBuiltinNode {
 
     private static final String[] ONE_EMPTY_STRING = new String[]{""};
@@ -58,23 +57,9 @@ public abstract class Paste extends RBuiltinNode {
     @Child private CastStringNode castCharacterNode;
 
     private final ValueProfile lengthProfile = PrimitiveValueProfile.createEqualityProfile();
-    private final ConditionProfile vectorOrSequence = ConditionProfile.createBinaryProfile();
     private final ConditionProfile reusedResultProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonNullElementsProfile = BranchProfile.create();
     private final BranchProfile onlyNullElementsProfile = BranchProfile.create();
-
-    private RStringVector castCharacter(Object o) {
-        if (asCharacterNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            asCharacterNode = insert(AsCharacterNodeGen.create(null));
-        }
-        Object ret = asCharacterNode.execute(o);
-        if (ret instanceof String) {
-            return RDataFactory.createStringVector((String) ret);
-        } else {
-            return (RStringVector) ret;
-        }
-    }
 
     /**
      * FIXME The exact semantics needs checking regarding the use of {@code as.character}. Currently
@@ -84,13 +69,15 @@ public abstract class Paste extends RBuiltinNode {
     private RStringVector castCharacterVector(Object o) {
         if (castCharacterNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castCharacterNode = insert(CastStringNodeGen.create(false, true, false, false));
+            castCharacterNode = insert(CastStringNodeGen.create(false, false, false));
         }
         Object ret = castCharacterNode.executeString(o);
         if (ret instanceof String) {
             return RDataFactory.createStringVector((String) ret);
+        } else if (ret == RNull.instance) {
+            return RDataFactory.createEmptyStringVector();
         } else {
-            return (RStringVector) ret;
+            return (RStringVector) ((RStringVector) ret).copyDropAttributes();
         }
     }
 
@@ -141,12 +128,7 @@ public abstract class Paste extends RBuiltinNode {
         int maxLength = 1;
         for (int i = 0; i < length; i++) {
             Object element = values.getDataAt(i);
-            String[] array;
-            if (vectorOrSequence.profile(element instanceof RVector || element instanceof RSequence)) {
-                array = castCharacterVector(element).getDataWithoutCopying();
-            } else {
-                array = castCharacter(element).getDataWithoutCopying();
-            }
+            String[] array = castCharacterVector(element).getDataWithoutCopying();
             maxLength = Math.max(maxLength, array.length);
             converted[i] = array.length == 0 ? ONE_EMPTY_STRING : array;
         }

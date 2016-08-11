@@ -47,7 +47,6 @@ import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -368,7 +367,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     public Object callback(RFunction f, Object[] args) {
         boolean gd = RContext.getInstance().stateInstrumentation.setDebugGloballyDisabled(true);
         try {
-            return RContext.getEngine().evalFunction(f, null, null, args);
+            return RContext.getEngine().evalFunction(f, null, null, null, args);
         } catch (ReturnException ex) {
             // cannot throw return exceptions further up.
             return ex.getResult();
@@ -378,9 +377,9 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public Object forcePromise(Object val) {
+    public Object forcePromise(String identifier, Object val) {
         if (val instanceof RPromise) {
-            return PromiseHelperNode.evaluateSlowPath(null, (RPromise) val);
+            return ReadVariableNode.evalPromiseSlowPathWithName(identifier, null, (RPromise) val);
         } else {
             return val;
         }

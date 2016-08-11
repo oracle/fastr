@@ -22,14 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
+import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -40,10 +44,12 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -58,7 +64,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  *
  * TODO complete. This is sufficient for the b25 benchmark use.
  */
-@RBuiltin(name = "array", kind = INTERNAL, parameterNames = {"data", "dim", "dimnames"})
+@RBuiltin(name = "array", kind = INTERNAL, parameterNames = {"data", "dim", "dimnames"}, behavior = PURE)
 public abstract class Array extends RBuiltinNode {
 
     @Child private UpdateDimNames updateDimNames;
@@ -72,9 +78,20 @@ public abstract class Array extends RBuiltinNode {
         updateDimNames.executeRAbstractContainer(container, o);
     }
 
+    private String argType(Object arg) {
+        return ((RTypedValue) arg).getRType().getName();
+    }
+
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
+        Function<Object, Object> argType = this::argType;
+        casts.arg("data").mustBe(instanceOf(RAbstractListVector.class).or(numericValue()).or(stringValue()).or(complexValue().or(rawValue())),
+                        RError.SHOW_CALLER, RError.Message.MUST_BE_VECTOR_BUT_WAS, "data",
+                        argType);
+        casts.arg("dim").asIntegerVector().mustBe(notEmpty(), RError.SHOW_CALLER, RError.Message.CANNOT_BE_LENGTH, "dims", 0);
+        casts.arg("dimnames").shouldBe(instanceOf(RList.class).or(nullValue()), RError.SHOW_CALLER,
+                        RError.Message.GENERIC, "non-list dimnames are disregarded; will be an error in R 3.3.0").mapIf(
+                                        instanceOf(RList.class).not(), nullConstant());
     }
 
     private int dimDataHelper(RAbstractIntVector dim, int[] dimData) {

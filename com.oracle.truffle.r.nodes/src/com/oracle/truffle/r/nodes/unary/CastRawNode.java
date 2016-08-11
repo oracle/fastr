@@ -22,14 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
@@ -48,6 +49,25 @@ public abstract class CastRawNode extends CastBaseNode {
 
     private final NACheck naCheck = NACheck.create();
     private final BranchProfile warningBranch = BranchProfile.create();
+
+    protected CastRawNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    @Child private CastRawNode recursiveCastRaw;
+
+    @Override
+    protected final RType getTargetType() {
+        return RType.Raw;
+    }
+
+    protected Object castRawRecursive(Object o) {
+        if (recursiveCastRaw == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            recursiveCastRaw = insert(CastRawNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
+        }
+        return recursiveCastRaw.executeRaw(o);
+    }
 
     public abstract Object executeRaw(int o);
 
@@ -127,10 +147,10 @@ public abstract class CastRawNode extends CastBaseNode {
         return RRaw.valueOf((byte) intRawValue);
     }
 
-    private RRawVector createResultVector(RAbstractVector operand, byte[] bdata) {
+    private RRawVector vectorCopy(RAbstractVector operand, byte[] bdata) {
         RRawVector ret = RDataFactory.createRawVector(bdata, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -154,7 +174,7 @@ public abstract class CastRawNode extends CastBaseNode {
         if (warning) {
             RError.warning(this, RError.Message.OUT_OF_RANGE);
         }
-        return createResultVector(operand, bdata);
+        return vectorCopy(operand, bdata);
     }
 
     @Specialization
@@ -174,7 +194,7 @@ public abstract class CastRawNode extends CastBaseNode {
         if (warning) {
             RError.warning(this, RError.Message.OUT_OF_RANGE);
         }
-        return createResultVector(operand, bdata);
+        return vectorCopy(operand, bdata);
     }
 
     @Specialization
@@ -214,7 +234,7 @@ public abstract class CastRawNode extends CastBaseNode {
         if (outOfRangeWarning) {
             RError.warning(this, RError.Message.OUT_OF_RANGE);
         }
-        return createResultVector(operand, bdata);
+        return vectorCopy(operand, bdata);
     }
 
     @Specialization
@@ -242,7 +262,7 @@ public abstract class CastRawNode extends CastBaseNode {
         if (outOfRangeWarning) {
             RError.warning(this, RError.Message.OUT_OF_RANGE);
         }
-        return createResultVector(operand, bdata);
+        return vectorCopy(operand, bdata);
     }
 
     @Specialization
@@ -263,7 +283,7 @@ public abstract class CastRawNode extends CastBaseNode {
         if (warning) {
             RError.warning(this, RError.Message.OUT_OF_RANGE);
         }
-        return createResultVector(operand, bdata);
+        return vectorCopy(operand, bdata);
     }
 
     @Specialization
@@ -271,10 +291,14 @@ public abstract class CastRawNode extends CastBaseNode {
         return operand;
     }
 
-    @Fallback
-    @TruffleBoundary
-    protected int doOther(Object operand) {
-        throw new ConversionFailedException(operand.getClass().getName());
+    @Specialization
+    protected RRawVector doList(RAbstractListVector value) {
+        int length = value.getLength();
+        RRawVector result = RDataFactory.createRawVector(length);
+        for (int i = 0; i < length; i++) {
+            result.updateDataAt(i, (RRaw) castRawRecursive(value.getDataAt(i)));
+        }
+        return result;
     }
 
     public static CastRawNode createNonPreserving() {

@@ -22,16 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -43,7 +44,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.DetachException;
 
 public class AttachFunctions {
-    @RBuiltin(name = "attach", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"what", "pos", "name"})
+    @RBuiltin(name = "attach", visibility = OFF, kind = INTERNAL, parameterNames = {"what", "pos", "name"}, behavior = COMPLEX)
     public abstract static class Attach extends RBuiltinNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
@@ -105,7 +106,7 @@ public class AttachFunctions {
         }
     }
 
-    @RBuiltin(name = "detach", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"pos"})
+    @RBuiltin(name = "detach", visibility = OFF, kind = INTERNAL, parameterNames = {"pos"}, behavior = COMPLEX)
     public abstract static class Detach extends RBuiltinNode {
 
         @Override

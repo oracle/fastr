@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionCheckNodeFactory.Mat2indsubNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
@@ -49,6 +50,7 @@ abstract class PositionCheckNode extends Node {
     private final int dimensionIndex;
     protected final int numDimensions;
     private final VectorLengthProfile positionLengthProfile = VectorLengthProfile.create();
+    private final ConditionProfile nullDimensionsProfile = ConditionProfile.createBinaryProfile();
     protected final BranchProfile error = BranchProfile.create();
     protected final boolean replace;
     protected final RType containerType;
@@ -123,7 +125,7 @@ abstract class PositionCheckNode extends Node {
 
         if (mode.isSubset() && numDimensions == 1) {
             int[] vectorDim = vector.getDimensions();
-            if (vectorDim != null && vectorDim.length == 2) {
+            if (nullDimensionsProfile.profile(vectorDim != null) && vectorDim.length == 2) {
                 if (vector instanceof RAbstractVector && ((RAbstractVector) vector).isArray()) {
                     if (castPosition instanceof RAbstractVector) {
                         RAbstractVector vectorPosition = (RAbstractVector) castPosition;

@@ -26,7 +26,7 @@ import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
 
 public interface ArgumentMapperSampler<T, R> extends ArgumentMapper<T, R> {
 
-    TypeExpr resultTypes();
+    TypeExpr resultTypes(TypeExpr inputTypes);
 
     Samples<T> collectSamples(Samples<R> downStreamSamples);
 

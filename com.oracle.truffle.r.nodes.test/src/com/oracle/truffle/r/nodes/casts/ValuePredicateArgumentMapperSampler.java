@@ -23,44 +23,68 @@
 package com.oracle.truffle.r.nodes.casts;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentMapper;
 
 public class ValuePredicateArgumentMapperSampler<T, R> extends ValuePredicateArgumentMapper<T, R> implements ArgumentMapperSampler<T, R> {
 
     private final Function<R, T> unmapper;
-    private final TypeExpr allowedTypes;
-    private final Set<? extends T> positiveSamples;
-    private final Set<?> negativeSamples;
+    private final TypeExpr inputTypes;
+    private final TypeExpr resTypes;
+    private final String desc;
+    private final Samples<T> samples;
 
-    public ValuePredicateArgumentMapperSampler(Function<T, R> mapper, Function<R, T> unmapper, Set<? extends T> positiveSamples, Set<?> negativeSamples, Set<Class<?>> allowedTypeSet) {
+    public ValuePredicateArgumentMapperSampler(String desc, Function<T, R> mapper, Function<R, T> unmapper, Set<? extends T> positiveSamples, Set<?> negativeSamples, Set<Class<?>> inputTypeSet,
+                    Set<Class<?>> resultTypeSet) {
         super(mapper);
         this.unmapper = unmapper;
-        this.allowedTypes = allowedTypeSet.isEmpty() ? TypeExpr.ANYTHING : TypeExpr.union(allowedTypeSet);
-        this.positiveSamples = positiveSamples;
-        this.negativeSamples = negativeSamples;
+        this.inputTypes = inputTypeSet.isEmpty() ? TypeExpr.ANYTHING : TypeExpr.union(inputTypeSet);
+        this.resTypes = resultTypeSet.isEmpty() ? TypeExpr.ANYTHING : TypeExpr.union(resultTypeSet);
+        this.desc = desc;
+        Predicate<Object> posMembership = x -> inputTypes.isInstance(x) && !negativeSamples.contains(x);
+        this.samples = new Samples<>(desc, positiveSamples, negativeSamples, posMembership);
     }
 
     @Override
-    public TypeExpr resultTypes() {
-        return allowedTypes;
+    public TypeExpr resultTypes(TypeExpr it) {
+        return resTypes;
     }
 
-    public static <T, R> ValuePredicateArgumentMapperSampler<T, R> fromLambda(Function<T, R> mapper, Function<R, T> unmapper, Class<R> resultClass) {
-        return new ValuePredicateArgumentMapperSampler<>(mapper, unmapper, Collections.emptySet(), Collections.emptySet(), Collections.singleton(resultClass));
+    @Override
+    public String toString() {
+        return desc;
+    }
+
+    public static <T, R> ValuePredicateArgumentMapperSampler<T, R> fromLambda(Function<T, R> mapper, Function<R, T> unmapper, Class<T> inputClass, Class<R> resultClass) {
+        return new ValuePredicateArgumentMapperSampler<>(CastUtils.getPredefStepDesc(), mapper, unmapper, Collections.emptySet(), Collections.emptySet(),
+                        inputClass == null ? Collections.emptySet() : Collections.singleton(inputClass),
+                        resultClass == null ? Collections.emptySet() : Collections.singleton(resultClass));
     }
 
     public static <T, R> ValuePredicateArgumentMapperSampler<T, R> fromLambda(Function<T, R> mapper, Function<R, T> unmapper, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples,
-                    Class<R> resultClass) {
-        return new ValuePredicateArgumentMapperSampler<>(mapper, unmapper, positiveSamples, negativeSamples, Collections.singleton(resultClass));
+                    Class<T> inputClass, Class<R> resultClass) {
+        return new ValuePredicateArgumentMapperSampler<>(CastUtils.getPredefStepDesc(), mapper, unmapper, positiveSamples, negativeSamples, Collections.singleton(inputClass),
+                        Collections.singleton(resultClass));
     }
 
     @Override
     public Samples<T> collectSamples(Samples<R> downStreamSamples) {
-        Samples<T> unmappedSamples = downStreamSamples.map(x -> unmapper.apply(x), x -> x);
-        return new Samples<T>(positiveSamples, negativeSamples).and(unmappedSamples);
+        if (unmapper == null) {
+            return samples;
+        } else {
+            Samples<R> filtered = downStreamSamples.filter(x -> resTypes.isInstance(x), x -> resTypes.isInstance(x));
+            @SuppressWarnings("unchecked")
+            Samples<T> unmappedSamples = filtered.map(x -> unmapper.apply(x), x -> unmapper.apply((R) x),
+                            x -> inputTypes.isInstance(x) ? Optional.of(mapper.apply((T) x)) : Optional.empty(),
+                            x -> inputTypes.isInstance(x) ? Optional.of(mapper.apply((T) x)) : Optional.empty());
+
+            Samples<T> combined = samples.and(unmappedSamples);
+            return combined;
+        }
     }
 
 }

@@ -45,9 +45,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogica
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 import org.junit.Test;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -347,10 +344,9 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name,
-                                new CastBuilder().output(NullStream.INSTANCE).arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(
-                                                ValuePredicateArgumentFilterSampler.omLambdaWithResTypes(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Object.class),
-                                                Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(), asInteger()).builder().getCasts()[0]);
+                super(name, new CastBuilder().arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(
+                                ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Object.class),
+                                Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(), asInteger()).builder().getCasts()[0]);
             }
 
             @Override
@@ -370,7 +366,7 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(lengthLte(1)).map(
+                super(name, new CastBuilder().arg(0).mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(lengthLte(1)).map(
                                 charAt0(RRuntime.INT_NA)).notNA(100000).builder().getCasts()[0]);
             }
 
@@ -409,7 +405,7 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).mustBe(scalarIntegerValue()).shouldBe(gt0().and(lt(10))).builder().getCasts()[0]);
+                super(name, new CastBuilder().arg(0).mustBe(scalarIntegerValue()).shouldBe(gt0().and(lt(10))).builder().getCasts()[0]);
             }
 
             @Override
@@ -427,7 +423,7 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).mustBe(scalarIntegerValue()).shouldBe(gt0().and(lt(10)).not()).builder().getCasts()[0]);
+                super(name, new CastBuilder().arg(0).mustBe(scalarIntegerValue()).shouldBe(gt0().and(lt(10)).not()).builder().getCasts()[0]);
             }
 
             @Override
@@ -445,7 +441,7 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, new CastBuilder().output(NullStream.INSTANCE).arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(
+                super(name, new CastBuilder().arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(
                                 instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())), Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(),
                                                 asInteger()).builder().getCasts()[0]);
             }
@@ -458,16 +454,6 @@ public class TestCasts extends TestBase {
             }
         }
         testCompilation(new Object[]{RDataFactory.createIntVectorFromScalar(1)}, new Root("ComplexPipeline3SingleInt"));
-    }
-
-    static class NullStream extends OutputStream {
-
-        static final NullStream INSTANCE = new NullStream();
-
-        @Override
-        public void write(int b) throws IOException {
-        }
-
     }
 
 }

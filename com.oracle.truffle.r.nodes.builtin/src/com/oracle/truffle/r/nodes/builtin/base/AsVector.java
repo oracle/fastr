@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -32,6 +34,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -48,12 +51,14 @@ import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastSymbolNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -70,7 +75,7 @@ import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "as.vector", kind = INTERNAL, parameterNames = {"x", "mode"})
+@RBuiltin(name = "as.vector", kind = INTERNAL, parameterNames = {"x", "mode"}, behavior = COMPLEX)
 public abstract class AsVector extends RBuiltinNode {
 
     @Child private AsVectorInternal internal = AsVectorInternalNodeGen.create();
@@ -81,7 +86,7 @@ public abstract class AsVector extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstStringWithError(1, RError.Message.INVALID_ARGUMENT, "mode");
+        casts.arg("mode").mustBe(scalarStringValue(), RError.Message.INVALID_ARGUMENT, "mode");
     }
 
     protected static AsVectorInternal createInternal() {
@@ -115,41 +120,54 @@ public abstract class AsVector extends RBuiltinNode {
         public abstract Object execute(Object x, String mode);
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        private final BranchProfile hasAttributes = BranchProfile.create();
+
+        private Object dropAttributesIfNeeded(Object o) {
+            Object res = o;
+            if (res instanceof RAttributable && ((RAttributable) res).getAttributes() != null) {
+                // the assertion should hold because of how cast works and it's only used for
+                // vectors (as per as.vector docs)
+                assert res instanceof RAbstractVector;
+                hasAttributes.enter();
+                res = ((RAbstractVector) res).copyDropAttributes();
+            }
+            return res;
+        }
 
         @Specialization(guards = "castToString(mode)")
         protected Object asVectorString(Object x, @SuppressWarnings("unused") String mode, //
-                        @Cached("create()") AsCharacter asCharacter) {
-            return asCharacter.execute(x);
+                        @Cached("createNonPreserving()") CastStringNode cast) {
+            return dropAttributesIfNeeded(cast.execute(x));
         }
 
         @Specialization(guards = "castToInt(x, mode)")
         protected Object asVectorInt(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
                         @Cached("createNonPreserving()") CastIntegerNode cast) {
-            return cast.execute(x);
+            return dropAttributesIfNeeded(cast.execute(x));
         }
 
         @Specialization(guards = "castToDouble(x, mode)")
         protected Object asVectorDouble(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
                         @Cached("createNonPreserving()") CastDoubleNode cast) {
-            return cast.execute(x);
+            return dropAttributesIfNeeded(cast.execute(x));
         }
 
         @Specialization(guards = "castToComplex(x, mode)")
         protected Object asVectorComplex(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
                         @Cached("createNonPreserving()") CastComplexNode cast) {
-            return cast.execute(x);
+            return dropAttributesIfNeeded(cast.execute(x));
         }
 
         @Specialization(guards = "castToLogical(x, mode)")
         protected Object asVectorLogical(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
                         @Cached("createNonPreserving()") CastLogicalNode cast) {
-            return cast.execute(x);
+            return dropAttributesIfNeeded(cast.execute(x));
         }
 
         @Specialization(guards = "castToRaw(x, mode)")
         protected Object asVectorRaw(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
                         @Cached("createNonPreserving()") CastRawNode cast) {
-            return cast.execute(x);
+            return dropAttributesIfNeeded(cast.execute(x));
         }
 
         protected static CastListNode createListCast() {
@@ -207,12 +225,20 @@ public abstract class AsVector extends RBuiltinNode {
         }
 
         @Specialization(guards = "modeIsPairList(mode)")
+        @TruffleBoundary
         protected Object asVectorPairList(RList x, @SuppressWarnings("unused") String mode) {
             // TODO implement non-empty element list conversion; this is a placeholder for type test
             if (x.getLength() == 0) {
                 return RNull.instance;
             } else {
-                throw RError.nyi(RError.SHOW_CALLER, "non-empty lists");
+                Object list = RNull.instance;
+                RStringVector names = x.getNames();
+                for (int i = x.getLength() - 1; i >= 0; i--) {
+                    Object name = names == null ? RNull.instance : RDataFactory.createSymbolInterned(names.getDataAt(i));
+                    Object data = x.getDataAt(i);
+                    list = RDataFactory.createPairList(data, list, name);
+                }
+                return list;
             }
         }
 

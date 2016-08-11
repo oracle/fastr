@@ -11,6 +11,9 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -20,10 +23,9 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -54,7 +56,7 @@ public class DuplicatedFunctions {
         }
     }
 
-    @RBuiltin(name = "duplicated", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "imcomparables", "fromLast", "nmax"})
+    @RBuiltin(name = "duplicated", kind = INTERNAL, parameterNames = {"x", "imcomparables", "fromLast", "nmax"}, behavior = PURE)
     public abstract static class Duplicated extends Adapter {
 
         @Override
@@ -101,7 +103,7 @@ public class DuplicatedFunctions {
         }
     }
 
-    @RBuiltin(name = "anyDuplicated", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "imcomparables", "fromLast"})
+    @RBuiltin(name = "anyDuplicated", kind = INTERNAL, parameterNames = {"x", "imcomparables", "fromLast"}, behavior = PURE)
     public abstract static class AnyDuplicated extends Adapter {
 
         @Override

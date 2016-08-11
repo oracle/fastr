@@ -23,12 +23,22 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RRaw;
 
 public abstract class CastStringBaseNode extends CastBaseNode {
 
     @Child private ToStringNode toString = ToStringNodeGen.create();
+
+    protected CastStringBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    @Override
+    protected final RType getTargetType() {
+        return RType.Character;
+    }
 
     @Specialization
     protected String doString(String value) {

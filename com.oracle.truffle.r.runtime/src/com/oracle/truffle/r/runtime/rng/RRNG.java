@@ -310,7 +310,7 @@ public class RRNG {
     private static Object getDotRandomSeed() {
         Object seed = REnvironment.globalEnv().get(RANDOM_SEED);
         if (seed instanceof RPromise) {
-            seed = RContext.getRRuntimeASTAccess().forcePromise(seed);
+            seed = RContext.getRRuntimeASTAccess().forcePromise(RANDOM_SEED, seed);
         }
         return seed;
     }

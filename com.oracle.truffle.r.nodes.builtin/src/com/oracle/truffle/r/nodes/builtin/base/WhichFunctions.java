@@ -22,23 +22,28 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import java.util.ArrayList;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.nodes.builtin.base.WhichFunctionsFactory.WhichMinMaxNodeGen;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
@@ -46,97 +51,128 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 public class WhichFunctions {
 
-    @RBuiltin(name = "which", kind = INTERNAL, parameterNames = {"x"})
+    @RBuiltin(name = "which", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
     public abstract static class Which extends RBuiltinNode {
 
-        private final NACheck naCheck = NACheck.create();
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
-        @Specialization(guards = "!hasNames(x)")
-        @TruffleBoundary
-        protected RIntVector which(RAbstractLogicalVector x) {
-            ArrayList<Integer> w = new ArrayList<>();
-            for (int i = 0; i < x.getLength(); i++) {
-                if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {
-                    w.add(i);
-                }
-            }
-            int[] result = new int[w.size()];
-            for (int i = 0; i < result.length; i++) {
-                result[i] = w.get(i) + 1;
-            }
-            return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
-        }
-
-        @Specialization(guards = "hasNames(x)")
-        @TruffleBoundary
-        protected RIntVector whichNames(RAbstractLogicalVector x) {
-            ArrayList<Integer> w = new ArrayList<>();
-            ArrayList<String> n = new ArrayList<>();
-            RStringVector oldNames = x.getNames(attrProfiles);
-            naCheck.enable(oldNames);
-            for (int i = 0; i < x.getLength(); i++) {
-                if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {
-                    w.add(i);
-                    String s = oldNames.getDataAt(i);
-                    naCheck.check(s);
-                    n.add(s);
-                }
-            }
-            int[] result = new int[w.size()];
-            for (int i = 0; i < result.length; i++) {
-                result[i] = w.get(i) + 1;
-            }
-            String[] names = new String[n.size()];
-            return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR, RDataFactory.createStringVector(n.toArray(names), naCheck.neverSeenNA()));
-        }
-
-        protected boolean hasNames(RAbstractLogicalVector x) {
-            return x.getNames(attrProfiles) != null;
-        }
-    }
-
-    @RBuiltin(name = "which.max", kind = RBuiltinKind.INTERNAL, parameterNames = {"x"})
-    public abstract static class WhichMax extends RBuiltinNode {
-
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toDouble(0);
+            casts.arg("x").mustBe(logicalValue()).asLogicalVector();
         }
 
         @Specialization
-        protected int which(RAbstractDoubleVector x) {
-            double max = x.getDataAt(0);
-            int maxIndex = 0;
-            for (int i = 0; i < x.getLength(); i++) {
-                if (x.getDataAt(i) > max) {
-                    max = x.getDataAt(i);
-                    maxIndex = i;
+        protected RIntVector which(RAbstractLogicalVector x,
+                        @Cached("create()") VectorLengthProfile lengthProfile,
+                        @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile,
+                        @Cached("create()") RAttributeProfiles attrProfiles,
+                        @Cached("create()") NACheck naCheck) {
+            int length = lengthProfile.profile(x.getLength());
+            loopProfile.profileCounted(length);
+            // determine the length of the result
+            int resultLength = 0;
+            for (int i = 0; loopProfile.inject(i < length); i++) {
+                if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {
+                    resultLength++;
                 }
             }
-            return maxIndex + 1;
+            // collect result indexes
+            int[] result = new int[resultLength];
+            int pos = 0;
+            for (int i = 0; loopProfile.inject(i < length); i++) {
+                if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {
+                    result[pos++] = i + 1;
+                }
+            }
+            RStringVector names = x.getNames(attrProfiles);
+            if (hasNamesProfile.profile(names != null)) {
+                // collect result names
+                String[] resultNames = new String[resultLength];
+                naCheck.enable(names);
+                pos = 0;
+                for (int i = 0; i < x.getLength(); i++) {
+                    if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {
+                        String name = names.getDataAt(i);
+                        naCheck.check(name);
+                        resultNames[pos++] = name;
+                    }
+                }
+                return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR, RDataFactory.createStringVector(resultNames, naCheck.neverSeenNA()));
+            } else {
+                return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
+            }
         }
     }
 
-    @RBuiltin(name = "which.min", kind = RBuiltinKind.INTERNAL, parameterNames = {"x"})
-    public abstract static class WhichMin extends RBuiltinNode {
+    @RBuiltin(name = "which.max", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
+    public abstract static class WhichMax {
+        private WhichMax() {
+            // private
+        }
+
+        public static WhichMinMax create(RNode[] arguments) {
+            return WhichMinMaxNodeGen.create(true, arguments);
+        }
+    }
+
+    @RBuiltin(name = "which.min", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
+    public abstract static class WhichMin {
+        private WhichMin() {
+            // private
+        }
+
+        public static WhichMinMax create(RNode[] arguments) {
+            return WhichMinMaxNodeGen.create(false, arguments);
+        }
+    }
+
+    public abstract static class WhichMinMax extends RBuiltinNode {
+
+        private final boolean isMax;
+
+        protected WhichMinMax(boolean isMax) {
+            this.isMax = isMax;
+        }
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toDouble(0);
+            casts.arg(0, "x").asDoubleVector(true, false, false);
         }
 
         @Specialization
-        protected int which(RAbstractDoubleVector x) {
-            double minimum = x.getDataAt(0);
-            int minIndex = 0;
-            for (int i = 0; i < x.getLength(); i++) {
-                if (x.getDataAt(i) < minimum) {
-                    minimum = x.getDataAt(i);
-                    minIndex = i;
+        protected RIntVector which(RAbstractDoubleVector x,
+                        @Cached("create()") VectorLengthProfile lengthProfile,
+                        @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile isNaNProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile,
+                        @Cached("create()") RAttributeProfiles attrProfiles) {
+            int length = lengthProfile.profile(x.getLength());
+            loopProfile.profileCounted(length);
+            double extreme = Double.NaN;
+            int extremeIndex = -1;
+            for (int i = 0; loopProfile.inject(i < length); i++) {
+                double d = x.getDataAt(i);
+                // inverted comparison to pass when extreme is NaN
+                if (!Double.isNaN(d) && (isMax ? !(d <= extreme) : !(d >= extreme))) {
+                    extreme = x.getDataAt(i);
+                    extremeIndex = i;
                 }
             }
-            return minIndex + 1;
+            if (isNaNProfile.profile(extremeIndex == -1)) {
+                return RDataFactory.createEmptyIntVector();
+            }
+            RStringVector names = x.getNames(attrProfiles);
+            if (hasNamesProfile.profile(names != null)) {
+                // collect result names
+                RStringVector resultNames = RDataFactory.createStringVectorFromScalar(names.getDataAt(extremeIndex));
+                return RDataFactory.createIntVector(new int[]{extremeIndex + 1}, true, resultNames);
+            } else {
+                return RDataFactory.createIntVectorFromScalar(extremeIndex + 1);
+            }
+        }
+
+        @Specialization
+        protected RIntVector which(@SuppressWarnings("unused") RNull x) {
+            return RDataFactory.createEmptyIntVector();
         }
     }
 }

@@ -22,21 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBehavior;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
 // TODO Figure out how to distinguish f(,,a) from f(a) - RMissing is used in both contexts
-@RBuiltin(name = "nargs", kind = PRIMITIVE, parameterNames = {})
+@RBuiltin(name = "nargs", kind = PRIMITIVE, parameterNames = {}, behavior = RBehavior.READS_FRAME)
 public abstract class NArgs extends RBuiltinNode {
 
     private final BranchProfile isPromiseProfile = BranchProfile.create();

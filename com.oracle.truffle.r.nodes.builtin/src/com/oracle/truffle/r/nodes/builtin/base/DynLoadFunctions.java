@@ -22,20 +22,23 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -52,8 +55,15 @@ public class DynLoadFunctions {
 
     private static final String DLLINFOLIST_CLASS = "DLLInfoList";
 
-    @RBuiltin(name = "dyn.load", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"})
+    @RBuiltin(name = "dyn.load", visibility = OFF, kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"}, behavior = COMPLEX)
     public abstract static class DynLoad extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            // TODO: not sure if the behavior is 100% compliant
+            casts.arg("now").asLogicalVector().findFirst();
+        }
+
         @Specialization
         @TruffleBoundary
         protected RList doDynLoad(RAbstractStringVector libVec, RAbstractLogicalVector localVec, byte now, @SuppressWarnings("unused") String unused) {
@@ -80,7 +90,7 @@ public class DynLoadFunctions {
         }
     }
 
-    @RBuiltin(name = "dyn.unload", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"lib"})
+    @RBuiltin(name = "dyn.unload", visibility = OFF, kind = INTERNAL, parameterNames = {"lib"}, behavior = COMPLEX)
     public abstract static class DynUnload extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -94,7 +104,7 @@ public class DynLoadFunctions {
         }
     }
 
-    @RBuiltin(name = "getLoadedDLLs", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "getLoadedDLLs", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class GetLoadedDLLs extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -114,7 +124,7 @@ public class DynLoadFunctions {
         }
     }
 
-    @RBuiltin(name = "is.loaded", kind = INTERNAL, parameterNames = {"symbol", "package", "type"})
+    @RBuiltin(name = "is.loaded", kind = INTERNAL, parameterNames = {"symbol", "package", "type"}, behavior = READS_STATE)
     public abstract static class IsLoaded extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -142,8 +152,14 @@ public class DynLoadFunctions {
         }
     }
 
-    @RBuiltin(name = "getSymbolInfo", kind = INTERNAL, parameterNames = {"symbol", "package", "withReg"})
+    @RBuiltin(name = "getSymbolInfo", kind = INTERNAL, parameterNames = {"symbol", "package", "withReg"}, behavior = READS_STATE)
     public abstract static class GetSymbolInfo extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            // TODO: not sure if the behavior is 100% compliant
+            casts.arg("withReg").asLogicalVector().findFirst();
+        }
 
         @Specialization
         @TruffleBoundary

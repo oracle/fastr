@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,26 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.unary;
+package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
-import com.oracle.truffle.r.nodes.casts.TypeExpr;
-import com.oracle.truffle.r.runtime.data.RNull;
+import java.lang.instrument.Instrumentation;
 
-public class CastStringNodeGenSampler extends CastNodeSampler<CastStringNodeGen> {
+/**
+ * This is agent class for object sizing. It has to be separate as it is loaded from a jar file.
+ * This implements the basic call to the JVM for the "struct" part of the object.
+ * {@link AgentObjectSizeFactory} handles the recursive sizing based on the field/array types.
+ *
+ */
+public class ObjSizeAgent {
+    private static Instrumentation instrumentation;
 
-    public CastStringNodeGenSampler(CastStringNodeGen castNode) {
-        super(castNode);
+    public static void premain(@SuppressWarnings("unused") String agentArgs, Instrumentation inst) {
+        instrumentation = inst;
     }
 
-    @Override
-    public TypeExpr resultTypes(TypeExpr inputType) {
-        TypeExpr rt = super.resultTypes(inputType);
-        if (castNode.isEmptyVectorConvertedToNull()) {
-            return rt.or(TypeExpr.union(RNull.class));
-        } else {
-            return rt;
-        }
+    public static void agentmain(@SuppressWarnings("unused") String agentArgs, Instrumentation inst) {
+        instrumentation = inst;
+    }
+
+    public static long objectSize(Object obj) {
+        return instrumentation.getObjectSize(obj);
+    }
+
+    static boolean isInitialized() {
+        return instrumentation != null;
     }
 
 }

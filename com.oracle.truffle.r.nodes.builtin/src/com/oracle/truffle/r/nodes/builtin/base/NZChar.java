@@ -22,38 +22,32 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.nodes.unary.ConversionFailedException;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "nzchar", kind = PRIMITIVE, parameterNames = {"x"})
+@RBuiltin(name = "nzchar", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class NZChar extends RBuiltinNode {
     @Child private CastStringNode convertString;
 
     private String coerceContent(Object content) {
         if (convertString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            convertString = insert(CastStringNodeGen.create(false, true, false, false));
+            convertString = insert(CastStringNodeGen.create(false, false, false));
         }
-        try {
-            return (String) convertString.execute(content);
-        } catch (ConversionFailedException e) {
-            throw RError.error(this, RError.Message.TYPE_EXPECTED, RType.Character.getName());
-        }
+        return (String) convertString.execute(content);
     }
 
     private static byte isNonZeroLength(String s) {

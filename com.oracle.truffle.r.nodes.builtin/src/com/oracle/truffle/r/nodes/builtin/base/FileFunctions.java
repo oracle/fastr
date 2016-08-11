@@ -11,7 +11,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -49,12 +51,11 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -69,7 +70,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public class FileFunctions {
 
-    @RBuiltin(name = "file.access", kind = INTERNAL, parameterNames = {"names", "mode"})
+    @RBuiltin(name = "file.access", kind = INTERNAL, parameterNames = {"names", "mode"}, behavior = IO)
     public abstract static class FileAccess extends RBuiltinNode {
         private static final int EXECUTE = 1;
         private static final int WRITE = 2;
@@ -107,7 +108,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.append", kind = INTERNAL, parameterNames = {"file1", "file2"})
+    @RBuiltin(name = "file.append", kind = INTERNAL, parameterNames = {"file1", "file2"}, behavior = IO)
     public abstract static class FileAppend extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -197,7 +198,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.create", kind = INTERNAL, parameterNames = {"vec", "showWarnings"})
+    @RBuiltin(name = "file.create", kind = INTERNAL, parameterNames = {"vec", "showWarnings"}, behavior = IO)
     public abstract static class FileCreate extends RBuiltinNode {
 
         @Specialization
@@ -231,7 +232,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.info", kind = INTERNAL, parameterNames = {"fn", "extra_cols"})
+    @RBuiltin(name = "file.info", kind = INTERNAL, parameterNames = {"fn", "extra_cols"}, behavior = IO)
     public abstract static class FileInfo extends RBuiltinNode {
         // @formatter:off
         private  enum Column {
@@ -431,7 +432,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.link", kind = INTERNAL, parameterNames = {"from", "to"})
+    @RBuiltin(name = "file.link", kind = INTERNAL, parameterNames = {"from", "to"}, behavior = IO)
     public abstract static class FileLink extends FileLinkAdaptor {
         @Specialization
         @TruffleBoundary
@@ -446,7 +447,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.symlink", kind = INTERNAL, parameterNames = {"from", "to"})
+    @RBuiltin(name = "file.symlink", kind = INTERNAL, parameterNames = {"from", "to"}, behavior = IO)
     public abstract static class FileSymLink extends FileLinkAdaptor {
         @Specialization
         @TruffleBoundary
@@ -461,7 +462,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.remove", kind = INTERNAL, parameterNames = {"vec"})
+    @RBuiltin(name = "file.remove", kind = INTERNAL, parameterNames = {"vec"}, behavior = IO)
     public abstract static class FileRemove extends RBuiltinNode {
 
         @Specialization
@@ -491,7 +492,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.rename", kind = INTERNAL, parameterNames = {"from", "to"})
+    @RBuiltin(name = "file.rename", kind = INTERNAL, parameterNames = {"from", "to"}, behavior = IO)
     public abstract static class FileRename extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -526,7 +527,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.exists", kind = INTERNAL, parameterNames = {"vec"})
+    @RBuiltin(name = "file.exists", kind = INTERNAL, parameterNames = {"vec"}, behavior = IO)
     public abstract static class FileExists extends RBuiltinNode {
 
         @Specialization
@@ -553,7 +554,7 @@ public class FileFunctions {
     }
 
     // TODO Implement all the options
-    @RBuiltin(name = "list.files", kind = INTERNAL, parameterNames = {"path", "pattern", "all.files", "full.names", "recursive", "ignore.case", "include.dirs", "no.."})
+    @RBuiltin(name = "list.files", kind = INTERNAL, parameterNames = {"path", "pattern", "all.files", "full.names", "recursive", "ignore.case", "include.dirs", "no.."}, behavior = IO)
     public abstract static class ListFiles extends RBuiltinNode {
         private static final String DOT = ".";
         private static final String DOTDOT = "..";
@@ -682,7 +683,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "list.dirs", kind = INTERNAL, parameterNames = {"path", "full.names", "recursive"})
+    @RBuiltin(name = "list.dirs", kind = INTERNAL, parameterNames = {"path", "full.names", "recursive"}, behavior = IO)
     public abstract static class ListDirs extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -732,7 +733,7 @@ public class FileFunctions {
     }
 
     // TODO handle the general case, which is similar to paste
-    @RBuiltin(name = "file.path", kind = INTERNAL, parameterNames = {"paths", "fsep"})
+    @RBuiltin(name = "file.path", kind = INTERNAL, parameterNames = {"paths", "fsep"}, behavior = IO)
     public abstract static class FilePath extends RBuiltinNode {
 
         @Child private CastStringNode castStringNode;
@@ -740,7 +741,7 @@ public class FileFunctions {
         private CastStringNode initCastStringNode() {
             if (castStringNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castStringNode = insert(CastStringNodeGen.create(false, false, false, false));
+                castStringNode = insert(CastStringNodeGen.create(false, false, false));
             }
             return castStringNode;
         }
@@ -820,7 +821,7 @@ public class FileFunctions {
     /**
      * {@code file.copy} builtin. This is only called when the target is a directory.
      */
-    @RBuiltin(name = "file.copy", kind = INTERNAL, parameterNames = {"from", "to", "overwrite", "recursive", "copy.mode", "copy.date"})
+    @RBuiltin(name = "file.copy", kind = INTERNAL, parameterNames = {"from", "to", "overwrite", "recursive", "copy.mode", "copy.date"}, behavior = IO)
     public abstract static class FileCopy extends RBuiltinNode {
 
         @Override
@@ -982,7 +983,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "dirname", kind = INTERNAL, parameterNames = {"path"})
+    @RBuiltin(name = "dirname", kind = INTERNAL, parameterNames = {"path"}, behavior = IO)
     public abstract static class DirName extends XyzNameAdapter {
         @Specialization
         @TruffleBoundary
@@ -995,7 +996,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "basename", kind = INTERNAL, parameterNames = {"path"})
+    @RBuiltin(name = "basename", kind = INTERNAL, parameterNames = {"path"}, behavior = IO)
     public abstract static class BaseName extends XyzNameAdapter {
         @Specialization
         @TruffleBoundary
@@ -1008,7 +1009,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "unlink", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "recursive", "force"})
+    @RBuiltin(name = "unlink", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "recursive", "force"}, behavior = IO)
     public abstract static class Unlink extends RBuiltinNode {
 
         @Override
@@ -1097,7 +1098,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "dir.create", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"path", "showWarnings", "recursive", "mode"})
+    @RBuiltin(name = "dir.create", visibility = OFF, kind = INTERNAL, parameterNames = {"path", "showWarnings", "recursive", "mode"}, behavior = IO)
     public abstract static class DirCreate extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -1143,7 +1144,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "dir.exists", kind = INTERNAL, parameterNames = "paths")
+    @RBuiltin(name = "dir.exists", kind = INTERNAL, parameterNames = "paths", behavior = IO)
     public abstract static class DirExists extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
