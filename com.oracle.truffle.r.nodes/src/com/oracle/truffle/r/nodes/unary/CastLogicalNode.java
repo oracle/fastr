@@ -103,11 +103,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
     @Specialization
     protected RLogicalVector doLogicalVector(RLogicalVector operand) {
-        if (preserveAttributes() && preserveDimensions() && preserveNames()) {
-            return operand;
-        } else {
-            return vectorCopy(operand, operand.getDataCopy(), operand.isComplete());
-        }
+        return operand;
     }
 
     @Specialization(guards = "!isFactor(operand)")

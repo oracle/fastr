@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -35,6 +36,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 
 @RBuiltin(name = "as.raw", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class AsRaw extends RBuiltinNode {
+
+    private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -48,6 +51,10 @@ public abstract class AsRaw extends RBuiltinNode {
 
     @Specialization
     protected RAbstractRawVector asRaw(RAbstractRawVector v) {
-        return v;
+        if (noAttributes.profile(v.getAttributes() == null)) {
+            return v;
+        } else {
+            return (RAbstractRawVector) v.copyDropAttributes();
+        }
     }
 }

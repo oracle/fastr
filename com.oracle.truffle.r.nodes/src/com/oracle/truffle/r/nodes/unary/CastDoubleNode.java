@@ -60,15 +60,6 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return recursiveCastDouble.executeDouble(o);
     }
 
-    private RDoubleVector createResultVector(RAbstractVector operand, double[] ddata) {
-        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
     private RDoubleVector vectorCopy(RAbstractContainer operand, double[] data, boolean isComplete) {
         RDoubleVector ret = RDataFactory.createDoubleVector(data, isComplete, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
@@ -152,7 +143,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
             warningBranch.enter();
             RError.warning(this, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
-        return createResultVector(operand, ddata);
+        return vectorCopy(operand, ddata, naCheck.neverSeenNA());
     }
 
     @Specialization
@@ -162,11 +153,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
     @Specialization
     protected RDoubleVector doDoubleVector(RDoubleVector operand) {
-        if (preserveAttributes() && preserveDimensions() && preserveNames()) {
-            return operand;
-        } else {
-            return vectorCopy(operand, operand.getDataCopy(), operand.isComplete());
-        }
+        return operand;
     }
 
     @Specialization

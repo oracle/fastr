@@ -77,7 +77,7 @@ public abstract class Paste extends RBuiltinNode {
         } else if (ret == RNull.instance) {
             return RDataFactory.createEmptyStringVector();
         } else {
-            return (RStringVector) ret;
+            return (RStringVector) ((RStringVector) ret).copyDropAttributes();
         }
     }
 

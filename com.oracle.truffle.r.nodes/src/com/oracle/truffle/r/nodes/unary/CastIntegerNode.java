@@ -62,11 +62,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     @Specialization
     protected RIntVector doIntVector(RIntVector operand) {
-        if (preserveAttributes() && preserveDimensions() && preserveNames()) {
-            return operand;
-        } else {
-            return vectorCopy(operand, operand.getDataCopy(), operand.isComplete());
-        }
+        return operand;
     }
 
     @Specialization

@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -35,6 +36,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 
 @RBuiltin(name = "as.complex", kind = PRIMITIVE, parameterNames = {"x", "..."}, behavior = PURE)
 public abstract class AsComplex extends RBuiltinNode {
+
+    private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -48,7 +51,11 @@ public abstract class AsComplex extends RBuiltinNode {
 
     @Specialization
     protected RAbstractComplexVector asComplex(RAbstractComplexVector v) {
-        return v;
+        if (noAttributes.profile(v.getAttributes() == null)) {
+            return v;
+        } else {
+            return (RAbstractComplexVector) v.copyDropAttributes();
+        }
     }
 
 }

@@ -288,11 +288,7 @@ public abstract class CastRawNode extends CastBaseNode {
 
     @Specialization
     protected RRawVector doRawVector(RRawVector operand) {
-        if (preserveAttributes() && preserveDimensions() && preserveNames()) {
-            return operand;
-        } else {
-            return vectorCopy(operand, operand.getDataCopy());
-        }
+        return operand;
     }
 
     @Specialization
