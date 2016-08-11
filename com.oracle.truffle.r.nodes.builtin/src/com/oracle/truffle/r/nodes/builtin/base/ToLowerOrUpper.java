@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -100,7 +99,7 @@ public abstract class ToLowerOrUpper {
         }
 
         @TruffleBoundary
-        private static String processElement(String value, int i) {
+        private static String processElement(String value, @SuppressWarnings("unused") int i) {
             return value.toLowerCase();
         }
 
@@ -126,7 +125,7 @@ public abstract class ToLowerOrUpper {
         }
 
         @TruffleBoundary
-        private static String processElement(String value, int i) {
+        private static String processElement(String value, @SuppressWarnings("unused") int i) {
             return value.toUpperCase();
         }
 

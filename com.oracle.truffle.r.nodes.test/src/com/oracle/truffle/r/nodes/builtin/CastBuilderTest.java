@@ -675,7 +675,8 @@ public class CastBuilderTest {
 
     private void testPipeline(@SuppressWarnings("unused") boolean positiveMustNotBeEmpty) {
         CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(cb.getCasts()[0]);
-        Samples<?> samples = sampler.collectSamples();
+        sampler.collectSamples();
+        // Samples<?> samples = sampler.collectSamples();
         //
         // if (positiveMustNotBeEmpty) {
         // Assert.assertFalse(samples.positiveSamples().isEmpty());
