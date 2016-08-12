@@ -75,7 +75,7 @@ static NativeArrayElem *nativeArrayTable;
 // hwm of nativeArrayTable
 static int nativeArrayTableHwm;
 static int nativeArrayTableLength;
-static void releaseNativeArray(JNIEnv *env, int index);
+static void releaseNativeArray(JNIEnv *env, int index, int freedata);
 
 static int isEmbedded = 0;
 void setEmbedded() {
@@ -160,7 +160,7 @@ jmp_buf *getErrorJmpBuf() {
 void callExit(JNIEnv *env) {
 	int oldHwm = nativeArrayTableHwmStack[callDepth - 1];
 	for (int i = oldHwm; i < nativeArrayTableHwm; i++) {
-		releaseNativeArray(env, i);
+               releaseNativeArray(env, i, 1);
 	}
 	nativeArrayTableHwm = oldHwm;
 	callDepth--;
@@ -173,7 +173,7 @@ void invalidateNativeArray(JNIEnv *env, SEXP oldObj) {
 #if TRACE_NATIVE_ARRAYS
 			fprintf(traceFile, "invalidateNativeArray(%p): found\n", oldObj);
 #endif
-			releaseNativeArray(env, i);
+			releaseNativeArray(env, i, 1);
 			nativeArrayTable[i].obj = NULL;
 		}
 	}
@@ -181,6 +181,14 @@ void invalidateNativeArray(JNIEnv *env, SEXP oldObj) {
 	fprintf(traceFile, "invalidateNativeArray(%p): not found\n", oldObj);
 #endif
 }
+
+void updateNativeArrays(JNIEnv *env) {
+	int oldHwm = nativeArrayTableHwmStack[callDepth - 1];
+	for (int i = oldHwm; i < nativeArrayTableHwm; i++) {
+        releaseNativeArray(env, i, 0);
+	}
+}
+
 
 static void *findNativeArray(JNIEnv *env, SEXP x) {
 	int i;
@@ -280,16 +288,16 @@ void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
 	return data;
 }
 
-static void releaseNativeArray(JNIEnv *env, int i) {
+static void releaseNativeArray(JNIEnv *env, int i, int freedata) {
 	NativeArrayElem cv = nativeArrayTable[i];
 #if TRACE_NATIVE_ARRAYS
-		fprintf(traceFile, "releaseNativeArray(x=%p, ix=%d)\n", cv.obj, i);
+               fprintf(traceFile, "releaseNativeArray(x=%p, ix=%d, freedata=%d)\n", cv.obj, i, freedata);
 #endif
 	if (cv.obj != NULL) {
 		switch (cv.type) {
 		case INTSXP: {
 			jintArray intArray = (jintArray) cv.jArray;
-			(*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
+			(*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, freedata ? 0 : JNI_COMMIT);
 			break;
 		}
 
@@ -303,28 +311,32 @@ static void releaseNativeArray(JNIEnv *env, int i) {
 				internalData[i] = data[i] == NA_INTEGER ? 255 : (jbyte) data[i];
 			}
 			(*env)->ReleaseByteArrayElements(env, byteArray, internalData, 0);
-			free(data); // was malloc'ed in addNativeArray
+                       if (freedata){
+                           free(data); // was malloc'ed in addNativeArray
+                       }
 			break;
 		}
 
 		case REALSXP: {
 			jdoubleArray doubleArray = (jdoubleArray) cv.jArray;
-			(*env)->ReleaseDoubleArrayElements(env, doubleArray, (jdouble *)cv.data, 0);
+			(*env)->ReleaseDoubleArrayElements(env, doubleArray, (jdouble *)cv.data, freedata ? 0 : JNI_COMMIT);
 			break;
 
 		}
 
 		case RAWSXP: {
 			jbyteArray byteArray = (jbyteArray) cv.jArray;
-			(*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, 0);
+			(*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, freedata ? 0 : JNI_COMMIT);
 			break;
 
 		}
 		default:
 			fatalError("releaseNativeArray type");
 		}
-		// free up the slot
-		cv.obj = NULL;
+               if (freedata) {
+                   // free up the slot
+		    cv.obj = NULL;
+               }
 	}
 }
 

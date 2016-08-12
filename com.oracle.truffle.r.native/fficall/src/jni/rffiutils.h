@@ -73,6 +73,7 @@ void *getNativeArray(JNIEnv *env, SEXP x, SEXPTYPE type);
 // Rare case where an operation changes the internal
 // data and thus the old C array should be invalidated
 void invalidateNativeArray(JNIEnv *env, SEXP oldObj);
+void updateNativeArrays(JNIEnv *env);
 
 void init_rmath(JNIEnv *env);
 void init_variables(JNIEnv *env, jobjectArray initialValues);
