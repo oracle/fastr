@@ -33,6 +33,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public final class RCaller {
 
+    public static final RCaller topLevel = RCaller.createInvalid(null);
+
     private static final Object PROMISE_MARKER = new Object();
 
     private final int depth;
@@ -94,6 +96,11 @@ public final class RCaller {
     public static RCaller create(Frame callingFrame, RSyntaxNode node) {
         assert node != null;
         return new RCaller(callingFrame, node);
+    }
+
+    public static RCaller create(Frame callingFrame, RCaller parent, RSyntaxNode node) {
+        assert node != null;
+        return new RCaller(depthFromFrame(callingFrame), parent, node);
     }
 
     public static RCaller create(Frame callingFrame, Supplier<RSyntaxNode> supplier) {

@@ -44,6 +44,7 @@ import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RSource;
@@ -191,7 +192,7 @@ public class DebugHandling {
         @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("debug event disabled state unchanged");
 
-        @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
+        @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create(null);
 
         protected DebugEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition) {
             this.text = text;
@@ -231,7 +232,13 @@ public class DebugHandling {
         }
 
         protected void browserInteract(Node node, VirtualFrame frame) {
-            int exitMode = (int) browserInteractNode.execute(frame);
+            RCaller caller = RArguments.getCall(frame);
+            if (caller == null) {
+                caller = RCaller.topLevel;
+            }
+
+            // TODO: make sure that the caller correctly reflects the context
+            int exitMode = browserInteractNode.executeInteger(frame, caller);
             switch (exitMode) {
                 case BrowserInteractNode.NEXT:
                     break;

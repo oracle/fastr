@@ -64,7 +64,7 @@ public class BrowserFunctions {
     @RBuiltin(name = "browser", visibility = OFF, kind = PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"}, behavior = COMPLEX)
     public abstract static class BrowserNode extends RBuiltinNode {
 
-        @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
+        @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create(null);
 
         @Override
         public Object[] getDefaultParameterValues() {
@@ -86,12 +86,15 @@ public class BrowserFunctions {
                     RCaller caller = RArguments.getCall(mFrame);
                     String callerString;
                     if (caller == null) {
+                        caller = RCaller.topLevel;
                         callerString = "top level";
                     } else {
                         callerString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
                     }
+                    StackTraceElement[] s = Thread.currentThread().getStackTrace();
                     RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", callerString);
-                    browserInteractNode.execute(frame);
+                    RCaller browserCaller = RCaller.create(null, caller, this.asRSyntaxNode());
+                    browserInteractNode.executeInteger(frame, browserCaller);
                 } finally {
                     helperState.remove(helperState.size() - 1);
                 }

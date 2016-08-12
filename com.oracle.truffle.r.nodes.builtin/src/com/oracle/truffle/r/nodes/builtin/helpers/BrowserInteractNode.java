@@ -23,11 +23,13 @@
 package com.oracle.truffle.r.nodes.builtin.helpers;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RSrcref;
@@ -56,7 +58,10 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * </ol>
  *
  */
+@NodeChild("browserCall")
 public abstract class BrowserInteractNode extends RNode {
+
+    public abstract int executeInteger(VirtualFrame frame, Object caller);
 
     public static final int STEP = 0;
     public static final int NEXT = 1;
@@ -64,7 +69,7 @@ public abstract class BrowserInteractNode extends RNode {
     public static final int FINISH = 3;
 
     @Specialization
-    protected int interact(VirtualFrame frame) {
+    protected int interact(VirtualFrame frame, Object browserCaller) {
         CompilerDirectives.transferToInterpreter();
         MaterializedFrame mFrame = frame.materialize();
         ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
@@ -75,7 +80,7 @@ public abstract class BrowserInteractNode extends RNode {
         boolean callerIsDebugged = DebugHandling.isDebugged(caller);
         int exitMode = NEXT;
         try {
-            browserState.setInBrowser(true);
+            browserState.setInBrowser((RCaller) browserCaller);
             LW: while (true) {
                 String input = ch.readLine();
                 if (input != null) {
@@ -142,7 +147,7 @@ public abstract class BrowserInteractNode extends RNode {
             }
         } finally {
             ch.setPrompt(savedPrompt);
-            browserState.setInBrowser(false);
+            browserState.setInBrowser(null);
         }
         return exitMode;
     }

@@ -30,6 +30,7 @@ import com.oracle.truffle.api.instrumentation.EventBinding;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.tools.Profiler;
 
@@ -206,15 +207,15 @@ public final class InstrumentationState implements RContext.ContextState {
     }
 
     public static class BrowserState {
-        private boolean inBrowser;
+        private RCaller caller;
         private String lastEmptyLineCommand = "n";
 
-        public void setInBrowser(boolean state) {
-            this.inBrowser = state;
+        public void setInBrowser(RCaller caller) {
+            this.caller = caller;
         }
 
         public boolean inBrowser() {
-            return inBrowser;
+            return caller != null;
         }
 
         public void setLastEmptyLineCommand(String s) {
@@ -223,6 +224,10 @@ public final class InstrumentationState implements RContext.ContextState {
 
         public String lastEmptyLineCommand() {
             return lastEmptyLineCommand;
+        }
+
+        public RCaller getInBrowserCaller() {
+            return caller;
         }
     }
 
