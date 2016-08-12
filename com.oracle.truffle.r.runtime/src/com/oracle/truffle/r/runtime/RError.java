@@ -704,6 +704,7 @@ public final class RError extends RuntimeException {
         INVALID_STRING_IN_WARNING(" [invalid string in warning(.)]"),
         ERR_MSG_MUST_BE_STRING("error message must be a character string"),
         ERR_MSG_BAD("bad error message"),
+        BAD_ENVIRONMENT("bad %s environment argument"),
         CANNOT_BE_LENGTH("'%s' cannot be of length %d");
 
         public final String message;
