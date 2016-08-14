@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -54,6 +55,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  * The FastR builtins that allow multiple "virtual" R sessions potentially executing in parallel.
  */
 public class FastRContext {
+
+    private static final RStringVector EMPTY = RDataFactory.createEmptyStringVector();
 
     private abstract static class CastHelper extends RBuiltinNode {
         protected void exprs(CastBuilder casts) {
@@ -89,11 +92,11 @@ public class FastRContext {
      * {@code .fastr.context.join}.
      *
      */
-    @RBuiltin(name = ".fastr.context.spawn", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind", "args"}, behavior = COMPLEX)
+    @RBuiltin(name = ".fastr.context.spawn", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind"}, behavior = COMPLEX)
     public abstract static class Spawn extends CastHelper {
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, 1, "SHARE_NOTHING", ""};
+            return new Object[]{RMissing.instance, 1, "SHARE_NOTHING"};
         }
 
         @Override
@@ -101,17 +104,16 @@ public class FastRContext {
             exprs(casts);
             pc(casts);
             kind(casts);
-            args(casts);
         }
 
         @Specialization
         @TruffleBoundary
-        protected RIntVector spawn(RAbstractStringVector exprs, int pc, String kind, RAbstractStringVector args) {
+        protected RIntVector spawn(RAbstractStringVector exprs, int pc, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
             RContext.EvalThread[] threads = new RContext.EvalThread[pc];
             int[] data = new int[pc];
             for (int i = 0; i < pc; i++) {
-                ContextInfo info = createContextInfo(contextKind, args);
+                ContextInfo info = createContextInfo(contextKind, EMPTY);
                 threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
                 data[i] = info.getId();
             }
@@ -162,11 +164,11 @@ public class FastRContext {
      * sublist contains the result of the evaluation with name "result". It may also have an
      * attribute "error" if the evaluation threw an exception, in which case the result will be NA.
      */
-    @RBuiltin(name = ".fastr.context.eval", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind", "args"}, behavior = COMPLEX)
+    @RBuiltin(name = ".fastr.context.eval", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind"}, behavior = COMPLEX)
     public abstract static class Eval extends CastHelper {
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, 1, "SHARE_NOTHING", ""};
+            return new Object[]{RMissing.instance, 1, "SHARE_NOTHING"};
         }
 
         @Override
@@ -174,24 +176,23 @@ public class FastRContext {
             exprs(casts);
             pc(casts);
             kind(casts);
-            args(casts);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object eval(RAbstractStringVector exprs, int pc, String kind, RAbstractStringVector args) {
+        protected Object eval(RAbstractStringVector exprs, int pc, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
 
             Object[] results = new Object[pc];
             if (pc == 1) {
-                ContextInfo info = createContextInfo(contextKind, args);
+                ContextInfo info = createContextInfo(contextKind, EMPTY);
                 PolyglotEngine vm = info.createVM();
                 results[0] = RContext.EvalThread.run(vm, info, RSource.fromTextInternal(exprs.getDataAt(0), RSource.Internal.CONTEXT_EVAL));
             } else {
                 // separate threads that run in parallel; invoking thread waits for completion
                 RContext.EvalThread[] threads = new RContext.EvalThread[pc];
                 for (int i = 0; i < pc; i++) {
-                    ContextInfo info = createContextInfo(contextKind, args);
+                    ContextInfo info = createContextInfo(contextKind, EMPTY);
                     threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
                 }
                 for (int i = 0; i < pc; i++) {
