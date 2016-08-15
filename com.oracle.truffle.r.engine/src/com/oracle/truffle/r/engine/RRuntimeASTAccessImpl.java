@@ -22,6 +22,12 @@
  */
 package com.oracle.truffle.r.engine;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,6 +37,8 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.engine.shell.RCommand;
+import com.oracle.truffle.r.engine.shell.RscriptCommand;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
@@ -656,6 +664,108 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public boolean disableDebug(RFunction func) {
         return DebugHandling.undebug(func);
+    }
+
+    @Override
+    public Object rcommandMain(String[] args, boolean intern) {
+        IORedirect redirect = handleIORedirect(args, intern);
+        Object result = RCommand.doMain(redirect.args, false, redirect.in, redirect.out);
+        return redirect.getInternResult(result);
+    }
+
+    @Override
+    public Object rscriptMain(String[] args, boolean intern) {
+        IORedirect redirect = handleIORedirect(args, intern);
+        Object result = RscriptCommand.doMain(redirect.args, false, redirect.in, redirect.out);
+        return redirect.getInternResult(result);
+    }
+
+    private static final class IORedirect {
+        private final InputStream in;
+        private final OutputStream out;
+        private final String[] args;
+        private final boolean intern;
+
+        private IORedirect(InputStream in, OutputStream out, String[] args, boolean intern) {
+            this.in = in;
+            this.out = out;
+            this.args = args;
+            this.intern = intern;
+        }
+
+        private Object getInternResult(Object result) {
+            if (intern) {
+                int status = (int) result;
+                ByteArrayOutputStream bos = (ByteArrayOutputStream) out;
+                String s = new String(bos.toByteArray());
+                RStringVector sresult = s.length() == 0 ? RDataFactory.createEmptyStringVector() : RDataFactory.createStringVectorFromScalar(s);
+                if (status != 0) {
+                    sresult.setAttr("status", RDataFactory.createIntVectorFromScalar(status));
+                }
+                return sresult;
+            } else {
+                return result;
+            }
+
+        }
+    }
+
+    private static IORedirect handleIORedirect(String[] args, boolean intern) {
+        /*
+         * This code is primarily intended to handle the "system" .Internal so the possible I/O
+         * redirects are taken from the system/system2 R code. N.B. stdout redirection is never set
+         * if "intern == true. Both input and output can be redirected to /dev/null.
+         */
+        InputStream in = System.in;
+        OutputStream out = System.out;
+        ArrayList<String> newArgsList = new ArrayList<>();
+        int i = 0;
+        while (i < args.length) {
+            String arg = args[i];
+            if (arg.equals("<")) {
+                String file;
+                if (i < args.length - 1) {
+                    file = Utils.tildeExpand(Utils.unShQuote(args[i + 1]));
+                } else {
+                    throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "redirect missing");
+                }
+                try {
+                    in = new FileInputStream(file);
+                } catch (IOException ex) {
+                    throw RError.error(RError.NO_CALLER, RError.Message.NO_SUCH_FILE, file);
+                }
+                arg = null;
+                i++;
+            } else if (arg.startsWith("2>")) {
+                if (arg.equals("2>&1")) {
+                    // happens anyway
+                } else {
+                    assert !intern;
+                    throw RError.nyi(RError.NO_CALLER, "stderr redirect");
+                }
+                arg = null;
+            } else if (arg.startsWith(">")) {
+                assert !intern;
+                arg = null;
+                throw RError.nyi(RError.NO_CALLER, "stdout redirect");
+            }
+            if (arg != null) {
+                newArgsList.add(arg);
+            }
+            i++;
+        }
+        String[] newArgs;
+        if (newArgsList.size() == args.length) {
+            newArgs = args;
+        } else {
+            newArgs = new String[newArgsList.size()];
+            newArgsList.toArray(newArgs);
+        }
+        // to implement intern, we create a ByteArryOutputStream to capture the output
+        if (intern) {
+            out = new ByteArrayOutputStream();
+        }
+        return new IORedirect(in, out, newArgs, intern);
     }
 
 }

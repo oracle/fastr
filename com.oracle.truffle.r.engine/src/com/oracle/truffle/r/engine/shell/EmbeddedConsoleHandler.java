@@ -58,7 +58,7 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
                 if (startParams.getNoReadline()) {
                     delegate = new DefaultConsoleHandler(System.in, System.out);
                 } else {
-                    delegate = new JLineConsoleHandler(startParams);
+                    delegate = new JLineConsoleHandler(startParams, System.in, System.out);
                 }
             }
         }

@@ -29,6 +29,8 @@ import java.io.Console;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.List;
 
@@ -66,12 +68,16 @@ public class RCommand {
     // CheckStyle: stop system..print check
 
     public static void main(String[] args) {
+        doMain(args, true, System.in, System.out);
+        // never returns
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    public static int doMain(String[] args, boolean initial, InputStream inStream, OutputStream outStream) {
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
         options.printHelpAndVersion();
-        PolyglotEngine vm = createPolyglotEngineFromCommandLine(options, false);
-        // never returns
-        readEvalPrint(vm);
-        throw RInternalError.shouldNotReachHere();
+        PolyglotEngine vm = createPolyglotEngineFromCommandLine(options, false, initial, inStream, outStream);
+        return readEvalPrint(vm);
     }
 
     /**
@@ -81,7 +87,7 @@ public class RCommand {
         return input.replace("~+~", " ");
     }
 
-    static PolyglotEngine createPolyglotEngineFromCommandLine(RCmdOptions options, boolean embedded) {
+    static PolyglotEngine createPolyglotEngineFromCommandLine(RCmdOptions options, boolean embedded, boolean initial, InputStream inStream, OutputStream outStream) {
         RStartParams rsp = new RStartParams(options, embedded);
 
         String fileArg = options.getString(FILE);
@@ -120,13 +126,21 @@ public class RCommand {
             List<String> lines;
             String filePath;
             try {
-                File file = new File(fileArg);
+                /*
+                 * If initial==false, ~ expansion will not have been done and the open will fail.
+                 * It's harmless to always do it.
+                 */
+                File file = new File(Utils.tildeExpand(fileArg));
                 lines = Files.readAllLines(file.toPath());
                 filePath = file.getCanonicalPath();
             } catch (IOException e) {
-                throw Utils.rSuicide("cannot open file '" + fileArg + "': " + e.getMessage());
+                if (initial) {
+                    throw Utils.rSuicide(String.format(RError.Message.NO_SUCH_FILE.message, fileArg));
+                } else {
+                    throw RError.error(RError.NO_CALLER, RError.Message.NO_SUCH_FILE, fileArg);
+                }
             }
-            consoleHandler = new StringConsoleHandler(lines, System.out, filePath);
+            consoleHandler = new StringConsoleHandler(lines, outStream, filePath);
         } else if (options.getStringList(EXPR) != null) {
             List<String> exprs = options.getStringList(EXPR);
             for (int i = 0; i < exprs.size(); i++) {
@@ -137,7 +151,7 @@ public class RCommand {
             }
             // cf GNU R
             rsp.setInteractive(false);
-            consoleHandler = new StringConsoleHandler(exprs, System.out, RSource.Internal.EXPRESSION_INPUT.string);
+            consoleHandler = new StringConsoleHandler(exprs, outStream, RSource.Internal.EXPRESSION_INPUT.string);
         } else {
             /*
              * GnuR behavior differs from the manual entry for {@code interactive} in that {@code
@@ -148,23 +162,28 @@ public class RCommand {
              * should be lazy, as these may not be necessary and can cause hangs if stdin has been
              * redirected.
              */
-            Console sysConsole = System.console();
+            Console sysConsole = System.console(); // TODO fix for context sessions
             boolean isInteractive = options.getBoolean(INTERACTIVE) || sysConsole != null;
             if (!isInteractive && rsp.getSaveAction() != SA_TYPE.SAVE && rsp.getSaveAction() != SA_TYPE.NOSAVE) {
-                throw Utils.rSuicide("you must specify '--save', '--no-save' or '--vanilla'");
+                String msg = "you must specify '--save', '--no-save' or '--vanilla'";
+                if (initial) {
+                    throw Utils.rSuicide(msg);
+                } else {
+                    throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, msg);
+                }
             }
             if (embedded) {
                 consoleHandler = new EmbeddedConsoleHandler(rsp);
             } else {
                 boolean useReadLine = !rsp.getNoReadline();
                 if (useReadLine) {
-                    consoleHandler = new JLineConsoleHandler(rsp);
+                    consoleHandler = new JLineConsoleHandler(rsp, inStream, outStream);
                 } else {
-                    consoleHandler = new DefaultConsoleHandler(System.in, System.out);
+                    consoleHandler = new DefaultConsoleHandler(inStream, outStream);
                 }
             }
         }
-        return ContextInfo.create(rsp, ContextKind.SHARE_NOTHING, null, consoleHandler).createVM();
+        return ContextInfo.create(rsp, ContextKind.SHARE_NOTHING, initial ? null : RContext.getInstance(), consoleHandler).createVM();
     }
 
     private static final Source GET_ECHO = RSource.fromTextInternal("invisible(getOption('echo'))", RSource.Internal.GET_ECHO);
@@ -181,9 +200,10 @@ public class RCommand {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    static void readEvalPrint(PolyglotEngine vm) {
+    static int readEvalPrint(PolyglotEngine vm) {
         int lastStatus = 0;
-        ConsoleHandler consoleHandler = ContextInfo.getContextInfo(vm).getConsoleHandler();
+        ContextInfo contextInfo = ContextInfo.getContextInfo(vm);
+        ConsoleHandler consoleHandler = contextInfo.getConsoleHandler();
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             REPL: for (;;) {
@@ -241,8 +261,13 @@ public class RCommand {
                                 throw (RuntimeException) cause;
                             } else if (cause instanceof ExitException) {
                                 // usually from quit
-                                vm.dispose();
-                                Utils.systemExit(((ExitException) cause).getStatus());
+                                int status = ((ExitException) cause).getStatus();
+                                if (contextInfo.getParent() == null) {
+                                    vm.dispose();
+                                    Utils.systemExit(status);
+                                } else {
+                                    return status;
+                                }
                             } else {
                                 RInternalError.reportErrorAndConsoleLog(cause, consoleHandler, 0);
                                 // We continue the repl even though the system may be broken
@@ -262,13 +287,18 @@ public class RCommand {
             } catch (Throwable e) {
                 if (e.getCause() instanceof ExitException) {
                     // normal quit, but with exit code based on lastStatus
-                    Utils.systemExit(lastStatus);
+                    if (contextInfo.getParent() == null) {
+                        Utils.systemExit(lastStatus);
+                    } else {
+                        return lastStatus;
+                    }
                 }
                 throw RInternalError.shouldNotReachHere(e);
             }
         } finally {
             vm.dispose();
         }
+        return 0;
     }
 
     private static boolean doEcho(PolyglotEngine vm) {
