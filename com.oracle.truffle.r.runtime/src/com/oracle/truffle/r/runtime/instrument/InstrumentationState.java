@@ -22,21 +22,22 @@
  */
 package com.oracle.truffle.r.runtime.instrument;
 
-import java.io.PrintWriter;
+import java.io.PrintStream;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.WeakHashMap;
-
+import java.util.concurrent.ConcurrentHashMap;
 import com.oracle.truffle.api.instrumentation.EventBinding;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.RCleanUp;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.tools.Profiler;
 
 /**
- * The tracingState is a global variable in R, so we store it (and the associated listener objects)
- * in the {@link RContext}. We also store related {@code debug} state, as that is also context
- * specific.
+ * Collects together all the context-specific state related to profiling, instrumentation.
  *
  */
 public final class InstrumentationState implements RContext.ContextState {
@@ -63,17 +64,9 @@ public final class InstrumentationState implements RContext.ContextState {
      */
     private Profiler profiler;
 
-    /**
-     * The {@link RprofState} state, if any, associated with this {@link RContext}.
-     */
-    private final RprofState rprofState;
+    private TracememContext tracememContext;
 
-    /**
-     * The {@link RprofmemState} state, if any, associated with this {@link RContext}.
-     */
-    private final RprofmemState rprofmemState;
-
-    private final TracememContext tracememContext;
+    Map<String, RprofState> rprofStates = new ConcurrentHashMap<>(7);
 
     /**
      * State used by the {@code tracemem} built-in.
@@ -92,7 +85,7 @@ public final class InstrumentationState implements RContext.ContextState {
     /**
      * The {@link BrowserState} state, if any, associated with this {@link RContext}.
      */
-    private final BrowserState browserState;
+    private BrowserState browserState;
 
     /**
      * Whether debugging is globally disabled in this {@link RContext}. Used to (temporarily)
@@ -101,107 +94,28 @@ public final class InstrumentationState implements RContext.ContextState {
      */
     private boolean debugGloballyDisabled;
 
-    private abstract static class RprofAdapter {
-        protected PrintWriter out;
+    public abstract static class RprofState implements CleanupHandler {
+        private PrintStream out;
+
+        protected RprofState() {
+            RCleanUp.registerCleanupHandler(this);
+        }
 
         /**
          * Return current output or {@code null} if not profiling.
          */
-        public PrintWriter out() {
+        public PrintStream out() {
             return out;
         }
 
-        public void setOut(PrintWriter out) {
+        public void setOut(PrintStream out) {
             this.out = out;
         }
-    }
 
-    /**
-     * State used by {@code Rprof}.
-     *
-     */
-    public static final class RprofState extends RprofAdapter {
-        private Thread profileThread;
-        private ExecutionEventListener statementListener;
-        private long intervalInMillis;
-        private boolean lineProfiling;
-        private MemoryQuad memoryQuad;
-
-        public static final class MemoryQuad {
-            public long smallV;
-            public long largeV;
-            public long nodes;
-            public long copied;
-
-            public MemoryQuad copyAndClear() {
-                MemoryQuad result = new MemoryQuad();
-                result.copied = copied;
-                result.largeV = largeV;
-                result.smallV = smallV;
-                result.nodes = nodes;
-                copied = 0;
-                largeV = 0;
-                smallV = 0;
-                nodes = 0;
-                return result;
-            }
-        }
-
-        public void initialize(PrintWriter outA, Thread profileThreadA, ExecutionEventListener statementListenerA, long intervalInMillisA,
-                        boolean lineProfilingA, boolean memoryProfilingA) {
-            this.out = outA;
-            this.profileThread = profileThreadA;
-            this.statementListener = statementListenerA;
-            this.intervalInMillis = intervalInMillisA;
-            this.lineProfiling = lineProfilingA;
-            this.memoryQuad = memoryProfilingA ? new MemoryQuad() : null;
-        }
-
-        public boolean lineProfiling() {
-            return lineProfiling;
-        }
-
-        public boolean memoryProfiling() {
-            return memoryQuad != null;
-        }
-
-        public MemoryQuad memoryQuad() {
-            return memoryQuad;
-        }
-
-        public long intervalInMillis() {
-            return intervalInMillis;
-        }
-
-        public ExecutionEventListener statementListener() {
-            return statementListener;
-        }
-
-        public Thread profileThread() {
-            return profileThread;
-        }
-
-    }
-
-    public static final class RprofmemState extends RprofAdapter {
-        private double threshold;
-        private int pageCount;
-
-        public void initialize(PrintWriter outA, double thresholdA) {
-            this.out = outA;
-            this.threshold = thresholdA;
-        }
-
-        public double threshold() {
-            return threshold;
-        }
-
-        public int pageCount() {
-            return pageCount;
-        }
-
-        public void setPageCount(int pageCount) {
-            this.pageCount = pageCount;
+        public void closeAndResetOut() {
+            out.flush();
+            out.close();
+            out = null;
         }
     }
 
@@ -226,12 +140,17 @@ public final class InstrumentationState implements RContext.ContextState {
         }
     }
 
+    /**
+     * An interface that can be used to register an action to be taken when the system shuts down as
+     * part of the {@code R_Cleanup}.
+     *
+     */
+    public interface CleanupHandler {
+        void cleanup(int status);
+    }
+
     private InstrumentationState(Instrumenter instrumenter) {
         this.instrumenter = instrumenter;
-        this.rprofState = new RprofState();
-        this.rprofmemState = new RprofmemState();
-        this.tracememContext = new TracememContext();
-        this.browserState = new BrowserState();
     }
 
     public void putTraceBinding(SourceSection ss, EventBinding<?> binding) {
@@ -267,11 +186,11 @@ public final class InstrumentationState implements RContext.ContextState {
         return tracingState;
     }
 
-    public void setProfiler(Profiler profiler) {
-        this.profiler = profiler;
-    }
-
     public Profiler getProfiler() {
+        if (profiler == null) {
+            PolyglotEngine vm = RContext.getInstance().getVM();
+            profiler = Profiler.find(vm);
+        }
         return profiler;
     }
 
@@ -279,19 +198,26 @@ public final class InstrumentationState implements RContext.ContextState {
         return instrumenter;
     }
 
-    public RprofState getRprof() {
-        return rprofState;
+    public RprofState getRprofState(String name) {
+        RprofState state = rprofStates.get(name);
+        return state;
     }
 
-    public RprofmemState getRprofmem() {
-        return rprofmemState;
+    public void setRprofState(String name, RprofState state) {
+        rprofStates.put(name, state);
     }
 
     public TracememContext getTracemem() {
+        if (tracememContext == null) {
+            tracememContext = new TracememContext();
+        }
         return tracememContext;
     }
 
     public BrowserState getBrowserState() {
+        if (browserState == null) {
+            browserState = new BrowserState();
+        }
         return browserState;
     }
 

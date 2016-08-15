@@ -24,27 +24,22 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.Arrays;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -505,7 +500,7 @@ public final class RDataFactory {
     @CompilationFinal private static boolean enabled;
     private static final CyclicAssumption noAllocationTracingAssumption = new CyclicAssumption("data allocation");
 
-    public static void setAllocationTracing(boolean newState) {
+    public static void setTracingState(boolean newState) {
         if (enabled != newState) {
             noAllocationTracingAssumption.invalidate();
             enabled = newState;
@@ -541,64 +536,4 @@ public final class RDataFactory {
         listeners.addLast(listener);
     }
 
-    /*
-     * (Legacy) support for R:PerfStats option. This does produce more information than Rprofmem
-     * regarding the types and length of the objects being allocated, but it does not record where
-     * in R the allocation took place.
-     */
-    static {
-        RPerfStats.register(new PerfHandler());
-    }
-
-    private static class PerfHandler implements RPerfStats.Handler, Listener {
-        private static Map<Class<?>, RPerfStats.Histogram> histMap;
-
-        @Override
-        public void initialize(String optionData) {
-            histMap = new HashMap<>();
-            addListener(this);
-            setAllocationTracing(true);
-        }
-
-        @Override
-        public String getName() {
-            return "datafactory";
-        }
-
-        @Override
-        @TruffleBoundary
-        public void reportAllocation(RTypedValue data) {
-            Class<?> klass = data.getClass();
-            boolean isBounded = data instanceof RAbstractVector;
-            RPerfStats.Histogram hist = histMap.get(klass);
-            if (hist == null) {
-                hist = new RPerfStats.Histogram(isBounded ? 10 : 1);
-                histMap.put(klass, hist);
-            }
-            int length = isBounded ? ((RAbstractVector) data).getLength() : 0;
-            hist.inc(length);
-        }
-
-        @Override
-        public void report() {
-            RPerfStats.out().println("Scalar types");
-            for (Map.Entry<Class<?>, RPerfStats.Histogram> entry : histMap.entrySet()) {
-                RPerfStats.Histogram hist = entry.getValue();
-                if (hist.numBuckets() == 1) {
-                    RPerfStats.out().printf("%s: %d%n", entry.getKey().getSimpleName(), hist.getTotalCount());
-                }
-            }
-            RPerfStats.out().println();
-            RPerfStats.out().println("Vector types");
-            for (Map.Entry<Class<?>, RPerfStats.Histogram> entry : histMap.entrySet()) {
-                RPerfStats.Histogram hist = entry.getValue();
-                if (hist.numBuckets() > 1) {
-                    RPerfStats.out().printf("%s: %d, max size %d%n", entry.getKey().getSimpleName(), hist.getTotalCount(), hist.getMaxSize());
-                    entry.getValue().report();
-                }
-            }
-            RPerfStats.out().println();
-        }
-
-    }
 }

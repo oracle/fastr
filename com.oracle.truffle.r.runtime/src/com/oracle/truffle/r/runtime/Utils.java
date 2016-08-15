@@ -173,11 +173,8 @@ public final class Utils {
      * This the real, final, non-overrideable, exit of the entire R system. TODO well, modulo how
      * quit() is interpreted when R is started implicitly from a Polyglot shell that is running
      * other languages.
-     *
-     * @param status
      */
     public static void systemExit(int status) {
-        RPerfStats.report();
         System.exit(status);
     }
 
