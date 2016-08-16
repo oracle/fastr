@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -35,6 +36,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
@@ -55,12 +57,11 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-// TODO Implement properly, this is a simple implementation that works when the environment doesn't matter
+// TODO Implement completely, this is a simple implementation that works when the envir argument is ignored
 @RBuiltin(name = "do.call", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"what", "args", "envir"}, behavior = COMPLEX)
 public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNodeChildren {
 
@@ -68,7 +69,6 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
     @Child private GetCallerFrameNode getCallerFrame;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-    private final BranchProfile errorProfile = BranchProfile.create();
     private final BranchProfile containsRLanguageProfile = BranchProfile.create();
     private final BranchProfile containsRSymbolProfile = BranchProfile.create();
 
@@ -76,29 +76,37 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
     @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier);
     @Child private FrameSlotNode slot = FrameSlotNode.createTemp(argsIdentifier, true);
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("what").defaultError(RError.Message.MUST_BE_STRING_OR_FUNCTION, "what").mustBe(instanceOf(RFunction.class).or(stringValue()));
+        casts.arg("args").mustBe(instanceOf(RList.class));
+        casts.arg("envir").mustBe(instanceOf(REnvironment.class));
+
+    }
+
     @Specialization
-    protected Object doDoCall(VirtualFrame frame, Object what, RList argsAsList, REnvironment env) {
-        /*
-         * Step 1: handle the variants of "what" (could be done in extra specializations) and assign
-         * "func".
-         */
+    protected Object doCall(VirtualFrame frame, String what, RList argsAsList, REnvironment env) {
         RFunction func;
-        if (what instanceof RFunction) {
-            func = (RFunction) what;
-        } else if (what instanceof String || (what instanceof RAbstractStringVector && ((RAbstractStringVector) what).getLength() == 1)) {
-            if (getNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getNode = insert(GetNodeGen.create(null));
-            }
-            func = (RFunction) getNode.execute(frame, what, env, RType.Function.getName(), true);
-        } else {
-            errorProfile.enter();
+        if (getNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getNode = insert(GetNodeGen.create(null));
+        }
+        func = (RFunction) getNode.execute(frame, what, env, RType.Function.getName(), true);
+        return doCall(frame, func, argsAsList, env);
+    }
+
+    @Specialization
+    protected Object doCall(VirtualFrame frame, RStringVector what, RList argsAsList, REnvironment env) {
+        if (what.getLength() != 1) {
             throw RError.error(this, RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
         }
+        return doCall(frame, what.getDataAt(0), argsAsList, env);
+    }
 
+    @Specialization
+    protected Object doCall(VirtualFrame frame, RFunction func, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
         /*
-         * Step 2: To re-create the illusion of a normal call, turn the values in argsAsList into
-         * promises.
+         * To re-create the illusion of a normal call, turn the values in argsAsList into promises.
          */
         Object[] argValues = argsAsList.getDataCopy();
         RStringVector n = argsAsList.getNames(attrProfiles);

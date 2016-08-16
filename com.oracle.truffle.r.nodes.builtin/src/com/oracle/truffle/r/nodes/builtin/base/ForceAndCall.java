@@ -22,12 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -56,7 +56,9 @@ public abstract class ForceAndCall extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(0);
+        casts.arg("n").asIntegerVector().findFirst();
+        // TODO other types are possible for FUN
+        casts.arg("FUN").mustBe(instanceOf(RFunction.class));
     }
 
     @Specialization(guards = "cachedN == n")
@@ -105,9 +107,4 @@ public abstract class ForceAndCall extends RBuiltinNode {
         throw RError.nyi(this, "generic case of forceAndCall");
     }
 
-    @SuppressWarnings("unused")
-    @Fallback
-    protected Object forceAndCall(Object n, Object fun, RArgsValuesAndNames args) {
-        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
-    }
 }
