@@ -112,7 +112,7 @@ public class TestBuiltin_strsplit extends TestBase {
         assertEval("{ strsplit(\"a,h,o,j\", split=\",\") }");
         assertEval("{ strsplit(\"abc\", \".\", fixed = TRUE, perl=FALSE) }");
         // Warning text formats differently
-        assertEval("{ strsplit(\"abc\", \".\", fixed = TRUE, perl=TRUE) }");
+        assertEval(Output.IgnoreWarningContext, "{ strsplit(\"abc\", \".\", fixed = TRUE, perl=TRUE) }");
         assertEval("{ strsplit(\"abc\", \".\", fixed = FALSE, perl=FALSE) }");
         assertEval("{ strsplit(\"abc\", \".\", fixed = FALSE, perl=TRUE) }");
 
