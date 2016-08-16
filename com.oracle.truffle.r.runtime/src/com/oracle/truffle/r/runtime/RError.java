@@ -688,6 +688,9 @@ public final class RError extends RuntimeException {
         ARGUMENTS_REQUIRED_COUNT("%d arguments to '%s' which requires %d"),
         ARGUMENT_LENGTH_0("argument of length 0"),
         MUST_BE_VECTOR_BUT_WAS("'%s' must be of a vector type, was '%s'"),
+        SYSTEM_CHAR_ARG("non-empty character argument expected"),
+        SYSTEM_INTERN_NOT_NA("'intern' must be logical and not NA"),
+        NO_SUCH_FILE("cannot open file '%s': No such file or directory"),
         CANNOT_BE_LENGTH("'%s' cannot be of length %d");
 
         public final String message;

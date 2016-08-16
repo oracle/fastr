@@ -44,6 +44,8 @@ import com.oracle.truffle.r.nodes.builtin.base.foreign.DotC;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.DotCNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.ForeignFunctions;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.ForeignFunctionsFactory;
+import com.oracle.truffle.r.nodes.builtin.base.system.SystemFunction;
+import com.oracle.truffle.r.nodes.builtin.base.system.SystemFunctionNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContext;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebug;
@@ -278,6 +280,8 @@ public class BasePackage extends RBuiltinPackage {
         add(WithVisible.class, WithVisibleNodeGen::create);
         add(Exists.class, ExistsNodeGen::create);
         add(Expression.class, ExpressionNodeGen::create);
+        add(FastRContext.R.class, FastRContextFactory.RNodeGen::create);
+        add(FastRContext.Rscript.class, FastRContextFactory.RscriptNodeGen::create);
         add(FastRContext.CloseChannel.class, FastRContextFactory.CloseChannelNodeGen::create);
         add(FastRContext.CreateChannel.class, FastRContextFactory.CreateChannelNodeGen::create);
         add(FastRContext.Eval.class, FastRContextFactory.EvalNodeGen::create);

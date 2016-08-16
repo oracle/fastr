@@ -304,6 +304,14 @@ public final class Utils {
         return tildeExpand(path, false);
     }
 
+    public static String unShQuote(String s) {
+        if (s.charAt(0) == '\'') {
+            return s.substring(1, s.length() - 1);
+        } else {
+            return s;
+        }
+    }
+
     /**
      * Retrieve a frame from the call stack. N.B. To avoid the iterator overhead use
      * {@link #getActualCurrentFrame()} for the current frame.
