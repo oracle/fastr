@@ -57,8 +57,8 @@ public abstract class ForceAndCall extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("n").asIntegerVector().findFirst();
-        // TODO other types are possible for FUN
-        casts.arg("FUN").mustBe(instanceOf(RFunction.class));
+        // TODO other types are possible for FUN that we don't yet handle
+        casts.arg("FUN").mustBe(instanceOf(RFunction.class), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
     @Specialization(guards = "cachedN == n")
