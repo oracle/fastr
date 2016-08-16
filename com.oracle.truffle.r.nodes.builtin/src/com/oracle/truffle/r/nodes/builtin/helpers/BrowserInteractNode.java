@@ -72,7 +72,8 @@ public abstract class BrowserInteractNode extends RNode {
         String savedPrompt = ch.getPrompt();
         ch.setPrompt(browserPrompt(RArguments.getDepth(frame)));
         RFunction caller = RArguments.getFunction(frame);
-        boolean callerIsDebugged = DebugHandling.isDebugged(caller);
+        // we may be at top level where there is not caller
+        boolean callerIsDebugged = caller == null ? false : DebugHandling.isDebugged(caller);
         int exitMode = NEXT;
         try {
             browserState.setInBrowser(true);
@@ -94,14 +95,16 @@ public abstract class BrowserInteractNode extends RNode {
                         break LW;
                     case "n":
                         exitMode = NEXT;
-                        if (!callerIsDebugged) {
+                        // don't enable debugging if at top level
+                        if (!callerIsDebugged && caller != null) {
                             DebugHandling.enableDebug(caller, "", "", true, true);
                         }
                         browserState.setLastEmptyLineCommand("n");
                         break LW;
                     case "s":
                         exitMode = STEP;
-                        if (!callerIsDebugged) {
+                        // don't enable debugging if at top level
+                        if (!callerIsDebugged & caller != null) {
                             DebugHandling.enableDebug(caller, "", "", true, true);
                         }
                         browserState.setLastEmptyLineCommand("s");
