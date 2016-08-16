@@ -59,6 +59,11 @@ public abstract class CastSymbolNode extends CastBaseNode {
     }
 
     @Specialization
+    protected RSymbol doSymbol(RSymbol value) {
+        return value;
+    }
+
+    @Specialization
     protected RSymbol doInteger(int value) {
         return asSymbol(toString(value));
     }

@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class RDataFactory {
 
@@ -396,7 +396,7 @@ public final class RDataFactory {
         return createSymbol(name.intern());
     }
 
-    public static RLanguage createLanguage(RNode rep) {
+    public static RLanguage createLanguage(RBaseNode rep) {
         return traceDataCreated(new RLanguage(rep));
     }
 
