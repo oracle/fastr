@@ -1,6 +1,6 @@
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 #java8 : {name : oraclejdk, version : "8u66", platformspecific: true}
-java8 : {name : labsjdk, version : "8u92-jvmci-0.17", platformspecific: true}
+java8 : {name : labsjdk, version : "8u92-jvmci-0.19", platformspecific: true}
 
 common : {
   packages : {
