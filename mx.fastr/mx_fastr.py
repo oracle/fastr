@@ -486,23 +486,6 @@ def rcmplib(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
-def _cran_test_project():
-    return 'com.oracle.truffle.r.test.cran'
-
-def _cran_test_project_dir():
-    return mx.project(_cran_test_project()).dir
-
-def installpkgs(args):
-    _installpkgs(args)
-
-def _installpkgs_script():
-    cran_test = _cran_test_project_dir()
-    return join(cran_test, 'r', 'install.cran.packages.R')
-
-def _installpkgs(args, **kwargs):
-    script = _installpkgs_script()
-    return rscript([script] + args, **kwargs)
-
 _commands = {
     'r' : [rshell, '[options]'],
     'R' : [rshell, '[options]'],
@@ -520,12 +503,11 @@ _commands = {
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
     'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep-lite | --sweep-total'],
     'rcmplib' : [rcmplib, ['options']],
-    'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'rembed' : [rembed, '[options]'],
-    'installpkgs' : [installpkgs, '[options]'],
-    'installcran' : [installpkgs, '[options]'],
     'r-cp' : [r_classpath, '[options]'],
+    'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
+    'installpkgs' : [mx_fastr_pkgs.installpkgs, '[options]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)
