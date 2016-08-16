@@ -40,5 +40,7 @@ public class TestBuiltin_asfunction extends TestBase {
         assertEval("{ as.function(alist(\"foo\"))() }");
         assertEval("{ as.function(alist(7+42i))() }");
         assertEval("{ as.function(alist(as.raw(7)))() }");
+        assertEval(Output.IgnoreErrorContext, "{ .Internal(as.function.default(alist(a+b), \"foo\")) }");
+        assertEval(Output.IgnoreErrorContext, "{ .Internal(as.function.default(function() 42, parent.frame())) }");
     }
 }

@@ -368,7 +368,7 @@ public final class RError extends RuntimeException {
         // below: not exactly GNU-R message
         PROMISE_CYCLE("promise already under evaluation: recursive default argument reference or earlier problems?"),
         MISSING_ARGUMENTS("'missing' can only be used for arguments"),
-        INVALID_ENVIRONMENT("invalid environment specified"),
+        INVALID_ENVIRONMENT("invalid environment"),
         ENVIR_NOT_LENGTH_ONE("numeric 'envir' arg not of length one"),
         FMT_NOT_CHARACTER("'fmt' is not a character vector"),
         UNSUPPORTED_TYPE("unsupported type"),
