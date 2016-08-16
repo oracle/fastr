@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -50,10 +51,11 @@ public class BrowserFunctions {
 
     private static final class HelperState {
 
-        private final String text;
+        // docs state that "text" is a string but in reality it can be anything
+        private final Object text;
         private final Object condition;
 
-        private HelperState(String text, Object condition) {
+        private HelperState(Object text, Object condition) {
             this.text = text;
             this.condition = condition;
         }
@@ -73,19 +75,22 @@ public class BrowserFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toInteger(3);
+            // TODO: add support for conditions conditions
+            casts.arg("condition").mustBe(nullValue(), RError.Message.GENERIC, "Only NULL conditions currently supported in browser");
+            casts.arg("expr").asLogicalVector().findFirst();
+            casts.arg("skipCalls").asIntegerVector().findFirst();
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RNull browser(VirtualFrame frame, String text, RNull condition, byte expr, int skipCalls) {
+        protected RNull browser(VirtualFrame frame, Object text, RNull condition, byte expr, int skipCalls) {
             if (RRuntime.fromLogical(expr)) {
                 try {
                     helperState.add(new HelperState(text, condition));
                     MaterializedFrame mFrame = frame.materialize();
                     RCaller caller = RArguments.getCall(mFrame);
                     String callerString;
-                    if (caller == null) {
+                    if (caller == null || (!caller.isValidCaller() && caller.getDepth() == 0 && caller.getParent() == null)) {
                         callerString = "top level";
                     } else {
                         callerString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
@@ -103,13 +108,15 @@ public class BrowserFunctions {
 
     private abstract static class RetrieveAdapter extends RBuiltinNode {
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("n").asIntegerVector().findFirst().mustBe(gt(0), Message.POSITIVE_CONTEXTS);
+        }
+
         /**
          * GnuR objects to indices <= 0 but allows positive indices that are out of range.
          */
         protected HelperState getHelperState(int n) {
-            if (n <= 0) {
-                throw RError.error(this, Message.POSITIVE_CONTEXTS);
-            }
             int nn = n;
             if (nn > helperState.size()) {
                 nn = helperState.size();
@@ -123,15 +130,10 @@ public class BrowserFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected String browserText(int n) {
+        protected Object browserText(int n) {
             return getHelperState(n).text;
         }
 
-        @Specialization
-        @TruffleBoundary
-        protected String browserText(double n) {
-            return getHelperState((int) n).text;
-        }
     }
 
     @RBuiltin(name = "browserCondition", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
@@ -143,11 +145,6 @@ public class BrowserFunctions {
             return getHelperState(n).condition;
         }
 
-        @Specialization
-        @TruffleBoundary
-        protected Object browserCondition(double n) {
-            return getHelperState((int) n).condition;
-        }
     }
 
     @RBuiltin(name = "browserSetDebug", visibility = OFF, kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
