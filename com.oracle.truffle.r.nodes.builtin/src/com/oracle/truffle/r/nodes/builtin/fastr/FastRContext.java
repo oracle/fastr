@@ -58,18 +58,26 @@ public class FastRContext {
 
     private static final String[] EMPTY = new String[0];
 
-    private abstract static class CastHelper extends RBuiltinNode {
-        protected void exprs(CastBuilder casts) {
+    private static final class Casts {
+        private static void exprs(CastBuilder casts) {
             casts.arg("exprs").asStringVector().mustBe(nullValue().not().and(notEmpty()));
         }
 
-        protected void kind(CastBuilder casts) {
+        private static void kind(CastBuilder casts) {
             casts.arg("kind").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().notNA().mustBe(
                             equalTo(RContext.ContextKind.SHARE_NOTHING.name()).or(equalTo(RContext.ContextKind.SHARE_PARENT_RW.name()).or(equalTo(RContext.ContextKind.SHARE_PARENT_RO.name()))));
         }
 
-        protected void pc(CastBuilder casts) {
+        private static void pc(CastBuilder casts) {
             casts.arg("pc").asIntegerVector().findFirst().notNA().mustBe(gt(0));
+        }
+
+        private static void key(CastBuilder casts) {
+            casts.arg("key").asIntegerVector().mustBe(nullValue().not().and(notEmpty())).findFirst();
+        }
+
+        private static void id(CastBuilder casts) {
+            casts.arg("id").asIntegerVector().mustBe(nullValue().not().and(notEmpty())).findFirst();
         }
     }
 
@@ -89,7 +97,7 @@ public class FastRContext {
      *
      */
     @RBuiltin(name = ".fastr.context.spawn", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind"}, behavior = COMPLEX)
-    public abstract static class Spawn extends CastHelper {
+    public abstract static class Spawn extends RBuiltinNode {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{RMissing.instance, 1, "SHARE_NOTHING"};
@@ -97,9 +105,9 @@ public class FastRContext {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            exprs(casts);
-            pc(casts);
-            kind(casts);
+            Casts.exprs(casts);
+            Casts.pc(casts);
+            Casts.kind(casts);
         }
 
         @Specialization
@@ -161,7 +169,7 @@ public class FastRContext {
      * attribute "error" if the evaluation threw an exception, in which case the result will be NA.
      */
     @RBuiltin(name = ".fastr.context.eval", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind"}, behavior = COMPLEX)
-    public abstract static class Eval extends CastHelper {
+    public abstract static class Eval extends RBuiltinNode {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{RMissing.instance, 1, "SHARE_NOTHING"};
@@ -169,9 +177,9 @@ public class FastRContext {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            exprs(casts);
-            pc(casts);
-            kind(casts);
+            Casts.exprs(casts);
+            Casts.pc(casts);
+            Casts.kind(casts);
         }
 
         @Specialization
@@ -209,7 +217,7 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.context.r", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "intern"}, behavior = COMPLEX)
-    public abstract static class R extends CastHelper {
+    public abstract static class R extends RBuiltinNode {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
@@ -236,7 +244,7 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.context.rscript", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "intern"}, behavior = COMPLEX)
-    public abstract static class Rscript extends CastHelper {
+    public abstract static class Rscript extends RBuiltinNode {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
@@ -263,22 +271,12 @@ public class FastRContext {
         return info;
     }
 
-    private abstract static class ChannelCastAdapter extends RBuiltinNode {
-        protected void key(CastBuilder casts) {
-            casts.arg("key").asIntegerVector().mustBe(nullValue().not().and(notEmpty())).findFirst();
-        }
-
-        protected void id(CastBuilder casts) {
-            casts.arg("id").asIntegerVector().mustBe(nullValue().not().and(notEmpty())).findFirst();
-        }
-    }
-
     @RBuiltin(name = ".fastr.channel.create", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)
-    public abstract static class CreateChannel extends ChannelCastAdapter {
+    public abstract static class CreateChannel extends RBuiltinNode {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            key(casts);
+            Casts.key(casts);
         }
 
         @Specialization
@@ -290,10 +288,10 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.get", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)
-    public abstract static class GetChannel extends ChannelCastAdapter {
+    public abstract static class GetChannel extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            key(casts);
+            Casts.key(casts);
         }
 
         @Specialization
@@ -305,10 +303,10 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.close", visibility = OFF, kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
-    public abstract static class CloseChannel extends ChannelCastAdapter {
+    public abstract static class CloseChannel extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            id(casts);
+            Casts.id(casts);
         }
 
         @Specialization
@@ -321,10 +319,10 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.send", visibility = OFF, kind = PRIMITIVE, parameterNames = {"id", "data"}, behavior = COMPLEX)
-    public abstract static class ChannelSend extends ChannelCastAdapter {
+    public abstract static class ChannelSend extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            id(casts);
+            Casts.id(casts);
         }
 
         @Specialization
@@ -337,10 +335,10 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.receive", kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
-    public abstract static class ChannelReceive extends ChannelCastAdapter {
+    public abstract static class ChannelReceive extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            id(casts);
+            Casts.id(casts);
         }
 
         @Specialization
@@ -352,10 +350,10 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.poll", kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
-    public abstract static class ChannelPoll extends ChannelCastAdapter {
+    public abstract static class ChannelPoll extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            id(casts);
+            Casts.id(casts);
         }
 
         @Specialization
