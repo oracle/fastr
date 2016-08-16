@@ -522,26 +522,46 @@ public final class CastBuilder {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RRaw || x instanceof RAbstractRawVector);
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         @Override
         public TypePredicateArgumentFilter<Object, String> scalarStringValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof String);
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         @Override
         public TypePredicateArgumentFilter<Object, Integer> scalarIntegerValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Integer);
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         @Override
         public TypePredicateArgumentFilter<Object, Double> scalarDoubleValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Double);
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         @Override
         public TypePredicateArgumentFilter<Object, Byte> scalarLogicalValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Byte);
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         @Override
         public TypePredicateArgumentFilter<Object, RComplex> scalarComplexValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RComplex);
