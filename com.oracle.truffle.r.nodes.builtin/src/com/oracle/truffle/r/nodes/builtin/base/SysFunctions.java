@@ -32,8 +32,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -369,6 +373,26 @@ public class SysFunctions {
             String[] data = new String[matches.size()];
             matches.toArray(data);
             return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
+    }
+
+    @RBuiltin(name = "setFileTime", kind = INTERNAL, parameterNames = {"path", "time"}, behavior = IO)
+    public abstract static class SysSetFileTime extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("path").mustBe(stringValue()).asStringVector().findFirst();
+            casts.arg("time").asIntegerVector().findFirst().notNA();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected byte sysSetFileTime(String path, int time) {
+            try {
+                Files.setLastModifiedTime(FileSystems.getDefault().getPath(path), FileTime.from(time, TimeUnit.SECONDS));
+                return RRuntime.LOGICAL_TRUE;
+            } catch (IOException ex) {
+                return RRuntime.LOGICAL_FALSE;
+            }
         }
     }
 }
