@@ -31,6 +31,11 @@ public abstract class CacheClass extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("class").defaultError(RError.Message.GENERIC, "invalid class argument to internal .class_cache").mustBe(stringValue()).asStringVector().findFirst();
+        // apparently, "extends" does not have to be a string vector (GNU R will not signal this
+        // error) - but it does not seem to make much sense and it's doubtful if it's worth
+        // supporting since this is internal function
+        casts.arg("extends").defaultError(RError.Message.GENERIC, "invalid extends argument to internal .class_cache").mustBe(stringValue()).asStringVector();
+
     }
 
     @TruffleBoundary
