@@ -110,6 +110,10 @@ public final class CastBuilder {
         return insert(index, CastToVectorNodeGen.create(false));
     }
 
+    public CastBuilder toVector(int index, boolean preserveNonVector) {
+        return insert(index, CastToVectorNodeGen.create(preserveNonVector));
+    }
+
     public CastBuilder toInteger(int index) {
         return toInteger(index, false, false, false);
     }
@@ -1416,6 +1420,11 @@ public final class CastBuilder {
 
         default CoercedPhaseBuilder<RAbstractVector, Object> asVector() {
             state().castBuilder().toVector(state().index());
+            return state().factory.newCoercedPhaseBuilder(this, Object.class);
+        }
+
+        default CoercedPhaseBuilder<RAbstractVector, Object> asVector(boolean preserveNonVector) {
+            state().castBuilder().toVector(state().index(), preserveNonVector);
             return state().factory.newCoercedPhaseBuilder(this, Object.class);
         }
 
