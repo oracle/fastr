@@ -64,6 +64,7 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -993,6 +994,10 @@ public final class CastBuilder {
 
         public static ArgumentTypeFilter<Object, Object> numericValue() {
             return integerValue().or(doubleValue()).or(logicalValue());
+        }
+
+        public static ArgumentTypeFilter<Object, Object> abstractVectorValue() {
+            return numericValue().or(stringValue()).or(complexValue()).or(rawValue()).or(instanceOf(RAbstractListVector.class));
         }
 
         public static TypePredicateArgumentFilter<Object, String> scalarStringValue() {
