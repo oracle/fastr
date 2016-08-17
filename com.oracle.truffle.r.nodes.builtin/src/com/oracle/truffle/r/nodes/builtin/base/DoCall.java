@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -44,8 +45,10 @@ import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -54,12 +57,14 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 // TODO Implement completely, this is a simple implementation that works when the envir argument is ignored
 @RBuiltin(name = "do.call", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"what", "args", "envir"}, behavior = COMPLEX)
@@ -78,10 +83,9 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("what").defaultError(RError.Message.MUST_BE_STRING_OR_FUNCTION, "what").mustBe(instanceOf(RFunction.class).or(stringValue()));
-        casts.arg("args").mustBe(instanceOf(RList.class));
-        casts.arg("envir").mustBe(instanceOf(REnvironment.class));
-
+        casts.arg("what").defaultError(Message.MUST_BE_STRING_OR_FUNCTION, "what").mustBe(instanceOf(RFunction.class).or(stringValue()));
+        casts.arg("args").mustBe(RAbstractListVector.class, Message.SECOND_ARGUMENT_LIST);
+        casts.arg("envir").mustBe(REnvironment.class, Message.MUST_BE_ENVIRON, "envir");
     }
 
     @Specialization
@@ -128,7 +132,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
                 containsRLanguageProfile.enter();
                 callerFrame = getCallerFrame(frame, callerFrame);
                 RLanguage lang = (RLanguage) arg;
-                argValues[i] = createArgPromise(callerFrame, RASTUtils.cloneNode(lang.getRep()));
+                argValues[i] = createRLanguagePromise(callerFrame, lang);
             } else if (arg instanceof RSymbol) {
                 containsRSymbolProfile.enter();
                 RSymbol symbol = (RSymbol) arg;
@@ -136,7 +140,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
                     argValues[i] = REmpty.instance;
                 } else {
                     callerFrame = getCallerFrame(frame, callerFrame);
-                    argValues[i] = createArgPromise(callerFrame, RASTUtils.createReadVariableNode(symbol.getName()));
+                    argValues[i] = createLookupPromise(callerFrame, symbol);
                 }
             }
         }
@@ -149,6 +153,17 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
         }
     }
 
+    @TruffleBoundary
+    private static RPromise createLookupPromise(MaterializedFrame callerFrame, RSymbol symbol) {
+        Closure closure = RPromise.Closure.create(RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, symbol.getName(), false).asRNode());
+        return RDataFactory.createPromise(PromiseState.Supplied, closure, callerFrame);
+    }
+
+    @TruffleBoundary
+    private static RPromise createRLanguagePromise(MaterializedFrame callerFrame, RLanguage lang) {
+        return RDataFactory.createPromise(PromiseState.Supplied, RPromise.Closure.create(RASTUtils.cloneNode(lang.getRep())), callerFrame);
+    }
+
     private MaterializedFrame getCallerFrame(VirtualFrame frame, MaterializedFrame callerFrame) {
         if (getCallerFrame == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -159,10 +174,5 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
         } else {
             return callerFrame;
         }
-    }
-
-    @TruffleBoundary
-    private static RPromise createArgPromise(MaterializedFrame frame, RBaseNode rep) {
-        return RDataFactory.createPromise(PromiseState.Supplied, RPromise.Closure.create(rep), frame);
     }
 }

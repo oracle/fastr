@@ -28,11 +28,11 @@ import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class MapNodeGenSampler extends CastNodeSampler<MapNodeGen> {
+public class MapNodeSampler extends CastNodeSampler<MapNode> {
 
     private final ArgumentMapperSampler mapFn;
 
-    public MapNodeGenSampler(MapNodeGen castNode) {
+    public MapNodeSampler(MapNode castNode) {
         super(castNode);
         assert castNode.getMapper() instanceof ArgumentMapperSampler;
         this.mapFn = (ArgumentMapperSampler) castNode.getMapper();

@@ -22,9 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
@@ -32,7 +31,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public abstract class FilterNode extends CastNode {
+public final class FilterNode extends CastNode {
 
     private final ArgumentFilter filter;
     private final RError.Message message;
@@ -42,16 +41,21 @@ public abstract class FilterNode extends CastNode {
     private final boolean isWarning;
 
     private final BranchProfile warningProfile = BranchProfile.create();
+    private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
 
     @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNodeGen.create();
 
-    protected FilterNode(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives) {
+    private FilterNode(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives) {
         this.filter = filter;
         this.isWarning = isWarning;
         this.callObj = callObj == null ? this : callObj;
         this.message = message;
         this.messageArgs = messageArgs;
         this.boxPrimitives = boxPrimitives;
+    }
+
+    public static FilterNode create(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives) {
+        return new FilterNode(filter, isWarning, callObj, message, messageArgs, boxPrimitives);
     }
 
     public ArgumentFilter getFilter() {
@@ -73,14 +77,11 @@ public abstract class FilterNode extends CastNode {
         }
     }
 
-    @Specialization(guards = "evalCondition(x)")
-    protected Object onTrue(Object x) {
-        return x;
-    }
-
-    @Fallback
-    protected Object onFalse(Object x) {
-        handleMessage(x);
+    @Override
+    public Object execute(Object x) {
+        if (!conditionProfile.profile(evalCondition(x))) {
+            handleMessage(x);
+        }
         return x;
     }
 
@@ -88,5 +89,4 @@ public abstract class FilterNode extends CastNode {
         Object y = boxPrimitives ? boxPrimitiveNode.execute(x) : x;
         return filter.test(y);
     }
-
 }

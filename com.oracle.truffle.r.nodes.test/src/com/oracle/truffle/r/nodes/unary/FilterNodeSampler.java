@@ -28,13 +28,13 @@ import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 
 @SuppressWarnings("rawtypes")
-public class FilterNodeGenSampler extends CastNodeSampler<FilterNodeGen> {
+public class FilterNodeSampler extends CastNodeSampler<FilterNode> {
 
     private final ArgumentFilterSampler filter;
     private final boolean isWarning;
     private final TypeExpr resType;
 
-    public FilterNodeGenSampler(FilterNodeGen castNode) {
+    public FilterNodeSampler(FilterNode castNode) {
         super(castNode);
         assert castNode.getFilter() instanceof ArgumentFilterSampler : "Check PredefFiltersSamplers is installed in Predef";
         this.filter = (ArgumentFilterSampler) castNode.getFilter();
@@ -59,5 +59,4 @@ public class FilterNodeGenSampler extends CastNodeSampler<FilterNodeGen> {
         Samples<?> combined = samples.and(downStreamSamples);
         return combined;
     }
-
 }

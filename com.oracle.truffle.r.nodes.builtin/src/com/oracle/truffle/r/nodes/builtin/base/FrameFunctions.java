@@ -281,20 +281,7 @@ public class FrameFunctions {
                         RPairList prev = null;
                         for (int i2 = 0; i2 < varArgNodes.length; i2++) {
                             RNode n = varArgNodes[i2];
-                            Object listValue;
-                            if (n instanceof ConstantNode) {
-                                listValue = ((ConstantNode) n).getValue();
-                            } else if (n instanceof ReadVariableNode) {
-                                String id = ((ReadVariableNode) n).getIdentifier();
-                                assert id == id.intern();
-                                listValue = RDataFactory.createSymbol(id);
-                            } else if (n instanceof VarArgNode) {
-                                listValue = createVarArgSymbol((VarArgNode) n);
-                            } else if (n instanceof RCallNode) {
-                                listValue = RDataFactory.createLanguage(n);
-                            } else {
-                                throw RInternalError.shouldNotReachHere("node: " + n + " at " + i2);
-                            }
+                            Object listValue = RASTUtils.createLanguageElement(n.asRSyntaxNode());
                             pl.setCar(listValue);
                             if (varArgSignature.getName(i2) != null) {
                                 pl.setTag(RDataFactory.createSymbolInterned(varArgSignature.getName(i2)));

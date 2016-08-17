@@ -32,14 +32,14 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@NodeField(name = "nonVectorPreserved", type = boolean.class)
+@NodeField(name = "preserveNonVector", type = boolean.class)
 public abstract class CastToVectorNode extends CastNode {
 
-    public abstract boolean isNonVectorPreserved();
+    public abstract boolean isPreserveNonVector();
 
     @Specialization
     protected Object castNull(@SuppressWarnings("unused") RNull rnull) {
-        if (isNonVectorPreserved()) {
+        if (isPreserveNonVector()) {
             return RNull.instance;
         } else {
             return RDataFactory.createList();
@@ -48,7 +48,7 @@ public abstract class CastToVectorNode extends CastNode {
 
     @Specialization
     protected Object castMissing(@SuppressWarnings("unused") RMissing missing) {
-        if (isNonVectorPreserved()) {
+        if (isPreserveNonVector()) {
             return RMissing.instance;
         } else {
             return RDataFactory.createList();
@@ -57,7 +57,7 @@ public abstract class CastToVectorNode extends CastNode {
 
     @Specialization
     protected Object castFunction(RFunction f) {
-        if (isNonVectorPreserved()) {
+        if (isPreserveNonVector()) {
             return f;
         } else {
             return RDataFactory.createList();

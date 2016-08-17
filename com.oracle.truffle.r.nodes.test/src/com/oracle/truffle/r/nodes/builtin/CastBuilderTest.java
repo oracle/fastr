@@ -641,11 +641,26 @@ public class CastBuilderTest {
 
     @Test
     public void testSample16() {
-        // cb.arg(0, "dim").asIntegerVector().mustBe(Predef.notEmpty());
         Function<Object, Object> argMsg = this::argMsg;
         cb.arg(0, "open").shouldBe(stringValue(), RError.Message.GENERIC, argMsg);
 
         cast(RNull.instance);
+    }
+
+    @Test
+    public void testPreserveNonVectorFlag() {
+        cb.arg(0, "x").asVector(true);
+
+        assertEquals(RNull.instance, cast(RNull.instance));
+    }
+
+    @Test
+    public void testNotPreserveNonVectorFlag() {
+        cb.arg(0, "x").asVector(false);
+
+        Object res = cast(RNull.instance);
+        Assert.assertTrue(res instanceof RList);
+        Assert.assertEquals(0, ((RList) res).getLength());
     }
 
     class RBuiltinRootNode extends RootNode {

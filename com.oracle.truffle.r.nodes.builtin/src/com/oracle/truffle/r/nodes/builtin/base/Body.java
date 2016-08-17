@@ -39,7 +39,7 @@ public abstract class Body extends RBuiltinNode {
     @Specialization
     protected Object doBody(RFunction fun) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) fun.getRootNode();
-        return RASTUtils.createLanguageElement(fdn.getBody().asRNode());
+        return RASTUtils.createLanguageElement(fdn.getBody());
     }
 
     @Specialization(guards = "!isRFunction(fun)")

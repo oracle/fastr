@@ -279,7 +279,7 @@ final class REngine implements Engine, Engine.Timings {
     @Override
     public RExpression parse(Map<String, Object> constants, Source source) throws ParseException {
         List<RSyntaxNode> list = parseImpl(constants, source);
-        Object[] data = list.stream().map(node -> RASTUtils.createLanguageElement(node.asRNode())).toArray();
+        Object[] data = list.stream().map(node -> RASTUtils.createLanguageElement(node)).toArray();
         return RDataFactory.createExpression(RDataFactory.createList(data));
     }
 

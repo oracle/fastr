@@ -181,10 +181,6 @@ public interface RRuntimeASTAccess {
      */
     boolean isTaggedWith(Node node, Class<?> tag);
 
-    RBaseNode createReadVariableNode(String name);
-
-    RBaseNode createConstantNode(Object o);
-
     boolean enableDebug(RFunction func, boolean once);
 
     boolean disableDebug(RFunction func);
