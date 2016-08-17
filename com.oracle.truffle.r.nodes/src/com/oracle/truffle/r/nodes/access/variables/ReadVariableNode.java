@@ -305,6 +305,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         private final FrameSlot slot;
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
+        private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
         private Match(FrameSlot slot) {
             this.slot = slot;
@@ -316,7 +317,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
             if (!checkType(frame, value, isNullProfile)) {
                 throw new LayoutChangedException();
             }
-            return value;
+            return valueProfile.profile(value);
         }
 
         @Override
