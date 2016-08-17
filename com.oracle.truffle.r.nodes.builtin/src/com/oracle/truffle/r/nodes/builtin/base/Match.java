@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -75,10 +77,11 @@ public abstract class Match extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-// casts.arg("x").mustBe(instanceOf(RAbstractVector.class).or(nullValue())).asVector();
-// casts.arg("table").mustBe(instanceOf(RAbstractVector.class).or(nullValue())).asVector();
+        // TODO these pipelines do not allow scalars, i.e., the RAbstractVector isn't right.
+        // casts.arg("x").mustBe(instanceOf(RAbstractVector.class).or(nullValue())).asVector(true);
+        // casts.arg("table").mustBe(instanceOf(RAbstractVector.class).or(nullValue())).asVector(true);
         casts.arg("nomatch").asIntegerVector().findFirst();
-// casts.arg("incomparables").mustBe(instanceOf(RAbstractVector.class).or(nullValue())).asVector();
+        // casts.arg("incomparables").mustBe(instanceOf(RAbstractVector.class).or(nullValue())).asVector(true);
     }
 
     private RAbstractStringVector castString(RAbstractVector operand) {
