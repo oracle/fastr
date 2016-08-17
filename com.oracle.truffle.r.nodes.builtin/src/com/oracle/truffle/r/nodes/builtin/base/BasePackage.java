@@ -571,6 +571,7 @@ public class BasePackage extends RBuiltinPackage {
         add(SysFunctions.SysInfo.class, SysFunctionsFactory.SysInfoNodeGen::create);
         add(SysFunctions.SysReadlink.class, SysFunctionsFactory.SysReadlinkNodeGen::create);
         add(SysFunctions.SysSetEnv.class, SysFunctionsFactory.SysSetEnvNodeGen::create);
+        add(SysFunctions.SysSetFileTime.class, SysFunctionsFactory.SysSetFileTimeNodeGen::create);
         add(SysFunctions.SysSleep.class, SysFunctionsFactory.SysSleepNodeGen::create);
         add(SysFunctions.SysTime.class, SysFunctionsFactory.SysTimeNodeGen::create);
         add(SysFunctions.SysUmask.class, SysFunctionsFactory.SysUmaskNodeGen::create);

@@ -34,6 +34,7 @@ import java.nio.ByteBuffer;
 import java.util.zip.GZIPInputStream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.TempPathName;
@@ -102,24 +103,17 @@ public class FileConnections {
 
         FileReadTextRConnection(BasePathRConnection base) throws IOException {
             super(base);
-            inputStream = new BufferedInputStream(new FileInputStream(base.path));
             // can be compressed - check for it
-            inputStream.mark(2);
-            int byte1 = inputStream.read();
-            if (byte1 == -1) {
-                inputStream.reset();
-            } else {
-                int byte2 = inputStream.read();
-                if (byte2 == -1) {
-                    inputStream.reset();
-                } else {
-                    if (byte1 == (GZIPInputStream.GZIP_MAGIC & 0x000000FF) && byte2 == (GZIPInputStream.GZIP_MAGIC >> 8)) {
-                        inputStream.close();
-                        inputStream = new GZIPInputStream(new FileInputStream(base.path), GZIPConnections.GZIP_BUFFER_SIZE);
-                    } else {
-                        inputStream.reset();
-                    }
-                }
+            RCompression.Type cType = RCompression.getCompressionType(base.path);
+            switch (cType) {
+                case NONE:
+                    inputStream = new BufferedInputStream(new FileInputStream(base.path));
+                    break;
+                case GZIP:
+                    inputStream = new GZIPInputStream(new FileInputStream(base.path), GZIPConnections.GZIP_BUFFER_SIZE);
+                    break;
+                default:
+                    throw RError.nyi(RError.SHOW_CALLER2, "compression type: " + cType.name());
             }
         }
 
@@ -212,10 +206,10 @@ public class FileConnections {
         }
     }
 
-    private static class FileReadBinaryRConnection extends DelegateReadRConnection implements ReadWriteHelper {
+    static class FileReadBinaryRConnection extends DelegateReadRConnection implements ReadWriteHelper {
         private FileInputStream inputStream;
 
-        FileReadBinaryRConnection(FileRConnection base) throws IOException {
+        FileReadBinaryRConnection(BasePathRConnection base) throws IOException {
             super(base);
             inputStream = new FileInputStream(base.path);
         }
@@ -316,7 +310,7 @@ public class FileConnections {
     private static class FileReadWriteConnection extends DelegateReadWriteRConnection implements ReadWriteHelper {
         /*
          * This is a minimal implementation to support one specific use in package installation.
-         * 
+         *
          * N.B. R mandates separate "position" offsets for reading and writing (pain). This code is
          * pessimistic and assumes interleaved reads and writes, so does a lot of probably redundant
          * seeking. It could be optimized.
