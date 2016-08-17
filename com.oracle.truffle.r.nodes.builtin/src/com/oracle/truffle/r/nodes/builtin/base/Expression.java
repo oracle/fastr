@@ -78,7 +78,7 @@ public abstract class Expression extends RBuiltinNode {
         if (isEvaluatedProfile.profile(promise.isEvaluated())) {
             return promise.getValue();
         } else {
-            return RASTUtils.createLanguageElement(RASTUtils.unwrap(promise.getRep()));
+            return RASTUtils.createLanguageElement(promise.getRep().asRSyntaxNode());
         }
     }
 }

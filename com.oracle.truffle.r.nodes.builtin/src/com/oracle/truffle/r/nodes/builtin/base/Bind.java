@@ -365,7 +365,7 @@ public abstract class Bind extends RBaseNode {
         Object argValue = promiseArgs.getArgument(argInd);
         if (argValue instanceof RPromise) {
             RPromise p = (RPromise) argValue;
-            Object node = RASTUtils.createLanguageElement(RASTUtils.unwrap(p.getRep()));
+            Object node = RASTUtils.createLanguageElement(p.getRep().asRSyntaxNode());
             if (deparseLevel == 1 && node instanceof RSymbol) {
                 return ((RSymbol) node).toString();
             } // else - TODO handle deparseLevel > 1

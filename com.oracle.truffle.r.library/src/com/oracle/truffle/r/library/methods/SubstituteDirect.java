@@ -43,7 +43,7 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
     protected static Object substituteDirect(Object object, REnvironment env) {
         if (object instanceof RLanguage) {
             RLanguage lang = (RLanguage) object;
-            return RASTUtils.createLanguageElement(RSubstitute.substitute(env, lang.getRep()).asRNode());
+            return RASTUtils.createLanguageElement(RSubstitute.substitute(env, lang.getRep()));
         } else {
             return object;
         }

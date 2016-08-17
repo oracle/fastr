@@ -705,7 +705,8 @@ public final class RError extends RuntimeException {
         ERR_MSG_MUST_BE_STRING("error message must be a character string"),
         ERR_MSG_BAD("bad error message"),
         BAD_ENVIRONMENT("bad %s environment argument"),
-        CANNOT_BE_LENGTH("'%s' cannot be of length %d");
+        CANNOT_BE_LENGTH("'%s' cannot be of length %d"),
+        SECOND_ARGUMENT_LIST("second argument must be a list");
 
         public final String message;
         final boolean hasArgs;

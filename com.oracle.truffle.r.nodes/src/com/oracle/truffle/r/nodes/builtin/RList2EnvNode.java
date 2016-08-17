@@ -24,8 +24,8 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 public final class RList2EnvNode extends RBaseNode {
 
     @TruffleBoundary
-    public REnvironment execute(RList list, REnvironment env) {
+    public REnvironment execute(RAbstractListVector list, REnvironment env) {
         if (list.getLength() == 0) {
             return env;
         }

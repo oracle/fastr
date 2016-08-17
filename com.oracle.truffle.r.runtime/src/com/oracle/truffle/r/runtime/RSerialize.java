@@ -72,6 +72,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.instrument.RPackageSource;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 // Code loosely transcribed from GnuR serialize.c.
 
@@ -615,9 +616,9 @@ public class RSerialize {
                                 RLanguage lang = (RLanguage) expr.getDataAt(0);
                                 rep = lang.getRep();
                             } else if (expr.getDataAt(0) instanceof RSymbol) {
-                                rep = RContext.getRRuntimeASTAccess().createReadVariableNode(((RSymbol) expr.getDataAt(0)).getName());
+                                rep = RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, ((RSymbol) expr.getDataAt(0)).getName(), false).asRNode();
                             } else {
-                                rep = RContext.getRRuntimeASTAccess().createConstantNode(expr.getDataAt(0));
+                                rep = RContext.getASTBuilder().constant(RSyntaxNode.SOURCE_UNAVAILABLE, expr.getDataAt(0)).asRNode();
                             }
                             if (pl.car() == RUnboundValue.instance) {
                                 REnvironment env = pl.getTag() == RNull.instance ? REnvironment.baseEnv() : (REnvironment) pl.getTag();
