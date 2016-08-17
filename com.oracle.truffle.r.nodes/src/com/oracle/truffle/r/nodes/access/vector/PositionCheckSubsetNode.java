@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -37,6 +38,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -244,12 +246,12 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                 }
             }
         }
-
         return doIntegerProfiled(profile, dimensionLength, position, positionLength, seenPositiveFlagProfile.profile(hasSeenPositive), seenNegativeFlagProfile.profile(hasSeenNegative),
                         seenNAFlagProfile.profile(hasSeenNA), outOfBoundsCount, zeroCount, maxOutOfBoundsIndex);
     }
 
     private final BranchProfile noZeroes = BranchProfile.create();
+    private boolean checkForScalarPosition = true;
 
     private RAbstractVector doIntegerProfiled(PositionProfile profile, int dimensionLength, RAbstractIntVector intPosition, int positionLength, boolean hasSeenPositive, boolean hasSeenNegative,
                     boolean hasSeenNA, int outOfBoundsCount, int zeroCount, int maxOutOfBoundsIndex) {
@@ -283,6 +285,14 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     }
 
     private RAbstractVector eliminateZerosAndOutOfBounds(RAbstractIntVector position, int positionLength, int dimensionLength, int outOfBoundsCount, int zeroCount, boolean hasSeenNA) {
+        if (checkForScalarPosition) {
+            if (position instanceof RInteger && outOfBoundsCount == 1) {
+                return RInteger.valueOf(RRuntime.INT_NA);
+            } else {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                checkForScalarPosition = false;
+            }
+        }
         int[] newIndices = new int[positionLength - zeroCount];
         int newPositionIndex = 0;
         for (int i = 0; i < positionLength; i++) {
