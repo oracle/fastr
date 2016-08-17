@@ -400,7 +400,7 @@ public class BasePackage extends RBuiltinPackage {
         add(InfixFunctions.UpdateArraySubsetBuiltin.class, InfixFunctionsFactory.UpdateArraySubsetBuiltinNodeGen::create);
         add(InfixFunctions.UpdateFieldBuiltin.class, InfixFunctionsFactory.UpdateFieldBuiltinNodeGen::create);
         add(InfixFunctions.WhileBuiltin.class, InfixFunctionsFactory.WhileBuiltinNodeGen::create);
-        add(Inherits.class, InheritsNodeGen::create);
+        add(InheritsBuiltin.class, InheritsBuiltinNodeGen::create);
         add(Interactive.class, InteractiveNodeGen::create);
         add(Internal.class, InternalNodeGen::create);
         add(IntToBits.class, IntToBitsNodeGen::create);
