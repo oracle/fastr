@@ -1020,6 +1020,14 @@ public final class CastBuilder {
             return predefFilters().scalarComplexValue();
         }
 
+        /**
+         * Checks that the argument is one of scalar values: string, double, complex, integer or
+         * logical/byte.
+         */
+        public static ArgumentTypeFilter<Object, Object> scalarValue() {
+            return scalarStringValue().or(scalarDoubleValue()).or(scalarComplexValue()).or(scalarIntegerValue()).or(scalarLogicalValue());
+        }
+
         public static TypePredicateArgumentFilter<Object, RMissing> missingValue() {
             return predefFilters().missingValue();
         }
