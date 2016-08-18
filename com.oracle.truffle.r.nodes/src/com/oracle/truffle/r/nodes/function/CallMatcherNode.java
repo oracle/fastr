@@ -27,6 +27,7 @@ import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -34,7 +35,6 @@ import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -194,11 +194,10 @@ public abstract class CallMatcherNode extends RBaseNode {
     private static final class CallMatcherCachedNode extends CallMatcherNode {
 
         @Child private CallMatcherNode next;
-
         @Child private CallRFunctionNode call;
-
         @Child private RBuiltinNode builtin;
         @Children private final CastNode[] builtinArgumentCasts;
+        @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         private final RBuiltinDescriptor builtinDescriptor;
         private final ArgumentsSignature cachedSuppliedSignature;
@@ -257,7 +256,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                 } else {
                     applyCasts(reorderedArgs);
                     Object result = builtin.execute(frame, reorderedArgs);
-                    RContext.getInstance().setVisible(builtinDescriptor.getVisibility());
+                    visibility.execute(frame, builtinDescriptor.getVisibility());
                     return result;
                 }
             } else {

@@ -48,6 +48,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -57,7 +58,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.StableValue;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -130,6 +130,8 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     @Child private PromiseHelperNode promiseHelper;
     @Child private CheckTypeNode checkTypeNode;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+
     @CompilationFinal private FrameLevel read;
     @CompilationFinal private boolean needsCopying;
 
@@ -187,7 +189,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     private Object executeInternal(VirtualFrame frame, Frame variableFrame) {
         if (kind != ReadKind.Silent) {
-            RContext.getInstance().setVisible(true);
+            visibility.execute(frame, true);
         }
 
         Object result;

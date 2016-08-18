@@ -67,6 +67,7 @@ import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.NoGenericMethodE
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArguments;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.Arguments;
@@ -87,7 +88,6 @@ import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -294,14 +294,15 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     @Specialization(limit = "5", guards = {"isSpecialDispatch(function)", "cachedBuiltin == function.getRBuiltin()"})
-    public Object callSpecial(VirtualFrame frame, @SuppressWarnings("unused") RFunction function, //
-                    @Cached("function.getRBuiltin()") RBuiltinDescriptor cachedBuiltin, //
-                    @Cached("createSpecial(cachedBuiltin)") RBuiltinNode call) {
+    public Object callSpecial(VirtualFrame frame, @SuppressWarnings("unused") RFunction function,
+                    @Cached("function.getRBuiltin()") RBuiltinDescriptor cachedBuiltin,
+                    @Cached("createSpecial(cachedBuiltin)") RBuiltinNode call,
+                    @Cached("create()") SetVisibilityNode visibility) {
         if (explicitArgs != null) {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.INVALID_USE, cachedBuiltin.getName());
         }
-        RContext.getInstance().setVisible(cachedBuiltin.getVisibility());
+        visibility.execute(frame, cachedBuiltin.getVisibility());
         return call.execute(frame);
     }
 
@@ -929,6 +930,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Child private RBuiltinNode builtin;
         @Child private PromiseCheckHelperNode promiseHelper;
         @Children private final CastNode[] casts;
+        @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         private final BranchProfile emptyProfile = BranchProfile.create();
         private final BranchProfile varArgsProfile = BranchProfile.create();
@@ -1017,7 +1019,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction, RArgsValuesAndNames orderedArguments, S3Args s3Args) {
             Object result = builtin.execute(frame, castArguments(frame, orderedArguments.getArguments()));
-            RContext.getInstance().setVisible(builtinDescriptor.getVisibility());
+            visibility.execute(frame, builtinDescriptor.getVisibility());
             return result;
         }
     }
@@ -1026,6 +1028,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         @Child private CallRFunctionNode call;
         @Child private RFastPathNode fastPath;
+        @Child private SetVisibilityNode visibility;
 
         private final RootCallTarget cachedTarget;
         private final FastPathFactory fastPathFactory;
@@ -1038,6 +1041,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             this.fastPathFactory = root.getFastPath();
             this.fastPath = fastPathFactory == null ? null : fastPathFactory.create();
             this.fastPathVisibility = fastPathFactory == null ? null : fastPathFactory.getVisibility();
+            this.visibility = fastPathFactory == null ? null : SetVisibilityNode.create();
             originalCall.needsCallerFrame |= root.containsDispatch();
         }
 
@@ -1047,11 +1051,12 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 Object result = fastPath.execute(frame, orderedArguments.getArguments());
                 if (result != null) {
                     assert fastPathVisibility != null;
-                    RContext.getInstance().setVisible(fastPathVisibility);
+                    visibility.execute(frame, fastPathVisibility);
                     return result;
                 }
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 fastPath = null;
+                visibility = null;
             }
 
             if (call == null) {
