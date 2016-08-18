@@ -22,25 +22,32 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 @RBuiltin(name = "gc", kind = INTERNAL, parameterNames = {"verbose", "reset"}, behavior = COMPLEX)
 public abstract class Gc extends RBuiltinNode {
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("verbose").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("reset").asLogicalVector().findFirst().map(toBoolean());
+    }
+
     @SuppressWarnings("unused")
     @Specialization
-    protected RDoubleVector gc(RAbstractLogicalVector verbose, RAbstractLogicalVector reset) {
+    protected RDoubleVector gc(boolean verbose, boolean reset) {
         System.gc();
         // TODO: somehow produce the (semi?) correct values
         double[] data = new double[14];

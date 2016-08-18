@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -53,6 +54,12 @@ public abstract class Formals extends RBuiltinNode {
     @Specialization(contains = "formalsCached")
     protected Object formals(RFunction fun) {
         return createFormals(fun);
+    }
+
+    @Fallback
+    protected Object formals(Object fun) {
+        // for anything that is not a function, GnuR returns NULL
+        return RNull.instance;
     }
 
     @TruffleBoundary

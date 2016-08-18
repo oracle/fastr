@@ -28,11 +28,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -41,10 +42,11 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 public class DebugFunctions {
 
-    protected abstract static class ErrorAdapter extends RBuiltinNode {
+    protected abstract static class ErrorAndFunAdapter extends RBuiltinNode {
 
-        protected RError arg1Closure() throws RError {
-            throw RError.error(this, RError.Message.ARG_MUST_BE_CLOSURE);
+        @Override
+        protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
+            casts.arg("fun").mustBe(RFunction.class, Message.ARG_MUST_BE_CLOSURE);
         }
 
         protected void doDebug(RFunction fun, Object text, Object condition, boolean once) throws RError {
@@ -58,14 +60,7 @@ public class DebugFunctions {
     }
 
     @RBuiltin(name = "debug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
-    public abstract static class Debug extends ErrorAdapter {
-
-        @SuppressWarnings("unused")
-        @Fallback
-        @TruffleBoundary
-        protected Object doDebug(Object fun, Object text, Object condition) {
-            throw arg1Closure();
-        }
+    public abstract static class Debug extends ErrorAndFunAdapter {
 
         @Specialization
         @TruffleBoundary
@@ -76,14 +71,7 @@ public class DebugFunctions {
     }
 
     @RBuiltin(name = "debugonce", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
-    public abstract static class DebugOnce extends ErrorAdapter {
-
-        @SuppressWarnings("unused")
-        @Fallback
-        @TruffleBoundary
-        protected Object doDebug(Object fun, Object text, Object condition) {
-            throw arg1Closure();
-        }
+    public abstract static class DebugOnce extends ErrorAndFunAdapter {
 
         @Specialization
         @TruffleBoundary
@@ -95,13 +83,7 @@ public class DebugFunctions {
     }
 
     @RBuiltin(name = "undebug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun"}, behavior = COMPLEX)
-    public abstract static class UnDebug extends ErrorAdapter {
-
-        @Fallback
-        @TruffleBoundary
-        protected Object doDebug(@SuppressWarnings("unused") Object fun) {
-            throw arg1Closure();
-        }
+    public abstract static class UnDebug extends ErrorAndFunAdapter {
 
         @Specialization
         @TruffleBoundary
@@ -114,13 +96,7 @@ public class DebugFunctions {
     }
 
     @RBuiltin(name = "isdebugged", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
-    public abstract static class IsDebugged extends ErrorAdapter {
-
-        @Fallback
-        @TruffleBoundary
-        protected Object doDebug(@SuppressWarnings("unused") Object fun) {
-            throw arg1Closure();
-        }
+    public abstract static class IsDebugged extends ErrorAndFunAdapter {
 
         @Specialization
         @TruffleBoundary

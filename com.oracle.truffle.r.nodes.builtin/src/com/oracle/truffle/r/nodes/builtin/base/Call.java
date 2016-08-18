@@ -22,14 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
@@ -39,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -55,15 +55,14 @@ public abstract class Call extends RBuiltinNode {
         return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY};
     }
 
-    @Specialization(guards = "name.getLength() != 0")
-    protected RLanguage call(RAbstractStringVector name, RArgsValuesAndNames args) {
-        return makeCall(name.getDataAt(0), args);
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("").mustBe(stringValue(), RError.Message.FIRST_ARG_MUST_BE_STRING).asStringVector().findFirst();
     }
 
-    @Fallback
-    @SuppressWarnings("unused")
-    protected RLanguage call(Object name, Object args) {
-        throw RError.error(this, RError.Message.FIRST_ARG_MUST_BE_STRING);
+    @Specialization
+    protected RLanguage call(String name, RArgsValuesAndNames args) {
+        return makeCall(name, args);
     }
 
     @TruffleBoundary
