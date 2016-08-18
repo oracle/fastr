@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
@@ -98,7 +99,11 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
             update.execute(frame);
         }
         removeTemp.execute(frame);
-        return removeRhs.execute(frame);
+        try {
+            return removeRhs.execute(frame);
+        } finally {
+            RContext.getInstance().setVisible(false);
+        }
     }
 
     @Override

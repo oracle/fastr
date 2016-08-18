@@ -36,7 +36,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -101,7 +100,6 @@ public class DebugFunctions {
         @Specialization
         @TruffleBoundary
         protected byte isDebugged(RFunction func) {
-            RContext.getInstance().setVisible(true);
             return RRuntime.asLogical(DebugHandling.isDebugged(func));
         }
     }

@@ -59,9 +59,13 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
     @Override
     public abstract Object getValue();
 
+    protected static final void handleVisibility(@SuppressWarnings("unused") VirtualFrame frame) {
+        RContext.getInstance().setVisible(true);
+    }
+
     @Override
     public final Object execute(VirtualFrame frame) {
-        RContext.getInstance().setVisible(true);
+        handleVisibility(frame);
         return getValue();
     }
 
@@ -113,7 +117,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
         @Override
         public double executeDouble(VirtualFrame frame) {
-            RContext.getInstance().setVisible(true);
+            handleVisibility(frame);
             return doubleValue;
         }
     }
@@ -136,7 +140,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
         @Override
         public byte executeByte(VirtualFrame frame) {
-            RContext.getInstance().setVisible(true);
+            handleVisibility(frame);
             return logicalValue;
         }
     }
@@ -159,7 +163,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
         @Override
         public int executeInteger(VirtualFrame frame) {
-            RContext.getInstance().setVisible(true);
+            handleVisibility(frame);
             return intValue;
         }
     }

@@ -82,7 +82,6 @@ public class BrowserFunctions {
                     browserState.pop();
                 }
             }
-            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
 
@@ -144,7 +143,6 @@ public class BrowserFunctions {
         @TruffleBoundary
         protected RNull browserSetDebug(@SuppressWarnings("unused") int n) {
             // TODO implement
-            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
     }

@@ -11,7 +11,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RErrorHandling.getHandlerStack;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -27,7 +30,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -82,7 +84,6 @@ public class ConditionFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull resetCondHands(Object stack) {
-            RContext.getInstance().setVisible(false);
             // TODO
             throw RInternalError.unimplemented();
         }
@@ -177,7 +178,6 @@ public class ConditionFunctions {
 
         @Specialization
         protected RNull seterrmessage(String msg) {
-            RContext.getInstance().setVisible(false);
             RErrorHandling.seterrmessage(msg);
             return RNull.instance;
         }
@@ -216,7 +216,6 @@ public class ConditionFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull printDeferredWarnings() {
-            RContext.getInstance().setVisible(false);
             RErrorHandling.printDeferredWarnings();
             return RNull.instance;
         }

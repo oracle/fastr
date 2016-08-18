@@ -88,7 +88,6 @@ public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
         } catch (InterruptedException | IOException ex) {
             result = 127;
         }
-        RContext.getInstance().setVisible(false);
         return result;
     }
 
@@ -103,5 +102,4 @@ public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
             }
         }
     }
-
 }
