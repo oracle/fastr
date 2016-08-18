@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import java.util.function.Function;
 
@@ -33,7 +34,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -51,7 +51,6 @@ public abstract class Quantifier extends RBuiltinNode {
     protected static final int MAX_CACHED_LENGTH = 10;
 
     private final NACheck naCheck = NACheck.create();
-    private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile trueBranch = BranchProfile.create();
     private final BranchProfile falseBranch = BranchProfile.create();
 
@@ -65,6 +64,11 @@ public abstract class Quantifier extends RBuiltinNode {
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
+    }
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
     }
 
     private void createArgCast(int index) {
@@ -88,15 +92,14 @@ public abstract class Quantifier extends RBuiltinNode {
 
     @Specialization(limit = "1", guards = {"cachedLength == args.getLength()", "cachedLength < MAX_CACHED_LENGTH"})
     @ExplodeLoop
-    protected byte opCachedLength(RArgsValuesAndNames args, byte naRm, //
+    protected byte opCachedLength(RArgsValuesAndNames args, boolean naRm, //
                     @Cached("args.getLength()") int cachedLength) {
-        boolean profiledNaRm = naRmProfile.profile(naRm != RRuntime.LOGICAL_FALSE);
         Object[] arguments = args.getArguments();
 
         byte result = RRuntime.asLogical(emptyVectorResult());
         for (int i = 0; i < cachedLength; i++) {
             Object argValue = arguments[i];
-            byte v = processArgument(argValue, i, profiledNaRm);
+            byte v = processArgument(argValue, i, naRm);
             if (v == RRuntime.asLogical(!emptyVectorResult())) {
                 return RRuntime.asLogical(!emptyVectorResult());
             } else if (v == RRuntime.LOGICAL_NA) {
@@ -107,8 +110,8 @@ public abstract class Quantifier extends RBuiltinNode {
     }
 
     @Specialization(contains = "opCachedLength")
-    protected byte op(RArgsValuesAndNames args, byte naRm) {
-        boolean profiledNaRm = naRmProfile.profile(naRm != RRuntime.LOGICAL_FALSE);
+    protected byte op(RArgsValuesAndNames args, boolean naRm) {
+        boolean profiledNaRm = naRm;
 
         byte result = RRuntime.asLogical(emptyVectorResult());
         for (Object argValue : args.getArguments()) {
@@ -122,7 +125,7 @@ public abstract class Quantifier extends RBuiltinNode {
         return result;
     }
 
-    private byte processArgument(Object argValue, int index, boolean profiledNaRm) {
+    private byte processArgument(Object argValue, int index, boolean naRm) {
         byte result = RRuntime.asLogical(emptyVectorResult());
         if (argValue != RNull.instance) {
             if (argCastNodes[index] == null) {
@@ -135,7 +138,7 @@ public abstract class Quantifier extends RBuiltinNode {
                 naCheck.enable(vector);
                 for (int i = 0; i < vector.getLength(); i++) {
                     byte b = vector.getDataAt(i);
-                    if (!profiledNaRm && naCheck.check(b)) {
+                    if (!naRm && naCheck.check(b)) {
                         result = RRuntime.LOGICAL_NA;
                     } else if (b == RRuntime.asLogical(!emptyVectorResult())) {
                         trueBranch.enter();
@@ -145,7 +148,7 @@ public abstract class Quantifier extends RBuiltinNode {
             } else {
                 byte b = (byte) castValue;
                 naCheck.enable(true);
-                if (!profiledNaRm && naCheck.check(b)) {
+                if (!naRm && naCheck.check(b)) {
                     result = RRuntime.LOGICAL_NA;
                 } else if (b == RRuntime.asLogical(!emptyVectorResult())) {
                     trueBranch.enter();
