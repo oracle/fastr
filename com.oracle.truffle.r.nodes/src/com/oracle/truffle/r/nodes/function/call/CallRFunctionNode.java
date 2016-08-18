@@ -30,6 +30,7 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
@@ -40,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 public final class CallRFunctionNode extends Node {
 
     @Child private DirectCallNode callNode;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     private CallRFunctionNode(CallTarget callTarget) {
         this.callNode = Truffle.getRuntime().createDirectCallNode(callTarget);
@@ -52,7 +54,11 @@ public final class CallRFunctionNode extends Node {
     public Object execute(VirtualFrame frame, RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature,
                     MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
         Object[] callArgs = RArguments.create(function, call, callerFrame, evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
-        return callNode.call(frame, callArgs);
+        try {
+            return callNode.call(frame, callArgs);
+        } finally {
+            visibility.executeAfterCall(frame);
+        }
     }
 
     public DirectCallNode getCallNode() {
@@ -61,6 +67,10 @@ public final class CallRFunctionNode extends Node {
 
     public static Object executeSlowpath(RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
         Object[] callArgs = RArguments.create(function, call, callerFrame, evaluatedArgs, dispatchArgs);
-        return function.getTarget().call(callArgs);
+        try {
+            return function.getTarget().call(callArgs);
+        } finally {
+            SetVisibilityNode.executeAfterCallSlowPath(callerFrame);
+        }
     }
 }

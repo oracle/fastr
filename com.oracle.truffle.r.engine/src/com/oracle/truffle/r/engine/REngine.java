@@ -58,6 +58,7 @@ import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNod
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.ExitException;
@@ -346,6 +347,7 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
+    @TruffleBoundary
     public Object eval(RExpression exprs, REnvironment envir, RCaller caller) {
         Object result = RNull.instance;
         for (int i = 0; i < exprs.getLength(); i++) {
@@ -360,6 +362,7 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
+    @TruffleBoundary
     public Object eval(RLanguage expr, REnvironment envir, RCaller caller) {
         return evalNode(expr.getRep().asRSyntaxNode(), envir, caller);
     }
@@ -474,6 +477,7 @@ final class REngine implements Engine, Engine.Timings {
 
         @Child private RNode body;
         @Child private GetVisibilityNode visibility = GetVisibilityNode.create();
+        @Child private SetVisibilityNode setVisibility = SetVisibilityNode.create();
 
         protected AnonymousRootNode(RNode body, String description, boolean printResult, boolean topLevel) {
             super(TruffleRLanguage.class, null, new FrameDescriptor());
@@ -504,13 +508,14 @@ final class REngine implements Engine, Engine.Timings {
                 assert checkResult(result);
                 if (printResult && result != null) {
                     assert topLevel;
-                    if (visibility.execute(frame, context)) {
+                    if (visibility.execute(vf, context)) {
                         printResult(result);
                     }
                 }
                 if (topLevel) {
                     RErrorHandling.printWarnings(suppressWarnings);
                 }
+                setVisibility.executeEndOfFunction(vf);
             } catch (RError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw e;

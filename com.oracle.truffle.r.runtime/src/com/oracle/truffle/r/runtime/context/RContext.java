@@ -602,10 +602,18 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         return engine;
     }
 
+    /**
+     * This method should only be used under exceptional circumstances; the visibility can be
+     * derived with {@code GetVisibilityNode}.
+     */
     public boolean isVisible() {
         return resultVisible;
     }
 
+    /**
+     * This method should only be used under exceptional circumstances; the visibility can be
+     * changed with {@code SetVisibilityNode}.
+     */
     public void setVisible(boolean v) {
         if (!FastROptions.IgnoreVisibility.getBooleanValue()) {
             /*

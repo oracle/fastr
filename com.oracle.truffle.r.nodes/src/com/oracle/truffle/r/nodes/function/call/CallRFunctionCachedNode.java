@@ -33,6 +33,7 @@ import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
@@ -41,6 +42,8 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class CallRFunctionCachedNode extends Node {
+
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     protected final int cacheLimit;
 
@@ -68,7 +71,11 @@ public abstract class CallRFunctionCachedNode extends Node {
     @Specialization(guards = "target == callNode.getCallTarget()", limit = "cacheLimit")
     protected Object call(VirtualFrame frame, @SuppressWarnings("unused") CallTarget target, Object[] arguments,
                     @Cached("createDirectCallNode(target)") DirectCallNode callNode) {
-        return callNode.call(frame, arguments);
+        try {
+            return callNode.call(frame, arguments);
+        } finally {
+            visibility.executeAfterCall(frame);
+        }
     }
 
     protected static IndirectCallNode createIndirectCallNode() {
@@ -78,6 +85,10 @@ public abstract class CallRFunctionCachedNode extends Node {
     @Specialization
     protected Object call(VirtualFrame frame, CallTarget target, Object[] arguments,
                     @Cached("createIndirectCallNode()") IndirectCallNode callNode) {
-        return callNode.call(frame, target, arguments);
+        try {
+            return callNode.call(frame, target, arguments);
+        } finally {
+            visibility.executeAfterCall(frame);
+        }
     }
 }
