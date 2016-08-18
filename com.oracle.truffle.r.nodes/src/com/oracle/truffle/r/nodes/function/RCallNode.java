@@ -30,7 +30,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
@@ -42,7 +41,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -67,6 +65,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperN
 import com.oracle.truffle.r.nodes.function.RCallNodeGen.FunctionDispatchNodeGen;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArguments;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -75,9 +74,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
-import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RDispatch;
@@ -88,6 +84,9 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
+import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -1025,7 +1024,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     private static final class DispatchedCallNode extends LeafCallNode {
 
-        @Child private DirectCallNode call;
+        @Child private CallRFunctionNode call;
         @Child private RFastPathNode fastPath;
 
         private final RootCallTarget cachedTarget;
@@ -1056,16 +1055,15 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
             if (call == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                call = insert(Truffle.getRuntime().createDirectCallNode(cachedTarget));
+                call = insert(CallRFunctionNode.create(cachedTarget));
                 if (needsSplitting(cachedTarget)) {
-                    call.cloneCallTarget();
+                    call.getCallNode().cloneCallTarget();
                 }
             }
             MaterializedFrame callerFrame = /* CompilerDirectives.inInterpreter() || */originalCall.needsCallerFrame ? frame.materialize() : null;
 
-            Object[] argsObject = RArguments.create(function, originalCall.createCaller(frame, function), callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(),
+            return call.execute(frame, function, originalCall.createCaller(frame, function), callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(),
                             function.getEnclosingFrame(), s3Args);
-            return call.call(frame, argsObject);
         }
     }
 

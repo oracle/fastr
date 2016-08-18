@@ -56,6 +56,7 @@ import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.ExitException;
@@ -410,8 +411,7 @@ final class REngine implements Engine, Engine.Timings {
                 newArgs[i] = PromiseHelperNode.evaluateSlowPath(null, (RPromise) arg);
             }
         }
-        Object[] rArgs = RArguments.create(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, newArgs, null);
-        return func.getTarget().call(rArgs);
+        return CallRFunctionNode.executeSlowpath(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, newArgs, null);
     }
 
     private Object evalNode(RSyntaxElement exprRep, REnvironment envir, RCaller caller) {
@@ -572,7 +572,7 @@ final class REngine implements Engine, Engine.Timings {
                 ((RShareable) resultValue).incRefCount();
             }
             MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
-            function.getTarget().call(RArguments.create(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, null));
+            CallRFunctionNode.executeSlowpath(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, null);
             if (resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                 ((RShareable) resultValue).decRefCount();
             }

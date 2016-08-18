@@ -16,17 +16,17 @@ import java.util.function.Supplier;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -179,7 +179,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                 CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, this));
                 // for splitting if necessary
                 if (cachedNode.call != null && RCallNode.needsSplitting(function.getTarget())) {
-                    cachedNode.call.cloneCallTarget();
+                    cachedNode.call.getCallNode().cloneCallTarget();
                 }
                 return cachedNode.execute(frame, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
             }
@@ -195,7 +195,7 @@ public abstract class CallMatcherNode extends RBaseNode {
 
         @Child private CallMatcherNode next;
 
-        @Child private DirectCallNode call;
+        @Child private CallRFunctionNode call;
 
         @Child private RBuiltinNode builtin;
         @Children private final CastNode[] builtinArgumentCasts;
@@ -227,7 +227,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                 this.builtin = RBuiltinNode.inline(builtinDescriptor, null);
                 this.builtinArgumentCasts = builtin.getCasts();
             } else {
-                this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
+                this.call = CallRFunctionNode.create(function.getTarget());
                 this.builtinArgumentCasts = null;
                 this.builtinDescriptor = null;
             }
@@ -253,8 +253,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                     String genFunctionName = functionName == null ? function.getName() : functionName;
                     Supplier<RSyntaxNode> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, preparePermutation, suppliedArguments, suppliedSignature);
                     RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent) : RCaller.create(frame, parent, argsSupplier);
-                    Object[] arguments = RArguments.create(cachedFunction, caller, null, reorderedArgs, matchedArgs.getSignature(), cachedFunction.getEnclosingFrame(), dispatchArgs);
-                    return call.call(frame, arguments);
+                    return call.execute(frame, cachedFunction, caller, null, reorderedArgs, matchedArgs.getSignature(), cachedFunction.getEnclosingFrame(), dispatchArgs);
                 } else {
                     applyCasts(reorderedArgs);
                     Object result = builtin.execute(frame, reorderedArgs);
@@ -328,7 +327,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             super(forNextMethod, argsAreEvaluated);
         }
 
-        @Child private IndirectCallNode call = Truffle.getRuntime().createIndirectCallNode();
+        @Child private CallRFunctionCachedNode call = CallRFunctionCachedNodeGen.create(0);
 
         @Override
         public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
@@ -340,8 +339,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent)
                             : RCaller.create(frame, RCallerHelper.createFromArguments(genFunctionName,
                                             new RArgsValuesAndNames(reorderedArgs.getArguments(), ArgumentsSignature.empty(reorderedArgs.getLength()))));
-            Object[] arguments = RArguments.create(function, caller, null, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function.getEnclosingFrame(), dispatchArgs);
-            return call.call(frame, function.getTarget(), arguments);
+            return call.execute(frame, function, caller, null, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function.getEnclosingFrame(), dispatchArgs);
         }
 
         @Override
