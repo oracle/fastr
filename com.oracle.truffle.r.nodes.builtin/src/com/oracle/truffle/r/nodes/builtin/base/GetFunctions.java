@@ -84,9 +84,9 @@ public class GetFunctions {
         protected void unknownObject(String x, RType modeType, String modeString) throws RError {
             unknownObjectErrorProfile.enter();
             if (modeType == RType.Any) {
-                throw RError.error(this, RError.Message.UNKNOWN_OBJECT, x);
+                throw RError.error(RError.SHOW_CALLER, RError.Message.UNKNOWN_OBJECT, x);
             } else {
-                throw RError.error(this, RError.Message.UNKNOWN_OBJECT_MODE, x, modeType == null ? modeString : modeType.getName());
+                throw RError.error(RError.SHOW_CALLER, RError.Message.UNKNOWN_OBJECT_MODE, x, modeType == null ? modeString : modeType.getName());
             }
         }
 

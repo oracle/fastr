@@ -92,7 +92,7 @@ public abstract class Assign extends RBuiltinNode {
      * The general case that requires searching the environment hierarchy.
      */
     @Specialization
-    protected Object assignInherit(RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits, //
+    protected Object assign(RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits, //
                     @Cached("createBinaryProfile()") ConditionProfile inheritsProfile) {
         String x = checkVariable(xVec);
         REnvironment env = envir;
@@ -119,7 +119,7 @@ public abstract class Assign extends RBuiltinNode {
             env.put(x, value);
         } catch (PutException ex) {
             errorProfile.enter();
-            throw RError.error(this, ex);
+            throw RError.error(RError.SHOW_CALLER, ex);
         }
         return value;
     }

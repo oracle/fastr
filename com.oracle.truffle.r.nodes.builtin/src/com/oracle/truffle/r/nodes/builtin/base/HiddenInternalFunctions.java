@@ -173,7 +173,7 @@ public class HiddenInternalFunctions {
                 try {
                     impEnv.put(impsym, binding);
                 } catch (PutException ex) {
-                    throw RError.error(this, ex);
+                    throw RError.error(RError.SHOW_CALLER, ex);
                 }
 
             }
