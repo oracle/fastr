@@ -46,10 +46,10 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
-import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlotNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -225,7 +225,6 @@ public class GetFunctions {
 
         @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
-        @Child private RArgumentsNode argsNode;
 
         @CompilationFinal private boolean needsCallerFrame;
 
@@ -337,14 +336,11 @@ public class GetFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 needsCallerFrame = true;
             }
-            if (argsNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                argsNode = insert(RArgumentsNode.create());
-            }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
             FormalArguments formals = ((RRootNode) ifnFunc.getRootNode()).getFormalArguments();
             RArgsValuesAndNames args = new RArgsValuesAndNames(new Object[]{x}, ArgumentsSignature.empty(1));
-            Object[] callArgs = argsNode.execute(ifnFunc, RCaller.create(frame, RCallerHelper.createFromArguments(ifnFunc, args)), callerFrame, new Object[]{x}, formals.getSignature(), null);
+            Object[] callArgs = RArguments.create(ifnFunc, RCaller.create(frame, RCallerHelper.createFromArguments(ifnFunc, args)), callerFrame, new Object[]{x}, formals.getSignature(),
+                            ifnFunc.getEnclosingFrame(), null);
             return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
         }
     }

@@ -175,10 +175,6 @@ public final class RArguments {
         return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(formalSignature.getLength()), functionObj.getEnclosingFrame(), dispatchArgs);
     }
 
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
-        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length), enclosingFrame, dispatchArgs);
-    }
-
     /**
      * Creates the arguments array that can be stored in the frame.
      *

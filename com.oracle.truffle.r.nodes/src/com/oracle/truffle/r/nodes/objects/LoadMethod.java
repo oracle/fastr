@@ -29,8 +29,8 @@ import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
-import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -60,7 +60,6 @@ abstract class LoadMethod extends RBaseNode {
     @Child private ReadVariableNode loadMethodFind;
     @Child private DirectCallNode loadMethodCall;
     @CompilationFinal private RFunction loadMethodFunction;
-    @Child private RArgumentsNode argsNode = RArgumentsNode.create();
     private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
     private final ConditionProfile moreAttributes = ConditionProfile.createBinaryProfile();
     private final ConditionProfile noNextMethodAttr = ConditionProfile.createBinaryProfile();
@@ -129,9 +128,9 @@ abstract class LoadMethod extends RBaseNode {
             if (cached.profile(currentFunction == loadMethodFunction)) {
                 // TODO: technically, someone could override loadMethod function and access the
                 // caller, but it's rather unlikely
-                Object[] args = argsNode.execute(loadMethodFunction, caller, null,
+                Object[] args = RArguments.create(loadMethodFunction, caller, null,
                                 new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())}, SIGNATURE,
-                                null);
+                                loadMethodFunction.getEnclosingFrame(), null);
                 ret = (RFunction) loadMethodCall.call(frame, args);
             } else {
                 // slow path

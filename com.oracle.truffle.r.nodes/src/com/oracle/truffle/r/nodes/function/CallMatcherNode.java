@@ -27,14 +27,13 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
-import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -50,7 +49,6 @@ public abstract class CallMatcherNode extends RBaseNode {
     protected final boolean argsAreEvaluated;
 
     @Child private PromiseHelperNode promiseHelper;
-    @Child private RArgumentsNode argsNode = RArgumentsNode.create();
 
     protected final ConditionProfile missingArgProfile = ConditionProfile.createBinaryProfile();
     protected final ConditionProfile emptyArgProfile = ConditionProfile.createBinaryProfile();
@@ -126,10 +124,6 @@ public abstract class CallMatcherNode extends RBaseNode {
         MatchPermutation permutation = ArgumentMatcher.matchArguments(resultSignature, formalSignature, this, forNextMethod, function.getRBuiltin());
 
         return new CallMatcherCachedNode(suppliedSignature, varArgSignatures, function, preparePermutation, permutation, forNextMethod, argsAreEvaluated, next);
-    }
-
-    protected Object[] prepareArguments(Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, DispatchArgs dispatchArgs, RCaller caller) {
-        return argsNode.execute(function, caller, null, reorderedArgs, reorderedSignature, dispatchArgs);
     }
 
     protected final void evaluatePromises(VirtualFrame frame, RFunction function, Object[] args, int varArgIndex) {
@@ -259,7 +253,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                     String genFunctionName = functionName == null ? function.getName() : functionName;
                     Supplier<RSyntaxNode> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, preparePermutation, suppliedArguments, suppliedSignature);
                     RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent) : RCaller.create(frame, parent, argsSupplier);
-                    Object[] arguments = prepareArguments(reorderedArgs, matchedArgs.getSignature(), cachedFunction, dispatchArgs, caller);
+                    Object[] arguments = RArguments.create(cachedFunction, caller, null, reorderedArgs, matchedArgs.getSignature(), cachedFunction.getEnclosingFrame(), dispatchArgs);
                     return call.call(frame, arguments);
                 } else {
                     applyCasts(reorderedArgs);
@@ -346,7 +340,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent)
                             : RCaller.create(frame, RCallerHelper.createFromArguments(genFunctionName,
                                             new RArgsValuesAndNames(reorderedArgs.getArguments(), ArgumentsSignature.empty(reorderedArgs.getLength()))));
-            Object[] arguments = prepareArguments(reorderedArgs.getArguments(), reorderedArgs.getSignature(), function, dispatchArgs, caller);
+            Object[] arguments = RArguments.create(function, caller, null, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function.getEnclosingFrame(), dispatchArgs);
             return call.call(frame, function.getTarget(), arguments);
         }
 
