@@ -22,4 +22,13 @@ public class TestBuiltin_Encodingassign_ extends TestBase {
     public void testEncodingassign_1() {
         assertEval("argv <- structure(list(x = 'abc', value = 'UTF-8'), .Names = c('x',     'value'));do.call('Encoding<-', argv)");
     }
+
+    @Test
+    public void testEncoding() {
+        assertEval(Output.IgnoreErrorContext, "{ x<-42; Encoding(x)<-\"UTF-8\" }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-\"foo\"; Encoding(x)<-NULL }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-\"foo\"; Encoding(x)<-42 }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-\"foo\"; Encoding(x)<-character() }");
+    }
+
 }
