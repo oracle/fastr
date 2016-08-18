@@ -10,6 +10,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -71,7 +72,7 @@ public abstract class IsListFactor extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstBoolean(1);
+        casts.arg("recursive").asLogicalVector().findFirst().map(toBoolean());
     }
 
     protected static IsListFactorInternal createNode(boolean recursive) {
