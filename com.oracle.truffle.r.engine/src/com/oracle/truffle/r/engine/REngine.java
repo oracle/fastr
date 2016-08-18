@@ -288,7 +288,9 @@ final class REngine implements Engine, Engine.Timings {
         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
         RootCallTarget callTarget = parser.rootFunction(source, name, new RASTBuilder(constants));
         FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
-        return RDataFactory.createFunction(name, callTarget, null, enclosingFrame);
+        RFunction func = RDataFactory.createFunction(name, callTarget, null, enclosingFrame);
+        RInstrumentation.checkDebugRequested(func);
+        return func;
     }
 
     @Override
