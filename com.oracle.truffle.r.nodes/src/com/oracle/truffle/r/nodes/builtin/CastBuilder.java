@@ -996,6 +996,10 @@ public final class CastBuilder {
             return integerValue().or(doubleValue()).or(logicalValue());
         }
 
+        /**
+         * Checks that the argument is a list or vector/scalar of type numeric, string, complex or
+         * raw.
+         */
         public static ArgumentTypeFilter<Object, Object> abstractVectorValue() {
             return numericValue().or(stringValue()).or(complexValue()).or(rawValue()).or(instanceOf(RAbstractListVector.class));
         }
@@ -1018,14 +1022,6 @@ public final class CastBuilder {
 
         public static TypePredicateArgumentFilter<Object, RComplex> scalarComplexValue() {
             return predefFilters().scalarComplexValue();
-        }
-
-        /**
-         * Checks that the argument is one of scalar values: string, double, complex, integer or
-         * logical/byte.
-         */
-        public static ArgumentTypeFilter<Object, Object> scalarValue() {
-            return scalarStringValue().or(scalarDoubleValue()).or(scalarComplexValue()).or(scalarIntegerValue()).or(scalarLogicalValue());
         }
 
         public static TypePredicateArgumentFilter<Object, RMissing> missingValue() {
