@@ -1046,7 +1046,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             if (fastPath != null) {
                 Object result = fastPath.execute(frame, orderedArguments.getArguments());
                 if (result != null) {
-                    RContext.getInstance().setVisible(this.fastPathVisibility);
+                    assert fastPathVisibility != null;
+                    RContext.getInstance().setVisible(fastPathVisibility);
                     return result;
                 }
                 CompilerDirectives.transferToInterpreterAndInvalidate();

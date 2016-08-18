@@ -32,6 +32,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public abstract class IntersectFastPath extends RFastPathNode {
 
@@ -44,7 +45,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
                     @Cached("createBinaryProfile()") ConditionProfile resultLengthMatchProfile) {
         int xLength = x.getLength();
         int yLength = y.getLength();
-        reportWork(xLength + yLength);
+        RNode.reportWork(this, xLength + yLength);
 
         int count = 0;
         int[] result = EMPTY_INT_ARRAY;

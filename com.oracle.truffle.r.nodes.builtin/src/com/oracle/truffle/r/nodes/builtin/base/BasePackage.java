@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.util.function.Supplier;
+
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -78,6 +80,7 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrls;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrlsNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNode;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNodeGen;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -640,7 +643,11 @@ public class BasePackage extends RBuiltinPackage {
         ((RRootNode) function.getRootNode()).setFastPath(factory);
     }
 
-    private static void addFastPath(MaterializedFrame baseFrame, String name, java.util.function.Supplier<RFastPathNode> factory, Class<?> builtinNodeClass) {
+    private static void addFastPath(MaterializedFrame baseFrame, String name, Supplier<RFastPathNode> factory, RVisibility visibility) {
+        addFastPath(baseFrame, name, FastPathFactory.fromVisibility(visibility, factory));
+    }
+
+    private static void addFastPath(MaterializedFrame baseFrame, String name, Supplier<RFastPathNode> factory, Class<?> builtinNodeClass) {
         RBuiltin builtin = builtinNodeClass.getAnnotation(RBuiltin.class);
         addFastPath(baseFrame, name, FastPathFactory.fromRBuiltin(builtin, factory));
     }
@@ -648,16 +655,16 @@ public class BasePackage extends RBuiltinPackage {
     @Override
     public void loadOverrides(MaterializedFrame baseFrame) {
         super.loadOverrides(baseFrame);
-        addFastPath(baseFrame, "matrix", () -> MatrixFastPathNodeGen.create(null), Matrix.class);
-        addFastPath(baseFrame, "setdiff", () -> SetDiffFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "get", () -> GetFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "exists", () -> ExistsFastPathNodeGen.create(null), Exists.class);
-        addFastPath(baseFrame, "assign", () -> AssignFastPathNodeGen.create(null), Assign.class);
-        addFastPath(baseFrame, "is.element", () -> IsElementFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "integer", () -> IntegerFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "numeric", () -> DoubleFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "double", () -> DoubleFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "intersect", () -> IntersectFastPathNodeGen.create(null));
+        addFastPath(baseFrame, "matrix", MatrixFastPathNodeGen::create, Matrix.class);
+        addFastPath(baseFrame, "setdiff", SetDiffFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "get", GetFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "exists", ExistsFastPathNodeGen::create, Exists.class);
+        addFastPath(baseFrame, "assign", AssignFastPathNodeGen::create, Assign.class);
+        addFastPath(baseFrame, "is.element", IsElementFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "integer", IntegerFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "numeric", DoubleFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "double", DoubleFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "intersect", IntersectFastPathNodeGen::create, RVisibility.ON);
         addFastPath(baseFrame, "pmax", FastPathFactory.EVALUATE_ARGS);
         addFastPath(baseFrame, "pmin", FastPathFactory.EVALUATE_ARGS);
         addFastPath(baseFrame, "cbind", FastPathFactory.FORCED_EAGER_ARGS);
