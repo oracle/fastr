@@ -68,7 +68,7 @@ public abstract class RArgumentsNode extends RBaseNode {
         @Override
         public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature signature, DispatchArgs dispatchArgs) {
             if (function == cachedFunction) {
-                return RArguments.create(cachedFunction, caller, callerFrame, evaluatedArgs, cachedFunction.getEnclosingFrame(), dispatchArgs);
+                return RArguments.create(cachedFunction, caller, callerFrame, evaluatedArgs, signature, cachedFunction.getEnclosingFrame(), dispatchArgs);
             } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new RArgumentsGenericNode()).execute(function, caller, callerFrame, evaluatedArgs, signature, dispatchArgs);
@@ -79,7 +79,7 @@ public abstract class RArgumentsNode extends RBaseNode {
     private static final class RArgumentsGenericNode extends RArgumentsNode {
         @Override
         public Object[] execute(RFunction function, RCaller caller, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature signature, DispatchArgs dispatchArgs) {
-            return RArguments.create(function, caller, callerFrame, evaluatedArgs, function.getEnclosingFrame(), dispatchArgs);
+            return RArguments.create(function, caller, callerFrame, evaluatedArgs, signature, function.getEnclosingFrame(), dispatchArgs);
         }
     }
 }

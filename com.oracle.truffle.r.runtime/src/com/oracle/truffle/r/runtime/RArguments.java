@@ -171,12 +171,8 @@ public final class RArguments {
 
     public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
         ArgumentsSignature formalSignature = ((HasSignature) functionObj.getRootNode()).getSignature();
-        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(formalSignature.getLength()), dispatchArgs);
-    }
-
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature, DispatchArgs dispatchArgs) {
         CompilerAsserts.neverPartOfCompilation();
-        return create(functionObj, call, callerFrame, evaluatedArgs, suppliedSignature, functionObj.getEnclosingFrame(), dispatchArgs);
+        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(formalSignature.getLength()), functionObj.getEnclosingFrame(), dispatchArgs);
     }
 
     public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
