@@ -279,11 +279,13 @@ public class RCommand {
                     // interrupted by ctrl-c
                 }
             }
-        } catch (JumpToTopLevelException e) {
-            // can happen if user profile invokes browser (unlikely but possible)
-        } catch (EOFException ex) {
+        } catch (JumpToTopLevelException | EOFException ex) {
+            // JumpToTopLevelException can happen if user profile invokes browser (unlikely but
+            // possible)
             try {
                 vm.eval(QUIT_EOF);
+            } catch (JumpToTopLevelException e) {
+                Utils.systemExit(0);
             } catch (Throwable e) {
                 if (e.getCause() instanceof ExitException) {
                     // normal quit, but with exit code based on lastStatus
