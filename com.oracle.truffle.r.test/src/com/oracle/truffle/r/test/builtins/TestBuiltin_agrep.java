@@ -39,4 +39,16 @@ public class TestBuiltin_agrep extends TestBase {
         assertEval(Ignored.Unknown,
                         "argv <- list('laysy', c('1 lazy', '1', '1 LAZY'), TRUE, FALSE, c(1L, 1L, 1L), c(2, NA, NA, NA, NA), FALSE, TRUE); .Internal(agrep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
+
+    @Test
+    public void testAgrep() {
+        assertEval("{ .Internal(agrep(7, \"42\", F, F, NULL, NULL, F, F)) }");
+        assertEval("{ .Internal(agrep(character(), \"42\", F, F, NULL, NULL, F, F)) }");
+        assertEval("{ .Internal(agrep(\"7\", 42, F, F, NULL, NULL, F, F)) }");
+
+        assertEval("{ .Internal(agrepl(7, \"42\", F, F, NULL, NULL, F, F)) }");
+        assertEval("{ .Internal(agrepl(character(), \"42\", F, F, NULL, NULL, F, F)) }");
+        assertEval("{ .Internal(agrepl(\"7\", 42, F, F, NULL, NULL, F, F)) }");
+    }
+
 }

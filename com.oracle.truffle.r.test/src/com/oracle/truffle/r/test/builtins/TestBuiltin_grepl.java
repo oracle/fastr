@@ -73,7 +73,11 @@ public class TestBuiltin_grepl extends TestBase {
     }
 
     @Test
-    public void testGrep() {
+    public void testGrepl() {
         assertEval("{ txt<-c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"); grepl(\"foo\", txt) }");
+
+        assertEval("{ .Internal(grepl(7, \"7\", F, F, F, F, F, F)) }");
+        assertEval("{ .Internal(grepl(character(), \"7\", F, F, F, F, F, F)) }");
+        assertEval("{ .Internal(grepl(\"7\", 7, F, F, F, F, F, F)) }");
     }
 }
