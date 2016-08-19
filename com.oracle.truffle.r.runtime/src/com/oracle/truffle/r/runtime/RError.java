@@ -290,13 +290,12 @@ public final class RError extends RuntimeException {
         NA_INTRODUCED_COERCION_INT("NAs introduced by coercion to integer range"),
         ARGUMENT_WHICH_NOT_LOGICAL("argument to 'which' is not logical"),
         X_NUMERIC("'x' must be numeric"),
-        X_LIST_ATOMIC("'x' must be list or atomic vector"),
+        X_LIST_ATOMIC("'x' must be a list or atomic vector"),
         X_ARRAY_TWO("'x' must be an array of at least two dimensions"),
         ACCURACY_MODULUS("probable complete loss of accuracy in modulus"),
         INVALID_SEPARATOR("invalid separator"),
         INCORRECT_DIMENSIONS("incorrect number of dimensions"),
         LOGICAL_SUBSCRIPT_LONG("(subscript) logical subscript too long"),
-        DECREASING_TRUE_FALSE("'decreasing' must be TRUE or FALSE"),
         ARGUMENT_LENGTHS_DIFFER("argument lengths differ"),
         ZERO_LENGTH_PATTERN("zero-length pattern"),
         UNSUPPORTED_MODE("unsupported mode"),
@@ -431,6 +430,7 @@ public final class RError extends RuntimeException {
         ATTRIBUTE_VECTOR_SAME_LENGTH("'%s' attribute [%d] must be the same length as the vector [%d]"),
         SCAN_UNEXPECTED("scan() expected '%s', got '%s'"),
         MUST_BE_ENVIRON("'%s' must be an environment"),
+        MUST_BE_INTEGER("'%s' must be an integer"),
         UNUSED_ARGUMENT("unused argument (%s)"),
         UNUSED_ARGUMENTS("unused arguments (%s)"),
         INFINITE_MISSING_VALUES("infinite or missing values in '%s'"),
@@ -567,7 +567,6 @@ public final class RError extends RuntimeException {
         PARSE_ERROR("parse error"),
         SEED_NOT_VALID_INT("supplied seed is not a valid integer"),
         POSITIVE_CONTEXTS("number of contexts must be positive"),
-        INVALID_TIMES_ARG("invalid 'times' value"),
         NORMALIZE_PATH_NOSUCH("path[%d]=\"%s\": No such file or directory"),
         ARGS_MUST_BE_NAMED("all arguments must be named"),
         INVALID_INTERNAL("invalid .Internal() argument"),
@@ -694,6 +693,7 @@ public final class RError extends RuntimeException {
         ROWSUM_NAMES_NOT_CHAR("row names are not character"),
         ROWSUM_NON_NUMERIC("non-numeric matrix in rowsum(): this should not happen"),
         ARGUMENTS_REQUIRED_COUNT("%d arguments to '%s' which requires %d"),
+        ARG_IS_NOT_OF_MODE("argument is not of mode %s"),
         ARGUMENT_LENGTH_0("argument of length 0"),
         MUST_BE_VECTOR_BUT_WAS("'%s' must be of a vector type, was '%s'"),
         SYSTEM_CHAR_ARG("non-empty character argument expected"),
@@ -705,7 +705,9 @@ public final class RError extends RuntimeException {
         ERR_MSG_MUST_BE_STRING("error message must be a character string"),
         ERR_MSG_BAD("bad error message"),
         BAD_ENVIRONMENT("bad %s environment argument"),
-        CANNOT_BE_LENGTH("'%s' cannot be of length %d");
+        CANNOT_BE_LENGTH("'%s' cannot be of length %d"),
+        SECOND_ARGUMENT_LIST("second argument must be a list"),
+        DOES_NOT_HAVE_DIMNAMES("'%s' does not have named dimnames");
 
         public final String message;
         final boolean hasArgs;

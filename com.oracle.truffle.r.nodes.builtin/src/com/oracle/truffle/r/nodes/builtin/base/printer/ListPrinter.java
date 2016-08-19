@@ -84,7 +84,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 }
             } else if (tmp instanceof RAbstractIntVector) {
                 RAbstractIntVector iv = (RAbstractIntVector) tmp;
-                if (printCtx.printerNode().inherits(iv, "factor", RRuntime.LOGICAL_FALSE)) {
+                if (printCtx.printerNode().inherits(iv, RRuntime.CLASS_FACTOR)) {
                     /* factors are stored as integers */
                     pbuf = snprintf(115, "factor,%d", iv.getLength());
                 } else {

@@ -52,7 +52,7 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
                     continue;
                 }
             }
-            if (utils.inherits(value, "factor", RRuntime.LOGICAL_FALSE)) {
+            if (utils.inherits(value, RRuntime.CLASS_FACTOR)) {
                 if (RRuntime.LEVELS_ATTR_KEY.equals(a.getName())) {
                     continue;
                 }

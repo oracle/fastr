@@ -39,8 +39,8 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.impl.FindContextNode;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -54,13 +54,13 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
-import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -279,7 +279,7 @@ final class REngine implements Engine, Engine.Timings {
     @Override
     public RExpression parse(Map<String, Object> constants, Source source) throws ParseException {
         List<RSyntaxNode> list = parseImpl(constants, source);
-        Object[] data = list.stream().map(node -> RASTUtils.createLanguageElement(node.asRNode())).toArray();
+        Object[] data = list.stream().map(node -> RASTUtils.createLanguageElement(node)).toArray();
         return RDataFactory.createExpression(RDataFactory.createList(data));
     }
 
@@ -288,7 +288,9 @@ final class REngine implements Engine, Engine.Timings {
         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
         RootCallTarget callTarget = parser.rootFunction(source, name, new RASTBuilder(constants));
         FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
-        return RDataFactory.createFunction(name, callTarget, null, enclosingFrame);
+        RFunction func = RDataFactory.createFunction(name, callTarget, null, enclosingFrame);
+        RInstrumentation.checkDebugRequested(func);
+        return func;
     }
 
     @Override
@@ -301,7 +303,7 @@ final class REngine implements Engine, Engine.Timings {
 
         private final List<RSyntaxNode> statements;
 
-        @SuppressWarnings("unchecked") @Child private FindContextNode<RContext> findContext = (FindContextNode<RContext>) TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
+        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         PolyglotEngineRootNode(List<RSyntaxNode> statements) {
             super(TruffleRLanguage.class, SourceSection.createUnavailable("repl", RSource.Internal.REPL_WRAPPER.string), new FrameDescriptor());
@@ -316,7 +318,7 @@ final class REngine implements Engine, Engine.Timings {
         @Override
         public Object execute(VirtualFrame frame) {
             RContext oldContext = RContext.threadLocalContext.get();
-            RContext newContext = findContext.executeFindContext();
+            RContext newContext = TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext);
             RContext.threadLocalContext.set(newContext);
             try {
                 Object lastValue = RNull.instance;

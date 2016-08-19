@@ -69,7 +69,6 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -366,7 +365,7 @@ public abstract class Bind extends RBaseNode {
         Object argValue = promiseArgs.getArgument(argInd);
         if (argValue instanceof RPromise) {
             RPromise p = (RPromise) argValue;
-            Object node = RASTUtils.createLanguageElement(RASTUtils.unwrap(p.getRep()));
+            Object node = RASTUtils.createLanguageElement(p.getRep().asRSyntaxNode());
             if (deparseLevel == 1 && node instanceof RSymbol) {
                 return ((RSymbol) node).toString();
             } // else - TODO handle deparseLevel > 1

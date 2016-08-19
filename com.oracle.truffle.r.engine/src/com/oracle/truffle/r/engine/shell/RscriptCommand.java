@@ -99,7 +99,7 @@ public class RscriptCommand {
     }
 
     public static void main(String[] args) {
-        doMain(args, true, null, null);
+        doMain(args, true, System.in, System.out);
         // never returns
         throw RInternalError.shouldNotReachHere();
     }

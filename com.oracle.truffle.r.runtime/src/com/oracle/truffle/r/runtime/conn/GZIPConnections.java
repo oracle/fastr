@@ -60,20 +60,18 @@ public class GZIPConnections {
         @Override
         protected void createDelegateConnection() throws IOException {
             DelegateRConnection delegate = null;
-            switch (getOpenMode().abstractOpenMode) {
+            AbstractOpenMode openMode = getOpenMode().abstractOpenMode;
+            switch (openMode) {
                 case Read:
                 case ReadBinary:
-                    RCompression.Type cType = RCompression.Type.NONE;
-                    try (InputStream is = new FileInputStream(path)) {
-                        byte[] buf = new byte[5];
-                        int count = is.read(buf);
-                        if (count == 5) {
-                            cType = RCompression.Type.decodeBuf(buf);
-                        }
-                    }
+                    RCompression.Type cType = RCompression.getCompressionType(path);
                     switch (cType) {
                         case NONE:
-                            delegate = new FileConnections.FileReadTextRConnection(this);
+                            if (openMode == AbstractOpenMode.ReadBinary) {
+                                delegate = new FileConnections.FileReadBinaryRConnection(this);
+                            } else {
+                                delegate = new FileConnections.FileReadTextRConnection(this);
+                            }
                             break;
                         case GZIP:
                             delegate = new GZIPInputRConnection(this);
