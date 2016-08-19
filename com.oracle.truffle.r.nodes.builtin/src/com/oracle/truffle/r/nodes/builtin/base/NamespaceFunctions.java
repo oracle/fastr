@@ -42,17 +42,17 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class NamespaceFunctions {
 
-    private abstract static class CastHelper extends RBuiltinNode {
-        protected void name(CastBuilder casts) {
+    private static final class Casts {
+        private static void name(CastBuilder casts) {
             casts.arg("name").mustBe(stringValue().or(instanceOf(RSymbol.class)));
         }
     }
 
     @RBuiltin(name = "getRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = READS_STATE)
-    public abstract static class GetRegisteredNamespace extends CastHelper {
+    public abstract static class GetRegisteredNamespace extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            name(casts);
+            Casts.name(casts);
         }
 
         @Specialization
@@ -77,10 +77,10 @@ public class NamespaceFunctions {
     }
 
     @RBuiltin(name = "isRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = READS_STATE)
-    public abstract static class IsRegisteredNamespace extends CastHelper {
+    public abstract static class IsRegisteredNamespace extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            name(casts);
+            Casts.name(casts);
         }
 
         @Specialization
@@ -126,10 +126,10 @@ public class NamespaceFunctions {
     }
 
     @RBuiltin(name = "registerNamespace", kind = INTERNAL, parameterNames = {"name", "env"}, behavior = MODIFIES_STATE)
-    public abstract static class RegisterNamespace extends CastHelper {
+    public abstract static class RegisterNamespace extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            name(casts);
+            Casts.name(casts);
             casts.arg("env").mustBe(instanceOf(REnvironment.class));
         }
 
@@ -152,10 +152,10 @@ public class NamespaceFunctions {
     }
 
     @RBuiltin(name = "unregisterNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = MODIFIES_STATE)
-    public abstract static class UnregisterNamespace extends CastHelper {
+    public abstract static class UnregisterNamespace extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            name(casts);
+            Casts.name(casts);
         }
 
         @Specialization
