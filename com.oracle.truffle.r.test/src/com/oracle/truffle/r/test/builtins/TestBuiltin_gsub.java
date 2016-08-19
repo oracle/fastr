@@ -170,7 +170,7 @@ public class TestBuiltin_gsub extends TestBase {
     }
 
     @Test
-    public void testSub() {
+    public void testGsub() {
         assertEval("{ gsub(\"a\",\"aa\", \"prague alley\") }");
         assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\") }");
         assertEval("{ gsub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
@@ -180,5 +180,11 @@ public class TestBuiltin_gsub extends TestBase {
         assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\")) }");
         assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\"), fixed=TRUE) }");
         assertEval(Ignored.Unknown, "{ gsub(\"a\",\"aa\", \"prAgue alley\", ignore.case=TRUE) }");
+
+        assertEval("{ .Internal(gsub(7, \"42\", \"7\", F, F, F, F)) }");
+        assertEval("{ .Internal(gsub(character(), \"42\", \"7\", F, F, F, F)) }");
+        assertEval("{ .Internal(gsub(\"7\", 42, \"7\", F, F, F, F)) }");
+        assertEval("{ .Internal(gsub(\"7\", character(), \"7\", F, F, F, F)) }");
+        assertEval("{ .Internal(gsub(\"7\", \"42\", 7, F, F, F, F)) }");
     }
 }

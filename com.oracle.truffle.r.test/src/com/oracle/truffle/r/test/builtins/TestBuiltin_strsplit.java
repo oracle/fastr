@@ -115,5 +115,8 @@ public class TestBuiltin_strsplit extends TestBase {
         assertEval(Output.IgnoreWarningContext, "{ strsplit(\"abc\", \".\", fixed = TRUE, perl=TRUE) }");
         assertEval("{ strsplit(\"abc\", \".\", fixed = FALSE, perl=FALSE) }");
         assertEval("{ strsplit(\"abc\", \".\", fixed = FALSE, perl=TRUE) }");
+
+        assertEval("{ .Internal(strsplit(7, \"42\", F, F, F)) }");
+        assertEval("{ .Internal(strsplit(\"7\", 42, F, F, F)) }");
     }
 }
