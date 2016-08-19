@@ -22,26 +22,28 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
 @RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"}, behavior = PURE)
 public abstract class Paste extends RBuiltinNode {
@@ -60,6 +62,13 @@ public abstract class Paste extends RBuiltinNode {
     private final ConditionProfile reusedResultProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonNullElementsProfile = BranchProfile.create();
     private final BranchProfile onlyNullElementsProfile = BranchProfile.create();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg(0).mustBe(RAbstractListVector.class);
+        casts.arg("sep").mustBe(nullValue().not()).asStringVector().findFirst(Message.INVALID_SEPARATOR);
+        casts.arg("collapse").mustBe(Predef.stringValue().or(Predef.nullValue())).mapIf(Predef.stringValue(), Predef.findFirst().stringElement());
+    }
 
     /**
      * FIXME The exact semantics needs checking regarding the use of {@code as.character}. Currently
@@ -92,21 +101,12 @@ public abstract class Paste extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = "!isRNull(collapse)")
-    protected String pasteList(RList values, String sep, Object collapse, //
-                    @Cached("createBinaryProfile()") ConditionProfile collapseIsVectorProfile) {
+    @Specialization
+    protected String pasteList(RList values, String sep, String collapse) {
         int length = lengthProfile.profile(values.getLength());
         if (hasNonNullElements(values, length)) {
             String[] result = pasteListElements(values, sep, length);
-            String collapseString;
-            if (collapse instanceof String) {
-                collapseString = (String) collapse;
-            } else if (collapseIsVectorProfile.profile(collapse instanceof RAbstractStringVector)) {
-                collapseString = ((RAbstractStringVector) collapse).getDataAt(0);
-            } else {
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "collapse");
-            }
-            return collapseString(result, collapseString);
+            return collapseString(result, collapse);
         } else {
             return "";
         }

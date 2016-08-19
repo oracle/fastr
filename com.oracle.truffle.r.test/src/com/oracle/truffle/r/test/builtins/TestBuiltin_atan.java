@@ -29,7 +29,7 @@ public class TestBuiltin_atan extends TestBase {
 
     @Test
     public void testatan3() {
-        assertEval(Ignored.OutputFormatting, "argv <- list(c(0+2i, 0.0001+2i, 0-2i, 0-2.0001i));atan(argv[[1]]);");
+        assertEval("argv <- list(c(0+2i, 0.0001+2i, 0-2i, 0-2.0001i));atan(argv[[1]]);");
     }
 
     @Test
