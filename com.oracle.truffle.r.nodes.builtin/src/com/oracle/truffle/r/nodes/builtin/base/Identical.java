@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -77,7 +78,11 @@ public abstract class Identical extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstBoolean(2, "num.eq").firstBoolean(3, "single.NA").firstBoolean(4, "attrib.as.set").firstBoolean(5, "ignore.bytecode").firstBoolean(6, "ignore.environment");
+        casts.arg("num.eq").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("single.NA").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("attrib.as.set").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("ignore.bytecode").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("ignore.environment").asLogicalVector().findFirst().map(toBoolean());
     }
 
     private final ConditionProfile vecLengthProfile = ConditionProfile.createBinaryProfile();
