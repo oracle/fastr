@@ -163,7 +163,7 @@ public class LocaleFunctions {
     @RBuiltin(name = "bindtextdomain", kind = PRIMITIVE, parameterNames = {"domain", "dirname"}, behavior = READS_STATE)
     public abstract static class BindTextDomain extends RBuiltinNode {
         @Override
-        protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
+        protected void createCasts(CastBuilder casts) {
             casts.arg("domain").mustBe(stringValue(), INVALID_VALUE, "domain");
         }
 

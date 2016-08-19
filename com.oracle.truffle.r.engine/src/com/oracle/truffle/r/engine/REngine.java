@@ -398,7 +398,7 @@ final class REngine implements Engine, Engine.Timings {
         MaterializedFrame actualFrame = frame;
         if (actualFrame == null) {
             Frame current = Utils.getActualCurrentFrame();
-            if (current == null) {
+            if (current == null || !RArguments.isRFrame(current)) {
                 // special case, e.g. in parser and an error is thrown
                 actualFrame = REnvironment.globalEnv().getFrame();
             } else {

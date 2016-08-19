@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
@@ -91,11 +90,7 @@ public final class ContextInfo implements TruffleObject {
     }
 
     public static ContextInfo getContextInfo(PolyglotEngine vm) {
-        try {
-            return (ContextInfo) vm.findGlobalSymbol(ContextInfo.GLOBAL_SYMBOL).get();
-        } catch (Exception ex) {
-            throw RInternalError.shouldNotReachHere();
-        }
+        return (ContextInfo) vm.findGlobalSymbol(ContextInfo.GLOBAL_SYMBOL).get();
     }
 
     public RStartParams getStartParams() {

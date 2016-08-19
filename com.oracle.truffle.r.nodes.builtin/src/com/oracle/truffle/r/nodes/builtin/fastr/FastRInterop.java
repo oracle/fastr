@@ -22,13 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notLogicalNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
-
-import java.io.IOException;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -38,12 +39,17 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -67,10 +73,9 @@ public class FastRInterop {
 
             Source sourceObject = RSource.fromTextInternal(source, RSource.Internal.EVAL_WRAPPER, mimeType);
             try {
-                emitIO();
                 return RContext.getInstance().getEnv().parse(sourceObject);
-            } catch (IOException e) {
-                throw RError.error(this, Message.GENERIC, "Error while parsing: " + e.getMessage());
+            } catch (Throwable t) {
+                throw RError.error(this, Message.GENERIC, "Error while parsing: " + t.getMessage());
             }
         }
 
@@ -91,10 +96,6 @@ public class FastRInterop {
         @TruffleBoundary
         protected Object eval(String mimeType, String source) {
             return parse(mimeType, source).call();
-        }
-
-        @SuppressWarnings("unused")
-        private void emitIO() throws IOException {
         }
     }
 
@@ -146,6 +147,53 @@ public class FastRInterop {
                 throw RError.error(this, RError.Message.NO_IMPORT_OBJECT, name);
             }
             return object;
+        }
+    }
+
+    @RBuiltin(name = ".fastr.interop.hasSize", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    public abstract static class HasSize extends RBuiltinNode {
+
+        @Child private Node node = com.oracle.truffle.api.interop.Message.HAS_SIZE.createNode();
+
+        @Specialization
+        public byte hasSize(VirtualFrame frame, TruffleObject obj) {
+            return RRuntime.asLogical(ForeignAccess.sendHasSize(node, frame, obj));
+        }
+    }
+
+    @RBuiltin(name = ".fastr.interop.isNull", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    public abstract static class IsNull extends RBuiltinNode {
+
+        @Child private Node node = com.oracle.truffle.api.interop.Message.IS_NULL.createNode();
+
+        @Specialization
+        public byte hasSize(VirtualFrame frame, TruffleObject obj) {
+            return RRuntime.asLogical(ForeignAccess.sendIsNull(node, frame, obj));
+        }
+    }
+
+    @RBuiltin(name = ".fastr.interop.isExecutable", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    public abstract static class IsExecutable extends RBuiltinNode {
+
+        @Child private Node node = com.oracle.truffle.api.interop.Message.IS_EXECUTABLE.createNode();
+
+        @Specialization
+        public byte hasSize(VirtualFrame frame, TruffleObject obj) {
+            return RRuntime.asLogical(ForeignAccess.sendIsExecutable(node, frame, obj));
+        }
+    }
+
+    @RBuiltin(name = ".fastr.interop.toBoolean", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    public abstract static class ToBoolean extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("value").mustBe(logicalValue()).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(notLogicalNA()).map(Predef.toBoolean());
+        }
+
+        @Specialization
+        public boolean toBoolean(boolean value) {
+            return value;
         }
     }
 }
