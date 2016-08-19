@@ -78,11 +78,11 @@ public abstract class Identical extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("num.eq").asLogicalVector().findFirst().map(toBoolean());
-        casts.arg("single.NA").asLogicalVector().findFirst().map(toBoolean());
-        casts.arg("attrib.as.set").asLogicalVector().findFirst().map(toBoolean());
-        casts.arg("ignore.bytecode").asLogicalVector().findFirst().map(toBoolean());
-        casts.arg("ignore.environment").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("num.eq").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("single.NA").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("attrib.as.set").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("ignore.bytecode").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("ignore.environment").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
 
     private final ConditionProfile vecLengthProfile = ConditionProfile.createBinaryProfile();

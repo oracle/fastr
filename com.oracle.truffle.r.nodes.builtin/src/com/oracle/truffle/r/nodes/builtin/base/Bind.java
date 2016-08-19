@@ -396,7 +396,7 @@ public abstract class Bind extends RBaseNode {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("deparse.level").asIntegerVector().findFirst();
+            casts.arg("deparse.level").asIntegerVector().findFirst(0);
         }
 
         private int precedence(Object[] args) {
@@ -514,7 +514,7 @@ public abstract class Bind extends RBaseNode {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("deparse.level").asIntegerVector().findFirst();
+            casts.arg("deparse.level").asIntegerVector().findFirst(0);
         }
 
         private int precedence(Object[] args) {

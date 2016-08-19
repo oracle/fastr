@@ -30,6 +30,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -47,8 +48,8 @@ public abstract class IConv extends RBuiltinNode {
         casts.arg("to").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "to").asStringVector().mustBe(size(1), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT,
                         "to");
         casts.arg("sub").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "sub").asStringVector().mustBe(size(1), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "sub");
-        casts.arg("mark").asLogicalVector().findFirst();
-        casts.arg("toRaw").asLogicalVector().findFirst();
+        casts.arg("mark").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+        casts.arg("toRaw").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
 
     }
 
