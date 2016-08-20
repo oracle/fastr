@@ -43,6 +43,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -134,15 +135,20 @@ public class SysFunctions {
 
         protected void checkNSLoad(VirtualFrame frame, RAbstractStringVector names, RAbstractStringVector values, boolean setting) {
             if (names.getLength() == 1 && NS_LOAD.equals(names.getDataAt(0))) {
-                Frame caller = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
-                RFunction func = RArguments.getFunction(caller);
-                if (func.toString().equals(LOADNAMESPACE)) {
-                    if (setting) {
-                        RContext.getInstance().setNamespaceName(values.getDataAt(0));
-                    } else {
-                        // Now we can run the overrides
-                        RBuiltinPackages.loadDefaultPackageOverrides(RContext.getInstance().getNamespaceName());
-                    }
+                doCheckNSLoad(frame.materialize(), values, setting);
+            }
+        }
+
+        @TruffleBoundary
+        private static void doCheckNSLoad(MaterializedFrame frame, RAbstractStringVector values, boolean setting) {
+            Frame caller = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
+            RFunction func = RArguments.getFunction(caller);
+            if (func.toString().equals(LOADNAMESPACE)) {
+                if (setting) {
+                    RContext.getInstance().setNamespaceName(values.getDataAt(0));
+                } else {
+                    // Now we can run the overrides
+                    RBuiltinPackages.loadDefaultPackageOverrides(RContext.getInstance().getNamespaceName());
                 }
             }
 

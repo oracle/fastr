@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.Locale;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
@@ -118,6 +119,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     @Override
+    @TruffleBoundary
     @SuppressWarnings("try")
     protected CallTarget parse(Source source, Node context, String... argumentNames) throws IOException {
         try (Closeable c = RContext.withinContext(findContext(createFindContextNode()))) {

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.instrument;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -120,8 +121,20 @@ public final class InstrumentationState implements RContext.ContextState {
     }
 
     public static class BrowserState {
+        public static final class HelperState {
+            // docs state that "text" is a string but in reality it can be anything
+            public final Object text;
+            public final Object condition;
+
+            public HelperState(Object text, Object condition) {
+                this.text = text;
+                this.condition = condition;
+            }
+        }
+
         private boolean inBrowser;
         private String lastEmptyLineCommand = "n";
+        private ArrayList<HelperState> helperStateList = new ArrayList<>();
 
         public void setInBrowser(boolean state) {
             this.inBrowser = state;
@@ -137,6 +150,10 @@ public final class InstrumentationState implements RContext.ContextState {
 
         public String lastEmptyLineCommand() {
             return lastEmptyLineCommand;
+        }
+
+        public ArrayList<HelperState> helperStateList() {
+            return helperStateList;
         }
     }
 

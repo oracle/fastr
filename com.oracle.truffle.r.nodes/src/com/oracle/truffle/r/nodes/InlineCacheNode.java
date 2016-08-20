@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -40,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.TruffleBiFunction;
 
 /**
  * This node reifies a runtime object into the AST by creating nodes for frequently encountered
@@ -49,11 +49,11 @@ public abstract class InlineCacheNode extends RBaseNode {
 
     protected final int maxPicDepth;
     private final Function<Object, RNode> reify;
-    private final BiFunction<Frame, Object, Object> generic;
+    private final TruffleBiFunction<Frame, Object, Object> generic;
 
     public abstract Object execute(Frame frame, Object value);
 
-    InlineCacheNode(int maxPicDepth, Function<Object, RNode> reify, BiFunction<Frame, Object, Object> generic) {
+    InlineCacheNode(int maxPicDepth, Function<Object, RNode> reify, TruffleBiFunction<Frame, Object, Object> generic) {
         this.maxPicDepth = maxPicDepth;
         this.reify = reify;
         this.generic = generic;
@@ -92,8 +92,8 @@ public abstract class InlineCacheNode extends RBaseNode {
      *            inline cache has reached its maximum size
      */
     @SuppressWarnings("unchecked")
-    public static <T> InlineCacheNode createCache(int maxPicDepth, Function<T, RNode> reify, BiFunction<Frame, T, Object> generic) {
-        return InlineCacheNodeGen.create(maxPicDepth, (Function<Object, RNode>) reify, (BiFunction<Frame, Object, Object>) generic);
+    public static <T> InlineCacheNode createCache(int maxPicDepth, Function<T, RNode> reify, TruffleBiFunction<Frame, T, Object> generic) {
+        return InlineCacheNodeGen.create(maxPicDepth, (Function<Object, RNode>) reify, (TruffleBiFunction<Frame, Object, Object>) generic);
     }
 
     /**

@@ -17,6 +17,7 @@ import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -51,6 +52,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
     private static int TAGBUFLEN = 256;
 
     @Override
+    @TruffleBoundary
     protected void printValue(RAbstractListVector s, PrintContext printCtx) throws IOException {
         RAbstractIntVector dims = Utils.<RAbstractIntVector> castTo(
                         s.getAttr(dummyAttrProfiles, RRuntime.DIM_ATTR_KEY));
@@ -155,6 +157,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         StringVectorPrinter.INSTANCE.print(tt, cc);
     }
 
+    @TruffleBoundary
     static void printNoDimList(RAbstractContainer s, PrintContext printCtx) throws IOException {
         final PrintParameters pp = printCtx.parameters();
         final PrintWriter out = printCtx.output();

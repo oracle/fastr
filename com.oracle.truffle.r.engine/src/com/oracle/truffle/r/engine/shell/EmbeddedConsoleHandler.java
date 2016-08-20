@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInterfaceCallbacks;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
@@ -51,6 +52,7 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
         this.startParams = startParams;
     }
 
+    @TruffleBoundary
     private REmbedRFFI getREmbedRFFI() {
         if (rEmbedRFFI == null) {
             rEmbedRFFI = RFFIFactory.getRFFI().getREmbedRFFI();
@@ -66,6 +68,7 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
     }
 
     @Override
+    @TruffleBoundary
     public void println(String s) {
         getREmbedRFFI();
         if (delegate == null) {
@@ -78,6 +81,7 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
     }
 
     @Override
+    @TruffleBoundary
     public void print(String s) {
         getREmbedRFFI();
         if (delegate == null) {
@@ -89,6 +93,7 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
     }
 
     @Override
+    @TruffleBoundary
     public void printErrorln(String s) {
         getREmbedRFFI();
         if (delegate == null) {
@@ -101,6 +106,7 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
     }
 
     @Override
+    @TruffleBoundary
     public void printError(String s) {
         getREmbedRFFI();
         if (delegate == null) {
@@ -112,6 +118,7 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
     }
 
     @Override
+    @TruffleBoundary
     public String readLine() {
         getREmbedRFFI();
         if (delegate == null) {
@@ -132,6 +139,7 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
     }
 
     @Override
+    @TruffleBoundary
     public void setPrompt(String prompt) {
         this.prompt = prompt;
         if (delegate != null) {

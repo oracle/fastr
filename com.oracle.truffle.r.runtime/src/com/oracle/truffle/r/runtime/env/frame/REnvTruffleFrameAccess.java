@@ -135,6 +135,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     }
 
     @Override
+    @TruffleBoundary
     public RStringVector ls(boolean allNames, Pattern pattern, boolean sorted) {
         FrameDescriptor fd = frame.getFrameDescriptor();
         String[] names = getStringIdentifiers(fd);

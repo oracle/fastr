@@ -798,6 +798,7 @@ public class ForeignFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
             long func = DLL.findSymbol(name, packageName, rns);

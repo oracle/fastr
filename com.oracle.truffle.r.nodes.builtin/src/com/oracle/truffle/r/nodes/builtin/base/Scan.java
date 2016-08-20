@@ -145,6 +145,7 @@ public abstract class Scan extends RBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected Object doScan(RConnection file, RAbstractVector what, int nmax, String sep, String dec, String quotes, int nskip,
                     int nlines, RAbstractStringVector naStringsVec, boolean flush, boolean fill, RAbstractLogicalVector stripVec,
                     boolean quiet, boolean blSkip, boolean multiLine, int commentChar, boolean escapes,

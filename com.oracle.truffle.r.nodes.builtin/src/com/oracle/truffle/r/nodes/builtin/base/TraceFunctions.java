@@ -144,6 +144,7 @@ public class TraceFunctions {
             return RContext.getInstance().getInstrumentationState().getTracemem().getTracedObjects();
         }
 
+        @TruffleBoundary
         protected static String formatHashCode(Object x) {
             return String.format("<0x%x>", x.hashCode());
         }
@@ -187,6 +188,7 @@ public class TraceFunctions {
         }
 
         private static final class TracememListener implements MemoryCopyTracer.Listener {
+            @TruffleBoundary
             @Override
             public void reportCopying(RAbstractVector src, RAbstractVector dest) {
                 if (getTracedObjects().contains(src)) {
@@ -238,6 +240,7 @@ public class TraceFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object execute(Object x, String previous) {
             Object result = getResult(x);
             if (x != null && x != RNull.instance) {

@@ -26,6 +26,7 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 final class PrintContext {
@@ -114,6 +115,7 @@ final class PrintContext {
         }
     }
 
+    @TruffleBoundary
     static PrintContext leave() {
         ArrayDeque<PrintContext> ctxStack = printCtxTL.get();
 

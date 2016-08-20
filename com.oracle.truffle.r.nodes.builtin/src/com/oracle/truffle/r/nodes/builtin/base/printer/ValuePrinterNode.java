@@ -93,6 +93,7 @@ public abstract class ValuePrinterNode extends RBaseNode {
 
     public abstract Object executeString(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt);
 
+    @TruffleBoundary
     public Object prettyPrint(Object v, WriterFactory wf) {
         PrintParameters printParams = new PrintParameters();
         printParams.setDefaults();
@@ -102,7 +103,7 @@ public abstract class ValuePrinterNode extends RBaseNode {
             ValuePrinters.INSTANCE.print(v, printCtx);
             return printCtx.output().getPrintReport();
         } catch (IOException ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+            throw RError.ioError(this, ex);
         } finally {
             PrintContext.leave();
         }
@@ -115,7 +116,7 @@ public abstract class ValuePrinterNode extends RBaseNode {
                             right, max, useSource, noOpt), RWriter::new);
             return null;
         } catch (IOException ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+            throw RError.ioError(this, ex);
         }
     }
 
