@@ -19,7 +19,7 @@ public class TestBuiltin_sink extends TestBase {
 
     @Test
     public void testsink1() {
-        assertEval("argv <- list(structure(2L, class = c('terminal', 'connection')), FALSE, TRUE, FALSE); .Internal(sink(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(structure(2L, class = c('terminal', 'connection')), FALSE, FALSE, FALSE); .Internal(sink(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
