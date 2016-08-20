@@ -453,7 +453,7 @@ public class HiddenInternalFunctions {
                 out.write(cdata);
                 return result;
             } catch (IOException ex) {
-                throw RError.error(this, Message.GENERIC, "lazyLoadDBinsertValue file append error");
+                throw RError.ioError(this, ex);
             }
         }
     }
@@ -461,6 +461,7 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "lazyLoadDBflush", kind = INTERNAL, parameterNames = "path", behavior = COMPLEX)
     public abstract static class LazyLoadDBFlush extends RBuiltinNode {
         @Specialization
+        @TruffleBoundary
         protected RNull doLazyLoadDBFlush(RAbstractStringVector dbPath) {
             RContext.getInstance().stateLazyDBCache.remove(dbPath.getDataAt(0));
             return RNull.instance;

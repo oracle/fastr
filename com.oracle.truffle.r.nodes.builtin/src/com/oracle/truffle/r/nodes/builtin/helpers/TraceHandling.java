@@ -178,7 +178,7 @@ public class TraceHandling {
                     String callString = getCallSource(frame);
                     outputHandler.writeString("trace: " + callString, true);
                 } catch (IOException ex) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ex.getMessage());
+                    throw RError.ioError(RError.SHOW_CALLER2, ex);
                 }
             }
         }

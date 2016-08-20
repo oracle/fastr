@@ -333,6 +333,7 @@ public abstract class PromiseNode extends RNode {
         }
 
         @Override
+        @TruffleBoundary
         public String getIdentifier() {
             int num = index + 1;
             return (num < 10 ? ".." : ".") + num;

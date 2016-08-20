@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -274,6 +275,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!lengthOne(list)")
+    @TruffleBoundary
     protected RList doUnique(RList list, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
         /*
          * Brute force, as manual says: Using this for lists is potentially slow, especially if the

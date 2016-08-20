@@ -158,6 +158,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     }
 
     @Override
+    @TruffleBoundary
     public boolean bindingIsLocked(String key) {
         return lockedBindings != null && lockedBindings.contains(key);
     }
@@ -182,6 +183,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     }
 
     @Override
+    @TruffleBoundary
     public void unlockBinding(String key) {
         if (lockedBindings != null) {
             lockedBindings.remove(key);

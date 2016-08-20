@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.base.system.ContextSystemFunctionFacto
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContext;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -94,7 +95,7 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
             Object result = node.execute(frame, RDataFactory.createStringVector(args, RDataFactory.COMPLETE_VECTOR), intern);
             return result;
         } else {
-            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, command + " cannot be executed in a context");
+            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, Utils.stringConcat(command, " cannot be executed in a context"));
         }
     }
 

@@ -160,6 +160,7 @@ public class ForeignFunctions {
             return UNKNOWN_EXTERNAL_BUILTIN;
         }
 
+        @TruffleBoundary
         protected RuntimeException fallback(Object fobj) {
             String name = null;
             if (fobj instanceof RList) {

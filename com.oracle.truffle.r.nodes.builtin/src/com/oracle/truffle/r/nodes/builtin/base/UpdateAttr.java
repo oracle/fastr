@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -101,7 +102,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
     private String intern(String name) {
         if (cachedName == null) {
             // unoptimized case
-            return name.intern();
+            return Utils.intern(name);
         }
         if (cachedName == name) {
             // cached case
@@ -112,17 +113,17 @@ public abstract class UpdateAttr extends RBuiltinNode {
         if (cachedName == "") {
             // Checkstyle: resume StringLiteralEquality
             cachedName = name;
-            cachedInternedName = name.intern();
+            cachedInternedName = Utils.intern(name);
         } else {
             cachedName = null;
             cachedInternedName = null;
         }
-        return name.intern();
+        return Utils.intern(name);
     }
 
     @Specialization
     protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value) {
-        String internedName = intern(name);
+        String internedName = Utils.intern(name);
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
@@ -205,7 +206,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
         if (object instanceof RShareable) {
             object = ((RShareable) object).getNonShared();
         }
-        String internedName = intern(sname);
+        String internedName = Utils.intern(sname);
         if (object instanceof RAttributable) {
             RAttributable attributable = (RAttributable) object;
             if (value == RNull.instance) {

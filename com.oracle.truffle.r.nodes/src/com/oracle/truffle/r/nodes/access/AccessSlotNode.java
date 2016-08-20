@@ -120,7 +120,7 @@ public abstract class AccessSlotNode extends RNode {
 
     @Specialization(contains = "getSlotS4Cached", guards = "slotAccessAllowed(object)")
     protected Object getSlotS4(RAttributable object, String name) {
-        String internedName = name.intern();
+        String internedName = Utils.intern(name);
         Object value = object.getAttr(attrProfiles, internedName);
         return getSlotS4Internal(object, internedName, value);
     }

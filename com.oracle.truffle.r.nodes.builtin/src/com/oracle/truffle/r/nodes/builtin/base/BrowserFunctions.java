@@ -28,8 +28,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import java.util.ArrayList;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -46,7 +44,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState.HelperState;
 
 public class BrowserFunctions {
@@ -73,15 +71,15 @@ public class BrowserFunctions {
         @Specialization
         protected RNull browser(VirtualFrame frame, Object text, RNull condition, boolean expr, int skipCalls) {
             if (expr) {
-                ArrayList<InstrumentationState.BrowserState.HelperState> helperStateList = RContext.getInstance().stateInstrumentation.getBrowserState().helperStateList();
+                BrowserState browserState = RContext.getInstance().stateInstrumentation.getBrowserState();
                 try {
-                    helperStateList.add(new HelperState(text, condition));
+                    browserState.push(new HelperState(text, condition));
                     MaterializedFrame mFrame = frame.materialize();
                     RCaller caller = RArguments.getCall(mFrame);
                     doPrint(caller);
                     browserInteractNode.execute(frame);
                 } finally {
-                    helperStateList.remove(helperStateList.size() - 1);
+                    browserState.pop();
                 }
             }
             RContext.getInstance().setVisible(false);
@@ -112,12 +110,8 @@ public class BrowserFunctions {
          * GnuR objects to indices <= 0 but allows positive indices that are out of range.
          */
         protected HelperState getHelperState(int n) {
-            ArrayList<InstrumentationState.BrowserState.HelperState> helperStateList = RContext.getInstance().stateInstrumentation.getBrowserState().helperStateList();
-            int nn = n;
-            if (nn > helperStateList.size()) {
-                nn = helperStateList.size();
-            }
-            return helperStateList.get(nn - 1);
+            BrowserState helperState = RContext.getInstance().stateInstrumentation.getBrowserState();
+            return helperState.get(n);
         }
     }
 

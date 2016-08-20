@@ -98,6 +98,7 @@ final class PrintContext {
         return cloned;
     }
 
+    @TruffleBoundary
     static PrintContext enter(ValuePrinterNode printerNode, PrintParameters parameters, WriterFactory wf) {
         ArrayDeque<PrintContext> ctxStack = printCtxTL.get();
         if (ctxStack == null) {

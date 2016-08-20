@@ -140,6 +140,7 @@ public class TraceFunctions {
             MemoryCopyTracer.addListener(new TracememBase.TracememListener());
         }
 
+        @TruffleBoundary
         protected static HashSet<Object> getTracedObjects() {
             return RContext.getInstance().getInstrumentationState().getTracemem().getTracedObjects();
         }
@@ -149,6 +150,7 @@ public class TraceFunctions {
             return String.format("<0x%x>", x.hashCode());
         }
 
+        @TruffleBoundary
         protected static void startTracing(Object x) {
             /*
              * There is no explicit command to enable tracing, it is implicit in the call to
@@ -162,6 +164,7 @@ public class TraceFunctions {
             }
         }
 
+        @TruffleBoundary
         protected static void printToStdout(String msg) {
             try {
                 StdConnections.getStdout().writeString(msg, true);
@@ -250,6 +253,7 @@ public class TraceFunctions {
             return result;
         }
 
+        @TruffleBoundary
         private static Object getResult(Object x) {
             if (!isRNull(x) && getTracedObjects().contains(x)) {
                 RContext.getInstance().setVisible(true);
@@ -264,6 +268,7 @@ public class TraceFunctions {
     @RBuiltin(name = "untracemem", kind = PRIMITIVE, visibility = OFF, parameterNames = "x", behavior = COMPLEX)
     public abstract static class Untracemem extends TracememBase {
         @Specialization
+        @TruffleBoundary
         protected RNull execute(Object x) {
             getTracedObjects().remove(x);
             return RNull.instance;

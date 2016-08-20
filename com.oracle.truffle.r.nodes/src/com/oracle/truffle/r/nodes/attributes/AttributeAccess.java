@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -44,7 +45,7 @@ public abstract class AttributeAccess extends RBaseNode {
     @CompilationFinal private int maximumSize = 2;
 
     protected AttributeAccess(String name) {
-        this.name = name.intern();
+        this.name = Utils.intern(name);
     }
 
     public static AttributeAccess create(String name) {
