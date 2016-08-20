@@ -293,10 +293,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * performing the evaluation, so we can store the {@link RContext} in a {@link ThreadLocal}.
      *
      * When a context is first created no threads are attached, to allow contexts to be used as
-     * values in the experimental {@code fastr.createcontext} function. Additional threads can be
+     * values in the experimental {@code fastr.context.xxx} functions. Additional threads can be
      * added by the {@link #attachThread} method.
      */
-    public static final ThreadLocal<RContext> threadLocalContext = new ThreadLocal<>();
+    private static final ThreadLocal<RContext> threadLocalContext = new ThreadLocal<>();
 
     /**
      * Used by the MethodListDispatch class.
@@ -557,6 +557,16 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     }
 
     @TruffleBoundary
+    public static RContext getThreadLocalInstance() {
+        return threadLocalContext.get();
+    }
+
+    @TruffleBoundary
+    public static void setThreadLocalInstance(RContext context) {
+        threadLocalContext.set(context);
+    }
+
+    @TruffleBoundary
     private static RContext getInstanceInternal() {
         RContext result = threadLocalContext.get();
         assert result != null;
@@ -764,6 +774,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         throw new IllegalStateException("cannot access " + RContext.class.getSimpleName() + " via Truffle");
     }
 
+    @TruffleBoundary
     public static Closeable withinContext(RContext context) {
         RContext oldContext = RContext.threadLocalContext.get();
         RContext.threadLocalContext.set(context);

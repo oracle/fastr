@@ -137,6 +137,7 @@ public class FastRContext {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RNull eval(RAbstractIntVector handle) {
             try {
                 for (int i = 0; i < handle.getLength(); i++) {

@@ -22,11 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -52,6 +54,7 @@ public abstract class FastRTree extends RBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected String printTree(RFunction function, boolean verbose) {
         RootNode root = function.getTarget().getRootNode();
         String printedTree = verbose ? NodeUtil.printTreeToString(root) : NodeUtil.printCompactTreeToString(root);

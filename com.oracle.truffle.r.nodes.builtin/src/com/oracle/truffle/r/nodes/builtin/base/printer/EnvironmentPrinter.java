@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 final class EnvironmentPrinter extends AbstractValuePrinter<REnvironment> {
@@ -35,6 +36,7 @@ final class EnvironmentPrinter extends AbstractValuePrinter<REnvironment> {
     }
 
     @Override
+    @TruffleBoundary
     protected void printValue(REnvironment value, PrintContext printCtx) throws IOException {
         printCtx.output().print(value.getPrintName());
     }

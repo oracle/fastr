@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RVector;
@@ -43,6 +44,7 @@ final class FactorPrinter extends AbstractValuePrinter<RAbstractIntVector> {
     @SuppressWarnings("unused") private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     @Override
+    @TruffleBoundary
     protected void printValue(RAbstractIntVector operand, PrintContext printCtx) throws IOException {
         // TODO: this should be handled by an S3 function. Should it? For example, in C code for
         // split, there is direct call to getAttrib. This should be refactored to use

@@ -45,7 +45,7 @@ public class DebugFunctions {
     protected abstract static class ErrorAndFunAdapter extends RBuiltinNode {
 
         @Override
-        protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
+        protected void createCasts(CastBuilder casts) {
             casts.arg("fun").mustBe(RFunction.class, Message.ARG_MUST_BE_CLOSURE);
         }
 

@@ -894,4 +894,25 @@ public final class Utils {
         }
         return o;
     }
+
+    @TruffleBoundary
+    public static String intern(String s) {
+        return s.intern();
+    }
+
+    @TruffleBoundary
+    public static boolean equals(Object a, Object b) {
+        return a.equals(b);
+    }
+
+    @TruffleBoundary
+    public static String stringConcat(String a, String b) {
+        return a + b;
+    }
+
+    @TruffleBoundary
+    public static String toString(Object obj) {
+        return obj.toString();
+    }
+
 }

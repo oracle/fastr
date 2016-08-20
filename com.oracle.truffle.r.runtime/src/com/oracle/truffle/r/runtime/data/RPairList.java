@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -317,7 +318,7 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
         boolean complete = RDataFactory.COMPLETE_VECTOR;
         int i = 0;
         while (true) {
-            data[i] = pl.tag.toString();
+            data[i] = Utils.toString(pl.tag);
             if (pl.tag == RRuntime.STRING_NA) {
                 complete = false;
             }

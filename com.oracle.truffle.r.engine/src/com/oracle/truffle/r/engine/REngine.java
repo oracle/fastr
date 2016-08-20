@@ -317,12 +317,13 @@ final class REngine implements Engine, Engine.Timings {
          */
         @Override
         public Object execute(VirtualFrame frame) {
-            RContext oldContext = RContext.threadLocalContext.get();
+            RContext oldContext = RContext.getThreadLocalInstance();
             RContext newContext = TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext);
-            RContext.threadLocalContext.set(newContext);
+            RContext.setThreadLocalInstance(newContext);
             try {
                 Object lastValue = RNull.instance;
-                for (RSyntaxNode node : statements) {
+                for (int i = 0; i < statements.size(); i++) {
+                    RSyntaxNode node = statements.get(i);
                     RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, true, true);
                     lastValue = callTarget.call(newContext.stateREnvironment.getGlobalFrame());
                 }
@@ -337,7 +338,7 @@ final class REngine implements Engine, Engine.Timings {
             } catch (Throwable t) {
                 throw t;
             } finally {
-                RContext.threadLocalContext.set(oldContext);
+                RContext.setThreadLocalInstance(oldContext);
             }
         }
     }

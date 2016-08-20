@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base.printer;
+package com.oracle.truffle.r.runtime.nodes;
 
-import java.io.IOException;
+import java.util.function.BiFunction;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 
-final class SymbolPrinter extends AbstractValuePrinter<RSymbol> {
+/**
+ * A slight variant of {@link BiFunction} that produces better call graph analysis of methods that
+ * need {@link TruffleBoundary} annotations.
+ */
+@FunctionalInterface
+public interface TruffleBiFunction<T, U, R> {
+    /**
+     * Applies this function to the given arguments.
+     *
+     * @param t the first function argument
+     * @param u the second function argument
+     * @return the function result
+     */
+    R apply(T t, U u);
 
-    static final SymbolPrinter INSTANCE = new SymbolPrinter();
-
-    private SymbolPrinter() {
-        // singleton
-    }
-
-    @Override
-    @TruffleBoundary
-    protected void printValue(RSymbol value, PrintContext printCtx) throws IOException {
-        printCtx.output().print(RDeparse.deparse(value, RDeparse.DEFAULT_Cutoff, true, RDeparse.SIMPLEDEPARSE, -1));
-    }
 }

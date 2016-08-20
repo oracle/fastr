@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -79,7 +80,7 @@ public abstract class Attr extends RBuiltinNode {
     private String intern(String name) {
         if (cachedName == null) {
             // unoptimized case
-            return name.intern();
+            return Utils.intern(name);
         }
         if (cachedName == name) {
             // cached case
@@ -90,12 +91,12 @@ public abstract class Attr extends RBuiltinNode {
         if (cachedName == "") {
             // Checkstyle: resume StringLiteralEquality
             cachedName = name;
-            cachedInternedName = name.intern();
+            cachedInternedName = Utils.intern(name);
         } else {
             cachedName = null;
             cachedInternedName = null;
         }
-        return name.intern();
+        return Utils.intern(name);
     }
 
     private static Object searchKeyPartial(RAttributes attributes, String name) {

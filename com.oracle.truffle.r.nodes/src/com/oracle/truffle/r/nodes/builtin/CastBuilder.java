@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
@@ -208,6 +209,11 @@ public final class CastBuilder {
                 return i;
             }
         }
+        throw argNotFound(argumentName);
+    }
+
+    @TruffleBoundary
+    private RInternalError argNotFound(String argumentName) throws RInternalError {
         throw RInternalError.shouldNotReachHere(String.format("Argument %s not found in builtin %s", argumentName, builtinNode.getRBuiltin().name()));
     }
 
