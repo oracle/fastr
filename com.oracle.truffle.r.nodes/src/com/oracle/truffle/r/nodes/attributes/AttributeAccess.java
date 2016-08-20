@@ -33,12 +33,12 @@ import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
- * Simple attribute access node that specializes on the position at which the attribute was found
- * last time.
+ * Simple attribute access node, for a specific attributes, that specializes on the position at
+ * which the attribute was found last time.
  */
 public abstract class AttributeAccess extends RBaseNode {
 
-    private static final int MAX_SIZE_BOUND = 10;
+    public static final int MAX_SIZE_BOUND = 10;
 
     protected final String name;
     @CompilationFinal private int maximumSize = 2;
@@ -83,7 +83,7 @@ public abstract class AttributeAccess extends RBaseNode {
         return null;
     }
 
-    @Specialization(contains = {"accessCached", "accessCachedSize"}, rewriteOn = IndexOutOfBoundsException.class)
+    @Specialization(contains = {"accessCached", "accessCachedSize"}, guards = "attr.size() <= MAX_SIZE_BOUND")
     @ExplodeLoop
     protected Object accessCachedMaximumSize(RAttributes attr, //
                     @Cached("create()") BranchProfile foundProfile, //
@@ -91,9 +91,6 @@ public abstract class AttributeAccess extends RBaseNode {
         int size = attr.size();
         if (size > maximumSize) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (size > MAX_SIZE_BOUND) {
-                throw new IndexOutOfBoundsException();
-            }
             maximumSize = size;
         }
         for (int i = 0; i < maximumSize; i++) {
