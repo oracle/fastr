@@ -281,6 +281,7 @@ public class DebugHandling {
             fser.setContinuing();
         }
 
+        @TruffleBoundary
         protected void clearStepInstrument() {
             if (stepIntoInstrument != null) {
                 stepIntoInstrument.dispose();
