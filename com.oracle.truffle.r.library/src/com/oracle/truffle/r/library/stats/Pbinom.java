@@ -34,7 +34,7 @@ public final class Pbinom implements StatsFunctions.Function3_2 {
 
         if (DPQ.nonint(size)) {
             nanProfile.enter();
-            RError.warning(RError.SHOW_CALLER, RError.Message.NON_INTEGER_N, size);
+            RError.warning(RError.SHOW_CALLER, RError.Message.NON_INTEGER_N, "n", size);
             return Double.NaN;
         }
         size = Math.round(size);

@@ -682,7 +682,7 @@ public final class RError extends RuntimeException {
         INVALID_PRIM_METHOD_CODE("invalid primitive methods code (\"%s\"): should be \"clear\", \"reset\", \"set\", or \"suppress\""),
         PRIM_GENERIC_NOT_FUNCTION("the formal definition of a primitive generic must be a function object (got type '%s')"),
         NON_INTEGER_VALUE("non-integer value %s qualified with L; using numeric value"),
-        NON_INTEGER_N("non-integer n = %f"),
+        NON_INTEGER_N("non-integer %s = %f"),
         INTEGER_VALUE_DECIAML("integer literal %s contains decimal; using numeric value"),
         INTEGER_VALUE_UNNECESARY_DECIMAL("integer literal %s contains unnecessary decimal point"),
         NON_LANG_ASSIGNMENT_TARGET("target of assignment expands to non-language object"),
