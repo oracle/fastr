@@ -104,5 +104,9 @@ public class TestBuiltin_regexpr extends TestBase {
         assertEval("{ as.integer(regexpr(\"foo\", c(\"bar foo foo\", \"foo\"), fixed=F)) }");
         assertEval("{ x<-regexpr(\"foo\", c(\"bar foo foo\", \"foo\"), fixed=T); attr(x, \"match.length\") }");
         assertEval("{ x<-regexpr(\"foo\", c(\"bar foo foo\", \"foo\")); attr(x, \"match.length\") }");
+
+        assertEval("{ .Internal(regexpr(7, \"42\", F, F, F, F)) }");
+        assertEval("{ .Internal(regexpr(character(), \"42\", F, F, F, F)) }");
+        assertEval("{ .Internal(regexpr(\"7\", 42, F, F, F, F)) }");
     }
 }

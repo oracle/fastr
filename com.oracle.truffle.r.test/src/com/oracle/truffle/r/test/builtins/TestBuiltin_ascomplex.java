@@ -45,8 +45,7 @@ public class TestBuiltin_ascomplex extends TestBase {
 
     @Test
     public void testascomplex6() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));as.complex(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));as.complex(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -66,7 +65,7 @@ public class TestBuiltin_ascomplex extends TestBase {
 
     @Test
     public void testascomplex10() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(a = 1), .Names = 'a'));as.complex(argv[[1]]);");
+        assertEval("argv <- list(structure(list(a = 1), .Names = 'a'));as.complex(argv[[1]]);");
     }
 
     @Test
@@ -92,8 +91,8 @@ public class TestBuiltin_ascomplex extends TestBase {
         assertEval("{ as.complex(\"0x42\") }");
         assertEval("{ as.complex(NULL) }");
 
-        assertEval(Ignored.Unknown, "{ as.complex(\"1e10+5i\") }");
-        assertEval(Ignored.Unknown, "{ as.complex(\"-.1e10+5i\") }");
+        assertEval("{ as.complex(\"1e10+5i\") }");
+        assertEval("{ as.complex(\"-.1e10+5i\") }");
         assertEval(Ignored.Unknown, "{ as.complex(\"1e-2+3i\") }");
         assertEval(Ignored.Unknown, "{ as.complex(\"+.1e+2-3i\") }");
 

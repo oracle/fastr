@@ -66,11 +66,11 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
      */
     private int length = -1;
 
-    RLanguage(RNode rep) {
+    RLanguage(RBaseNode rep) {
         this.rep = rep;
     }
 
-    private RLanguage(RNode rep, int length) {
+    private RLanguage(RBaseNode rep, int length) {
         this.rep = rep;
         this.length = length;
     }

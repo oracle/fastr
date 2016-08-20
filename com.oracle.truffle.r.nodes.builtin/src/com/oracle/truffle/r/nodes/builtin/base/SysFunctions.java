@@ -85,12 +85,12 @@ public class SysFunctions {
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("x").mustBe(stringValue(), RError.Message.ARGUMENT_WRONG_TYPE);
-            casts.arg("unset").mustBe(stringValue()).asStringVector().mustBe(size(1));
+            casts.arg("unset").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object sysGetEnv(RAbstractStringVector x, RAbstractStringVector unset) {
+        protected Object sysGetEnv(RAbstractStringVector x, String unset) {
             Map<String, String> envMap = RContext.getInstance().stateREnvVars.getMap();
             int len = x.getLength();
             if (zeroLengthProfile.profile(len == 0)) {
@@ -111,8 +111,8 @@ public class SysFunctions {
                     if (value != null) {
                         data[i] = value;
                     } else {
-                        data[i] = unset.getDataAt(0);
-                        if (RRuntime.isNA(unset.getDataAt(0))) {
+                        data[i] = unset;
+                        if (RRuntime.isNA(unset)) {
                             complete = RDataFactory.INCOMPLETE_VECTOR;
                         }
                     }

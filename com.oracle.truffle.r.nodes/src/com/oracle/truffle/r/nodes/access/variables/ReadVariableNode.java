@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -63,6 +64,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -305,6 +307,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         private final FrameSlot slot;
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
+        private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
         private Match(FrameSlot slot) {
             this.slot = slot;
@@ -316,7 +319,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
             if (!checkType(frame, value, isNullProfile)) {
                 throw new LayoutChangedException();
             }
-            return value;
+            return valueProfile.profile(value);
         }
 
         @Override
@@ -885,6 +888,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 /*
  * This is RRuntime.checkType in the node form.
  */
+@TypeSystemReference(RTypes.class)
 abstract class CheckTypeNode extends RBaseNode {
 
     public abstract boolean executeBoolean(Object o);
