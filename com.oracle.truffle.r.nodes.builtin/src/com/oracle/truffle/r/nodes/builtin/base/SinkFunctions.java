@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -29,34 +32,45 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 public class SinkFunctions {
-    @RBuiltin(name = "sink", visibility = OFF, kind = INTERNAL, parameterNames = {"file", "closeOnExit", "isMessage", "split"}, behavior = IO)
+    @RBuiltin(name = "sink", visibility = OFF, kind = INTERNAL, parameterNames = {"file", "closeOnExit", "type", "split"}, behavior = IO)
     public abstract static class Sink extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("file").mustBe(instanceOf(RConnection.class).or(integerValue()));
+            casts.arg("closeOnExit").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("type").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("split").asLogicalVector().findFirst().notNA().map(toBoolean());
+        }
+
         @Specialization
         @TruffleBoundary
-        protected RNull sink(RConnection conn, byte closeOnExit, byte isMessage, @SuppressWarnings("unused") byte split) {
-            if (RRuntime.fromLogical(isMessage)) {
+        protected RNull sink(RConnection conn, boolean closeOnExit, boolean errcon, boolean split) {
+            if (errcon) {
                 // TODO
-            } else {
-                StdConnections.pushDivertOut(conn, RRuntime.fromLogical(closeOnExit));
+                throw RError.nyi(this, "type=message");
             }
+            if (split) {
+                // TODO
+                throw RError.nyi(this, "split");
+            }
+            StdConnections.pushDivertOut(conn, closeOnExit);
             return RNull.instance;
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RNull sink(RAbstractIntVector conn, byte closeOnExit, byte isMessage, byte split) {
+        @TruffleBoundary
+        protected RNull sink(int conn, boolean closeOnExit, boolean isMessage, boolean split) {
             try {
                 StdConnections.popDivertOut();
             } catch (IOException ex) {
@@ -65,29 +79,24 @@ public class SinkFunctions {
             return RNull.instance;
         }
 
-        @SuppressWarnings("unused")
-        @Fallback
-        protected RNull sink(Object conn, Object closeOnExit, Object isMessage, Object split) {
-            throw RError.error(this, RError.Message.INVALID_UNNAMED_ARGUMENTS);
-        }
     }
 
     @RBuiltin(name = "sink.number", kind = INTERNAL, parameterNames = {"type"}, behavior = IO)
     public abstract static class SinkNumber extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("type").asLogicalVector().findFirst().notNA().map(toBoolean());
+        }
+
         @Specialization
         @TruffleBoundary
-        protected int sinkNumber(byte isOutput) {
-            if (RRuntime.fromLogical(isOutput)) {
+        protected int sinkNumber(boolean isOutput) {
+            if (isOutput) {
                 return StdConnections.stdoutDiversions();
             } else {
                 return StdConnections.stderrDiversion();
             }
         }
 
-        @SuppressWarnings("unused")
-        @Fallback
-        protected RNull sinkNumbner(Object type) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT);
-        }
     }
 }
