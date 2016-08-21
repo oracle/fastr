@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.MODIFIES_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
@@ -34,6 +35,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
@@ -168,6 +170,11 @@ public class OptionsFunctions {
 
     @RBuiltin(name = "getOption", kind = INTERNAL, parameterNames = "x", behavior = READS_STATE)
     public abstract static class GetOption extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(scalarStringValue(), RError.SHOW_CALLER, RError.Message.MUST_BE_STRING, "x");
+        }
 
         @TruffleBoundary
         @Specialization
