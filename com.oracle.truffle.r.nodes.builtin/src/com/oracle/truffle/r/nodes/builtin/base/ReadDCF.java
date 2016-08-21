@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -34,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -54,17 +54,17 @@ public abstract class ReadDCF extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("conn").mustBe(RConnection.class);
-        casts.arg("fields").mustBe(stringValue()).asStringVector();
-        casts.arg("keepwhite").mustBe(stringValue()).asStringVector();
     }
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector doReadDCF(RConnection conn, RAbstractStringVector fields, RAbstractStringVector keepWhite) {
+    protected RStringVector doReadDCF(RConnection conn, Object fieldsObj, Object keepWhiteObj) {
+        RAbstractStringVector fields = fieldsObj == RNull.instance ? null : (RAbstractStringVector) RRuntime.asAbstractVector(fieldsObj);
+        RAbstractStringVector keepWhite = keepWhiteObj == RNull.instance ? null : (RAbstractStringVector) RRuntime.asAbstractVector(keepWhiteObj);
         DCF dcf = null;
         try (RConnection openConn = conn.forceOpen("r")) {
             Set<String> keepWhiteSet = null;
-            if (keepWhite.getLength() > 0) {
+            if (keepWhite != null) {
                 keepWhiteSet = new HashSet<>(keepWhite.getLength());
                 for (int i = 0; i < keepWhite.getLength(); i++) {
                     keepWhiteSet.add(keepWhite.getDataAt(i));
@@ -122,7 +122,7 @@ public abstract class ReadDCF extends RBuiltinNode {
     }
 
     private static boolean needField(String fieldName, RAbstractStringVector fields) {
-        if (fields.getLength() > 0) {
+        if (fields == null) {
             return true;
         }
         for (int i = 0; i < fields.getLength(); i++) {
@@ -133,4 +133,9 @@ public abstract class ReadDCF extends RBuiltinNode {
         return false;
     }
 
+    @SuppressWarnings("unused")
+    @Fallback
+    protected RStringVector doReadDCF(Object conn, Object fields, Object keepWhite) {
+        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+    }
 }
