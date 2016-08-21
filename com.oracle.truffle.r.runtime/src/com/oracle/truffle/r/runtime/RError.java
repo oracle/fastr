@@ -708,7 +708,10 @@ public final class RError extends RuntimeException {
         BAD_ENVIRONMENT("bad %s environment argument"),
         CANNOT_BE_LENGTH("'%s' cannot be of length %d"),
         SECOND_ARGUMENT_LIST("second argument must be a list"),
-        DOES_NOT_HAVE_DIMNAMES("'%s' does not have named dimnames");
+        DOES_NOT_HAVE_DIMNAMES("'%s' does not have named dimnames"),
+        ATTEMPT_TO_REPLICATE("attempt to replicate an object of type '%s'"),
+        ATTEMPT_TO_REPLICATE_NO_VECTOR("attempt to replicate non-vector"),
+        INCORRECT_ARG_TYPE("incorrect type for %s argument");
 
         public final String message;
         final boolean hasArgs;
