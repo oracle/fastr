@@ -139,6 +139,7 @@ public class ConditionFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RNull invokeRestart(RList restart, Object args) {
             checkLength(restart);
             if (RErrorHandling.invokeRestart(restart, args) == null) {

@@ -940,6 +940,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected ByteBuffer writeString(RAbstractStringVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes) {
             int length = object.getLength();
             byte[][] data = new byte[length][];

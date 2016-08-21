@@ -11,10 +11,11 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.io.IOException;
+
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -132,8 +133,13 @@ public final class RError extends RuntimeException {
     }
 
     @TruffleBoundary
-    public static RError interopError(RBaseNode node, InteropException e, TruffleObject o) {
+    public static RError interopError(RBaseNode node, Throwable e, TruffleObject o) {
         throw error0(node, RError.Message.GENERIC, "Foreign function failed: " + (e.getMessage() != null ? e.getMessage() : e.toString()) + " on object " + o);
+    }
+
+    @TruffleBoundary
+    public static RError ioError(RBaseNode node, IOException ex) {
+        throw error0(node, Message.GENERIC, ex.getMessage());
     }
 
     public static RBaseNode findParentRBase(Node node) {
@@ -677,6 +683,7 @@ public final class RError extends RuntimeException {
         INVALID_PRIM_METHOD_CODE("invalid primitive methods code (\"%s\"): should be \"clear\", \"reset\", \"set\", or \"suppress\""),
         PRIM_GENERIC_NOT_FUNCTION("the formal definition of a primitive generic must be a function object (got type '%s')"),
         NON_INTEGER_VALUE("non-integer value %s qualified with L; using numeric value"),
+        NON_INTEGER_N("non-integer %s = %f"),
         INTEGER_VALUE_DECIAML("integer literal %s contains decimal; using numeric value"),
         INTEGER_VALUE_UNNECESARY_DECIMAL("integer literal %s contains unnecessary decimal point"),
         NON_LANG_ASSIGNMENT_TARGET("target of assignment expands to non-language object"),

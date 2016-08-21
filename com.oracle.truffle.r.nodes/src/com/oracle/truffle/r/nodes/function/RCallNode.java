@@ -569,7 +569,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 return result;
             } catch (Throwable e) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.GENERIC, "Foreign function failed: " + e.getMessage() != null ? e.getMessage() : e.toString());
+                throw RError.interopError(RError.findParentRBase(this), e, function);
             }
         }
     }

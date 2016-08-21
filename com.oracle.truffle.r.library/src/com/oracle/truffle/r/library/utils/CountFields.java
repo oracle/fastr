@@ -291,6 +291,7 @@ public final class CountFields extends RExternalBuiltinNode {
 
     // Transcribed from GnuR, library/utils/src/io.c
     @Override
+    @TruffleBoundary
     public Object call(RArgsValuesAndNames args) {
         Object[] argValues = args.getArguments();
         RConnection conn = (RConnection) argValues[0];

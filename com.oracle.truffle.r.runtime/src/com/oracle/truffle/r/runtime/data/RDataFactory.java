@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
@@ -463,14 +464,17 @@ public final class RDataFactory {
 
     private static final AtomicInteger environmentCount = new AtomicInteger();
 
+    @TruffleBoundary
     public static REnvironment createInternalEnv() {
         return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<internal-env-" + environmentCount.incrementAndGet() + ">"), REnvironment.UNNAMED));
     }
 
+    @TruffleBoundary
     public static REnvironment.NewEnv createNewEnv(String name) {
         return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<new-env-" + environmentCount.incrementAndGet() + ">"), name));
     }
 
+    @TruffleBoundary
     public static REnvironment createNewEnv(String name, boolean hashed, int initialSize) {
         REnvironment.NewEnv env = new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<new-env-" + environmentCount.incrementAndGet() + ">"), name);
         env.setHashed(hashed);

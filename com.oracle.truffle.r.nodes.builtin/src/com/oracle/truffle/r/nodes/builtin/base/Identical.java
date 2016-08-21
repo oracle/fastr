@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -186,7 +187,7 @@ public abstract class Identical extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(RSymbol x, RSymbol y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        assert x.getName() == x.getName().intern() && y.getName() == y.getName().intern();
+        assert x.getName() == Utils.intern(x.getName()) && y.getName() == Utils.intern(y.getName());
         return x.getName() == y.getName() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
@@ -247,7 +248,7 @@ public abstract class Identical extends RBuiltinNode {
             return RRuntime.LOGICAL_FALSE;
         } else {
             for (int i = 0; i < x.getLength(); i++) {
-                if (!x.getDataAtAsObject(i).equals(y.getDataAtAsObject(i))) {
+                if (!Utils.equals(x.getDataAtAsObject(i), y.getDataAtAsObject(i))) {
                     return RRuntime.LOGICAL_FALSE;
                 }
             }
@@ -325,7 +326,7 @@ public abstract class Identical extends RBuiltinNode {
                     if (xSubList.getTag() instanceof RSymbol && ySubList.getTag() instanceof RSymbol) {
                         String xTagName = ((RSymbol) xSubList.getTag()).getName();
                         String yTagName = ((RSymbol) ySubList.getTag()).getName();
-                        assert xTagName == xTagName.intern() && yTagName == yTagName.intern();
+                        assert xTagName == Utils.intern(xTagName) && yTagName == Utils.intern(yTagName);
                         if (xTagName != yTagName) {
                             return RRuntime.LOGICAL_FALSE;
                         }

@@ -23,10 +23,13 @@
 package com.oracle.truffle.r.runtime.instrument;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.instrumentation.EventBinding;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
@@ -120,8 +123,20 @@ public final class InstrumentationState implements RContext.ContextState {
     }
 
     public static class BrowserState {
+        public static final class HelperState {
+            // docs state that "text" is a string but in reality it can be anything
+            public final Object text;
+            public final Object condition;
+
+            public HelperState(Object text, Object condition) {
+                this.text = text;
+                this.condition = condition;
+            }
+        }
+
         private boolean inBrowser;
         private String lastEmptyLineCommand = "n";
+        private ArrayList<HelperState> helperStateList = new ArrayList<>();
 
         public void setInBrowser(boolean state) {
             this.inBrowser = state;
@@ -138,6 +153,26 @@ public final class InstrumentationState implements RContext.ContextState {
         public String lastEmptyLineCommand() {
             return lastEmptyLineCommand;
         }
+
+        @TruffleBoundary
+        public void push(HelperState helperState) {
+            helperStateList.add(helperState);
+        }
+
+        @TruffleBoundary
+        public void pop() {
+            helperStateList.remove(helperStateList.size() - 1);
+        }
+
+        @TruffleBoundary
+        public HelperState get(int n) {
+            int nn = n;
+            if (nn > helperStateList.size()) {
+                nn = helperStateList.size();
+            }
+            return helperStateList.get(nn - 1);
+        }
+
     }
 
     /**
@@ -153,18 +188,22 @@ public final class InstrumentationState implements RContext.ContextState {
         this.instrumenter = instrumenter;
     }
 
+    @TruffleBoundary
     public void putTraceBinding(SourceSection ss, EventBinding<?> binding) {
         traceBindingMap.put(ss, binding);
     }
 
+    @TruffleBoundary
     public EventBinding<?> getTraceBinding(SourceSection ss) {
         return traceBindingMap.get(ss);
     }
 
+    @TruffleBoundary
     public void putDebugListener(SourceSection ss, ExecutionEventListener listener) {
         debugListenerMap.put(ss, listener);
     }
 
+    @TruffleBoundary
     public EventBinding<?>[] getTraceBindings() {
         EventBinding<?>[] result = new EventBinding<?>[traceBindingMap.size()];
         traceBindingMap.values().toArray(result);
@@ -172,6 +211,7 @@ public final class InstrumentationState implements RContext.ContextState {
 
     }
 
+    @TruffleBoundary
     public ExecutionEventListener getDebugListener(SourceSection ss) {
         return debugListenerMap.get(ss);
     }
@@ -198,11 +238,13 @@ public final class InstrumentationState implements RContext.ContextState {
         return instrumenter;
     }
 
+    @TruffleBoundary
     public RprofState getRprofState(String name) {
         RprofState state = rprofStates.get(name);
         return state;
     }
 
+    @TruffleBoundary
     public void setRprofState(String name, RprofState state) {
         rprofStates.put(name, state);
     }

@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -47,6 +48,7 @@ public abstract class Gc extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     protected RDoubleVector gc(boolean verbose, boolean reset) {
         System.gc();
         // TODO: somehow produce the (semi?) correct values

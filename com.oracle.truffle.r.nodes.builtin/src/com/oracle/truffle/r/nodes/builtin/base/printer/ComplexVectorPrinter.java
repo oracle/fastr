@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.base.Round;
 import com.oracle.truffle.r.nodes.builtin.base.Round.RoundArithmetic;
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.ScientificDouble;
@@ -382,6 +383,7 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
         }
     }
 
+    @TruffleBoundary
     static String encodeComplex(RComplex x, ComplexVectorMetrics cvm, PrintParameters pp) {
         if (RRuntime.isNA(x.getRealPart()) || RRuntime.isNA(x.getImaginaryPart())) {
             return DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, cvm.maxWidth, 0, 0, '.', pp);

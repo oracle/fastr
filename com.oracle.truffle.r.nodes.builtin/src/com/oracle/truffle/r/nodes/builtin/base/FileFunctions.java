@@ -785,6 +785,7 @@ public class FileFunctions {
         }
 
         @Specialization(guards = "!lengthZero(args)")
+        @TruffleBoundary
         protected RStringVector doFilePath(RList args, String fsep) {
             Object[] argValues = args.getDataWithoutCopying();
             int resultLength = 0;

@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /**
  * Options to control the behavior of the FastR system, that relate to the implementation, i.e., are
@@ -77,6 +78,7 @@ public enum FastROptions {
         this.value = defaultValue;
     }
 
+    @TruffleBoundary
     public boolean getBooleanValue() {
         assert isBoolean;
         if (value instanceof Boolean) {
@@ -89,6 +91,7 @@ public enum FastROptions {
 
     }
 
+    @TruffleBoundary
     public String getStringValue() {
         assert !isBoolean;
         if (value == null || value instanceof String) {
@@ -100,6 +103,7 @@ public enum FastROptions {
         }
     }
 
+    @TruffleBoundary
     public int getNonNegativeIntValue() {
         assert !isBoolean;
         if (value instanceof String) {

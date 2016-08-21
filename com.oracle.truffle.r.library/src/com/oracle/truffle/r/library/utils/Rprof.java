@@ -80,6 +80,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
 
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     public Object doRprof(RAbstractStringVector filenameVec, byte appendL, double intervalD, byte memProfilingL,
                     byte gcProfilingL, byte lineProfilingL, int numFiles, int bufSize) {
         RprofState profState = RprofState.get();

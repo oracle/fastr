@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -42,6 +43,7 @@ final class ExpressionPrinter extends AbstractValuePrinter<RExpression> {
     private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     @Override
+    @TruffleBoundary
     protected void printValue(RExpression expr, PrintContext printCtx) throws IOException {
         final PrintWriter out = printCtx.output();
         final PrintContext valPrintCtx = printCtx.cloneContext();

@@ -214,7 +214,7 @@ public class LoadSaveFunctions {
                     value = promiseHelper.checkEvaluate(frame, value);
                 }
                 RPairList pl = RDataFactory.createPairList(value);
-                pl.setTag(RDataFactory.createSymbol(varName.intern()));
+                pl.setTag(RDataFactory.createSymbol(Utils.intern(varName)));
                 if (prev == null) {
                     toSave = pl;
                 } else {

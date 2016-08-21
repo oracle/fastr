@@ -28,8 +28,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import java.util.ArrayList;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -46,22 +44,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState.HelperState;
 
 public class BrowserFunctions {
-
-    private static final class HelperState {
-
-        // docs state that "text" is a string but in reality it can be anything
-        private final Object text;
-        private final Object condition;
-
-        private HelperState(Object text, Object condition) {
-            this.text = text;
-            this.condition = condition;
-        }
-    }
-
-    private static final ArrayList<HelperState> helperState = new ArrayList<>();
 
     @RBuiltin(name = "browser", visibility = OFF, kind = PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"}, behavior = COMPLEX)
     public abstract static class BrowserNode extends RBuiltinNode {
@@ -77,32 +63,39 @@ public class BrowserFunctions {
         protected void createCasts(CastBuilder casts) {
             // TODO: add support for conditions conditions
             casts.arg("condition").mustBe(nullValue(), RError.Message.GENERIC, "Only NULL conditions currently supported in browser");
-            casts.arg("expr").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+            casts.arg("expr").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
             casts.arg("skipCalls").asIntegerVector().findFirst(0);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RNull browser(VirtualFrame frame, Object text, RNull condition, byte expr, int skipCalls) {
-            if (RRuntime.fromLogical(expr)) {
+        protected RNull browser(VirtualFrame frame, Object text, RNull condition, boolean expr, int skipCalls) {
+            if (expr) {
+                BrowserState browserState = RContext.getInstance().stateInstrumentation.getBrowserState();
                 try {
-                    helperState.add(new HelperState(text, condition));
+                    browserState.push(new HelperState(text, condition));
                     MaterializedFrame mFrame = frame.materialize();
                     RCaller caller = RArguments.getCall(mFrame);
-                    String callerString;
-                    if (caller == null || (!caller.isValidCaller() && caller.getDepth() == 0 && caller.getParent() == null)) {
-                        callerString = "top level";
-                    } else {
-                        callerString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
-                    }
-                    RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", callerString);
+                    doPrint(caller);
                     browserInteractNode.execute(frame);
                 } finally {
-                    helperState.remove(helperState.size() - 1);
+                    browserState.pop();
                 }
             }
             RContext.getInstance().setVisible(false);
             return RNull.instance;
+        }
+
+        @TruffleBoundary
+        private static void doPrint(RCaller caller) {
+            String callerString;
+            if (caller == null || (!caller.isValidCaller() && caller.getDepth() == 0 && caller.getParent() == null)) {
+                callerString = "top level";
+            } else {
+                callerString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
+            }
+            RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", callerString);
+
         }
     }
 
@@ -117,11 +110,8 @@ public class BrowserFunctions {
          * GnuR objects to indices <= 0 but allows positive indices that are out of range.
          */
         protected HelperState getHelperState(int n) {
-            int nn = n;
-            if (nn > helperState.size()) {
-                nn = helperState.size();
-            }
-            return helperState.get(nn - 1);
+            BrowserState helperState = RContext.getInstance().stateInstrumentation.getBrowserState();
+            return helperState.get(n);
         }
     }
 

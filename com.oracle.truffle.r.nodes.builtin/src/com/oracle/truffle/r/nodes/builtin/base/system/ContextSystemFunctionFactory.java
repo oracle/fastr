@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base.system;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.base.system.ContextSystemFunctionFactoryFactory.ContextRSystemFunctionNodeGen;
@@ -30,6 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.base.system.ContextSystemFunctionFacto
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContext;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -85,17 +87,24 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
     @Override
     Object execute(VirtualFrame frame, String command, boolean intern) {
         log(command, "Context");
-        String[] parts = command.split(" ");
-        String rcommand = isFastR(parts[0]);
-        if (rcommand != null) {
+        String[] parts = checkRCommand(command);
+        if (parts != null) {
             String[] args = new String[parts.length - 1];
             System.arraycopy(parts, 1, args, 0, args.length);
-            ContextSystemFunctionNode node = rcommand.equals("R") ? ContextRSystemFunctionNodeGen.create() : ContextRscriptSystemFunctionNodeGen.create();
+            ContextSystemFunctionNode node = parts[0].equals("R") ? ContextRSystemFunctionNodeGen.create() : ContextRscriptSystemFunctionNodeGen.create();
             Object result = node.execute(frame, RDataFactory.createStringVector(args, RDataFactory.COMPLETE_VECTOR), intern);
             return result;
         } else {
-            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, command + " cannot be executed in a context");
+            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, Utils.stringConcat(command, " cannot be executed in a context"));
         }
+    }
+
+    @TruffleBoundary
+    private static String[] checkRCommand(String command) {
+        String[] parts = command.split(" ");
+        String rcommand = isFastR(parts[0]);
+        return rcommand == null ? null : parts;
+
     }
 
 }

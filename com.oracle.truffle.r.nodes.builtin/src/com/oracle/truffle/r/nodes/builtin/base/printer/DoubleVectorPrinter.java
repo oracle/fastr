@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
@@ -354,6 +355,7 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
         return encodeReal(x, dm.maxWidth, dm.d, dm.e, '.', pp);
     }
 
+    @TruffleBoundary
     static String encodeReal(double initialX, int w, int d, int e, char cdec, PrintParameters pp) {
         final String buff;
         String fmt;

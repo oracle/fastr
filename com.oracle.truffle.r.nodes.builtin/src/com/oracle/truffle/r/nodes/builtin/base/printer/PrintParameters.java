@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 //Transcribed from GnuR, src/include/Print.h
 
@@ -56,6 +57,7 @@ public final class PrintParameters {
         // default constructor
     }
 
+    @TruffleBoundary
     PrintParameters(Object digits, boolean quote, Object naPrint,
                     Object printGap, boolean right, Object max, boolean useSource, @SuppressWarnings("unused") boolean noOpt) {
 

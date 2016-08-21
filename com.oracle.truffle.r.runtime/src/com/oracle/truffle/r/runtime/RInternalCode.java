@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -52,6 +53,7 @@ public final class RInternalCode {
         this.basePackage = basePackage;
     }
 
+    @TruffleBoundary
     public static Source loadSourceRelativeTo(Class<?> clazz, String fileName) {
         return Utils.getResourceAsSource(clazz, fileName);
     }

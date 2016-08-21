@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -243,6 +244,7 @@ public abstract class Mapply extends RBuiltinNode {
          * TODO names and moreArgs
          *
          */
+        @TruffleBoundary
         protected RCallNode createCallNode(ElementNode[] elementNodeArray) {
             RSyntaxNode[] syntaxNodes = new RSyntaxNode[elementNodeArray.length];
             String[] names = new String[elementNodeArray.length];

@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -102,7 +103,7 @@ public class ReadVariadicComponentNode extends RSourceSectionNode implements RSy
 
     @Override
     public String getIdentifier() {
-        return getPrintForm().intern();
+        return Utils.intern(getPrintForm());
     }
 
     @Override
