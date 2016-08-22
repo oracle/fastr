@@ -247,14 +247,18 @@ public final class PredefFiltersSamplers implements PredefFilters {
 
     @Override
     public <R extends RAbstractComplexVector> TypePredicateArgumentFilterSampler<Object, R> complexValue() {
-        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof RComplex ||
-                        x instanceof RAbstractComplexVector, RAbstractComplexVector.class, RComplex.class);
+        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof RAbstractComplexVector, RAbstractComplexVector.class, RComplex.class);
     }
 
     @Override
     public <R extends RAbstractRawVector> TypePredicateArgumentFilterSampler<Object, R> rawValue() {
         return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof RRaw ||
                         x instanceof RAbstractRawVector, RAbstractRawVector.class, RRaw.class);
+    }
+
+    @Override
+    public <R> TypePredicateArgumentFilterSampler<Object, R> anyValue() {
+        return TypePredicateArgumentFilterSampler.fromLambda(x -> true, Object.class, Object.class);
     }
 
     @Override
