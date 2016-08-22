@@ -1405,6 +1405,10 @@ public final class CastBuilder {
             return this;
         }
 
+        /**
+         * This method should be used as a step in pipeline, not as an argument to {@code mustBe}.
+         * Example: {@code casts.arg("x").notNA()}.
+         */
         default InitialPhaseBuilder<T> notNA() {
             state().castBuilder().insert(state().index(), NonNANodeGen.create(state().defaultError().callObj, state().defaultError().message, state().defaultError().args, null));
             return this;
