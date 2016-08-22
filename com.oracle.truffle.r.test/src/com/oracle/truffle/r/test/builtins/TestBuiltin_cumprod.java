@@ -55,7 +55,7 @@ public class TestBuiltin_cumprod extends TestBase {
 
     @Test
     public void testcumprod8() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL);cumprod(argv[[1]]);");
+        assertEval("argv <- list(NULL);cumprod(argv[[1]]);");
     }
 
     @Test

@@ -10,6 +10,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asDoubleVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mapIf;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -17,6 +24,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -26,11 +34,10 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -41,6 +48,11 @@ public abstract class CumProd extends RBuiltinNode {
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private BinaryArithmetic mul = BinaryArithmetic.MULTIPLY.create();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mapIf(integerValue().or(logicalValue()), asIntegerVector(), chain(mapIf(complexValue().not(), asDoubleVector())).end());
+    }
 
     @Specialization
     protected int cumprod(int arg) {
@@ -53,12 +65,8 @@ public abstract class CumProd extends RBuiltinNode {
     }
 
     @Specialization
-    protected int cumprod(byte arg) {
-        na.enable(arg);
-        if (na.check(arg)) {
-            return RRuntime.INT_NA;
-        }
-        return arg;
+    protected RDoubleVector cumNull(@SuppressWarnings("unused") RNull rnull) {
+        return RDataFactory.createEmptyDoubleVector();
     }
 
     @Specialization
@@ -95,47 +103,6 @@ public abstract class CumProd extends RBuiltinNode {
             }
             prev = mul.op(prev, arg.getDataAt(i));
             if (na.check(prev)) {
-                break;
-            }
-            array[i] = prev;
-        }
-        if (!na.neverSeenNA()) {
-            Arrays.fill(array, i, array.length, RRuntime.DOUBLE_NA);
-        }
-        return RDataFactory.createDoubleVector(array, !na.neverSeenNA(), arg.getNames(attrProfiles));
-    }
-
-    @Specialization
-    protected RIntVector cumprod(RAbstractLogicalVector arg) {
-        int[] array = new int[arg.getLength()];
-        na.enable(arg);
-        int prev = 1;
-        int i;
-        for (i = 0; i < arg.getLength(); i++) {
-            if (na.check(arg.getDataAt(i))) {
-                break;
-            }
-            prev = mul.op(prev, arg.getDataAt(i));
-            if (na.check(prev)) {
-                break;
-            }
-            array[i] = prev;
-        }
-        if (!na.neverSeenNA()) {
-            Arrays.fill(array, i, array.length, RRuntime.INT_NA);
-        }
-        return RDataFactory.createIntVector(array, !na.neverSeenNA(), arg.getNames(attrProfiles));
-    }
-
-    @Specialization
-    protected RDoubleVector cumprod(RAbstractStringVector arg) {
-        double[] array = new double[arg.getLength()];
-        na.enable(arg);
-        double prev = 1;
-        int i;
-        for (i = 0; i < arg.getLength(); i++) {
-            prev = mul.op(prev, na.convertStringToDouble(arg.getDataAt(i)));
-            if (na.check(arg.getDataAt(i))) {
                 break;
             }
             array[i] = prev;

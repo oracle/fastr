@@ -22,12 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -39,6 +42,12 @@ public abstract class Crossprod extends RBuiltinNode {
 
     @Child private MatMult matMult;
     @Child private Transpose transpose;
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mustBe(numericValue().or(complexValue()), RError.ROOTNODE, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+        casts.arg("y").mustBe(nullValue().or(numericValue()).or(complexValue()), RError.ROOTNODE, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+    }
 
     private void ensureMatMult() {
         if (matMult == null) {

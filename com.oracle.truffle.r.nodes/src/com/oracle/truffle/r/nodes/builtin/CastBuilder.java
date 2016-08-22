@@ -717,6 +717,10 @@ public final class CastBuilder {
             return phaseBuilder -> ConditionalMapNode.create(filter, trueBranchFactory.apply(phaseBuilder), falseBranchFactory.apply(phaseBuilder));
         }
 
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> mapIf(ArgumentFilter<?, ?> filter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchFactory) {
+            return phaseBuilder -> ConditionalMapNode.create(filter, trueBranchFactory.apply(phaseBuilder), null);
+        }
+
         public static <T> ChainBuilder<T> chain(CastNode firstCast) {
             return new ChainBuilder<>(pb -> firstCast);
         }

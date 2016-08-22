@@ -39,7 +39,7 @@ public class TestBuiltin_cumsum extends TestBase {
 
     @Test
     public void testcumsum5() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL);cumsum(argv[[1]]);");
+        assertEval("argv <- list(NULL);cumsum(argv[[1]]);");
     }
 
     @Test
