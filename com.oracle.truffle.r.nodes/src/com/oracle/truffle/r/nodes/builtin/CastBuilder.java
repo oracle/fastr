@@ -770,6 +770,14 @@ public final class CastBuilder {
             return phaseBuilder -> CastLogicalNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
         }
 
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asVector() {
+            return phaseBuilder -> CastToVectorNodeGen.create(true);
+        }
+
+        public static <T> Function<ArgCastBuilder<T, ?>, CastNode> asVector(boolean preserveNonVector) {
+            return phaseBuilder -> CastToVectorNodeGen.create(preserveNonVector);
+        }
+
         public static <T> FindFirstNodeBuilder<T> findFirst(RBaseNode callObj, RError.Message message, Object... messageArgs) {
             return new FindFirstNodeBuilder<>(callObj, message, messageArgs);
         }
