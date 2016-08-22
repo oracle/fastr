@@ -25,8 +25,8 @@ package com.oracle.truffle.r.runtime;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /**
  * Options to control the behavior of the FastR system, that relate to the implementation, i.e., are
@@ -78,12 +78,12 @@ public enum FastROptions {
         this.value = defaultValue;
     }
 
-    @TruffleBoundary
     public boolean getBooleanValue() {
         assert isBoolean;
         if (value instanceof Boolean) {
             return (Boolean) value;
         } else {
+            CompilerDirectives.transferToInterpreter();
             System.out.println("boolean option value expected with " + name() + " - forgot +/- ?");
             System.exit(2);
             return false;
@@ -91,25 +91,29 @@ public enum FastROptions {
 
     }
 
-    @TruffleBoundary
     public String getStringValue() {
         assert !isBoolean;
         if (value == null || value instanceof String) {
             return (String) value;
         } else {
+            CompilerDirectives.transferToInterpreter();
             System.out.println("string option value expected with " + name());
             System.exit(2);
             return "";
         }
     }
 
-    @TruffleBoundary
     public int getNonNegativeIntValue() {
         assert !isBoolean;
+        if (value instanceof Integer) {
+            return (Integer) value;
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         if (value instanceof String) {
             try {
                 int res = Integer.decode((String) value);
                 if (res >= 0) {
+                    value = res;
                     return res;
                 } // else fall through to error message
             } catch (NumberFormatException x) {
