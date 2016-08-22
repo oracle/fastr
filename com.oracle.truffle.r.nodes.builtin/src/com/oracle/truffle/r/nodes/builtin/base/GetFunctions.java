@@ -65,7 +65,6 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.env.REnvironment.Function;
 
 /**
  * assert: not expected to be fast even when called as, e.g., {@code get("x")}.
@@ -78,6 +77,8 @@ public class GetFunctions {
         @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
         @Child protected TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
 
+        @CompilationFinal private boolean firstExecution = true;
+
         public abstract Object execute(VirtualFrame frame, Object name, REnvironment envir, String mode, byte inherits);
 
         protected void unknownObject(String x, RType modeType, String modeString) throws RError {
@@ -89,10 +90,11 @@ public class GetFunctions {
             }
         }
 
-        protected Object checkPromise(VirtualFrame frame, Object r, String identifier, boolean evaluateOnSlowPath) {
+        protected Object checkPromise(VirtualFrame frame, Object r, String identifier) {
             if (r instanceof RPromise) {
-                if (evaluateOnSlowPath) {
-                    CompilerDirectives.transferToInterpreter();
+                if (firstExecution) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    firstExecution = false;
                     return ReadVariableNode.evalPromiseSlowPathWithName(identifier, frame, (RPromise) r);
                 }
                 return promiseHelper.evaluate(frame, (RPromise) r);
@@ -107,7 +109,7 @@ public class GetFunctions {
 
         protected Object getAndCheck(VirtualFrame frame, RAbstractStringVector xv, REnvironment env, RType modeType, boolean fail) throws RError {
             String x = xv.getDataAt(0);
-            Object obj = checkPromise(frame, env.get(x), x, !(env instanceof Function));
+            Object obj = checkPromise(frame, env.get(x), x);
             if (obj != null && RRuntime.checkType(obj, modeType)) {
                 return obj;
             } else {
@@ -128,7 +130,7 @@ public class GetFunctions {
                 while (env != REnvironment.emptyEnv()) {
                     env = env.getParent();
                     if (env != REnvironment.emptyEnv()) {
-                        r = checkPromise(frame, env.get(x), x, !(env instanceof Function));
+                        r = checkPromise(frame, env.get(x), x);
                         if (r != null && RRuntime.checkType(r, modeType)) {
                             break;
                         }
@@ -282,7 +284,7 @@ public class GetFunctions {
                 String x = state.checkNA(xv.getDataAt(i));
                 state.names[i] = x;
                 RType modeType = typeFromMode.execute(mode.getDataAt(state.modeLength == 1 ? 0 : i));
-                Object r = checkPromise(frame, env.get(x), x, !(env instanceof Function));
+                Object r = checkPromise(frame, env.get(x), x);
                 if (r != null && RRuntime.checkType(r, modeType)) {
                     state.data[i] = r;
                 } else {
@@ -306,7 +308,7 @@ public class GetFunctions {
                     while (env != REnvironment.emptyEnv()) {
                         env = env.getParent();
                         if (env != REnvironment.emptyEnv()) {
-                            r = checkPromise(frame, env.get(x), x, !(env instanceof Function));
+                            r = checkPromise(frame, env.get(x), x);
                             if (r != null && RRuntime.checkType(r, modeType)) {
                                 break;
                             }
