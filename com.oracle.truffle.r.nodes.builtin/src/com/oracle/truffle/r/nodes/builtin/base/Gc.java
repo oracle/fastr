@@ -48,12 +48,16 @@ public abstract class Gc extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    @TruffleBoundary
     protected RDoubleVector gc(boolean verbose, boolean reset) {
-        System.gc();
+        doGc();
         // TODO: somehow produce the (semi?) correct values
         double[] data = new double[14];
         Arrays.fill(data, RRuntime.DOUBLE_NA);
         return RDataFactory.createDoubleVector(data, RDataFactory.INCOMPLETE_VECTOR);
+    }
+
+    @TruffleBoundary
+    private static void doGc() {
+        System.gc();
     }
 }

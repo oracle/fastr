@@ -29,7 +29,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -139,7 +138,7 @@ public abstract class APerm extends RBuiltinNode {
         int[] perm = new int[permVector.getLength()];
         for (int i = 0; i < perm.length; i++) {
             for (int dimNamesIdx = 0; dimNamesIdx < dimNames.getLength(); dimNamesIdx++) {
-                if (Utils.equals(dimNames.getDataAt(dimNamesIdx), permVector.getDataAt(i))) {
+                if (dimNames.getDataAt(dimNamesIdx).equals(permVector.getDataAt(i))) {
                     perm[i] = dimNamesIdx;
                     break;
                 }

@@ -123,7 +123,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
 
     @Specialization
     protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value) {
-        String internedName = Utils.intern(name);
+        String internedName = intern(name);
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
@@ -206,7 +206,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
         if (object instanceof RShareable) {
             object = ((RShareable) object).getNonShared();
         }
-        String internedName = Utils.intern(sname);
+        String internedName = intern(sname);
         if (object instanceof RAttributable) {
             RAttributable attributable = (RAttributable) object;
             if (value == RNull.instance) {

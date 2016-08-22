@@ -37,7 +37,6 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -79,11 +78,11 @@ public abstract class Identical extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("num.eq").asLogicalVector().findFirst().map(toBoolean());
-        casts.arg("single.NA").asLogicalVector().findFirst().map(toBoolean());
-        casts.arg("attrib.as.set").asLogicalVector().findFirst().map(toBoolean());
-        casts.arg("ignore.bytecode").asLogicalVector().findFirst().map(toBoolean());
-        casts.arg("ignore.environment").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("num.eq").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("single.NA").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("attrib.as.set").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("ignore.bytecode").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("ignore.environment").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
 
     private final ConditionProfile vecLengthProfile = ConditionProfile.createBinaryProfile();
@@ -187,7 +186,7 @@ public abstract class Identical extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(RSymbol x, RSymbol y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        assert x.getName() == Utils.intern(x.getName()) && y.getName() == Utils.intern(y.getName());
+        assert x.getName() == x.getName().intern() && y.getName() == y.getName().intern();
         return x.getName() == y.getName() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
@@ -248,7 +247,7 @@ public abstract class Identical extends RBuiltinNode {
             return RRuntime.LOGICAL_FALSE;
         } else {
             for (int i = 0; i < x.getLength(); i++) {
-                if (!Utils.equals(x.getDataAtAsObject(i), y.getDataAtAsObject(i))) {
+                if (!x.getDataAtAsObject(i).equals(y.getDataAtAsObject(i))) {
                     return RRuntime.LOGICAL_FALSE;
                 }
             }
@@ -326,7 +325,7 @@ public abstract class Identical extends RBuiltinNode {
                     if (xSubList.getTag() instanceof RSymbol && ySubList.getTag() instanceof RSymbol) {
                         String xTagName = ((RSymbol) xSubList.getTag()).getName();
                         String yTagName = ((RSymbol) ySubList.getTag()).getName();
-                        assert xTagName == Utils.intern(xTagName) && yTagName == Utils.intern(yTagName);
+                        assert xTagName == xTagName.intern() && yTagName == yTagName.intern();
                         if (xTagName != yTagName) {
                             return RRuntime.LOGICAL_FALSE;
                         }
