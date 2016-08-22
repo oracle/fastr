@@ -28,6 +28,7 @@ public class TestBuiltin_anyNA extends TestBase {
         assertEval("anyNA(list(list(c(NA)),c(1)), recursive=TRUE)");
         assertEval("anyNA(list(list(c(NA)),c(1)), recursive=FALSE)");
         assertEval("anyNA(list(list(c(NA)),c(1)), recursive=c(FALSE,TRUE))");
+        assertEval("anyNA(list(list(4,5,NA), 3), recursive=TRUE)");
     }
 
 }
