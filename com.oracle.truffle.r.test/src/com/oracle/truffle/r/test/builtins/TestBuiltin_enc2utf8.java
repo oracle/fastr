@@ -41,4 +41,10 @@ public class TestBuiltin_enc2utf8 extends TestBase {
     public void testenc2utf86() {
         assertEval("argv <- list(NA_character_);do.call('enc2utf8', argv)");
     }
+
+    @Test
+    public void testInvalidArguments() {
+        // Note: GnuR has typo in the message
+        assertEval(Output.IgnoreErrorMessage, "enc2utf8(42);");
+    }
 }

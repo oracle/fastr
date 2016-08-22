@@ -621,6 +621,7 @@ public final class RError extends RuntimeException {
         FILE_OPEN_TMP("file(\"\") only supports open = \"w+\" and open = \"w+b\": using the former"),
         FILE_APPEND_WRITE("write error during file append"),
         REQUIRES_CHAR_VECTOR("'%s' requires a character vector"),
+        ARGUMENT_NOT_CHAR_VECTOR("argument is not a character vector"),
         NOT_VALID_NAMES("not a valid named list"),
         CHAR_ARGUMENT("character argument expected"),
         CANNOT_BE_INVALID("'%s' cannot be NA, NaN or infinite"),
