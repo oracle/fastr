@@ -22,6 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.eq;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.RError.Message.NOT_CHARACTER_VECTOR;
+import static com.oracle.truffle.r.runtime.RError.Message.WRONG_WINSLASH;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -33,6 +38,7 @@ import java.nio.file.NoSuchFileException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -47,6 +53,15 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public abstract class NormalizePath extends RBuiltinNode {
 
     private final ConditionProfile doesNotNeedToWork = ConditionProfile.createBinaryProfile();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("path").mustBe(stringValue(), NOT_CHARACTER_VECTOR, "path");
+        casts.arg("winslash").defaultError(NOT_CHARACTER_VECTOR, "winslash").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(eq("/").or(eq("\\\\")).or(eq("\\")),
+                        WRONG_WINSLASH);
+        // Note: NA is acceptable value for mustwork with special meaning
+        casts.arg("mustwork").asLogicalVector().findFirst();
+    }
 
     @Specialization
     @TruffleBoundary

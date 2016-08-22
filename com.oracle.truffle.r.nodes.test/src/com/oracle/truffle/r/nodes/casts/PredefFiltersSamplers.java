@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Objects;
 
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PredefFilters;
+import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentFilter;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -160,6 +161,11 @@ public final class PredefFiltersSamplers implements PredefFilters {
     @Override
     public ValuePredicateArgumentFilterSampler<Double> eq(double x) {
         return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double arg) -> arg != null && arg.doubleValue() == x, samples(x), CastUtils.<Double> samples(x + 1));
+    }
+
+    @Override
+    public ValuePredicateArgumentFilter<String> eq(String x) {
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((String arg) -> arg != null && arg.equals(x), samples(x), CastUtils.samples(x + 1));
     }
 
     @Override

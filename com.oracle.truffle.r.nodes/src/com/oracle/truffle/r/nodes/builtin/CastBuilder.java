@@ -275,6 +275,8 @@ public final class CastBuilder {
 
         ValuePredicateArgumentFilter<Double> eq(double x);
 
+        ValuePredicateArgumentFilter<String> eq(String x);
+
         ValuePredicateArgumentFilter<Integer> gt(int x);
 
         ValuePredicateArgumentFilter<Double> gt(double x);
@@ -445,6 +447,11 @@ public final class CastBuilder {
         @Override
         public ValuePredicateArgumentFilter<Double> eq(double x) {
             return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg != null && arg.doubleValue() == x);
+        }
+
+        @Override
+        public ValuePredicateArgumentFilter<String> eq(String x) {
+            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.equals(x));
         }
 
         @Override
@@ -907,6 +914,10 @@ public final class CastBuilder {
         }
 
         public static ValuePredicateArgumentFilter<Double> eq(double x) {
+            return predefFilters().eq(x);
+        }
+
+        public static ValuePredicateArgumentFilter<String> eq(String x) {
             return predefFilters().eq(x);
         }
 
