@@ -35,6 +35,7 @@ import java.util.Set;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.DCF;
 import com.oracle.truffle.r.runtime.RError;
@@ -49,6 +50,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "readDCF", kind = INTERNAL, parameterNames = {"conn", "fields", "keepwhite"}, behavior = IO)
 public abstract class ReadDCF extends RBuiltinNode {
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("conn").mustBe(RConnection.class);
+    }
 
     @Specialization
     @TruffleBoundary

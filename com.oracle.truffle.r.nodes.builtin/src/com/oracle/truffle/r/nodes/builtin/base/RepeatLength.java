@@ -11,6 +11,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -19,6 +20,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -40,7 +42,10 @@ public abstract class RepeatLength extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
+        casts.arg("x").mustBe(abstractVectorValue(), RError.SHOW_CALLER, RError.Message.ATTEMPT_TO_REPLICATE_NO_VECTOR);
+        // with default error message, SHOW_CALLER does not work
+        casts.arg("length.out").asIntegerVector().mustBe(size(1), RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "length.out").findFirst(1).mustBe(notIntNA(), RError.SHOW_CALLER,
+                        RError.Message.INVALID_VALUE, "length.out");
     }
 
     @Specialization

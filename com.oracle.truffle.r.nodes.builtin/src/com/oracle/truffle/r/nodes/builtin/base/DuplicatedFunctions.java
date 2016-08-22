@@ -48,7 +48,7 @@ public class DuplicatedFunctions {
         protected void casts(CastBuilder casts) {
             casts.arg("x").mustBe(nullValue().or(abstractVectorValue()), RError.SHOW_CALLER, RError.Message.GENERIC,
                             "duplicated() applies only to vectors").asVector();
-            casts.arg("fromLast").asLogicalVector().findFirst();
+            casts.arg("fromLast").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         }
 
         protected boolean isIncomparable(RAbstractVector incomparables) {

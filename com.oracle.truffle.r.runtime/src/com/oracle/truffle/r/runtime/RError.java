@@ -281,6 +281,7 @@ public final class RError extends RuntimeException {
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("'%s' is not a function, character or symbol"),
         NON_CHARACTER("non-character argument"),
+        NON_CHARACTER_NAMES("non-character names"),
         NON_NUMERIC_MATH("non-numeric argument to mathematical function"),
         NAN_PRODUCED("NaNs produced"),
         NUMERIC_COMPLEX_MATRIX_VECTOR("requires numeric/complex matrix/vector arguments"),
@@ -714,7 +715,10 @@ public final class RError extends RuntimeException {
         BAD_ENVIRONMENT("bad %s environment argument"),
         CANNOT_BE_LENGTH("'%s' cannot be of length %d"),
         SECOND_ARGUMENT_LIST("second argument must be a list"),
-        DOES_NOT_HAVE_DIMNAMES("'%s' does not have named dimnames");
+        DOES_NOT_HAVE_DIMNAMES("'%s' does not have named dimnames"),
+        ATTEMPT_TO_REPLICATE("attempt to replicate an object of type '%s'"),
+        ATTEMPT_TO_REPLICATE_NO_VECTOR("attempt to replicate non-vector"),
+        INCORRECT_ARG_TYPE("incorrect type for %s argument");
 
         public final String message;
         final boolean hasArgs;

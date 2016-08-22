@@ -22,19 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "make.unique", kind = INTERNAL, parameterNames = {"names", "sep"}, behavior = PURE)
@@ -43,6 +43,13 @@ public abstract class MakeUnique extends RBuiltinNode {
     private final ConditionProfile namesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile duplicatesProfile = ConditionProfile.createBinaryProfile();
     private final NACheck dummyCheck = NACheck.create(); // never triggered (used for vector update)
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("names").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.NOT_CHARACTER_VECTOR, "names");
+        casts.arg("sep").mustBe(scalarStringValue(), RError.SHOW_CALLER, RError.Message.MUST_BE_STRING, "sep");
+
+    }
 
     @Specialization
     protected RAbstractStringVector makeUnique(RAbstractStringVector names, String sep) {
@@ -91,28 +98,4 @@ public abstract class MakeUnique extends RBuiltinNode {
         return s1 + sep + index;
     }
 
-    @Specialization(guards = "sepIsString(sep)")
-    protected RAbstractStringVector makeUnique(RAbstractStringVector names, RAbstractVector sep) {
-        return makeUnique(names, (String) sep.getDataAtAsObject(0));
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "!sepIsString(sep)")
-    protected RAbstractStringVector makeUniqueWrongSep(RAbstractStringVector names, RAbstractVector sep) {
-        throw RError.error(this, RError.Message.MUST_BE_STRING, "sep");
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "!namesIsStringVector(names)")
-    protected RAbstractStringVector makeUnique(RAbstractVector names, Object sep) {
-        throw RError.error(this, RError.Message.NOT_CHARACTER_VECTOR, "names");
-    }
-
-    protected boolean namesIsStringVector(RAbstractVector names) {
-        return names.getElementClass() == RString.class;
-    }
-
-    protected boolean sepIsString(RAbstractVector sep) {
-        return sep.getElementClass() == RString.class && sep.getLength() == 1;
-    }
 }

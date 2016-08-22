@@ -22,11 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.Arrays;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -40,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -81,11 +84,17 @@ public abstract class Repeat extends RBuiltinNode {
         return new Object[]{RMissing.instance, 1, RRuntime.INT_NA, 1};
     }
 
+    private String argType(Object arg) {
+        return ((RTypedValue) arg).getRType().getName();
+    }
+
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
-        casts.firstIntegerWithWarning(2, RRuntime.INT_NA, "length.out");
-        casts.toInteger(3);
+        Function<Object, Object> argType = this::argType;
+        casts.arg("x").mustBe(abstractVectorValue(), RError.SHOW_CALLER, RError.Message.ATTEMPT_TO_REPLICATE, argType);
+        casts.arg("times").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "times").mustBe(nullValue().not()).asIntegerVector();
+        casts.arg("length.out").asIntegerVector().shouldBe(size(1), RError.Message.FIRST_ELEMENT_USED, "length.out").findFirst(1);
+        casts.arg("each").asIntegerVector().shouldBe(size(1), RError.Message.FIRST_ELEMENT_USED, "each").findFirst(1);
     }
 
     protected boolean hasNames(RAbstractVector x) {
@@ -98,7 +107,12 @@ public abstract class Repeat extends RBuiltinNode {
 
     @Specialization(guards = {"x.getLength() == 1", "times.getLength() == 1", "each <= 1", "!hasNames(x)"})
     protected RAbstractVector repNoEachNoNamesSimple(RAbstractDoubleVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
-        int length = lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut)) ? lengthOut : times.getDataAt(0);
+        int t = times.getDataAt(0);
+        if (t < 0) {
+            errorBranch.enter();
+            throw invalidTimes();
+        }
+        int length = lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut)) ? lengthOut : t;
         double[] data = new double[length];
         Arrays.fill(data, x.getDataAt(0));
         return RDataFactory.createDoubleVector(data, !RRuntime.isNA(x.getDataAt(0)));
@@ -193,6 +207,10 @@ public abstract class Repeat extends RBuiltinNode {
         if (oneTimeGiven.profile(times.getLength() == 1)) {
             // only one times value is given
             final int howManyTimes = times.getDataAt(0);
+            if (howManyTimes < 0) {
+                errorBranch.enter();
+                throw invalidTimes();
+            }
             if (replicateOnce.profile(howManyTimes == 1)) {
                 return (RVector) (copyIfSameSize ? x.copy() : x);
             } else {
@@ -207,7 +225,12 @@ public abstract class Repeat extends RBuiltinNode {
             // iterate once over the times vector to determine result vector size
             int resultLength = 0;
             for (int i = 0; i < times.getLength(); i++) {
-                resultLength += times.getDataAt(i);
+                int t = times.getDataAt(i);
+                if (t < 0) {
+                    errorBranch.enter();
+                    throw invalidTimes();
+                }
+                resultLength += t;
             }
             // create and populate result vector
             RVector r = x.createEmptySameType(resultLength, x.isComplete());

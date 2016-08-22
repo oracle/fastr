@@ -47,5 +47,13 @@ public class TestBuiltin_rep_len extends TestBase {
         assertEval("{rep_len(c(\"abcd\", \"efg\"), 0)}");
         assertEval("{rep_len(c(\"abcd\", \"efg\"), 1)}");
         assertEval("{rep_len(c(\"abcd\", \"efg\"), 2)}");
+
+        assertEval(Output.IgnoreErrorContext, "{ rep_len(function() 42, 7) }");
+        assertEval("{ rep_len(7, \"7\") }");
+        assertEval("{ rep_len(7, integer()) }");
+        assertEval("{ rep_len(7, NA) }");
+        assertEval("{ rep_len(7, NULL) }");
+        assertEval("{ rep_len(7, c(7, 42)) }");
+
     }
 }
