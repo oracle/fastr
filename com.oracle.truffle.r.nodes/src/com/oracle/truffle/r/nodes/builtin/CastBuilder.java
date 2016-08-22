@@ -307,6 +307,8 @@ public final class CastBuilder {
 
         <R extends RAbstractRawVector> TypePredicateArgumentFilter<Object, R> rawValue();
 
+        <R> TypePredicateArgumentFilter<Object, R> anyValue();
+
         TypePredicateArgumentFilter<Object, String> scalarStringValue();
 
         TypePredicateArgumentFilter<Object, Integer> scalarIntegerValue();
@@ -520,12 +522,17 @@ public final class CastBuilder {
 
         @Override
         public <R extends RAbstractComplexVector> TypePredicateArgumentFilter<Object, R> complexValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RComplex || x instanceof RAbstractComplexVector);
+            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RAbstractComplexVector);
         }
 
         @Override
         public <R extends RAbstractRawVector> TypePredicateArgumentFilter<Object, R> rawValue() {
             return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RRaw || x instanceof RAbstractRawVector);
+        }
+
+        @Override
+        public <R> TypePredicateArgumentFilter<Object, R> anyValue() {
+            return TypePredicateArgumentFilter.fromLambda(x -> true);
         }
 
         /**
@@ -1016,6 +1023,10 @@ public final class CastBuilder {
 
         public static <R extends RAbstractRawVector> TypePredicateArgumentFilter<Object, R> rawValue() {
             return predefFilters().rawValue();
+        }
+
+        public static <R> TypePredicateArgumentFilter<Object, R> anyValue() {
+            return predefFilters().anyValue();
         }
 
         public static ArgumentTypeFilter<Object, Object> numericValue() {
