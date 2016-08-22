@@ -22,13 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -36,9 +39,16 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 @RBuiltin(name = "ls", aliases = {"objects"}, kind = INTERNAL, parameterNames = {"envir", "all.names", "sorted"}, behavior = PURE)
 public abstract class Ls extends RBuiltinNode {
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("envir").mustBe(REnvironment.class, NO_CALLER, INVALID_ARGUMENT, "envir");
+        casts.arg("all.names").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("sorted").asLogicalVector().findFirst().map(toBoolean());
+    }
+
     @Specialization
     @TruffleBoundary
-    protected RStringVector ls(REnvironment envir, byte allNames, byte sorted) {
-        return envir.ls(RRuntime.fromLogical(allNames), null, RRuntime.fromLogical(sorted));
+    protected RStringVector ls(REnvironment envir, boolean allNames, boolean sorted) {
+        return envir.ls(allNames, null, sorted);
     }
 }
