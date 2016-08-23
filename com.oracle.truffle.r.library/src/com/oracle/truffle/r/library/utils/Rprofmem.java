@@ -125,7 +125,6 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDat
 
         long size = RObjectSize.getObjectSize(data, myIgnoreObjectHandler);
         if (data instanceof RAbstractVector && size >= LARGE_VECTOR) {
-            RAbstractVector absv = (RAbstractVector) data;
             if (size > profmemState.threshold) {
                 profmemState.out().printf("%d: %s\n", size, name);
             }
