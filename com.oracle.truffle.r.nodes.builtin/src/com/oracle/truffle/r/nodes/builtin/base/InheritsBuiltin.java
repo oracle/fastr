@@ -11,7 +11,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RError.Message.NOT_CHARACTER_VECTOR;
@@ -37,7 +37,7 @@ public abstract class InheritsBuiltin extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("what").mustBe(stringValue(), NOT_CHARACTER_VECTOR, "what");
-        casts.arg("which").mustBe(scalarLogicalValue(), NOT_LEN_ONE_LOGICAL_VECTOR, "which").map(toBoolean());
+        casts.arg("which").mustBe(logicalValue(), NOT_LEN_ONE_LOGICAL_VECTOR, "which").asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Specialization

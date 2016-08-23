@@ -303,7 +303,7 @@ public abstract class ConnectionFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("host").mustBe(scalarStringValue());
+            casts.arg("host").mustBe(stringValue()).asStringVector().findFirst();
             casts.arg("port").asIntegerVector().findFirst().notNA().mustBe(gte(0));
             casts.arg("server").asLogicalVector().findFirst().notNA().map(toBoolean());
             Casts.open(casts);

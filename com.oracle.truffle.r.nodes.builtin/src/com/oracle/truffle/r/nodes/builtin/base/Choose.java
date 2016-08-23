@@ -53,7 +53,7 @@ public abstract class Choose extends RBuiltinNode {
     private final NACheck na = NACheck.create();
 
     @Override
-    protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
+    protected void createCasts(CastBuilder casts) {
         casts.arg("n").mustBe(numericValue(), RError.SHOW_CALLER, Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
         casts.arg("k").mustBe(numericValue(), RError.SHOW_CALLER, Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
     }

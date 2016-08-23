@@ -69,7 +69,7 @@ public abstract class Rm extends RBuiltinNode {
                 }
             }
         } catch (PutException ex) {
-            throw RError.error(this, ex);
+            throw RError.error(RError.SHOW_CALLER, ex);
         }
         return RNull.instance;
     }
@@ -85,7 +85,7 @@ public abstract class Rm extends RBuiltinNode {
             }
         }
         if (fs == null) {
-            RError.warning(this, RError.Message.UNKNOWN_OBJECT, x);
+            RError.warning(RError.SHOW_CALLER, RError.Message.UNKNOWN_OBJECT, x);
         } else {
             // use null (not an R value) to represent "undefined"
             FrameSlotChangeMonitor.setObjectAndInvalidate(frame, fs, null, false, invalidateProfile);

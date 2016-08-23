@@ -57,7 +57,7 @@ public abstract class Formals extends RBuiltinNode {
     }
 
     @Fallback
-    protected Object formals(Object fun) {
+    protected Object formals(@SuppressWarnings("unused") Object fun) {
         // for anything that is not a function, GnuR returns NULL
         return RNull.instance;
     }

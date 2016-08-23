@@ -1060,22 +1060,42 @@ public final class CastBuilder {
             return numericValue().or(stringValue()).or(complexValue()).or(rawValue()).or(instanceOf(RAbstractListVector.class));
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         public static TypePredicateArgumentFilter<Object, String> scalarStringValue() {
             return predefFilters().scalarStringValue();
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         public static TypePredicateArgumentFilter<Object, Integer> scalarIntegerValue() {
             return predefFilters().scalarIntegerValue();
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         public static TypePredicateArgumentFilter<Object, Double> scalarDoubleValue() {
             return predefFilters().scalarDoubleValue();
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         public static TypePredicateArgumentFilter<Object, Byte> scalarLogicalValue() {
             return predefFilters().scalarLogicalValue();
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         public static TypePredicateArgumentFilter<Object, RComplex> scalarComplexValue() {
             return predefFilters().scalarComplexValue();
         }
@@ -1158,7 +1178,7 @@ public final class CastBuilder {
         }
 
         default THIS shouldBe(ArgumentFilter<? super T, ?> argFilter) {
-            return shouldBe(argFilter, state().defaultWarning().message, state().defaultWarning().args);
+            return shouldBe(argFilter, state().defaultWarning().callObj, state().defaultWarning().message, state().defaultWarning().args);
         }
 
         default <R, THAT extends ArgCastBuilder<R, THAT>> THAT alias(Function<THIS, THAT> aliaser) {
@@ -1328,7 +1348,7 @@ public final class CastBuilder {
         }
 
         default <S> InitialPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter) {
-            return mustBe(argFilter, state().defaultError().message, state().defaultError().args);
+            return mustBe(argFilter, state().defaultError().callObj, state().defaultError().message, state().defaultError().args);
         }
 
         default <S> InitialPhaseBuilder<S> mustBe(Class<S> cls, RBaseNode callObj, RError.Message message, Object... messageArgs) {
@@ -1566,7 +1586,7 @@ public final class CastBuilder {
         }
 
         default CoercedPhaseBuilder<T, S> mustBe(ArgumentFilter<? super T, ? extends T> argFilter) {
-            return mustBe(argFilter, state().defaultError().message, state().defaultError().args);
+            return mustBe(argFilter, state().defaultError().callObj, state().defaultError().message, state().defaultError().args);
         }
 
     }
@@ -1625,7 +1645,7 @@ public final class CastBuilder {
         }
 
         default <S> HeadPhaseBuilder<S> mustBe(ArgumentFilter<? super T, S> argFilter) {
-            return mustBe(argFilter, state().defaultError().message, state().defaultError().args);
+            return mustBe(argFilter, state().defaultError().callObj, state().defaultError().message, state().defaultError().args);
         }
 
         default <S> HeadPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {

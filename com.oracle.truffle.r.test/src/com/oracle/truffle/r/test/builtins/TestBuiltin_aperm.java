@@ -196,19 +196,19 @@ public class TestBuiltin_aperm extends TestBase {
         assertEval(Output.IgnoreWarningContext, "{ aperm(array(1:27,c(3,3,3)), c(1+1i,3+3i,2+2i))[1,2,3] == array(1:27,c(3,3,3))[1,3,2]; }");
 
         // perm is not a permutation vector
-        assertEval(Output.IgnoreErrorContext, "{ aperm(array(1,c( 3,3,3)), c(1,2,1)); }");
+        assertEval("{ aperm(array(1,c( 3,3,3)), c(1,2,1)); }");
 
         // perm value out of bounds
-        assertEval(Output.IgnoreErrorContext, "{ aperm(array(1,c(3,3,3)), c(1,2,0)); }");
+        assertEval("{ aperm(array(1,c(3,3,3)), c(1,2,0)); }");
 
         // first argument not an array
-        assertEval(Output.IgnoreErrorContext, "{ aperm(c(1,2,3)); }");
+        assertEval("{ aperm(c(1,2,3)); }");
 
         // Invalid first argument, not array
-        assertEval(Output.IgnoreErrorContext, "{ aperm(c(c(2,3), c(4,5), c(6,7)), c(3,4)) }");
+        assertEval("{ aperm(c(c(2,3), c(4,5), c(6,7)), c(3,4)) }");
 
         // invalid perm length
-        assertEval(Output.IgnoreErrorContext, "{ aperm(array(1,c(3,3,3)), c(1,2)); }");
+        assertEval("{ aperm(array(1,c(3,3,3)), c(1,2)); }");
 
         // Complex Vector
         assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");

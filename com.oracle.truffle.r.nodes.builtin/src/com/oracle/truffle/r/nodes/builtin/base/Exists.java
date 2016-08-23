@@ -53,7 +53,7 @@ public abstract class Exists extends RBuiltinNode {
     public abstract byte execute(String nameVec, REnvironment env, String mode, boolean inherits);
 
     @Override
-    protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
+    protected void createCasts(CastBuilder casts) {
         casts.arg("x").mustBe(stringValue(), Message.INVALID_FIRST_ARGUMENT).asStringVector().findFirst();
         casts.arg("envir").mustBe(REnvironment.class);
         casts.arg("mode").mustBe(stringValue()).asStringVector().findFirst();

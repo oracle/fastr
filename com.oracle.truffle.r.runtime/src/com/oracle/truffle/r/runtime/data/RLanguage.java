@@ -30,7 +30,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Denotes an (unevaluated) R language element. It is equivalent to a LANGSXP value in GnuR. It
@@ -198,7 +197,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
 
     @Override
     public RLanguage copy() {
-        RLanguage l = new RLanguage((RNode) getRep(), this.length);
+        RLanguage l = new RLanguage(getRep(), this.length);
         if (this.attributes != null) {
             l.attributes = attributes.copy();
         }

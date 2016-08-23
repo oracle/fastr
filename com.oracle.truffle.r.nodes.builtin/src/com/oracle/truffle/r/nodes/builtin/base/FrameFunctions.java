@@ -75,7 +75,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -337,12 +336,6 @@ public class FrameFunctions {
                 return rvn.getLength() == 0;
             }
             return false;
-        }
-
-        private static RSymbol createVarArgSymbol(VarArgNode varArgNode) {
-            CompilerAsserts.neverPartOfCompilation(); // for string concatenation and interning
-            String varArgSymbol = createVarArgName(varArgNode);
-            return RDataFactory.createSymbolInterned(varArgSymbol);
         }
 
         private static String createVarArgName(VarArgNode varArgNode) {
