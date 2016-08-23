@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -47,7 +48,7 @@ public abstract class MakeUnique extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("names").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.NOT_CHARACTER_VECTOR, "names");
-        casts.arg("sep").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.MUST_BE_STRING, "sep").asStringVector().findFirst();
+        casts.arg("sep").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_STRING, "sep").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
 
     }
 
