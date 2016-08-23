@@ -1625,6 +1625,7 @@ public final class CastBuilder {
             return state().factory.newHeadPhaseBuilder(this);
         }
 
+        @SuppressWarnings("overloads")
         default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper) {
             state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, MapNode.create(trueBranchMapper), null));
 
