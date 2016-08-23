@@ -271,6 +271,8 @@ public final class CastBuilder {
 
         ValuePredicateArgumentFilter<Double> eq(double x);
 
+        ValuePredicateArgumentFilter<String> eq(String x);
+
         ValuePredicateArgumentFilter<Integer> gt(int x);
 
         ValuePredicateArgumentFilter<Double> gt(double x);
@@ -443,6 +445,11 @@ public final class CastBuilder {
         @Override
         public ValuePredicateArgumentFilter<Double> eq(double x) {
             return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg != null && arg.doubleValue() == x);
+        }
+
+        @Override
+        public ValuePredicateArgumentFilter<String> eq(String x) {
+            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.equals(x));
         }
 
         @Override
@@ -922,6 +929,10 @@ public final class CastBuilder {
         }
 
         public static ValuePredicateArgumentFilter<Double> eq(double x) {
+            return predefFilters().eq(x);
+        }
+
+        public static ValuePredicateArgumentFilter<String> eq(String x) {
             return predefFilters().eq(x);
         }
 
@@ -1424,6 +1435,10 @@ public final class CastBuilder {
             return this;
         }
 
+        /**
+         * This method should be used as a step in pipeline, not as an argument to {@code mustBe}.
+         * Example: {@code casts.arg("x").notNA()}.
+         */
         default InitialPhaseBuilder<T> notNA() {
             state().castBuilder().insert(state().index(), NonNANodeGen.create(state().defaultError().callObj, state().defaultError().message, state().defaultError().args, null));
             return this;
