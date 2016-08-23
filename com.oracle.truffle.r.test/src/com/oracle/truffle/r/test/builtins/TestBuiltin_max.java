@@ -217,7 +217,7 @@ public class TestBuiltin_max extends TestBase {
 
         assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(integer(0)) }");
         assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(integer()) }");
-        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(as.double(NA), na.rm=TRUE) }");
+        assertEval(Output.IgnoreWarningContext, "{ max(as.double(NA), na.rm=TRUE) }");
         assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(as.integer(NA), na.rm=TRUE) }");
         assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
     }

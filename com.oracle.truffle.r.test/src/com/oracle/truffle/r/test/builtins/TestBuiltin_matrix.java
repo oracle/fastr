@@ -134,8 +134,7 @@ public class TestBuiltin_matrix extends TestBase {
 
     @Test
     public void testmatrix24() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(TRUE, FALSE, FALSE, TRUE), 2L, 2L, TRUE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(c(TRUE, FALSE, FALSE, TRUE), 2L, 2L, TRUE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -180,8 +179,7 @@ public class TestBuiltin_matrix extends TestBase {
 
     @Test
     public void testmatrix33() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(1+2i, 3-4i, 5+0i, -6+0i), 2L, 2L, TRUE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(c(1+2i, 3-4i, 5+0i, -6+0i), 2L, 2L, TRUE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
