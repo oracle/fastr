@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -29,9 +32,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -46,7 +49,6 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -66,21 +68,13 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 @SuppressWarnings("unused")
 public class IsTypeFunctions {
 
-    protected abstract static class ErrorAdapter extends RBuiltinNode {
-        protected final BranchProfile errorProfile = BranchProfile.create();
+    protected abstract static class MissingAdapter extends RBuiltinNode {
 
-        protected RError missingError() throws RError {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.ARGUMENT_MISSING, "x");
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "x");
         }
-    }
 
-    protected abstract static class MissingAdapter extends ErrorAdapter {
-
-        @Specialization
-        protected byte isType(RMissing value) throws RError {
-            throw missingError();
-        }
     }
 
     @RBuiltin(name = "is.array", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
@@ -476,19 +470,20 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.vector", kind = INTERNAL, parameterNames = {"x", "mode"}, behavior = PURE)
-    public abstract static class IsVector extends ErrorAdapter {
+    public abstract static class IsVector extends RBuiltinNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "x");
+            casts.arg("mode").defaultError(this, RError.Message.INVALID_ARGUMENT, "mode").mustBe(stringValue()).asStringVector().mustBe(size(1));
+        }
 
         @Override
         public Object[] getDefaultParameterValues() {
             // INTERNAL does not need default parameters
             return RNode.EMPTY_OBJECT_ARRAY;
-        }
-
-        @Specialization
-        protected byte isVector(RMissing value, String mode) {
-            throw missingError();
         }
 
         @Specialization
