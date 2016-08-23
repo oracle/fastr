@@ -237,6 +237,7 @@ public class TestCasts extends TestBase {
 
             final boolean mustBeResultCompilationConstant;
 
+            @SuppressWarnings("deprecation")
             protected Root(String name, boolean mustBeResultCompilationConstant) {
                 super(name, new CastBuilder().arg(0).mapIf(scalarIntegerValue(), constant(10)).builder().getCasts()[0]);
                 this.mustBeResultCompilationConstant = mustBeResultCompilationConstant;
@@ -343,6 +344,7 @@ public class TestCasts extends TestBase {
     public void testComplexPipeline1() {
         class Root extends TestRootNode<CastNode> {
 
+            @SuppressWarnings("deprecation")
             protected Root(String name) {
                 super(name, new CastBuilder().arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(
                                 ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Object.class),
@@ -404,6 +406,7 @@ public class TestCasts extends TestBase {
     public void testFilterAndExpression() {
         class Root extends TestRootNode<CastNode> {
 
+            @SuppressWarnings("deprecation")
             protected Root(String name) {
                 super(name, new CastBuilder().arg(0).mustBe(scalarIntegerValue()).shouldBe(gt0().and(lt(10))).builder().getCasts()[0]);
             }
@@ -422,6 +425,7 @@ public class TestCasts extends TestBase {
     public void testFilterNotAndExpression() {
         class Root extends TestRootNode<CastNode> {
 
+            @SuppressWarnings("deprecation")
             protected Root(String name) {
                 super(name, new CastBuilder().arg(0).mustBe(scalarIntegerValue()).shouldBe(gt0().and(lt(10)).not()).builder().getCasts()[0]);
             }
@@ -440,6 +444,7 @@ public class TestCasts extends TestBase {
     public void testComplexPipeline3() {
         class Root extends TestRootNode<CastNode> {
 
+            @SuppressWarnings("deprecation")
             protected Root(String name) {
                 super(name, new CastBuilder().arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(
                                 instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())), Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(),

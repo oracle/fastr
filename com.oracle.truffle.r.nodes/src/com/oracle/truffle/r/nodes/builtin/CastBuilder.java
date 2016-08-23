@@ -1049,22 +1049,42 @@ public final class CastBuilder {
             return numericValue().or(stringValue()).or(complexValue()).or(rawValue()).or(instanceOf(RAbstractListVector.class));
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         public static TypePredicateArgumentFilter<Object, String> scalarStringValue() {
             return predefFilters().scalarStringValue();
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         public static TypePredicateArgumentFilter<Object, Integer> scalarIntegerValue() {
             return predefFilters().scalarIntegerValue();
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         public static TypePredicateArgumentFilter<Object, Double> scalarDoubleValue() {
             return predefFilters().scalarDoubleValue();
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         public static TypePredicateArgumentFilter<Object, Byte> scalarLogicalValue() {
             return predefFilters().scalarLogicalValue();
         }
 
+        /**
+         * @deprecated tests for scalar types are dangerous
+         */
+        @Deprecated
         public static TypePredicateArgumentFilter<Object, RComplex> scalarComplexValue() {
             return predefFilters().scalarComplexValue();
         }

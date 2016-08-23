@@ -27,9 +27,9 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt0;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -80,7 +80,7 @@ public abstract class Cat extends RBuiltinNode {
         casts.arg("sep").mustBe(stringValue(), RError.Message.INVALID_SEP);
 
         casts.arg("fill").mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())),
-                        Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(), asInteger());
+                        Message.NON_POSITIVE_FILL).mapIf(logicalValue(), asBoolean(), asInteger());
 
         casts.arg("labels").map(defaultValue(RDataFactory.createStringVector(0))).mustBe(stringValue()).asStringVector();
 

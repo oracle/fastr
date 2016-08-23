@@ -363,6 +363,7 @@ public class CastBuilderTest {
         assertEquals("A", cast(RRuntime.DOUBLE_NA));
     }
 
+    @SuppressWarnings("deprecation")
     public InitialPhaseBuilder<String> matchStringArg(InitialPhaseBuilder<Object> phaseBuilder, String... optValues) {
         ArgumentValueFilter<String> opts = null;
         for (String opt : optValues) {
@@ -371,6 +372,7 @@ public class CastBuilderTest {
         return phaseBuilder.mustBe(scalarStringValue().and(opts));
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testMatchArg() {
 
@@ -453,6 +455,7 @@ public class CastBuilderTest {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testSample5() {
         ArgumentTypeFilter<Object, Object> complexOrExpr = integerValue().or(doubleValue()).or(complexValue()).or(logicalValue());
