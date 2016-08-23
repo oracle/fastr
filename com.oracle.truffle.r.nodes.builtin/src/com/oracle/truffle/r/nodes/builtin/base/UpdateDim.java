@@ -28,11 +28,14 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
+import com.oracle.truffle.r.nodes.attributes.PutAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -51,16 +54,22 @@ public abstract class UpdateDim extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractVector updateDim(RAbstractVector vector, RAbstractVector dimensions, //
-                    @Cached("createPreserveNames()") CastIntegerNode castInteger) {
+    protected RAbstractVector updateDim(RAbstractVector vector, RAbstractVector dimensions,
+                    @Cached("createPreserveNames()") CastIntegerNode castInteger,
+                    @Cached("createDim()") PutAttributeNode putDimensions,
+                    @Cached("create()") InitAttributesNode initAttributes) {
         if (dimensions.getLength() == 0) {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.LENGTH_ZERO_DIM_INVALID);
         }
-        int[] dimsData = ((RAbstractIntVector) castInteger.execute(dimensions)).materialize().getDataCopy();
+        RIntVector dimensionsMaterialized = ((RAbstractIntVector) castInteger.execute(dimensions)).materialize();
+        int[] dimsData = dimensionsMaterialized.getDataCopy();
         RVector.verifyDimensions(vector.getLength(), dimsData, this);
         RVector result = ((RAbstractVector) reuse.execute(vector)).materialize();
-        result.resetDimensions(dimsData);
+        result.setInternalDimensions(dimsData);
+        result.setInternalNames(null);
+        result.setInternalDimNames(null);
+        putDimensions.execute(initAttributes.execute(result), dimensionsMaterialized);
         return result;
     }
 }
