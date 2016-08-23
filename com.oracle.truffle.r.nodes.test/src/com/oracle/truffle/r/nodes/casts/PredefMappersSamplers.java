@@ -27,9 +27,11 @@ import static com.oracle.truffle.r.nodes.casts.CastUtils.samples;
 import java.util.Collections;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentMapper;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PredefMappers;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class PredefMappersSamplers implements PredefMappers {
 
@@ -37,6 +39,15 @@ public final class PredefMappersSamplers implements PredefMappers {
     public ValuePredicateArgumentMapperSampler<Byte, Boolean> toBoolean() {
         return ValuePredicateArgumentMapperSampler.fromLambda(x -> RRuntime.fromLogical(x), x -> RRuntime.asLogical(x), samples(RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA),
                         CastUtils.<Byte> samples(), Byte.class, Boolean.class);
+    }
+
+    @Override
+    public ValuePredicateArgumentMapperSampler<Double, Integer> doubleToInt() {
+        final NACheck naCheck = NACheck.create();
+        return ValuePredicateArgumentMapperSampler.fromLambda(x -> {
+            naCheck.enable(x);
+            return naCheck.convertDoubleToInt(x);
+        }, x -> x == null ? null : (double) x, Double.class, Integer.class);
     }
 
     @Override

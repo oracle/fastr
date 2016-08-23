@@ -149,6 +149,11 @@ public final class PredefFiltersSamplers implements PredefFilters {
     }
 
     @Override
+    public ValuePredicateArgumentFilterSampler<Double> isFractional() {
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double x) -> !RRuntime.isNA(x) && !Double.isInfinite(x) && x != Math.floor(x), samples(0d), samples(RRuntime.DOUBLE_NA));
+    }
+
+    @Override
     public ValuePredicateArgumentFilterSampler<String> stringNA() {
         return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((String x) -> RRuntime.isNA(x), samples(RRuntime.STRING_NA), samples(""));
     }
