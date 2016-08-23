@@ -71,6 +71,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class CastBuilder {
 
@@ -265,6 +266,8 @@ public final class CastBuilder {
 
         ValuePredicateArgumentFilter<Double> doubleNA();
 
+        ValuePredicateArgumentFilter<Double> isFractional();
+
         ValuePredicateArgumentFilter<String> stringNA();
 
         ValuePredicateArgumentFilter<Integer> eq(int x);
@@ -323,6 +326,8 @@ public final class CastBuilder {
 
     public interface PredefMappers {
         ValuePredicateArgumentMapper<Byte, Boolean> toBoolean();
+
+        ValuePredicateArgumentMapper<Double, Integer> doubleToInt();
 
         ValuePredicateArgumentMapper<String, Integer> charAt0(int defaultValue);
 
@@ -430,6 +435,11 @@ public final class CastBuilder {
         @Override
         public ValuePredicateArgumentFilter<Double> doubleNA() {
             return ValuePredicateArgumentFilter.fromLambda((Double x) -> RRuntime.isNA(x));
+        }
+
+        @Override
+        public ValuePredicateArgumentFilter<Double> isFractional() {
+            return ValuePredicateArgumentFilter.fromLambda((Double x) -> !RRuntime.isNA(x) && !Double.isInfinite(x) && x != Math.floor(x));
         }
 
         @Override
@@ -595,6 +605,15 @@ public final class CastBuilder {
         @Override
         public ValuePredicateArgumentMapper<Byte, Boolean> toBoolean() {
             return ValuePredicateArgumentMapper.fromLambda(x -> RRuntime.fromLogical(x));
+        }
+
+        @Override
+        public ValuePredicateArgumentMapper<Double, Integer> doubleToInt() {
+            final NACheck naCheck = NACheck.create();
+            return ValuePredicateArgumentMapper.fromLambda(x -> {
+                naCheck.enable(x);
+                return naCheck.convertDoubleToInt(x);
+            });
         }
 
         @Override
@@ -916,6 +935,10 @@ public final class CastBuilder {
             return predefFilters().doubleNA().not();
         }
 
+        public static ValuePredicateArgumentFilter<Double> isFractional() {
+            return predefFilters().isFractional();
+        }
+
         public static ValuePredicateArgumentFilter<String> stringNA() {
             return predefFilters().stringNA();
         }
@@ -1106,6 +1129,10 @@ public final class CastBuilder {
 
         public static ValuePredicateArgumentMapper<Byte, Boolean> toBoolean() {
             return predefMappers().toBoolean();
+        }
+
+        public static ValuePredicateArgumentMapper<Double, Integer> doubleToInt() {
+            return predefMappers().doubleToInt();
         }
 
         public static ValuePredicateArgumentMapper<String, Integer> charAt0(int defaultValue) {
@@ -1400,13 +1427,6 @@ public final class CastBuilder {
         }
 
         @SuppressWarnings("overloads")
-        default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchNode) {
-            state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, trueBranchNode.apply(this), null));
-
-            return state().factory.newInitialPhaseBuilder(this);
-        }
-
-        @SuppressWarnings("overloads")
         default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper, ArgumentMapper<T, T> falseBranchMapper) {
             state().castBuilder().insert(
                             state().index(),
@@ -1418,6 +1438,13 @@ public final class CastBuilder {
 
         default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, CastNode trueBranchNode, CastNode falseBranchNode) {
             state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, trueBranchNode, falseBranchNode));
+
+            return state().factory.newInitialPhaseBuilder(this);
+        }
+
+        @SuppressWarnings("overloads")
+        default <S, R> InitialPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchNodeFactory) {
+            state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, trueBranchNodeFactory.apply(this), null));
 
             return state().factory.newInitialPhaseBuilder(this);
         }
@@ -1598,6 +1625,7 @@ public final class CastBuilder {
             return state().factory.newHeadPhaseBuilder(this);
         }
 
+        @SuppressWarnings("overloads")
         default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, ArgumentMapper<S, R> trueBranchMapper) {
             state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, MapNode.create(trueBranchMapper), null));
 
@@ -1616,6 +1644,13 @@ public final class CastBuilder {
                             state().index(),
                             ConditionalMapNode.create(argFilter, MapNode.create(trueBranchMapper),
                                             MapNode.create(falseBranchMapper)));
+
+            return state().factory.newHeadPhaseBuilder(this);
+        }
+
+        @SuppressWarnings("overloads")
+        default <S, R> HeadPhaseBuilder<Object> mapIf(ArgumentFilter<? super T, S> argFilter, Function<ArgCastBuilder<T, ?>, CastNode> trueBranchNodeFactory) {
+            state().castBuilder().insert(state().index(), ConditionalMapNode.create(argFilter, trueBranchNodeFactory.apply(this), null));
 
             return state().factory.newHeadPhaseBuilder(this);
         }
