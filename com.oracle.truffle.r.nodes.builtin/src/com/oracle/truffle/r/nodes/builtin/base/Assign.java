@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * The {@code assign} builtin. There are two special cases worth optimizing:
@@ -58,6 +59,19 @@ public abstract class Assign extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
     private final BranchProfile warningProfile = BranchProfile.create();
+    private final boolean direct;
+
+    protected Assign() {
+        this(false);
+    }
+
+    protected Assign(boolean direct) {
+        this.direct = direct;
+    }
+
+    private RBaseNode errorContext() {
+        return direct ? this : RError.SHOW_CALLER;
+    }
 
     /**
      * TODO: This method becomes obsolete when Assign and AssignFastPaths are modified to have the
@@ -69,10 +83,10 @@ public abstract class Assign extends RBuiltinNode {
             return xVec.getDataAt(0);
         } else if (len == 0) {
             errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_FIRST_ARGUMENT);
+            throw RError.error(errorContext(), RError.Message.INVALID_FIRST_ARGUMENT);
         } else {
             warningProfile.enter();
-            RError.warning(this, RError.Message.ONLY_FIRST_VARIABLE_NAME);
+            RError.warning(errorContext(), RError.Message.ONLY_FIRST_VARIABLE_NAME);
             return xVec.getDataAt(0);
         }
     }
@@ -112,14 +126,14 @@ public abstract class Assign extends RBuiltinNode {
             }
             if (env == REnvironment.emptyEnv()) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
+                throw RError.error(errorContext(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
             }
         }
         try {
             env.put(x, value);
         } catch (PutException ex) {
             errorProfile.enter();
-            throw RError.error(RError.SHOW_CALLER, ex);
+            throw RError.error(errorContext(), ex);
         }
         return value;
     }

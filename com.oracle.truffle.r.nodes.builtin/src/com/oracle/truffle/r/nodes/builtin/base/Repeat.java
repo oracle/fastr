@@ -91,8 +91,8 @@ public abstract class Repeat extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         Function<Object, Object> argType = this::argType;
-        casts.arg("x").mustBe(abstractVectorValue(), RError.SHOW_CALLER, RError.Message.ATTEMPT_TO_REPLICATE, argType);
-        casts.arg("times").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "times").mustBe(nullValue().not()).asIntegerVector();
+        casts.arg("x").mustBe(abstractVectorValue(), RError.Message.ATTEMPT_TO_REPLICATE, argType);
+        casts.arg("times").defaultError(RError.Message.INVALID_ARGUMENT, "times").mustBe(nullValue().not()).asIntegerVector();
         casts.arg("length.out").asIntegerVector().shouldBe(size(1), RError.Message.FIRST_ELEMENT_USED, "length.out").findFirst(1);
         casts.arg("each").asIntegerVector().shouldBe(size(1), RError.Message.FIRST_ELEMENT_USED, "each").findFirst(1);
     }
