@@ -583,10 +583,10 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         # visitor to collect/copy all the classes/jar files needed by the launchers
         def dep_visit(dep, edge):
             if isinstance(dep, mx.JARDistribution):
-                shutil.copy(dep.path, jars_dir)
+                shutil.copy(join(dep.suite.dir, dep.path), jars_dir)
             elif isinstance(dep, mx.Library):
                 jar_name = dep.name.lower() + '.jar'
-                shutil.copyfile(dep.path, join(jars_dir, jar_name))
+                shutil.copyfile(join(dep.suite.dir, dep.path), join(jars_dir, jar_name))
             elif isinstance(dep, mx.JavaProject):
                 if 'com.oracle.truffle.r' in dep.name:
                     classfiles_dir = dep.output_dir()
