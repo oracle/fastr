@@ -29,21 +29,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "Arg", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = COMPLEX_GROUP_GENERIC, behavior = PURE)
 public abstract class Arg extends UnaryArithmeticBuiltinNode {
@@ -89,27 +79,6 @@ public abstract class Arg extends UnaryArithmeticBuiltinNode {
     @Override
     public double opd(double re, double im) {
         return Math.atan2(im, re);
-    }
-
-    private final ConditionProfile signumProfile = ConditionProfile.createBinaryProfile();
-    private final NACheck naCheck = NACheck.create();
-
-    @Override
-    protected void createCasts(CastBuilder casts) {
-        casts.arg("z").mustBe(numericValue().or(complexValue()), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
-    }
-
-    @Specialization
-    protected double arg(double z) {
-        naCheck.enable(z);
-        if (naCheck.check(z)) {
-            return RRuntime.DOUBLE_NA;
-        }
-        if (signumProfile.profile(z >= 0)) {
-            return 0;
-        } else {
-            return Math.PI;
-        }
     }
 
     @Specialization

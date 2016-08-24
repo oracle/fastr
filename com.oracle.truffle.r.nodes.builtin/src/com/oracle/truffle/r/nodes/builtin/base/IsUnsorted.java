@@ -57,8 +57,6 @@ public abstract class IsUnsorted extends RBuiltinNode {
 
     private final ConditionProfile strictlyProfile = ConditionProfile.createBinaryProfile();
 
-    @Child private RComplexComparator ccmp = new RComplexComparator();
-
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("strictly").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).notNA().map(toBoolean());
@@ -166,50 +164,6 @@ public abstract class IsUnsorted extends RBuiltinNode {
     @SuppressWarnings("unused")
     protected byte isUnsortedFallback(Object x, boolean strictly) {
         return RRuntime.LOGICAL_NA;
-    }
-
-    public final class RComplexComparator extends RBaseNode {
-
-        public Object execute(RComplex x, RComplex y, boolean naLast) {
-            // compare real parts
-            boolean nax = RRuntime.isNA(x.getRealPart());
-            boolean nay = RRuntime.isNA(y.getRealPart());
-            if (nax && nay) {
-                return 0;
-            }
-            if (nax) {
-                return naLast ? 1 : -1;
-            }
-            if (nay) {
-                return naLast ? -1 : 1;
-            }
-            if (x.getRealPart() < y.getRealPart()) {
-                return -1;
-            }
-            if (x.getRealPart() > y.getRealPart()) {
-                return 1;
-            }
-
-            // compare real parts
-            nax = RRuntime.isNA(x.getImaginaryPart());
-            nay = RRuntime.isNA(y.getImaginaryPart());
-            if (nax && nay) {
-                return 0;
-            }
-            if (nax) {
-                return naLast ? 1 : -1;
-            }
-            if (nay) {
-                return naLast ? -1 : 1;
-            }
-            if (x.getImaginaryPart() < y.getImaginaryPart()) {
-                return -1;
-            }
-            if (x.getImaginaryPart() > y.getImaginaryPart()) {
-                return 1;
-            }
-            return 0; // equal
-        }
     }
 
 }
