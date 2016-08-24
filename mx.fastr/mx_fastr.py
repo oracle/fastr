@@ -553,6 +553,9 @@ class ReleaseBuildTask(mx.NativeBuildTask):
             targetFile.write(LauncherTemplate(open(source).read()).substitute(dictionary))
 
     def build(self):
+        if os.environ.has_key('FASTR_NO_RELEASE'):
+            mx.log('FastR: not updating release project')
+            return
         # copy the release directories
         output_dir = self.subject.dir
         fastr_dir = _fastr_suite.dir
