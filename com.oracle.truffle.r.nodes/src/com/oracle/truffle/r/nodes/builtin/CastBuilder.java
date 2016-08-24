@@ -1607,6 +1607,7 @@ public final class CastBuilder {
          * no warning message.
          */
         default HeadPhaseBuilder<S> findFirst(S defaultValue) {
+            assert defaultValue != null : "defaultValue cannot be null";
             state().castBuilder().insert(state().index(), FindFirstNodeGen.create(elementClass(), defaultValue));
             return state().factory.newHeadPhaseBuilder(this);
         }

@@ -22,24 +22,29 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.RError.Message.MUST_BE_STRING_OR_CONNECTION;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -50,14 +55,13 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -97,58 +101,38 @@ public abstract class Parse extends RBuiltinNode {
     @Child private CastStringNode castStringNode;
     @Child private CastToVectorNode castVectorNode;
 
-    private int castInt(Object n) {
-        if (castIntNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castIntNode = insert(CastIntegerNodeGen.create(false, false, false));
-        }
-        int result = (int) castIntNode.executeInt(n);
-        if (RRuntime.isNA(result)) {
-            result = -1;
-        }
-        return result;
-    }
-
-    private RStringVector castString(Object s) {
-        if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVectorNode = insert(CastToVectorNodeGen.create(false));
-            castStringNode = insert(CastStringNodeGen.create(false, false, false));
-        }
-        return (RStringVector) castStringNode.executeString(castVectorNode.execute(s));
-    }
-
-    @Specialization
-    protected Object parse(RConnection conn, Object n, Object text, RAbstractStringVector prompt, Object srcFile, RAbstractStringVector encoding) {
-        int nAsInt;
-        if (n != RNull.instance) {
-            nAsInt = castInt(n);
-        } else {
-            nAsInt = -1;
-        }
-        Object textVec = text;
-        if (textVec != RNull.instance) {
-            textVec = castString(textVec);
-        }
-        return doParse(conn, nAsInt, textVec, prompt, srcFile, encoding);
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        // Note: string is captured by the R wrapper and transformed to a file, other types not
+        casts.arg("conn").mustBe(RConnection.class, MUST_BE_STRING_OR_CONNECTION, "file");
+        casts.arg("n").asIntegerVector().findFirst(RRuntime.INT_NA).mapIf(RRuntime::isNA, constant(-1));
+        casts.arg("text").mapIf(nullValue().not(), chain(asStringVector()).with(findFirst().stringElement()).end());
+        casts.arg("prompt").asStringVector().findFirst("?");
+        casts.arg("encoding").mustBe(nullValue().not().and(stringValue())).asStringVector().findFirst();
     }
 
     @TruffleBoundary
-    @SuppressWarnings("unused")
-    private Object doParse(RConnection conn, int n, Object textVec, RAbstractStringVector prompt, Object srcFile, RAbstractStringVector encoding) {
+    @Specialization
+    protected Object parse(RConnection conn, int n, RNull text, String prompt, Object srcFile, String encoding) {
         String[] lines;
-        if (textVec == RNull.instance) {
-            if (conn == StdConnections.getStdin()) {
-                throw RError.nyi(this, "parse from stdin not implemented");
-            }
-            try (RConnection openConn = conn.forceOpen("r")) {
-                lines = openConn.readLines(0, false, false);
-            } catch (IOException ex) {
-                throw RError.error(this, RError.Message.PARSE_ERROR);
-            }
-        } else {
-            lines = ((RStringVector) textVec).getDataWithoutCopying();
+        if (conn == StdConnections.getStdin()) {
+            throw RError.nyi(this, "parse from stdin not implemented");
         }
+        try (RConnection openConn = conn.forceOpen("r")) {
+            lines = openConn.readLines(0, false, false);
+        } catch (IOException ex) {
+            throw RError.error(this, RError.Message.PARSE_ERROR);
+        }
+        return doParse(conn, n, lines, prompt, srcFile, encoding);
+    }
+
+    @TruffleBoundary
+    @Specialization
+    protected Object parse(RConnection conn, int n, RAbstractStringVector text, String prompt, Object srcFile, String encoding) {
+        return doParse(conn, n, text.materialize().getDataWithoutCopying(), prompt, srcFile, encoding);
+    }
+
+    private Object doParse(RConnection conn, int n, String[] lines, String prompt, Object srcFile, String encoding) {
         String coalescedLines = coalesce(lines);
         if (coalescedLines.length() == 0 || n == 0) {
             return RDataFactory.createExpression(RDataFactory.createList());
@@ -207,7 +191,9 @@ public abstract class Parse extends RBuiltinNode {
                 } else {
                     path = fileName;
                 }
-                return createFileSource(path, coalescedLines);
+                Source result = createFileSource(path, coalescedLines);
+                assert result != null : "Source created from environment should not be null";
+                return result;
             } else {
                 return Source.newBuilder(coalescedLines).name("<parse>").mimeType(RRuntime.R_APP_MIME).build();
             }
@@ -228,7 +214,12 @@ public abstract class Parse extends RBuiltinNode {
     }
 
     private static Source createFileSource(String path, String chars) {
-        return RSource.fromFileName(chars, path);
+        try {
+            return RSource.fromFileName(chars, path);
+        } catch (URISyntaxException e) {
+            // Note: to be compatible with GnuR we construct Source even with a malformed path
+            return Source.newBuilder(chars).name(path).mimeType(RRuntime.R_APP_MIME).build();
+        }
     }
 
     private static void addAttributes(RExpression exprs, Source source, REnvironment srcFile) {

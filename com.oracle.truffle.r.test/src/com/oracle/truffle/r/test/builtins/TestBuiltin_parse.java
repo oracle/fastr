@@ -51,4 +51,9 @@ public class TestBuiltin_parse extends TestBase {
         assertEval("parse(text='somethingthatdoesnotexist')");
         assertEval(Ignored.ImplementationError, "attributes(parse(text='somethingthatdoesnotexist'))");
     }
+
+    @Test
+    public void testArgumentsCasts() {
+        assertEval(".Internal(parse(stdin(), c(1,2), c('expr1', 'expr2'), '?', '<weird-text', 'unknown'))");
+    }
 }
