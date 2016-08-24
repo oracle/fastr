@@ -394,6 +394,40 @@ suite = {
 
     },
 
+    "FASTR" : {
+      "description" : "class files for compiling against FastR in a separate suite",
+      "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.runtime.ffi"],
+      "mainClass" : "com.oracle.truffle.r.engine.shell.RCommand",
+      "exclude" : [
+        "JDK_TOOLS",
+        "NETLIB",
+        "ASM",
+        "ASM_UTIL",
+        "ASM_TREE",
+        "ASM_COMMONS",
+        "ASM_ANALYSIS",
+        "ASM",
+        "JNR_X86ASM",
+        "JFFI_NATIVE",
+        "JFFI",
+        "JNR_FFI",
+        "JNR_CONSTANTS",
+        "JNR_POSIX",
+        "JNR_INVOKE",
+        "JNR_UDIS86",
+        "truffle:JLINE",
+        "ANTLR-C-3.5",
+        "ANTLR-3.5",
+        "GNUR",
+        "GNU_ICONV",
+      ],
+      "distDependencies" : [
+        "truffle:TRUFFLE_API",
+        "truffle:TRUFFLE_DEBUG",
+        "TRUFFLE_R_PARSER_PROCESSOR",
+      ],
+    },
+
     "FASTR_NATIVE_DEV": {
         "description" : "support for overriding the native project implementation in a separate suite",
         "native" : "true",
