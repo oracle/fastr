@@ -383,6 +383,7 @@ suite = {
 
   "distributions" : {
     "TRUFFLE_R_PARSER_PROCESSOR" : {
+      "description" : "internal support for generating the R parser",
       "subDir" : "truffle",
       "dependencies" : ["com.oracle.truffle.r.parser.processor"],
       "exclude" : [
@@ -394,6 +395,7 @@ suite = {
     },
 
     "FASTR_NATIVE_DEV": {
+        "description" : "support for overriding the native project implementation in a separate suite",
         "native" : "true",
         "relpath" : "true",
         "dependencies" : ["com.oracle.truffle.r.native"],
@@ -404,6 +406,7 @@ suite = {
     },
 
     "FASTR_RELEASE": {
+        "description" : "a binary release of FastR",
         "native" : "true",
         "dependencies" : ["com.oracle.truffle.r.release"],
         "relpath" : "true",
