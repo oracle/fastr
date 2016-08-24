@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
@@ -35,6 +36,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "readline", kind = INTERNAL, parameterNames = "prompt", behavior = IO)
 public abstract class Readline extends RBuiltinNode {
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("prompt").asStringVector().findFirst("");
+    }
+
     @Specialization
     @TruffleBoundary
     protected String readline(RAbstractStringVector prompt) {

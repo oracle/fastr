@@ -26,4 +26,11 @@ public class TestBuiltin_Syssetlocale extends TestBase {
     public void testSyssetlocale3() {
         assertEval("argv <- structure(list(category = 'LC_TIME', locale = 'C'), .Names = c('category',     'locale'));do.call('Sys.setlocale', argv)");
     }
+
+    @Test
+    public void testSyssetlocaleInvalidArgs() {
+        assertEval(Output.IgnoreErrorContext, ".Internal(Sys.setlocale(4, c('more', 'elements')))");
+        assertEval(Output.IgnoreErrorContext, ".Internal(Sys.setlocale(4, 42))");
+        assertEval(Output.IgnoreErrorMessage, ".Internal(Sys.setlocale('3L', 'C'))");
+    }
 }

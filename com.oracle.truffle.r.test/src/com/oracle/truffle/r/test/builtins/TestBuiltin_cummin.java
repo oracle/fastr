@@ -50,7 +50,7 @@ public class TestBuiltin_cummin extends TestBase {
 
     @Test
     public void testcummin7() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL);cummin(argv[[1]]);");
+        assertEval("argv <- list(NULL);cummin(argv[[1]]);");
     }
 
     @Test

@@ -199,5 +199,24 @@ public class TestBuiltin_rep extends TestBase {
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, length=5) }");
 
         assertEval("rep(x<-42)");
+
+        assertEval(Output.IgnoreErrorContext, "{ rep(function() 42) }");
+        assertEval("{ rep(7, times=character()) }");
+        assertEval("{ rep(7, times=NULL) }");
+        assertEval("{ rep(7, times=\"7\") }");
+        assertEval("{ rep(7, length.out=\"7\") }");
+        assertEval(Output.IgnoreWarningContext, "{ rep(7, length.out=integer()) }");
+        assertEval("{ rep(7, length.out=NA) }");
+        assertEval("{ rep(7, length.out=NULL) }");
+        assertEval(Output.IgnoreWarningContext, "{ rep(7, length.out=c(7, 42)) }");
+        assertEval("{ rep(7, each=\"7\") }");
+        assertEval("{ rep(7, each=integer()) }");
+        assertEval("{ rep(7, each=NA) }");
+        assertEval("{ rep(7, each=NULL) }");
+        assertEval("{ rep(7, each=c(7, 42)) }");
+        assertEval("{ rep(7, times=NA) }");
+        assertEval("{ rep(7, times=-1) }");
+        assertEval("{ rep(c(7, 42), times=c(2, NA)) }");
+        assertEval(Output.IgnoreWarningContext, "{ rep(7, times=\"foo\") }");
     }
 }

@@ -51,6 +51,6 @@ public class TestBuiltin_attach extends TestBase {
 
     @Test
     public void sharingTests() {
-        assertEval(Ignored.Unimplemented, "d <- data.frame(colNameX=c(1,2,3)); attach(d); d$colNameX[1] <- 42; colNameX");
+        assertEval("d <- data.frame(colNameX=c(1,2,3)); attach(d); d$colNameX[1] <- 42; colNameX");
     }
 }

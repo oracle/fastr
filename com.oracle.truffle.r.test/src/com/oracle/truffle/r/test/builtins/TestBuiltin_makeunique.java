@@ -44,8 +44,16 @@ public class TestBuiltin_makeunique extends TestBase {
         assertEval("{ make.unique(c(\"a\", \"a\")) }");
         assertEval("{ make.unique(c(\"a\", \"a\", \"a\")) }");
         assertEval("{ make.unique(c(\"a\", \"a\"), \"_\") }");
-        assertEval(Output.IgnoreErrorContext, "{ make.unique(1) }");
-        assertEval(Output.IgnoreErrorContext, "{ make.unique(\"a\", 1) }");
-        assertEval(Output.IgnoreErrorContext, "{ make.unique(\"a\", character()) }");
+        assertEval("{ make.unique(1) }");
+        assertEval("{ make.unique(\"a\", 1) }");
+        assertEval("{ make.unique(\"a\", character()) }");
+
+        assertEval("{ .Internal(make.unique(c(7, 42), \".\")) }");
+        assertEval("{ .Internal(make.unique(NULL, \".\")) }");
+        assertEval("{ .Internal(make.unique(c(\"7\", \"42\"), 42)) }");
+        assertEval("{ .Internal(make.unique(c(\"7\", \"42\"), character())) }");
+        assertEval("{ .Internal(make.unique(c(\"7\", \"42\"), c(\".\", \".\"))) }");
+        assertEval("{ .Internal(make.unique(c(\"7\", \"42\"), NULL)) }");
+
     }
 }

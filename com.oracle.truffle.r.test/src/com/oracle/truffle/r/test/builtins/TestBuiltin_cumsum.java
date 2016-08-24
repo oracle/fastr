@@ -39,7 +39,7 @@ public class TestBuiltin_cumsum extends TestBase {
 
     @Test
     public void testcumsum5() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL);cumsum(argv[[1]]);");
+        assertEval("argv <- list(NULL);cumsum(argv[[1]]);");
     }
 
     @Test
@@ -108,7 +108,7 @@ public class TestBuiltin_cumsum extends TestBase {
 
         assertEval(Ignored.Unknown, "{ cumsum(c(1,2,3,0/0,5)) }");
         assertEval(Ignored.Unknown, "{ cumsum(c(1,0/0,5+1i)) }");
-        assertEval(Ignored.Unknown, "{ cumsum(as.raw(1:6)) }");
+        assertEval("{ cumsum(as.raw(1:6)) }");
         // FIXME 1e+308
         assertEval(Ignored.Unknown, "{ cumsum(rep(1e308, 3) ) }");
         // FIXME 1e+308

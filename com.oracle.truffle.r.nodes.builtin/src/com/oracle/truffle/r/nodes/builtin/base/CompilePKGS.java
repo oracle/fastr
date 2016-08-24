@@ -38,7 +38,7 @@ public abstract class CompilePKGS extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("enable").asIntegerVector().findFirst();
+        casts.arg("enable").asIntegerVector().findFirst(0);
     }
 
     @Specialization

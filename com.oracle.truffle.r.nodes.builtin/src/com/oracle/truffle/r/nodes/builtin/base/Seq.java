@@ -26,9 +26,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -55,6 +57,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class Seq extends RBuiltinNode {
     private final ConditionProfile lengthProfile1 = ConditionProfile.createBinaryProfile();
     private final ConditionProfile lengthProfile2 = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile topLengthProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile error = BranchProfile.create();
 
     @Child private Seq seqRecursive;
@@ -112,7 +115,7 @@ public abstract class Seq extends RBuiltinNode {
 
     private void validateParams(double start, double to) {
         validateParam(start, "from");
-        validateParam(start, "to");
+        validateParam(to, "to");
     }
 
     private void validateParams(RAbstractDoubleVector start, RAbstractDoubleVector to) {
@@ -121,15 +124,6 @@ public abstract class Seq extends RBuiltinNode {
         }
         if (to != null) {
             validateParam(start.getDataAt(0), "to");
-        }
-    }
-
-    private void validateParams(RAbstractLogicalVector start, RAbstractLogicalVector to) {
-        if (start != null) {
-            validateParam(RRuntime.logical2int(start.getDataAt(0)), "from");
-        }
-        if (to != null) {
-            validateParam(RRuntime.logical2int(start.getDataAt(0)), "to");
         }
     }
 
@@ -183,321 +177,367 @@ public abstract class Seq extends RBuiltinNode {
         return RDataFactory.createIntSequence(1, 1, start.getLength());
     }
 
-    // int vector start, missing to
-
-    @Specialization(guards = "!startEmpty(start)")
-    protected RIntSequence seqFromOneArg(RAbstractIntVector start, RMissing to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
-        validateParam(start.getDataAt(0), "to");
-        // GNU R really does that (take the length of start to create a sequence)
-        return RDataFactory.createIntSequence(1, 1, start.getLength());
-    }
-
-    @Specialization(guards = "startEmpty(start)")
-    protected RIntVector seqFromOneArgEmpty(RAbstractIntVector start, RMissing to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "!lengthZero(lengthOut)"})
-    protected RDoubleSequence seq(RAbstractIntVector start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
-        validateParam(start.getDataAt(0), "from");
-        return RDataFactory.createDoubleSequence(RRuntime.int2double(start.getDataAt(0)), 1, lengthOut);
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "!lengthZero(lengthOut)"})
-    protected RDoubleSequence seq(RAbstractIntVector start, RMissing to, RMissing stride, double lengthOut, RMissing alongWith) {
-        validateParam(start.getDataAt(0), "from");
-        return RDataFactory.createDoubleSequence(RRuntime.int2double(start.getDataAt(0)), 1, (int) Math.ceil(lengthOut));
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "lengthZero(lengthOut)"})
-    protected RIntVector seqLengthZero(RAbstractIntVector start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
-        validateParam(start.getDataAt(0), "from");
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "lengthZero(lengthOut)"})
-    protected RIntVector seqLengthZero(RAbstractIntVector start, RMissing to, RMissing stride, double lengthOut, RMissing alongWith) {
-        validateParam(start.getDataAt(0), "from");
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    // int vector start, int vector to
-
     @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "zero(start, to)"})
     protected int seqZero(RAbstractIntVector start, RAbstractIntVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
         return 0;
     }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-    protected RIntSequence seq(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return RDataFactory.createIntSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1);
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-    protected RIntSequence seq(RAbstractIntVector start, RAbstractIntVector to, int stride, RMissing lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return RDataFactory.createIntSequence(start.getDataAt(0), stride, Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1);
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-    protected RDoubleSequence seq(RAbstractIntVector start, RAbstractIntVector to, double stride, RMissing lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return RDataFactory.createDoubleSequence(RRuntime.int2double(start.getDataAt(0)), stride, (int) (Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride)) + 1);
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!lengthZero(lengthOut)"})
-    protected RIntVector seq(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, int lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return getVectorWithComputedStride(start.getDataAt(0), to.getDataAt(0), RRuntime.int2double(lengthOut), ascending(start, to));
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!lengthZero(lengthOut)"})
-    protected RIntVector seq(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, double lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return getVectorWithComputedStride(start.getDataAt(0), to.getDataAt(0), lengthOut, ascending(start, to));
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "lengthZero(lengthOut)"})
-    protected RIntVector seqLengthZero(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, int lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "lengthZero(lengthOut)"})
-    protected RIntVector seqLengthZero(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, double lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "lengthZeroAlong(alongWith)"})
-    protected RIntVector seq(RAbstractIntVector start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
-        validateParam(start.getDataAt(0), "from");
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "!lengthZeroAlong(alongWith)"})
-    protected RDoubleSequence seqLengthZero(RAbstractIntVector start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
-        validateParam(start.getDataAt(0), "from");
-        return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, alongWith.getLength());
-    }
-
-    // int vector start, double vector to
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "zero(start, to)"})
-    protected int seqZero(RAbstractIntVector start, RAbstractDoubleVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
-        return 0;
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-    protected RIntSequence seq(RAbstractIntVector start, RAbstractDoubleVector to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return RDataFactory.createIntSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1);
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-    protected RDoubleSequence seq(RAbstractIntVector start, RAbstractDoubleVector to, int stride, RMissing lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        int length = (int) Math.abs(to.getDataAt(0) - start.getDataAt(0)) / stride;
-        if (start.getDataAt(0) + length * stride == to.getDataAt(0)) {
-            length++;
-        }
-        return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, length);
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-    protected RDoubleSequence seq(RAbstractIntVector start, RAbstractDoubleVector to, double stride, RMissing lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        int length = (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) / stride);
-        if (start.getDataAt(0) + length * stride == to.getDataAt(0)) {
-            length++;
-        }
-        return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, length);
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "lengthZero(lengthOut)"})
-    protected RIntVector seqLengthZero(RAbstractIntVector start, RAbstractDoubleVector to, RMissing stride, int lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!lengthZero(lengthOut)"})
-    protected RDoubleVector seq(RAbstractIntVector start, RAbstractDoubleVector to, RMissing stride, int lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return getVectorWithComputedStride(RRuntime.int2double(start.getDataAt(0)), to.getDataAt(0), lengthOut, ascending(start, to));
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "lengthZero(lengthOut)"})
-    protected RIntVector seqLengthZero(RAbstractIntVector start, RAbstractDoubleVector to, RMissing stride, double lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!lengthZero(lengthOut)"})
-    protected RDoubleVector seq(RAbstractIntVector start, RAbstractDoubleVector to, RMissing stride, double lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return getVectorWithComputedStride(RRuntime.int2double(start.getDataAt(0)), to.getDataAt(0), lengthOut, ascending(start, to));
-    }
-
-    // double vector start, missing to
-
-    @Specialization(guards = "!startEmpty(start)")
-    protected RDoubleSequence seqFromOneArg(RAbstractDoubleVector start, RMissing to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
-        validateParam(start.getDataAt(0), "from");
-        // GNU R really does that (take the length of start to create a sequence)
-        return RDataFactory.createDoubleSequence(1, 1, start.getLength());
-    }
-
-    @Specialization(guards = "startEmpty(start)")
-    protected RIntVector seqFromOneArgEmpty(RAbstractDoubleVector start, RMissing to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "!lengthZero(lengthOut)"})
-    protected RDoubleSequence seqLengthZero(RAbstractDoubleVector start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
-        validateParam(start.getDataAt(0), "from");
-        return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, lengthOut);
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "!lengthZero(lengthOut)"})
-    protected RDoubleSequence seqLengthZero(RAbstractDoubleVector start, RMissing to, RMissing stride, double lengthOut, RMissing alongWith) {
-        validateParam(start.getDataAt(0), "from");
-        return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, (int) Math.ceil(lengthOut));
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "lengthZero(lengthOut)"})
-    protected RIntVector seq(RAbstractDoubleVector start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
-        validateParam(start.getDataAt(0), "from");
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "lengthZero(lengthOut)"})
-    protected RIntVector seq(RAbstractDoubleVector start, RMissing to, RMissing stride, double lengthOut, RMissing alongWith) {
-        validateParam(start.getDataAt(0), "from");
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "lengthZeroAlong(alongWith)"})
-    protected RIntVector seq(RAbstractDoubleVector start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
-        validateParam(start.getDataAt(0), "from");
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "!lengthZeroAlong(alongWith)"})
-    protected RDoubleSequence seqLengthZero(RAbstractDoubleVector start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
-        validateParam(start.getDataAt(0), "from");
-        return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, alongWith.getLength());
-    }
-
-    // double vector start, int vector to
 
     @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "zero(start, to)"})
     protected int seqZero(RAbstractDoubleVector start, RAbstractIntVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
         return 0;
     }
 
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-    protected RAbstractVector seq(RAbstractDoubleVector start, RAbstractIntVector to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        if ((int) start.getDataAt(0) == start.getDataAt(0)) {
-            return RDataFactory.createIntSequence((int) start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1));
+    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "zero(start, to)"})
+    protected int seqZero(RAbstractIntVector start, RAbstractDoubleVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
+        return 0;
+    }
+
+    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "zero(start, to)"})
+    protected int seqZero(RAbstractDoubleVector start, RAbstractDoubleVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
+        return 0;
+    }
+
+    // int vector start, missing to
+
+    @Specialization
+    protected RAbstractIntVector seqFromOneArg(RAbstractIntVector start, RMissing to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
+        if (topLengthProfile.profile(start.getLength() == 0)) {
+            return RDataFactory.createEmptyIntVector();
         } else {
-            return RDataFactory.createDoubleSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1));
+            validateParam(start.getDataAt(0), "to");
+            // GNU R really does that (take the length of start to create a sequence)
+            return RDataFactory.createIntSequence(1, 1, start.getLength());
         }
     }
 
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-    protected RDoubleSequence seq(RAbstractDoubleVector start, RAbstractIntVector to, int stride, RMissing lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1);
+    @Specialization
+    protected RAbstractVector seq(RAbstractIntVector start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        validateParam(start.getDataAt(0), "from");
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            return RDataFactory.createDoubleSequence(RRuntime.int2double(start.getDataAt(0)), 1, lengthOut);
+        }
     }
 
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-    protected RDoubleSequence seq(RAbstractDoubleVector start, RAbstractIntVector to, double stride, RMissing lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1);
+    @Specialization
+    protected RAbstractVector seq(RAbstractIntVector start, RMissing to, RMissing stride, double lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        validateParam(start.getDataAt(0), "from");
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            return RDataFactory.createDoubleSequence(RRuntime.int2double(start.getDataAt(0)), 1, (int) Math.ceil(lengthOut));
+        }
     }
 
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "lengthZero(lengthOut)"})
-    protected RIntVector seqLengthZero(RAbstractDoubleVector start, RAbstractIntVector to, RMissing stride, int lengthOut, RMissing alongWith) {
+    // int vector start, int vector to
+
+    @Specialization
+    protected Object seq(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
         validateParams(start, to);
-        return RDataFactory.createEmptyIntVector();
+        if (topLengthProfile.profile(zero(start, to))) {
+            return 0;
+        } else {
+            return RDataFactory.createIntSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1);
+        }
     }
 
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!lengthZero(lengthOut)"})
-    protected RDoubleVector seq(RAbstractDoubleVector start, RAbstractIntVector to, RMissing stride, int lengthOut, RMissing alongWith) {
+    @Specialization
+    protected Object seq(RAbstractIntVector start, RAbstractIntVector to, int stride, RMissing lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
         validateParams(start, to);
-        return getVectorWithComputedStride(start.getDataAt(0), RRuntime.int2double(to.getDataAt(0)), lengthOut, ascending(start, to));
+        if (topLengthProfile.profile(zero(start, to))) {
+            return 0;
+        } else {
+            return RDataFactory.createIntSequence(start.getDataAt(0), stride, Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1);
+        }
     }
 
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "lengthZero(lengthOut)"})
-    protected RIntVector seqLengthZero(RAbstractDoubleVector start, RAbstractIntVector to, RMissing stride, double lengthOut, RMissing alongWith) {
+    @Specialization
+    protected Object seq(RAbstractIntVector start, RAbstractIntVector to, double stride, RMissing lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
         validateParams(start, to);
-        return RDataFactory.createEmptyIntVector();
+        if (topLengthProfile.profile(zero(start, to))) {
+            return 0;
+        } else {
+            return RDataFactory.createDoubleSequence(RRuntime.int2double(start.getDataAt(0)), stride, (int) (Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride)) + 1);
+        }
     }
 
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!lengthZero(lengthOut)"})
-    protected RDoubleVector seq(RAbstractDoubleVector start, RAbstractIntVector to, RMissing stride, double lengthOut, RMissing alongWith) {
+    @Specialization
+    protected RIntVector seq(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, int lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            validateParams(start, to);
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            validateParams(start, to);
+            return getVectorWithComputedStride(start.getDataAt(0), to.getDataAt(0), RRuntime.int2double(lengthOut), ascending(start, to));
+        }
+    }
+
+    @Specialization
+    protected RIntVector seq(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, double lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            validateParams(start, to);
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            validateParams(start, to);
+            return getVectorWithComputedStride(start.getDataAt(0), to.getDataAt(0), lengthOut, ascending(start, to));
+        }
+    }
+
+    @Specialization
+    protected RAbstractVector seq(RAbstractIntVector start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
+        startLengthOne(start);
+        if (topLengthProfile.profile(alongWith.getLength() == 0)) {
+            validateParam(start.getDataAt(0), "from");
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            validateParam(start.getDataAt(0), "from");
+            return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, alongWith.getLength());
+        }
+    }
+
+    // int vector start, double vector to
+
+    @Specialization
+    protected Object seq(RAbstractIntVector start, RAbstractDoubleVector to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
         validateParams(start, to);
-        return getVectorWithComputedStride(start.getDataAt(0), RRuntime.int2double(to.getDataAt(0)), lengthOut, ascending(start, to));
+        if (topLengthProfile.profile(zero(start, to))) {
+            return 0;
+        } else {
+            return RDataFactory.createIntSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1);
+        }
+    }
+
+    @Specialization
+    protected Object seq(RAbstractIntVector start, RAbstractDoubleVector to, int stride, RMissing lengthOut, RMissing alongWith) {
+        return seq(start, to, (double) stride, lengthOut, alongWith);
+    }
+
+    @Specialization
+    protected Object seq(RAbstractIntVector start, RAbstractDoubleVector to, double stride, RMissing lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
+        validateParams(start, to);
+        if (topLengthProfile.profile(zero(start, to))) {
+            return 0;
+        } else {
+            int length = (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) / stride);
+            if (start.getDataAt(0) + length * stride == to.getDataAt(0)) {
+                length++;
+            }
+            return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, length);
+        }
+    }
+
+    @Specialization
+    protected RAbstractVector seqLengthZero(RAbstractIntVector start, RAbstractDoubleVector to, RMissing stride, int lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
+        validateParams(start, to);
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            return getVectorWithComputedStride(RRuntime.int2double(start.getDataAt(0)), to.getDataAt(0), lengthOut, ascending(start, to));
+        }
+    }
+
+    @Specialization
+    protected RAbstractVector seqLengthZero(RAbstractIntVector start, RAbstractDoubleVector to, RMissing stride, double lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
+        validateParams(start, to);
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            return getVectorWithComputedStride(RRuntime.int2double(start.getDataAt(0)), to.getDataAt(0), lengthOut, ascending(start, to));
+        }
+    }
+
+    // double vector start, missing to
+
+    @Specialization
+    protected RAbstractVector seqFromOneArg(RAbstractDoubleVector start, RMissing to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
+        if (topLengthProfile.profile(start.getLength() == 0)) {
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            validateParam(start.getDataAt(0), "from");
+            // GNU R really does that (take the length of start to create a sequence)
+            return RDataFactory.createDoubleSequence(1, 1, start.getLength());
+        }
+    }
+
+    @Specialization
+    protected RAbstractVector seqStartLengthOne(RAbstractDoubleVector start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        validateParam(start.getDataAt(0), "from");
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, lengthOut);
+        }
+    }
+
+    @Specialization
+    protected RAbstractVector seqStartLengthOne(RAbstractDoubleVector start, RMissing to, RMissing stride, double lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        validateParam(start.getDataAt(0), "from");
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, (int) Math.ceil(lengthOut));
+        }
+    }
+
+    @Specialization
+    protected RAbstractVector seqStartLengthOne(RAbstractDoubleVector start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
+        startLengthOne(start);
+        validateParam(start.getDataAt(0), "from");
+        if (topLengthProfile.profile(alongWith.getLength() == 0)) {
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, alongWith.getLength());
+        }
+    }
+
+    // double vector start, int vector to
+
+    @Specialization
+    protected Object seq(RAbstractDoubleVector start, RAbstractIntVector to, RMissing stride, RMissing lengthOut, RMissing alongWith,
+                    @Cached("createBinaryProfile()") ConditionProfile intProfile) {
+        startLengthOne(start);
+        toLengthOne(to);
+        validateParams(start, to);
+        if (topLengthProfile.profile(zero(start, to))) {
+            return 0;
+        } else {
+            if (intProfile.profile((int) start.getDataAt(0) == start.getDataAt(0))) {
+                return RDataFactory.createIntSequence((int) start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1));
+            } else {
+                return RDataFactory.createDoubleSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1));
+            }
+        }
+    }
+
+    @Specialization
+    protected Object seq(RAbstractDoubleVector start, RAbstractIntVector to, int stride, RMissing lengthOut, RMissing alongWith) {
+        return seq(start, to, (double) stride, lengthOut, alongWith);
+    }
+
+    @Specialization
+    protected Object seq(RAbstractDoubleVector start, RAbstractIntVector to, double stride, RMissing lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
+        validateParams(start, to);
+        if (topLengthProfile.profile(zero(start, to))) {
+            return 0;
+        } else {
+            return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1);
+        }
+    }
+
+    @Specialization
+    protected RAbstractVector seqLengthZero(RAbstractDoubleVector start, RAbstractIntVector to, RMissing stride, int lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            validateParams(start, to);
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            validateParams(start, to);
+            return getVectorWithComputedStride(start.getDataAt(0), RRuntime.int2double(to.getDataAt(0)), lengthOut, ascending(start, to));
+        }
+    }
+
+    @Specialization
+    protected RAbstractVector seqLengthZero(RAbstractDoubleVector start, RAbstractIntVector to, RMissing stride, double lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            validateParams(start, to);
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            validateParams(start, to);
+            return getVectorWithComputedStride(start.getDataAt(0), RRuntime.int2double(to.getDataAt(0)), lengthOut, ascending(start, to));
+        }
     }
 
     // double vector start, double vector to
 
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "zero(start, to)"})
-    protected double seq(RAbstractDoubleVector start, RAbstractDoubleVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
-        return 0;
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-    protected RAbstractVector seq(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
+    @Specialization
+    protected Object seq(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, RMissing lengthOut, RMissing alongWith, //
+                    @Cached("createBinaryProfile()") ConditionProfile intProfile) {
+        startLengthOne(start);
+        toLengthOne(to);
         validateParams(start, to);
-        if ((int) start.getDataAt(0) == start.getDataAt(0) && (int) to.getDataAt(0) == to.getDataAt(0)) {
-            return RDataFactory.createIntSequence((int) start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1));
+        if (topLengthProfile.profile(zero(start, to))) {
+            return 0;
         } else {
-            return RDataFactory.createDoubleSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1));
+            if (intProfile.profile((int) start.getDataAt(0) == start.getDataAt(0) && (int) to.getDataAt(0) == to.getDataAt(0))) {
+                return RDataFactory.createIntSequence((int) start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1));
+            } else {
+                return RDataFactory.createDoubleSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1));
+            }
         }
     }
 
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-    protected RDoubleSequence seq(RAbstractDoubleVector start, RAbstractDoubleVector to, int stride, RMissing lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) (Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1));
+    @Specialization
+    protected Object seq(RAbstractDoubleVector start, RAbstractDoubleVector to, int stride, RMissing lengthOut, RMissing alongWith) {
+        return seq(start, to, (double) stride, lengthOut, alongWith);
     }
 
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-    protected RDoubleSequence seq(RAbstractDoubleVector start, RAbstractDoubleVector to, double stride, RMissing lengthOut, RMissing alongWith) {
+    @Specialization
+    protected Object seq(RAbstractDoubleVector start, RAbstractDoubleVector to, double stride, RMissing lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
         validateParams(start, to);
-        return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) (Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1));
+        if (topLengthProfile.profile(zero(start, to))) {
+            return 0;
+        } else {
+            return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) (Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1));
+        }
     }
 
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!lengthZero(lengthOut)"})
-    protected RDoubleVector seq(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, int lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return getVectorWithComputedStride(start.getDataAt(0), to.getDataAt(0), RRuntime.int2double(lengthOut), ascending(start, to));
+    @Specialization
+    protected RAbstractVector seqLengthZero(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, int lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            validateParams(start, to);
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            validateParams(start, to);
+            return getVectorWithComputedStride(start.getDataAt(0), to.getDataAt(0), RRuntime.int2double(lengthOut), ascending(start, to));
+        }
     }
 
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "lengthZero(lengthOut)"})
-    protected RIntVector seqLengthZero(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, int lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!lengthZero(lengthOut)"})
-    protected RDoubleVector seq(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, double lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return getVectorWithComputedStride(start.getDataAt(0), to.getDataAt(0), lengthOut, ascending(start, to));
-    }
-
-    @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "lengthZero(lengthOut)"})
-    protected RIntVector seqLengthZero(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, double lengthOut, RMissing alongWith) {
-        validateParams(start, to);
-        return RDataFactory.createEmptyIntVector();
+    @Specialization
+    protected RAbstractVector seqLengthZero(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, double lengthOut, RMissing alongWith) {
+        startLengthOne(start);
+        toLengthOne(to);
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            validateParams(start, to);
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            validateParams(start, to);
+            return getVectorWithComputedStride(start.getDataAt(0), to.getDataAt(0), lengthOut, ascending(start, to));
+        }
     }
 
     // logical vectors
-
-    private final NACheck naCheck = NACheck.create();
 
     @Specialization
     protected Object seq(RAbstractLogicalVector start, RAbstractLogicalVector to, Object stride, Object lengthOut, Object alongWith) {
@@ -528,122 +568,57 @@ public abstract class Seq extends RBuiltinNode {
         return v.getElementClass() == RLogical.class;
     }
 
-    // @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "zero(start, to)"})
-    // protected double seq(RAbstractLogicalVector start, RAbstractLogicalVector to, Object stride,
-    // RMissing lengthOut, RMissing alongWith) {
-    // controlVisibility();
-    // return 0;
-    // }
-    //
-    // @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "!zero(start, to)"})
-    // protected RIntSequence seq(RAbstractLogicalVector start, RAbstractLogicalVector to, RMissing
-    // stride, RMissing lengthOut, RMissing alongWith) {
-    // controlVisibility();
-    // validateParams(start, to);
-    // return RDataFactory.createIntSequence(RRuntime.logical2int(start.getDataAt(0)),
-    // ascending(start,
-    // to) ? 1 : -1,
-    // Math.abs(RRuntime.logical2int(to.getDataAt(0)) - RRuntime.logical2int(start.getDataAt(0))) +
-    // 1);
-    // }
-    //
-    // @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)",
-    // "!lengthZero(lengthOut)"})
-    // protected RDoubleVector seq(RAbstractLogicalVector start, RAbstractLogicalVector to, RMissing
-    // stride, int lengthOut, RMissing alongWith) {
-    // controlVisibility();
-    // validateParams(start, to);
-    // return getVectorWithComputedStride(RRuntime.logical2double(start.getDataAt(0)),
-    // RRuntime.logical2double(to.getDataAt(0)), RRuntime.int2double(lengthOut), ascending(start,
-    // to));
-    // }
-    //
-    // @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)",
-    // "!lengthZero(lengthOut)"})
-    // protected RDoubleVector seq(RAbstractLogicalVector start, RAbstractLogicalVector to, RMissing
-    // stride, double lengthOut, RMissing alongWith) {
-    // controlVisibility();
-    // validateParams(start, to);
-    // return getVectorWithComputedStride(RRuntime.logical2double(start.getDataAt(0)),
-    // RRuntime.logical2double(to.getDataAt(0)), lengthOut, ascending(start, to));
-    // }
-    //
-    // @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)",
-    // "lengthZero(lengthOut)"})
-    // protected RIntVector seqLengthZero(RAbstractLogicalVector start, RAbstractLogicalVector to,
-    // RMissing stride, double lengthOut, RMissing alongWith) {
-    // controlVisibility();
-    // validateParams(start, to);
-    // return RDataFactory.createEmptyIntVector();
-    // }
-    //
-    // @Specialization(guards = "!startEmpty(start)")
-    // protected RIntSequence seqFromOneArg(RAbstractLogicalVector start, RMissing to, RMissing
-    // stride,
-    // RMissing lengthOut, RMissing alongWith) {
-    // controlVisibility();
-    // validateParam(RRuntime.logical2int(start.getDataAt(0)), "to");
-    // // GNU R really does that (take the length of start to create a sequence)
-    // return RDataFactory.createIntSequence(1, 1, start.getLength());
-    // }
-    //
-    // @Specialization(guards = "startEmpty(start)")
-    // protected RIntVector seqFromOneArgEmpty(RAbstractLogicalVector start, RMissing to, RMissing
-    // stride, RMissing lengthOut, RMissing alongWith) {
-    // return RDataFactory.createEmptyIntVector();
-    // }
-
-    @Specialization(guards = "lengthZero(lengthOut)")
-    protected RIntVector seqLengthZero(RMissing start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
-        return RDataFactory.createEmptyIntVector();
+    @Specialization
+    protected RAbstractVector seqLengthZero(RMissing start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            return RDataFactory.createIntSequence(1, 1, lengthOut);
+        }
     }
 
-    @Specialization(guards = "!lengthZero(lengthOut)")
-    protected RIntSequence seq(RMissing start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
-        return RDataFactory.createIntSequence(1, 1, lengthOut);
+    @Specialization
+    protected RAbstractVector seqLengthZero(RMissing start, RMissing to, RMissing stride, double lengthOut, RMissing alongWith) {
+        if (topLengthProfile.profile(lengthOut == 0)) {
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            return RDataFactory.createIntSequence(1, 1, (int) Math.ceil(lengthOut));
+        }
     }
 
-    @Specialization(guards = "lengthZero(lengthOut)")
-    protected RIntVector seqLengthZero(RMissing start, RMissing to, RMissing stride, double lengthOut, RMissing alongWith) {
-        return RDataFactory.createEmptyIntVector();
+    @Specialization
+    protected RAbstractVector seqLengthZeroAlong(RMissing start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
+        if (topLengthProfile.profile(alongWith.getLength() == 0)) {
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            return RDataFactory.createIntSequence(1, 1, alongWith.getLength());
+        }
     }
 
-    @Specialization(guards = "!lengthZero(lengthOut)")
-    protected RIntSequence seq(RMissing start, RMissing to, RMissing stride, double lengthOut, RMissing alongWith) {
-        return RDataFactory.createIntSequence(1, 1, (int) Math.ceil(lengthOut));
-    }
-
-    @Specialization(guards = "lengthZeroAlong(alongWith)")
-    protected RIntVector seqLengthZeroAlong(RMissing start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization(guards = "!lengthZeroAlong(alongWith)")
-    protected RIntSequence seq(RMissing start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
-        return RDataFactory.createIntSequence(1, 1, alongWith.getLength());
-    }
-
-    @Specialization(guards = {"toLengthOne(to)", "positiveLengthOut(lengthOut)"})
+    @Specialization
     protected RDoubleSequence seq(RMissing start, RAbstractIntVector to, RMissing stride, int lengthOut, RMissing alongWith) {
+        toLengthOne(to);
+        positiveLengthOut(lengthOut);
         validateParam(to.getDataAt(0), "to");
         return RDataFactory.createDoubleSequence(to.getDataAt(0) - lengthOut + 1, 1, lengthOut);
     }
 
-    @Specialization(guards = {"toLengthOne(to)", "positiveLengthOut(lengthOut)"})
+    @Specialization
     protected RDoubleSequence seq(RMissing start, RAbstractIntVector to, RMissing stride, double lengthOut, RMissing alongWith) {
-        validateParam(to.getDataAt(0), "to");
-        final int intLength = (int) Math.ceil(lengthOut);
-        return RDataFactory.createDoubleSequence(to.getDataAt(0) - intLength + 1, 1, intLength);
+        return seq(start, to, stride, (int) Math.ceil(lengthOut), alongWith);
     }
 
-    @Specialization(guards = {"toLengthOne(to)", "positiveLengthOut(lengthOut)"})
+    @Specialization
     protected RDoubleSequence seq(RMissing start, RAbstractDoubleVector to, RMissing stride, double lengthOut, RMissing alongWith) {
+        toLengthOne(to);
+        positiveLengthOut(lengthOut);
         validateParam(to.getDataAt(0), "to");
         return RDataFactory.createDoubleSequence(to.getDataAt(0) - lengthOut + 1, 1, (int) Math.ceil(lengthOut));
     }
 
-    @Specialization(guards = "toLengthOne(to)")
+    @Specialization
     protected Object seq(RMissing start, RAbstractVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
+        toLengthOne(to);
         return seqRecursive(1.0, to, stride, lengthOut, alongWith);
     }
 
@@ -683,12 +658,9 @@ public abstract class Seq extends RBuiltinNode {
         return start.getDataAt(0) == 0 && to.getDataAt(0) == 0;
     }
 
-    protected boolean startEmpty(RAbstractVector start) {
-        return start.getLength() == 0;
-    }
-
     protected boolean startLengthOne(RAbstractVector start) {
         if (start.getLength() != 1) {
+            error.enter();
             throw RError.error(this, RError.Message.MUST_BE_SCALAR, "from");
         }
         return true;
@@ -696,25 +668,15 @@ public abstract class Seq extends RBuiltinNode {
 
     protected boolean toLengthOne(RAbstractVector to) {
         if (to.getLength() != 1) {
+            error.enter();
             throw RError.error(this, RError.Message.MUST_BE_SCALAR, "to");
         }
         return true;
     }
 
-    protected boolean lengthZero(int lengthOut) {
-        return lengthOut == 0;
-    }
-
-    protected boolean lengthZero(double lengthOut) {
-        return lengthOut == 0;
-    }
-
-    protected boolean lengthZeroAlong(RAbstractVector alongWith) {
-        return alongWith.getLength() == 0;
-    }
-
     protected boolean positiveLengthOut(int lengthOut) {
         if (lengthOut < 0) {
+            error.enter();
             throw RError.error(this, RError.Message.MUST_BE_POSITIVE, "length.out");
         }
         return true;
@@ -722,6 +684,7 @@ public abstract class Seq extends RBuiltinNode {
 
     protected boolean positiveLengthOut(double lengthOut) {
         if (lengthOut < 0) {
+            error.enter();
             throw RError.error(this, RError.Message.MUST_BE_POSITIVE, "length.out");
         }
         return true;

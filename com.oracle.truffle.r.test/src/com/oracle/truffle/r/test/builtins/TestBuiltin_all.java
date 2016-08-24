@@ -29,13 +29,12 @@ public class TestBuiltin_all extends TestBase {
 
     @Test
     public void testall3() {
-        assertEval(Ignored.Unknown, "argv <- list(c(1, 1, 3, 1, 1, 3, 3, 3, 3), FALSE, NULL);all(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(c(1, 1, 3, 1, 1, 3, 3, 3, 3), FALSE, NULL);all(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
     public void testall4() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(0, 0, 3, 0, 0, 0, 1, 0, 0, 2, 2, 3.2, -1, 1, 3.2, 4, 3, 0, 0, 0, 0, 3.2, 0, 0, 3.2, 0, 202, 0, 0, 0, 241, 0, 243, 0, 0), .Dim = c(5L, 7L), .Dimnames = list(c('r1', 'r2', 'r3', 'r4', 'r5'), c('c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'))));all(argv[[1]]);");
+        assertEval("argv <- list(structure(c(0, 0, 3, 0, 0, 0, 1, 0, 0, 2, 2, 3.2, -1, 1, 3.2, 4, 3, 0, 0, 0, 0, 3.2, 0, 0, 3.2, 0, 202, 0, 0, 0, 241, 0, 243, 0, 0), .Dim = c(5L, 7L), .Dimnames = list(c('r1', 'r2', 'r3', 'r4', 'r5'), c('c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'))));all(argv[[1]]);");
     }
 
     @Test
@@ -119,10 +118,10 @@ public class TestBuiltin_all extends TestBase {
 
         assertEval("{ all(TRUE, TRUE, NA,  na.rm=TRUE) }");
         // FIXME coercion warning missing
-        assertEval(Ignored.Unknown, "{ all(1) }");
-        assertEval(Ignored.Unknown, "{ all(0) }");
-        assertEval(Ignored.Unknown, "{ all(TRUE,c(TRUE,TRUE),1) }");
-        assertEval(Ignored.Unknown, "{ all(TRUE,c(TRUE,TRUE),1,0) }");
+        assertEval("{ all(1) }");
+        assertEval("{ all(0) }");
+        assertEval(Output.IgnoreWarningContext, "{ all(TRUE,c(TRUE,TRUE),1) }");
+        assertEval("{ all(TRUE,c(TRUE,TRUE),1,0) }");
 
         assertEval("{ all(NULL) }");
         assertEval("{ all(NULL, NULL) }");

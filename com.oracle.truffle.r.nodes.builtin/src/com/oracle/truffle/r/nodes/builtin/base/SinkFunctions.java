@@ -55,15 +55,15 @@ public class SinkFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull sink(RConnection conn, boolean closeOnExit, boolean errcon, boolean split) {
-            if (errcon) {
-                // TODO
-                throw RError.nyi(this, "type=message");
-            }
             if (split) {
                 // TODO
                 throw RError.nyi(this, "split");
             }
-            StdConnections.pushDivertOut(conn, closeOnExit);
+            if (errcon) {
+                StdConnections.divertErr(conn);
+            } else {
+                StdConnections.pushDivertOut(conn, closeOnExit);
+            }
             return RNull.instance;
         }
 
@@ -97,6 +97,5 @@ public class SinkFunctions {
                 return StdConnections.stderrDiversion();
             }
         }
-
     }
 }

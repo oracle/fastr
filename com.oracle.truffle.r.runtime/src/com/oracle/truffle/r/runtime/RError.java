@@ -281,6 +281,7 @@ public final class RError extends RuntimeException {
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("'%s' is not a function, character or symbol"),
         NON_CHARACTER("non-character argument"),
+        NON_CHARACTER_NAMES("non-character names"),
         NON_NUMERIC_MATH("non-numeric argument to mathematical function"),
         NAN_PRODUCED("NaNs produced"),
         NUMERIC_COMPLEX_MATRIX_VECTOR("requires numeric/complex matrix/vector arguments"),
@@ -540,6 +541,7 @@ public final class RError extends RuntimeException {
         ARGUMENTS_PASSED_0_1("0 arguments passed to '%s' which requires 1"),
         ARGUMENT_IGNORED("argument '%s' will be ignored"),
         NOT_CHARACTER_VECTOR("'%s' must be a character vector"),
+        WRONG_WINSLASH("'winslash' must be '/' or '\\\\\\\\'"),
         CANNOT_MAKE_VECTOR_OF_MODE("vector: cannot make a vector of mode '%s'"),
         SET_ROWNAMES_NO_DIMS("attempt to set 'rownames' on an object with no dimensions"),
         COLUMNS_NOT_MULTIPLE("number of columns of result is not a multiple of vector length (arg %d)"),
@@ -621,6 +623,7 @@ public final class RError extends RuntimeException {
         FILE_OPEN_TMP("file(\"\") only supports open = \"w+\" and open = \"w+b\": using the former"),
         FILE_APPEND_WRITE("write error during file append"),
         REQUIRES_CHAR_VECTOR("'%s' requires a character vector"),
+        ARGUMENT_NOT_CHAR_VECTOR("argument is not a character vector"),
         NOT_VALID_NAMES("not a valid named list"),
         CHAR_ARGUMENT("character argument expected"),
         CANNOT_BE_INVALID("'%s' cannot be NA, NaN or infinite"),
@@ -714,7 +717,10 @@ public final class RError extends RuntimeException {
         BAD_ENVIRONMENT("bad %s environment argument"),
         CANNOT_BE_LENGTH("'%s' cannot be of length %d"),
         SECOND_ARGUMENT_LIST("second argument must be a list"),
-        DOES_NOT_HAVE_DIMNAMES("'%s' does not have named dimnames");
+        DOES_NOT_HAVE_DIMNAMES("'%s' does not have named dimnames"),
+        ATTEMPT_TO_REPLICATE("attempt to replicate an object of type '%s'"),
+        ATTEMPT_TO_REPLICATE_NO_VECTOR("attempt to replicate non-vector"),
+        INCORRECT_ARG_TYPE("incorrect type for %s argument");
 
         public final String message;
         final boolean hasArgs;

@@ -22,11 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -60,8 +60,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @RBuiltin(name = "match.fun", kind = SUBSTITUTE, parameterNames = {"fun", "descend"}, nonEvalArgs = 0, behavior = COMPLEX)
 public abstract class MatchFun extends RBuiltinNode {
 
-    @CompilationFinal private String lastFun;
-
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RMissing.instance, RRuntime.LOGICAL_TRUE};
@@ -69,7 +67,7 @@ public abstract class MatchFun extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstBoolean(1, "descend");
+        casts.arg("descend").asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Specialization

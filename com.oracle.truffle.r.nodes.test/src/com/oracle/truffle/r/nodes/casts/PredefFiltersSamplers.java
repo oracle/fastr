@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Objects;
 
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PredefFilters;
+import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentFilter;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -148,6 +149,11 @@ public final class PredefFiltersSamplers implements PredefFilters {
     }
 
     @Override
+    public ValuePredicateArgumentFilterSampler<Double> isFractional() {
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double x) -> !RRuntime.isNA(x) && !Double.isInfinite(x) && x != Math.floor(x), samples(0d), samples(RRuntime.DOUBLE_NA));
+    }
+
+    @Override
     public ValuePredicateArgumentFilterSampler<String> stringNA() {
         return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((String x) -> RRuntime.isNA(x), samples(RRuntime.STRING_NA), samples(""));
     }
@@ -160,6 +166,11 @@ public final class PredefFiltersSamplers implements PredefFilters {
     @Override
     public ValuePredicateArgumentFilterSampler<Double> eq(double x) {
         return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double arg) -> arg != null && arg.doubleValue() == x, samples(x), CastUtils.<Double> samples(x + 1));
+    }
+
+    @Override
+    public ValuePredicateArgumentFilter<String> eq(String x) {
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((String arg) -> arg != null && arg.equals(x), samples(x), CastUtils.samples(x + 1));
     }
 
     @Override
@@ -247,14 +258,18 @@ public final class PredefFiltersSamplers implements PredefFilters {
 
     @Override
     public <R extends RAbstractComplexVector> TypePredicateArgumentFilterSampler<Object, R> complexValue() {
-        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof RComplex ||
-                        x instanceof RAbstractComplexVector, RAbstractComplexVector.class, RComplex.class);
+        return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof RAbstractComplexVector, RAbstractComplexVector.class, RComplex.class);
     }
 
     @Override
     public <R extends RAbstractRawVector> TypePredicateArgumentFilterSampler<Object, R> rawValue() {
         return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof RRaw ||
                         x instanceof RAbstractRawVector, RAbstractRawVector.class, RRaw.class);
+    }
+
+    @Override
+    public <R> TypePredicateArgumentFilterSampler<Object, R> anyValue() {
+        return TypePredicateArgumentFilterSampler.fromLambda(x -> true, Object.class, Object.class);
     }
 
     @Override

@@ -99,9 +99,9 @@ public class LoadSaveFunctions {
                     throw RError.error(this, RError.Message.GENERIC, "the input does not start with a magic number compatible with loading from a connection");
                 }
             } catch (IOException iox) {
-                throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
+                throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
             } catch (PutException px) {
-                throw RError.error(this, px);
+                throw RError.error(RError.SHOW_CALLER, px);
             }
         }
     }

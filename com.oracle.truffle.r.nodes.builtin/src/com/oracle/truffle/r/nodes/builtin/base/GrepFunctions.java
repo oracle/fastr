@@ -78,11 +78,11 @@ public class GrepFunctions {
         }
 
         protected void castIgnoreCase(CastBuilder casts) {
-            casts.arg("ignore.case").asLogicalVector().findFirst();
+            casts.arg("ignore.case").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         }
 
         protected void castPerl(CastBuilder casts) {
-            casts.arg("perl").asLogicalVector().findFirst();
+            casts.arg("perl").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         }
 
         protected void castFixed(CastBuilder casts, byte defaultValue) {
@@ -90,15 +90,15 @@ public class GrepFunctions {
         }
 
         protected void castValue(CastBuilder casts) {
-            casts.arg("value").asLogicalVector().findFirst();
+            casts.arg("value").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         }
 
         protected void castUseBytes(CastBuilder casts) {
-            casts.arg("useBytes").asLogicalVector().findFirst();
+            casts.arg("useBytes").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         }
 
         protected void castInvert(CastBuilder casts) {
-            casts.arg("invert").asLogicalVector().findFirst();
+            casts.arg("invert").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         }
 
         protected void castCosts(CastBuilder casts) {
