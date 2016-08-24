@@ -22,22 +22,138 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
 import static com.oracle.truffle.r.runtime.RDispatch.COMPLEX_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "Arg", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = COMPLEX_GROUP_GENERIC, behavior = PURE)
 public abstract class Arg extends RBuiltinNode {
 
+    private final ConditionProfile signumProfile = ConditionProfile.createBinaryProfile();
+    private final NACheck naCheck = NACheck.create();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("z").mustBe(numericValue().or(complexValue()), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+    }
+
     @Specialization
-    @TruffleBoundary
-    protected Object im(@SuppressWarnings("unused") Object value) {
-        throw RInternalError.unimplemented();
+    protected double arg(double z) {
+        naCheck.enable(z);
+        if (naCheck.check(z)) {
+            return RRuntime.DOUBLE_NA;
+        }
+        if (signumProfile.profile(z >= 0)) {
+            return 0;
+        } else {
+            return Math.PI;
+        }
+    }
+
+    @Specialization
+    protected RAbstractDoubleVector arg(RAbstractDoubleVector v) {
+        double[] result = new double[v.getLength()];
+
+        naCheck.enable(v);
+        for (int i = 0; i < v.getLength(); i++) {
+            double z = v.getDataAt(i);
+            if (naCheck.check(z)) {
+                result[i] = RRuntime.DOUBLE_NA;
+            } else {
+                result[i] = z >= 0 ? 0 : Math.PI;
+            }
+        }
+
+        return RDataFactory.createDoubleVector(result, v.isComplete());
+    }
+
+    @Specialization
+    protected double arg(int z) {
+        naCheck.enable(z);
+        if (naCheck.check(z)) {
+            return RRuntime.DOUBLE_NA;
+        }
+        if (signumProfile.profile(z >= 0)) {
+            return 0;
+        } else {
+            return Math.PI;
+        }
+    }
+
+    @Specialization
+    protected RAbstractDoubleVector arg(RAbstractIntVector v) {
+        double[] result = new double[v.getLength()];
+
+        naCheck.enable(v);
+        for (int i = 0; i < v.getLength(); i++) {
+            int z = v.getDataAt(i);
+            if (naCheck.check(z)) {
+                result[i] = RRuntime.DOUBLE_NA;
+            } else {
+                result[i] = z >= 0 ? 0 : Math.PI;
+            }
+        }
+
+        return RDataFactory.createDoubleVector(result, v.isComplete());
+    }
+
+    @Specialization
+    protected double arg(byte z) {
+        naCheck.enable(z);
+        if (naCheck.check(z)) {
+            return RRuntime.DOUBLE_NA;
+        }
+        return 0;
+    }
+
+    @Specialization
+    protected RAbstractDoubleVector arg(RAbstractLogicalVector v) {
+        double[] result = new double[v.getLength()];
+
+        naCheck.enable(v);
+        for (int i = 0; i < v.getLength(); i++) {
+            int z = v.getDataAt(i);
+            if (naCheck.check(z)) {
+                result[i] = RRuntime.DOUBLE_NA;
+            } else {
+                result[i] = 0;
+            }
+        }
+
+        return RDataFactory.createDoubleVector(result, v.isComplete());
+    }
+
+    @Specialization
+    protected RAbstractDoubleVector arg(RAbstractComplexVector v) {
+        double[] result = new double[v.getLength()];
+
+        naCheck.enable(v);
+        for (int i = 0; i < v.getLength(); i++) {
+            RComplex z = v.getDataAt(i);
+            if (naCheck.check(z)) {
+                result[i] = RRuntime.DOUBLE_NA;
+            } else {
+                result[i] = Math.atan2(z.getImaginaryPart(), z.getRealPart());
+            }
+        }
+
+        return RDataFactory.createDoubleVector(result, v.isComplete());
     }
 }
