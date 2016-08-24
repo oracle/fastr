@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+JAVA_ARGS=()
+PROGRAM_ARGS=()
+for opt in "${@:1}"
+do
+  case $opt in
+    -J:*)
+      opt=${opt:3}
+      JAVA_ARGS+=("$opt") ;;
+    *)
+      PROGRAM_ARGS+=("$opt") ;;
+  esac
+done
+
+exec java "${JAVA_ARGS[@]}" -cp %%CLASSPATH com.oracle.truffle.r.engine.shell.RCommand "${PROGRAM_ARGS[@]}"
